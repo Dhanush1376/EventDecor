@@ -1,5 +1,5 @@
 import api, { refreshAccessToken } from '../api';
-import { hasSessionMarker } from '../../utils/authStorage';
+import { hasSessionMarker } from '../../utils/auth/authStorage';
 
 const checkAuthLocal = () => hasSessionMarker();
 

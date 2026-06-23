@@ -9,7 +9,7 @@ import { inquiryService } from '../services/domainServices';
 import toast from 'react-hot-toast';
 import { MOTION_PRESETS, EASE, DURATION } from '../constants/design-tokens';
 
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 export function Contact() {
   const { contact, loading } = useWebsiteContent();

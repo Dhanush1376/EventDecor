@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
 
 // Setup Mock for redis
-jest.mock('../utils/redis', () => ({
+jest.mock('../utils/cache/redis', () => ({
   redisClient: {
     get: jest.fn(),
     set: jest.fn(),
@@ -12,7 +12,7 @@ jest.mock('../utils/redis', () => ({
   pingRedis: jest.fn().mockResolvedValue(true),
 }));
 
-jest.mock('../utils/otpVerifyCache', () => ({
+jest.mock('../utils/cache/otpVerifyCache', () => ({
   cacheOtpSession: jest.fn(),
   getCachedOtpSession: jest.fn().mockResolvedValue(null),
 }));

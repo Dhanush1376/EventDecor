@@ -5,7 +5,7 @@ import { corsMiddleware, corsHandler } from './middleware/corsMiddleware';
 import { securityHeadersMiddleware } from './middleware/helmetMiddleware';
 import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
-import { xssSanitize } from './utils/xssSanitizer';
+import { xssSanitize } from './utils/security/xssSanitizer';
 
 import cookieParser from 'cookie-parser';
 import { globalLimiter, apiFloodingLimiter } from './middleware/rateLimiter';
@@ -43,7 +43,7 @@ app.disable('x-powered-by');
 
 // Trust proxy hops — enforced to 1 for Railway/Render.
 // If moving to Cloudflare + Railway, this should be updated to 2.
-const trustProxy = process.env.TRUST_PROXY ? parseInt(process.env.TRUST_PROXY, 10) : 1;
+const trustProxy = process.env.TRUST_PROXY_HOPS ? parseInt(process.env.TRUST_PROXY_HOPS, 10) : 1;
 app.set('trust proxy', trustProxy);
 logger.info(`[STARTUP] Express trust proxy hops: ${trustProxy}`);
 
@@ -269,7 +269,7 @@ app.get(
       // Socket.io not yet initialized
     }
 
-    const pingRedis = require('./utils/redis').pingRedis;
+    const pingRedis = require('./utils/cache/redis').pingRedis;
     const redisStatus = await pingRedis();
 
     const report = getMetricsReport();

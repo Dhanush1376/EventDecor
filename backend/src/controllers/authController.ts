@@ -5,7 +5,7 @@ import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import User from '../models/User';
-import { canonicalizeEmail } from '../utils/emailHelper';
+import { canonicalizeEmail } from '../utils/email/emailHelper';
 import { STAFF_ROLES } from '../config/adminConfig';
 import logger from '../config/logger';
 import {
@@ -13,8 +13,8 @@ import {
   getCachedSessionJson,
   invalidateUserSessionCaches,
   sessionKeys,
-} from '../utils/userSessionCache';
-import { checkOtpSendAllowed, isOtpVerifyBlocked } from '../utils/otpRateLimit';
+} from '../utils/cache/userSessionCache';
+import { checkOtpSendAllowed, isOtpVerifyBlocked } from '../utils/security/otpRateLimit';
 import {
   setCustomerRefreshCookie,
   clearCustomerRefreshCookie,
@@ -22,9 +22,9 @@ import {
   ADMIN_REFRESH_COOKIE,
   clearAdminRefreshCookie,
   setAdminRefreshCookie,
-} from '../utils/authCookies';
+} from '../utils/security/authCookies';
 import { regenerateCsrfToken, clearCsrfCookie } from '../middleware/csrfMiddleware';
-import { blacklistToken } from '../utils/jwtBlacklist';
+import { blacklistToken } from '../utils/security/jwtBlacklist';
 import jwt from 'jsonwebtoken';
 
 export const sendOTP = asyncHandler(async (req: Request, res: Response) => {

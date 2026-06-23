@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { bookingService, userService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import logger from '../../utils/logger';
-import { getErrorMessage } from '../../utils/errorHelpers';
+import logger from '../../utils/core/logger';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 
 export function AdminBookingDetail() {
   const { bookingId } = useParams();
@@ -132,6 +132,7 @@ export function AdminBookingDetail() {
         clearTimeout(mapTimer);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBooking]);
 
   const initDrawerMap = () => {

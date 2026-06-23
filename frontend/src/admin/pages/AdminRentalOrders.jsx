@@ -2,7 +2,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import rentalService from '../../services/rentalService';
+import rentalService from '../../services/api/rentalService';
 import {
   PageHeader,
   EmptyState,

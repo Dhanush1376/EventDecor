@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { authService } from '../services/domainServices';
@@ -12,18 +13,20 @@ import {
   loadCachedProfile,
   saveCachedProfile,
   clearCachedProfile,
-} from '../utils/authSessionCache';
+} from '../utils/auth/authSessionCache';
 import {
   hasSessionMarker,
   setSessionMarker,
   clearAuthStorage,
   setFallbackRefreshToken,
-} from '../utils/authStorage';
+} from '../utils/auth/authStorage';
 import { AuthContext } from './AuthContext';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
+import { ADMIN_ROLES } from '../constants/roles';
 
 export function AuthProvider({ children }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   // Use lazy initialization to avoid synchronous exceptions during render body
   const getInitialState = () => {
     try {
@@ -209,7 +212,7 @@ export function AuthProvider({ children }) {
   }, [restoreSession, logout, cachedProfile, hasStoredSession]);
 
   useEffect(() => {
-    import('../utils/observability')
+    import('../utils/core/observability')
       .then(({ setUserContext }) => {
         setUserContext(user);
       })
@@ -222,78 +225,72 @@ export function AuthProvider({ children }) {
     setIntendedAction(null);
   };
 
-  const runProtectedAction = (actionCallback) => {
-    if (isAuthenticated) {
-      actionCallback();
-      return true;
-    }
-    setIntendedAction(() => actionCallback);
-    setIsAuthModalOpen(true);
-    toast.error('Authentication required to access this feature');
-    return false;
-  };
+  const runProtectedAction = useCallback(
+    (actionCallback) => {
+      if (isAuthenticated) {
+        actionCallback();
+        return true;
+      }
+      setIntendedAction(() => actionCallback);
+      setIsAuthModalOpen(true);
+      toast.error('Authentication required to access this feature');
+      return false;
+    },
+    [isAuthenticated],
+  );
 
-  const loginSuccess = async (userData, token, refreshToken) => {
-    const accessToken = token || null;
-    if (!accessToken) {
-      logger.error('[Auth] loginSuccess called without access token');
-      toast.error('Sign-in incomplete. Please try again.');
-      return;
-    }
-
-    setAccessToken(accessToken);
-    setSessionMarker();
-    setFallbackRefreshToken(refreshToken);
-
-    setUser(userData);
-    setIsAuthenticated(true);
-    setIsAuthInitialized(true);
-    setLoading(false);
-    saveCachedProfile(userData);
-    setIsAuthModalOpen(false);
-
-    toast.success('Welcome back to the Studio!');
-
-    const searchParams = new URLSearchParams(window.location.search);
-    const redirectUrl = searchParams.get('redirect');
-
-    const adminRoles = [
-      'super_admin',
-      'main_admin',
-      'moderator',
-      'support_admin',
-      'order_manager',
-      'content_manager',
-      'admin',
-      'manager',
-      'coordinator',
-    ];
-
-    if (redirectUrl) {
-      if (redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')) {
-        if (redirectUrl.startsWith('/admin') && !adminRoles.includes(userData?.role)) {
-          window.location.href = '/';
-        } else {
-          window.location.href = redirectUrl;
-        }
+  const loginSuccess = useCallback(
+    async (userData, token, refreshToken) => {
+      const accessToken = token || null;
+      if (!accessToken) {
+        logger.error('[Auth] loginSuccess called without access token');
+        toast.error('Sign-in incomplete. Please try again.');
         return;
       }
-    }
 
-    if (adminRoles.includes(userData?.role)) {
-      window.location.href = '/admin';
-      return;
-    }
+      setAccessToken(accessToken);
+      setSessionMarker();
+      setFallbackRefreshToken(refreshToken);
 
-    if (intendedAction) {
-      try {
-        await intendedAction();
-      } catch (err) {
-        logger.error('Failed to auto-execute intended action after login:', err);
+      setUser(userData);
+      setIsAuthenticated(true);
+      setIsAuthInitialized(true);
+      setLoading(false);
+      saveCachedProfile(userData);
+      setIsAuthModalOpen(false);
+
+      toast.success('Welcome back to the Studio!');
+
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectUrl = searchParams.get('redirect');
+
+      if (redirectUrl) {
+        if (redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')) {
+          if (redirectUrl.startsWith('/admin') && !ADMIN_ROLES.includes(userData?.role)) {
+            navigate('/');
+          } else {
+            navigate(redirectUrl);
+          }
+          return;
+        }
       }
-      setIntendedAction(null);
-    }
-  };
+
+      if (ADMIN_ROLES.includes(userData?.role)) {
+        navigate('/admin');
+        return;
+      }
+
+      if (intendedAction) {
+        try {
+          await intendedAction();
+        } catch (err) {
+          logger.error('Failed to auto-execute intended action after login:', err);
+        }
+        setIntendedAction(null);
+      }
+    },
+    [intendedAction],
+  );
 
   const contextValue = useMemo(
     () => ({
@@ -310,7 +307,17 @@ export function AuthProvider({ children }) {
       loginSuccess,
       isAuthInitialized,
     }),
-    [user, loading, isAuthenticated, logout, restoreSession, isAuthModalOpen, isAuthInitialized],
+    [
+      user,
+      loading,
+      isAuthenticated,
+      logout,
+      restoreSession,
+      isAuthModalOpen,
+      isAuthInitialized,
+      runProtectedAction,
+      loginSuccess,
+    ],
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

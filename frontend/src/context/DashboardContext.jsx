@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useMemo, useRef, Profiler } from 'react';
-import { logRenderMetrics } from '../utils/profilerLogger';
+import { logRenderMetrics } from '../utils/performance/profilerLogger';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useWishlist } from './WishlistContext';
@@ -85,6 +85,7 @@ export function DashboardProvider({ children }) {
 
   // Address forms
   const [editingAddressId, setEditingAddressId] = useState(null);
+  const [addressFormData, setAddressFormData] = useState(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
   const [reviewingProduct, setReviewingProduct] = useState(null);
@@ -284,6 +285,8 @@ export function DashboardProvider({ children }) {
 
     editingAddressId,
     setEditingAddressId,
+    addressFormData,
+    setAddressFormData,
 
     isAddressModalOpen,
     setIsAddressModalOpen,

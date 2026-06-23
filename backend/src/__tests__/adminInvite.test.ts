@@ -30,7 +30,7 @@ jest.mock('../models/AdminInvite', () => ({
   },
 }));
 
-jest.mock('../utils/safetyLockCache', () => ({
+jest.mock('../utils/cache/safetyLockCache', () => ({
   __esModule: true,
   getSafetyLockDocument: jest.fn(async () => ({ data: { safetyLock: false } })),
   invalidateSafetyLockCache: jest.fn(async () => {}),
@@ -79,7 +79,7 @@ describe('Admin Access Invitation & Approval System', () => {
       { expiresIn: '15m' },
     );
 
-    moderatorToken = jwt.sign(
+    _moderatorToken = jwt.sign(
       { id: 'moderator_id', role: 'moderator', email: 'mod@siriartsandcrafts.com' },
       process.env.JWT_SECRET!,
       { expiresIn: '15m' },

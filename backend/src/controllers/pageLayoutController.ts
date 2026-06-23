@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import PageLayout from '../models/PageLayout';
 import logger from '../config/logger';
-import { bumpPublicCacheVersion } from '../utils/cacheVersion';
+import { bumpPublicCacheVersion } from '../utils/cache/cacheVersion';
 
 export const getLayoutByPath = async (req: Request, res: Response) => {
   try {

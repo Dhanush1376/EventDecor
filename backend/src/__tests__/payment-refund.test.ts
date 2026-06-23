@@ -1,6 +1,6 @@
 import { PaymentRefundService } from '../services/PaymentRefundService';
 import RefundRecord from '../models/RefundRecord';
-import { RazorpayGateway } from '../utils/RazorpayGateway';
+import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import { refundQueue } from '../jobs/queues';
 
 jest.mock('../models/RefundRecord');

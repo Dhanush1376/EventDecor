@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { getErrorMessage } from '../../utils/errorHelpers';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 import {
   PageHeader,
   AdminToggle,

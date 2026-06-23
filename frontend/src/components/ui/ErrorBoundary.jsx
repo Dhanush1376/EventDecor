@@ -1,7 +1,7 @@
 import { Component } from 'react';
 import * as Sentry from '@sentry/react';
 
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 /**
  * Enterprise-grade Error Boundary with:
  * - Sentry error reporting

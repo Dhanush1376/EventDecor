@@ -1,6 +1,6 @@
-import { MemoryCache } from '../../utils/MemoryCache';
+import { MemoryCache } from '../../utils/cache/MemoryCache';
 import logger from '../../config/logger';
-import redisClient from '../../utils/redis';
+import redisClient from '../../utils/cache/redis';
 
 // ── In-memory caches ──
 export const autocompleteCache = new MemoryCache({ defaultTtlMs: 5 * 60 * 1000, maxKeys: 500 });

@@ -5,8 +5,8 @@ import {
   getSrcSet,
   handleImageError,
   getBlurDataUri,
-} from '../../utils/imageUtils';
-import { perfMonitor } from '../../utils/performanceMonitor';
+} from '../../utils/media/imageUtils';
+import { perfMonitor } from '../../utils/performance/performanceMonitor';
 
 function BaseOptimizedImage({
   src,
@@ -57,6 +57,13 @@ function BaseOptimizedImage({
     observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, [eager, loading, skipObserver]);
+
+  // Reset load start time when image enters viewport to prevent massive false-positive performance loading warnings
+  useEffect(() => {
+    if (isInView) {
+      loadStartTime.current = Date.now();
+    }
+  }, [isInView]);
 
   // Handle actual src changes (reference check bypassed, actual value check)
   useEffect(() => {

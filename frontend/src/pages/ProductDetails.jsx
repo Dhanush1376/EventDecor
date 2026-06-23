@@ -12,8 +12,8 @@ import { useProduct } from '../hooks/useProductQueries';
 import { useAuth } from '../context/AuthContext';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 import { useQueryClient } from '@tanstack/react-query';
-import recommendationService from '../services/recommendationService';
-import logger from '../utils/logger';
+import recommendationService from '../services/api/recommendationService';
+import logger from '../utils/core/logger';
 
 const RecommendationSystem = React.lazy(() =>
   import('../components/sections/RecommendationSystem').then((m) => ({
@@ -62,7 +62,7 @@ export function ProductDetails() {
         })
         .catch(() => {});
     }
-  }, [product, queryClient]);
+  }, [product, queryClient, id]);
 
   useEffect(() => {
     if (product && user) {
@@ -70,7 +70,7 @@ export function ProductDetails() {
         logger.error('Failed to track recently viewed masterpiece:', err);
       });
     }
-  }, [product, user]);
+  }, [product, user, id]);
 
   useEffect(() => {
     // Immediate scroll to top on mount and ID change

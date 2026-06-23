@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import recommendationService from '../services/recommendationService';
+import recommendationService from '../services/api/recommendationService';
 
 export function useTrendingRecommendations(params, options = {}) {
   const {

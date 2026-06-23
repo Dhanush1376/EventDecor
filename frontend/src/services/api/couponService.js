@@ -1,5 +1,5 @@
 import api from '../api';
-import { hasSessionMarker } from '../../utils/authStorage';
+import { hasSessionMarker } from '../../utils/auth/authStorage';
 
 const checkAuthLocal = () => hasSessionMarker();
 
@@ -7,6 +7,10 @@ export const couponService = {
   getAll: async () => {
     if (!checkAuthLocal()) return Promise.reject(new Error('Not authenticated'));
     const response = await api.get('/coupons');
+    return response.data;
+  },
+  getProductCoupons: async (productId) => {
+    const response = await api.get(`/coupons/product/${productId}`);
     return response.data;
   },
   validate: async (code) => {

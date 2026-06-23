@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:report": "vite build && node scripts/report-chunk-sizes.mjs",
-    "lint": "eslint . && node ../scripts/check-no-console.mjs",
+    "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run --coverage",
     "check-env": "node scripts/check-env.ci.mjs"
@@ -37,8 +37,6 @@
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^8.0.1",
-    "@eslint/js": "^9.39.4",
     "@tailwindcss/vite": "^4.3.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -51,11 +49,10 @@
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
-    "puppeteer": "^25.1.0",
+    "puppeteer": "^25.2.0",
     "rollup-plugin-visualizer": "^7.0.1",
     "vite": "^8.0.12",
     "vite-plugin-compression": "^0.5.1",

@@ -1,4 +1,4 @@
-import { redisClient } from '../../utils/redis';
+import { redisClient } from '../../utils/cache/redis';
 
 /**
  * Enterprise Chaos & Resilience Test Suite

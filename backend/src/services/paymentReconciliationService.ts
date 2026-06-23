@@ -90,7 +90,7 @@ export class PaymentReconciliationService {
       let rzpStatus = 'unknown';
       let rzpAmount = 0;
       try {
-        const { RazorpayGateway } = require('../utils/RazorpayGateway');
+        const { RazorpayGateway } = require('../utils/payment/RazorpayGateway');
         if (o.razorpayPaymentId) {
           const payment = await RazorpayGateway.getPayment(o.razorpayPaymentId);
           rzpStatus = payment.status;
@@ -311,7 +311,7 @@ export class PaymentReconciliationService {
 
     if (orphanedOrders.length === 0) return 0;
 
-    const { RazorpayGateway } = require('../utils/RazorpayGateway');
+    const { RazorpayGateway } = require('../utils/payment/RazorpayGateway');
     let recoveredCount = 0;
 
     for (const order of orphanedOrders) {
@@ -364,7 +364,7 @@ export class PaymentReconciliationService {
 
     const { OrderFulfillmentService } = require('./orders/OrderFulfillmentService');
     const { UnifiedWebhookRouter } = require('./payments/UnifiedWebhookRouter');
-    const { RazorpayGateway } = require('../utils/RazorpayGateway');
+    const { RazorpayGateway } = require('../utils/payment/RazorpayGateway');
 
     let cancelledCount = 0;
 

@@ -2,9 +2,7 @@ import { sendDirectEmail } from './notificationService';
 import logger from '../config/logger';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@siriartsandcrafts.com';
-const getFrontendUrl = () => {
-  return process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
-};
+import { getFrontendUrl } from '../utils/getFrontendUrl';
 
 // HTML escape utility to prevent XSS in email templates
 const escapeHtml = (unsafe: string) => {

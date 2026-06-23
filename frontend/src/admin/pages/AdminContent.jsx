@@ -1,26 +1,12 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { ImageUpload } from '../components/ImageUpload';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect, useRef } from 'react';
 import { useAdmin } from '../context/AdminContext';
 
-import toast from 'react-hot-toast';
 import { useDraft } from '../hooks/useDraft';
-import { cmsService } from '../../services/domainServices';
-import logger from '../../utils/logger';
-import { DEFAULT_SPECIALIZATIONS, PLACEHOLDER_IMAGES } from '../../constants/placeholderImages';
-import {
-  SkeletonDashboard,
-  AdminToggle,
-  SectionHeader,
-  AdminField,
-  AdminInput,
-  AdminTextarea,
-  PublishBar,
-} from '../components/AdminUIKit';
-import { AISparkButton } from '../components/cms/AISparkButton';
+import { SkeletonDashboard, PublishBar } from '../components/AdminUIKit';
 import { HomePageControllerEditor } from '../components/cms/HomePageControllerEditor';
 import { GalleryPortfolioEditor } from '../components/cms/GalleryPortfolioEditor';
 import { AboutPageDetailsEditor } from '../components/cms/AboutPageDetailsEditor';

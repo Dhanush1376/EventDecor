@@ -1,8 +1,16 @@
 import api from '../api';
 import axios from 'axios';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 import imageCompression from 'browser-image-compression';
 import { getApiRootUrl } from '../../config/apiConfig';
+import { EXTERNAL_URLS } from '../../config/constants';
+
+const DEFAULT_COMPRESSION_OPTIONS = {
+  maxSizeMB: 1, // maximum size in MB
+  maxWidthOrHeight: 1920, // max resolution
+  useWebWorker: true, // Use multi-threading
+  initialQuality: 0.8, // default quality
+};
 
 export const uploadWithRetry = async (uploadFn, formData, retries = 3, delayMs = 1500) => {
   let lastError;
@@ -47,13 +55,7 @@ export const uploadDirectToCloudinary = async (
         !value.type.includes('gif')
       ) {
         try {
-          const options = {
-            maxSizeMB: 1, // maximum size in MB
-            maxWidthOrHeight: 1920, // max resolution
-            useWebWorker: true, // Use multi-threading
-            initialQuality: 0.8, // default quality
-          };
-          const compressedFile = await imageCompression(value, options);
+          const compressedFile = await imageCompression(value, DEFAULT_COMPRESSION_OPTIONS);
           logger.debug(
             `[UPLOAD] Compressed ${value.name}: ${(value.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
           );
@@ -80,9 +82,8 @@ export const uploadDirectToCloudinary = async (
           const origin = apiRoot.startsWith('/') ? window.location.origin : '';
           const proxyUrl = `${origin}${apiRoot}/v1/media/optimize?url=${encodeURIComponent(u)}&q=100`;
 
-          const response = await fetch(proxyUrl);
-          if (!response.ok) throw new Error(`Proxy fetch failed: HTTP ${response.status}`);
-          const blob = await response.blob();
+          const response = await axios.get(proxyUrl, { responseType: 'blob' });
+          const blob = response.data;
 
           let fileName = u.split('/').pop()?.split('?')[0] || 'remote_image.jpg';
           if (!fileName.includes('.')) fileName += '.jpg';
@@ -94,13 +95,7 @@ export const uploadDirectToCloudinary = async (
             !fileObj.type.includes('svg') &&
             !fileObj.type.includes('gif')
           ) {
-            const options = {
-              maxSizeMB: 1,
-              maxWidthOrHeight: 1920,
-              useWebWorker: true,
-              initialQuality: 0.8,
-            };
-            const compressedFile = await imageCompression(fileObj, options);
+            const compressedFile = await imageCompression(fileObj, DEFAULT_COMPRESSION_OPTIONS);
             logger.debug(
               `[UPLOAD] Compressed Remote URL ${u}: ${(fileObj.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
             );
@@ -134,7 +129,7 @@ export const uploadDirectToCloudinary = async (
     cloudinaryData.append('folder', folder);
 
     const res = await axios.post(
-      uploadUrl || `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      uploadUrl || `${EXTERNAL_URLS.CLOUDINARY_UPLOAD_BASE}/${cloudName}/image/upload`,
       cloudinaryData,
       {
         onUploadProgress: (progressEvent) => {

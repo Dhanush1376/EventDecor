@@ -2,13 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
-import { LocationSelectorModal } from '../components/ui/LocationSelectorModal';
 import { EventDetailSkeleton } from '../components/ui/Skeleton';
 import { useWishlist } from '../context/WishlistContext';
 import { useAuth } from '../context/AuthContext';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 import { eventService, showcaseService } from '../services/domainServices';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 // Extracted Components
 import { useEventBookingForm } from './eventDetail/useEventBookingForm';
@@ -159,7 +158,7 @@ export function EventDetail() {
 
       <section className="pt-24 pb-8 md:pt-32 md:pb-12 bg-surface">
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop space-y-6 md:space-y-8">
-          <nav className="flex items-center gap-2 font-label text-[10px] uppercase tracking-widest text-black/40 font-bold overflow-x-auto whitespace-nowrap no-scrollbar">
+          <nav className="hidden md:flex items-center gap-2 font-label text-[10px] uppercase tracking-widest text-black/40 font-bold overflow-x-auto whitespace-nowrap no-scrollbar">
             <Link to="/" className="hover:text-primary transition-colors">
               Home
             </Link>
@@ -178,7 +177,7 @@ export function EventDetail() {
                 <span className="font-label-sm text-primary text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold block">
                   {event.category}
                 </span>
-                <h1 className="font-display text-[40px] md:text-[56px] lg:text-[64px] text-black leading-[1.05] font-normal">
+                <h1 className="font-display text-[32px] md:text-[48px] lg:text-[56px] text-black leading-[1.05] font-normal">
                   {event.title}
                 </h1>
                 <p className="font-body text-[15px] md:text-[16px] text-stone-600 leading-relaxed font-light max-w-2xl">
@@ -197,6 +196,43 @@ export function EventDetail() {
           </div>
         </div>
       </section>
+
+      {/* Event Showcases */}
+      {_relatedEvents && _relatedEvents.length > 0 && (
+        <section className="bg-surface py-8 md:py-12 border-t border-outline-variant/30">
+          <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
+            <h2 className="font-display text-xl md:text-2xl text-black mb-6 md:mb-8 text-left md:text-left">
+              Explore More Showcases
+            </h2>
+            <div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x snap-mandatory">
+              {_relatedEvents.map((showcase) => (
+                <div
+                  key={showcase._id || showcase.id}
+                  className="w-[200px] md:w-[280px] shrink-0 snap-start"
+                >
+                  <Link to={`/events/${showcase._id || showcase.id}`} className="block group">
+                    <div className="aspect-[4/5] md:aspect-[4/3] rounded-2xl overflow-hidden bg-surface-container mb-3 md:mb-4">
+                      <img
+                        src={showcase.image || showcase.images?.[0]}
+                        alt={showcase.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-label-sm text-primary text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-bold mb-1">
+                        {showcase.category || 'Showcase'}
+                      </span>
+                      <h3 className="font-display text-lg text-black group-hover:text-primary transition-colors line-clamp-1">
+                        {showcase.title}
+                      </h3>
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Smart Recommendations */}
       <React.Suspense
@@ -238,15 +274,6 @@ export function EventDetail() {
       </AnimatePresence>
 
       <EventCustomizerDrawer event={event} bookingForm={bookingForm} />
-
-      <LocationSelectorModal
-        isOpen={bookingState.isLocationModalOpen}
-        onClose={() => bookingActions.setIsLocationModalOpen(false)}
-        onSelect={(loc) => {
-          bookingActions.setVenueDetails(loc);
-          bookingActions.setIsLocationModalOpen(false);
-        }}
-      />
     </motion.div>
   );
 }

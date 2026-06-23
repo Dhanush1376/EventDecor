@@ -8,14 +8,14 @@ import AdminAuditLog from '../models/AdminAuditLog';
 import logger from '../config/logger';
 import { updateRequestContext } from './requestTracker';
 import { STAFF_ROLES } from '../config/adminConfig';
-import { getSafetyLockDocument } from '../utils/safetyLockCache';
+import { getSafetyLockDocument } from '../utils/cache/safetyLockCache';
 import {
   getCachedSessionJson,
   setCachedSessionJson,
   sessionKeys,
   coalesceRequest,
-} from '../utils/userSessionCache';
-import { isTokenBlacklisted } from '../utils/jwtBlacklist';
+} from '../utils/cache/userSessionCache';
+import { isTokenBlacklisted } from '../utils/security/jwtBlacklist';
 
 interface JwtPayload {
   id: string;
@@ -23,6 +23,7 @@ interface JwtPayload {
   email?: string;
   name?: string;
   iat?: number;
+  loyaltyTier?: string;
 }
 
 // Extend Express Request interface to include user
@@ -158,7 +159,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
       user = await coalesceRequest(`mongo:profile:${decoded.id}`, async () => {
         // Promise.race to enforce a strict timeout (10 seconds) if MongoDB is hanging
         const mongoQuery = User.findById(decoded.id)
-          .select('role email name isVerified passwordChangedAt isLocked')
+          .select('role email name isVerified passwordChangedAt isLocked loyaltyTier')
           .lean()
           .exec();
         const timeout = new Promise((_, reject) =>
@@ -205,6 +206,7 @@ export const requireAuth = asyncHandler(async (req: Request, res: Response, next
     decoded.role = user.role;
     decoded.email = user.email;
     decoded.name = user.name;
+    decoded.loyaltyTier = user.loyaltyTier;
     req.user = decoded;
 
     // Seed authenticated user ID to request correlation context
@@ -258,7 +260,7 @@ export const optionalAuth = asyncHandler(
         // Coalesce concurrent requests for the same user profile (Cache Stampede mitigation)
         user = await coalesceRequest(`mongo:profile:${decoded.id}`, async () => {
           const mongoQuery = User.findById(decoded.id)
-            .select('role email name isVerified passwordChangedAt isLocked')
+            .select('role email name isVerified passwordChangedAt isLocked loyaltyTier')
             .lean()
             .exec();
           const timeout = new Promise((_, reject) =>
@@ -290,6 +292,7 @@ export const optionalAuth = asyncHandler(
           decoded.role = user.role;
           decoded.email = user.email;
           decoded.name = user.name;
+          decoded.loyaltyTier = user.loyaltyTier;
           req.user = decoded;
           updateRequestContext({ userId: decoded.id });
         }

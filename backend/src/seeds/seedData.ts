@@ -390,8 +390,7 @@ const initialWebsiteContent = {
       subtitle: 'Curated Artisanship',
       description:
         'Discover masterfully crafted decor pieces that honor ancient traditions with contemporary luxury sensibilities.',
-      backgroundImage:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuC6Cy1TlK9jjSUwKlKlXEL_AKlV3Ff5c2VdyViS7GGN3dgR1UB3SgmAto5fKc__pxujkfieY8wFl8MLAhbv7fZHW-oIWdXX0Xqg7SaMj5Szj9w6aGsuChZguzRLBppvcE_7OyVd9N7Ldchm0izPUhXOQGyYaQUsd43cUxBLr5ift2YUa0I_rr4_34hldd6L-V9MeNbxa-BUn2gvZq7JQypKg2Wl6-8TPta6D_ZooOmuUfcwSJJUjNe8-voUHsu7mBKM_CeD9YFd204',
+      backgroundImage: IMAGES.luxuryRoyalWedding,
       mobileBackgroundImage: '',
       mobileTitle: '',
       mobileSubtitle: '',
@@ -401,8 +400,7 @@ const initialWebsiteContent = {
       highlightText: 'Up to 40% Off',
       description:
         'Bring home heritage-inspired elegance with our exclusive handcrafted seasonal curation. Limited stock available for high-fidelity pieces.',
-      backgroundImage:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w',
+      backgroundImage: IMAGES.galleryBackdrop,
       badgeText: 'Limited Time Offer',
       statusText: 'Ends Soon',
       ctaText: 'Claim Offer',
@@ -415,15 +413,13 @@ const initialWebsiteContent = {
       subtitle: 'Cinematic Environments',
       description:
         'Immersive architectural curations designed to transform your milestone celebrations into living masterpieces.',
-      backgroundImage:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g',
+      backgroundImage: IMAGES.modernReceptionLounge,
       mobileBackgroundImage: '',
       mobileTitle: '',
       mobileSubtitle: '',
     },
     promo: {
-      backgroundImage:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w',
+      backgroundImage: IMAGES.galleryBackdrop,
     },
     status: 'published',
   },

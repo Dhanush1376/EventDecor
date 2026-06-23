@@ -1,7 +1,7 @@
 import User from '../models/User';
 import ApiError from '../utils/ApiError';
-import { decryptField } from '../utils/fieldEncryption';
-import { generateTotpSecret, buildOtpAuthUrl, verifyTotpToken } from '../utils/totp';
+import { decryptField } from '../utils/security/fieldEncryption';
+import { generateTotpSecret, buildOtpAuthUrl, verifyTotpToken } from '../utils/security/totp';
 
 export class TwoFactorService {
   static async getStatus(userId: string) {

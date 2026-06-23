@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { SectionHeader } from '../AdminUIKit';
 import toast from 'react-hot-toast';
 

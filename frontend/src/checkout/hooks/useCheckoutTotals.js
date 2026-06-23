@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { persistentStorage } from '../../utils/persistentStorage';
+import { persistentStorage } from '../../utils/storage/persistentStorage';
 import { orderService, couponService } from '../../services/domainServices';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
 export function useCheckoutTotals({
   isAuthenticated,
@@ -73,7 +73,21 @@ export function useCheckoutTotals({
               const isExpired = new Date() > new Date(c.expiryDate);
               return c.isActive && !isExpired && (!c.usageLimit || c.usedCount < c.usageLimit);
             });
-            setAvailableCoupons(activeList);
+
+            // Deduplicate dynamically generated coupons (like WELCOME-XXXX)
+            const uniqueCoupons = [];
+            const seenPrefixes = new Set();
+            for (const c of activeList) {
+              const prefixMatch = c.code.match(/^([A-Z]+)-[A-Z0-9]+$/);
+              const prefix = prefixMatch ? prefixMatch[1] : c.code;
+
+              if (!seenPrefixes.has(prefix)) {
+                seenPrefixes.add(prefix);
+                uniqueCoupons.push(c);
+              }
+            }
+
+            setAvailableCoupons(uniqueCoupons);
           }
         })
         .catch((err) => {
@@ -102,57 +116,60 @@ export function useCheckoutTotals({
     }
   }, [isAuthenticated, claimedCoupon, location, appliedCoupon, setClaimedCoupon]);
 
-  const fetchBackendTotals = async (couponToApply = '') => {
-    if (!activeItems || activeItems.length === 0) return;
-    const requestId = totalsRequestRef.current + 1;
-    totalsRequestRef.current = requestId;
+  const fetchBackendTotals = useCallback(
+    async (couponToApply = '') => {
+      if (!activeItems || activeItems.length === 0) return;
+      const requestId = totalsRequestRef.current + 1;
+      totalsRequestRef.current = requestId;
 
-    setIsTotalsLoading(true);
-    setTotalsError(null);
-    try {
-      const itemsPayload = activeItems.map((item) => ({
-        productId: item.id || item._id,
-        quantity: item.quantity,
-      }));
+      setIsTotalsLoading(true);
+      setTotalsError(null);
+      try {
+        const itemsPayload = activeItems.map((item) => ({
+          productId: item.id || item._id,
+          quantity: item.quantity,
+        }));
 
-      const res = await orderService.validateTotals({
-        items: itemsPayload,
-        couponCode: couponToApply || undefined,
-        paymentMethod: paymentOption,
-        useWallet,
-      });
+        const res = await orderService.validateTotals({
+          items: itemsPayload,
+          couponCode: couponToApply || undefined,
+          paymentMethod: paymentOption,
+          useWallet,
+        });
 
-      if (res.success && res.data) {
-        if (requestId !== totalsRequestRef.current) return;
-        setBackendTotals(res.data);
-        setTotalsError(null);
-        if (couponToApply) {
-          setCouponValid(res.data.couponValid);
-          setCouponMessage(res.data.couponMessage);
-          if (res.data.couponValid) {
-            setAppliedCoupon(couponToApply);
-          } else {
-            setAppliedCoupon('');
+        if (res.success && res.data) {
+          if (requestId !== totalsRequestRef.current) return;
+          setBackendTotals(res.data);
+          setTotalsError(null);
+          if (couponToApply) {
+            setCouponValid(res.data.couponValid);
+            setCouponMessage(res.data.couponMessage);
+            if (res.data.couponValid) {
+              setAppliedCoupon(couponToApply);
+            } else {
+              setAppliedCoupon('');
+            }
           }
         }
+      } catch (err) {
+        logger.error('Failed to validate checkout totals:', err);
+        const errMsg =
+          err.response?.data?.message ||
+          'Failed to connect to backend server. Please verify your connection.';
+        setTotalsError(errMsg);
+        toast.error(errMsg);
+      } finally {
+        if (requestId === totalsRequestRef.current) {
+          setIsTotalsLoading(false);
+        }
       }
-    } catch (err) {
-      logger.error('Failed to validate checkout totals:', err);
-      const errMsg =
-        err.response?.data?.message ||
-        'Failed to connect to backend server. Please verify your connection.';
-      setTotalsError(errMsg);
-      toast.error(errMsg);
-    } finally {
-      if (requestId === totalsRequestRef.current) {
-        setIsTotalsLoading(false);
-      }
-    }
-  };
+    },
+    [activeItems, paymentOption, useWallet],
+  );
 
   useEffect(() => {
     fetchBackendTotals(appliedCoupon);
-  }, [activeItems, appliedCoupon, paymentOption, useWallet]);
+  }, [appliedCoupon, fetchBackendTotals]);
 
   const handleApplyCoupon = () => {
     if (!couponInput.trim()) {

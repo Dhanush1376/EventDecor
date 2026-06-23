@@ -1,7 +1,7 @@
 import { AdminField } from './AdminUIKit';
 import { useState, useEffect } from 'react';
 import { productService } from '../../services/api/productService';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
 export function CategorySelector({ selectedCategories = [], onChange, maxItems = null }) {
   const [categories, setCategories] = useState([]);

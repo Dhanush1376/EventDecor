@@ -7,7 +7,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { productService } from '../services/domainServices';
 import toast from 'react-hot-toast';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 // Helper utilities matching ProductCard.jsx
 const parseNumericPrice = (val) => {

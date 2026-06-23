@@ -5,7 +5,9 @@ import React, { useState } from 'react';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useCartDispatch } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { prefetchManager } from '../../utils/prefetchManager';
+import { prefetchManager } from '../../utils/performance/prefetchManager';
+import { parseNumericPrice, formatPrice } from '../../utils/ecommerce/priceUtils';
+import { getProductRoute } from '../../utils/ecommerce/productRouteUtils';
 
 export const ProductCard = React.memo(function ProductCard({
   id,
@@ -47,6 +49,7 @@ export const ProductCard = React.memo(function ProductCard({
   const { attemptAddToCart } = useCartDispatch();
   const { runProtectedAction } = useAuth();
   const [added, setAdded] = useState(false);
+  const [isRippling, setIsRippling] = useState(false);
 
   if (loading) {
     return (
@@ -69,27 +72,6 @@ export const ProductCard = React.memo(function ProductCard({
 
   const productId = id || _id;
   const wishlisted = isWishlisted(productId);
-
-  const parseNumericPrice = (val) => {
-    if (typeof val === 'number') return val;
-    if (!val) return 0;
-    const clean = String(val)
-      .replace(/[₹\s,]/g, '')
-      .replace(/[Rr][Ss].?/g, '');
-    const num = parseFloat(clean);
-    return isNaN(num) ? 0 : num;
-  };
-
-  const formatPrice = (val) => {
-    if (val === undefined || val === null) return '0';
-    if (typeof val === 'number') {
-      return val.toLocaleString('en-IN');
-    }
-    const str = String(val).trim();
-    const cleanStr = str.replace(/[₹\s,]/g, '').replace(/[Rr][Ss].?/g, '');
-    const num = parseFloat(cleanStr);
-    return isNaN(num) ? str : num.toLocaleString('en-IN');
-  };
 
   const numericPrice = parseNumericPrice(price);
   const parsedOldPrice = oldPrice ? parseNumericPrice(oldPrice) : 0;
@@ -120,12 +102,14 @@ export const ProductCard = React.memo(function ProductCard({
   const handleCardClick = (e) => {
     // If the user clicked a button or any interactive element inside a button, don't trigger the card link
     if (e.target.closest('button')) return;
-    navigate(itemType === 'event' ? `/events/${productId}` : `/product/${productId}`);
+    navigate(getProductRoute(itemType, productId));
   };
 
   const handleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsRippling(true);
+    setTimeout(() => setIsRippling(false), 500);
     runProtectedAction(() => {
       toggleItem({
         id: productId,
@@ -159,14 +143,14 @@ export const ProductCard = React.memo(function ProductCard({
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      navigate(itemType === 'event' ? `/events/${productId}` : `/product/${productId}`);
+      navigate(getProductRoute(itemType, productId));
     }
   };
 
   return (
     <motion.div
       onMouseEnter={() => {
-        const route = itemType === 'event' ? `/events/${productId}` : `/product/${productId}`;
+        const route = getProductRoute(itemType, productId);
         prefetchManager.prefetchRoute(route, { kind: 'hover', productId });
       }}
       onClick={handleCardClick}
@@ -178,10 +162,7 @@ export const ProductCard = React.memo(function ProductCard({
     >
       {/* 1. VISUAL CANVAS */}
       <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl border border-black/5">
-        <Link
-          to={itemType === 'event' ? `/events/${productId}` : `/product/${productId}`}
-          className="block h-full"
-        >
+        <Link to={getProductRoute(itemType, productId)} className="block h-full">
           <CloudinaryImage
             src={imageSrc}
             alt={title}
@@ -197,9 +178,19 @@ export const ProductCard = React.memo(function ProductCard({
         <div className="absolute top-2 right-3 md:top-3 md:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]`}
+            className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} relative min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96] overflow-hidden`}
             aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
+            <AnimatePresence>
+              {isRippling && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0.5 }}
+                  animate={{ scale: 2.5, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                  className={`absolute inset-0 rounded-full origin-center pointer-events-none ${wishlisted ? 'bg-black/10' : 'bg-[#ff2d55]/20'}`}
+                />
+              )}
+            </AnimatePresence>
             <motion.span
               animate={{
                 scale: wishlisted ? [1, 1.4, 1] : 1,
@@ -208,7 +199,7 @@ export const ProductCard = React.memo(function ProductCard({
               }}
               whileTap={{ scale: 0.8 }}
               transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-              className={`material-symbols-outlined ${compact ? 'text-[10px] md:text-[12px]' : 'text-[12px] md:text-[14px]'}`}
+              className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
             >
               favorite
             </motion.span>
@@ -320,7 +311,7 @@ export const ProductCard = React.memo(function ProductCard({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    navigate(`/events/${productId}`);
+                    navigate(getProductRoute('event', productId));
                   }}
                   className="w-full py-3 bg-[#e0d6b8] hover:bg-white text-[#1a1c1a] rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
@@ -352,7 +343,7 @@ export const ProductCard = React.memo(function ProductCard({
                     } else {
                       e.preventDefault();
                       e.stopPropagation();
-                      navigate(`/events/${productId}`);
+                      navigate(getProductRoute('event', productId));
                     }
                   }}
                   className="w-full bg-white/10 backdrop-blur-md text-white py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
@@ -439,13 +430,13 @@ export const ProductCard = React.memo(function ProductCard({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                navigate(`/events/${productId}`);
+                navigate(getProductRoute('event', productId));
               }}
-              className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
+              className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
               aria-label="Book setup"
             >
               <span
-                className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
+                className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
               >
                 event
               </span>
@@ -454,7 +445,7 @@ export const ProductCard = React.memo(function ProductCard({
             <button
               onClick={isOutOfStock ? undefined : handleAddToCart}
               disabled={isOutOfStock}
-              className={`${compact ? 'w-8 h-8 md:w-9 md:h-9' : 'w-9 h-9 md:w-10 md:h-10'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
+              className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
                 isOutOfStock
                   ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
                   : added
@@ -471,7 +462,7 @@ export const ProductCard = React.memo(function ProductCard({
                     animate={{ opacity: 1, scale: 1, rotate: 0 }}
                     exit={{ opacity: 0, scale: 0.5, rotate: 30 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                    className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
+                    className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
                   >
                     check
                   </motion.span>
@@ -482,7 +473,7 @@ export const ProductCard = React.memo(function ProductCard({
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.5 }}
                     transition={{ duration: 0.2 }}
-                    className={`material-symbols-outlined ${compact ? 'text-[13px]' : 'text-[16px]'}`}
+                    className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
                   >
                     {isOutOfStock ? 'remove_shopping_cart' : 'add'}
                   </motion.span>
@@ -520,7 +511,7 @@ export const ProductCard = React.memo(function ProductCard({
         </div>
 
         <Link
-          to={itemType === 'event' ? `/events/${productId}` : `/product/${productId}`}
+          to={getProductRoute(itemType, productId)}
           className={`group/link block ${compact ? 'mb-0.5' : 'mb-1 md:mb-1.5'}`}
         >
           <h3

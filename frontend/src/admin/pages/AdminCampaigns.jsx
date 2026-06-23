@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import { getErrorMessage } from '../../utils/errorHelpers';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 export function AdminCampaigns() {

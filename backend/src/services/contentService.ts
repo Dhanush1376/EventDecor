@@ -1,9 +1,9 @@
 import ContentSection from '../models/ContentSection';
 import { PLACEHOLDER_IMAGES } from '../constants/placeholderImages';
 import ApiError from '../utils/ApiError';
-import { cmsCache } from '../utils/MemoryCache';
-import { bumpPublicCacheVersion } from '../utils/cacheVersion';
-import { invalidateSafetyLockCache } from '../utils/safetyLockCache';
+import { cmsCache } from '../utils/cache/MemoryCache';
+import { bumpPublicCacheVersion } from '../utils/cache/cacheVersion';
+import { invalidateSafetyLockCache } from '../utils/cache/safetyLockCache';
 
 const SENSITIVE_STUDIO_SETTINGS_KEYS = ['razorpaySecret', 'razorpayKeySecret'] as const;
 const ADMIN_ONLY_SECTION_KEYS = new Set(['studio_settings']);

@@ -1,6 +1,6 @@
-import React from"react";
+import React from 'react';
 
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 /**
  * Error Boundary for Admin Portal sections.
  * Catches JavaScript errors in child component tree and shows
@@ -18,7 +18,7 @@ export class AdminErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     this.setState({ errorInfo });
-    logger.error("[Admin Error Boundary]", error, errorInfo);
+    logger.error('[Admin Error Boundary]', error, errorInfo);
   }
 
   handleReset = () => {
@@ -30,16 +30,14 @@ export class AdminErrorBoundary extends React.Component {
       return (
         <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
           <div className="w-14 h-14 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center mb-4">
-            <span className="material-symbols-outlined text-[24px] text-rose-500">
-              warning
-            </span>
+            <span className="material-symbols-outlined text-[24px] text-rose-500">warning</span>
           </div>
           <h2 className="text-[16px] font-bold text-slate-800 tracking-tight mb-2">
             Something went wrong
           </h2>
           <p className="text-[12px] text-slate-505 max-w-md mb-6 leading-relaxed">
-            This section encountered an unexpected error. Your data is safe — 
-            try refreshing the section or contact support if the issue persists.
+            This section encountered an unexpected error. Your data is safe — try refreshing the
+            section or contact support if the issue persists.
           </p>
           {this.state.error && (
             <details className="text-left bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 max-w-lg w-full">

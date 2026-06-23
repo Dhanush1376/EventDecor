@@ -3,13 +3,11 @@ import { Link } from 'react-router-dom';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import React, { useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
-import { prefetchManager } from '../../utils/prefetchManager';
-
-const _EMPTY_CART_ILLU =
-  'https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129342/event_decor_ecommerce/assets/event_decor_empty_cart_illustration.jpg';
+import { prefetchManager } from '../../utils/performance/prefetchManager';
 
 export function CartDrawer({ isOpen, onClose }) {
-  const { items, removeItem, updateQuantity, subtotal, cartCount, loading } = useCart();
+  const { items, removeItem, updateQuantity, subtotal, cartCount, loading, appliedCoupon } =
+    useCart();
   const [confirmingRemove, setConfirmingRemove] = React.useState(null); // { id, variant }
 
   const drawerRef = React.useRef(null);
@@ -433,14 +431,34 @@ export function CartDrawer({ isOpen, onClose }) {
             {/* Footer with Totals */}
             {items.length > 0 && (
               <div
-                className="p-6 border-t border-outline-variant/10 space-y-4 bg-white"
+                className="p-6 border-t border-outline-variant/10 space-y-3 bg-white"
                 style={{
                   paddingBottom: `calc(16px + env(safe-area-inset-bottom, 0px))`,
                 }}
               >
+                <div className="flex justify-between items-center text-[14px]">
+                  <span className="font-body text-secondary">Subtotal</span>
+                  <span className="font-medium">₹{subtotal.toLocaleString()}</span>
+                </div>
+                {appliedCoupon && appliedCoupon.calculatedDiscount > 0 && (
+                  <div className="flex justify-between items-center text-[14px] text-green-700 font-medium">
+                    <span className="flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px] text-green-700">
+                        local_activity
+                      </span>
+                      Discount ({appliedCoupon.code})
+                    </span>
+                    <span>− ₹{appliedCoupon.calculatedDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="h-[1px] bg-outline-variant/10 my-2" />
                 <div className="flex justify-between items-center">
-                  <span className="font-body text-[14px] text-secondary">Subtotal</span>
-                  <span className="font-display text-[20px]">₹{subtotal.toLocaleString()}</span>
+                  <span className="font-body text-[14px] font-bold text-on-surface">
+                    Estimated Total
+                  </span>
+                  <span className="font-display text-[20px] font-bold text-on-surface">
+                    ₹{(subtotal - (appliedCoupon?.calculatedDiscount || 0)).toLocaleString()}
+                  </span>
                 </div>
                 <p className="font-body text-[12px] text-secondary/60 font-light">
                   Shipping calculated at checkout

@@ -1,7 +1,4 @@
 import api from '../api';
-import { hasSessionMarker } from '../../utils/authStorage';
-
-const _checkAuthLocal = () => hasSessionMarker();
 
 export const inquiryService = {
   create: async (data) => {

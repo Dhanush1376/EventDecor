@@ -5,7 +5,7 @@ import { SEO } from '../components/seo/SEO';
 import { Skeleton } from '../components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { policyService } from '../services/domainServices';
-import { createSafeHtml } from '../utils/sanitize';
+import { createSafeHtml } from '../utils/security/sanitize';
 
 export function Returns() {
   const {

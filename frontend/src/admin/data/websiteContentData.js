@@ -2,23 +2,17 @@
 // Every field here maps directly to a visible frontend element.
 // The admin can edit these values and see exactly where they appear on the live site.
 
+import { PLACEHOLDER_IMAGES } from '../../constants/placeholderImages';
+
 const IMAGES = {
-  luxuryRoyalWedding:
-    'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop',
-  templeStyleMandap:
-    'https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=1974&auto=format&fit=crop',
-  galleryBackdrop:
-    'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=2069&auto=format&fit=crop',
-  galleryHampers:
-    'https://images.unsplash.com/photo-1607344645866-009c320b63e0?q=80&w=2080&auto=format&fit=crop',
-  modernReceptionLounge:
-    'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2070&auto=format&fit=crop',
-  haldiVibrantSetup:
-    'https://images.unsplash.com/photo-1582293041079-7814c2f12063?q=80&w=1974&auto=format&fit=crop',
-  galleryMetalPots:
-    'https://images.unsplash.com/photo-1604085572504-a392ddf0d86a?q=80&w=2000&auto=format&fit=crop',
-  galleryPlatePacking:
-    'https://images.unsplash.com/photo-1616166160538-4e142e057351?q=80&w=2000&auto=format&fit=crop',
+  luxuryRoyalWedding: PLACEHOLDER_IMAGES.heroBackground,
+  templeStyleMandap: PLACEHOLDER_IMAGES.collectionWedding,
+  galleryBackdrop: PLACEHOLDER_IMAGES.mandalaHero,
+  galleryHampers: PLACEHOLDER_IMAGES.mandalaArt2,
+  modernReceptionLounge: PLACEHOLDER_IMAGES.mandalaArt3,
+  haldiVibrantSetup: PLACEHOLDER_IMAGES.mandalaArt4,
+  galleryMetalPots: PLACEHOLDER_IMAGES.collectionWedding,
+  galleryPlatePacking: PLACEHOLDER_IMAGES.mandalaHero,
 };
 
 export const initialWebsiteContent = {
@@ -93,16 +87,14 @@ export const initialWebsiteContent = {
       subtitle: 'Curated Artisanship',
       description:
         'Discover masterfully crafted decor pieces that honor ancient traditions with contemporary luxury sensibilities.',
-      backgroundImage:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuC6Cy1TlK9jjSUwKlKlXEL_AKlV3Ff5c2VdyViS7GGN3dgR1UB3SgmAto5fKc__pxujkfieY8wFl8MLAhbv7fZHW-oIWdXX0Xqg7SaMj5Szj9w6aGsuChZguzRLBppvcE_7OyVd9N7Ldchm0izPUhXOQGyYaQUsd43cUxBLr5ift2YUa0I_rr4_34hldd6L-V9MeNbxa-BUn2gvZq7JQypKg2Wl6-8TPta6D_ZooOmuUfcwSJJUjNe8-voUHsu7mBKM_CeD9YFd204',
+      backgroundImage: PLACEHOLDER_IMAGES.heroBackground,
     },
     promo: {
       title: '',
       highlightText: 'Up to 40% Off',
       description:
         'Bring home heritage-inspired elegance with our exclusive handcrafted seasonal curation. Limited stock available for high-fidelity pieces.',
-      backgroundImage:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w',
+      backgroundImage: PLACEHOLDER_IMAGES.heroBackground,
       badgeText: 'Limited Time Offer',
       statusText: 'Ends Soon',
       ctaText: 'Claim Offer',
@@ -121,15 +113,13 @@ export const initialWebsiteContent = {
       subtitle: 'Cinematic Environments',
       description:
         'Immersive architectural curations designed to transform your milestone celebrations into living masterpieces.',
-      backgroundImage:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuA7F3ck_1VBGtclja4rFpblASLZWmGyrrSeXc-D7PYlO1RJFSwwrZdHFE80h72hY1_kcwRRwjHuqfhG4Zlouur0m6jrXSLrhifw9vDKzna2lQ-ju5fdSEXiP7YRFTwnqlKsqohXveyKFObF5Wlx3w4eHE_H8k0Y1_l5DTr3WtpRbeEK40rGPLPe9CzEazxPBk_dKXe0G4hYrk0NZhhWEsdpFvGFb0pGyqjB5La45C5zfJ87FPCec_D1_Au1Z-IJca6gythEhj_rF4g',
+      backgroundImage: PLACEHOLDER_IMAGES.heroBackground,
     },
     promo: {
       title: '',
       highlightText: 'Up to 25% Off',
       description: 'Book your event early and secure premium availability with special discounts.',
-      backgroundImage:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuArmLX9xra0m1GxmrjS8xH0pXUpTrKa18fhO9gW8NY160WAZ5MfXc157OoFlIivj6H_WT6aMZVWNjLvqixrhrBG2ryiAU15p_ZC42em1Dzj1w8ukwUFzndsHouARkcvS5wRRDyDVaOaIHwbiV5vUgkbNfc6zFl8XAYOQBERj5JYLZZOPpjaoiUd4B_6zT7iQQYhbyHU5Q5geiCAvvn2hga0_UsahQbwxSy3eLhHFEKPHc897yWc_fLyCPjkZ0wcfIcXDcMrPumI35w',
+      backgroundImage: PLACEHOLDER_IMAGES.heroBackground,
       badgeText: 'Early Booking Promo',
       statusText: 'Ends Soon',
       ctaText: 'Claim Offer',

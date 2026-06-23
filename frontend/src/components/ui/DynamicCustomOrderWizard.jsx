@@ -48,7 +48,7 @@ export function DynamicCustomOrderWizard({
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [formData.dynamicData, currentStep, selectedType]);
+  }, [formData, currentStep, selectedType]);
 
   // Load Config & Draft Recovery
   useEffect(() => {

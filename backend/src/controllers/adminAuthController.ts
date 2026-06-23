@@ -6,14 +6,15 @@ import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import { TwoFactorService } from '../services/twoFactorService';
-import { consumeTwoFactorPending, hasTwoFactorPending } from '../utils/twoFactorPending';
+import { consumeTwoFactorPending, hasTwoFactorPending } from '../utils/security/twoFactorPending';
 import User from '../models/User';
 import {
   ADMIN_REFRESH_COOKIE,
   setAdminRefreshCookie,
   clearAdminRefreshCookie,
-} from '../utils/authCookies';
+} from '../utils/security/authCookies';
 import { regenerateCsrfToken, clearCsrfCookie } from '../middleware/csrfMiddleware';
+import { getFrontendUrl } from '../utils/getFrontendUrl';
 
 const issueAdminSession = async (req: Request, res: Response, userId: string) => {
   const user = await User.findById(userId);
@@ -179,7 +180,7 @@ export const adminForgotPassword = asyncHandler(async (req: Request, res: Respon
   if (token) {
     // Send email with the token (this is typically done via a background job, but we dispatch it here)
     const { sendDirectEmail } = require('../services/notificationService');
-    const frontendUrl = process.env.ADMIN_FRONTEND_URL || 'http://localhost:5173/admin';
+    const frontendUrl = getFrontendUrl() + '/admin';
     const resetLink = `${frontendUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
     try {

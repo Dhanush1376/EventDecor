@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import connectDB from '../config/db';
 import User from '../models/User';
-import { isSameEmail } from '../utils/emailHelper';
+import { isSameEmail } from '../utils/email/emailHelper';
 import logger from '../config/logger';
 
 dotenv.config();

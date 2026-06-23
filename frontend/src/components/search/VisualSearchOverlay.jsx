@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
-import { ProductCard } from '../ui/ProductCard';
+import { ProductCard } from '../shared/ProductCard';
 import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { useDragControls, useScroll, useTransform, AnimatePresence, motion } from 'framer-motion';
 import '../../styles/visual-search.css';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
 /**
  * VisualSearchOverlay — Premium Google Lens-style visual search experience.

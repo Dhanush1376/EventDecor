@@ -6,7 +6,7 @@ import { useCart } from '../../context/CartContext';
 import { useProducts } from '../../hooks/useProductQueries';
 import { useRecommendationTracker } from '../../hooks/useRecommendationTracker';
 import { SEO } from '../seo/SEO';
-import { ProductCard } from '../ui/ProductCard';
+import { ProductCard } from '../shared/ProductCard';
 import { QuickViewModal } from '../ui/QuickViewModal';
 import { WishlistPageSkeleton } from '../ui/Skeleton';
 import { useUserProfile, useUserAddresses, useAddressMutations } from '../../hooks/useUserQueries';

@@ -1,8 +1,9 @@
 import { m as motion } from 'framer-motion';
+import { useCallback } from 'react';
 import { PageHeader, fadeUp, stagger } from '../components/AdminUIKit';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import rentalService from '../../services/rentalService';
+import rentalService from '../../services/api/rentalService';
 
 export function AdminRentalCalendar() {
   const [calendarData, setCalendarData] = useState([]);
@@ -11,11 +12,7 @@ export function AdminRentalCalendar() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [productId, _setProductId] = useState(''); // Optionally filter by product
 
-  useEffect(() => {
-    fetchCalendar();
-  }, [currentMonth, currentYear, productId]);
-
-  const fetchCalendar = async () => {
+  const fetchCalendar = useCallback(async () => {
     setDataLoading(true);
     try {
       const res = await rentalService.adminGetCalendar(productId, currentMonth, currentYear);
@@ -27,7 +24,11 @@ export function AdminRentalCalendar() {
     } finally {
       setDataLoading(false);
     }
-  };
+  }, [productId, currentMonth, currentYear]);
+
+  useEffect(() => {
+    fetchCalendar();
+  }, [fetchCalendar]);
 
   const handlePrevMonth = () => {
     if (currentMonth === 1) {

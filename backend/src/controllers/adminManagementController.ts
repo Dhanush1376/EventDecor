@@ -5,7 +5,7 @@ import ApiError from '../utils/ApiError';
 import User from '../models/User';
 import PaymentWebhookEvent from '../models/PaymentWebhookEvent';
 import bcrypt from 'bcryptjs';
-import { canonicalizeEmail } from '../utils/emailHelper';
+import { canonicalizeEmail } from '../utils/email/emailHelper';
 import {
   isProtectedSuperAdminEmail,
   ADMIN_ROLES,

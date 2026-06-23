@@ -1,15 +1,17 @@
 import { useParams, Link } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
 import { SectionWrapper } from '../components/layout';
-import { ProductCard, FilterPanel, ShareButton } from '../components/ui';
+import { FilterPanel, ShareButton } from '../components/ui';
+import { ProductCard } from '../components/shared/ProductCard';
 import { SEO } from '../components/seo/SEO';
 import { useEffect, useMemo, useState } from 'react';
 import { fadeUp } from '../animations/variants';
-import { handleImageError } from '../utils/imageUtils';
+import { handleImageError } from '../utils/media/imageUtils';
 import { productService } from '../services/domainServices';
 
-const fallbackHero =
-  'https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129318/event_decor_ecommerce/assets/event_decor_collection_wedding.png';
+import { PLACEHOLDER_IMAGES } from '../constants/placeholderImages';
+
+const fallbackHero = PLACEHOLDER_IMAGES.collectionWedding;
 
 const humanizeSlug = (value = '') =>
   value

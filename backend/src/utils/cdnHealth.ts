@@ -9,12 +9,13 @@ let lastLoggedStatus: CdnHealth | null = null;
 const SUCCESS_CACHE_TTL_MS = Number(process.env.CDN_HEALTH_CACHE_TTL_MS || 300000);
 const FAIL_CACHE_TTL_MS = Number(process.env.CDN_FAIL_CACHE_TTL_MS || 60000);
 
+import { EXTERNAL_URLS } from '../constants/externalUrls';
+
 /** Cloudinary-hosted demo asset — exists on every account without upload. */
 const buildProbeUrl = (cloudName: string) =>
-  `https://res.cloudinary.com/${cloudName}/image/upload/w_1,h_1,c_limit,f_auto,q_auto/demo`;
+  `${EXTERNAL_URLS.CLOUDINARY_CDN_BASE}/${cloudName}/image/upload/w_1,h_1,c_limit,f_auto,q_auto/demo`;
 
-const isReachableStatus = (status: number) =>
-  status >= 200 && status < 500;
+const isReachableStatus = (status: number) => status >= 200 && status < 500;
 
 /**
  * Probes Cloudinary delivery (not upload API). Used by cron and optional full health checks.
@@ -26,8 +27,7 @@ export const checkCloudinaryCdn = async (options?: { force?: boolean }): Promise
   }
 
   const now = Date.now();
-  const ttl =
-    cachedStatus === 'down' ? FAIL_CACHE_TTL_MS : SUCCESS_CACHE_TTL_MS;
+  const ttl = cachedStatus === 'down' ? FAIL_CACHE_TTL_MS : SUCCESS_CACHE_TTL_MS;
   if (!options?.force && cachedStatus && now - lastCheckTime < ttl) {
     return cachedStatus;
   }

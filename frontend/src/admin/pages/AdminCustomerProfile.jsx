@@ -1,7 +1,11 @@
+const SkeletonProfile = () => (
+  <div className="animate-pulse bg-gray-200 h-24 w-24 rounded-full"></div>
+);
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { StatusBadge, formatCurrency, fadeUp, stagger } from '../components/AdminUIKit';
+import { EXTERNAL_URLS } from '../../config/constants';
 
 export function AdminCustomerProfile() {
   const { customerId } = useParams();
@@ -141,7 +145,7 @@ export function AdminCustomerProfile() {
                 Email
               </a>
               <a
-                href={`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}`}
+                href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${customer.phone.replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="admin-btn flex-1 h-10 px-0 bg-[var(--admin-success)] hover:bg-[var(--admin-success-light)] border-none shadow-sm"

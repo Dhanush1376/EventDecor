@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import Product from '../models/Product';
 import User from '../models/User';
 import logger from '../config/logger';
-import { sendEmail } from '../utils/sendEmail';
+import { sendEmail } from '../utils/email/sendEmail';
 import { exec } from 'child_process';
 import path from 'path';
 import fs from 'fs';

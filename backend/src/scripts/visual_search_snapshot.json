@@ -1,0 +1,205 @@
+[
+  {
+    "name": "Red Velvet Decoration",
+    "bestMatch": {
+      "id": "6a3a5409884c49899dc258a8",
+      "score": 65,
+      "title": "Floral Ring Tray"
+    },
+    "similar": [
+      {
+        "id": "6a0d5c8ec725a13dd9a95618",
+        "score": 48,
+        "title": "Floral Ring Tray"
+      },
+      {
+        "id": "6a272dcf1dd5c8cd06962659",
+        "score": 48,
+        "title": "Gold Ring Tray"
+      },
+      {
+        "id": "6a273613bd05ef48fdd36554",
+        "score": 48,
+        "title": "Blushing Heritage Tray"
+      },
+      {
+        "id": "6a0c74fa9b8633afb920de7b",
+        "score": 31,
+        "title": "Floral Jewelry Tray"
+      }
+    ],
+    "related": [
+      {
+        "id": "6a19cb169875c9a89386d920",
+        "score": 29,
+        "title": "Wooden Wedding Ring Tray"
+      },
+      {
+        "id": "6a0c75c89b8633afb920de8f",
+        "score": 29,
+        "title": "Bangle Ceremony Tray"
+      },
+      {
+        "id": "6a0af6dbd33e9f39945561a2",
+        "score": 16,
+        "title": "Sacred Pellikuthuru Lotus Gifting Crate"
+      },
+      {
+        "id": "6a09fbe0394672b320fa3eb4",
+        "score": 16,
+        "title": "Sacred Pellikuthuru Lotus Gifting Crate"
+      },
+      {
+        "id": "6a1982f6594e9ef6fa074f28",
+        "score": 4,
+        "title": "Pearl Engagement Tray"
+      },
+      {
+        "id": "6a1c3fd6d5e8db93a79944bc",
+        "score": 4,
+        "title": "Beaded Heart Shaped Coconut"
+      }
+    ]
+  },
+  {
+    "name": "Golden Brass Tray",
+    "bestMatch": {
+      "id": "6a0c781bb048b5d5827cdf89",
+      "score": 89,
+      "title": "Pearl Pooja Thambulam"
+    },
+    "similar": [
+      {
+        "id": "6a0af6dbd33e9f39945561a2",
+        "score": 79,
+        "title": "Sacred Pellikuthuru Lotus Gifting Crate"
+      },
+      {
+        "id": "6a09fbe0394672b320fa3eb4",
+        "score": 79,
+        "title": "Sacred Pellikuthuru Lotus Gifting Crate"
+      },
+      {
+        "id": "6a273613bd05ef48fdd36554",
+        "score": 60,
+        "title": "Blushing Heritage Tray"
+      },
+      {
+        "id": "6a272dcf1dd5c8cd06962659",
+        "score": 35,
+        "title": "Gold Ring Tray"
+      }
+    ],
+    "related": [
+      {
+        "id": "6a0c74fa9b8633afb920de7b",
+        "score": 28,
+        "title": "Floral Jewelry Tray"
+      },
+      {
+        "id": "6a0c75c89b8633afb920de8f",
+        "score": 26,
+        "title": "Bangle Ceremony Tray"
+      },
+      {
+        "id": "6a1982f6594e9ef6fa074f28",
+        "score": 26,
+        "title": "Pearl Engagement Tray"
+      },
+      {
+        "id": "6a3a5409884c49899dc258a8",
+        "score": 26,
+        "title": "Floral Ring Tray"
+      },
+      {
+        "id": "6a0d5c8ec725a13dd9a95618",
+        "score": 23,
+        "title": "Floral Ring Tray"
+      },
+      {
+        "id": "6a19cb169875c9a89386d920",
+        "score": 23,
+        "title": "Wooden Wedding Ring Tray"
+      },
+      {
+        "id": "6a0c76cc9b8633afb920dec8",
+        "score": 13,
+        "title": "Jute Jewellery Cart"
+      },
+      {
+        "id": "6a275711dccad738269ad33e",
+        "score": 8,
+        "title": "Ganesh Coconut Decor"
+      }
+    ]
+  },
+  {
+    "name": "Floral Arrangement",
+    "bestMatch": {
+      "id": "6a273613bd05ef48fdd36554",
+      "score": 61,
+      "title": "Blushing Heritage Tray"
+    },
+    "similar": [
+      {
+        "id": "6a3a5409884c49899dc258a8",
+        "score": 39,
+        "title": "Floral Ring Tray"
+      },
+      {
+        "id": "6a0c74fa9b8633afb920de7b",
+        "score": 31,
+        "title": "Floral Jewelry Tray"
+      }
+    ],
+    "related": [
+      {
+        "id": "6a0d5c8ec725a13dd9a95618",
+        "score": 26,
+        "title": "Floral Ring Tray"
+      },
+      {
+        "id": "6a341c3615693d6710e78f7a",
+        "score": 26,
+        "title": "Rose Chocolate Bouquet"
+      }
+    ]
+  },
+  {
+    "name": "Event Showcase Generic",
+    "bestMatch": null,
+    "similar": [],
+    "related": [
+      {
+        "id": "6a0d5c8ec725a13dd9a95618",
+        "score": 29,
+        "title": "Floral Ring Tray"
+      },
+      {
+        "id": "6a19cb169875c9a89386d920",
+        "score": 25,
+        "title": "Wooden Wedding Ring Tray"
+      },
+      {
+        "id": "6a272dcf1dd5c8cd06962659",
+        "score": 25,
+        "title": "Gold Ring Tray"
+      },
+      {
+        "id": "6a273613bd05ef48fdd36554",
+        "score": 25,
+        "title": "Blushing Heritage Tray"
+      },
+      {
+        "id": "6a341c3615693d6710e78f7a",
+        "score": 13,
+        "title": "Rose Chocolate Bouquet"
+      },
+      {
+        "id": "6a0c74fa9b8633afb920de7b",
+        "score": 5,
+        "title": "Floral Jewelry Tray"
+      }
+    ]
+  }
+]

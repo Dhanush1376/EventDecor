@@ -1,4 +1,3 @@
-/* eslint-disable no-redeclare */
 /* global process */
 import logger from '../src/utils/logger.js';
 

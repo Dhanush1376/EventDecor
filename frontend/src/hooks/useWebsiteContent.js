@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { cmsService } from '../services/domainServices';
 import { emptyWebsiteContent } from '../constants/emptyWebsiteContent';
 import { initialWebsiteContent } from '../admin/data/websiteContentData';
-import { invalidateApiCache } from '../utils/apiCache';
-import { isPrerendering } from '../utils/prerender';
+import { invalidateApiCache } from '../utils/api/apiCache';
+import { isPrerendering } from '../utils/performance/prerender';
 
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — stale-while-revalidate in background
 const STALE_REFRESH_MS = 60 * 1000; // revalidate at most once per minute when stale
 const LOCAL_STORAGE_KEY = 'siri_arts_website_content';
@@ -161,7 +161,7 @@ export function useWebsiteContent() {
     return () => {
       listeners.delete(handleUpdate);
     };
-  }, []);
+  }, [isPrerender]);
 
   return { ...(content || {}), loading, isReady: content !== null };
 }

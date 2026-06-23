@@ -87,5 +87,9 @@ export const registerApiRoutes = (
   // Social Preview Metadata
   apiRouter.use('/social', lazyRouter('./socialRoutes'));
 
+  // CMS/Content Routes
+  apiRouter.use('/blogs', lazyRouter('./blogRoutes'));
+  apiRouter.use('/locations', lazyRouter('./locationRoutes'));
+
   app.use(prefix, apiRouter);
 };

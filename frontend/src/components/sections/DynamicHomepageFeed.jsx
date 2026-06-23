@@ -2,8 +2,8 @@ import { RecommendationCarousel } from '../ui/RecommendationCarousel';
 import { m as motion } from 'framer-motion';
 import { Component, useEffect, useState } from 'react';
 import { usePersonalizedSections } from '../../hooks/usePersonalizedSections';
-import { recommendationService } from '../../services/recommendationService';
-import logger from '../../utils/logger';
+import { recommendationService } from '../../services/api/recommendationService';
+import logger from '../../utils/core/logger';
 
 class ErrorBoundary extends Component {
   constructor(props) {

@@ -1,8 +1,20 @@
+import { ResponsiveContainer } from 'recharts';
+import { AreaChart } from 'recharts';
+import { CartesianGrid } from 'recharts';
+import { XAxis } from 'recharts';
+import { YAxis } from 'recharts';
+import { Tooltip } from 'recharts';
+import { Area } from 'recharts';
+import { BarChart } from 'recharts';
+import { Bar } from 'recharts';
+import { PieChart } from 'recharts';
+import { Pie } from 'recharts';
+import { Cell } from 'recharts';
 import { m as motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
 import api from '../../services/api';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 import {
   PageHeader,
   StatCard,

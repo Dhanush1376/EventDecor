@@ -1,4 +1,4 @@
-import { decryptField, encryptField } from '../utils/fieldEncryption';
+import { decryptField, encryptField } from '../utils/security/fieldEncryption';
 
 describe('fieldEncryption', () => {
   const prev = process.env.JWT_SECRET;

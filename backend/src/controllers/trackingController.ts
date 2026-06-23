@@ -6,7 +6,7 @@ import logger from '../config/logger';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 import { getTrackingCookieOptions } from '../config/cookieConfig';
-import { sanitizeTrackingMetadata } from '../utils/aiSanitizer';
+import { sanitizeTrackingMetadata } from '../utils/security/aiSanitizer';
 
 const VALID_EVENT_TYPES = new Set([
   'product_view',

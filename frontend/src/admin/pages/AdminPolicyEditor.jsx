@@ -2,12 +2,12 @@ import { m as motion } from 'framer-motion';
 import { SkeletonDashboard, stagger } from '../components/AdminUIKit';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { policyService } from '../../services/domainServices';
-import { createSafeHtml } from '../../utils/sanitize';
+import { createSafeHtml } from '../../utils/security/sanitize';
 import { toast } from 'react-hot-toast';
-import { getErrorMessage } from '../../utils/errorHelpers';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 import { useDraft } from '../hooks/useDraft';
 
 export function AdminPolicyEditor() {
@@ -43,14 +43,7 @@ export function AdminPolicyEditor() {
     enabled: true,
   });
 
-  useEffect(() => {
-    if (!isNew) {
-      setLoading(true);
-      fetchPolicy();
-    }
-  }, [id, isNew]);
-
-  const fetchPolicy = async () => {
+  const fetchPolicy = useCallback(async () => {
     try {
       const data = await policyService.getById(id);
       if (data.data) {
@@ -58,11 +51,18 @@ export function AdminPolicyEditor() {
       }
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to load policy'));
-      handleCancelAction();
+      navigate('/admin/policies');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, setFormData, navigate]);
+
+  useEffect(() => {
+    if (!isNew) {
+      setLoading(true);
+      fetchPolicy();
+    }
+  }, [isNew, fetchPolicy]);
 
   const handleSave = async () => {
     setSaving(true);

@@ -1,3 +1,12 @@
+import { ResponsiveContainer } from 'recharts';
+import { AreaChart } from 'recharts';
+import { CartesianGrid } from 'recharts';
+import { XAxis } from 'recharts';
+import { YAxis } from 'recharts';
+import { Tooltip } from 'recharts';
+import { Area } from 'recharts';
+import { BarChart } from 'recharts';
+import { Bar } from 'recharts';
 import { m as motion } from 'framer-motion';
 import { useMemo, useEffect, useState } from 'react';
 import { useAdmin } from '../context/AdminContext';

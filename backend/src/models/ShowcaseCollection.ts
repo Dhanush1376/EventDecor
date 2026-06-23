@@ -60,6 +60,8 @@ const ShowcaseCollectionSchema: Schema = new Schema(
 
 ShowcaseCollectionSchema.index({ title: 'text', description: 'text' });
 ShowcaseCollectionSchema.index({ category: 1 });
+ShowcaseCollectionSchema.index({ isActive: 1, category: 1 });
+ShowcaseCollectionSchema.index({ isActive: 1, popularityScore: -1 });
 
 ShowcaseCollectionSchema.plugin(SoftDeletePlugin);
 

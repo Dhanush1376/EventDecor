@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, lazy, Suspense } from 'react';
-import { Helmet } from 'react-helmet-async';
+import { SEO } from '../../components/seo/SEO';
 
 import { HeroCarousel } from './sections/HeroCarousel';
 import { LazySection } from '../../components/ui/LazySection';
@@ -33,29 +33,32 @@ export function Home() {
   const cms = useWebsiteContent({ includeDefaults: false });
   const loading = cms.loading;
 
+  const isSectionVisible = useCallback(
+    (id) => {
+      const orderSection = cms?.homepageSections?.find((s) => s.id === id);
+      if (orderSection && orderSection.isVisible !== undefined) {
+        return orderSection.isVisible;
+      }
+      if (cms?.[id] && cms[id].isVisible !== undefined) {
+        return cms[id].isVisible;
+      }
+      return true;
+    },
+    [cms],
+  );
+
   if (loading) {
     return <HomeSkeleton />;
   }
-
-  const isSectionVisible = (id) => {
-    const orderSection = cms?.homepageSections?.find((s) => s.id === id);
-    if (orderSection && orderSection.isVisible !== undefined) {
-      return orderSection.isVisible;
-    }
-    if (cms?.[id] && cms[id].isVisible !== undefined) {
-      return cms[id].isVisible;
-    }
-    return true;
-  };
 
   const sections = cms?.homepageSections || [];
 
   return (
     <>
-      <Helmet>
-        <title>{cms?.seo?.homeTitle || cms?.siteName || 'Siri Arts & Crafts'}</title>
-        {cms?.seo?.homeDescription && <meta name="description" content={cms.seo.homeDescription} />}
-      </Helmet>
+      <SEO
+        title={cms?.seo?.homeTitle || cms?.siteName || 'Siri Arts & Crafts'}
+        description={cms?.seo?.homeDescription}
+      />
 
       <div className="h1-page relative bg-surface-bright overflow-hidden">
         {/* Global Background Art - Performance Optimized Gradients & Mandalas */}

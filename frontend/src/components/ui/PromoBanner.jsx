@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import { handleImageError, getOptimizedUrl } from '../../utils/imageUtils';
+import { handleImageError, getOptimizedUrl } from '../../utils/media/imageUtils';
 
 export function PromoBanner({
   backgroundImage,

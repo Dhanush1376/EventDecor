@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { cmsService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 import { refreshWebsiteContent } from '../../hooks/useWebsiteContent';
 import { initialWebsiteContent } from '../data/websiteContentData';
 

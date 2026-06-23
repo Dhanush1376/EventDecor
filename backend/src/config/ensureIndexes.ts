@@ -6,7 +6,7 @@ export const seedDefaultEmailTemplates = async (): Promise<void> => {
     const {
       getWelcomeEmailTemplate,
       getSuspiciousLoginEmailTemplate,
-    } = require('../utils/emailTemplates');
+    } = require('../utils/email/emailTemplates');
 
     const defaultTemplates = [
       {

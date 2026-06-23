@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 const ConfigContext = createContext(null);
 

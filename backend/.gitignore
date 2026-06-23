@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .env
+.env.local
+.env.*
 *.log
 v8.log
 isolate-*.log

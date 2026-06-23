@@ -1,4 +1,4 @@
-import { redisClient } from '../../utils/redis';
+import { redisClient } from '../../utils/cache/redis';
 import logger from '../../config/logger';
 import ApiError from '../../utils/ApiError';
 

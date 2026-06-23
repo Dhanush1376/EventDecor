@@ -1,0 +1,158 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN DESIGN SYSTEM v2.0
+   Production-grade SaaS dashboard tokens, utilities & component styles
+   Inspired by: Linear, Vercel, Stripe, Shopify Admin
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── DESIGN TOKENS ─── */
+.admin-section-root {
+  /* Font System */
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  --font-headline: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  --font-label: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  --font-signature: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif !important;
+
+  /* ── Color Palette: Modern SaaS Light Theme ── */
+  --admin-bg: #fafafa;
+  --admin-bg-subtle: #f5f5f5;
+  --admin-surface: #ffffff;
+  --admin-surface-hover: #f9fafb;
+  --admin-surface-muted: #f3f4f6;
+  --admin-surface-raised: #ffffff;
+  --admin-surface-overlay: rgba(0, 0, 0, 0.4);
+
+  --admin-border: #e5e7eb;
+  --admin-border-subtle: #f3f4f6;
+  --admin-border-strong: #d1d5db;
+  --admin-border-focus: #475569;
+
+  --admin-text-primary: #111827;
+  --admin-text-secondary: #374151; /* Increased contrast from #4B5563 */
+  --admin-text-tertiary: #6b7280; /* Increased contrast from #9CA3AF */
+  --admin-text-placeholder: #9ca3af;
+  --admin-text-inverse: #ffffff;
+
+  /* Accent: Warm Professional Slate */
+  --admin-accent: #334155;
+  --admin-accent-hover: #475569;
+  --admin-accent-light: #f1f5f9;
+  --admin-accent-muted: rgba(51, 65, 85, 0.08);
+  --admin-accent-subtle: rgba(51, 65, 85, 0.04);
+  --admin-accent-text: #1e293b;
+
+  /* Semantic Colors */
+  --admin-success: #10b981;
+  --admin-success-light: #ecfdf5;
+  --admin-success-border: #a7f3d0;
+  --admin-warning: #f59e0b;
+  --admin-warning-light: #fffbeb;
+  --admin-warning-border: #fde68a;
+  --admin-error: #ef4444;
+  --admin-error-light: #fef2f2;
+  --admin-error-border: #fecaca;
+  --admin-info: #3b82f6;
+  --admin-info-light: #eff6ff;
+  --admin-info-border: #bfdbfe;
+
+  /* ── Domain Colors (Visual Hierarchy) ── */
+  --admin-domain-revenue: #10b981;
+  --admin-domain-revenue-bg: #ecfdf5;
+  --admin-domain-orders: #3b82f6;
+  --admin-domain-orders-bg: #eff6ff;
+  --admin-domain-products: #8b5cf6;
+  --admin-domain-products-bg: #f5f3ff;
+  --admin-domain-users: #f59e0b;
+  --admin-domain-users-bg: #fffbeb;
+  --admin-domain-settings: #64748b;
+  --admin-domain-settings-bg: #f8fafc;
+  --admin-domain-danger: #ef4444;
+  --admin-domain-danger-bg: #fef2f2;
+
+  /* ── Typography Scale ── */
+  --admin-text-xs: 11px;
+  --admin-text-sm: 12px;
+  --admin-text-base: 13px;
+  --admin-text-md: 14px;
+  --admin-text-lg: 16px;
+  --admin-text-xl: 18px;
+  --admin-text-2xl: 22px;
+  --admin-text-3xl: 28px;
+  --admin-text-4xl: 36px;
+  --admin-text-metric: 28px;
+
+  /* ── Spacing Scale (4px base) ── */
+  --admin-space-0: 0px;
+  --admin-space-0_5: 2px;
+  --admin-space-1: 4px;
+  --admin-space-1_5: 6px;
+  --admin-space-2: 8px;
+  --admin-space-3: 12px;
+  --admin-space-4: 16px;
+  --admin-space-5: 20px;
+  --admin-space-6: 24px;
+  --admin-space-8: 32px;
+  --admin-space-10: 40px;
+  --admin-space-12: 48px;
+  --admin-space-16: 64px;
+
+  /* ── Shadows (Premium Soft SaaS Elevation) ── */
+  --admin-shadow-xs: 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --admin-shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
+  --admin-shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+  --admin-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --admin-shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.12);
+  --admin-shadow-2xl: 0 40px 60px -15px rgba(0, 0, 0, 0.16);
+  --admin-shadow-overlay: 0 0 0 1px rgba(0, 0, 0, 0.02), 0 25px 50px -12px rgba(0, 0, 0, 0.2);
+  --admin-shadow-ring: 0 0 0 3px rgba(51, 65, 85, 0.12);
+
+  /* ── Radii ── */
+  --admin-radius-sm: 4px;
+  --admin-radius-md: 6px;
+  --admin-radius-lg: 8px;
+  --admin-radius-xl: 12px;
+  --admin-radius-2xl: 16px;
+  --admin-radius-full: 9999px;
+
+  /* ── Transitions ── */
+  --admin-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --admin-ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --admin-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --admin-duration-fast: 120ms;
+  --admin-duration-normal: 200ms;
+  --admin-duration-slow: 350ms;
+  --admin-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --admin-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Chart Colors (Modern SaaS Palette) ── */
+  --admin-chart-1: #111827;
+  --admin-chart-2: #6366f1;
+  --admin-chart-3: #8b5cf6;
+  --admin-chart-4: #ec4899;
+  --admin-chart-5: #10b981;
+  --admin-chart-6: #f59e0b;
+  --admin-chart-7: #0ea5e9;
+  --admin-chart-8: #3b82f6;
+
+  /* ── Layout ── */
+  --admin-sidebar-width: 260px;
+  --admin-sidebar-collapsed: 72px;
+  --admin-topbar-height: 56px;
+  --admin-max-content-width: 1600px;
+  --admin-bottom-nav-height: 60px;
+
+  /* Map Tailwind v4 design tokens */
+  --color-on-surface: var(--admin-text-primary) !important;
+  --color-on-surface-variant: var(--admin-text-secondary) !important;
+  --color-surface: var(--admin-surface) !important;
+  --color-surface-bright: var(--admin-surface) !important;
+  --color-surface-dim: var(--admin-bg) !important;
+  --color-outline: var(--admin-text-secondary) !important;
+  --color-outline-variant: var(--admin-border) !important;
+}

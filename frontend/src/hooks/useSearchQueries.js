@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { searchService } from '../services/searchService';
+import { searchService } from '../services/api/searchService';
 
 export function useSearch(query, options = {}) {
   const {

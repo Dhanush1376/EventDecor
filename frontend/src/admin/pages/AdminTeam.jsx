@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { adminInviteService } from '../../services/domainServices';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { getErrorMessage } from '../../utils/errorHelpers';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 import {
   PageHeader,
   SkeletonDashboard,

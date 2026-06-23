@@ -53,7 +53,7 @@ export function GalleryInner() {
       setSearchQuery(s);
       setDebouncedSearch(s);
     }
-  }, [searchParams]);
+  }, [searchParams, searchQuery, debouncedSearch]);
 
   // Sync debounced search to URL search query param
   useEffect(() => {

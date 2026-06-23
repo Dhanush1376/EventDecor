@@ -1,0 +1,577 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLE SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--admin-radius-xl);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+}
+
+.admin-section-root .admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--admin-text-sm);
+}
+
+.admin-section-root .admin-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.admin-section-root .admin-table thead tr {
+  background: var(--admin-bg-subtle);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-section-root .admin-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-text-tertiary);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.admin-section-root .admin-table td {
+  padding: 12px 16px;
+  text-align: left;
+  color: var(--admin-text-primary);
+  vertical-align: middle;
+}
+
+.admin-section-root .admin-table tbody tr {
+  border-bottom: 1px solid var(--admin-border-subtle);
+  transition: background var(--admin-duration-fast) var(--admin-ease);
+}
+
+.admin-section-root .admin-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.admin-section-root .admin-table tbody tr:hover {
+  background: var(--admin-surface-hover);
+}
+
+.admin-section-root .admin-table tbody tr.admin-table-row-clickable {
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHART TOOLTIP SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .recharts-tooltip-wrapper {
+  pointer-events: none !important;
+}
+
+.admin-section-root .admin-chart-tooltip {
+  background: var(--admin-surface) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: var(--admin-radius-lg) !important;
+  box-shadow: var(--admin-shadow-lg) !important;
+  padding: 10px 14px !important;
+  min-width: 120px;
+}
+
+.admin-section-root .admin-chart-tooltip-label {
+  font-size: var(--admin-text-xs);
+  font-weight: 500;
+  color: var(--admin-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.admin-section-root .admin-chart-tooltip-value {
+  font-size: var(--admin-text-md);
+  font-weight: 700;
+  color: var(--admin-text-primary);
+}
+
+/* Recharts label and axis styling */
+.admin-section-root .recharts-cartesian-axis-tick-value {
+  font-size: 10px !important;
+  fill: var(--admin-text-tertiary) !important;
+}
+
+.admin-section-root .recharts-cartesian-grid line {
+  stroke: var(--admin-border-subtle) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE GRID UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-grid-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.admin-section-root .admin-grid-charts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.admin-section-root .admin-grid-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .admin-section-root .admin-grid-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-section-root .admin-grid-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .admin-section-root .admin-grid-charts {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .admin-section-root .admin-grid-content {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MISC UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Floating Publish Bar / Action Bar */
+.admin-section-root .admin-floating-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  background: var(--admin-text-primary);
+  color: var(--admin-text-inverse);
+  border-radius: var(--admin-radius-xl);
+  box-shadow: var(--admin-shadow-2xl);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Empty State */
+.admin-section-root .admin-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  border: 1px dashed var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  background: var(--admin-bg-subtle);
+}
+
+/* Divider */
+.admin-section-root .admin-divider {
+  height: 1px;
+  background: var(--admin-border-subtle);
+  border: none;
+  margin: 0;
+}
+
+/* Stat card accent stripe */
+.admin-section-root .admin-stat-accent {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+}
+
+/* Filter pill active state */
+.admin-section-root .admin-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--admin-radius-lg);
+  font-size: var(--admin-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--admin-duration-fast) var(--admin-ease);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  color: var(--admin-text-secondary);
+  white-space: nowrap;
+}
+
+.admin-section-root .admin-filter-pill:hover {
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text-primary);
+}
+
+.admin-section-root .admin-filter-pill-active {
+  background: var(--admin-accent);
+  color: var(--admin-text-inverse);
+  border-color: var(--admin-accent);
+}
+
+.admin-section-root .admin-filter-pill-active:hover {
+  background: var(--admin-accent-hover);
+  border-color: var(--admin-accent-hover);
+  color: var(--admin-text-inverse);
+}
+
+/* Dropdown / popover panel */
+.admin-section-root .admin-dropdown {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  box-shadow: var(--admin-shadow-xl);
+  overflow: hidden;
+}
+
+.admin-section-root .admin-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: var(--admin-text-sm);
+  color: var(--admin-text-secondary);
+  cursor: pointer;
+  transition: all var(--admin-duration-fast) var(--admin-ease);
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+}
+
+.admin-section-root .admin-dropdown-item:hover {
+  background: var(--admin-surface-hover);
+  color: var(--admin-text-primary);
+}
+
+/* Page section spacing */
+.admin-section-root .admin-page-section {
+  margin-bottom: 24px;
+}
+
+@media (min-width: 1024px) {
+  .admin-section-root .admin-page-section {
+    margin-bottom: 32px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE-SPECIFIC OVERRIDES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Safe Area Inset Support (Notched Devices) ─────────────────────────── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .admin-section-root .admin-mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ── Core Mobile Breakpoint (≤640px) ───────────────────────────────────── */
+@media (max-width: 640px) {
+  .admin-section-root .admin-table-wrapper {
+    border-radius: var(--admin-radius-lg);
+  }
+
+  .admin-section-root .admin-card,
+  .admin-section-root .admin-card-interactive,
+  .admin-section-root .admin-card-elevated {
+    border-radius: var(--admin-radius-lg);
+  }
+
+  .admin-section-root .admin-btn-lg {
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+
+  /* Touch target enforcement — 44px minimum for key interactive elements */
+  .admin-section-root .admin-btn,
+  .admin-section-root .admin-btn-outline,
+  .admin-section-root .admin-btn-primary {
+    min-height: 44px;
+  }
+
+  .admin-section-root .admin-btn-icon {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .admin-section-root .admin-filter-pill {
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+
+  .admin-section-root .admin-dropdown-item {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+
+  /* General interactive element baseline */
+  .admin-section-root button,
+  .admin-section-root a,
+  .admin-section-root [role='button'] {
+    min-height: 36px;
+  }
+
+  /* Filter bar smooth touch scrolling */
+  .admin-section-root .admin-filter-bar {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  .admin-section-root .admin-filter-bar > * {
+    scroll-snap-align: start;
+  }
+}
+
+/* ── Floating Bar ↔ Bottom Nav Clearance (Mobile/Tablet) ───────────────── */
+@media (max-width: 1023px) {
+  .admin-section-root .admin-floating-bar {
+    bottom: calc(var(--admin-bottom-nav-height, 64px) + 20px);
+  }
+}
+
+/* ── Dynamic Viewport Height (Modern Devices) ──────────────────────────── */
+@supports (height: 100dvh) {
+  @media (max-width: 1023px) {
+    .admin-section-root .h-screen {
+      height: 100dvh;
+    }
+  }
+}
+
+/* ── Table Scroll Indicator (Mobile) ───────────────────────────────────── */
+@media (max-width: 768px) {
+  .admin-section-root .admin-card:has(.overflow-x-auto) {
+    position: relative;
+  }
+
+  /* Right-edge fade gradient to hint at horizontal scrollability */
+  .admin-section-root .admin-card:has(.overflow-x-auto)::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 32px;
+    background: linear-gradient(90deg, transparent, var(--admin-surface) 90%);
+    pointer-events: none;
+    z-index: 5;
+    border-radius: 0 var(--admin-radius-lg) var(--admin-radius-lg) 0;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+
+  /* Hide the gradient once user has scrolled to the end */
+  .admin-section-root .overflow-x-auto::-webkit-scrollbar {
+    height: 3px;
+  }
+  .admin-section-root .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: var(--admin-border-strong);
+    border-radius: 4px;
+  }
+  .admin-section-root .overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* ── Dark Mode: Bottom Nav ─────────────────────────────────────────────── */
+.admin-section-root.dark .admin-mobile-bottom-nav {
+  background: rgba(24, 24, 27, 0.95) !important;
+  border-top-color: var(--admin-border) !important;
+}
+
+/* ── Narrow Screen Adjustments (320px–400px) ───────────────────────────── */
+@media (max-width: 400px) {
+  /* Stat cards: keep 2 columns even on very narrow screens */
+  .admin-section-root .admin-grid-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
+  }
+
+  /* Tighter horizontal padding on the smallest screens */
+  .admin-section-root #admin-main-content {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* COD ledger and similar divided grids — stack vertically */
+  .admin-section-root .grid-cols-2.divide-y,
+  .admin-section-root .grid.grid-cols-2[class*='divide'] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Settings Sidebar → Horizontal Tabs on Mobile ──────────────────────── */
+@media (max-width: 1023px) {
+  .admin-section-root .admin-settings-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 4px !important;
+    padding: 8px !important;
+    white-space: nowrap;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .admin-section-root .admin-settings-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .admin-section-root .admin-settings-nav > button {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    min-width: auto !important;
+    width: auto !important;
+    padding: 8px 14px !important;
+    font-size: 11px !important;
+  }
+  /* Hide the long label text on mobile, show icon + short title */
+  .admin-section-root .admin-settings-nav > button > span:last-child {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ── Drawer / Panel safe-area padding ──────────────────────────────────── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  @media (max-width: 640px) {
+    .admin-section-root .admin-drawer-footer {
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* ── Search Palette mobile tweaks ──────────────────────────────────────── */
+@media (max-width: 640px) {
+  .admin-section-root .admin-search-palette {
+    margin-top: 16px !important;
+    max-height: calc(100dvh - 32px) !important;
+    border-radius: var(--admin-radius-xl) !important;
+  }
+}
+
+/* ── Mobile Kanban column height ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .admin-section-root .admin-kanban-column {
+    height: 400px;
+    max-height: 400px;
+  }
+}
+
+/* Tablet sidebar behavior */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .admin-section-root {
+    --admin-sidebar-width: 72px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINT STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media print {
+  .admin-section-root aside,
+  .admin-section-root header,
+  .admin-section-root nav,
+  .admin-section-root .admin-floating-bar {
+    display: none !important;
+  }
+
+  .admin-section-root main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .admin-section-root .admin-card,
+  .admin-section-root .admin-card-interactive,
+  .admin-section-root .admin-card-elevated {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}
+/* ─── Admin Focus Colors Override (Moved from globals.css) ─── */
+/* Mouse click focus — no visible ring */
+.admin-section-root input:focus,
+.admin-section-root textarea:focus,
+.admin-section-root select:focus,
+.admin-section-root [type='text']:focus,
+.admin-section-root [type='number']:focus,
+.admin-section-root [type='email']:focus,
+.admin-section-root [type='url']:focus,
+.admin-section-root [type='password']:focus,
+.admin-section-root [type='search']:focus,
+.admin-section-root [type='tel']:focus {
+  border-color: var(--admin-border-focus, #475569) !important;
+  box-shadow: none !important;
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  outline-color: transparent !important;
+}
+
+/* Keyboard focus — visible slate ring for accessibility */
+.admin-section-root input:focus-visible,
+.admin-section-root textarea:focus-visible,
+.admin-section-root select:focus-visible,
+.admin-section-root [type='text']:focus-visible,
+.admin-section-root [type='number']:focus-visible,
+.admin-section-root [type='email']:focus-visible,
+.admin-section-root [type='url']:focus-visible,
+.admin-section-root [type='password']:focus-visible,
+.admin-section-root [type='search']:focus-visible,
+.admin-section-root [type='tel']:focus-visible {
+  border-color: var(--admin-border-focus, #475569) !important;
+  box-shadow: 0 0 0 3px rgba(51, 65, 85, 0.12) !important;
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  outline-color: transparent !important;
+}
+
+/* Buttons/links/interactive — mouse click: no ring */
+.admin-section-root button:focus,
+.admin-section-root a:focus,
+.admin-section-root [role='button']:focus,
+.admin-section-root [tabindex]:focus {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Buttons/links/interactive — keyboard: visible ring */
+.admin-section-root button:focus-visible,
+.admin-section-root a:focus-visible,
+.admin-section-root [role='button']:focus-visible,
+.admin-section-root [tabindex]:focus-visible {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  outline-color: transparent !important;
+  box-shadow:
+    0 0 0 2px var(--admin-surface, #ffffff),
+    0 0 0 4px rgba(51, 65, 85, 0.3) !important;
+}

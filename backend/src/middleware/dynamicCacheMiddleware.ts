@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
-import redisClient from '../utils/redis';
-import { getPublicCacheVersion, getAdminAnalyticsCacheVersion } from '../utils/cacheVersion';
+import redisClient from '../utils/cache/redis';
+import { getPublicCacheVersion, getAdminAnalyticsCacheVersion } from '../utils/cache/cacheVersion';
 import logger from '../config/logger';
-import { MemoryCache } from '../utils/MemoryCache';
+import { MemoryCache } from '../utils/cache/MemoryCache';
 
 const fallbackResponseCache = new MemoryCache({
   defaultTtlMs: 60 * 1000,

@@ -73,7 +73,7 @@ export function EventBookingCard({
 
           <p className="font-body text-black/60 text-[13px] leading-relaxed font-light">
             Plan your dream celebration setup. Add custom florals, verify venue logistics, specify
-            date & environment using our guided Artisan Customizer.
+            date & environment using our guided customization tool.
           </p>
 
           <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/15 space-y-2.5">

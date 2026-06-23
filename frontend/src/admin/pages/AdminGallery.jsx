@@ -2,10 +2,10 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { galleryService, productService } from '../../services/domainServices';
-import { handleImageError } from '../../utils/imageUtils';
+import { handleImageError } from '../../utils/media/imageUtils';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
-import { getErrorMessage } from '../../utils/errorHelpers';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 import {
   PageHeader,
   EmptyState,

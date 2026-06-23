@@ -3,12 +3,14 @@ import Product from '../models/Product';
 import User from '../models/User';
 import Event from '../models/Event';
 import logger from '../config/logger';
-import { analyticsCache, broadcastCacheDelete } from '../utils/MemoryCache';
+import { analyticsCache, broadcastCacheDelete } from '../utils/cache/MemoryCache';
 
 class AnalyticsService {
   // Method to programmatically invalidate analytics cache when orders/inventory changes
   static clearCache() {
-    logger.info('[ANALYTICS CACHE] Invalidation triggered. Purging stale dashboard statistics cache.');
+    logger.info(
+      '[ANALYTICS CACHE] Invalidation triggered. Purging stale dashboard statistics cache.',
+    );
     analyticsCache.delete('dashboard_stats');
     broadcastCacheDelete('analyticsCache', 'dashboard_stats');
   }
@@ -17,28 +19,25 @@ class AnalyticsService {
     const cacheKey = 'dashboard_stats';
     const cached = analyticsCache.get(cacheKey);
     if (cached !== null) {
-      logger.info('[ANALYTICS CACHE] Cache Hit. Serving dashboard statistics from in-memory cache.');
+      logger.info(
+        '[ANALYTICS CACHE] Cache Hit. Serving dashboard statistics from in-memory cache.',
+      );
       return cached;
     }
 
     logger.info('Generating fresh analytics dashboard stats from database...');
 
-    const [
-      totalSalesData,
-      pendingOrders,
-      totalCustomers,
-      totalProducts,
-      totalEvents
-    ] = await Promise.all([
-      Order.aggregate([
-        { $match: { paymentStatus: 'paid' } },
-        { $group: { _id: null, total: { $sum: '$total' } } }
-      ]),
-      Order.countDocuments({ orderStatus: 'Pending' }),
-      User.countDocuments({ role: { $in: ['customer', 'user'] } }), // Standard and legacy roles for storefront customers
-      Product.countDocuments({ isActive: true }),
-      Event.countDocuments({ isActive: true })
-    ]);
+    const [totalSalesData, pendingOrders, totalCustomers, totalProducts, totalEvents] =
+      await Promise.all([
+        Order.aggregate([
+          { $match: { paymentStatus: 'paid' } },
+          { $group: { _id: null, total: { $sum: '$total' } } },
+        ]),
+        Order.countDocuments({ orderStatus: 'Pending' }),
+        User.countDocuments({ role: { $in: ['customer', 'user'] } }), // Standard and legacy roles for storefront customers
+        Product.countDocuments({ isActive: true }),
+        Event.countDocuments({ isActive: true }),
+      ]);
 
     // Monthly Revenue (Last 12 months)
     const monthlyRevenue = await Order.aggregate([
@@ -47,14 +46,14 @@ class AnalyticsService {
         $group: {
           _id: {
             year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' }
+            month: { $month: '$createdAt' },
           },
           revenue: { $sum: '$total' },
-          orders: { $count: {} }
-        }
+          orders: { $count: {} },
+        },
       },
       { $sort: { '_id.year': -1, '_id.month': -1 } },
-      { $limit: 12 }
+      { $limit: 12 },
     ]);
 
     // Category Performance
@@ -77,17 +76,17 @@ class AnalyticsService {
         pendingOrders,
         totalCustomers,
         totalProducts,
-        totalEvents
+        totalEvents,
       },
       monthlyRevenue: monthlyRevenue.map((item: any) => ({
         month: `${item._id.year}-${item._id.month}`,
         revenue: item.revenue,
-        orders: item.orders
+        orders: item.orders,
       })),
       categoryPerformance: categoryPerformance.map((item: any) => ({
         name: item._id || 'Uncategorized',
-        value: item.value
-      }))
+        value: item.value,
+      })),
     };
 
     analyticsCache.set(cacheKey, result);

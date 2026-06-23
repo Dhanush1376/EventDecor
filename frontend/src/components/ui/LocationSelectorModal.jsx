@@ -2,7 +2,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 import 'leaflet/dist/leaflet.css';
 
 // Helper to check for Google Maps key
@@ -10,13 +10,26 @@ const getGoogleMapsApiKey = () => {
   return import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 };
 
-export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initialLocation }) {
+export function LocationSelectorModal({
+  isOpen,
+  onClose,
+  onLocationSelect,
+  initialLocation,
+  inline = false,
+}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [_isDetectingGPS, setIsDetectingGPS] = useState(false);
+
+  // Auto-sync location in inline mode so the user doesn't have to click "Confirm Venue"
+  useEffect(() => {
+    if (inline && selectedLocation) {
+      onLocationSelect(selectedLocation);
+    }
+  }, [selectedLocation, inline, onLocationSelect]);
 
   const mapInstanceRef = useRef(null);
   const markerInstanceRef = useRef(null);
@@ -399,45 +412,59 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+        <div
+          className={
+            inline
+              ? 'relative w-full flex-1 flex flex-col'
+              : 'fixed inset-0 z-[999] flex items-center justify-center p-4'
+          }
+        >
           {/* Blur Overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-md"
-          />
+          {!inline && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            />
+          )}
 
           {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 30 }}
+            initial={inline ? false : { opacity: 0, scale: 0.9, y: 30 }}
+            animate={inline ? false : { opacity: 1, scale: 1, y: 0 }}
+            exit={inline ? false : { opacity: 0, scale: 0.9, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="relative bg-[#FCFAF6] border border-[#C4A87C]/30 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl z-10 flex flex-col max-h-[90vh] font-body"
+            className={`relative bg-[#FCFAF6] border border-[#C4A87C]/30 w-full font-body overflow-hidden flex flex-col z-10 ${
+              inline
+                ? 'rounded-2xl flex-1 min-h-[400px]'
+                : 'max-w-2xl rounded-[2.5rem] shadow-2xl max-h-[90vh]'
+            }`}
           >
             {/* Elegant Header Banner */}
-            <div className="bg-[#FAF6F0] px-6 py-5 border-b border-black/5 flex items-center justify-between relative">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[24px]">map</span>
-                <div>
-                  <h3 className="font-display text-lg text-black font-semibold">
-                    Select Celebration Venue
-                  </h3>
-                  <p className="text-[10px] text-black/50 uppercase tracking-widest font-bold font-label">
-                    Search or drop a pin on the map
-                  </p>
+            {!inline && (
+              <div className="bg-[#FAF6F0] px-6 py-5 border-b border-black/5 flex items-center justify-between relative">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[24px]">map</span>
+                  <div>
+                    <h3 className="font-display text-lg text-black font-semibold">
+                      Select Celebration Venue
+                    </h3>
+                    <p className="text-[10px] text-black/50 uppercase tracking-widest font-bold font-label">
+                      Search or drop a pin on the map
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-9 h-9 min-h-0 rounded-full bg-white hover:bg-red-50 text-stone-500 hover:text-red-500 border border-black/5 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-9 h-9 min-h-0 rounded-full bg-white hover:bg-red-50 text-stone-500 hover:text-red-500 border border-black/5 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            </div>
+            )}
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-4 flex-1 flex flex-col min-h-[400px]">
@@ -548,29 +575,31 @@ export function LocationSelectorModal({ isOpen, onClose, onLocationSelect, initi
             </div>
 
             {/* Modal Footer Controls */}
-            <div className="bg-[#FAF6F0] px-6 py-5 border-t border-black/5 flex flex-col sm:flex-row gap-3 items-center justify-between">
-              <span className="text-[10px] text-stone-500 font-light leading-relaxed max-w-xs text-center sm:text-left">
-                Ensure coordinates map accurately. You can drag the gold heritage map marker pin to
-                tweak setup logistics!
-              </span>
-              <div className="flex gap-2 w-full sm:w-auto shrink-0 justify-end">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-5 py-3 rounded-full border border-black/10 bg-white hover:bg-stone-50 text-xs font-bold text-stone-600 transition-all active:scale-95 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmLocation}
-                  disabled={!selectedLocation}
-                  className="px-6 py-3 rounded-full bg-black text-white hover:bg-primary hover:text-black font-semibold text-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer shadow-lg"
-                >
-                  Confirm Venue
-                </button>
+            {!inline && (
+              <div className="bg-[#FAF6F0] px-6 py-5 border-t border-black/5 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                <span className="text-[10px] text-stone-500 font-light leading-relaxed max-w-xs text-center sm:text-left">
+                  Ensure coordinates map accurately. You can drag the gold heritage map marker pin
+                  to tweak setup logistics!
+                </span>
+                <div className="flex gap-2 w-full sm:w-auto shrink-0 justify-end">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-5 py-3 rounded-full border border-black/10 bg-white hover:bg-stone-50 text-xs font-bold text-stone-600 transition-all active:scale-95 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmLocation}
+                    disabled={!selectedLocation}
+                    className="px-6 py-3 rounded-full bg-black text-white hover:bg-primary hover:text-black font-semibold text-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer shadow-lg"
+                  >
+                    Confirm Venue
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
         </div>
       )}

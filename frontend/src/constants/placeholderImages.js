@@ -1,7 +1,9 @@
 /**
  * Cloudinary-hosted placeholder images (no third-party image hosts in production).
  */
-const CDN = 'https://res.cloudinary.com/drxgnnzeb/image/upload';
+import { EXTERNAL_URLS } from '../config/constants';
+
+const CDN = `${EXTERNAL_URLS.CLOUDINARY_CDN_BASE}/drxgnnzeb/image/upload`;
 
 const img = (path, width = 800) =>
   `${CDN}/q_auto:eco,f_auto,dpr_auto,w_${width},c_limit,fl_strip_profile/${path}`;

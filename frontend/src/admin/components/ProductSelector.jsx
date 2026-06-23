@@ -2,7 +2,7 @@ import { CloudinaryImage } from '../../components/ui/CloudinaryImage';
 import { AdminField } from './AdminUIKit';
 import { useState, useEffect } from 'react';
 import { productService } from '../../services/api/productService';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 import toast from 'react-hot-toast';
 
 export function ProductSelector({ selectedIds = [], onChange, maxItems = null }) {

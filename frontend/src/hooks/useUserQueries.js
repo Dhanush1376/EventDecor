@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '../services/domainServices';
-import { hasSessionMarker } from '../utils/authStorage';
+import { hasSessionMarker } from '../utils/auth/authStorage';
 import toast from 'react-hot-toast';
 
 const checkAuthLocal = () => hasSessionMarker();

@@ -4,9 +4,9 @@ import { SEO } from '../components/seo/SEO';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { InvoiceTemplate, OrderSuccessSkeleton, OptimizedImage } from '../components/ui';
 import { useState, useEffect } from 'react';
-import { handleImageError } from '../utils/imageUtils';
+import { handleImageError } from '../utils/media/imageUtils';
 import { orderService, rentalService } from '../services/domainServices';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 const _BarcodeSVG = ({ _val }) => (
   <svg viewBox="0 0 200 40" className="w-full h-9" xmlns="http://www.w3.org/2000/svg">
@@ -213,7 +213,7 @@ export function OrderSuccess() {
       fetchOrder();
     }, 0);
     return () => clearTimeout(timer);
-  }, [orderId]);
+  }, [orderId, order]);
 
   if (loading) {
     return <OrderSuccessSkeleton />;

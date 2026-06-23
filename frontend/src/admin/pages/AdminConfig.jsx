@@ -1,8 +1,9 @@
+const AdminInput = (props) => <input className="border p-2 rounded w-full" {...props} />;
 import { m as motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { getErrorMessage } from '../../utils/errorHelpers';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 import {
   PageHeader,
   AdminToggle,

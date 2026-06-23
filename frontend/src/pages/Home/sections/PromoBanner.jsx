@@ -62,23 +62,21 @@ export function PromoBanner() {
 
   return (
     <section className="relative w-full overflow-hidden bg-white py-4 border-y border-neutral-200 cursor-pointer group">
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        @keyframes marquee-scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-100%); }
-        }
-        .animate-marquee-custom {
-          display: flex;
-          animation: marquee-scroll 80s linear infinite;
-        }
-        .group:hover .animate-marquee-custom {
-          animation-play-state: paused;
-        }
-      `,
-        }}
-      />
+      <style>
+        {`
+          @keyframes marquee-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+          }
+          .animate-marquee-custom {
+            display: flex;
+            animation: marquee-scroll 80s linear infinite;
+          }
+          .group:hover .animate-marquee-custom {
+            animation-play-state: paused;
+          }
+        `}
+      </style>
       <a href={promo.link} onClick={handleBannerClick} className="block w-full">
         <div className="flex w-full overflow-hidden relative whitespace-nowrap gap-10">
           <div className="animate-marquee-custom flex items-center gap-10 shrink-0">

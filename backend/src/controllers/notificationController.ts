@@ -11,18 +11,25 @@ import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import { runCampaignDispatch } from '../services/notificationService';
 import logger from '../config/logger';
+import { getFrontendUrl } from '../utils/getFrontendUrl';
 
 // A transparent 1x1 pixel image GIF buffer for email open tracking
 const transparentGif = Buffer.from(
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
-  'base64'
+  'base64',
 );
 
 /**
  * Capture and persist visitor cookie and notification preferences (GDPR/EPrivacy style)
  */
 export const saveConsentPreference = asyncHandler(async (req: Request, res: Response) => {
-  const { consentToken, cookies, marketingEmails, updateNotifications, personalizedRecommendations } = req.body;
+  const {
+    consentToken,
+    cookies,
+    marketingEmails,
+    updateNotifications,
+    personalizedRecommendations,
+  } = req.body;
   const userId = (req as any).user?.id; // Optional authenticated user
 
   let token = consentToken;
@@ -36,7 +43,8 @@ export const saveConsentPreference = asyncHandler(async (req: Request, res: Resp
     consentRecord.cookies = cookies ?? consentRecord.cookies;
     consentRecord.marketingEmails = marketingEmails ?? consentRecord.marketingEmails;
     consentRecord.updateNotifications = updateNotifications ?? consentRecord.updateNotifications;
-    consentRecord.personalizedRecommendations = personalizedRecommendations ?? consentRecord.personalizedRecommendations;
+    consentRecord.personalizedRecommendations =
+      personalizedRecommendations ?? consentRecord.personalizedRecommendations;
     if (userId) {
       consentRecord.userId = new mongoose.Types.ObjectId(userId);
     }
@@ -67,9 +75,9 @@ export const saveConsentPreference = asyncHandler(async (req: Request, res: Resp
     }
   }
 
-  res.status(200).json(
-    new ApiResponse(true, 'Visitor consent preferences updated successfully', consentRecord)
-  );
+  res
+    .status(200)
+    .json(new ApiResponse(true, 'Visitor consent preferences updated successfully', consentRecord));
 });
 
 /**
@@ -113,8 +121,8 @@ export const trackEmailOpen = asyncHandler(async (req: Request, res: Response) =
     'Content-Type': 'image/gif',
     'Content-Length': transparentGif.length,
     'Cache-Control': 'no-store, no-cache, must-revalidate, private',
-    'Pragma': 'no-cache',
-    'Expires': '0',
+    Pragma: 'no-cache',
+    Expires: '0',
   });
   res.end(transparentGif);
 });
@@ -127,7 +135,7 @@ export const trackEmailClick = asyncHandler(async (req: Request, res: Response) 
   const targetUrl = req.query.url as string;
 
   if (!targetUrl) {
-    return res.redirect(process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:3000');
+    return res.redirect(getFrontendUrl());
   }
 
   try {
@@ -169,19 +177,19 @@ export const unsubscribeRecipient = asyncHandler(async (req: Request, res: Respo
   // 1. Update user settings if user exists
   await User.updateMany(
     { email: lowercaseEmail },
-    { $set: { 'notificationPreferences.marketing': false } }
+    { $set: { 'notificationPreferences.marketing': false } },
   );
 
   // 2. Update general visitor consent preferences
   await ConsentPreference.updateMany(
     { consentToken: lowercaseEmail },
-    { $set: { marketingEmails: false } }
+    { $set: { marketingEmails: false } },
   );
-  
+
   // also update by consentToken if there is a mapping
   await ConsentPreference.updateMany(
     { email: lowercaseEmail },
-    { $set: { marketingEmails: false } }
+    { $set: { marketingEmails: false } },
   );
 
   // Redirect to a beautiful confirmation screen or send clean styled confirmation
@@ -192,7 +200,7 @@ export const unsubscribeRecipient = asyncHandler(async (req: Request, res: Respo
         Your preference has been logged successfully. You have been removed from our marketing newsletter list and will no longer receive curations or offers from Siri Arts.
       </p>
       <div style="margin-top: 25px;">
-        <a href="${process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:3000'}" style="display: inline-block; background-color: #735c00; color: #ffffff; text-decoration: none; padding: 10px 25px; border-radius: 50px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-family: sans-serif;">Return to Storefront</a>
+        <a href="${getFrontendUrl()}" style="display: inline-block; background-color: #735c00; color: #ffffff; text-decoration: none; padding: 10px 25px; border-radius: 50px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-family: sans-serif;">Return to Storefront</a>
       </div>
     </div>
   `);
@@ -225,7 +233,10 @@ export const createCampaign = asyncHandler(async (req: Request, res: Response) =
  * ADMIN: Fetch All Campaigns
  */
 export const getCampaigns = asyncHandler(async (req: Request, res: Response) => {
-  const campaigns = await EmailCampaign.find().populate('templateId').sort({ createdAt: -1 }).lean();
+  const campaigns = await EmailCampaign.find()
+    .populate('templateId')
+    .sort({ createdAt: -1 })
+    .lean();
   res.status(200).json(new ApiResponse(true, 'Campaigns fetched', campaigns));
 });
 
@@ -244,7 +255,7 @@ export const triggerCampaignSend = asyncHandler(async (req: Request, res: Respon
   }
 
   // Trigger dispatch in background asynchronously
-  runCampaignDispatch(campaign.id).catch(err => {
+  runCampaignDispatch(campaign.id).catch((err) => {
     logger.error(`Error dispatched in background for campaign ${campaign.id}:`, err);
   });
 
@@ -304,12 +315,16 @@ export const updateTemplate = asyncHandler(async (req: Request, res: Response) =
  */
 export const getNotificationAnalytics = asyncHandler(async (req: Request, res: Response) => {
   const totalLogs = await NotificationLog.countDocuments();
-  const openedLogs = await NotificationLog.countDocuments({ openedAt: { $exists: true, $ne: null } });
-  
+  const openedLogs = await NotificationLog.countDocuments({
+    openedAt: { $exists: true, $ne: null },
+  });
+
   // Aggregate total link clicks
-  const logsWithClicks = await NotificationLog.find({ 'clicks.0': { $exists: true } }).select('clicks').lean();
+  const logsWithClicks = await NotificationLog.find({ 'clicks.0': { $exists: true } })
+    .select('clicks')
+    .lean();
   let totalClicks = 0;
-  logsWithClicks.forEach(log => {
+  logsWithClicks.forEach((log) => {
     totalClicks += log.clicks.length;
   });
 
@@ -320,23 +335,23 @@ export const getNotificationAnalytics = asyncHandler(async (req: Request, res: R
 
   // Get status breakdown of delivery logs
   const statusBreakdown = await NotificationLog.aggregate([
-    { $group: { _id: '$status', count: { $sum: 1 } } }
+    { $group: { _id: '$status', count: { $sum: 1 } } },
   ]);
 
   // Daily log trends for last 7 days
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  
+
   const dailyDispatches = await NotificationLog.aggregate([
     { $match: { createdAt: { $gte: sevenDaysAgo } } },
     {
       $group: {
         _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
         count: { $sum: 1 },
-        opened: { $sum: { $cond: [{ $ifNull: ['$openedAt', false] }, 1, 0] } }
-      }
+        opened: { $sum: { $cond: [{ $ifNull: ['$openedAt', false] }, 1, 0] } },
+      },
     },
-    { $sort: { _id: 1 } }
+    { $sort: { _id: 1 } },
   ]);
 
   res.status(200).json(
@@ -353,6 +368,6 @@ export const getNotificationAnalytics = asyncHandler(async (req: Request, res: R
       },
       statusBreakdown,
       dailyTrends: dailyDispatches,
-    })
+    }),
   );
 });

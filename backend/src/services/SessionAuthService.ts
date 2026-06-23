@@ -2,7 +2,8 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import RefreshToken from '../models/RefreshToken';
 import UsedRefreshToken from '../models/UsedRefreshToken';
-import User, { IUser } from '../models/User';
+import User from '../models/User';
+import { IUser } from '../types/user';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 

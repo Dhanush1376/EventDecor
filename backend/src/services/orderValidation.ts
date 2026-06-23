@@ -2,7 +2,7 @@ import Product from '../models/Product';
 import User from '../models/User';
 import Coupon from '../models/Coupon';
 import ApiError from '../utils/ApiError';
-import { cmsCache } from '../utils/MemoryCache';
+import { cmsCache } from '../utils/cache/MemoryCache';
 import ContentSection from '../models/ContentSection';
 
 export class OrderValidationService {

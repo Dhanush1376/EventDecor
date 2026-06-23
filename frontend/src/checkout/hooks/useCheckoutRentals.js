@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { persistentStorage } from '../../utils/persistentStorage';
-import rentalService from '../../services/rentalService';
-import logger from '../../utils/logger';
+import { persistentStorage } from '../../utils/storage/persistentStorage';
+import rentalService from '../../services/api/rentalService';
+import logger from '../../utils/core/logger';
 
 export function useCheckoutRentals() {
   const [rentalStartDate, setRentalStartDate] = useState(() => {

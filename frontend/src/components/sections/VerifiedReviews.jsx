@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { m as motion } from 'framer-motion';
 import { ReviewsSkeleton } from '../ui/Skeleton';
 import { OptimizedImage } from '../ui/OptimizedImage';
@@ -6,7 +7,9 @@ import toast from 'react-hot-toast';
 import { reviewService } from '../../services/domainServices';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
+import { useDragScroll } from '../../hooks/useDragScroll';
+
 // Lazy load heavy interaction overlays to trim the main package bundle size
 const PostReviewModal = lazy(() =>
   import('../reviews/PostReviewModal').then((m) => ({ default: m.PostReviewModal })),
@@ -26,11 +29,29 @@ export const VerifiedReviews = () => {
 
   // Infinite scroll carousel states and auto-scroll handlers
   const scrollRef = React.useRef(null);
-  const [isDown, setIsDown] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeftState, setScrollLeftState] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const boundaryCheck = React.useCallback(({ slider, e, setScrollLeftState, setStartX }) => {
+    const maxScroll = slider.scrollWidth / 3;
+    if (slider.scrollLeft >= maxScroll * 2) {
+      slider.scrollLeft -= maxScroll;
+      setScrollLeftState((prev) => prev - maxScroll);
+      setStartX(e.pageX - slider.offsetLeft);
+    } else if (slider.scrollLeft <= 0) {
+      slider.scrollLeft += maxScroll;
+      setScrollLeftState((prev) => prev + maxScroll);
+      setStartX(e.pageX - slider.offsetLeft);
+    }
+  }, []);
+
+  const {
+    isDown,
+    isDragging,
+    isHovered,
+    setIsHovered,
+    handleMouseDown,
+    handleMouseLeave,
+    handleMouseUp,
+    handleMouseMove,
+  } = useDragScroll({ scrollRef, sensitivity: 1.5, boundaryCheck });
 
   const filteredReviews = React.useMemo(() => {
     return reviewsList.filter((rev) => {
@@ -83,50 +104,7 @@ export const VerifiedReviews = () => {
     return () => cancelAnimationFrame(animationId);
   }, [isDown, isHovered, filteredReviews]);
 
-  // Mouse drag-to-scroll event handlers
-  const handleMouseDown = (e) => {
-    const slider = scrollRef.current;
-    if (!slider) return;
-    setIsDown(true);
-    setStartX(e.pageX - slider.offsetLeft);
-    setScrollLeftState(slider.scrollLeft);
-  };
-
-  const handleMouseLeave = () => {
-    setIsDown(false);
-    setIsHovered(false);
-  };
-
-  const handleMouseUp = () => {
-    setIsDown(false);
-    setTimeout(() => {
-      setIsDragging(false);
-    }, 50);
-  };
-
-  const handleMouseMove = (e) => {
-    const slider = scrollRef.current;
-    if (!slider || !isDown) return;
-    e.preventDefault();
-    const x = e.pageX - slider.offsetLeft;
-    const walk = (x - startX) * 1.5; // Drag sensitivity multiplier
-    if (Math.abs(walk) > 5) {
-      setIsDragging(true);
-    }
-    slider.scrollLeft = scrollLeftState - walk;
-
-    // Boundary check during active dragging
-    const maxScroll = slider.scrollWidth / 3;
-    if (slider.scrollLeft >= maxScroll * 2) {
-      slider.scrollLeft -= maxScroll;
-      setScrollLeftState((prev) => prev - maxScroll);
-      setStartX(e.pageX - slider.offsetLeft);
-    } else if (slider.scrollLeft <= 0) {
-      slider.scrollLeft += maxScroll;
-      setScrollLeftState((prev) => prev + maxScroll);
-      setStartX(e.pageX - slider.offsetLeft);
-    }
-  };
+  // Mouse drag-to-scroll event handlers extracted to useDragScroll hook
 
   useEffect(() => {
     const fetchLiveReviews = async () => {

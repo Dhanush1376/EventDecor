@@ -4,7 +4,7 @@ import Event from '../../models/Event';
 import User from '../../models/User';
 import ApiError from '../../utils/ApiError';
 import { generateUniqueBookingId } from '../../utils/bookingId';
-import { RazorpayGateway } from '../../utils/RazorpayGateway';
+import { RazorpayGateway } from '../../utils/payment/RazorpayGateway';
 import crypto from 'crypto';
 import logger from '../../config/logger';
 import BookingMessage from '../../models/BookingMessage';

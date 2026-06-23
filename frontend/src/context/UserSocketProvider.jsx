@@ -1,10 +1,10 @@
-/* eslint-disable */
 import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { io as socketIO } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { getApiRootUrl } from '../config/apiConfig';
-import logger from '../utils/logger';
+import { getAccessToken } from '../services/api';
+import logger from '../utils/core/logger';
 
 const UserSocketContext = createContext(null);
 
@@ -29,9 +29,12 @@ export function UserSocketProvider({ children }) {
     const rawApiUrl = getApiRootUrl();
     const socketServerUrl = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
 
+    const token = getAccessToken();
+
     const socket = socketIO(`${socketServerUrl}/user`, {
       transports: ['websocket', 'polling'],
       withCredentials: true,
+      auth: { token },
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });

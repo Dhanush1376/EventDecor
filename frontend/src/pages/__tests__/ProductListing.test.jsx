@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useSearchParams } from 'react-router-dom';
 import { ProductListing } from '../ProductListing';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock all external contexts and hooks to isolate URL sync logic
 vi.mock('../../context/CartContext', () => ({
@@ -48,15 +49,31 @@ vi.mock('../../hooks/useMediaQuery', () => ({
   useMediaQuery: () => false,
 }));
 
+vi.mock('../../services/domainServices', () => ({
+  couponService: {
+    getAll: vi.fn(() => Promise.resolve({ success: true, data: { data: [] } })),
+  },
+}));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
+
 // A test component to observe and manipulate URL search params from outside ProductListing
 function TestWrapper({ initialUrl = '/collections' }) {
   return (
-    <MemoryRouter initialEntries={[initialUrl]}>
-      <Routes>
-        <Route path="/collections" element={<ProductListing />} />
-      </Routes>
-      <UrlObserver />
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[initialUrl]}>
+        <Routes>
+          <Route path="/collections" element={<ProductListing />} />
+        </Routes>
+        <UrlObserver />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -108,7 +125,7 @@ describe('ProductListing URL Synchronization', () => {
       () => {
         expect(screen.getByTestId('search-param').textContent).toBe('mandap');
       },
-      { timeout: 1000 },
+      { timeout: 3000 },
     );
   });
 

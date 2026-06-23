@@ -2,16 +2,17 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { CartStateContext, CartDispatchContext } from './CartContext';
 import { useCartQuery, useCartMutations } from '../hooks/useCartQueries';
-import { useQueryClient } from '@tanstack/react-query';
+import { useOptimisticCartMutation } from '../hooks/useOptimisticCartMutation';
+import { transformDbCart, cleanRentalInfo } from '../utils/ecommerce/cartCalculations';
 import toast from 'react-hot-toast';
-import logger from '../utils/logger';
-import { persistentStorage } from '../utils/persistentStorage';
-import { userService } from '../services/domainServices';
-import { getErrorMessage } from '../utils/errorHelpers';
-
+import logger from '../utils/core/logger';
+import { persistentStorage } from '../utils/storage/persistentStorage';
+import { userService, couponService } from '../services/domainServices';
+import { useCartMerge } from '../hooks/useCartMerge';
+import { useAutoApplyCoupon } from '../hooks/useAutoApplyCoupon';
 export function CartProvider({ children }) {
   const { isAuthenticated, runProtectedAction } = useAuth();
-  const queryClient = useQueryClient();
+  const { syncCart } = useCartMutations();
 
   const [activeCartMode, setActiveCartMode] = useState(() => {
     return persistentStorage.getItem('siri_cart_mode', { fallback: 'purchase' });
@@ -21,7 +22,10 @@ export function CartProvider({ children }) {
     persistentStorage.setItem('siri_cart_mode', activeCartMode);
   }, [activeCartMode]);
 
-  const emptySummary = { subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 };
+  const emptySummary = useMemo(
+    () => ({ subtotal: 0, shippingFee: 0, platformFee: 0, discount: 0, total: 0 }),
+    [],
+  );
 
   const getInitialCartState = () => {
     return persistentStorage.getItem('siri_cart_cache', {
@@ -40,38 +44,19 @@ export function CartProvider({ children }) {
     () => initialCache.rentalCart || { items: [], summary: { ...emptySummary, depositTotal: 0 } },
   );
 
-  const [claimedCoupon, setClaimedCoupon] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState('');
+  const [claimedCoupon, setClaimedCouponState] = useState(() => {
+    return persistentStorage.getItem('siri_claimed_coupon', { fallback: '' });
+  });
+
+  const setClaimedCoupon = useCallback((code) => {
+    setClaimedCouponState(code);
+    persistentStorage.setItem('siri_claimed_coupon', code);
+  }, []);
+
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const { data: cartData, isLoading: cartLoading } = useCartQuery();
-  const { addToCart, removeFromCart, syncCart } = useCartMutations();
-
-  const transformDbCart = useCallback((dbCartItems) => {
-    if (!dbCartItems || !Array.isArray(dbCartItems)) return [];
-    return dbCartItems
-      .filter((item) => item.product)
-      .map((item) => ({
-        id: item.product._id || item.product.id,
-        _id: item.product._id || item.product.id,
-        title: item.product.title,
-        price: item.product.price,
-        oldPrice: item.product.oldPrice || item.product.price,
-        stock: item.product.stock || 0,
-        seller: item.product.seller || 'Siri Arts Artisans',
-        rating: item.product.rating || 0,
-        imageSrc: item.product.imageSrc,
-        category: item.product.category,
-        quantity: item.quantity,
-        variant: item.variant || 'Default',
-        type: item.type || 'purchase',
-        rentalInfo: item.rentalInfo,
-        deposit: item.deposit || 0,
-        isNonRefundable: item.product.isNonRefundable,
-        customizationConfig: item.product.customizationConfig,
-        product: item.product,
-      }));
-  }, []);
 
   const purchaseCart = useMemo(() => {
     if (isAuthenticated && cartData?.purchaseCart) {
@@ -81,7 +66,7 @@ export function CartProvider({ children }) {
       };
     }
     return guestPurchaseCart;
-  }, [isAuthenticated, cartData, guestPurchaseCart, transformDbCart]);
+  }, [isAuthenticated, cartData, guestPurchaseCart]);
 
   const rentalCart = useMemo(() => {
     if (isAuthenticated && cartData?.rentalCart) {
@@ -91,9 +76,8 @@ export function CartProvider({ children }) {
       };
     }
     return guestRentalCart;
-  }, [isAuthenticated, cartData, guestRentalCart, transformDbCart]);
+  }, [isAuthenticated, cartData, guestRentalCart]);
 
-  // Derived state based on active mode (for backward compatibility with components expecting a single cart)
   const items = activeCartMode === 'purchase' ? purchaseCart.items : rentalCart.items;
   const summary = activeCartMode === 'purchase' ? purchaseCart.summary : rentalCart.summary;
 
@@ -101,500 +85,25 @@ export function CartProvider({ children }) {
     persistentStorage.setItem('siri_cart_cache', { purchaseCart, rentalCart });
   }, [purchaseCart, rentalCart]);
 
-  const lastAuthRef = useRef(isAuthenticated);
+  const { addItem, attemptAddToCart, removeItem, updateQuantity, clearCart } =
+    useOptimisticCartMutation({
+      isAuthenticated,
+      activeCartMode,
+      setActiveCartMode,
+      runProtectedAction,
+      setIsCartOpen,
+      emptySummary,
+      setGuestPurchaseCart,
+      setGuestRentalCart,
+    });
 
-  useEffect(() => {
-    if (isAuthenticated && !lastAuthRef.current) {
-      const mergeGuestCart = async () => {
-        try {
-          const guestCart = persistentStorage.getItem('siri_cart_cache');
-          const allGuestItems = [
-            ...(guestCart?.purchaseCart?.items || []),
-            ...(guestCart?.rentalCart?.items || []),
-          ];
-
-          if (allGuestItems.length > 0) {
-            logger.info(
-              '[Cart] Merging guest cart items with authenticated database cart upon sign-in:',
-              allGuestItems,
-            );
-
-            const dbCartRes = await userService.getCart();
-            const dbPurchaseItems = dbCartRes?.success
-              ? dbCartRes.data?.purchaseCart?.items || []
-              : [];
-            const dbRentalItems = dbCartRes?.success ? dbCartRes.data?.rentalCart?.items || [] : [];
-            const allDbItems = [...dbPurchaseItems, ...dbRentalItems];
-
-            const mergedPayloadMap = new Map();
-
-            allDbItems.forEach((item) => {
-              const pId = item.product?._id || item.product?.id || item.product;
-              if (pId) mergedPayloadMap.set(pId, item);
-            });
-
-            allGuestItems.forEach((item) => {
-              const pId = item._id || item.id;
-              if (pId) {
-                const existing = mergedPayloadMap.get(pId);
-                if (existing) {
-                  existing.quantity += item.quantity;
-                } else {
-                  mergedPayloadMap.set(pId, {
-                    product: pId,
-                    quantity: item.quantity,
-                    type: item.type || 'purchase',
-                    rentalInfo: item.rentalInfo,
-                    deposit: item.deposit,
-                  });
-                }
-              }
-            });
-
-            const syncPayload = Array.from(mergedPayloadMap.values()).map((item) => {
-              const rInfo =
-                item.rentalInfo && Object.keys(item.rentalInfo).length > 0
-                  ? item.rentalInfo
-                  : undefined;
-              return {
-                product:
-                  item.product?._id || item.product?.id || item._id || item.id || item.product,
-                quantity: item.quantity,
-                type: item.type || 'purchase',
-                rentalInfo: rInfo,
-                deposit: item.deposit,
-              };
-            });
-
-            await syncCart({ cartItems: syncPayload });
-            toast.success('Your guest shopping bag was merged successfully!');
-          }
-
-          setGuestPurchaseCart({ items: [], summary: emptySummary });
-          setGuestRentalCart({ items: [], summary: { ...emptySummary, depositTotal: 0 } });
-          persistentStorage.removeItem('siri_cart_cache');
-        } catch (err) {
-          logger.error('[Cart] Guest-to-auth cart merge failed:', err);
-        }
-      };
-
-      mergeGuestCart();
-    }
-    lastAuthRef.current = isAuthenticated;
-  }, [isAuthenticated, syncCart]);
-
-  const syncTimeoutRef = useRef(null);
-
-  const attemptAddToCart = useCallback(
-    async (product) => {
-      const itemType = product.type || 'purchase';
-
-      if (itemType !== activeCartMode) {
-        toast(
-          `Switched to ${itemType === 'rental' ? 'Rental' : 'Purchase'} Cart to add this item`,
-          { icon: '🔄' },
-        );
-        setActiveCartMode(itemType);
-      }
-
-      addItem(product);
-    },
-    [activeCartMode],
-  );
-
-  const addItem = useCallback(
-    async (product) => {
-      const qty = product.quantity || 1;
-      const itemKey = product._id || product.id;
-      const itemType = product.type || 'purchase';
-
-      if (isAuthenticated) {
-        const action = async () => {
-          setIsCartOpen(true);
-          const previousCart = queryClient.getQueryData(['cart']);
-          let rollbackCart = previousCart;
-
-          if (previousCart) {
-            let targetCartKey = itemType === 'purchase' ? 'purchaseCart' : 'rentalCart';
-            const prevItems = previousCart[targetCartKey]?.items || [];
-
-            const existingIndex = prevItems.findIndex(
-              (item) => (item.product?._id || item.product?.id || item._id || item.id) === itemKey,
-            );
-            let updatedItems;
-
-            if (existingIndex >= 0) {
-              updatedItems = [...prevItems];
-              updatedItems[existingIndex] = {
-                ...updatedItems[existingIndex],
-                quantity: updatedItems[existingIndex].quantity + qty,
-              };
-            } else {
-              updatedItems = [
-                ...prevItems,
-                {
-                  id: itemKey,
-                  _id: itemKey,
-                  quantity: qty,
-                  type: itemType,
-                  product: product,
-                  rentalInfo: product.rentalInfo,
-                  deposit: product.deposit || 0,
-                },
-              ];
-            }
-
-            const subtotal = updatedItems.reduce(
-              (sum, item) => sum + (item.product?.price || item.price || 0) * item.quantity,
-              0,
-            );
-            const depositTotal =
-              itemType === 'rental'
-                ? updatedItems.reduce(
-                    (sum, item) =>
-                      sum + (item.product?.deposit || item.deposit || 0) * item.quantity,
-                    0,
-                  )
-                : 0;
-
-            queryClient.setQueryData(['cart'], {
-              ...previousCart,
-              [targetCartKey]: {
-                ...previousCart[targetCartKey],
-                items: updatedItems,
-                summary: {
-                  ...(previousCart[targetCartKey]?.summary || emptySummary),
-                  subtotal,
-                  depositTotal,
-                  total:
-                    subtotal +
-                    depositTotal +
-                    (previousCart[targetCartKey]?.summary?.shippingFee || 0),
-                },
-              },
-            });
-          }
-
-          try {
-            await addToCart({
-              productId: itemKey,
-              quantity: qty,
-              type: itemType,
-              rentalInfo: product.rentalInfo,
-              productInfo: product,
-            });
-          } catch (err) {
-            logger.error('Failed to add item to database cart:', err);
-            toast.error(getErrorMessage(err, 'Unable to add item to bag'));
-            if (rollbackCart) queryClient.setQueryData(['cart'], rollbackCart);
-          }
-        };
-        runProtectedAction(action);
-      } else {
-        const setTargetCart = itemType === 'purchase' ? setGuestPurchaseCart : setGuestRentalCart;
-
-        setTargetCart((prev) => {
-          const prevItems = prev.items || [];
-          const existingIndex = prevItems.findIndex((item) => item.id === itemKey);
-          let newItems;
-          if (existingIndex >= 0) {
-            newItems = [...prevItems];
-            newItems[existingIndex] = {
-              ...newItems[existingIndex],
-              quantity: newItems[existingIndex].quantity + qty,
-            };
-          } else {
-            newItems = [
-              ...prevItems,
-              {
-                id: itemKey,
-                _id: itemKey,
-                title: product.title,
-                price: product.price,
-                oldPrice: product.oldPrice || product.price,
-                stock: product.stock || 10,
-                seller: product.seller || 'Assured Craft Teams',
-                rating: product.rating || 4.5,
-                imageSrc: product.imageSrc,
-                category: product.category,
-                quantity: qty,
-                variant: 'Default',
-                type: itemType,
-                deposit: product.deposit || 0,
-                rentalInfo: product.rentalInfo,
-                isNonRefundable: product.isNonRefundable || false,
-                customizationConfig: product.customizationConfig,
-                product: product,
-              },
-            ];
-          }
-
-          const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-          let depositTotal = 0;
-          if (itemType === 'rental') {
-            depositTotal = newItems.reduce(
-              (sum, item) => sum + (item.deposit || 0) * item.quantity,
-              0,
-            );
-          }
-
-          return {
-            items: newItems,
-            summary: {
-              ...prev.summary,
-              subtotal,
-              total: subtotal + depositTotal,
-              depositTotal,
-            },
-          };
-        });
-        setIsCartOpen(true);
-      }
-    },
-    [runProtectedAction, isAuthenticated, addToCart],
-  );
-
-  const removeItem = useCallback(
-    async (id, _variant) => {
-      if (isAuthenticated) {
-        const action = async () => {
-          const previousCart = queryClient.getQueryData(['cart']);
-          let rollbackCart = previousCart;
-
-          if (previousCart) {
-            let targetCartKey = activeCartMode === 'purchase' ? 'purchaseCart' : 'rentalCart';
-            const prevItems = previousCart[targetCartKey]?.items || [];
-            const updatedItems = prevItems.filter(
-              (item) => (item.product?._id || item.product?.id || item._id || item.id) !== id,
-            );
-
-            const subtotal = updatedItems.reduce(
-              (sum, item) => sum + (item.product?.price || item.price || 0) * item.quantity,
-              0,
-            );
-            const depositTotal =
-              activeCartMode === 'rental'
-                ? updatedItems.reduce(
-                    (sum, item) =>
-                      sum + (item.product?.deposit || item.deposit || 0) * item.quantity,
-                    0,
-                  )
-                : 0;
-
-            queryClient.setQueryData(['cart'], {
-              ...previousCart,
-              [targetCartKey]: {
-                ...previousCart[targetCartKey],
-                items: updatedItems,
-                summary: {
-                  ...(previousCart[targetCartKey]?.summary || emptySummary),
-                  subtotal,
-                  depositTotal,
-                  total:
-                    subtotal +
-                    depositTotal +
-                    (previousCart[targetCartKey]?.summary?.shippingFee || 0),
-                },
-              },
-            });
-          }
-
-          try {
-            await removeFromCart({ productId: id });
-          } catch (err) {
-            logger.error('Failed to remove item from database cart:', err);
-            toast.error(getErrorMessage(err, 'Unable to remove item from bag'));
-            if (rollbackCart) queryClient.setQueryData(['cart'], rollbackCart);
-          }
-        };
-        runProtectedAction(action);
-      } else {
-        const setTargetCart =
-          activeCartMode === 'purchase' ? setGuestPurchaseCart : setGuestRentalCart;
-
-        setTargetCart((prev) => {
-          const newItems = prev.items.filter((item) => item.id !== id);
-          const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-          let depositTotal = 0;
-          if (activeCartMode === 'rental') {
-            depositTotal = newItems.reduce(
-              (sum, item) => sum + (item.deposit || 0) * item.quantity,
-              0,
-            );
-          }
-
-          return {
-            items: newItems,
-            summary: {
-              ...prev.summary,
-              subtotal,
-              total: subtotal + depositTotal,
-              depositTotal,
-            },
-          };
-        });
-      }
-    },
-    [runProtectedAction, isAuthenticated, removeFromCart, activeCartMode],
-  );
-
-  const updateQuantity = useCallback(
-    (id, variantOrQuantity, maybeQuantity) => {
-      const quantity = maybeQuantity !== undefined ? maybeQuantity : variantOrQuantity;
-      const numericQuantity = Number(quantity) || 1;
-
-      if (numericQuantity < 1) {
-        removeItem(id);
-        return;
-      }
-
-      if (isAuthenticated) {
-        const action = () => {
-          const previousCart = queryClient.getQueryData(['cart']);
-          if (previousCart) {
-            // Optimistically update the exact cart (purchase vs rental)
-            let targetCartKey = activeCartMode === 'purchase' ? 'purchaseCart' : 'rentalCart';
-            const updatedItems = previousCart[targetCartKey].items.map((item) => {
-              const itemId = item.product?._id || item.product?.id;
-              if (itemId === id) {
-                return { ...item, quantity: numericQuantity };
-              }
-              return item;
-            });
-
-            const subtotal = updatedItems.reduce(
-              (sum, item) => sum + (item.product?.price || 0) * item.quantity,
-              0,
-            );
-            const depositTotal =
-              activeCartMode === 'rental'
-                ? updatedItems.reduce(
-                    (sum, item) => sum + (item.product?.securityDeposit || 0) * item.quantity,
-                    0,
-                  )
-                : 0;
-            const total =
-              subtotal + depositTotal + (previousCart[targetCartKey].summary?.shippingFee || 0);
-
-            queryClient.setQueryData(['cart'], {
-              ...previousCart,
-              [targetCartKey]: {
-                ...previousCart[targetCartKey],
-                items: updatedItems,
-                summary: {
-                  ...previousCart[targetCartKey].summary,
-                  subtotal,
-                  depositTotal,
-                  total,
-                },
-              },
-            });
-          }
-
-          if (syncTimeoutRef.current) {
-            clearTimeout(syncTimeoutRef.current);
-          }
-
-          syncTimeoutRef.current = setTimeout(async () => {
-            const currentCart = queryClient.getQueryData(['cart']);
-            const allItems = [
-              ...(currentCart?.purchaseCart?.items || []),
-              ...(currentCart?.rentalCart?.items || []),
-            ];
-
-            const payload = allItems.map((item) => {
-              const rInfo =
-                item.rentalInfo && Object.keys(item.rentalInfo).length > 0
-                  ? item.rentalInfo
-                  : undefined;
-              return {
-                product:
-                  item.product?._id || item.product?.id || item._id || item.id || item.product,
-                quantity: item.quantity,
-                type: item.type || 'purchase',
-                rentalInfo: rInfo,
-                deposit: item.deposit,
-              };
-            });
-            try {
-              await syncCart({ cartItems: payload });
-            } catch (err) {
-              logger.error('Failed to update cart quantity in database:', err);
-              toast.error(getErrorMessage(err, 'Unable to update quantity'));
-            }
-          }, 500);
-        };
-        runProtectedAction(action);
-      } else {
-        const setTargetCart =
-          activeCartMode === 'purchase' ? setGuestPurchaseCart : setGuestRentalCart;
-
-        setTargetCart((prev) => {
-          const newItems = prev.items.map((item) =>
-            item.id === id ? { ...item, quantity: numericQuantity } : item,
-          );
-          const subtotal = newItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-          let depositTotal = 0;
-          if (activeCartMode === 'rental') {
-            depositTotal = newItems.reduce(
-              (sum, item) => sum + (item.deposit || 0) * item.quantity,
-              0,
-            );
-          }
-
-          return {
-            items: newItems,
-            summary: {
-              ...prev.summary,
-              subtotal,
-              total: subtotal + depositTotal,
-              depositTotal,
-            },
-          };
-        });
-      }
-    },
-    [removeItem, runProtectedAction, isAuthenticated, syncCart, queryClient, activeCartMode],
-  );
-
-  const clearCart = useCallback(async () => {
-    const action = async () => {
-      if (isAuthenticated) {
-        try {
-          // Note: clearing cart only clears the active cart!
-          const currentCart = queryClient.getQueryData(['cart']);
-          const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart';
-          const otherItems = currentCart?.[otherCartKey]?.items || [];
-          const payload = otherItems.map((item) => {
-            const rInfo =
-              item.rentalInfo && Object.keys(item.rentalInfo).length > 0
-                ? item.rentalInfo
-                : undefined;
-            return {
-              product: item.product?._id || item.product?.id || item._id || item.id || item.product,
-              quantity: item.quantity,
-              type: item.type || 'purchase',
-              rentalInfo: rInfo,
-              deposit: item.deposit,
-            };
-          });
-          await syncCart({ cartItems: payload }); // Leaves only the other cart's items
-        } catch (err) {
-          logger.error('Failed to clear database cart:', err);
-        }
-      } else {
-        const setTargetCart =
-          activeCartMode === 'purchase' ? setGuestPurchaseCart : setGuestRentalCart;
-        setTargetCart({ items: [], summary: { ...emptySummary, depositTotal: 0 } });
-      }
-    };
-
-    if (isAuthenticated) {
-      action();
-    } else {
-      action();
-    }
-  }, [isAuthenticated, syncCart, queryClient, activeCartMode]);
+  useCartMerge({
+    isAuthenticated,
+    syncCart,
+    emptySummary,
+    setGuestPurchaseCart,
+    setGuestRentalCart,
+  });
 
   const cartCount = useMemo(() => items.reduce((acc, item) => acc + item.quantity, 0), [items]);
 
@@ -607,7 +116,7 @@ export function CartProvider({ children }) {
     [rentalCart.items],
   );
 
-  const subtotal = useMemo(() => summary.subtotal, [summary.subtotal]);
+  const subtotal = summary.subtotal;
 
   const totalMRP = useMemo(
     () => items.reduce((acc, item) => acc + (item.oldPrice || item.price) * item.quantity, 0),
@@ -689,6 +198,8 @@ export function CartProvider({ children }) {
       setAppliedCoupon,
     ],
   );
+
+  useAutoApplyCoupon({ claimedCoupon, subtotal, setAppliedCoupon, isAuthenticated });
 
   return (
     <CartStateContext.Provider value={stateValue}>

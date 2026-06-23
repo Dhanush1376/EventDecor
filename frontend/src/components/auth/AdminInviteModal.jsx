@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { adminInviteService } from '../../services/domainServices';
 import { refreshAccessToken } from '../../services/api';
 import toast from 'react-hot-toast';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
 export function AdminInviteModal() {
   const { user, isAuthenticated, checkAuth } = useAuth();

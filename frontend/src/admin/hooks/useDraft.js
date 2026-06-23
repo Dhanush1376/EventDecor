@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import debounce from 'lodash.debounce';
 import { saveDraft, getDraft, deleteDraft as deleteDraftDb } from '../services/draftService';
@@ -68,29 +68,30 @@ export function useDraft({
   }, [initialData, enabled, hasDraft]);
 
   // The debounced save function
-  const debouncedSave = useCallback(
-    debounce(async (dataToSave, stateToSave) => {
-      if (!enabled) return;
+  const debouncedSave = useMemo(
+    () =>
+      debounce(async (dataToSave, stateToSave) => {
+        if (!enabled) return;
 
-      try {
-        setDraftStatus('saving');
-        await saveDraft(draftKey, {
-          module,
-          pageTitle,
-          pagePath: location.pathname,
-          formData: dataToSave,
-          pageState: stateToSave,
-        });
-        setDraftStatus('saved');
-        setLastSavedAt(Date.now());
-        hasUnsavedChanges.current = false;
-      } catch (error) {
-        import('../../utils/logger').then(({ default: logger }) => {
-          logger.error('Failed to auto-save draft:', error);
-        });
-        setDraftStatus('error');
-      }
-    }, debounceMs),
+        try {
+          setDraftStatus('saving');
+          await saveDraft(draftKey, {
+            module,
+            pageTitle,
+            pagePath: location.pathname,
+            formData: dataToSave,
+            pageState: stateToSave,
+          });
+          setDraftStatus('saved');
+          setLastSavedAt(Date.now());
+          hasUnsavedChanges.current = false;
+        } catch (error) {
+          import('../../utils/core/logger').then(({ default: logger }) => {
+            logger.error('Failed to auto-save draft:', error);
+          });
+          setDraftStatus('error');
+        }
+      }, debounceMs),
     [draftKey, module, pageTitle, location.pathname, enabled, debounceMs],
   );
 

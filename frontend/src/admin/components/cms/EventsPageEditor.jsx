@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { SectionHeader, AdminField, AdminInput, AdminTextarea, AdminToggle } from '../AdminUIKit';
 import { ImageUpload } from '../ImageUpload';
 import { AISparkButton } from './AISparkButton';

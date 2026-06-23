@@ -18,7 +18,7 @@ import { ensureIndexes } from './src/config/ensureIndexes';
 import { generateSitemap } from './src/utils/sitemapGenerator';
 import { initSocket, getIO } from './src/socket';
 import { initJobs } from './src/jobs/cronJobs';
-import { initRedis, closeRedisConnections } from './src/utils/redis';
+import { initRedis, closeRedisConnections } from './src/utils/cache/redis';
 import { initWorkers, closeWorkers } from './src/jobs/workers';
 import { initQueues, closeQueues } from './src/jobs/queues';
 import { initRecommendationSystem } from './src/services/recommendation/recommendationEngine';

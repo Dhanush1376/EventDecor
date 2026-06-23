@@ -1,6 +1,6 @@
 import logger from '../../config/logger';
-import { redisClient } from '../../utils/redis';
-import { MemoryCache } from '../../utils/MemoryCache';
+import { redisClient } from '../../utils/cache/redis';
+import { MemoryCache } from '../../utils/cache/MemoryCache';
 
 // In-memory fallback caches when Redis is unavailable
 const personalFeedCache = new MemoryCache({ defaultTtlMs: 10 * 60 * 1000, maxKeys: 500 });
@@ -120,7 +120,9 @@ export const RecommendationCache = {
         const keys = await redisClient!.keys('reco:*');
         if (keys && keys.length > 0) {
           await redisClient!.del(keys);
-          logger.info(`[RECO CACHE] Successfully cleared ${keys.length} recommendation keys from Redis`);
+          logger.info(
+            `[RECO CACHE] Successfully cleared ${keys.length} recommendation keys from Redis`,
+          );
         }
       } catch (err: any) {
         logger.error(`[RECO CACHE] Failed to clear Redis recommendation keys: ${err.message}`);

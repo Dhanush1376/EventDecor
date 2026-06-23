@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
-import { ProductCard } from './ProductCard';
+import { ProductCard } from '../shared/ProductCard';
 import { useRef, useState, useEffect } from 'react';
 
 /**

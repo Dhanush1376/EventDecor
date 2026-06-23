@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { productService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
 export function useProductAI({
   formData,

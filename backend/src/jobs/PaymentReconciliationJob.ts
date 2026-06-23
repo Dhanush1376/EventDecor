@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import Order from '../models/Order';
 import EventBooking from '../models/EventBooking';
 import RentalOrder from '../models/RentalOrder';
-import { RazorpayGateway } from '../utils/RazorpayGateway';
+import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import logger from '../config/logger';
 import { createAdminNotification, sendDirectEmail } from '../services/notificationService';
 import { getAdminEmails } from '../config/adminConfig';

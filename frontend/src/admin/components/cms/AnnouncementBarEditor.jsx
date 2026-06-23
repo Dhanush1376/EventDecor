@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { SectionHeader, AdminInput, AdminToggle } from '../AdminUIKit';
 
 export function AnnouncementBarEditor({ banners, onUpdate }) {

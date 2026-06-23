@@ -1,9 +1,9 @@
 import { m as motion } from 'framer-motion';
 import { CloudinaryImage } from './CloudinaryImage';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
-export function ShowcaseCard({
+export const ShowcaseCard = React.memo(function ShowcaseCard({
   id,
   _id,
   title,
@@ -180,4 +180,4 @@ export function ShowcaseCard({
       </div>
     </motion.div>
   );
-}
+});

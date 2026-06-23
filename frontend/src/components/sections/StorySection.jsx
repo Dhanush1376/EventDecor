@@ -6,7 +6,7 @@ import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { StorySkeleton } from '../ui/Skeleton';
 import { useRef } from 'react';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
-import { createSafeHtml } from '../../utils/sanitize';
+import { createSafeHtml } from '../../utils/security/sanitize';
 
 export function StorySection() {
   const containerRef = useRef(null);

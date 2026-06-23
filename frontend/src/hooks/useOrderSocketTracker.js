@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { customOrderService } from '../services/domainServices';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 export function useOrderSocketTracker({
   socket,
@@ -67,5 +67,5 @@ export function useOrderSocketTracker({
       socket.off('customOrder:newMessage', handleNewMessage);
       socket.off('customOrder:quoteCreated', handleQuoteCreated);
     };
-  }, [socket, selectedOrder, activeTab]); // Kept EXACTLY identical to avoid stale closures
+  }, [socket, selectedOrder, activeTab, loadWorkspaceData, setSelectedOrder]);
 }

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import rateLimit, { Options, ipKeyGenerator } from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
-import redisClient from '../utils/redis';
+import redisClient from '../utils/cache/redis';
 import logger from '../config/logger';
 
 // Standard rate limit bypass for local development or health checks

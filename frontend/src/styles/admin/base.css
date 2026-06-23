@@ -1,0 +1,87 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATIONS (Touch Targets & Spacing)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .admin-section-root .admin-btn,
+  .admin-section-root .admin-input,
+  .admin-section-root .admin-select,
+  .admin-section-root .admin-textarea {
+    min-height: 44px !important;
+  }
+  .admin-section-root .admin-btn-icon {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+  .admin-section-root .admin-card {
+    border-radius: var(--admin-radius-lg);
+  }
+  .admin-section-root #admin-main-content {
+    padding: 16px 16px 100px 16px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLOBAL RESETS (scoped to admin)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root,
+.admin-section-root *,
+.admin-section-root *::before,
+.admin-section-root *::after {
+  box-sizing: border-box;
+}
+
+.admin-section-root {
+  background-color: var(--admin-bg);
+  color: var(--admin-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.admin-section-root.dark {
+  color-scheme: dark;
+}
+
+/* Override storefront heading fonts inside admin */
+.admin-section-root h1,
+.admin-section-root h2,
+.admin-section-root h3,
+.admin-section-root h4,
+.admin-section-root h5,
+.admin-section-root h6 {
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif !important;
+  letter-spacing: -0.01em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.admin-section-root .custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-section-root .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--admin-border-strong);
+  border-radius: 10px;
+}
+.admin-section-root .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-text-tertiary);
+}
+
+.admin-section-root .scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.admin-section-root .scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

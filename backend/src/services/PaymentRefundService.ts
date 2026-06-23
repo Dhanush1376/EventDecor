@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import RefundRecord from '../models/RefundRecord';
 import logger from '../config/logger';
-import { RazorpayGateway } from '../utils/RazorpayGateway';
+import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import ApiError from '../utils/ApiError';
 import { refundQueue } from '../jobs/queues';
 import OutboxEvent from '../models/OutboxEvent';

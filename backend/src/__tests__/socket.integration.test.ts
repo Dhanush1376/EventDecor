@@ -18,7 +18,7 @@ jest.mock('../app', () => ({
   isOriginAllowed: jest.fn(() => true),
 }));
 
-jest.mock('../utils/redis', () => ({
+jest.mock('../utils/cache/redis', () => ({
   __esModule: true,
   default: null,
   pubClient: null,

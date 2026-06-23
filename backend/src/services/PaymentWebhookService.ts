@@ -1,14 +1,14 @@
 import mongoose from 'mongoose';
 import Order from '../models/Order';
 import logger from '../config/logger';
-import { RazorpayGateway } from '../utils/RazorpayGateway';
+import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import PaymentAudit from '../models/PaymentAudit';
 import { PaymentStateMachine } from './payments/PaymentStateMachine';
 import PaymentWebhookEvent from '../models/PaymentWebhookEvent';
 import OutboxEvent from '../models/OutboxEvent';
 import * as Sentry from '@sentry/node';
 import { webhookQueue } from '../jobs/queues';
-import { bumpAdminAnalyticsCacheVersion } from '../utils/cacheVersion';
+import { bumpAdminAnalyticsCacheVersion } from '../utils/cache/cacheVersion';
 import AnalyticsService from './analyticsService';
 import crypto from 'crypto';
 import { InventoryService } from './InventoryService';

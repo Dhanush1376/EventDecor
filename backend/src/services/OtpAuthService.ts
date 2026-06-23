@@ -4,13 +4,14 @@ import User from '../models/User';
 import OtpRequestLog from '../models/OtpRequestLog';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
-import { canonicalizeEmail } from '../utils/emailHelper';
-import { setTwoFactorPending } from '../utils/twoFactorPending';
+import { canonicalizeEmail } from '../utils/email/emailHelper';
+import { setTwoFactorPending } from '../utils/security/twoFactorPending';
 import OtpVerification, { OTP_MAX_ATTEMPTS } from '../models/OtpVerification';
 import FailedLoginAttempt from '../models/FailedLoginAttempt';
-import { cacheOtpSession, getCachedOtpSession } from '../utils/otpVerifyCache';
-import { recordOtpVerifyFailure } from '../utils/otpRateLimit';
+import { cacheOtpSession, getCachedOtpSession } from '../utils/cache/otpVerifyCache';
+import { recordOtpVerifyFailure } from '../utils/security/otpRateLimit';
 import SessionAuthService from './SessionAuthService';
+import { getFrontendUrl } from '../utils/getFrontendUrl';
 
 class OtpAuthService {
   static normalizeOtpInput(otp: string): string {
@@ -116,7 +117,7 @@ class OtpAuthService {
     });
 
     const { sendDirectEmail } = require('./notificationService');
-    const { getOtpEmailTemplate } = require('../utils/emailTemplates');
+    const { getOtpEmailTemplate } = require('../utils/email/emailTemplates');
     try {
       sendDirectEmail({
         email: cleanEmail,
@@ -395,7 +396,7 @@ class OtpAuthService {
 
       try {
         const { sendDirectEmail } = require('./notificationService');
-        const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:3000';
+        const frontendUrl = getFrontendUrl();
         sendDirectEmail({
           email: user.email,
           subject: `Welcome to Siri Arts & Crafts, ${user.name} ✦ Discover Timeless Decor`,
@@ -472,7 +473,7 @@ class OtpAuthService {
     });
 
     const { sendDirectEmail } = require('./notificationService');
-    const { getCodOtpEmailTemplate } = require('../utils/emailTemplates');
+    const { getCodOtpEmailTemplate } = require('../utils/email/emailTemplates');
     try {
       sendDirectEmail({
         email: cleanEmail,

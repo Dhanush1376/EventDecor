@@ -5,7 +5,7 @@ import RentalPolicy from '../../models/RentalPolicy';
 import ServiceArea from '../../models/ServiceArea';
 import ApiError from '../../utils/ApiError';
 import logger from '../../config/logger';
-import { RazorpayGateway } from '../../utils/RazorpayGateway';
+import { RazorpayGateway } from '../../utils/payment/RazorpayGateway';
 import { DistributedLock } from '../../utils/DistributedLock';
 import { RentalAvailabilityService } from './RentalAvailabilityService';
 import OutboxEvent from '../../models/OutboxEvent';

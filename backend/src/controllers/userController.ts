@@ -1,15 +1,13 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
-import { STAFF_ROLES, canActorAssignRole } from '../config/adminConfig';
+import { STAFF_ROLES } from '../config/adminConfig';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import Product from '../models/Product';
 import TeamInvite from '../models/TeamInvite';
-import { sendEmail } from '../utils/sendEmail';
-import crypto from 'crypto';
-import { canonicalizeEmail } from '../utils/emailHelper';
+import { canonicalizeEmail } from '../utils/email/emailHelper';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 import logger from '../config/logger';
 import { setPaginationHeaders } from '../utils/paginationHeaders';
@@ -19,7 +17,8 @@ import {
   getCachedSessionJson,
   invalidateUserSessionCaches,
   sessionKeys,
-} from '../utils/userSessionCache';
+} from '../utils/cache/userSessionCache';
+import { UserService } from '../services/users/userService';
 
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
@@ -92,39 +91,9 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
 
 export const updateUserRole = asyncHandler(async (req: Request, res: Response) => {
   const { role } = req.body;
-
-  // Validate that the requested role is a recognized system role
-  if (role !== 'user' && role !== 'customer' && !STAFF_ROLES.includes(role)) {
-    throw new ApiError(400, 'Invalid role assignment requested');
-  }
-
   const actorRole = (req as any).user!.role;
 
-  // Enforce enterprise RBAC hierarchy weight checks
-  if (!canActorAssignRole(actorRole, role)) {
-    throw new ApiError(
-      403,
-      `Access denied. Your current role (${actorRole}) does not have sufficient clearance to assign the '${role}' role.`,
-    );
-  }
-
-  // Ensure they aren't trying to modify an owner or someone above their paygrade
-  const targetUser = await User.findById(req.params.id);
-  if (!targetUser) throw new ApiError(404, 'User not found');
-
-  const targetRole = targetUser.role;
-  if (
-    targetRole === 'owner' ||
-    (!canActorAssignRole(actorRole, targetRole) && actorRole !== 'owner')
-  ) {
-    throw new ApiError(
-      403,
-      'Access denied. You cannot modify the role of a user with equal or higher privileges.',
-    );
-  }
-
-  const user = await User.findByIdAndUpdate(req.params.id, { role }, { returnDocument: 'after' });
-  if (!user) throw new ApiError(404, 'User not found');
+  const user = await UserService.updateUserRole(req.params.id as string, role, actorRole);
   res.status(200).json(new ApiResponse(true, 'User role updated', user));
 });
 
@@ -306,119 +275,7 @@ export const toggleWishlist = asyncHandler(async (req: any, res: Response) => {
     );
 });
 
-// Database-driven Cart Management
-const computeAndValidateCart = async (user: any) => {
-  const validatedCart = [];
-  let cartChanged = false;
-
-  const rawCart = Array.isArray(user.cart) ? user.cart : [];
-  const productIds = Array.from(
-    new Set<string>(rawCart.map((item: any) => String(item.product)).filter(Boolean)),
-  );
-  const products = await Product.find({ _id: { $in: productIds } });
-  const productsById = new Map(products.map((product: any) => [product._id.toString(), product]));
-
-  for (const item of rawCart) {
-    if (!item.product) continue;
-    const product = productsById.get(String(item.product));
-    if (!product || !product.isActive) {
-      cartChanged = true;
-      continue; // Auto-prune inactive or deleted products
-    }
-
-    const itemType = item.type || 'purchase';
-
-    let quantity = Number(item.quantity) || 0;
-    if (quantity > 50) {
-      quantity = 50;
-      cartChanged = true;
-    }
-    if (quantity > product.stock) {
-      quantity = product.stock;
-      cartChanged = true;
-    }
-
-    if (quantity > 0) {
-      validatedCart.push({
-        product: product,
-        quantity,
-        variant: item.variant || 'Default',
-        type: itemType,
-        rentalInfo: item.rentalInfo,
-      });
-    } else {
-      cartChanged = true;
-    }
-  }
-
-  if (cartChanged) {
-    user.cart = validatedCart.map((item) => ({
-      product: item.product._id,
-      quantity: item.quantity,
-      variant: item.variant,
-      type: item.type,
-      rentalInfo: item.rentalInfo,
-    }));
-    await User.findOneAndUpdate({ _id: user._id }, { $set: { cart: user.cart } });
-  }
-
-  const computeSummary = (items: any[], isRental: boolean) => {
-    let subtotal = 0;
-    let depositTotal = 0;
-
-    items.forEach((item) => {
-      let itemPrice = item.product.price;
-
-      if (isRental && item.rentalInfo?.startDate && item.rentalInfo?.endDate) {
-        const start = new Date(item.rentalInfo.startDate);
-        const end = new Date(item.rentalInfo.endDate);
-        const diffDays =
-          Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) || 1;
-
-        if (item.product.rentalPricing) {
-          if (diffDays >= 30 && item.product.rentalPricing.monthly > 0) {
-            itemPrice = (item.product.rentalPricing.monthly / 30) * diffDays;
-          } else if (diffDays >= 7 && item.product.rentalPricing.weekly > 0) {
-            itemPrice = (item.product.rentalPricing.weekly / 7) * diffDays;
-          } else if (item.product.rentalPricing.daily > 0) {
-            itemPrice = item.product.rentalPricing.daily * diffDays;
-          }
-        }
-        depositTotal += (item.product.securityDeposit || 0) * item.quantity;
-      }
-
-      subtotal += itemPrice * item.quantity;
-    });
-
-    const shippingFee = subtotal > 2000 || subtotal === 0 ? 0 : 100;
-    const platformFee = 0;
-    const discount = 0;
-    const total = subtotal + shippingFee + depositTotal - discount;
-
-    return {
-      subtotal,
-      depositTotal,
-      shippingFee,
-      platformFee,
-      discount,
-      total,
-    };
-  };
-
-  const purchaseItems = validatedCart.filter((item) => item.type === 'purchase');
-  const rentalItems = validatedCart.filter((item) => item.type === 'rental');
-
-  return {
-    purchaseCart: {
-      items: purchaseItems,
-      summary: computeSummary(purchaseItems, false),
-    },
-    rentalCart: {
-      items: rentalItems,
-      summary: computeSummary(rentalItems, true),
-    },
-  };
-};
+// Compute and validate cart moved to UserService
 
 export const getCart = asyncHandler(async (req: any, res: Response) => {
   const userId = String(req.user.id);
@@ -431,7 +288,7 @@ export const getCart = asyncHandler(async (req: any, res: Response) => {
 
   const user = await User.findById(req.user.id);
   if (!user) throw new ApiError(404, 'User not found');
-  const cartDetails = await computeAndValidateCart(user);
+  const cartDetails = await UserService.computeAndValidateCart(user);
   await cacheCart(userId, cartDetails);
   res.setHeader('X-Session-Cache', 'MISS');
   res.status(200).json(new ApiResponse(true, 'Cart fetched', cartDetails));
@@ -500,7 +357,7 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
   if (!updatedUser) throw new ApiError(404, 'User not found');
 
   await invalidateUserSessionCaches(String(req.user.id));
-  const cartDetails = await computeAndValidateCart(updatedUser);
+  const cartDetails = await UserService.computeAndValidateCart(updatedUser);
   res.status(200).json(new ApiResponse(true, 'Cart updated', cartDetails));
 });
 
@@ -529,7 +386,7 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
   await User.findOneAndUpdate({ _id: req.user.id }, { $set: { cart: updatedCart } });
 
   await invalidateUserSessionCaches(String(req.user.id));
-  const cartDetails = await computeAndValidateCart(user);
+  const cartDetails = await UserService.computeAndValidateCart(user);
   res.status(200).json(new ApiResponse(true, 'Cart synced successfully', cartDetails));
 });
 
@@ -544,7 +401,7 @@ export const removeFromCart = asyncHandler(async (req: any, res: Response) => {
   if (!user) throw new ApiError(404, 'User not found');
 
   await invalidateUserSessionCaches(String(req.user.id));
-  const cartDetails = await computeAndValidateCart(user);
+  const cartDetails = await UserService.computeAndValidateCart(user);
   res.status(200).json(new ApiResponse(true, 'Removed from cart', cartDetails));
 });
 
@@ -663,52 +520,13 @@ export const getTeamMembers = asyncHandler(async (req: Request, res: Response) =
   );
 });
 
-// Create team invitation
 export const inviteTeamMember = asyncHandler(async (req: any, res: Response) => {
   const { email, role, permissions } = req.body;
   if (!email || !role) {
     throw new ApiError(400, 'Email and Role are required');
   }
 
-  const cleanEmail = canonicalizeEmail(email);
-
-  // Check if user is already a team member
-  const existingUser = await User.findOne({ email: cleanEmail });
-  if (existingUser && ['admin', 'manager', 'coordinator'].includes(existingUser.role)) {
-    throw new ApiError(400, 'This user is already a registered team member');
-  }
-
-  // Cancel any existing pending invite for this email
-  await TeamInvite.deleteMany({ email: cleanEmail, status: 'pending' }, {
-    bypassDestructionGuard: true,
-  } as any);
-
-  const token = crypto.randomBytes(32).toString('hex');
-  const invite = await TeamInvite.create({
-    email: cleanEmail,
-    role,
-    permissions: permissions || 'Full Access',
-    token,
-    invitedBy: req.user.id,
-  });
-
-  // Dynamic notification to member email!
-  const frontendUrl = (
-    process.env.FRONTEND_URLS?.split(',')[0] ||
-    process.env.FRONTEND_URL ||
-    'http://localhost:5173'
-  ).trim();
-  const acceptUrl = `${frontendUrl}/accept-invite?token=${token}`;
-
-  const { getTeamInviteEmailTemplate } = require('../utils/emailTemplates');
-  const emailHtml = getTeamInviteEmailTemplate(acceptUrl, role, permissions || 'Full Access');
-
-  await sendEmail({
-    email: cleanEmail,
-    subject: 'Invitation to join Siri Arts & Crafts Admin Team',
-    message: `You are invited to join the Siri Arts & Crafts team as an ${role}. Visit here to accept: ${acceptUrl}`,
-    html: emailHtml,
-  });
+  const invite = await UserService.inviteTeamMember(email, role, permissions, req.user.id);
 
   res.status(201).json(new ApiResponse(true, 'Invitation sent successfully', invite));
 });

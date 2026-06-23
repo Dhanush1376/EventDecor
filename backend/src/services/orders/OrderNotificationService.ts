@@ -1,5 +1,6 @@
 import { emailQueue, notificationQueue } from '../../jobs/queues';
 import logger from '../../config/logger';
+import { getFrontendUrl } from '../../utils/getFrontendUrl';
 
 export class OrderNotificationService {
   /**
@@ -7,7 +8,7 @@ export class OrderNotificationService {
    */
   static async dispatchOrderConfirmation(order: any, user: any, adminEmails: string[]) {
     try {
-      const frontendUrl = process.env.FRONTEND_URLS?.split(',')[0] || 'http://localhost:5173';
+      const frontendUrl = getFrontendUrl();
 
       // Base context for templates
       const context = {

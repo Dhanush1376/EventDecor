@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { persistentStorage } from '../../utils/persistentStorage';
+import { persistentStorage } from '../../utils/storage/persistentStorage';
 import { userService } from '../../services/domainServices';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
 export function useCheckoutShipping({ isAuthenticated, user, setActiveStep, setIsProcessing }) {
   const [savedAddresses, setSavedAddresses] = useState([]);
