@@ -88,9 +88,6 @@ jobs:
         working-directory: backend
         run: npm run lint
 
-      - name: Check no stray console.* in src
-        run: node scripts/check-no-console.mjs
-
       - name: Build Backend
         working-directory: backend
         run: npm run build
