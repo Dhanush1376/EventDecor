@@ -1,0 +1,379 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARD SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  box-shadow: var(--admin-shadow-xs);
+  transition:
+    box-shadow var(--admin-duration-normal) var(--admin-ease),
+    border-color var(--admin-duration-normal) var(--admin-ease);
+}
+
+.admin-section-root .admin-card:hover {
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.admin-section-root .admin-card-interactive {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  box-shadow: var(--admin-shadow-xs);
+  cursor: pointer;
+  transition: all var(--admin-duration-normal) var(--admin-ease);
+}
+
+.admin-section-root .admin-card-interactive:hover {
+  border-color: var(--admin-border-strong);
+  box-shadow: var(--admin-shadow-md);
+  transform: translateY(-1px);
+}
+
+.admin-section-root .admin-card-elevated {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-xl);
+  box-shadow: var(--admin-shadow-md);
+  transition: all var(--admin-duration-normal) var(--admin-ease);
+}
+
+.admin-section-root .admin-card-elevated:hover {
+  box-shadow: var(--admin-shadow-lg);
+  transform: translateY(-2px);
+}
+
+.admin-section-root .admin-card-flush {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  overflow: hidden;
+}
+
+.admin-section-root .admin-card-inset {
+  background: var(--admin-bg-subtle);
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: var(--admin-radius-lg);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTON SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: var(--admin-text-sm);
+  line-height: 1;
+  border-radius: var(--admin-radius-lg);
+  padding: 8px 16px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--admin-duration-fast) var(--admin-ease);
+  white-space: nowrap;
+  user-select: none;
+  min-height: 36px;
+}
+
+.admin-section-root .admin-btn:active {
+  transform: scale(0.97);
+}
+
+.admin-section-root .admin-btn:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.admin-section-root .admin-btn:focus-visible {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  outline-color: transparent !important;
+  box-shadow:
+    0 0 0 2px var(--admin-surface, #ffffff),
+    0 0 0 4px rgba(51, 65, 85, 0.3) !important;
+}
+
+/* Primary */
+.admin-section-root .admin-btn-primary {
+  background: var(--admin-accent-light);
+  color: var(--admin-accent);
+  border-color: rgba(51, 65, 85, 0.15);
+}
+
+.admin-section-root .admin-btn-primary:hover {
+  background: var(--admin-accent-muted);
+  border-color: rgba(51, 65, 85, 0.25);
+}
+
+/* Secondary */
+.admin-section-root .admin-btn-secondary {
+  background: var(--admin-text-primary);
+  color: var(--admin-text-inverse);
+  border-color: var(--admin-text-primary);
+}
+
+.admin-section-root .admin-btn-secondary:hover {
+  background: #27272a;
+}
+
+/* Outline */
+.admin-section-root .admin-btn-outline {
+  background: var(--admin-surface);
+  color: var(--admin-text-primary);
+  border-color: var(--admin-border);
+  box-shadow: var(--admin-shadow-xs);
+}
+
+.admin-section-root .admin-btn-outline:hover {
+  background: var(--admin-surface-hover);
+  border-color: var(--admin-border-strong);
+}
+
+/* Ghost */
+.admin-section-root .admin-btn-ghost {
+  background: transparent;
+  color: var(--admin-text-secondary);
+  border-color: transparent;
+}
+
+.admin-section-root .admin-btn-ghost:hover {
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-primary);
+}
+
+/* Destructive */
+.admin-section-root .admin-btn-destructive {
+  background: var(--admin-error);
+  color: white;
+  border-color: var(--admin-error);
+}
+
+.admin-section-root .admin-btn-destructive:hover {
+  background: #dc2626;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+/* Icon Button */
+.admin-section-root .admin-btn-icon {
+  padding: 8px;
+  min-height: 36px;
+  min-width: 36px;
+  background: transparent;
+  color: var(--admin-text-secondary);
+  border-color: transparent;
+  border-radius: var(--admin-radius-md);
+}
+
+.admin-section-root .admin-btn-icon:hover {
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-primary);
+}
+
+/* Button Sizes */
+.admin-section-root .admin-btn-sm {
+  padding: 5px 10px;
+  font-size: var(--admin-text-xs);
+  min-height: 28px;
+  border-radius: var(--admin-radius-md);
+  gap: 4px;
+}
+
+.admin-section-root .admin-btn-lg {
+  padding: 10px 20px;
+  font-size: var(--admin-text-md);
+  min-height: 42px;
+  border-radius: var(--admin-radius-xl);
+  gap: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BADGE SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--admin-radius-md);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.6;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.admin-section-root .admin-badge-success {
+  color: var(--admin-success);
+  background: var(--admin-success-light);
+  border-color: var(--admin-success-border);
+}
+
+.admin-section-root .admin-badge-warning {
+  color: var(--admin-warning);
+  background: var(--admin-warning-light);
+  border-color: var(--admin-warning-border);
+}
+
+.admin-section-root .admin-badge-error {
+  color: var(--admin-error);
+  background: var(--admin-error-light);
+  border-color: var(--admin-error-border);
+}
+
+.admin-section-root .admin-badge-info {
+  color: var(--admin-info);
+  background: var(--admin-info-light);
+  border-color: var(--admin-info-border);
+}
+
+.admin-section-root .admin-badge-neutral {
+  color: var(--admin-text-secondary);
+  background: var(--admin-surface-muted);
+  border-color: var(--admin-border);
+}
+
+.admin-section-root .admin-badge-primary {
+  color: var(--admin-accent);
+  background: var(--admin-accent-light);
+  border-color: rgba(51, 65, 85, 0.15);
+}
+
+.admin-section-root .admin-badge-dot::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.admin-section-root .admin-badge-dot-pulse::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  animation: admin-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SKELETON SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root .admin-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--admin-surface-muted);
+  border-radius: var(--admin-radius-md);
+  /* Hardware acceleration for smooth shimmer */
+  transform: translateZ(0);
+}
+
+.admin-section-root .admin-skeleton::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0.4) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: admin-skeleton-shimmer 1.5s infinite linear;
+}
+
+/* Dark mode adjustment for shimmer */
+.admin-section-root.dark .admin-skeleton::after {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.03) 20%,
+    rgba(255, 255, 255, 0.08) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+/* Accessibility: reduce motion support */
+@media (prefers-reduced-motion: reduce) {
+  .admin-section-root .admin-skeleton::after {
+    animation: none;
+  }
+}
+
+.admin-section-root .admin-skeleton-text {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.admin-section-root .admin-skeleton-title {
+  height: 20px;
+  border-radius: 8px;
+  width: 40%;
+}
+
+.admin-section-root .admin-skeleton-avatar {
+  border-radius: 50%;
+}
+
+.admin-section-root .admin-skeleton-card {
+  border-radius: var(--admin-radius-xl);
+  border: 1px solid var(--admin-border-subtle);
+}
+
+.admin-section-root .admin-skeleton-chart {
+  border-radius: var(--admin-radius-xl);
+  height: 280px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes admin-skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes admin-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes admin-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-section-root .admin-animate-in {
+  animation: admin-fade-in 0.3s var(--admin-ease-spring) forwards;
+}

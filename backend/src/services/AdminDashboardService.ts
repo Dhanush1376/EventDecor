@@ -6,7 +6,7 @@ import User from '../models/User';
 import PaymentAudit from '../models/PaymentAudit';
 import OutboxEvent from '../models/OutboxEvent';
 import Product from '../models/Product';
-import { analyticsCache } from '../utils/MemoryCache';
+import { analyticsCache } from '../utils/cache/MemoryCache';
 import { emailQueue, webhookQueue, refundQueue } from '../jobs/queues';
 
 export class AdminDashboardService {

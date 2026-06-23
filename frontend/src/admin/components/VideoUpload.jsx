@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { uploadService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 export function VideoUpload({
   value,
   onChange,

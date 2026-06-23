@@ -1,11 +1,10 @@
-/* eslint-disable */
 import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { io as socketIO } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { getApiRootUrl } from '../config/apiConfig';
 import { getAccessToken } from '../services/api';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 const UserSocketContext = createContext(null);
 

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
-import { OptimizedImage } from '../ui';
+import { OptimizedImage, StatusPill } from '../ui';
 
 export function OrderCard({ order, item, itemIdx, idx }) {
   const { setSelectedOrderId, setSelectedOrderItemIndex, setReviewingProduct } = useDashboard();
@@ -81,9 +81,9 @@ export function OrderCard({ order, item, itemIdx, idx }) {
             })}
           </span>
         </div>
-        <span className="text-[9px] bg-surface-container px-2 py-0.5 rounded font-bold uppercase tracking-wider text-secondary border border-outline-variant/10">
+        <StatusPill color="neutral">
           {order.orderType === 'rental' || item.type === 'rental' ? 'Rental' : 'Purchase'}
-        </span>
+        </StatusPill>
       </div>
 
       {/* Card Body - Item Container */}
@@ -174,9 +174,9 @@ export function OrderCard({ order, item, itemIdx, idx }) {
             </span>
           </div>
           {isReturnActive && (
-            <span className="text-[#8c7335] font-bold uppercase tracking-wider text-[8px] border border-[#8c7335]/30 px-1.5 py-0.5 rounded bg-[#8c7335]/5">
+            <StatusPill color="accent" className="text-[8px] px-1.5 py-0.5">
               Active
-            </span>
+            </StatusPill>
           )}
         </div>
       )}

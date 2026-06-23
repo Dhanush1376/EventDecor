@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 // Dynamic GPS Map Component using Leaflet (Lazy Loaded on Viewport Intersect)
 const GPSMap = ({ address }) => {

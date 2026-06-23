@@ -7,6 +7,7 @@ import { HeroSkeleton } from '../ui/Skeleton';
 import { useState, useEffect } from 'react';
 import { useWindowHeight } from '../../hooks/useWindowHeight';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
+import { PLACEHOLDER_IMAGES } from '../../constants/placeholderImages';
 
 export function HeroSection({
   badgeText,
@@ -100,7 +101,7 @@ export function HeroSection({
               src={
                 hero.mobileBackgroundImage ||
                 hero.backgroundImage ||
-                'https://res.cloudinary.com/drxgnnzeb/image/upload/v1779181764/event_decor_ecommerce/assets/event_decor_mobile%20hero%20background.png'
+                PLACEHOLDER_IMAGES.heroBackground
               }
               alt="Luxury Royal Wedding Background"
               className="w-full h-full object-cover"

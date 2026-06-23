@@ -1,7 +1,7 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import rentalService from '../../services/rentalService';
+import rentalService from '../../services/api/rentalService';
 import toast from 'react-hot-toast';
 
 const RADIUS_PRESETS = [10, 25, 50, 100, 200];

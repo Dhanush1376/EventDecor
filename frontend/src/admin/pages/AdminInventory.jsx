@@ -1,11 +1,11 @@
 import { m as motion } from 'framer-motion';
 import { useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
-import { handleImageError } from '../../utils/imageUtils';
+import { handleImageError } from '../../utils/media/imageUtils';
 import { productService } from '../../services/api/productService';
 import { refreshWebsiteContent } from '../../hooks/useWebsiteContent';
 import toast from 'react-hot-toast';
-import { getErrorMessage } from '../../utils/errorHelpers';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 import {
   PageHeader,
   StatCard,

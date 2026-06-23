@@ -1,5 +1,5 @@
 import React from 'react';
-import { ProductCard } from '../../components/ui/ProductCard';
+import { ProductCard } from '../../components/shared/ProductCard';
 
 export function LivePreviewCard({ formData, mobileTab }) {
   return (

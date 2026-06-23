@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import Order from '../models/Order';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
-import { RazorpayGateway } from '../utils/RazorpayGateway';
+import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import PaymentAudit from '../models/PaymentAudit';
 import { PaymentStateMachine } from './payments/PaymentStateMachine';
 import OutboxEvent from '../models/OutboxEvent';

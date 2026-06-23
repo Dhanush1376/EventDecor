@@ -9,9 +9,10 @@ import { getColdStartFeed } from '../services/recommendation/coldStartHandler';
 import { RecommendationCache } from '../services/recommendation/recommendationCache';
 import Product from '../models/Product';
 import Event from '../models/Event';
+import ShowcaseCollection from '../models/ShowcaseCollection';
 import logger from '../config/logger';
 import { escapeRegex } from '../services/searchService';
-import { sanitizeOutputStrings } from '../utils/aiSanitizer';
+import { sanitizeOutputStrings } from '../utils/security/aiSanitizer';
 import mongoose from 'mongoose';
 import { recommendationQueue, isQueuesReady } from '../jobs/queues';
 
@@ -471,9 +472,13 @@ export const getCompleteSetup = async (req: Request, res: Response) => {
         isDepositRefundable: p.isDepositRefundable,
       }));
     } else {
-      const event = await Event.findById(targetId).select('category').lean();
+      let event = await Event.findById(targetId).select('category').lean();
       if (!event) {
-        return res.status(404).json({ success: false, message: 'Event not found' });
+        event = await ShowcaseCollection.findById(targetId).select('category').lean();
+      }
+
+      if (!event) {
+        return res.status(404).json({ success: false, message: 'Event or Showcase not found' });
       }
 
       const fallbackEvents = await Event.find({
@@ -569,7 +574,11 @@ export const getAlsoViewed = async (req: Request, res: Response) => {
         }));
       }
     } else {
-      const event = await Event.findById(targetId).select('category').lean();
+      let event = await Event.findById(targetId).select('category').lean();
+      if (!event) {
+        event = await ShowcaseCollection.findById(targetId).select('category').lean();
+      }
+
       if (event) {
         const events = await Event.find({
           category: event.category,

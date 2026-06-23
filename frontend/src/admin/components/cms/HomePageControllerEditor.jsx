@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { SectionHeader, AdminField, AdminInput, AdminToggle } from '../AdminUIKit';
 import { ImageUpload } from '../ImageUpload';
 import { useAdmin } from '../../context/AdminContext';
-import logger from '../../../utils/logger';
+import logger from '../../../utils/core/logger';
 
 export function HomePageControllerEditor({ content, onUpdate }) {
   const [activeTab, setActiveTab] = useState('layout');

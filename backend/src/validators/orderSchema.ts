@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { canonicalizeEmail } from '../utils/emailHelper';
+import { canonicalizeEmail } from '../utils/email/emailHelper';
 
 const objectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid product ID');
 

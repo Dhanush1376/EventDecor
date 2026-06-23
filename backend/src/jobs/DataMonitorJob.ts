@@ -4,7 +4,7 @@ import logger from '../config/logger';
 import { withCronLock } from '../utils/cronLock';
 import { getAdminEmails } from '../config/adminConfig';
 import { BackupService } from '../services/backupService';
-import { redisClient } from '../utils/redis';
+import { redisClient } from '../utils/cache/redis';
 
 export const initDataMonitorJob = () => {
   const backupService = new BackupService();
@@ -33,7 +33,7 @@ export const initDataMonitorJob = () => {
             const prevCountStr = await redisClient.get(redisKey);
             if (prevCountStr) {
               const prevCount = parseInt(prevCountStr, 10);
-              
+
               // Define a drop threshold (e.g. 5% drop or more than 100 items at once)
               // Adjust these thresholds based on business logic
               const dropAmount = prevCount - currentCount;
@@ -52,8 +52,10 @@ export const initDataMonitorJob = () => {
         }
 
         if (emergencyTriggered) {
-          logger.error('[DATA MONITOR] Mass deletion signature detected! Taking emergency actions...');
-          
+          logger.error(
+            '[DATA MONITOR] Mass deletion signature detected! Taking emergency actions...',
+          );
+
           // 1. Trigger emergency backup snapshot
           const reason = `Mass deletion signature: ${dropsDetected.join(' | ')}`;
           await backupService.createEmergencySnapshot(reason);
@@ -70,7 +72,7 @@ export const initDataMonitorJob = () => {
                   <h2 style="color: red;">CRITICAL ALERT: Mass Deletion Detected</h2>
                   <p>Our real-time monitoring has detected a catastrophic drop in database records.</p>
                   <ul>
-                    ${dropsDetected.map(d => `<li>${d}</li>`).join('')}
+                    ${dropsDetected.map((d) => `<li>${d}</li>`).join('')}
                   </ul>
                   <p><strong>Action Taken:</strong> An emergency snapshot has been triggered and saved locally to prevent further data loss.</p>
                   <p>Please investigate immediately!</p>

@@ -5,7 +5,7 @@ import { corsMiddleware, corsHandler } from './middleware/corsMiddleware';
 import { securityHeadersMiddleware } from './middleware/helmetMiddleware';
 import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
-import { xssSanitize } from './utils/xssSanitizer';
+import { xssSanitize } from './utils/security/xssSanitizer';
 
 import cookieParser from 'cookie-parser';
 import { globalLimiter, apiFloodingLimiter } from './middleware/rateLimiter';
@@ -269,7 +269,7 @@ app.get(
       // Socket.io not yet initialized
     }
 
-    const pingRedis = require('./utils/redis').pingRedis;
+    const pingRedis = require('./utils/cache/redis').pingRedis;
     const redisStatus = await pingRedis();
 
     const report = getMetricsReport();

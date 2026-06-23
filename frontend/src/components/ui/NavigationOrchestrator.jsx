@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { prefetchManager } from '../../utils/prefetchManager';
+import { prefetchManager } from '../../utils/performance/prefetchManager';
 import { preloadRazorpay } from '../../hooks/useRazorpay';
 
 const _PRIORITY_ROUTES = ['/cart', '/checkout', '/dashboard', '/collections'];

@@ -4,7 +4,7 @@ import { SEO } from '../components/seo/SEO';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { useState, useEffect } from 'react';
 import { bookingService } from '../services/domainServices';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 export function EventBookingSuccess() {
   const { id } = useParams();

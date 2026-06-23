@@ -14,7 +14,7 @@ import { m as motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
 import api from '../../services/api';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 import {
   PageHeader,
   StatCard,

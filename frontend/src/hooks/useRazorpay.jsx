@@ -2,7 +2,8 @@ import React, { useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { orderService } from '../services/domainServices';
 
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
+import { EXTERNAL_URLS } from '../config/constants';
 let razorpayPromise = null;
 
 const loadScript = async (src, retries = 2) => {
@@ -34,7 +35,7 @@ const loadScript = async (src, retries = 2) => {
 };
 
 export const preloadRazorpay = () => {
-  loadScript('https://checkout.razorpay.com/v1/checkout.js').catch(() => {});
+  loadScript(EXTERNAL_URLS.RAZORPAY_CHECKOUT).catch(() => {});
 };
 
 const createIdempotencyKey = () => {
@@ -111,7 +112,7 @@ export const useRazorpay = () => {
     };
 
     try {
-      const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+      const res = await loadScript(EXTERNAL_URLS.RAZORPAY_CHECKOUT);
 
       if (!res) {
         showPremiumToast('Razorpay SDK failed to load. Are you online?', 'error');
@@ -142,7 +143,7 @@ export const useRazorpay = () => {
         description: 'Luxury Event Decor Order',
         image:
           import.meta.env.VITE_LOGO_URL ||
-          'https://res.cloudinary.com/siriartscrafts/image/upload/v1/SiriLogo.webp',
+          `${EXTERNAL_URLS.CLOUDINARY_CDN_BASE}/siriartscrafts/image/upload/v1/SiriLogo.webp`,
         order_id: razorpayOrder.id,
         handler: async (response) => {
           try {
@@ -224,7 +225,7 @@ export const useRazorpay = () => {
     };
 
     try {
-      const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+      const res = await loadScript(EXTERNAL_URLS.RAZORPAY_CHECKOUT);
 
       if (!res) {
         showPremiumToast('Razorpay SDK failed to load. Are you online?', 'error');
@@ -240,7 +241,7 @@ export const useRazorpay = () => {
         description: 'Complete Payment for Order',
         image:
           import.meta.env.VITE_LOGO_URL ||
-          'https://res.cloudinary.com/siriartscrafts/image/upload/v1/SiriLogo.webp',
+          `${EXTERNAL_URLS.CLOUDINARY_CDN_BASE}/siriartscrafts/image/upload/v1/SiriLogo.webp`,
         order_id: order.razorpayOrderId,
         handler: async (response) => {
           try {

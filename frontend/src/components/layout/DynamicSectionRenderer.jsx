@@ -8,7 +8,7 @@ import {
 } from '../ui';
 import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
 // Lazy load section components
 const HeroSection = React.lazy(() =>

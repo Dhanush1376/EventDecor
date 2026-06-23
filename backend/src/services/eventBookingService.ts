@@ -49,7 +49,7 @@ export class EventBookingService {
       const pkg = await Event.findById(eventPackageId);
       if (pkg) rentalFee = pkg.basePrice || 35000;
     }
-    const { cmsCache } = require('../utils/MemoryCache');
+    const { cmsCache } = require('../utils/cache/MemoryCache');
     const ContentSection = require('../models/ContentSection').default;
     const addonsConfig = await cmsCache.getOrSet('canonical_addons', async () => {
       return await ContentSection.findOne({ sectionKey: 'canonical_addons' });

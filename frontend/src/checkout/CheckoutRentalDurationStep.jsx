@@ -32,7 +32,7 @@ export default function CheckoutRentalDurationStep() {
         );
       }
     }
-  }, [rentalStartDate, rentalEndDate, rentalItem]);
+  }, [rentalStartDate, rentalEndDate, rentalItem, handleRentalCostCalculation]);
 
   const handleContinue = () => {
     if (!rentalStartDate || !rentalEndDate) {

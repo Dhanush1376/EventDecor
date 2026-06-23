@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { loyaltyService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 export function LoyaltyPanel() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);

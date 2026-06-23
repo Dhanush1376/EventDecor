@@ -1,5 +1,5 @@
 import { openDB } from 'idb';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
 const DB_NAME = 'admin_drafts_db';
 const STORE_NAME = 'drafts';

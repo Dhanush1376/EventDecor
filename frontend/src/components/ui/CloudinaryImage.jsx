@@ -5,8 +5,8 @@ import {
   getSrcSet,
   handleImageError,
   getBlurDataUri,
-} from '../../utils/imageUtils';
-import { perfMonitor } from '../../utils/performanceMonitor';
+} from '../../utils/media/imageUtils';
+import { perfMonitor } from '../../utils/performance/performanceMonitor';
 
 function BaseOptimizedImage({
   src,

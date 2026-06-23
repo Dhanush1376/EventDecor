@@ -1,6 +1,6 @@
 import Order from '../../models/Order';
 import ApiError from '../../utils/ApiError';
-import { RazorpayGateway } from '../../utils/RazorpayGateway';
+import { RazorpayGateway } from '../../utils/payment/RazorpayGateway';
 import logger from '../../config/logger';
 
 export class OrderRetryService {

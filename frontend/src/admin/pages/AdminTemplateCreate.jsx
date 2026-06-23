@@ -7,8 +7,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { notificationService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { fadeUp, stagger } from '../components/AdminUIKit';
-import logger from '../../utils/logger';
-import { getErrorMessage } from '../../utils/errorHelpers';
+import logger from '../../utils/core/logger';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 import { useDraft } from '../hooks/useDraft';
 
 export function AdminTemplateCreate() {
@@ -68,7 +68,7 @@ export function AdminTemplateCreate() {
       };
       fetchTemplate();
     }
-  }, [id, navigate]);
+  }, [id, navigate, isEditMode, setTemplateForm]);
 
   const handleTemplateUpdate = async (e) => {
     e.preventDefault();

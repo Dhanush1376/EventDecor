@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { getErrorMessage } from '../../utils/errorHelpers';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 import { useDraft } from '../hooks/useDraft';
 
 export function AdminAddCategory() {
@@ -68,7 +68,7 @@ export function AdminAddCategory() {
       };
       fetchCategory();
     }
-  }, [id, navigate]);
+  }, [id, navigate, isEditMode, setFormData]);
 
   const handleNameChange = (e) => {
     const val = e.target.value;

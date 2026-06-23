@@ -4,8 +4,8 @@ import { useAuth } from './AuthContext';
 import { WishlistStateContext, WishlistDispatchContext } from './WishlistContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import logger from '../utils/logger';
-import { getErrorMessage } from '../utils/errorHelpers';
+import logger from '../utils/core/logger';
+import { getErrorMessage } from '../utils/core/errorHelpers';
 
 export function WishlistProvider({ children }) {
   const { user, isAuthenticated, runProtectedAction, isAuthInitialized } = useAuth();

@@ -4,9 +4,9 @@ import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import { TwoFactorService } from '../services/twoFactorService';
 import SessionAuthService from '../services/SessionAuthService';
-import { consumeTwoFactorPending } from '../utils/twoFactorPending';
+import { consumeTwoFactorPending } from '../utils/security/twoFactorPending';
 import User from '../models/User';
-import { setCustomerRefreshCookie } from '../utils/authCookies';
+import { setCustomerRefreshCookie } from '../utils/security/authCookies';
 
 export const getTwoFactorStatus = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;

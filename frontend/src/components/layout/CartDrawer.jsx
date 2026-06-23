@@ -3,10 +3,7 @@ import { Link } from 'react-router-dom';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import React, { useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
-import { prefetchManager } from '../../utils/prefetchManager';
-
-const _EMPTY_CART_ILLU =
-  'https://res.cloudinary.com/drxgnnzeb/image/upload/v1779129342/event_decor_ecommerce/assets/event_decor_empty_cart_illustration.jpg';
+import { prefetchManager } from '../../utils/performance/prefetchManager';
 
 export function CartDrawer({ isOpen, onClose }) {
   const { items, removeItem, updateQuantity, subtotal, cartCount, loading, appliedCoupon } =

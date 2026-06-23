@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { encryptField, decryptField } from '../utils/fieldEncryption';
+import { encryptField, decryptField } from '../utils/security/fieldEncryption';
 import logger from '../config/logger';
 
 export interface IVisualSearchProvider {

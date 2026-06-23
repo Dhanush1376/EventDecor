@@ -5,9 +5,9 @@ import PasswordResetToken from '../models/PasswordResetToken';
 import FailedLoginAttempt from '../models/FailedLoginAttempt';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
-import { isSameEmail, canonicalizeEmail } from '../utils/emailHelper';
+import { isSameEmail, canonicalizeEmail } from '../utils/email/emailHelper';
 import { getAdminEmails, STAFF_ROLES } from '../config/adminConfig';
-import { setTwoFactorPending } from '../utils/twoFactorPending';
+import { setTwoFactorPending } from '../utils/security/twoFactorPending';
 import SessionAuthService from './SessionAuthService';
 
 class AdminAuthService {

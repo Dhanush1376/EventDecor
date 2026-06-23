@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { analyticsService, cmsService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
 export function useAdminSecurity() {
   const { logout } = useAuth();

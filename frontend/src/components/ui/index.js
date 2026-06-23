@@ -1,5 +1,4 @@
 export * from './Button';
-export * from './ProductCard';
 export * from './ProductGallery';
 export * from './ProductInfo';
 export * from './ProductCoupons';
@@ -30,3 +29,6 @@ export { default as CloudflareVerification } from './CloudflareVerification';
 export * from './PremiumRecommendationCard';
 export * from './RecommendationCarousel';
 export * from './ScrollToTopButton';
+
+export * from './FilterTabs';
+export * from './StatusPill';

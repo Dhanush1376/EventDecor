@@ -2,7 +2,7 @@ import UserInteraction from '../../models/UserInteraction';
 import Product from '../../models/Product';
 import Event from '../../models/Event';
 import logger from '../../config/logger';
-import { getSearchCache, setSearchCache } from './SearchCacheService';
+import { getSearchCache, setSearchCache } from './searchCache';
 import { SYNONYM_MAP, TRANSLITERATION_MAP } from './searchDictionaries';
 import { predictCategories } from './SearchQueryBuilder';
 

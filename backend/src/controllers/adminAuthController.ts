@@ -6,13 +6,13 @@ import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import { TwoFactorService } from '../services/twoFactorService';
-import { consumeTwoFactorPending, hasTwoFactorPending } from '../utils/twoFactorPending';
+import { consumeTwoFactorPending, hasTwoFactorPending } from '../utils/security/twoFactorPending';
 import User from '../models/User';
 import {
   ADMIN_REFRESH_COOKIE,
   setAdminRefreshCookie,
   clearAdminRefreshCookie,
-} from '../utils/authCookies';
+} from '../utils/security/authCookies';
 import { regenerateCsrfToken, clearCsrfCookie } from '../middleware/csrfMiddleware';
 import { getFrontendUrl } from '../utils/getFrontendUrl';
 

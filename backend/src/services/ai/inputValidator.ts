@@ -8,7 +8,7 @@
  */
 
 import { isKnownProvider } from './providerRegistry';
-import { isSafeUrl } from '../../utils/ssrfProtection';
+import { isSafeUrl } from '../../utils/security/ssrfProtection';
 import logger from '../../config/logger';
 
 // ── API Key Validation ─────────────────────────────────────────────────────

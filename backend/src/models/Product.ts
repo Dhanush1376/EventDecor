@@ -159,6 +159,7 @@ ProductSchema.index(
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ featured: 1 });
 ProductSchema.index({ isActive: 1 });
+ProductSchema.index({ slug: 1, isActive: 1 });
 
 // High-Performance Production Compound Indexes
 ProductSchema.index({ isActive: 1, category: 1, price: 1 });

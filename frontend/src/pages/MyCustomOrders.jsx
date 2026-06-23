@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useUserSocket } from '../context/UserSocketProvider';
 import { customOrderService, uploadService } from '../services/domainServices';
 import toast from 'react-hot-toast';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 // ─── Animation Presets ───
 const _fadeUp = {

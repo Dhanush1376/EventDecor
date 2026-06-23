@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { customOrderService } from '../services/domainServices';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 export function useCustomOrderWorkspace({
   user,
@@ -16,7 +16,7 @@ export function useCustomOrderWorkspace({
 }) {
   const [loading, setLoading] = useState(false);
 
-  const loadWorkspaceData = async () => {
+  const loadWorkspaceData = useCallback(async () => {
     setLoading(true);
     try {
       const configRes = await customOrderService.getConfig();
@@ -39,14 +39,14 @@ export function useCustomOrderWorkspace({
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, setConfig, setMyOrders]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       loadWorkspaceData();
     }, 0);
     return () => clearTimeout(timer);
-  }, [user]);
+  }, [user, loadWorkspaceData]);
 
   const handleSendChatMessage = async (e) => {
     if (e) e.preventDefault();

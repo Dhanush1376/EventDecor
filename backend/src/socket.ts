@@ -7,7 +7,7 @@ import { isOriginAllowed } from './config/corsConfig';
 import { ADMIN_ROLES } from './config/adminConfig';
 import { setSocketAdapterMode } from './config/socketState';
 import { createAdapter } from '@socket.io/redis-adapter';
-import { pubClient, subClient } from './utils/redis';
+import { pubClient, subClient } from './utils/cache/redis';
 import { checkSocketConnectionRateLimit } from './utils/socketConnectionRateLimit';
 
 let io: Server;

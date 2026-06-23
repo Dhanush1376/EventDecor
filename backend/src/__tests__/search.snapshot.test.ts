@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../app';
 import mongoose from 'mongoose';
 import { connectDB } from '../config/db';
-import redisClient from '../utils/redis';
+import redisClient from '../utils/cache/redis';
 
 // Note: To avoid real-time AI API drift, we mock the analyzeQueryWithAI response or rely on local fallback.
 // Since we want pure deterministic snapshots, we will override GROQ_API_KEY to force local parser.

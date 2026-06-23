@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { redisClient } from '../utils/redis';
+import { redisClient } from '../utils/cache/redis';
 import logger from '../config/logger';
 
 /**

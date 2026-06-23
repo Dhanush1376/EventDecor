@@ -1,5 +1,5 @@
 import logger from '../config/logger';
-import redisClient from './redis';
+import redisClient from './cache/redis';
 
 const WINDOW_MS = 60_000;
 const MAX_CONNECTIONS_PER_IP = 10;

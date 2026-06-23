@@ -3,7 +3,7 @@
  * Production must use VITE_API_URL (Render backend). Development uses the Vite /api proxy.
  */
 
-export const PRODUCTION_API_ORIGIN = 'https://eventdecor-production-1647.up.railway.app';
+export const PRODUCTION_API_ORIGIN = import.meta.env.VITE_PRODUCTION_API_ORIGIN || '';
 
 const normalizeApiBase = (url) => {
   let trimmed = String(url || '')

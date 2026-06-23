@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import visualSearchService from '../services/visualSearchService';
+import visualSearchService from '../services/api/visualSearchService';
 
 /**
  * useVisualSearch — manages the full visual search lifecycle:

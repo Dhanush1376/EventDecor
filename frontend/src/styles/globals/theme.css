@@ -1,0 +1,116 @@
+:root {
+  color-scheme: only light;
+
+  /* ─── Z-Index Scale ─── */
+  --z-base: 0;
+  --z-raised: 1;
+  --z-sticky: 50;
+  --z-dropdown: 60;
+  --z-overlay: 90;
+  --z-drawer: 110;
+  --z-modal: 120;
+  --z-toast: 130;
+  --z-loader: 9000;
+  --z-splash: 99999;
+
+  /* ─── Border Radius Scale ─── */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-3xl: 40px;
+  --radius-full: 9999px;
+
+  /* ─── Shadow Scale (warm luxury undertones) ─── */
+  --shadow-xs: 0 1px 2px rgba(115, 92, 0, 0.04);
+  --shadow-sm: 0 2px 4px rgba(115, 92, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 12px rgba(115, 92, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 8px 24px rgba(115, 92, 0, 0.07), 0 4px 8px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 16px 40px rgba(115, 92, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 24px 60px rgba(115, 92, 0, 0.1), 0 12px 24px rgba(0, 0, 0, 0.05);
+  --shadow-luxury:
+    0 30px 60px -12px rgba(115, 92, 0, 0.08), 0 18px 36px -18px rgba(115, 92, 0, 0.1);
+  --shadow-glow: 0 0 30px rgba(212, 175, 55, 0.15);
+
+  /* ─── Transition Presets ─── */
+  --ease-luxury: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 700ms;
+
+  /* ─── Semantic Surface Colors (aliases for scattered hex values) ─── */
+  --color-surface-warm: #f8f7f4;
+  --color-surface-ivory: #fcfbf9;
+  --color-surface-cream: #fdfbf7;
+  --color-surface-dark: #0f0e0c;
+  --color-surface-dark-alt: #1c1a17;
+  --color-gold: #d4af37;
+  --color-gold-light: #f1d592;
+  --color-gold-dark: #735c00;
+  --color-gold-darker: #594700;
+
+  /* ─── Layout Measurements ─── */
+  --navbar-height: 60px;
+  --navbar-height-scrolled: 52px;
+}
+
+@theme {
+  /* Luxury Design Palette - Digital Studio */
+  --color-primary: #735c00;
+  --color-primary-container: #d4af37;
+  --color-primary-fixed: #ffe088;
+  --color-primary-fixed-dim: #e9c349;
+  --color-on-primary: #1a1c1a;
+
+  --color-secondary: #685c57;
+  --color-secondary-container: #f0dfd9;
+
+  --color-tertiary: #5c624c;
+  /* Olive/Moss Green for Heritage vibe */
+  --color-error: #ba1a1a;
+
+  --color-on-primary-container: #1a1c1a;
+  --color-on-secondary-container: #211a18;
+
+  --color-surface: #faf9f6;
+  /* Ivory */
+  --color-surface-bright: #ffffff;
+  --color-surface-dim: #dbdad7;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f4f3f1;
+  /* Soft Beige */
+  --color-surface-container: #efeeeb;
+  --color-surface-container-high: #e9e8e5;
+  --color-surface-container-highest: #e3e2e0;
+  /* Warm Beige */
+
+  --color-on-surface: #000000;
+  --color-on-surface-variant: #2d2b29;
+  /* Refined dark grey for depth */
+
+  --color-outline: #7f7663;
+  --color-outline-variant: #d0c5af;
+
+  /* Additional Luxury Tones */
+  --color-gold-metallic: linear-gradient(135deg, #d4af37 0%, #f1d592 50%, #d4af37 100%);
+  --color-champagne: #f7e7ce;
+
+  /* Fonts */
+  --font-display: 'Playfair Display', serif;
+  --font-headline: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-label: 'Inter', sans-serif;
+
+  /* Spacing & Breakpoints */
+  --spacing-margin-desktop: clamp(22px, 4.5vw, 72px);
+  --spacing-margin-mobile: 18px;
+  --spacing-gutter: 22px;
+  --spacing-max-width: 1440px;
+  --bottom-nav-height: 64px;
+  --breakpoint-xs: 360px;
+}

@@ -3,7 +3,7 @@ import Event from '../models/Event';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
-import { bumpPublicCacheVersion } from '../utils/cacheVersion';
+import { bumpPublicCacheVersion } from '../utils/cache/cacheVersion';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 
 export const getEvents = asyncHandler(async (req: Request, res: Response) => {

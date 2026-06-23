@@ -11,14 +11,20 @@ export function useScrollDirection() {
     const updateScrollDirection = () => {
       const scrollY = window.scrollY;
 
-      setIsAtTop(scrollY < 50);
+      setIsAtTop((prev) => {
+        const current = scrollY < 50;
+        return prev === current ? prev : current;
+      });
 
       if (Math.abs(scrollY - lastScrollY) < 10) {
         ticking = false;
         return;
       }
 
-      setScrollDirection(scrollY > lastScrollY ? 'down' : 'up');
+      setScrollDirection((prev) => {
+        const current = scrollY > lastScrollY ? 'down' : 'up';
+        return prev === current ? prev : current;
+      });
       lastScrollY = scrollY > 0 ? scrollY : 0;
       ticking = false;
     };

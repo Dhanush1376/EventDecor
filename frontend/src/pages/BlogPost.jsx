@@ -4,27 +4,55 @@ import { SEO } from '../components/seo/SEO';
 import { LazyImage } from '../components/ui/LazyImage';
 import { FAQAccordion } from '../components/seo/FAQAccordion';
 import { BlogCard } from '../components/blog/BlogCard';
-import { useMemo } from 'react';
-import fallbackBlogsData from '../content/blogs.json';
-import { useWebsiteContent } from '../hooks/useWebsiteContent';
+import { useState, useEffect } from 'react';
+import { blogService } from '../services/domainServices';
 
 export function BlogPost() {
   const { slug } = useParams();
 
-  const { blogs } = useWebsiteContent();
-  const blogsData = blogs || fallbackBlogsData;
+  const [post, setPost] = useState(null);
+  const [relatedPosts, setRelatedPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const post = useMemo(() => blogsData.find((b) => b.slug === slug), [slug, blogsData]);
+  useEffect(() => {
+    const fetchPost = async () => {
+      try {
+        const response = await blogService.getBlogBySlug(slug);
+        if (response?.success) {
+          setPost(response.data);
 
-  // Find related posts (same category, excluding current)
-  const relatedPosts = useMemo(() => {
-    if (!post) return [];
-    return blogsData
-      .filter((b) => b.category === post.category && b.slug !== post.slug)
-      .slice(0, 3);
-  }, [post, blogsData]);
+          // Fetch related posts (could be optimized with a specific backend route)
+          const allBlogsResponse = await blogService.getBlogs();
+          if (allBlogsResponse?.success) {
+            const related = allBlogsResponse.data
+              .filter((b) => b.category === response.data.category && b.slug !== response.data.slug)
+              .slice(0, 3);
+            setRelatedPosts(related);
+          }
+        } else {
+          setError(true);
+        }
+      } catch (err) {
+        console.error('Failed to fetch blog post:', err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPost();
+  }, [slug]);
 
-  if (!post) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background pt-32 pb-20 text-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-on-surface-variant">Loading article...</p>
+      </div>
+    );
+  }
+
+  if (error || !post) {
     return <Navigate to="/blog" replace />;
   }
 

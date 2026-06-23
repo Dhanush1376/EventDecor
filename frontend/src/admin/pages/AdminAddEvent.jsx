@@ -104,7 +104,7 @@ export function AdminAddEvent() {
       };
       fetchEvent();
     }
-  }, [id, navigate]);
+  }, [id, navigate, isEditMode, setFormData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

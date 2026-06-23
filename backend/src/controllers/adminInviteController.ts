@@ -5,11 +5,11 @@ import ApiError from '../utils/ApiError';
 import User from '../models/User';
 import AdminInvite from '../models/AdminInvite';
 import logger from '../config/logger';
-import { canonicalizeEmail } from '../utils/emailHelper';
+import { canonicalizeEmail } from '../utils/email/emailHelper';
 import { canActorManageTarget, canActorAssignRole } from '../config/adminConfig';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import { setPaginationHeaders } from '../utils/paginationHeaders';
-import { invalidateUserSessionCaches } from '../utils/userSessionCache';
+import { invalidateUserSessionCaches } from '../utils/cache/userSessionCache';
 
 /**
  * Invite an existing registered user to the Admin Portal
@@ -29,17 +29,26 @@ export const createAdminInvite = asyncHandler(async (req: Request, res: Response
   // 1. Resolve and validate the target user
   const targetUser = await User.findOne({ email: cleanEmail });
   if (!targetUser) {
-    throw new ApiError(404, `No registered user found with email "${cleanEmail}". Admin access invitations can only be sent to existing registered accounts.`);
+    throw new ApiError(
+      404,
+      `No registered user found with email "${cleanEmail}". Admin access invitations can only be sent to existing registered accounts.`,
+    );
   }
 
   // 2. Prevent self-invitation or self-privilege escalation
   if (String(targetUser._id) === String(actorId)) {
-    throw new ApiError(400, 'You cannot invite yourself to a role or escalate your own privileges.');
+    throw new ApiError(
+      400,
+      'You cannot invite yourself to a role or escalate your own privileges.',
+    );
   }
 
   // 3. Verify actor has permissions over target user's current role
   if (!canActorManageTarget(actorRole, targetUser.role)) {
-    throw new ApiError(403, `You do not have permission to manage users with the role "${targetUser.role}".`);
+    throw new ApiError(
+      403,
+      `You do not have permission to manage users with the role "${targetUser.role}".`,
+    );
   }
 
   // 4. Verify actor can assign the requested role
@@ -50,7 +59,10 @@ export const createAdminInvite = asyncHandler(async (req: Request, res: Response
   // 5. Prevent duplicate invitations
   const existingPending = await AdminInvite.findOne({ email: cleanEmail, status: 'pending' });
   if (existingPending) {
-    throw new ApiError(400, `A pending invitation to the role "${existingPending.roleAssigned}" already exists for this email.`);
+    throw new ApiError(
+      400,
+      `A pending invitation to the role "${existingPending.roleAssigned}" already exists for this email.`,
+    );
   }
 
   // 6. Create the invitation record
@@ -63,7 +75,9 @@ export const createAdminInvite = asyncHandler(async (req: Request, res: Response
     invitedUser: targetUser._id,
   });
 
-  logger.info(`[ADMIN INVITE] Invite created for user ${cleanEmail} (ID: ${targetUser._id}) as ${role} by actor ${actorId}`);
+  logger.info(
+    `[ADMIN INVITE] Invite created for user ${cleanEmail} (ID: ${targetUser._id}) as ${role} by actor ${actorId}`,
+  );
 
   res.status(201).json(new ApiResponse(true, 'Admin invitation created successfully', invite));
 });
@@ -86,9 +100,15 @@ export const getPendingInvites = asyncHandler(async (req: Request, res: Response
   ]);
 
   setPaginationHeaders(res, totalCount, page, limit);
-  res.status(200).json(
-    new ApiResponse(true, 'Pending invitations retrieved', formatPaginationResponse(invites, totalCount, page, limit))
-  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Pending invitations retrieved',
+        formatPaginationResponse(invites, totalCount, page, limit),
+      ),
+    );
 });
 
 /**
@@ -109,9 +129,15 @@ export const getInviteHistory = asyncHandler(async (req: Request, res: Response)
   ]);
 
   setPaginationHeaders(res, totalCount, page, limit);
-  res.status(200).json(
-    new ApiResponse(true, 'Invitation history retrieved', formatPaginationResponse(invites, totalCount, page, limit))
-  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        'Invitation history retrieved',
+        formatPaginationResponse(invites, totalCount, page, limit),
+      ),
+    );
 });
 
 /**
@@ -128,7 +154,10 @@ export const revokeAdminInvite = asyncHandler(async (req: Request, res: Response
   }
 
   if (invite.status !== 'pending') {
-    throw new ApiError(400, `Only pending invitations can be revoked. This invitation is currently "${invite.status}".`);
+    throw new ApiError(
+      400,
+      `Only pending invitations can be revoked. This invitation is currently "${invite.status}".`,
+    );
   }
 
   // Verify actor has role clearance to revoke this role
@@ -140,7 +169,9 @@ export const revokeAdminInvite = asyncHandler(async (req: Request, res: Response
   invite.revokedAt = new Date();
   await invite.save();
 
-  logger.info(`[ADMIN INVITE] Invitation ${id} for ${invite.email} revoked by ${(req as any).user!.id}`);
+  logger.info(
+    `[ADMIN INVITE] Invitation ${id} for ${invite.email} revoked by ${(req as any).user!.id}`,
+  );
 
   res.status(200).json(new ApiResponse(true, 'Invitation revoked successfully', invite));
 });
@@ -206,17 +237,31 @@ export const respondToAdminInvite = asyncHandler(async (req: Request, res: Respo
     // Invalidate user session caches
     await invalidateUserSessionCaches(String(userId));
 
-    logger.info(`[ADMIN INVITE ACCEPTED] User ${userId} accepted invite. Upgraded from ${previousRole} to ${invite.roleAssigned}`);
+    logger.info(
+      `[ADMIN INVITE ACCEPTED] User ${userId} accepted invite. Upgraded from ${previousRole} to ${invite.roleAssigned}`,
+    );
 
-    res.status(200).json(new ApiResponse(true, `You have successfully accepted the invitation and are now a ${invite.roleAssigned}!`, { role: invite.roleAssigned }));
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          true,
+          `You have successfully accepted the invitation and are now a ${invite.roleAssigned}!`,
+          { role: invite.roleAssigned },
+        ),
+      );
   } else {
     // Mark invitation rejected
     invite.status = 'rejected';
     invite.rejectedAt = new Date();
     await invite.save();
 
-    logger.info(`[ADMIN INVITE REJECTED] User ${userId} rejected invite to become ${invite.roleAssigned}`);
+    logger.info(
+      `[ADMIN INVITE REJECTED] User ${userId} rejected invite to become ${invite.roleAssigned}`,
+    );
 
-    res.status(200).json(new ApiResponse(true, 'You have rejected the invitation.', { status: 'rejected' }));
+    res
+      .status(200)
+      .json(new ApiResponse(true, 'You have rejected the invitation.', { status: 'rejected' }));
   }
 });

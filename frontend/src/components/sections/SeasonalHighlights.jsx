@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SectionWrapper } from '../layout';
 import { RecommendationCarousel } from '../ui/RecommendationCarousel';
-import { ProductCard } from '../ui/ProductCard';
+import { ProductCard } from '../shared/ProductCard';
 import { useState, useEffect } from 'react';
-import { recommendationService } from '../../services/recommendationService';
-import logger from '../../utils/logger';
+import { recommendationService } from '../../services/api/recommendationService';
+import logger from '../../utils/core/logger';
 
 const SEASONAL_THEMES = {
   diwali: {

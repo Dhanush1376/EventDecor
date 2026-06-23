@@ -1,4 +1,4 @@
-import redisClient from './redis';
+import redisClient from './cache/redis';
 import logger from '../config/logger';
 
 /**

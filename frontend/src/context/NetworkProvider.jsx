@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { safeLocalStorage } from '../utils/storage';
-import { isPrerendering } from '../utils/prerender';
-import logger from '../utils/logger';
+import { safeLocalStorage } from '../utils/storage/storage';
+import { isPrerendering } from '../utils/performance/prerender';
+import logger from '../utils/core/logger';
 import { getApiRootUrl } from '../config/apiConfig';
 import { NetworkContext } from './NetworkContext';
 

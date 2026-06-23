@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { recommendationService } from '../services/recommendationService';
+import { recommendationService } from '../services/api/recommendationService';
 import { useAuth } from '../context/AuthContext';
 import { getApiUrl } from '../config/apiConfig';
 
@@ -40,6 +40,27 @@ export function useRecommendationTracker({
     return 'luxury';
   }, []);
 
+  // Flush the batch buffer
+  const flushBatch = useCallback(() => {
+    if (batchBufferRef.current.length === 0) return;
+
+    const events = [...batchBufferRef.current];
+    batchBufferRef.current = [];
+
+    // Use sendBeacon for page unload reliability, fall back to regular API
+    if (navigator.sendBeacon && events.length <= 5) {
+      try {
+        const blob = new Blob([JSON.stringify({ events })], { type: 'application/json' });
+        navigator.sendBeacon(`${getApiUrl()}/tracking/batch`, blob);
+        return;
+      } catch {
+        // Fall through to regular API
+      }
+    }
+
+    recommendationService.trackBatch(events);
+  }, []);
+
   // Queue an event to the batch buffer
   const queueEvent = useCallback(
     (eventType, tType, tId, metadata = {}) => {
@@ -63,29 +84,8 @@ export function useRecommendationTracker({
         flushBatch();
       }
     },
-    [source, location.pathname],
+    [source, location.pathname, flushBatch],
   );
-
-  // Flush the batch buffer
-  const flushBatch = useCallback(() => {
-    if (batchBufferRef.current.length === 0) return;
-
-    const events = [...batchBufferRef.current];
-    batchBufferRef.current = [];
-
-    // Use sendBeacon for page unload reliability, fall back to regular API
-    if (navigator.sendBeacon && events.length <= 5) {
-      try {
-        const blob = new Blob([JSON.stringify({ events })], { type: 'application/json' });
-        navigator.sendBeacon(`${getApiUrl()}/tracking/batch`, blob);
-        return;
-      } catch {
-        // Fall through to regular API
-      }
-    }
-
-    recommendationService.trackBatch(events);
-  }, []);
 
   // Track a single event explicitly (for use in component event handlers)
   const trackEvent = useCallback(

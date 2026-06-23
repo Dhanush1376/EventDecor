@@ -1,0 +1,70 @@
+export function cleanRentalInfo(rentalInfo) {
+  if (!rentalInfo) return undefined;
+  const { startDate, endDate } = rentalInfo;
+  if (!startDate || !endDate) return undefined;
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return undefined;
+  }
+
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+  const duration = Number(rentalInfo.duration) || diffDays;
+
+  return {
+    startDate: start.toISOString(),
+    endDate: end.toISOString(),
+    duration,
+  };
+}
+
+export function calculateCartSummary(items, cartType, shippingFee = 0) {
+  const subtotal = items.reduce(
+    (sum, item) => sum + (item.product?.price || item.price || 0) * item.quantity,
+    0,
+  );
+
+  let depositTotal = 0;
+  if (cartType === 'rental') {
+    depositTotal = items.reduce(
+      (sum, item) =>
+        sum +
+        (item.product?.deposit || item.deposit || item.product?.securityDeposit || 0) *
+          item.quantity,
+      0,
+    );
+  }
+
+  const total = subtotal + depositTotal + shippingFee;
+
+  return { subtotal, depositTotal, total };
+}
+
+export function transformDbCart(dbCartItems) {
+  if (!dbCartItems || !Array.isArray(dbCartItems)) return [];
+  return dbCartItems
+    .filter((item) => item.product)
+    .map((item) => ({
+      id: item.product._id || item.product.id,
+      _id: item.product._id || item.product.id,
+      title: item.product.title,
+      price: item.product.price,
+      oldPrice: item.product.oldPrice || item.product.price,
+      stock: item.product.stock || 0,
+      seller: item.product.seller || 'Siri Arts Artisans',
+      rating: item.product.rating || 0,
+      imageSrc: item.product.imageSrc,
+      category: item.product.category,
+      quantity: item.quantity,
+      variant: item.variant || 'Default',
+      type: item.type || 'purchase',
+      rentalInfo: cleanRentalInfo(item.rentalInfo),
+      deposit: item.deposit || 0,
+      isNonRefundable: item.product.isNonRefundable,
+      customizationConfig: item.product.customizationConfig,
+      product: item.product,
+    }));
+}

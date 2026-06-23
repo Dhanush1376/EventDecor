@@ -3,26 +3,81 @@ import { ArrowRight, MapPin, Star, CheckCircle } from 'lucide-react';
 import { SEO } from '../components/seo/SEO';
 import { LazyImage } from '../components/ui/LazyImage';
 import { FAQAccordion } from '../components/seo/FAQAccordion';
-import { useMemo } from 'react';
-import fallbackLocationsData from '../content/locations.json';
-import { useWebsiteContent } from '../hooks/useWebsiteContent';
+import { useState, useEffect } from 'react';
+import { locationService } from '../services/domainServices';
 
 export function LocationLanding() {
   const { city } = useParams();
 
-  const { locations } = useWebsiteContent();
-  const locationsData = locations || fallbackLocationsData;
+  const [locationObj, setLocationObj] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  // Find location data based on the URL parameter
-  const locationObj = useMemo(() => {
-    if (!city) return null;
-    // Handle both exact slugs (like "wedding-decorations-hyderabad") and plain city names ("hyderabad")
-    return locationsData.find(
-      (loc) => loc.slug === city || loc.city.toLowerCase() === city.toLowerCase(),
+  useEffect(() => {
+    const fetchLocation = async () => {
+      try {
+        const response = await locationService.getLocationBySlug(city);
+        if (response?.success) {
+          setLocationObj(response.data);
+        } else {
+          // If the slug didn't match directly, we might need to fetch all and find by city
+          const allResponse = await locationService.getLocations();
+          if (allResponse?.success) {
+            const loc = allResponse.data.find(
+              (l) => l.slug === city || l.city.toLowerCase() === city.toLowerCase(),
+            );
+            if (loc) {
+              setLocationObj(loc);
+            } else {
+              setError(true);
+            }
+          } else {
+            setError(true);
+          }
+        }
+      } catch (err) {
+        // Fallback or handle error
+        try {
+          const allResponse = await locationService.getLocations();
+          if (allResponse?.success) {
+            const loc = allResponse.data.find(
+              (l) => l.slug === city || l.city.toLowerCase() === city.toLowerCase(),
+            );
+            if (loc) {
+              setLocationObj(loc);
+            } else {
+              setError(true);
+            }
+          } else {
+            setError(true);
+          }
+        } catch (e) {
+          console.error('Failed to fetch location:', e);
+          setError(true);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (city) {
+      fetchLocation();
+    } else {
+      setError(true);
+      setLoading(false);
+    }
+  }, [city]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background pt-32 pb-20 text-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-on-surface-variant">Loading location...</p>
+      </div>
     );
-  }, [city, locationsData]);
+  }
 
-  if (!locationObj) {
+  if (error || !locationObj) {
     return <Navigate to="/" replace />;
   }
 

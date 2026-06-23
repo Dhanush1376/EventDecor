@@ -9,8 +9,8 @@ import {
 import toast from 'react-hot-toast';
 import { io as socketIO } from 'socket.io-client';
 import { getAccessToken } from '../../services/api';
-import { getApiUrl } from '../../utils/apiUrl';
-import logger from '../../utils/logger';
+import { getApiRootUrl } from '../../config/apiConfig';
+import logger from '../../utils/core/logger';
 
 import { useAdminSecurity } from '../hooks/useAdminSecurity';
 import { useAdminCMS } from '../hooks/useAdminCMS';
@@ -208,10 +208,12 @@ export function AdminProvider({ children }) {
     };
 
     fetchAdminData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     cms.loadCMSData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cms.loadCMSData]);
 
   const unreadNotifications = notifications.filter((n) => !n.read).length;
@@ -245,6 +247,7 @@ export function AdminProvider({ children }) {
         toast.error('Failed to approve review');
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [security.activeRole, security.safetyLock, security.logAdminAction],
   );
 
@@ -272,8 +275,8 @@ export function AdminProvider({ children }) {
     const token = getAccessToken();
     if (!token) return;
 
-    const rawApiUrl = getApiUrl();
-    const socketServerUrl = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
+    const rawApiUrl = getApiRootUrl();
+    const socketServerUrl = rawApiUrl;
 
     const socket = socketIO(`${socketServerUrl}/admin`, {
       auth: { token },
@@ -331,6 +334,7 @@ export function AdminProvider({ children }) {
     return () => {
       socket.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshDashboard = useCallback(async () => {
@@ -400,6 +404,7 @@ export function AdminProvider({ children }) {
       } catch (_err) {}
     }, 60000);
     return () => clearInterval(pollInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ordersHook.refreshOrders, refreshDashboard]);
 
   return (

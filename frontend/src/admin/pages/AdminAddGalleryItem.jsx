@@ -92,7 +92,7 @@ export function AdminAddGalleryItem() {
       }
     };
     fetchData();
-  }, [id, isEditing, navigate]);
+  }, [id, isEditing, navigate, setNewItem]);
 
   const handleAiAutofill = () => {
     if (!newItem.image) {

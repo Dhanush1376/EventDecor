@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import Coupon from '../../models/Coupon';
 import WalletTransaction from '../../models/WalletTransaction';
-import { creditWalletBalance } from '../../utils/walletMutations';
+import { creditWalletBalance } from '../../utils/payment/walletMutations';
 import { InventoryService } from '../InventoryService';
 import logger from '../../config/logger';
 

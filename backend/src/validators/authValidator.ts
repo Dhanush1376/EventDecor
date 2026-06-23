@@ -1,5 +1,5 @@
 import { body } from 'express-validator';
-import { canonicalizeEmail } from '../utils/emailHelper';
+import { canonicalizeEmail } from '../utils/email/emailHelper';
 
 const emailField = (field: string) =>
   body(field)

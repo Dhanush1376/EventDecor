@@ -2,16 +2,30 @@ import { m as motion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { SEO } from '../components/seo/SEO';
 import { BlogCard } from '../components/blog/BlogCard';
-import { useState, useMemo } from 'react';
-import fallbackBlogsData from '../content/blogs.json';
-import { useWebsiteContent } from '../hooks/useWebsiteContent';
+import { useState, useMemo, useEffect } from 'react';
+import { blogService } from '../services/domainServices';
 
 export function BlogListing() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [blogsData, setBlogsData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const { blogs } = useWebsiteContent();
-  const blogsData = blogs || fallbackBlogsData;
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        const response = await blogService.getBlogs();
+        if (response?.success) {
+          setBlogsData(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch blogs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBlogs();
+  }, []);
 
   // Extract unique categories
   const categories = useMemo(() => {
@@ -54,7 +68,7 @@ export function BlogListing() {
         </div>
 
         {/* Featured Post (Only show if 'All' category and no search term) */}
-        {activeCategory === 'All' && !searchTerm && featuredPost && (
+        {!loading && activeCategory === 'All' && !searchTerm && featuredPost && (
           <div className="mb-16">
             <BlogCard post={featuredPost} featured={true} />
           </div>
@@ -93,7 +107,12 @@ export function BlogListing() {
         </div>
 
         {/* Blog Grid */}
-        {filteredPosts.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-20">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-on-surface-variant">Loading articles...</p>
+          </div>
+        ) : filteredPosts.length > 0 ? (
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             initial={{ opacity: 0, y: 20 }}

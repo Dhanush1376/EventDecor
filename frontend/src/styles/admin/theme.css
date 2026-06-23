@@ -1,0 +1,366 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK THEME — Clean Variable Swap
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.admin-section-root.dark {
+  color-scheme: dark;
+
+  --admin-bg: #09090b;
+  --admin-bg-subtle: #0f0f12;
+  --admin-surface: #18181b;
+  --admin-surface-hover: #1f1f23;
+  --admin-surface-muted: #27272a;
+  --admin-surface-raised: #1c1c20;
+  --admin-surface-overlay: rgba(0, 0, 0, 0.7);
+
+  --admin-border: rgba(255, 255, 255, 0.08);
+  --admin-border-subtle: rgba(255, 255, 255, 0.04);
+  --admin-border-strong: rgba(255, 255, 255, 0.12);
+  --admin-border-focus: #818cf8;
+
+  --admin-text-primary: #f4f4f5;
+  --admin-text-secondary: #a1a1aa;
+  --admin-text-tertiary: #71717a;
+  --admin-text-placeholder: #52525b;
+  --admin-text-inverse: #09090b;
+
+  --admin-accent: #d4af37;
+  --admin-accent-hover: #c49a3c;
+  --admin-accent-light: rgba(212, 175, 55, 0.12);
+  --admin-accent-muted: rgba(212, 175, 55, 0.1);
+  --admin-accent-subtle: rgba(212, 175, 55, 0.05);
+  --admin-accent-text: #f1d592;
+
+  --admin-success-light: rgba(5, 150, 105, 0.12);
+  --admin-success-border: rgba(5, 150, 105, 0.25);
+  --admin-warning-light: rgba(217, 119, 6, 0.12);
+  --admin-warning-border: rgba(217, 119, 6, 0.25);
+  --admin-error-light: rgba(239, 68, 68, 0.12);
+  --admin-error-border: rgba(239, 68, 68, 0.25);
+  --admin-info-light: rgba(124, 106, 62, 0.12);
+  --admin-info-border: rgba(124, 106, 62, 0.25);
+
+  --admin-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --admin-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --admin-shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.5);
+  --admin-shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.6);
+  --admin-shadow-xl: 0 20px 40px -8px rgba(0, 0, 0, 0.7);
+  --admin-shadow-2xl: 0 32px 64px -12px rgba(0, 0, 0, 0.8);
+
+  --color-on-surface: var(--admin-text-primary) !important;
+  --color-on-surface-variant: var(--admin-text-secondary) !important;
+  --color-surface: var(--admin-surface) !important;
+  --color-surface-bright: var(--admin-surface) !important;
+  --color-surface-dim: var(--admin-bg) !important;
+  --color-surface-container-lowest: var(--admin-bg) !important;
+  --color-surface-container-low: rgba(255, 255, 255, 0.03) !important;
+  --color-surface-container: rgba(255, 255, 255, 0.04) !important;
+  --color-surface-container-high: rgba(255, 255, 255, 0.06) !important;
+  --color-surface-container-highest: rgba(255, 255, 255, 0.08) !important;
+  --color-outline: var(--admin-text-secondary) !important;
+  --color-outline-variant: var(--admin-border) !important;
+}
+
+/* Dark mode: global surface overrides (catch-all for inline Tailwind bg/text) */
+.admin-section-root.dark,
+.admin-section-root.dark .min-h-screen,
+.admin-section-root.dark main {
+  background-color: var(--admin-bg) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+.admin-section-root.dark header,
+.admin-section-root.dark aside,
+.admin-section-root.dark nav,
+.admin-section-root.dark .bg-white {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text-primary) !important;
+  border-color: var(--admin-border) !important;
+}
+
+/* Dark: Background utility overrides */
+.admin-section-root.dark .bg-slate-50,
+.admin-section-root.dark .bg-stone-50,
+.admin-section-root.dark .bg-neutral-50,
+.admin-section-root.dark .bg-zinc-50,
+.admin-section-root.dark .bg-\[\#F8F9FB\],
+.admin-section-root.dark .bg-\[\#F8F9FB\]\/40,
+.admin-section-root.dark .bg-\[\#F1F5F9\],
+.admin-section-root.dark .bg-\[\#FAFAFA\] {
+  background-color: var(--admin-bg) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+.admin-section-root.dark .bg-slate-100,
+.admin-section-root.dark .bg-stone-100,
+.admin-section-root.dark .bg-neutral-100,
+.admin-section-root.dark .bg-stone-200,
+.admin-section-root.dark .bg-slate-200 {
+  background-color: var(--admin-surface-muted) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+/* Dark: Cards & Modals */
+.admin-section-root.dark .admin-card,
+.admin-section-root.dark .admin-card-interactive,
+.admin-section-root.dark .admin-card-elevated,
+.admin-section-root.dark .admin-card-flush,
+.admin-section-root.dark .ui-card,
+.admin-section-root.dark .rounded-2xl.bg-white,
+.admin-section-root.dark .rounded-xl.bg-white,
+.admin-section-root.dark .rounded-lg.bg-white,
+.admin-section-root.dark .shadow-lg.bg-white {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text-primary) !important;
+  border-color: var(--admin-border) !important;
+}
+
+/* Dark: Inputs */
+.admin-section-root.dark input,
+.admin-section-root.dark select,
+.admin-section-root.dark textarea {
+  background-color: var(--admin-surface-muted) !important;
+  color: var(--admin-text-primary) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.admin-section-root.dark input::placeholder,
+.admin-section-root.dark textarea::placeholder {
+  color: var(--admin-text-placeholder) !important;
+}
+
+/* Dark: Dropdown options */
+.admin-section-root.dark option {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+/* Dark: Primary buttons (inverted) */
+.admin-section-root.dark .admin-btn-secondary,
+.admin-section-root.dark .bg-black,
+.admin-section-root.dark .bg-slate-900 {
+  background-color: var(--admin-text-primary) !important;
+  color: var(--admin-bg) !important;
+}
+
+.admin-section-root.dark .bg-black:hover,
+.admin-section-root.dark .bg-slate-900:hover {
+  background-color: #d4d4d8 !important;
+}
+
+.admin-section-root.dark .bg-black span,
+.admin-section-root.dark .bg-slate-900 span,
+.admin-section-root.dark .bg-black *,
+.admin-section-root.dark .bg-slate-900 * {
+  color: var(--admin-bg) !important;
+}
+
+/* Dark: Text overrides */
+.admin-section-root.dark .text-slate-900,
+.admin-section-root.dark .text-stone-900,
+.admin-section-root.dark .text-zinc-900,
+.admin-section-root.dark .text-neutral-900,
+.admin-section-root.dark .text-slate-950,
+.admin-section-root.dark .text-zinc-950,
+.admin-section-root.dark .text-slate-800,
+.admin-section-root.dark .text-zinc-800,
+.admin-section-root.dark .text-stone-800,
+.admin-section-root.dark .text-slate-700,
+.admin-section-root.dark .text-zinc-700,
+.admin-section-root.dark .text-stone-700,
+.admin-section-root.dark .text-\[\#0F172A\],
+.admin-section-root.dark .text-\[\#111827\],
+.admin-section-root.dark .text-\[\#1a1a1a\],
+.admin-section-root.dark .text-\[\#000000\],
+.admin-section-root.dark .text-black,
+.admin-section-root.dark h1,
+.admin-section-root.dark h2,
+.admin-section-root.dark h3,
+.admin-section-root.dark h4,
+.admin-section-root.dark h5,
+.admin-section-root.dark h6 {
+  color: var(--admin-text-primary) !important;
+}
+
+.admin-section-root.dark .text-slate-600,
+.admin-section-root.dark .text-zinc-600,
+.admin-section-root.dark .text-stone-600 {
+  color: var(--admin-text-secondary) !important;
+}
+
+.admin-section-root.dark .text-slate-500,
+.admin-section-root.dark .text-zinc-500,
+.admin-section-root.dark .text-stone-500,
+.admin-section-root.dark .text-slate-400,
+.admin-section-root.dark .text-zinc-400,
+.admin-section-root.dark .text-stone-400 {
+  color: var(--admin-text-tertiary) !important;
+}
+
+/* Dark: Translucent text overrides */
+.admin-section-root.dark .text-black\/10,
+.admin-section-root.dark .text-black\/20,
+.admin-section-root.dark .text-black\/30,
+.admin-section-root.dark .text-black\/40,
+.admin-section-root.dark .text-black\/50 {
+  color: var(--admin-text-tertiary) !important;
+}
+
+.admin-section-root.dark .text-black\/60,
+.admin-section-root.dark .text-black\/70,
+.admin-section-root.dark .text-black\/80,
+.admin-section-root.dark .text-black\/90 {
+  color: var(--admin-text-primary) !important;
+}
+
+/* Dark: Border overrides */
+.admin-section-root.dark .border-slate-200,
+.admin-section-root.dark .border-neutral-200,
+.admin-section-root.dark .border-stone-200,
+.admin-section-root.dark .border-zinc-200,
+.admin-section-root.dark .border-slate-100,
+.admin-section-root.dark .border-black\/5,
+.admin-section-root.dark .border-black\/10,
+.admin-section-root.dark .border-black\/15,
+.admin-section-root.dark .divide-slate-100,
+.admin-section-root.dark .divide-slate-200,
+.admin-section-root.dark .divide-y,
+.admin-section-root.dark .divide-x {
+  border-color: var(--admin-border) !important;
+}
+
+.admin-section-root.dark .border-black {
+  border-color: var(--admin-text-primary) !important;
+}
+
+/* Dark: Table row hover */
+.admin-section-root.dark tr:hover {
+  background-color: var(--admin-surface-hover) !important;
+}
+
+/* Dark: Hover state overrides */
+.admin-section-root.dark .hover\:bg-slate-50:hover,
+.admin-section-root.dark .hover\:bg-slate-100:hover {
+  background-color: var(--admin-surface-hover) !important;
+}
+
+/* Dark: Translucent backgrounds */
+.admin-section-root.dark .bg-white\/95,
+.admin-section-root.dark .bg-white\/90,
+.admin-section-root.dark .bg-white\/80,
+.admin-section-root.dark .bg-white\/70,
+.admin-section-root.dark .bg-white\/60,
+.admin-section-root.dark .bg-white\/50,
+.admin-section-root.dark .bg-white\/40,
+.admin-section-root.dark .bg-white\/30,
+.admin-section-root.dark .bg-white\/20,
+.admin-section-root.dark .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  backdrop-filter: blur(12px) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+/* Dark: Gradient overrides */
+.admin-section-root.dark .bg-gradient-to-tr {
+  background-image: none !important;
+  background-color: var(--admin-surface) !important;
+}
+
+/* Dark: Semantic color badges */
+.admin-section-root.dark .bg-red-50,
+.admin-section-root.dark .bg-rose-50 {
+  background-color: var(--admin-error-light) !important;
+  border-color: var(--admin-error-border) !important;
+}
+
+.admin-section-root.dark .bg-amber-50 {
+  background-color: var(--admin-warning-light) !important;
+  border-color: var(--admin-warning-border) !important;
+}
+
+.admin-section-root.dark .bg-emerald-50,
+.admin-section-root.dark .bg-green-50 {
+  background-color: var(--admin-success-light) !important;
+  border-color: var(--admin-success-border) !important;
+}
+
+.admin-section-root.dark .text-red-600,
+.admin-section-root.dark .text-rose-600,
+.admin-section-root.dark .text-red-700,
+.admin-section-root.dark .text-rose-700 {
+  color: #ef4444 !important;
+}
+
+.admin-section-root.dark .text-amber-600,
+.admin-section-root.dark .text-amber-700 {
+  color: #f59e0b !important;
+}
+
+.admin-section-root.dark .text-emerald-600,
+.admin-section-root.dark .text-green-600,
+.admin-section-root.dark .text-emerald-700,
+.admin-section-root.dark .text-green-700 {
+  color: #10b981 !important;
+}
+
+/* Dark: Chart tooltips */
+.admin-section-root.dark .recharts-tooltip-wrapper,
+.admin-section-root.dark .recharts-default-tooltip {
+  background-color: var(--admin-surface) !important;
+  border: 1px solid var(--admin-border) !important;
+  color: var(--admin-text-primary) !important;
+}
+
+/* Dark: Progress bar fills */
+.admin-section-root.dark .bg-surface-container-low,
+.admin-section-root.dark .bg-surface-container-low\/20,
+.admin-section-root.dark .bg-surface-container-low\/40 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Dark: Toggle */
+.admin-section-root.dark button[role='switch'] {
+  background-color: var(--admin-surface-muted) !important;
+}
+
+.admin-section-root.dark button[role='switch'][aria-checked='true'] {
+  background-color: var(--admin-accent) !important;
+}
+
+.admin-section-root.dark button[role='switch'][aria-checked='true'] > div {
+  background-color: var(--admin-bg) !important;
+}
+
+/* Dark: Badges */
+.admin-section-root.dark .badge-premium,
+.admin-section-root.dark .rounded-full.bg-stone-100 {
+  background-color: var(--admin-surface-muted) !important;
+  color: var(--admin-text-primary) !important;
+  border-color: var(--admin-border) !important;
+}
+
+/* Dark: Active tab buttons */
+.admin-section-root.dark .bg-white.text-black {
+  background-color: var(--admin-text-primary) !important;
+  color: var(--admin-bg) !important;
+}
+
+.admin-section-root.dark .bg-white.text-black span {
+  color: var(--admin-bg) !important;
+}
+
+/* Dark: Interactive elements */
+.admin-section-root.dark .bg-\[\#000000\]\/10,
+.admin-section-root.dark .hover\:bg-\[\#000000\]\/10:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.admin-section-root.dark button.bg-black,
+.admin-section-root.dark a.bg-black {
+  background-color: var(--admin-text-primary) !important;
+  color: var(--admin-bg) !important;
+}
+
+.admin-section-root.dark .bg-surface {
+  background-color: var(--admin-surface) !important;
+}

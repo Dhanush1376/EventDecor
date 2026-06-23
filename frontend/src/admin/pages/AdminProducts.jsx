@@ -2,8 +2,8 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
-import { productCategories } from '../data/adminData';
-import { handleImageError } from '../../utils/imageUtils';
+import { useCategories } from '../../hooks/useProductQueries';
+import { handleImageError } from '../../utils/media/imageUtils';
 import {
   PageHeader,
   StatusBadge,
@@ -25,6 +25,7 @@ export function AdminProducts() {
     searchQuery,
     _refreshProducts,
   } = useAdmin();
+  const { data: productCategories = [] } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [viewMode, setViewMode] = useState('table');

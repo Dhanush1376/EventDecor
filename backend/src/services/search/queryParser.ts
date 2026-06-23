@@ -1,6 +1,6 @@
 import { getLearnedMappings } from './SearchAnalyticsService';
 import logger from '../../config/logger';
-import { sanitizePromptInput, validateAIResponse } from '../../utils/aiSanitizer';
+import { sanitizePromptInput, validateAIResponse } from '../../utils/security/aiSanitizer';
 import {
   TRANSLITERATION_MAP,
   SYNONYM_MAP,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { SectionHeader, AdminField, AdminInput } from '../AdminUIKit';
 
 export function ContactInfoEditor({ content, onUpdate }) {

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { orderService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
 const mapDbOrderToFrontend = (o) => {
   if (!o) return null;

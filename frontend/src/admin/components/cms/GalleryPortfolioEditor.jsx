@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { SectionHeader, AdminField, AdminInput, AdminToggle } from '../AdminUIKit';
 
 export function GalleryPortfolioEditor({ content, onUpdate }) {

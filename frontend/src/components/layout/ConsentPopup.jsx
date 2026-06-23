@@ -4,9 +4,9 @@ import { createPortal } from 'react-dom';
 import { notificationService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
-import { safeLocalStorage } from '../../utils/storage';
+import { safeLocalStorage } from '../../utils/storage/storage';
 
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
 export function ConsentPopup() {
   const [step, setStep] = useState('idle'); // 'idle' | 'cookie' | 'notification' | 'done'
@@ -102,10 +102,10 @@ export function ConsentPopup() {
         setPreferences(finalPrefs);
 
         if (finalPrefs.personalizedRecommendations || finalPrefs.marketingEmails) {
-          import('../../utils/analytics')
+          import('../../utils/core/analytics')
             .then(({ initAnalytics }) => initAnalytics())
             .catch(() => {});
-          import('../../utils/observability')
+          import('../../utils/core/observability')
             .then(({ initObservability }) => initObservability())
             .catch(() => {});
         }

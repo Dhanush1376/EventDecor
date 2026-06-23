@@ -1,7 +1,7 @@
 import WebsiteContent from '../models/WebsiteContent';
-import { cmsCache } from '../utils/MemoryCache';
+import { cmsCache } from '../utils/cache/MemoryCache';
 import logger from '../config/logger';
-import { bumpPublicCacheVersion } from '../utils/cacheVersion';
+import { bumpPublicCacheVersion } from '../utils/cache/cacheVersion';
 import {
   deleteFromCloudinary,
   extractPublicId,

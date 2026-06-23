@@ -4,8 +4,8 @@ import {
   getSearchCache,
   setSearchCache,
   autocompleteCache,
-} from '../services/search/SearchCacheService';
-import redisClient from '../utils/redis';
+} from '../services/search/searchCache';
+import redisClient from '../utils/cache/redis';
 
 jest.mock('../utils/redis', () => ({
   get: jest.fn(),

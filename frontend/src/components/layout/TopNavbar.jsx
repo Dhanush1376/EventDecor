@@ -12,7 +12,7 @@ import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { adminInviteService } from '../../services/domainServices';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { useSearchOverlay } from '../../hooks/useSearchOverlay';
-import { prefetchManager } from '../../utils/prefetchManager';
+import { prefetchManager } from '../../utils/performance/prefetchManager';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useVisualSearch } from '../../hooks/useVisualSearch';
 

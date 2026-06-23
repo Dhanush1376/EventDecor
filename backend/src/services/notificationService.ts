@@ -193,7 +193,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
       } else {
         // Fallback: check filesystem .hbs templates
         try {
-          const { compileTemplate } = require('../utils/templateEngine');
+          const { compileTemplate } = require('../utils/email/templateEngine');
           bodyHtml = compileTemplate(templateNameVal, templateDataVal);
         } catch (fileErr: any) {
           logger.warn(
@@ -226,7 +226,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
       !bodyHtml.trim().toLowerCase().startsWith('<!doctype html') &&
       !bodyHtml.trim().toLowerCase().startsWith('<html')
     ) {
-      const { getLuxuryEmailWrapper } = require('../utils/emailTemplates');
+      const { getLuxuryEmailWrapper } = require('../utils/email/emailTemplates');
       bodyHtml = getLuxuryEmailWrapper(finalSubject, bodyHtml);
     }
 

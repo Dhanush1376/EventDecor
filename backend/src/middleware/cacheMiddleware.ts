@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { getPublicCacheVersion } from '../utils/cacheVersion';
+import { getPublicCacheVersion } from '../utils/cache/cacheVersion';
 
 export const cacheResponse = (_durationSeconds: number) => {
   return async (req: Request, res: Response, next: NextFunction) => {

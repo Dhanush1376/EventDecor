@@ -2,7 +2,7 @@ import { OrderCheckoutService } from '../services/orders/OrderCheckoutService';
 import Order from '../models/Order';
 import User from '../models/User';
 import { InventoryService } from '../services/InventoryService';
-import { RazorpayGateway } from '../utils/RazorpayGateway';
+import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import Product from '../models/Product';
 
 jest.mock('../models/Order');
@@ -47,18 +47,16 @@ describe('OrderCheckoutService', () => {
     });
     (Product.find as jest.Mock).mockReturnValue({
       select: jest.fn().mockReturnValue({
-        session: jest
-          .fn()
-          .mockResolvedValue([
-            {
-              _id: 'prod_1',
-              title: 'Product 1',
-              price: 500,
-              stock: 10,
-              reservedStock: 0,
-              isActive: true,
-            },
-          ]),
+        session: jest.fn().mockResolvedValue([
+          {
+            _id: 'prod_1',
+            title: 'Product 1',
+            price: 500,
+            stock: 10,
+            reservedStock: 0,
+            isActive: true,
+          },
+        ]),
       }),
     });
     (InventoryService.reserveInventory as jest.Mock).mockResolvedValue({ _id: 'res_1' });

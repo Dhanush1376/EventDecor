@@ -1,13 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import logger from '../config/logger';
-import { sanitizeData } from '../utils/sanitize';
+import { sanitizeData } from '../utils/security/sanitize';
 
-const SILENT_PATHS = [
-  '/api/health',
-  '/api/readiness',
-  '/api/version',
-  '/favicon.ico',
-];
+const SILENT_PATHS = ['/api/health', '/api/readiness', '/api/version', '/favicon.ico'];
 
 const isSilentPath = (url: string) => {
   const path = url.split('?')[0];

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 export function useProductValidation({
@@ -84,6 +84,7 @@ export function useProductValidation({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, formData, showAIHUD]);
 
   return { getStepErrors, isStepValid, handleNext, handlePrev };

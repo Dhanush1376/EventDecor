@@ -6,6 +6,7 @@ import getCloudinary from '../config/cloudinary';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 import asyncHandler from '../utils/asyncHandler';
+import { EXTERNAL_URLS } from '../constants/externalUrls';
 
 const router = Router();
 
@@ -89,7 +90,7 @@ router.get(
         apiKey: process.env.CLOUDINARY_API_KEY,
         folder,
         resourceType,
-        uploadUrl: `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
+        uploadUrl: `${EXTERNAL_URLS.CLOUDINARY_UPLOAD_BASE}/${process.env.CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
       }),
     );
   }),

@@ -116,9 +116,11 @@ export function MinimalLayout() {
 
       <CheckoutNavbar />
       <main id="main-content" className="flex-1" tabIndex={-1}>
-        <Suspense fallback={<RouteSkeleton variant={getRouteSkeletonVariant(pathname)} />}>
-          <Outlet />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<RouteSkeleton variant={getRouteSkeletonVariant(pathname)} />}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   );

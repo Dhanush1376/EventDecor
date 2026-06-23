@@ -1,5 +1,5 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { ProductCard } from '../ui/ProductCard';
+import { ProductCard } from '../shared/ProductCard';
 import { RecommendationSkeleton } from '../ui/Skeleton';
 import { useState, useEffect, useMemo } from 'react';
 import {

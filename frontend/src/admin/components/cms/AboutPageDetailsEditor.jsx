@@ -1,5 +1,5 @@
 const DEFAULT_FEATURES = [];
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { SectionHeader, AdminField, AdminInput, AdminTextarea } from '../AdminUIKit';
 import { ImageUpload } from '../ImageUpload';
 import toast from 'react-hot-toast';

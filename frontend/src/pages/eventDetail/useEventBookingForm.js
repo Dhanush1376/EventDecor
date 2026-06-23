@@ -1,38 +1,15 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { bookingService } from '../../services/domainServices';
-import logger from '../../utils/logger';
+import logger from '../../utils/core/logger';
 
-export const EVENT_TYPES = [
-  {
-    id: 'wedding',
-    label: 'Wedding / Vivaham',
-    icon: 'church',
-    desc: 'Grand traditional structures',
-  },
-  { id: 'engagement', label: 'Engagement Ceremony', icon: 'diamond', desc: 'Modern floral panels' },
-  {
-    id: 'haldi',
-    label: 'Haldi & Mehndi',
-    icon: 'palette',
-    desc: 'Vibrant yellow marigold blasting',
-  },
-  { id: 'reception', label: 'Reception Gala', icon: 'celebration', desc: 'Bespoke stage styling' },
-  { id: 'birthday', label: 'Birthday / Cradle', icon: 'child_care', desc: 'Vibrant custom themes' },
-  { id: 'festival', label: 'Festival / Puja Decor', icon: 'spa', desc: 'Traditional South Indian' },
-  {
-    id: 'other',
-    label: 'Other Celebration',
-    icon: 'more_horiz',
-    desc: 'Specify custom celebration',
-  },
-];
+import { EVENT_TYPES, EXTERNAL_URLS } from '../../config/constants';
 
 export const loadRazorpayScript = () => {
   return new Promise((resolve) => {
     if (window.Razorpay) return resolve(true);
     const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.src = EXTERNAL_URLS.RAZORPAY_CHECKOUT;
     script.onload = () => resolve(true);
     script.onerror = () => resolve(false);
     document.body.appendChild(script);
@@ -63,6 +40,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
   const [customizerStep, setCustomizerStep] = useState(1);
   const [eventType, setEventType] = useState('wedding');
   const [customOccasion, setCustomOccasion] = useState('');
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Initialization
   useEffect(() => {
@@ -337,6 +315,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
       customizerStep,
       eventType,
       customOccasion,
+      isDrawerOpen,
     },
     actions: {
       setCustomInclusions,
@@ -360,6 +339,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
       setCustomizerStep,
       setEventType,
       setCustomOccasion,
+      setIsDrawerOpen,
       handleManualFieldChange,
       calculateLivePrice,
       handleBookRental,

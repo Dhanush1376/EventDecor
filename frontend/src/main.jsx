@@ -3,20 +3,20 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import './styles/globals.css';
 import App from './App.jsx';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
-import { runAppBootstrap } from './utils/bootstrap';
+import { runAppBootstrap } from './utils/core/bootstrap';
 import { getApiRootUrl } from './config/apiConfig';
-import { logStartupDiagnostics } from './utils/diagnostics';
-import { isPrerendering } from './utils/prerender';
+import { logStartupDiagnostics } from './utils/core/diagnostics';
+import { isPrerendering } from './utils/performance/prerender';
 
-import logger from './utils/logger';
+import logger from './utils/core/logger';
 
 // Defer non-critical monitoring and analytics until after first paint
 const deferNonCriticalInit = () => {
   if (isPrerendering()) return; // skip analytics when pre-rendering
-  import('./utils/observability')
+  import('./utils/core/observability')
     .then(({ initObservability }) => initObservability())
     .catch(() => {});
-  import('./utils/analytics').then(({ initAnalytics }) => initAnalytics()).catch(() => {});
+  import('./utils/core/analytics').then(({ initAnalytics }) => initAnalytics()).catch(() => {});
 };
 
 if (typeof requestIdleCallback === 'function') {

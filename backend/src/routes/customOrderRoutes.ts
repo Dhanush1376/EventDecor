@@ -7,6 +7,15 @@ import {
   deleteDraft,
   getMyCustomOrders,
   getSingleCustomOrder,
+} from '../controllers/customOrder/customOrderCrudController.js';
+
+import {
+  customerRespondQuotation,
+  postMessage,
+  getOrderHistory,
+} from '../controllers/customOrder/customOrderWorkflowController.js';
+
+import {
   adminGetCustomOrders,
   adminUpdateStatus,
   adminUpdatePriority,
@@ -14,15 +23,15 @@ import {
   adminAddInternalNote,
   adminAssignStaff,
   adminUpdateQuotation,
-  customerRespondQuotation,
-  postMessage,
-  getOrderHistory,
   adminArchiveOrder,
+} from '../controllers/customOrder/customOrderAdminController.js';
+
+import {
   getCustomOrderConfig,
   adminGetCustomOrderConfig,
   adminSaveCustomOrderConfigDraft,
   adminUpdateCustomOrderConfig,
-} from '../controllers/customOrderController';
+} from '../controllers/customOrderConfigController';
 import { requireAuth, requireRole } from '../middleware/authMiddleware';
 import { validate } from '../middleware/validateMiddleware';
 import { customOrderSubmissionLimiter, chatMessageLimiter } from '../middleware/rateLimiter';

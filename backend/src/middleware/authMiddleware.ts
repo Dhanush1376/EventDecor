@@ -8,14 +8,14 @@ import AdminAuditLog from '../models/AdminAuditLog';
 import logger from '../config/logger';
 import { updateRequestContext } from './requestTracker';
 import { STAFF_ROLES } from '../config/adminConfig';
-import { getSafetyLockDocument } from '../utils/safetyLockCache';
+import { getSafetyLockDocument } from '../utils/cache/safetyLockCache';
 import {
   getCachedSessionJson,
   setCachedSessionJson,
   sessionKeys,
   coalesceRequest,
-} from '../utils/userSessionCache';
-import { isTokenBlacklisted } from '../utils/jwtBlacklist';
+} from '../utils/cache/userSessionCache';
+import { isTokenBlacklisted } from '../utils/security/jwtBlacklist';
 
 interface JwtPayload {
   id: string;

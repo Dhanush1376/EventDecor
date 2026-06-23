@@ -1,6 +1,6 @@
 import User from '../models/User';
 import { ADMIN_ROLES, getAdminEmails } from '../config/adminConfig';
-import { isSameEmail } from '../utils/emailHelper';
+import { isSameEmail } from '../utils/email/emailHelper';
 import logger from '../config/logger';
 
 const DEFAULT_STAFF_ROLE = 'admin';

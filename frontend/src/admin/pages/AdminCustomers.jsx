@@ -11,6 +11,7 @@ import {
   fadeUp,
   stagger,
 } from '../components/AdminUIKit';
+import { EXTERNAL_URLS } from '../../config/constants';
 
 export function AdminCustomers() {
   const navigate = useNavigate();
@@ -246,7 +247,7 @@ export function AdminCustomers() {
                     <span className="hidden sm:inline truncate">Email</span>
                   </a>
                   <a
-                    href={`https://wa.me/${c.phone.replace(/[^0-9]/g, '')}`}
+                    href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${c.phone.replace(/[^0-9]/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="admin-btn admin-btn-outline min-h-[36px] h-8 text-[10px] px-2 border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)] justify-center gap-1.5 w-full transition-all"

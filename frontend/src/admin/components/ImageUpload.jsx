@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import { uploadService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import { compressImage } from '../../utils/imageCompressor';
-import logger from '../../utils/logger';
+import { compressImage } from '../../utils/media/imageCompressor';
+import logger from '../../utils/core/logger';
 export function ImageUpload({ value, onChange, folder = 'products', label = 'Upload Image' }) {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);

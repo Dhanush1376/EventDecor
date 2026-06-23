@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { couponService } from '../services/domainServices';
 import { fadeUp, staggerContainer } from '../animations/variants';
 import toast from 'react-hot-toast';
-import logger from '../utils/logger';
+import logger from '../utils/core/logger';
 
 export function Coupons() {
   const [coupons, setCoupons] = useState([]);

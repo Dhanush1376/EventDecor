@@ -22,7 +22,7 @@ export function AdminDrafts() {
       const data = await getAllDrafts();
       setDrafts(data);
     } catch (error) {
-      import('../../utils/logger').then(({ default: logger }) => {
+      import('../../utils/core/logger').then(({ default: logger }) => {
         logger.error('Failed to load drafts:', error);
       });
       toast.error('Failed to load drafts');

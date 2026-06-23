@@ -45,12 +45,12 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
   res.status(200).json(new ApiResponse(true, 'Product fetched successfully', product));
 });
 
-export const createProduct = asyncHandler(async (req: Request | any, res: Response) => {
+export const createProduct = asyncHandler(async (req: Request, res: Response) => {
   const product = await ProductService.createProduct(req.body, req.user);
   res.status(201).json(new ApiResponse(true, 'Product created successfully', product));
 });
 
-export const updateProduct = asyncHandler(async (req: Request | any, res: Response) => {
+export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
   const product = await ProductService.updateProduct(req.params.id as string, req.body, req.user);
   if (!product) {
     throw new ApiError(404, 'Product not found');
@@ -58,7 +58,7 @@ export const updateProduct = asyncHandler(async (req: Request | any, res: Respon
   res.status(200).json(new ApiResponse(true, 'Product updated successfully', product));
 });
 
-export const deleteProduct = asyncHandler(async (req: Request | any, res: Response) => {
+export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {
   const product = await ProductService.deleteProduct(req.params.id as string, req.user);
   if (!product) {
     throw new ApiError(404, 'Product not found');
@@ -192,7 +192,7 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
         const contentType = response.headers.get('content-type');
         if (contentType) mimeType = contentType;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof ApiError) throw err;
       logger.error('Error fetching image for AI analysis:', err);
     }
@@ -254,8 +254,8 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
     }
   `;
 
-  const messages: any[] = [];
-  const userContent: any[] = [{ type: 'text', text: prompt }];
+  const messages: Record<string, unknown>[] = [];
+  const userContent: Record<string, unknown>[] = [{ type: 'text', text: prompt }];
 
   if (base64Image) {
     userContent.push({
@@ -290,8 +290,8 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
         temperature: 0.2,
       }),
     });
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new ApiError(504, 'Groq API timeout. The request took too long.');
     }
     throw new ApiError(500, 'Failed to connect to Groq AI API.');
@@ -305,7 +305,9 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
     throw new ApiError(500, 'Failed to generate product details from Groq AI API.');
   }
 
-  const responseData: any = await groqResponse.json();
+  const responseData = (await groqResponse.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
   const textResponse = responseData.choices?.[0]?.message?.content;
 
   if (!textResponse) {
@@ -351,7 +353,9 @@ export const refineAiProduct = asyncHandler(async (req: Request, res: Response) 
     Output ONLY the raw JSON object, without any markdown formatting or ticks.
   `;
 
-  const messages: any[] = [{ role: 'user', content: [{ type: 'text', text: prompt }] }];
+  const messages: Record<string, unknown>[] = [
+    { role: 'user', content: [{ type: 'text', text: prompt }] },
+  ];
 
   const groqController = new AbortController();
   const groqTimeout = setTimeout(() => groqController.abort(), 15000); // 15s timeout
@@ -372,8 +376,8 @@ export const refineAiProduct = asyncHandler(async (req: Request, res: Response) 
         temperature: 0.2,
       }),
     });
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new ApiError(504, 'Groq API timeout. The request took too long.');
     }
     throw new ApiError(500, 'Failed to connect to Groq AI API.');
@@ -387,7 +391,9 @@ export const refineAiProduct = asyncHandler(async (req: Request, res: Response) 
     throw new ApiError(500, 'Failed to refine product details from Groq AI API.');
   }
 
-  const responseData: any = await groqResponse.json();
+  const responseData = (await groqResponse.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
   const textResponse = responseData.choices?.[0]?.message?.content;
 
   if (!textResponse) {

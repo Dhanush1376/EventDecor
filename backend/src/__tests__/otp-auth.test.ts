@@ -3,8 +3,8 @@ import User from '../models/User';
 import OtpRequestLog from '../models/OtpRequestLog';
 import OtpVerification from '../models/OtpVerification';
 import FailedLoginAttempt from '../models/FailedLoginAttempt';
-import { cacheOtpSession, getCachedOtpSession } from '../utils/otpVerifyCache';
-import { recordOtpVerifyFailure } from '../utils/otpRateLimit';
+import { cacheOtpSession, getCachedOtpSession } from '../utils/cache/otpVerifyCache';
+import { recordOtpVerifyFailure } from '../utils/security/otpRateLimit';
 import SessionAuthService from '../services/SessionAuthService';
 import bcrypt from 'bcryptjs';
 

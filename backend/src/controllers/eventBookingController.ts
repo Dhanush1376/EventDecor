@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import EventBooking from '../models/EventBooking';
 import Event from '../models/Event';
 import { EventBookingMailService } from '../services/eventBookingMailService';
@@ -17,17 +17,17 @@ import { EventBookingCheckoutService } from '../services/eventBooking/EventBooki
 import { DistributedLock } from '../utils/DistributedLock';
 
 // 1. Submit Event Booking Inquiry (Customer)
-export const submitEventBooking = asyncHandler(async (req: any, res: Response) => {
-  const userId = req.user?.id;
-  const { booking } = await EventBookingService.createBooking(userId, req.body);
+export const submitEventBooking = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+  const { booking } = await EventBookingService.createBooking(userId as string, req.body);
   res
     .status(201)
     .json(new ApiResponse(true, 'Your luxury event design has been submitted!', booking));
 });
 
 // 1.B Initialize Booking Checkout (Secure eCommerce Flow)
-export const initializeBookingCheckout = asyncHandler(async (req: any, res: Response) => {
-  const userId = req.user?.id;
+export const initializeBookingCheckout = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
   if (!userId) throw new ApiError(401, 'Authentication credentials missing.');
 
   const result = await EventBookingCheckoutService.initializeBookingCheckout(userId, req.body);
@@ -35,8 +35,8 @@ export const initializeBookingCheckout = asyncHandler(async (req: any, res: Resp
 });
 
 // 1.C Verify Booking Checkout Payment
-export const verifyBookingCheckout = asyncHandler(async (req: any, res: Response) => {
-  const userId = req.user?.id;
+export const verifyBookingCheckout = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
   if (!userId) throw new ApiError(401, 'Authentication credentials missing.');
 
   const booking = await EventBookingCheckoutService.verifyBookingCheckout(userId, req.body);
@@ -60,8 +60,8 @@ export const verifyBookingCheckout = asyncHandler(async (req: any, res: Response
 });
 
 // 2. Get Customer Event Bookings
-export const getMyEventBookings = asyncHandler(async (req: any, res: Response) => {
-  const bookings = await EventBooking.find({ user: req.user?.id })
+export const getMyEventBookings = asyncHandler(async (req: Request, res: Response) => {
+  const bookings = await EventBooking.find({ user: (req as any).user?.id })
     .populate('eventPackage', 'title image') // only get necessary package fields
     .select(
       'bookingId title eventType date status pricing.totalPrice pricing.paymentStatus createdAt',
@@ -74,7 +74,7 @@ export const getMyEventBookings = asyncHandler(async (req: any, res: Response) =
 });
 
 // 3. Get Single Event Booking (Client or Admin)
-export const getSingleEventBooking = asyncHandler(async (req: any, res: Response) => {
+export const getSingleEventBooking = asyncHandler(async (req: Request, res: Response) => {
   const booking = await EventBooking.findById(req.params.id)
     .populate('user', 'name email phone')
     .populate('eventPackage', 'title basePrice image')
@@ -86,8 +86,8 @@ export const getSingleEventBooking = asyncHandler(async (req: any, res: Response
 
   // Security bounds checks
   if (
-    !ADMIN_ROLES.includes(req.user.role as any) &&
-    String(booking.user._id || booking.user) !== String(req.user.id)
+    !ADMIN_ROLES.includes((req as any).user.role as any) &&
+    String(booking.user._id || booking.user) !== String((req as any).user.id)
   ) {
     throw new ApiError(403, 'Access denied to this secure design workspace.');
   }
@@ -102,7 +102,7 @@ export const getSingleEventBooking = asyncHandler(async (req: any, res: Response
 });
 
 // 4. Client Responds / Approves Quotation
-export const customerApproveQuote = asyncHandler(async (req: any, res: Response) => {
+export const customerApproveQuote = asyncHandler(async (req: Request, res: Response) => {
   const { approved } = req.body;
   const booking = await EventBooking.findById(req.params.id);
 
@@ -110,7 +110,7 @@ export const customerApproveQuote = asyncHandler(async (req: any, res: Response)
     throw new ApiError(404, 'Booking not found');
   }
 
-  if (String(booking.user) !== String(req.user?.id)) {
+  if (String(booking.user) !== String((req as any).user?.id)) {
     throw new ApiError(403, 'Only the client can execute quote responses.');
   }
 
@@ -141,7 +141,7 @@ export const customerApproveQuote = asyncHandler(async (req: any, res: Response)
 });
 
 // 5. Customer Submits Payment Milestone
-export const customerSubmitPayment = asyncHandler(async (req: any, res: Response) => {
+export const customerSubmitPayment = asyncHandler(async (req: Request, res: Response) => {
   const { amount, transactionId, note } = req.body;
   const booking = await EventBooking.findById(req.params.id);
 
@@ -149,7 +149,7 @@ export const customerSubmitPayment = asyncHandler(async (req: any, res: Response
     throw new ApiError(404, 'Booking not found');
   }
 
-  if (String(booking.user) !== String(req.user?.id)) {
+  if (String(booking.user) !== String((req as any).user?.id)) {
     throw new ApiError(403, 'Unauthorized transaction action.');
   }
 
@@ -172,7 +172,7 @@ export const customerSubmitPayment = asyncHandler(async (req: any, res: Response
 
   // Fetch Razorpay payment details to verify authentic transaction
   try {
-    const { RazorpayGateway } = require('../utils/RazorpayGateway');
+    const { RazorpayGateway } = require('../utils/payment/RazorpayGateway');
     const paymentDetails = await RazorpayGateway.getPayment(transactionId);
 
     if (paymentDetails.status !== 'captured' && paymentDetails.status !== 'authorized') {
@@ -190,7 +190,7 @@ export const customerSubmitPayment = asyncHandler(async (req: any, res: Response
     if (paymentDetails.currency !== 'INR') {
       throw new ApiError(400, 'Invalid currency. Expected INR.');
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof ApiError) throw err;
     throw new ApiError(400, 'Failed to verify transaction ID with payment gateway.');
   }
@@ -232,7 +232,7 @@ export const customerSubmitPayment = asyncHandler(async (req: any, res: Response
 });
 
 // 6. Post Real-Time Studio Chat Message
-export const postChatMessage = asyncHandler(async (req: any, res: Response) => {
+export const postChatMessage = asyncHandler(async (req: Request, res: Response) => {
   const { message, attachments } = req.body;
   const booking = await EventBooking.findById(req.params.id);
 
@@ -240,9 +240,9 @@ export const postChatMessage = asyncHandler(async (req: any, res: Response) => {
     throw new ApiError(404, 'Workspace not found');
   }
 
-  const isAdmin = ADMIN_ROLES.includes(req.user?.role as any);
+  const isAdmin = ADMIN_ROLES.includes((req as any).user?.role as any);
 
-  if (!isAdmin && String(booking.user) !== String(req.user?.id)) {
+  if (!isAdmin && String(booking.user) !== String((req as any).user?.id)) {
     throw new ApiError(403, 'Restricted messaging permission.');
   }
 
@@ -272,7 +272,7 @@ export const postChatMessage = asyncHandler(async (req: any, res: Response) => {
 
 // 7. Get All Bookings (Admin Panel Pipeline)
 export const adminGetAllBookings = asyncHandler(async (req: Request, res: Response) => {
-  const filterQuery: any = {};
+  const filterQuery: Record<string, unknown> = {};
   if (req.query.status) {
     filterQuery.status = req.query.status;
   }
@@ -311,7 +311,7 @@ export const adminGetAllBookings = asyncHandler(async (req: Request, res: Respon
 });
 
 // 8. Admin Timeline Status Shifter
-export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) => {
+export const adminUpdateStatus = asyncHandler(async (req: Request, res: Response) => {
   const { status } = req.body;
   const booking = await EventBooking.findById(req.params.id).populate('user');
 
@@ -326,7 +326,7 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
     booking,
     status as any,
     'Status manually updated by admin',
-    req.user.id,
+    (req as any).user.id,
   );
 
   if (status === 'confirmed') {
@@ -400,7 +400,7 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
   // Handle Refunds on Cancellation
   if (status === 'cancelled') {
     const totalPaid = (booking.payments || []).reduce(
-      (acc: number, p: any) => acc + (p.status === 'success' ? p.amount : 0),
+      (acc: number, p: any) => acc + (p.status === 'success' ? (p.amount as number) : 0),
       0,
     );
 
@@ -461,7 +461,7 @@ export const adminUpdateStatus = asyncHandler(async (req: any, res: Response) =>
 });
 
 // 9. Admin Refines Quotation Estimates
-export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response) => {
+export const adminUpdateQuotation = asyncHandler(async (req: Request, res: Response) => {
   const { eventPackageId, selectedAddons, rentalDurationDays, depositAmountOverride } = req.body;
   const booking = await EventBooking.findById(req.params.id);
 
@@ -493,11 +493,14 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
     'Traditional Handpainted Kolam/Rangoli': 3500,
   };
 
-  const addOnCharges = (booking.selectedAddons || []).reduce((acc: number, item: any) => {
-    const canonicalPrice = CANONICAL_ADDONS[item.name] || 0;
-    item.price = canonicalPrice;
-    return acc + canonicalPrice;
-  }, 0);
+  const addOnCharges = (booking.selectedAddons || []).reduce(
+    (acc: number, item: Record<string, any>) => {
+      const canonicalPrice = CANONICAL_ADDONS[item.name as string] || 0;
+      item.price = canonicalPrice;
+      return acc + canonicalPrice;
+    },
+    0,
+  );
 
   const total = basePrice + addOnCharges;
 
@@ -535,7 +538,7 @@ export const adminUpdateQuotation = asyncHandler(async (req: any, res: Response)
 });
 
 // 10. Admin Manages Logistics & Setup/Pickup Schedules
-export const adminUpdateLogistics = asyncHandler(async (req: any, res: Response) => {
+export const adminUpdateLogistics = asyncHandler(async (req: Request, res: Response) => {
   const { setupTiming, pickupTiming, assignedTeam, rentedInventory, adminNotes, venue } = req.body;
   const booking = await EventBooking.findById(req.params.id);
 
@@ -568,7 +571,7 @@ export const adminUpdateLogistics = asyncHandler(async (req: any, res: Response)
 });
 
 // 11. Admin Internal Notes Logger
-export const adminUpdateNotes = asyncHandler(async (req: any, res: Response) => {
+export const adminUpdateNotes = asyncHandler(async (req: Request, res: Response) => {
   const { adminNotes } = req.body;
   const booking = await EventBooking.findByIdAndUpdate(
     req.params.id,

@@ -6,7 +6,7 @@ import ApiError from '../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 import logger from '../config/logger';
-import { bumpPublicCacheVersion } from '../utils/cacheVersion';
+import { bumpPublicCacheVersion } from '../utils/cache/cacheVersion';
 import { ChangeTracker } from '../utils/ChangeTracker';
 
 function escapeRegex(string: string) {

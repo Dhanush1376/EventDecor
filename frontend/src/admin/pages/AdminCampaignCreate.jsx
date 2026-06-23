@@ -7,9 +7,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import { createSafeHtml } from '../../utils/sanitize';
-import logger from '../../utils/logger';
-import { getErrorMessage } from '../../utils/errorHelpers';
+import { createSafeHtml } from '../../utils/security/sanitize';
+import logger from '../../utils/core/logger';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 import { useDraft } from '../hooks/useDraft';
 
 export function AdminCampaignCreate() {
