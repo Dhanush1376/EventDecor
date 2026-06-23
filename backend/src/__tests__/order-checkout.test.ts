@@ -9,7 +9,7 @@ jest.mock('../models/Order');
 jest.mock('../models/User');
 jest.mock('../models/Product');
 jest.mock('../services/InventoryService');
-jest.mock('../utils/RazorpayGateway');
+jest.mock('../utils/payment/RazorpayGateway');
 jest.mock('../models/OutboxEvent');
 jest.mock('../services/orders/OrderIdempotencyManager', () => ({
   OrderIdempotencyManager: {

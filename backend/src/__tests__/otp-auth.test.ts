@@ -13,7 +13,7 @@ jest.mock('../models/OtpRequestLog');
 jest.mock('../models/OtpVerification');
 jest.mock('../models/FailedLoginAttempt');
 jest.mock('../utils/cache/otpVerifyCache');
-jest.mock('../utils/otpRateLimit');
+jest.mock('../utils/security/otpRateLimit');
 jest.mock('../services/SessionAuthService');
 jest.mock('../services/notificationService', () => ({
   sendDirectEmail: jest.fn(),

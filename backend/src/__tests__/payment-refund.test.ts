@@ -4,7 +4,7 @@ import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import { refundQueue } from '../jobs/queues';
 
 jest.mock('../models/RefundRecord');
-jest.mock('../utils/RazorpayGateway');
+jest.mock('../utils/payment/RazorpayGateway');
 jest.mock('../jobs/queues', () => ({
   refundQueue: { add: jest.fn() },
   isQueuesReady: jest.fn().mockReturnValue(true),
