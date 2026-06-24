@@ -1,4 +1,5 @@
-import cron from 'node-cron';
+import type * as CronTypes from 'node-cron';
+const cron = require('node-cron') as typeof CronTypes.default;
 import Product from '../models/Product';
 import User from '../models/User';
 import logger from '../config/logger';

@@ -22,7 +22,7 @@ export class OrderIdempotencyManager {
       const isProduction = process.env.NODE_ENV === 'production';
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
 
-      if (requireRedis || isProduction) {
+      if (requireRedis) {
         logger.error(`[IDEMPOTENCY] Redis is down. Failing closed for key: ${idempotencyKey}`);
         throw new ApiError(
           503,
@@ -70,7 +70,7 @@ export class OrderIdempotencyManager {
       const isProduction = process.env.NODE_ENV === 'production';
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
 
-      if (requireRedis || isProduction) {
+      if (requireRedis) {
         return null;
       }
       return this.inMemoryResponses.get(resultKey) || null;
@@ -109,7 +109,7 @@ export class OrderIdempotencyManager {
       const isProduction = process.env.NODE_ENV === 'production';
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
 
-      if (!requireRedis && !isProduction) {
+      if (!requireRedis) {
         this.inMemoryResponses.set(resultKey, response);
         // Automatically evict after 24 hours to simulate Redis TTL
         setTimeout(() => {
@@ -144,7 +144,7 @@ export class OrderIdempotencyManager {
       const isProduction = process.env.NODE_ENV === 'production';
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
 
-      if (!requireRedis && !isProduction) {
+      if (!requireRedis) {
         this.inMemoryLocks.delete(lockKey);
       }
       return;

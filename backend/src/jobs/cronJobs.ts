@@ -1,4 +1,5 @@
-import cron from 'node-cron';
+import type * as CronTypes from 'node-cron';
+const cron = require('node-cron') as typeof CronTypes.default;
 import logger from '../config/logger';
 import ContentSection from '../models/ContentSection';
 import { FailedEmailRetryService } from '../services/failedEmailRetryService';
