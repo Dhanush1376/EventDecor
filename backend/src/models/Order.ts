@@ -62,6 +62,7 @@ const OrderSchema: Schema = new Schema(
     orderStatus: {
       type: String,
       enum: [
+        'Payment Pending',
         'Pending',
         'Confirmed',
         'Packed',

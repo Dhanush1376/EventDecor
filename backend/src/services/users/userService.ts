@@ -56,6 +56,8 @@ export class UserService {
     const products = await Product.find({ _id: { $in: productIds } });
     const productsById = new Map(products.map((product: any) => [product._id.toString(), product]));
 
+    const aggregatedCartMap = new Map<string, any>();
+
     for (const item of rawCart) {
       if (!item.product) continue;
       const product = productsById.get(String(item.product));
@@ -65,25 +67,42 @@ export class UserService {
       }
 
       const itemType = item.type || 'purchase';
-
       let quantity = Number(item.quantity) || 0;
-      if (quantity > 50) {
-        quantity = 50;
+
+      if (quantity <= 0) {
         cartChanged = true;
-      }
-      if (quantity > product.stock) {
-        quantity = product.stock;
-        cartChanged = true;
+        continue;
       }
 
-      if (quantity > 0) {
-        validatedCart.push({
+      const key = `${item.product}_${itemType}_${item.variant || 'Default'}_${JSON.stringify(item.rentalInfo || {})}`;
+
+      if (aggregatedCartMap.has(key)) {
+        cartChanged = true;
+        const existing = aggregatedCartMap.get(key);
+        existing.quantity += quantity;
+      } else {
+        aggregatedCartMap.set(key, {
           product: product,
           quantity,
           variant: item.variant || 'Default',
           type: itemType,
           rentalInfo: item.rentalInfo,
         });
+      }
+    }
+
+    for (const item of aggregatedCartMap.values()) {
+      if (item.quantity > 50) {
+        item.quantity = 50;
+        cartChanged = true;
+      }
+      if (item.quantity > item.product.stock) {
+        item.quantity = item.product.stock;
+        cartChanged = true;
+      }
+
+      if (item.quantity > 0) {
+        validatedCart.push(item);
       } else {
         cartChanged = true;
       }

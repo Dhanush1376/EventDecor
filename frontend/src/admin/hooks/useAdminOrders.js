@@ -12,6 +12,7 @@ const mapDbOrderToFrontend = (o) => {
   // Use capitalized statuses strictly
   let fStatus = o.orderStatus || 'Pending';
   if (fStatus === 'placed') fStatus = 'Pending';
+  else if (fStatus === 'Payment Pending') fStatus = 'Payment Pending';
   else if (fStatus === 'confirmed') fStatus = 'Confirmed';
   else if (fStatus === 'processing') fStatus = 'Packed';
   else if (fStatus === 'shipped') fStatus = 'Shipped';

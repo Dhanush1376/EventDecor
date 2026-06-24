@@ -361,9 +361,14 @@ export class OrderCheckoutService {
           couponCode: couponValid ? couponCode.toUpperCase() : undefined,
           paymentMethod: 'razorpay',
           paymentStatus: 'pending',
+          orderStatus: 'Payment Pending',
           reservationIds,
           statusHistory: [
-            { status: 'pending', note: 'Order initiated via Checkout', updatedBy: 'system' },
+            {
+              status: 'Payment Pending',
+              note: 'Order initiated via Checkout',
+              updatedBy: 'system',
+            },
           ],
           invoiceNumber,
           trackingNumber,

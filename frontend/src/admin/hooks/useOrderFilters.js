@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 
 export const allStatuses = [
+  'Payment Pending',
   'Pending',
   'Confirmed',
   'Packed',
@@ -15,6 +16,7 @@ export const allStatuses = [
 ];
 
 export const statusIcons = {
+  'Payment Pending': 'hourglass_empty',
   Pending: 'schedule',
   Confirmed: 'thumb_up',
   Packed: 'inventory_2',
