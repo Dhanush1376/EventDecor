@@ -12,7 +12,7 @@ import {
 } from '../auth/authStorage';
 import { persistentStorage } from '../storage/persistentStorage';
 
-vi.mock('./persistentStorage', () => ({
+vi.mock('../storage/persistentStorage', () => ({
   persistentStorage: {
     getItem: vi.fn(),
     setItem: vi.fn(),

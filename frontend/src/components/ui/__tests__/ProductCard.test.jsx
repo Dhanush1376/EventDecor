@@ -1,4 +1,4 @@
-import { ProductCard } from '../ProductCard';
+import { ProductCard } from '../../shared/ProductCard';
 import { BrowserRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
