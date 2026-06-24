@@ -147,4 +147,4 @@ jobs:
       - name: Automated Rollback on Failure
         run: echo "Rollback logic here if needed"
       - name: Post-Deploy Smoke Tests
-        run: curl -sSf https://eventdecor-production-1647.up.railway.app/api/health || exit 1
+        run: curl -sSf https://eventdecor-production-1647.up.railway.app/api/readiness || exit 1
