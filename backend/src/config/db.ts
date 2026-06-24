@@ -4,21 +4,6 @@ import dns from 'dns';
 import logger from './logger';
 import { DestructionGuard } from '../utils/DestructionGuard';
 
-// Prevent querySrv ETIMEOUT on local environments by using reliable public DNS resolvers
-const setupLocalDns = async () => {
-  const isLocal =
-    process.env.NODE_ENV !== 'production' && !process.env.RENDER && !process.env.RAILWAY_STATIC_URL;
-  if (!isLocal) return;
-  try {
-    const { Resolver } = dns.promises;
-    const resolver = new Resolver();
-    await resolver.resolve('google.com');
-  } catch {
-    logger.warn('[DNS] Local DNS resolver seems unstable, falling back to 8.8.8.8');
-    dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
-  }
-};
-
 // Enforce global maxTimeMS to prevent runaway database queries
 mongoose.plugin((schema) => {
   const defaultTimeout = 15000; // 15 seconds for regular queries
@@ -154,7 +139,6 @@ class DatabaseManager {
   }
 
   public async connect(): Promise<typeof mongoose> {
-    await setupLocalDns();
     const MONGO_URI = process.env.MONGO_URI;
 
     if (!MONGO_URI) {
