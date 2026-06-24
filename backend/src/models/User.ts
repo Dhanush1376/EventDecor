@@ -29,6 +29,11 @@ const UserSchema: Schema = new Schema(
       default: 'customer',
     },
     avatar: { type: String, default: '' },
+    providers: {
+      type: [{ type: String, enum: ['otp', 'google'] }],
+      default: ['otp'],
+    },
+    googleId: { type: String },
     gender: {
       type: String,
       enum: ['male', 'female', 'other', 'prefer_not_to_say', ''],
@@ -117,6 +122,7 @@ UserSchema.index({ isVerified: 1 });
 UserSchema.index({ 'recentlyViewed.product': 1 });
 UserSchema.index({ loyaltyTier: 1 });
 UserSchema.index({ phone: 1 });
+UserSchema.index({ googleId: 1 }, { unique: true, sparse: true });
 
 // High-Performance Production Compound Index for Paginated Staff and Admin Lists
 UserSchema.index({ role: 1, createdAt: -1 });

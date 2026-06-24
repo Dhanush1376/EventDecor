@@ -19,6 +19,7 @@ const CSRF_EXEMPT_SUFFIXES = [
   '/auth/register',
   '/auth/send-otp',
   '/auth/verify-otp',
+  '/auth/google',
   '/tracking/session',
   '/tracking/event',
   '/tracking/batch',

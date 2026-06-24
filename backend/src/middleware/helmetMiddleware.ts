@@ -37,7 +37,7 @@ const helmetConfig = helmet({
   // Razorpay checkout iframe + Cloudinary assets break under require-corp
   crossOriginEmbedderPolicy: false,
   // Isolate browsing context to prevent cross-origin window references
-  crossOriginOpenerPolicy: { policy: 'same-origin' },
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
   hsts:
     process.env.NODE_ENV === 'production'
       ? { maxAge: 31536000, includeSubDomains: true, preload: true }

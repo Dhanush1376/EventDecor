@@ -99,7 +99,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a0d5c8ec725a13dd9a95618</loc>
-    <lastmod>2026-06-17</lastmod>
+    <lastmod>2026-06-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -149,7 +149,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a1982f6594e9ef6fa074f28</loc>
-    <lastmod>2026-06-23</lastmod>
+    <lastmod>2026-06-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -189,7 +189,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a11579708fa7569dfc015a0</loc>
-    <lastmod>2026-06-23</lastmod>
+    <lastmod>2026-06-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -235,6 +235,16 @@
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1782206402/siri-arts-crafts/products/b290u5fj7et7hpvq2jo3.jpg</image:loc>
       <image:title>Floral Ring Tray</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/product/6a3baccd26b550d51b4eb3b8</loc>
+    <lastmod>2026-06-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1782295702/siri-arts-crafts/products/ealo2xqly87vawkyeurf.jpg</image:loc>
+      <image:title>Makeup Gift Bouquet</image:title>
     </image:image>
   </url>
   <url>
@@ -405,6 +415,16 @@
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781799718/siri-arts-crafts/products/pgndnrhojhzfzx28sjnz.jpg</image:loc>
       <image:title>Rose Chocolate Bouquet</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a3bacce26b550d51b4eb3ba</loc>
+    <lastmod>2026-06-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1782295702/siri-arts-crafts/products/ealo2xqly87vawkyeurf.jpg</image:loc>
+      <image:title>Makeup Gift Bouquet</image:title>
     </image:image>
   </url>
 </urlset>

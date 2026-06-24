@@ -71,6 +71,9 @@ const envSchema = z
     TEST_RATE_LIMIT: z.string().optional(),
     BYPASS_OTP_CODE: z.string().optional(),
     SECRET_ROTATION_REMINDER: z.string().optional(),
+
+    // Google OAuth
+    GOOGLE_CLIENT_ID: z.string().optional(),
   })
   .refine(
     (data) => {

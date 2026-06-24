@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import OtpAuthService from '../services/OtpAuthService';
+import GoogleAuthService from '../services/GoogleAuthService';
 import SessionAuthService from '../services/SessionAuthService';
 import asyncHandler from '../utils/asyncHandler';
 import ApiResponse from '../utils/ApiResponse';
@@ -234,5 +235,50 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'private, no-store');
   res.setHeader('X-Session-Cache', 'MISS');
   res.status(200).json(new ApiResponse(true, 'Profile fetched', user));
+});
+
+export const googleAuth = asyncHandler(async (req: Request, res: Response) => {
+  const { credential } = req.body;
+  if (!credential) {
+    throw new ApiError(400, 'Google credential is required');
+  }
+
+  const clientIp = req.ip || '127.0.0.1';
+  const userAgent = req.headers['user-agent'] || '';
+
+  logger.info(`[AUTH] Google auth requested from ${clientIp}`);
+
+  const result = await GoogleAuthService.authenticateWithGoogle(credential, clientIp, userAgent);
+
+  if ((result as { requires2FA?: boolean }).requires2FA) {
+    logger.info(`[AUTH] Google auth verified — awaiting 2FA for user: ${result.user._id}`);
+    return res.status(200).json(
+      new ApiResponse(true, 'Two-factor authentication required', {
+        requires2FA: true,
+        userId: result.user._id,
+        user: result.user,
+      }),
+    );
+  }
+
+  logger.info(`[AUTH] Google auth session created for user ${result.user._id}`);
+  await invalidateUserSessionCaches(String(result.user._id));
+
+  if ((STAFF_ROLES as readonly string[]).includes(result.user.role)) {
+    setAdminRefreshCookie(res, result.refreshToken);
+  } else {
+    setCustomerRefreshCookie(res, result.refreshToken);
+  }
+
+  const csrfToken = regenerateCsrfToken(res);
+
+  const payload: Record<string, unknown> = {
+    user: result.user,
+    accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
+    csrfToken,
+  };
+
+  res.status(200).json(new ApiResponse(true, 'Authenticated successfully', payload));
 });
 // Trigger dev restart to pick up BYPASS_OTP_CODE env change

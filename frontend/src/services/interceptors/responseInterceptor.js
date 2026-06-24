@@ -20,8 +20,9 @@ export const createResponseInterceptor = ({
 }) => [
   (response) => {
     // Capture new CSRF tokens returned in any successful response (e.g. login)
-    if (response.data?.csrfToken) {
-      setCsrfTokenState(response.data.csrfToken);
+    const csrfToken = response.data?.csrfToken || response.data?.data?.csrfToken;
+    if (csrfToken) {
+      setCsrfTokenState(csrfToken);
     }
 
     const started = response.config?.metadata?.startTime;

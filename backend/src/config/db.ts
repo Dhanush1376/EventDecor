@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import os from 'os';
-import dns from 'dns';
 import logger from './logger';
 import { DestructionGuard } from '../utils/DestructionGuard';
 

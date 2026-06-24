@@ -51,7 +51,9 @@ export const isPathProtected = (path) => {
         path.includes('/config/admin') ||
         path.includes('/config/draft') ||
         path.includes('/config/publish'))) ||
-    path.includes('/notifications') ||
+    (path.includes('/notifications') &&
+      !path.includes('/notifications/consent') &&
+      !path.includes('/notifications/unsubscribe')) ||
     path.includes('/analytics/') ||
     (path.includes('/reviews') &&
       !path.includes('/reviews/public') &&

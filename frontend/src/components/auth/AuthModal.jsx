@@ -30,6 +30,9 @@ export function AuthModal() {
     handleKeyDown,
     handlePaste,
     resetState,
+    googleLoading,
+    handleGoogleSuccess,
+    handleGoogleError,
   } = useAuthFlow(loginSuccess, isAuthModalOpen);
 
   const [isFocused, setIsFocused] = useState(false);
@@ -205,6 +208,9 @@ export function AuthModal() {
                             isLoading={isLoading}
                             isFocused={isFocused}
                             setIsFocused={setIsFocused}
+                            googleLoading={googleLoading}
+                            handleGoogleSuccess={handleGoogleSuccess}
+                            handleGoogleError={handleGoogleError}
                           />
                         ) : step === '2fa' ? (
                           <TwoFactorForm

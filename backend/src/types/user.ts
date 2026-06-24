@@ -21,6 +21,8 @@ export interface IUser extends ISoftDeleted {
     | 'manager'
     | 'coordinator';
   avatar?: string;
+  providers: ('otp' | 'google')[];
+  googleId?: string;
   gender?: string;
   dateOfBirth?: string;
   wishlist: mongoose.Types.ObjectId[];

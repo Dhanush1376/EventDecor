@@ -11,6 +11,7 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
   const [pending2faUserId, setPending2faUserId] = useState(null);
   const [timer, setTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -124,6 +125,46 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
       setIsLoading(false);
     }
   };
+
+  const handleGoogleSuccess = useCallback(
+    async (credentialResponse) => {
+      if (isSubmittingRef.current || googleLoading) return;
+      isSubmittingRef.current = true;
+      setGoogleLoading(true);
+      try {
+        const response = await authService.googleAuth(credentialResponse.credential);
+        if (response.success && response.data?.requires2FA) {
+          setPending2faUserId(response.data.userId);
+          setTotpCode('');
+          setStep('2fa');
+          return;
+        }
+        if (response.success) {
+          setStep('success');
+          setTimeout(async () => {
+            await loginSuccess(
+              response.data.user,
+              response.data.accessToken || response.data.token,
+              response.data.refreshToken,
+            );
+          }, 1800);
+        }
+      } catch (err) {
+        const msg = err.response?.data?.message || 'Google sign-in failed. Please try again.';
+        toast.error(msg);
+      } finally {
+        isSubmittingRef.current = false;
+        setGoogleLoading(false);
+      }
+    },
+    [googleLoading, loginSuccess],
+  );
+
+  const handleGoogleError = useCallback((errorMsg) => {
+    if (errorMsg && !errorMsg.includes('dismissed') && !errorMsg.includes('skipped')) {
+      toast.error('Google sign-in could not be started. Please try OTP login.');
+    }
+  }, []);
 
   // Auto-submit OTP
   useEffect(() => {
@@ -250,5 +291,8 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
     handleKeyDown,
     handlePaste,
     resetState,
+    googleLoading,
+    handleGoogleSuccess,
+    handleGoogleError,
   };
 }

@@ -62,8 +62,10 @@ export function useDraft({
   // Sync with initialData changes (e.g. after async fetch)
   useEffect(() => {
     if (enabled && initialData && !hasDraft) {
-      setFormDataInternal(initialData);
-      formDataRef.current = initialData;
+      if (JSON.stringify(initialData) !== JSON.stringify(formDataRef.current)) {
+        setFormDataInternal(initialData);
+        formDataRef.current = initialData;
+      }
     }
   }, [initialData, enabled, hasDraft]);
 

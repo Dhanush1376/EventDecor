@@ -1,60 +1,97 @@
 import React from 'react';
 import { m as motion } from 'framer-motion';
+import { GoogleSignInButton } from './GoogleSignInButton';
+import { useGoogleIdentity } from '../../hooks/useGoogleIdentity';
 
-export function EmailInputForm({ email, setEmail, sendOTP, isLoading, isFocused, setIsFocused }) {
+export function EmailInputForm({
+  email,
+  setEmail,
+  sendOTP,
+  isLoading,
+  isFocused,
+  setIsFocused,
+  googleLoading,
+  handleGoogleSuccess,
+  handleGoogleError,
+}) {
+  const {
+    isReady: googleReady,
+    triggerLogin,
+    renderGoogleButton,
+  } = useGoogleIdentity(handleGoogleSuccess, handleGoogleError);
+
   return (
-    <motion.form
+    <motion.div
       key="email-block"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      onSubmit={sendOTP}
       className="space-y-5"
     >
-      <div className="relative group">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/30 text-[16px] group-focus-within:text-primary transition-colors">
-          mail
-        </span>
+      {/* OTP Login Section */}
+      <form onSubmit={sendOTP} className="space-y-5">
+        <div className="relative group">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/30 text-[16px] group-focus-within:text-primary transition-colors">
+            mail
+          </span>
 
-        <label
-          htmlFor="auth-email-input"
-          className={`absolute transition-all duration-300 pointer-events-none font-bold ${
-            isFocused || email
-              ? 'text-[9px] -top-2 left-4 bg-white px-1.5 text-primary tracking-[0.2em] uppercase z-10'
-              : 'text-[12px] top-1/2 -translate-y-1/2 left-10 text-on-surface-variant/40 tracking-[0.15em] uppercase'
-          }`}
+          <label
+            htmlFor="auth-email-input"
+            className={`absolute transition-all duration-300 pointer-events-none font-bold ${
+              isFocused || email
+                ? 'text-[9px] -top-2 left-4 bg-white px-1.5 text-primary tracking-[0.2em] uppercase z-10'
+                : 'text-[12px] top-1/2 -translate-y-1/2 left-10 text-on-surface-variant/40 tracking-[0.15em] uppercase'
+            }`}
+          >
+            Email Address
+          </label>
+
+          <input
+            id="auth-email-input"
+            type="email"
+            required
+            className="w-full bg-surface-container-low/50 border border-outline-variant/35 rounded-xl pl-10 pr-4 py-3.5 font-body text-[14px] text-on-surface-variant outline-none transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/5"
+            placeholder={isFocused ? 'e.g. creative@siriartsandcrafts.com' : ''}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+          />
+        </div>
+        <button
+          disabled={!email || isLoading}
+          className="w-full h-12 bg-primary text-surface rounded-full flex items-center justify-center gap-2.5 font-label-sm text-[10px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-md shadow-primary/10 cursor-pointer"
         >
-          Email Address
-        </label>
+          {isLoading ? (
+            <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
+          ) : (
+            <>
+              <span>Send Verification Code</span>
+              <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
+                arrow_forward
+              </span>
+            </>
+          )}
+        </button>
+      </form>
 
-        <input
-          id="auth-email-input"
-          type="email"
-          required
-          className="w-full bg-surface-container-low/50 border border-outline-variant/35 rounded-xl pl-10 pr-4 py-3.5 font-body text-[14px] text-on-surface-variant outline-none transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/5"
-          placeholder={isFocused ? 'e.g. creative@siriartsandcrafts.com' : ''}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-        />
+      {/* ── OR Divider ── */}
+      <div className="flex items-center gap-4 py-1">
+        <div className="flex-1 h-px bg-outline-variant/30" />
+        <span className="font-label-sm text-[9px] text-on-surface-variant/40 uppercase tracking-[0.25em] font-bold select-none">
+          or
+        </span>
+        <div className="flex-1 h-px bg-outline-variant/30" />
       </div>
-      <button
-        disabled={!email || isLoading}
-        className="w-full h-12 bg-primary text-surface rounded-full flex items-center justify-center gap-2.5 font-label-sm text-[10px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-md shadow-primary/10 cursor-pointer"
-      >
-        {isLoading ? (
-          <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
-        ) : (
-          <>
-            <span>Send Verification Code</span>
-            <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-              arrow_forward
-            </span>
-          </>
-        )}
-      </button>
-    </motion.form>
+
+      {/* ── Google Sign-In ── */}
+      <GoogleSignInButton
+        onClick={triggerLogin}
+        isLoading={googleLoading}
+        disabled={!googleReady}
+        renderGoogleButton={googleReady ? renderGoogleButton : null}
+      />
+    </motion.div>
   );
 }
 

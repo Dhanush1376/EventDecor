@@ -22,6 +22,7 @@ export const createRequestInterceptor =
       path.includes('/auth/login') ||
       path.includes('/auth/register') ||
       path.includes('/auth/logout') ||
+      path.includes('/auth/google') ||
       config._skipAuthRetry === true;
 
     const accessToken = getAccessToken();
