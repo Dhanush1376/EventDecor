@@ -10,10 +10,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label
-              htmlFor="dashboard-address-name"
-              className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-address-name" className="form-label">
               Receiver Full Name*
             </label>
             <input
@@ -21,7 +18,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               type="text"
               required
               placeholder="Receiver full name"
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
               value={addressFormData.name}
               onChange={(e) =>
                 setAddressFormData({
@@ -32,10 +29,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
             />
           </div>
           <div>
-            <label
-              htmlFor="dashboard-address-phone"
-              className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-address-phone" className="form-label">
               Contact Phone Number*
             </label>
             <input
@@ -43,7 +37,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               type="tel"
               required
               placeholder="10-digit number"
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
               value={addressFormData.phone}
               onChange={(e) =>
                 setAddressFormData({
@@ -54,17 +48,14 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
             />
           </div>
           <div>
-            <label
-              htmlFor="dashboard-address-alt-phone"
-              className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-address-alt-phone" className="form-label">
               Alternate Phone Number
             </label>
             <input
               id="dashboard-address-alt-phone"
               type="tel"
               placeholder="Optional alternate number"
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
               value={addressFormData.alternatePhone}
               onChange={(e) =>
                 setAddressFormData({
@@ -75,17 +66,14 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
             />
           </div>
           <div>
-            <label
-              htmlFor="dashboard-address-email"
-              className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-address-email" className="form-label">
               Email Address
             </label>
             <input
               id="dashboard-address-email"
               type="email"
               placeholder="Enter email address"
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
               value={addressFormData.email}
               onChange={(e) =>
                 setAddressFormData({
@@ -105,10 +93,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label
-              htmlFor="dashboard-address-pincode"
-              className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-address-pincode" className="form-label">
               6-Digit Pincode*
             </label>
             <input
@@ -116,7 +101,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               type="text"
               required
               placeholder="e.g. 560041"
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
               value={addressFormData.pincode}
               onChange={(e) =>
                 setAddressFormData({
@@ -127,10 +112,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
             />
           </div>
           <div>
-            <label
-              htmlFor="dashboard-address-locality"
-              className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-address-locality" className="form-label">
               Locality / Sector*
             </label>
             <input
@@ -138,7 +120,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               type="text"
               required
               placeholder="e.g. Sector 4 / Jayanagar"
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
               value={addressFormData.locality}
               onChange={(e) =>
                 setAddressFormData({
@@ -149,17 +131,14 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
             />
           </div>
           <div className="sm:col-span-2">
-            <label
-              htmlFor="dashboard-address-street"
-              className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-address-street" className="form-label">
               Street Address & Building Details*
             </label>
             <textarea
               id="dashboard-address-street"
               required
               placeholder="Flat, House no., Building, Apartment details"
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all min-h-[70px] font-semibold"
+              className="form-field min-h-[70px]"
               value={addressFormData.addressString}
               onChange={(e) =>
                 setAddressFormData({
@@ -170,10 +149,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
             />
           </div>
           <div className="sm:col-span-2">
-            <label
-              htmlFor="dashboard-address-landmark"
-              className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-address-landmark" className="form-label">
               Landmark*
             </label>
             <input
@@ -181,7 +157,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               type="text"
               required
               placeholder="e.g. Near LPU Gate 1"
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
               value={addressFormData.landmark}
               onChange={(e) =>
                 setAddressFormData({
@@ -192,10 +168,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
             />
           </div>
           <div>
-            <label
-              htmlFor="dashboard-address-city"
-              className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-address-city" className="form-label">
               City / District*
             </label>
             <input
@@ -203,7 +176,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               type="text"
               required
               placeholder="City"
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
               value={addressFormData.city}
               onChange={(e) =>
                 setAddressFormData({
@@ -214,10 +187,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
             />
           </div>
           <div>
-            <label
-              htmlFor="dashboard-address-state"
-              className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-address-state" className="form-label">
               State*
             </label>
             <input
@@ -225,7 +195,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               type="text"
               required
               placeholder="State"
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
               value={addressFormData.state}
               onChange={(e) =>
                 setAddressFormData({
@@ -236,10 +206,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
             />
           </div>
           <div>
-            <label
-              htmlFor="dashboard-address-tag"
-              className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-address-tag" className="form-label">
               Destination Type
             </label>
             <select
@@ -251,7 +218,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
                   tag: e.target.value,
                 })
               }
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
+              className="form-field cursor-pointer"
             >
               <option value="Home">Home</option>
               <option value="Work">Work</option>

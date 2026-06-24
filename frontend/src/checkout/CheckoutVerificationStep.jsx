@@ -59,7 +59,7 @@ export default function CheckoutVerificationStep() {
               placeholder="12-digit Aadhaar Number"
               value={aadhaarNumber}
               onChange={handleAadhaarChange}
-              className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
             />
             <p className="text-[10px] text-secondary mt-1.5 ml-1">
               Enter your 12-digit Aadhaar number

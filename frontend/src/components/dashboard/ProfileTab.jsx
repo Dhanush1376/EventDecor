@@ -33,7 +33,7 @@ export default function ProfileTab({
               autoComplete="name"
               value={profileForm.name}
               onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-              className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
               placeholder="Enter your full name"
             />
           </div>
@@ -68,7 +68,7 @@ export default function ProfileTab({
               autoComplete="tel"
               value={profileForm.phone}
               onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-              className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+              className="form-field"
               placeholder="e.g. 9876543210"
             />
           </div>

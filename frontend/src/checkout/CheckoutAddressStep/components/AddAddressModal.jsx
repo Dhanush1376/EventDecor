@@ -61,22 +61,18 @@ export function AddAddressModal({
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                          Receiver Full Name*
-                        </label>
+                        <label className="form-label">Receiver Full Name*</label>
                         <input
                           type="text"
                           required
                           placeholder="Receiver full name"
                           value={newAddress.name}
                           onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+                          className="form-field"
                         />
                       </div>
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                          Contact Phone Number*
-                        </label>
+                        <label className="form-label">Contact Phone Number*</label>
                         <input
                           type="tel"
                           required
@@ -84,13 +80,11 @@ export function AddAddressModal({
                           placeholder="10-digit mobile number"
                           value={newAddress.phone}
                           onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+                          className="form-field"
                         />
                       </div>
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                          Alternate Phone Number
-                        </label>
+                        <label className="form-label">Alternate Phone Number</label>
                         <input
                           type="tel"
                           placeholder="Optional alternate number"
@@ -98,19 +92,17 @@ export function AddAddressModal({
                           onChange={(e) =>
                             setNewAddress({ ...newAddress, alternatePhone: e.target.value })
                           }
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+                          className="form-field"
                         />
                       </div>
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                          Email Address
-                        </label>
+                        <label className="form-label">Email Address</label>
                         <input
                           type="email"
                           placeholder="Enter email address"
                           value={newAddress.email}
                           onChange={(e) => setNewAddress({ ...newAddress, email: e.target.value })}
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+                          className="form-field"
                         />
                       </div>
                     </div>
@@ -176,9 +168,7 @@ export function AddAddressModal({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                          6-Digit Pincode*
-                        </label>
+                        <label className="form-label">6-Digit Pincode*</label>
                         <input
                           type="tel"
                           required
@@ -194,14 +184,12 @@ export function AddAddressModal({
                             }
                             setNewAddress(updated);
                           }}
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+                          className="form-field"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                          Locality / Sector*
-                        </label>
+                        <label className="form-label">Locality / Sector*</label>
                         <input
                           type="text"
                           required
@@ -210,14 +198,12 @@ export function AddAddressModal({
                           onChange={(e) =>
                             setNewAddress({ ...newAddress, locality: e.target.value })
                           }
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+                          className="form-field"
                         />
                       </div>
 
                       <div className="sm:col-span-2">
-                        <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                          Street Address & Building Details*
-                        </label>
+                        <label className="form-label">Street Address & Building Details*</label>
                         <textarea
                           required
                           placeholder="Flat, House no., Building, Apartment details"
@@ -225,14 +211,12 @@ export function AddAddressModal({
                           onChange={(e) =>
                             setNewAddress({ ...newAddress, address: e.target.value })
                           }
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all min-h-[70px] font-semibold"
+                          className="form-field min-h-[70px]"
                         />
                       </div>
 
                       <div className="sm:col-span-2">
-                        <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                          Landmark
-                        </label>
+                        <label className="form-label">Landmark</label>
                         <input
                           type="text"
                           placeholder="e.g. Near Apollo Hospital"
@@ -240,35 +224,31 @@ export function AddAddressModal({
                           onChange={(e) =>
                             setNewAddress({ ...newAddress, landmark: e.target.value })
                           }
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+                          className="form-field"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                          City / District*
-                        </label>
+                        <label className="form-label">City / District*</label>
                         <input
                           type="text"
                           required
                           placeholder="City"
                           value={newAddress.city}
                           onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold"
+                          className="form-field"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                          State*
-                        </label>
+                        <label className="form-label">State*</label>
                         <input
                           type="text"
                           required
                           placeholder="State"
                           value={newAddress.state}
                           onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold uppercase"
+                          className="form-field uppercase"
                         />
                       </div>
                     </div>
@@ -280,13 +260,11 @@ export function AddAddressModal({
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
                       <div>
-                        <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                          Destination Type
-                        </label>
+                        <label className="form-label">Destination Type</label>
                         <select
                           value={newAddress.tag}
                           onChange={(e) => setNewAddress({ ...newAddress, tag: e.target.value })}
-                          className="w-full bg-white border border-outline-variant/30 rounded-lg px-3 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
+                          className="form-field cursor-pointer"
                         >
                           <option value="Home">Home</option>
                           <option value="Work">Work</option>
@@ -297,16 +275,14 @@ export function AddAddressModal({
                     </div>
 
                     <div className="sm:col-span-2 mb-4">
-                      <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5 font-display">
-                        Delivery Instructions
-                      </label>
+                      <label className="form-label">Delivery Instructions</label>
                       <textarea
                         placeholder="E.g. Leave with security, call before delivery"
                         value={newAddress.deliveryInstructions}
                         onChange={(e) =>
                           setNewAddress({ ...newAddress, deliveryInstructions: e.target.value })
                         }
-                        className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all min-h-[70px] font-semibold"
+                        className="form-field min-h-[70px]"
                       />
                     </div>
 
