@@ -350,19 +350,19 @@ export function ProductGallery({ images = [], product }) {
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
                   transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                  className="absolute bottom-0 left-0 w-full bg-surface shadow-2xl rounded-t-3xl border-t border-white/20 pb-8 pt-2"
+                  className="absolute bottom-0 left-0 w-full bg-surface shadow-2xl rounded-t-3xl border-t border-white/20 pb-6 pt-1"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Drag handle area (visual only) */}
                   <div
-                    className="w-full flex justify-center pt-2 pb-4 cursor-pointer"
+                    className="w-full flex justify-center pt-1 pb-2 cursor-pointer"
                     onClick={() => setIsSimilarOpen(false)}
                   >
                     <div className="w-12 h-1.5 rounded-full bg-outline-variant/30" />
                   </div>
 
-                  <div className="px-4 pb-2 flex justify-between items-center">
-                    <h3 className="font-label text-[13px] font-bold uppercase tracking-widest text-on-surface">
+                  <div className="px-4 pb-1 flex justify-between items-center">
+                    <h3 className="!font-label text-[13px] font-bold uppercase tracking-widest text-on-surface">
                       Similar Pieces
                     </h3>
                     <button

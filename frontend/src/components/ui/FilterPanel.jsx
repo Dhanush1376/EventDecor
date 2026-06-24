@@ -83,9 +83,9 @@ export function FilterPanel({
       setActiveSections((prev) => {
         const next = { ...prev };
         const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
-        filterGroups.forEach((group) => {
+        filterGroups.forEach((group, idx) => {
           if (next[group.id] === undefined) {
-            next[group.id] = !isMobile;
+            next[group.id] = !isMobile || idx === 0;
           }
         });
         return next;

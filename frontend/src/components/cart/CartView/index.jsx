@@ -539,38 +539,36 @@ export function CartView({ isEmbedded = false }) {
             <motion.div
               initial={{ y: 100 }}
               animate={{ y: 0 }}
-              className="fixed bottom-2 left-2 right-2 bg-surface-bright border border-outline-variant/40 py-3.5 px-5 shadow-[0_-10px_40px_rgba(0,0,0,0.12)] z-[100] lg:hidden rounded-2xl"
+              className="fixed bottom-0 left-0 w-full h-[calc(72px+env(safe-area-inset-bottom,0px))] md:h-[80px] z-[100] lg:hidden bg-white/95 backdrop-blur-xl border-t border-outline-variant/15 px-6 pb-[env(safe-area-inset-bottom,0px)] flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] select-none"
             >
-              <div className="max-w-[1240px] mx-auto flex items-center justify-between sm:px-6">
-                <div className="flex flex-col justify-center">
-                  <span className="text-[10px] text-secondary/90 font-extrabold uppercase tracking-widest mb-0.5">
-                    {cartCount} ITEM{cartCount !== 1 ? 'S' : ''} IN BAG
+              <div className="flex flex-col justify-center truncate">
+                <span className="font-label text-[8px] uppercase tracking-[0.25em] text-stone-500 font-bold leading-none">
+                  {cartCount} ITEM{cartCount !== 1 ? 'S' : ''} IN BAG
+                </span>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <span className="font-sans text-[15px] text-black font-bold leading-none">
+                    ₹{finalPayableAmount.toLocaleString('en-IN')}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[18px] font-extrabold text-on-surface leading-tight">
-                      ₹{finalPayableAmount.toLocaleString()}
+                  {appliedCoupon && (
+                    <span className="bg-green-100 text-green-800 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase border border-green-200 tracking-wider">
+                      {appliedCoupon.code}
                     </span>
-                    {appliedCoupon && (
-                      <span className="bg-green-100 text-green-800 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase border border-green-200 tracking-wider">
-                        {appliedCoupon.code}
-                      </span>
-                    )}
-                  </div>
+                  )}
                 </div>
-                <button
-                  onClick={() =>
-                    runProtectedAction(() => {
-                      sessionStorage.removeItem('siri_checkout_step');
-                      navigate('/checkout', {
-                        state: { checkoutMode: activeCartMode, couponCode: appliedCoupon?.code },
-                      });
-                    })
-                  }
-                  className="bg-black text-white hover:bg-[#8c7335] hover:text-white px-10 py-3.5 rounded-full text-[11px] font-extrabold uppercase tracking-widest shadow-lg transition-all text-center block cursor-pointer active:scale-[0.96]"
-                >
-                  {activeCartMode === 'rental' ? 'Rent Now' : 'Checkout'}
-                </button>
               </div>
+              <button
+                onClick={() =>
+                  runProtectedAction(() => {
+                    sessionStorage.removeItem('siri_checkout_step');
+                    navigate('/checkout', {
+                      state: { checkoutMode: activeCartMode, couponCode: appliedCoupon?.code },
+                    });
+                  })
+                }
+                className="bg-black text-white h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg active:scale-[0.96] transition-all flex items-center justify-center border-none cursor-pointer shrink-0"
+              >
+                {activeCartMode === 'rental' ? 'Rent Now' : 'Checkout'}
+              </button>
             </motion.div>,
             document.body,
           )}

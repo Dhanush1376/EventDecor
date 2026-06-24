@@ -98,19 +98,10 @@ export function LocationSelectorModal({
     }
 
     // Check if the DOM element exists
-    const container = document.getElementById('leaflet-map-canvas');
+    let container = document.getElementById('leaflet-map-canvas');
     if (!container) {
       setTimeout(initLeafletMap, 50);
       return;
-    }
-
-    // Clean up any leaflet internal state on the container to prevent reuse errors
-    if (container._leaflet_id) {
-      try {
-        container._leaflet_id = null;
-      } catch (e) {
-        logger.warn('Leaflet container reset warning', e);
-      }
     }
 
     // Clean up existing instance ref if present
@@ -121,6 +112,23 @@ export function LocationSelectorModal({
         logger.warn('Leaflet map instance remove warning', e);
       }
       mapInstanceRef.current = null;
+      markerInstanceRef.current = null;
+    }
+
+    // Bulletproof: if the container is already initialized by Leaflet (has _leaflet_id)
+    // but the mapInstanceRef was lost or cleared, we clone and replace the container
+    // to completely reset Leaflet's internal DOM cache and avoid "Map container already initialized" error.
+    if (container._leaflet_id) {
+      try {
+        const parent = container.parentNode;
+        if (parent) {
+          const clone = container.cloneNode(false);
+          parent.replaceChild(clone, container);
+          container = clone;
+        }
+      } catch (e) {
+        logger.warn('Leaflet container clone reset warning', e);
+      }
     }
 
     // Bulletproof coordinate parsing to prevent Leaflet view crashes from invalid numeric values

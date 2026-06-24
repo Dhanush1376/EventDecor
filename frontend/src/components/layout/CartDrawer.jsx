@@ -467,7 +467,7 @@ export function CartDrawer({ isOpen, onClose }) {
                   to="/checkout"
                   onMouseEnter={() => prefetchManager.prefetchRoute('/checkout', { kind: 'hover' })}
                   onClick={onClose}
-                  className="block w-full bg-black text-white py-4 rounded-full font-label text-[12px] uppercase tracking-[0.3em] text-center hover:bg-[#8c7335] hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-black/15"
+                  className="block w-full bg-black text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest text-center hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg font-bold"
                 >
                   Proceed to Checkout
                 </Link>

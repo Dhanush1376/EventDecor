@@ -147,7 +147,7 @@ export function RecommendationSystem({
 
   return (
     <section
-      className={`${compact ? 'pt-4 pb-0 md:py-4' : 'pt-6 pb-12 md:pt-10 md:pb-16'} bg-transparent relative overflow-hidden`}
+      className={`${compact ? 'pt-1 pb-0 md:py-2' : 'pt-6 pb-12 md:pt-10 md:pb-16'} bg-transparent relative overflow-hidden`}
     >
       {/* Subtle Glow Accent */}
       <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />

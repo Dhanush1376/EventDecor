@@ -104,21 +104,21 @@ export function StickyMobileATC({ product, triggerRef }) {
           className="sticky-mobile-atc fixed bottom-0 left-0 w-full h-[calc(72px+env(safe-area-inset-bottom,0px))] md:h-[80px] z-[100] md:hidden bg-white/95 backdrop-blur-xl border-t border-outline-variant/15 px-6 pb-[env(safe-area-inset-bottom,0px)] flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] select-none"
         >
           <div className="flex flex-col truncate">
-            <span className="font-label text-[8px] uppercase tracking-[0.25em] text-on-surface-variant/45 font-bold leading-none">
+            <span className="font-label text-[8px] uppercase tracking-[0.25em] text-stone-500 font-bold leading-none">
               Price
             </span>
-            <p className="font-display text-[16px] text-black font-medium leading-none mt-1.5">
+            <p className="font-sans text-[15px] text-black font-bold leading-none mt-1.5">
               {activeCoupon ? (
                 <span className="flex items-baseline gap-1.5">
-                  <span className="line-through text-on-surface-variant/40 text-[11px] font-light">
-                    ₹ {product?.price?.toLocaleString('en-IN')}
+                  <span className="line-through text-stone-400 text-[11px] font-normal">
+                    ₹{product?.price?.toLocaleString('en-IN')}
                   </span>
-                  <span className="text-green-700 font-semibold">
-                    ₹ {discountedPrice?.toLocaleString('en-IN')}
+                  <span className="text-green-700">
+                    ₹{discountedPrice?.toLocaleString('en-IN')}
                   </span>
                 </span>
               ) : (
-                `₹ ${product?.price?.toLocaleString('en-IN')}`
+                `₹${product?.price?.toLocaleString('en-IN')}`
               )}
             </p>
           </div>
@@ -126,11 +126,11 @@ export function StickyMobileATC({ product, triggerRef }) {
           <button
             type="button"
             onClick={handleAddToCart}
-            className="bg-on-surface text-surface h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-lg active:scale-[0.96] transition-all flex items-center justify-center gap-2 shrink-0"
+            className="bg-black text-white h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg active:scale-[0.96] transition-all flex items-center justify-center gap-1.5 shrink-0 border-none cursor-pointer"
             aria-label={`Add ${product?.title || 'product'} to bag`}
           >
             <span className="material-symbols-outlined text-[15px]">shopping_bag</span>
-            Add to Bag
+            <span>Add to Bag</span>
           </button>
         </motion.div>
       )}

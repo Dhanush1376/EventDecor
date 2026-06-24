@@ -74,7 +74,7 @@ export function EventFilterPanel({
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
     return {
       sort: true,
-      price: !isMobile,
+      price: true,
       occasion: !isMobile,
       style: !isMobile,
     };

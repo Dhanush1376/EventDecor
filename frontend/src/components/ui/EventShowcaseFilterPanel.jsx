@@ -73,7 +73,7 @@ export function EventShowcaseFilterPanel({
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
     return {
       sort: true,
-      price: !isMobile,
+      price: true,
       setupTime: !isMobile,
       accents: !isMobile,
     };

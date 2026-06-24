@@ -172,7 +172,7 @@ export function GalleryMobileLayout({
         </div>
       </div>
 
-      {/* ─── Mobile Floating Bottom Bar ─── */}
+      {/* ─── Mobile Full-Width Sticky Bottom Bar ─── */}
       <AnimatePresence>
         {!isScrollingDown && (
           <motion.div
@@ -180,35 +180,49 @@ export function GalleryMobileLayout({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 150, opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-            className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-[#F5F5F7]/85 backdrop-blur-[32px] saturate-[180%] border-[0.5px] border-black/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.8)] rounded-full h-[72px] px-2 flex items-center justify-between gap-2 select-none w-[calc(100%-2rem)] max-w-[340px]"
+            className="md:hidden fixed bottom-0 left-0 w-full h-[calc(72px+env(safe-area-inset-bottom,0px))] md:h-[80px] z-[100] bg-white/95 backdrop-blur-xl border-t border-outline-variant/15 px-6 pb-[env(safe-area-inset-bottom,0px)] flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] select-none"
           >
-            <button
-              onClick={handleWishlistLook}
-              className={`w-[60px] h-[60px] rounded-full flex items-center justify-center transition-all active:scale-95 shrink-0 ${
-                isLiked
-                  ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] border-[0.5px] border-black/[0.04]'
-                  : 'bg-transparent text-[#8E8E93] hover:text-black/60'
-              }`}
-            >
-              <motion.span
-                animate={{
-                  scale: isLiked ? [1, 1.3, 1] : 1,
-                  color: isLiked ? '#ff2d55' : '#8E8E93',
-                }}
-                transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-                className="material-symbols-outlined text-[24px]"
-                style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}
+            <div className="flex flex-col truncate max-w-[50%]">
+              <span className="font-label text-[8px] uppercase tracking-[0.25em] text-stone-500 font-bold leading-none">
+                Gallery Showcase
+              </span>
+              <p className="font-sans text-[14px] text-black font-bold leading-none mt-1.5 truncate">
+                {item.title}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={handleWishlistLook}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-[0.96] shrink-0 border-none cursor-pointer ${
+                  isLiked
+                    ? 'bg-red-50 text-red-500'
+                    : 'bg-stone-50 text-stone-500 border border-black/5'
+                }`}
+                aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
               >
-                favorite
-              </motion.span>
-            </button>
-            <button
-              onClick={handleShopLook}
-              className="flex-1 bg-black text-white h-[60px] rounded-full font-label-sm text-[10px] uppercase tracking-[0.2em] font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_4px_12px_rgba(0,0,0,0.15)] mr-1"
-            >
-              <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
-              Shop Look
-            </button>
+                <motion.span
+                  animate={{
+                    scale: isLiked ? [1, 1.3, 1] : 1,
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className="material-symbols-outlined text-[18px]"
+                  style={{ fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}
+                >
+                  favorite
+                </motion.span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShopLook}
+                className="bg-black text-white h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg active:scale-[0.96] transition-all flex items-center justify-center gap-1.5 border-none cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px]">shopping_bag</span>
+                <span>Shop Look</span>
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

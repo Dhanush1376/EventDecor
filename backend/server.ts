@@ -1,4 +1,7 @@
 import './src/config/loadEnv'; // Load & validate environment variables before any other imports resolve!
+import dns from 'dns';
+
+dns.setDefaultResultOrder('ipv4first');
 
 import logger from './src/config/logger';
 

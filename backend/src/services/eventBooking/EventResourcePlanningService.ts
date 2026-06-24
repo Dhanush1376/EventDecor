@@ -1,4 +1,4 @@
-﻿import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 import ApiError from '../../utils/ApiError';
 
 export interface IDailyEventCapacity extends Document {
@@ -125,11 +125,16 @@ export class EventResourcePlanningService {
     // Normalize venue string for robust matching: alphanumeric only
     const normalizedVenue = venueAddress.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    const sameDayBookings = await EventBooking.find({
-      _id: { $ne: excludeBookingId },
+    const query: any = {
       date: { $gte: startOfDay, $lte: endOfDay },
       status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] },
-    })
+    };
+
+    if (excludeBookingId && mongoose.Types.ObjectId.isValid(excludeBookingId)) {
+      query._id = { $ne: new mongoose.Types.ObjectId(excludeBookingId) };
+    }
+
+    const sameDayBookings = await EventBooking.find(query)
       .session(session || null)
       .lean();
 
