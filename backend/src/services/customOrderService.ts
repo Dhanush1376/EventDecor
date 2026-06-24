@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
-import Counter from '../models/Counter.js';
-import CustomOrderConfig from '../models/CustomOrderConfig.js';
-import CustomOrder from '../models/CustomOrder.js';
-import OutboxEvent from '../models/OutboxEvent.js';
-import Product from '../models/Product.js';
-import { CustomOrderMailService } from './customOrderMailService.js';
-import logger from '../config/logger.js';
+import Counter from '../models/Counter';
+import CustomOrderConfig from '../models/CustomOrderConfig';
+import CustomOrder from '../models/CustomOrder';
+import OutboxEvent from '../models/OutboxEvent';
+import Product from '../models/Product';
+import { CustomOrderMailService } from './customOrderMailService';
+import logger from '../config/logger';
 
 export class CustomOrderService {
   // ─── HELPER: Generate Order ID ───

@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import CustomOrder from '../../models/CustomOrder.js';
-import asyncHandler from '../../utils/asyncHandler.js';
-import ApiResponse from '../../utils/ApiResponse.js';
-import { CustomOrderMailService } from '../../services/customOrderMailService.js';
-import logger from '../../config/logger.js';
-import User from '../../models/User.js';
-import { createStatusHistoryEntry, createVersionSnapshot } from './customOrderHelpers.js';
+import CustomOrder from '../../models/CustomOrder';
+import asyncHandler from '../../utils/asyncHandler';
+import ApiResponse from '../../utils/ApiResponse';
+import { CustomOrderMailService } from '../../services/customOrderMailService';
+import logger from '../../config/logger';
+import User from '../../models/User';
+import { createStatusHistoryEntry, createVersionSnapshot } from './customOrderHelpers';
 
 // 8. Admin Search & Pipeline (Admin Only)
 export const adminGetCustomOrders = asyncHandler(async (req: Request, res: Response) => {
@@ -142,7 +142,7 @@ export const adminUpdateStatus = asyncHandler(async (req: Request, res: Response
 
   // Emit socket event to customer
   try {
-    const { emitUserEvent } = await import('../../socket.js');
+    const { emitUserEvent } = require('../../socket');
     // Find user by email to get userId for socket room
     const user = await User.findOne({ email: finalOrder.customerEmail });
     if (user) {
@@ -326,7 +326,7 @@ export const adminUpdateQuotation = asyncHandler(async (req: Request, res: Respo
 
     // Emit socket event
     try {
-      const { emitUserEvent } = await import('../../socket.js');
+      const { emitUserEvent } = require('../../socket');
       const customer = await User.findOne({ email: order.customerEmail }).select('_id');
       if (customer) {
         emitUserEvent(customer._id.toString(), 'customOrder:quoteCreated', {

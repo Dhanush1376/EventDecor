@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import CustomOrder from '../../models/CustomOrder.js';
-import asyncHandler from '../../utils/asyncHandler.js';
-import ApiResponse from '../../utils/ApiResponse.js';
-import { CustomOrderMailService } from '../../services/customOrderMailService.js';
-import logger from '../../config/logger.js';
-import { ADMIN_ROLES } from '../../config/adminConfig.js';
-import User from '../../models/User.js';
-import { createStatusHistoryEntry } from './customOrderHelpers.js';
+import CustomOrder from '../../models/CustomOrder';
+import asyncHandler from '../../utils/asyncHandler';
+import ApiResponse from '../../utils/ApiResponse';
+import { CustomOrderMailService } from '../../services/customOrderMailService';
+import logger from '../../config/logger';
+import { ADMIN_ROLES } from '../../config/adminConfig';
+import User from '../../models/User';
+import { createStatusHistoryEntry } from './customOrderHelpers';
 
 // 15. Customer Respond to Quotation (Accept/Reject)
 export const customerRespondQuotation = asyncHandler(async (req: Request, res: Response) => {
@@ -137,7 +137,7 @@ export const postMessage = asyncHandler(async (req: Request, res: Response) => {
 
   // Emit socket event
   try {
-    const { emitUserEvent, emitAdminNotification } = await import('../../socket.js');
+    const { emitUserEvent, emitAdminNotification } = require('../../socket');
     if (isSenderAdmin) {
       const customer = await User.findOne({ email: order.customerEmail }).select('_id');
       if (customer) {

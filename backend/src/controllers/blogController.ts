@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import Blog from '../models/Blog';
-import ApiError from '../utils/ApiError.js';
-import ApiResponse from '../utils/ApiResponse.js';
-import asyncHandler from '../utils/asyncHandler.js';
+import ApiError from '../utils/ApiError';
+import ApiResponse from '../utils/ApiResponse';
+import asyncHandler from '../utils/asyncHandler';
 
 export const getBlogs = asyncHandler(async (req: Request, res: Response) => {
   const blogs = await Blog.find().sort({ publishDate: -1 });

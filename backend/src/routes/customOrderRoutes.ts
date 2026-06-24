@@ -7,13 +7,13 @@ import {
   deleteDraft,
   getMyCustomOrders,
   getSingleCustomOrder,
-} from '../controllers/customOrder/customOrderCrudController.js';
+} from '../controllers/customOrder/customOrderCrudController';
 
 import {
   customerRespondQuotation,
   postMessage,
   getOrderHistory,
-} from '../controllers/customOrder/customOrderWorkflowController.js';
+} from '../controllers/customOrder/customOrderWorkflowController';
 
 import {
   adminGetCustomOrders,
@@ -24,7 +24,7 @@ import {
   adminAssignStaff,
   adminUpdateQuotation,
   adminArchiveOrder,
-} from '../controllers/customOrder/customOrderAdminController.js';
+} from '../controllers/customOrder/customOrderAdminController';
 
 import {
   getCustomOrderConfig,

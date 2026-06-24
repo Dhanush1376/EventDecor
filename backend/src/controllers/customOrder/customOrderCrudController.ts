@@ -1,19 +1,19 @@
 import { Request, Response } from 'express';
-import CustomOrder from '../../models/CustomOrder.js';
-import Product from '../../models/Product.js';
-import asyncHandler from '../../utils/asyncHandler.js';
-import ApiResponse from '../../utils/ApiResponse.js';
-import { ADMIN_ROLES } from '../../config/adminConfig.js';
+import CustomOrder from '../../models/CustomOrder';
+import Product from '../../models/Product';
+import asyncHandler from '../../utils/asyncHandler';
+import ApiResponse from '../../utils/ApiResponse';
+import { ADMIN_ROLES } from '../../config/adminConfig';
 import mongoose from 'mongoose';
 
 export const submitCustomOrder = asyncHandler(async (req: Request, res: Response) => {
-  const { CustomOrderService } = await import('../../services/customOrderService.js');
+  const { CustomOrderService } = require('../../services/customOrderService');
   const order = await CustomOrderService.submitCustomOrder(req.body, (req as any).user);
   res.status(201).json(new ApiResponse(true, 'Custom order request lodged successfully', order));
 });
 
 export const submitProductCustomization = asyncHandler(async (req: Request, res: Response) => {
-  const { CustomOrderService } = await import('../../services/customOrderService.js');
+  const { CustomOrderService } = require('../../services/customOrderService');
   const order = await CustomOrderService.submitProductCustomization(req.body, (req as any).user);
   res
     .status(201)
