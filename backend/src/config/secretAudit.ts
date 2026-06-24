@@ -57,9 +57,12 @@ export const secretLeakInterceptor = (req: Request, res: Response, next: NextFun
           /eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/, // JWT (could be normal if it's the auth endpoint, but we only flag if it's not auth route)
         ];
 
-        // We allow JWTs on auth routes
+        // We allow JWTs on auth routes and order routes (which return JWT tracking tokens)
         const isAuthRoute =
-          req.originalUrl.includes('/api/auth') || req.originalUrl.includes('/api/v1/auth');
+          req.originalUrl.includes('/api/auth') ||
+          req.originalUrl.includes('/api/v1/auth') ||
+          req.originalUrl.includes('/api/v1/orders') ||
+          req.originalUrl.includes('/api/v1/event-bookings');
 
         for (const pattern of suspiciousPatterns) {
           // If it's a JWT pattern and we are on an auth route, skip
