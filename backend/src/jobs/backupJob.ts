@@ -1,5 +1,4 @@
-import type * as CronTypes from 'node-cron';
-const cron = require('node-cron') as typeof CronTypes.default;
+const cron = require('node-cron');
 import logger from '../config/logger';
 import { withCronLock } from '../utils/cronLock';
 import { BackupService } from '../services/backupService';

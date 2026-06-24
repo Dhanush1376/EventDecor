@@ -1,5 +1,4 @@
-import type * as CronTypes from 'node-cron';
-const cron = require('node-cron') as typeof CronTypes.default;
+const cron = require('node-cron');
 import { exec } from 'child_process';
 import path from 'path';
 import fs from 'fs';
