@@ -19,7 +19,6 @@ export class OrderIdempotencyManager {
     const lockKey = `lock:order:${userId}:${idempotencyKey}`;
 
     if (!redisClient || !redisClient.isReady) {
-      const isProduction = process.env.NODE_ENV === 'production';
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
 
       if (requireRedis) {
@@ -67,7 +66,6 @@ export class OrderIdempotencyManager {
     const resultKey = `idempotency:order:${userId}:${idempotencyKey}`;
 
     if (!redisClient || !redisClient.isReady) {
-      const isProduction = process.env.NODE_ENV === 'production';
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
 
       if (requireRedis) {
@@ -106,7 +104,6 @@ export class OrderIdempotencyManager {
     const resultKey = `idempotency:order:${userId}:${idempotencyKey}`;
 
     if (!redisClient || !redisClient.isReady) {
-      const isProduction = process.env.NODE_ENV === 'production';
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
 
       if (!requireRedis) {
@@ -141,7 +138,6 @@ export class OrderIdempotencyManager {
     const lockKey = `lock:order:${userId}:${idempotencyKey}`;
 
     if (!redisClient || !redisClient.isReady) {
-      const isProduction = process.env.NODE_ENV === 'production';
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
 
       if (!requireRedis) {

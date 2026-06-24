@@ -67,7 +67,7 @@ export class UserService {
       }
 
       const itemType = item.type || 'purchase';
-      let quantity = Number(item.quantity) || 0;
+      const quantity = Number(item.quantity) || 0;
 
       if (quantity <= 0) {
         cartChanged = true;
