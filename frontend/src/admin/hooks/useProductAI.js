@@ -108,8 +108,10 @@ export function useProductAI({
           ? aiAnalysisResult.description.substring(0, 155) + '...'
           : '',
       },
-      { key: 'isCustomizable', value: aiAnalysisResult.isCustomizable },
-      { key: 'customizationNote', value: aiAnalysisResult.customizationNote },
+      // Personalization config (from AI)
+      { key: '_personalization', value: aiAnalysisResult.personalization_enabled },
+      // Customer note (from AI)
+      { key: 'customerNote', value: aiAnalysisResult.customer_note },
     ];
 
     let index = 0;
@@ -129,12 +131,14 @@ export function useProductAI({
       const field = fieldsToFill[index];
 
       // Navigate/Scroll to different steps if they are on a different page for visual polish!
-      if (field.key === 'tags' || field.key === 'isCustomizable') {
+      if (field.key === 'tags') {
         setCurrentStep(2); // Attributes step (new index 2)
       } else if (field.key === 'seoTitle') {
         setCurrentStep(3); // SEO step (new index 3)
       } else if (field.key === 'price') {
         setCurrentStep(4); // Pricing & Stock step
+      } else if (field.key === '_personalization' || field.key === 'customerNote') {
+        setCurrentStep(1); // Back to Product Info step to show note filling
       }
 
       setFocusedField(field.key);
@@ -144,24 +148,52 @@ export function useProductAI({
         setCategoriesList((prev) => [...prev, field.value].sort());
       }
 
-      if (field.key === 'isCustomizable' && field.value) {
+      // Apply personalization config from AI
+      if (field.key === '_personalization') {
+        const enabled = Boolean(aiAnalysisResult.personalization_enabled);
         setFormData((prev) => ({
           ...prev,
           customizationConfig: {
             ...prev.customizationConfig,
-            enabled: true,
-            required: true,
+            enabled: enabled,
+            required: enabled,
+            label:
+              aiAnalysisResult.personalization_label ||
+              prev.customizationConfig?.label ||
+              'Customization Note',
+            placeholder: (
+              aiAnalysisResult.personalization_placeholder ||
+              prev.customizationConfig?.placeholder ||
+              'Enter customization details'
+            ).replace(/\\n/g, '\n'),
+            helperText:
+              aiAnalysisResult.personalization_helper || prev.customizationConfig?.helperText || '',
           },
         }));
-      } else if (field.key === 'customizationNote' && field.value) {
+      } else if (field.key === 'customerNote') {
+        // Build a rich customer note including quantity estimation
+        let note = (field.value || '').replace(/\\n/g, '\n');
+
+        // Append quantity estimation if available
+        if (
+          aiAnalysisResult.estimated_quantity &&
+          aiAnalysisResult.estimated_quantity > 1 &&
+          aiAnalysisResult.estimated_quantity_unit
+        ) {
+          const quantityLine = `• Contains approximately ${aiAnalysisResult.estimated_quantity} ${aiAnalysisResult.estimated_quantity_unit}`;
+          if (
+            !note.includes('approximately') &&
+            !note.includes(aiAnalysisResult.estimated_quantity_unit)
+          ) {
+            note = note ? quantityLine + '\n' + note : quantityLine;
+          }
+        }
+
         setFormData((prev) => ({
           ...prev,
-          customizationConfig: {
-            ...prev.customizationConfig,
-            label: field.value,
-          },
+          customerNote: note || prev.customerNote,
         }));
-      } else if (field.key !== 'isCustomizable' && field.key !== 'customizationNote') {
+      } else {
         setFormData((prev) => ({
           ...prev,
           [field.key]: field.value || prev[field.key],

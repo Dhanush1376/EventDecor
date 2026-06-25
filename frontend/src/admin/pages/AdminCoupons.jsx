@@ -75,7 +75,7 @@ export function AdminCoupons() {
         subtitle={`${coupons.filter((c) => c.isActive).length} active coupons in store catalog`}
       >
         <button
-          onClick={() => navigate('/admin/coupons/add')}
+          onClick={() => navigate('/admin/coupons/create')}
           className="admin-btn admin-btn-primary h-9"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
@@ -98,7 +98,7 @@ export function AdminCoupons() {
           action={
             <button
               onClick={() => {
-                navigate('/admin/coupons/add');
+                navigate('/admin/coupons/create');
               }}
               className="admin-btn admin-btn-primary admin-btn-sm"
             >

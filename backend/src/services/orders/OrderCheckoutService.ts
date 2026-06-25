@@ -7,8 +7,7 @@ import User from '../../models/User';
 import Coupon from '../../models/Coupon';
 import ApiError from '../../utils/ApiError';
 import logger from '../../config/logger';
-import { cmsCache } from '../../utils/cache/MemoryCache';
-import ContentSection from '../../models/ContentSection';
+import storeSettingsService from '../../services/StoreSettingsService';
 import WalletTransaction from '../../models/WalletTransaction';
 import { debitWalletBalance, creditWalletBalance } from '../../utils/payment/walletMutations';
 import { LogisticsService } from '../../services/logisticsService';
@@ -31,8 +30,10 @@ export class OrderCheckoutService {
     } = orderData;
     const isCod = paymentMethod === 'cod';
 
-    const MAX_QUANTITY_PER_ITEM = 50;
-    const MAX_ITEMS_PER_ORDER = 20;
+    const settings = await storeSettingsService.getSettings();
+
+    const MAX_QUANTITY_PER_ITEM = settings.orders.maxQuantityPerItem;
+    const MAX_ITEMS_PER_ORDER = settings.orders.maxItemsPerOrder;
 
     if (!items || !Array.isArray(items)) {
       throw new ApiError(400, 'Items array is required');
@@ -179,21 +180,11 @@ export class OrderCheckoutService {
 
       let codFee = 0;
       if (isCod) {
-        try {
-          const settingsSection = await cmsCache.getOrSet('studio_settings', async () => {
-            return await ContentSection.findOne({ sectionKey: 'studio_settings' });
-          });
-          if (settingsSection && settingsSection.data && settingsSection.data.codFee) {
-            codFee = Number(settingsSection.data.codFee) || 0;
-          } else {
-            codFee = 90;
-          }
-        } catch {
-          codFee = 90;
-        }
+        codFee = settings.payments.codFee;
       }
 
-      const shippingFee = subtotal > 2000 ? 0 : 100;
+      const shippingFee =
+        subtotal > settings.shipping.freeShippingThreshold ? 0 : settings.shipping.deliveryCharge;
       user = await User.findById(userId).session(session);
       const preliminaryTotal = Math.max(
         0,
@@ -277,7 +268,7 @@ export class OrderCheckoutService {
           codCollected: false,
           settlementStatus: 'Pending',
           settledAmount: 0,
-          courierCharges: Math.round((shippingFee || 120) + codFee),
+          courierCharges: Math.round((shippingFee || settings.shipping.deliveryCharge) + codFee),
           earnings: 0,
         });
 

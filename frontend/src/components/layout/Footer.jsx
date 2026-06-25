@@ -3,18 +3,32 @@ import { MandalaElement } from '../ui/MandalaElement';
 import { SiriLogo } from '../ui/SiriLogo';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { CONTACT_EMAIL, SOCIAL_INSTAGRAM, SOCIAL_PINTEREST } from '../../constants/brandEnv';
+import { useQuery } from '@tanstack/react-query';
+import storeSettingsService from '../../services/api/storeSettingsService';
 
 export function Footer() {
   const { contact, footer, navigation } = useWebsiteContent();
+  const { data: settings } = useQuery({
+    queryKey: ['storeSettings', 'public'],
+    queryFn: () => storeSettingsService.getPublicSettings(),
+    staleTime: 10 * 60 * 1000,
+  });
+
   const logoText = navigation?.logo?.text || 'SIRI ARTS & CRAFTS';
   const logoWords = logoText.split(' ');
   const _firstWord = logoWords[0] || 'SIRI';
   const _restWords = logoWords.slice(1).join(' ') || 'ARTS & CRAFTS';
   const currentYear = new Date().getFullYear();
-  const phone = contact?.phone || footer?.phone || '';
-  const email = contact?.email || footer?.email || CONTACT_EMAIL;
-  const instagramLink = footer?.socialLinks?.instagram || SOCIAL_INSTAGRAM;
-  const pinterestLink = footer?.socialLinks?.pinterest || SOCIAL_PINTEREST;
+
+  const phone = settings?.general?.supportPhone || contact?.phone || footer?.phone || '';
+  const email = settings?.general?.supportEmail || contact?.email || footer?.email || CONTACT_EMAIL;
+
+  const instagramLink =
+    settings?.social?.instagramUrl || footer?.socialLinks?.instagram || SOCIAL_INSTAGRAM;
+  const pinterestLink =
+    settings?.social?.pinterestUrl || footer?.socialLinks?.pinterest || SOCIAL_PINTEREST;
+
+  const businessName = settings?.general?.storeName || 'Siri Arts & Crafts';
 
   return (
     <footer className="w-full relative bg-gradient-to-b from-surface to-secondary-container/10 border-t border-black/5 overflow-hidden">
@@ -202,7 +216,7 @@ export function Footer() {
         <div className="mt-6 pt-4 border-t border-black/5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 text-left">
           <div className="flex flex-col gap-1">
             <p className="font-label-sm text-on-surface-variant/50 tracking-[0.1em] text-[9px] uppercase font-bold">
-              © {currentYear} Siri Arts & Crafts.
+              © {currentYear} {businessName}.
             </p>
             <p className="font-body text-on-surface-variant/40 text-[8px] max-w-xl">
               * Free shipping is available for prepaid orders. Cash on Delivery (COD) and deliveries
@@ -223,6 +237,24 @@ export function Footer() {
               Returns
             </Link>
             <Link
+              to="/exchange"
+              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
+            >
+              Exchange
+            </Link>
+            <Link
+              to="/refund"
+              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
+            >
+              Refund
+            </Link>
+            <Link
+              to="/cancellation"
+              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
+            >
+              Cancellation
+            </Link>
+            <Link
               to="/shipping"
               className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
             >
@@ -233,6 +265,12 @@ export function Footer() {
               className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
             >
               Terms
+            </Link>
+            <Link
+              to="/faq"
+              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
+            >
+              FAQ
             </Link>
           </div>
         </div>

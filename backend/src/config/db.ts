@@ -210,7 +210,7 @@ class DatabaseManager {
       heartbeatFrequencyMS: 10000, // Perform keep-alive check every 10s
       maxIdleTimeMS: 30000, // Release idle sockets after 30s to conserve database resources
       waitQueueTimeoutMS: 10000, // How long to wait for connection pool slot before failing
-      family: 4, // Force IPv4 DNS resolution
+      // family: 4, // Removing forced IPv4 DNS resolution as it causes querySrv ETIMEOUT on some networks
       bufferCommands: false, // Disable buffering to fail-fast during transient database issues
       compressors: ['zstd', 'snappy'], // Enable wire protocol network compression
       retryReads: true,

@@ -96,7 +96,21 @@ export class PrivacyService {
     user.twoFactorEnabled = false;
     user.twoFactorSecret = undefined;
     user.isVerified = false;
-    user.notificationPreferences = { email: false, marketing: false };
+    user.notificationPreferences = {
+      email: false,
+      sms: false,
+      whatsapp: false,
+      inApp: false,
+      push: false,
+      categories: {
+        orderUpdates: false,
+        promotions: false,
+        security: false,
+        newsletter: false,
+        bookingUpdates: false,
+        rentalUpdates: false,
+      },
+    };
     user.passwordHash = undefined;
     user.referralCode = `ERASED-${userId.toString().slice(-6)}`;
     user.referredBy = undefined;

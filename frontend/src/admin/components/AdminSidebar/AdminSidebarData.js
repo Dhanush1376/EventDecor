@@ -202,6 +202,13 @@ export const navSections = [
         keywords: 'flags, variables, toggles',
         domain: 'settings',
       },
+      {
+        label: 'Store Configurations',
+        icon: 'storefront',
+        path: '/admin/store-config',
+        keywords: 'business rules, policies, shipping, cod, loyalty',
+        domain: 'settings',
+      },
     ],
   },
 ];

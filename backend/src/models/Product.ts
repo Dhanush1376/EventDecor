@@ -12,6 +12,14 @@ export interface IRentalPricing {
 export interface IProduct extends ISoftDeleted {
   title: string;
   teluguTitle?: string;
+  customerNote?: string;
+  complimentaryGift?: {
+    enabled: boolean;
+    name?: string;
+    quantity?: number;
+    description?: string;
+    displayBadge?: string;
+  };
   slug: string;
   category: string;
   material?: string;
@@ -75,6 +83,14 @@ const ProductSchema: Schema = new Schema(
   {
     title: { type: String, required: true, trim: true },
     teluguTitle: { type: String, trim: true },
+    customerNote: { type: String, trim: true },
+    complimentaryGift: {
+      enabled: { type: Boolean, default: false },
+      name: { type: String, trim: true },
+      quantity: { type: Number, min: 1, default: 1 },
+      description: { type: String, trim: true },
+      displayBadge: { type: String, trim: true },
+    },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     category: { type: String, required: true, trim: true },
     material: { type: String, trim: true },

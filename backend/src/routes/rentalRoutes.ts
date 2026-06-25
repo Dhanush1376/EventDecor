@@ -73,6 +73,7 @@ router.post(
   validate,
   releaseDeposit,
 );
+router.get('/admin/calendar', requireAuth, requireAdmin, getProductCalendar);
 router.get('/admin/calendar/:productId', requireAuth, requireAdmin, getProductCalendar);
 router.get('/admin/analytics', requireAuth, requireAdmin, getRentalAnalytics);
 router.post('/admin/:id/cancel', requireAuth, requireAdmin, adminCancelRental);

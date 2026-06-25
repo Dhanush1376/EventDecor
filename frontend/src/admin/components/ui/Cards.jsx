@@ -9,7 +9,7 @@ export function StatCard({
   value,
   change,
   changeType = 'up',
-  color = '#6366F1',
+  color = 'var(--admin-accent)',
   domainColor,
   infoTooltip,
   onClick,
@@ -44,11 +44,19 @@ export function StatCard({
           {change && (
             <span
               className={`admin-badge ${
-                changeType === 'up' ? 'admin-badge-success' : 'admin-badge-error'
+                changeType === 'up'
+                  ? 'admin-badge-success'
+                  : changeType === 'down'
+                    ? 'admin-badge-error'
+                    : 'admin-badge-neutral'
               } text-[8px] sm:text-[9px] max-w-[75px] sm:max-w-none px-1.5 sm:px-2`}
             >
               <span className="material-symbols-outlined text-[9px] sm:text-[10px] font-bold shrink-0">
-                {changeType === 'up' ? 'trending_up' : 'trending_down'}
+                {changeType === 'up'
+                  ? 'trending_up'
+                  : changeType === 'down'
+                    ? 'trending_down'
+                    : 'trending_flat'}
               </span>
               <span className="truncate">{change}</span>
             </span>

@@ -20,6 +20,12 @@ export const createGalleryValidator = [
   body('linkedProducts').optional().isArray(),
   body('linkedProducts.*').optional().isMongoId(),
   body('isActive').optional().isBoolean(),
+  body('customerNote').optional({ values: 'falsy' }).trim().isLength({ max: 2000 }),
+  body('complimentaryGift.enabled').optional().isBoolean(),
+  body('complimentaryGift.name').optional({ values: 'falsy' }).trim().isLength({ max: 100 }),
+  body('complimentaryGift.quantity').optional({ values: 'falsy' }).isInt({ min: 1 }),
+  body('complimentaryGift.description').optional({ values: 'falsy' }).trim().isLength({ max: 500 }),
+  body('complimentaryGift.displayBadge').optional({ values: 'falsy' }).trim().isLength({ max: 50 }),
 ];
 
 export const updateGalleryValidator = [
@@ -30,4 +36,10 @@ export const updateGalleryValidator = [
   body('video').optional({ values: 'falsy' }).isURL(),
   body('type').optional().isIn(['inspiration', 'real-event']),
   body('isActive').optional().isBoolean(),
+  body('customerNote').optional({ values: 'falsy' }).trim().isLength({ max: 2000 }),
+  body('complimentaryGift.enabled').optional().isBoolean(),
+  body('complimentaryGift.name').optional({ values: 'falsy' }).trim().isLength({ max: 100 }),
+  body('complimentaryGift.quantity').optional({ values: 'falsy' }).isInt({ min: 1 }),
+  body('complimentaryGift.description').optional({ values: 'falsy' }).trim().isLength({ max: 500 }),
+  body('complimentaryGift.displayBadge').optional({ values: 'falsy' }).trim().isLength({ max: 50 }),
 ];

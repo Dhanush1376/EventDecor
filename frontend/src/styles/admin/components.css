@@ -161,13 +161,18 @@
 
 /* Icon Button */
 .admin-section-root .admin-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 8px;
   min-height: 36px;
   min-width: 36px;
+  aspect-ratio: 1;
   background: transparent;
   color: var(--admin-text-secondary);
   border-color: transparent;
-  border-radius: var(--admin-radius-md);
+  border-radius: 50% !important;
+  flex-shrink: 0;
 }
 
 .admin-section-root .admin-btn-icon:hover {

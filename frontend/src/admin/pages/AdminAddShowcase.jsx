@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SkeletonForm } from '../components/AdminUIKit';
 import { ProductCard } from '../../components/shared/ProductCard';
@@ -84,9 +84,9 @@ export function AdminAddShowcase() {
   const [compressionProgress, setCompressionProgress] = useState(0);
   const [compressionStats, setCompressionStats] = useState([]);
 
-  const handleCancelAction = () => {
+  const handleCancelAction = useCallback(() => {
     navigate('/admin/events');
-  };
+  }, [navigate]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -108,7 +108,7 @@ export function AdminAddShowcase() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentStep, formData, handleNext, handlePrev]);
+  }, [currentStep, formData, handleNext, handlePrev, handleCancelAction]);
 
   const colors = formData.colorPalette
     ? formData.colorPalette

@@ -29,12 +29,16 @@ export default function CheckoutPaymentStep() {
     totalsError,
     appliedCoupon,
     fetchBackendTotals,
-    _settings,
+    settings,
     user,
     hasRentalItems,
     rentalStartDate,
     rentalEndDate,
   } = useCheckout();
+
+  const codMinOrder = settings?.payments?.codMinOrder ?? 500;
+  const codMaxOrder = settings?.payments?.codMaxOrder ?? 50000;
+  const isCodEnabled = settings?.payments?.enableCOD ?? true;
 
   // References and state for 4-digit OTP grid
   const otpRefs = [React.useRef(null), React.useRef(null), React.useRef(null), React.useRef(null)];
@@ -109,8 +113,11 @@ export default function CheckoutPaymentStep() {
     }
 
     // COD payment option selected
-    if (backendTotals.total < 500) {
-      return 'COD Unavailable (< ₹500)';
+    if (!isCodEnabled) {
+      return 'COD Unavailable';
+    }
+    if (backendTotals.total < codMinOrder) {
+      return `COD Unavailable (< ₹${codMinOrder})`;
     }
     if (!codVerified) {
       return 'Verify OTP';
@@ -130,8 +137,14 @@ export default function CheckoutPaymentStep() {
     if (paymentOption === 'razorpay') {
       handleConfirmOrder();
     } else {
-      if (backendTotals.total < 500) {
-        toast.error('COD is only serviceable for order totals between ₹500 and ₹50,000.');
+      if (!isCodEnabled) {
+        toast.error('Cash on Delivery is currently disabled.');
+        return;
+      }
+      if (backendTotals.total < codMinOrder || backendTotals.total > codMaxOrder) {
+        toast.error(
+          `COD is only serviceable for order totals between ₹${codMinOrder} and ₹${codMaxOrder}.`,
+        );
         return;
       }
       if (!codOtpSent) {
@@ -152,7 +165,11 @@ export default function CheckoutPaymentStep() {
     if (isProcessing) return true;
     if (isTotalsLoading) return true;
     if (totalsError) return true;
-    if (paymentOption === 'cod' && backendTotals.total < 500) return true;
+    if (
+      paymentOption === 'cod' &&
+      (!isCodEnabled || backendTotals.total < codMinOrder || backendTotals.total > codMaxOrder)
+    )
+      return true;
     if (paymentOption === 'cod' && !codVerified && codOtpInput.length < 4) return true;
     return false;
   };
@@ -244,12 +261,16 @@ export default function CheckoutPaymentStep() {
         {/* Option: Cash on Delivery */}
         <div
           onClick={() => {
-            if (backendTotals.total <= 50000) {
+            if (
+              isCodEnabled &&
+              backendTotals.total >= codMinOrder &&
+              backendTotals.total <= codMaxOrder
+            ) {
               setPaymentOption('cod');
             }
           }}
           className={`relative p-5 rounded-xl border transition-all duration-300 overflow-hidden ${
-            backendTotals.total > 50000
+            !isCodEnabled || backendTotals.total > codMaxOrder || backendTotals.total < codMinOrder
               ? 'opacity-45 cursor-not-allowed border-outline-variant/20 bg-gray-50/50'
               : 'cursor-pointer ' +
                 (paymentOption === 'cod'
@@ -277,10 +298,20 @@ export default function CheckoutPaymentStep() {
               <span className="text-[12px] font-semibold text-on-surface">
                 Cash on Delivery (COD)
               </span>
-              {backendTotals.total > 50000 ? (
+              {!isCodEnabled ? (
                 <p className="text-[10px] text-red-600 font-bold mt-0.5 flex items-center gap-1">
                   <span className="material-symbols-outlined text-[12px]">info</span>
-                  COD unavailable for orders above ₹50,000
+                  COD is currently disabled
+                </p>
+              ) : backendTotals.total > codMaxOrder ? (
+                <p className="text-[10px] text-red-600 font-bold mt-0.5 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[12px]">info</span>
+                  COD unavailable for orders above ₹{codMaxOrder.toLocaleString('en-IN')}
+                </p>
+              ) : backendTotals.total < codMinOrder ? (
+                <p className="text-[10px] text-red-600 font-bold mt-0.5 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[12px]">info</span>
+                  COD requires minimum order of ₹{codMinOrder.toLocaleString('en-IN')}
                 </p>
               ) : (
                 <p className="text-[10px] text-secondary mt-1 leading-relaxed">
@@ -291,22 +322,16 @@ export default function CheckoutPaymentStep() {
           </div>
 
           <AnimatePresence>
-            {paymentOption === 'cod' && backendTotals.total <= 50000 && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-4 pt-4 border-t border-primary/10 space-y-3 overflow-hidden text-xs"
-              >
-                {/* Order Limit Check */}
-                {backendTotals.total < 500 ? (
-                  <div className="p-2.5 bg-amber-50 text-amber-800 rounded-lg font-semibold text-[10px] uppercase tracking-wider flex items-center gap-1.5 border border-amber-200">
-                    <span className="material-symbols-outlined text-[13px]">warning</span>
-                    <span>
-                      COD requires minimum order of ₹500. Please choose secure online payment.
-                    </span>
-                  </div>
-                ) : (
+            {paymentOption === 'cod' &&
+              isCodEnabled &&
+              backendTotals.total <= codMaxOrder &&
+              backendTotals.total >= codMinOrder && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-4 pt-4 border-t border-primary/10 space-y-3 overflow-hidden text-xs"
+                >
                   <>
                     {/* Delhivery check */}
                     <div className="flex items-center gap-2 text-[10px] font-semibold text-green-700 bg-green-50/50 border border-green-200/50 p-2.5 rounded-md mb-2">
@@ -403,9 +428,8 @@ export default function CheckoutPaymentStep() {
                       </div>
                     )}
                   </>
-                )}
-              </motion.div>
-            )}
+                </motion.div>
+              )}
           </AnimatePresence>
         </div>
       </div>

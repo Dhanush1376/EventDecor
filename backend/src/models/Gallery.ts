@@ -4,6 +4,14 @@ import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDe
 export interface IGallery extends ISoftDeleted {
   title: string;
   teluguTitle?: string;
+  customerNote?: string;
+  complimentaryGift?: {
+    enabled: boolean;
+    name?: string;
+    quantity?: number;
+    description?: string;
+    displayBadge?: string;
+  };
   category: string;
   event?: string;
   style?: string;
@@ -30,6 +38,14 @@ const GallerySchema: Schema = new Schema(
   {
     title: { type: String, required: true },
     teluguTitle: { type: String },
+    customerNote: { type: String },
+    complimentaryGift: {
+      enabled: { type: Boolean, default: false },
+      name: { type: String, trim: true },
+      quantity: { type: Number, min: 1, default: 1 },
+      description: { type: String, trim: true },
+      displayBadge: { type: String, trim: true },
+    },
     category: { type: String, required: true },
     event: { type: String },
     style: { type: String },

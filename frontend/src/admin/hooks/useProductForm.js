@@ -51,6 +51,14 @@ export function useProductForm({ id, isEditMode }) {
     () => ({
       title: '',
       teluguTitle: '',
+      customerNote: '',
+      complimentaryGift: {
+        enabled: false,
+        name: '',
+        quantity: 1,
+        description: '',
+        displayBadge: '',
+      },
       slug: '',
       category: '',
       material: '',
@@ -133,9 +141,24 @@ export function useProductForm({ id, isEditMode }) {
             if (p.category && !dbCategories.includes(p.category)) {
               setCategoriesList((prev) => Array.from(new Set([...prev, p.category])).sort());
             }
+            const dbImages = Array.isArray(p.images) ? p.images : [];
+            const allImages = [p.imageSrc, ...dbImages].filter(
+              (img) => typeof img === 'string' && img.trim() !== '',
+            );
+            const finalImages = Array.from(new Set(allImages)); // Remove duplicates
+            const finalImageSrc = finalImages[0] || '';
+
             setFormData({
               title: p.title || p.name || '',
               teluguTitle: p.teluguTitle || p.nameTE || '',
+              customerNote: p.customerNote || '',
+              complimentaryGift: p.complimentaryGift || {
+                enabled: false,
+                name: '',
+                quantity: 1,
+                description: '',
+                displayBadge: '',
+              },
               slug: p.slug || '',
               category: p.category || '',
               material: p.material || '',
@@ -143,8 +166,8 @@ export function useProductForm({ id, isEditMode }) {
               price: p.price || '',
               oldPrice: p.oldPrice || '',
               stock: p.stock !== undefined ? p.stock : '',
-              imageSrc: p.imageSrc || (p.images && p.images[0]) || '',
-              images: p.images || [],
+              imageSrc: finalImageSrc,
+              images: finalImages,
               badges: p.badges ? p.badges.join(',') : '',
               description: p.description || '',
               dimensions: p.dimensions || '',

@@ -98,14 +98,7 @@
     touch-action: manipulation;
   }
 
-  /* Prevent iOS auto-zoom on input focus by forcing font-size to be at least 16px */
-  @media (max-width: 1024px) {
-    input,
-    select,
-    textarea {
-      font-size: 16px !important;
-    }
-  }
+  /* Removed iOS auto-zoom hack to keep text sizing small and premium globally */
 
   button:not(.min-h-0),
   [role='button']:not(.min-h-0),
@@ -115,7 +108,7 @@
     /* A11y: Apple recommended touch target */
   }
 
-  /* Global Form Input Focus - Premium Dual-Transition Shadow */
+  /* Global Form Input Focus - Premium Minimalist Underline */
   input:focus:not(.admin-section-root *):not(.search-portal-input),
   textarea:focus:not(.admin-section-root *):not(.search-portal-input),
   select:focus:not(.admin-section-root *):not(.search-portal-input),
@@ -128,10 +121,24 @@
   [type='search']:focus:not(.admin-section-root *):not(.search-portal-input),
   [type='tel']:focus:not(.admin-section-root *):not(.search-portal-input) {
     outline: none;
-    border-color: var(--color-primary-container);
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25) !important;
-    /* Premium gold tint, accessible */
+    border-color: transparent;
+    border-bottom-color: var(--color-primary) !important;
+    box-shadow: 0 1px 0 0 var(--color-primary) !important;
     transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Global Placeholder Styling */
+  ::-webkit-input-placeholder {
+    font-size: 0.85em !important;
+  }
+  ::-moz-placeholder {
+    font-size: 0.85em !important;
+  }
+  :-ms-input-placeholder {
+    font-size: 0.85em !important;
+  }
+  ::placeholder {
+    font-size: 0.85em !important;
   }
 
   /* Preserve Compound Input Borders but keep focus ring */

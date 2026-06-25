@@ -30,6 +30,7 @@ export function useCheckoutFlow({
   setIsProcessing,
   paymentOption,
   setPaymentOption,
+  settings,
 }) {
   const orderCompleteRef = useRef(false);
 
@@ -221,9 +222,17 @@ export function useCheckoutFlow({
       return;
     }
     if (paymentOption === 'cod') {
-      if (totals.backendTotals.total < 500) {
+      const codMinOrder = settings?.payments?.codMinOrder ?? 500;
+      const codMaxOrder = settings?.payments?.codMaxOrder ?? 50000;
+      const isCodEnabled = settings?.payments?.enableCOD ?? true;
+
+      if (!isCodEnabled) {
+        toast.error('Cash on Delivery is currently disabled.');
+        return;
+      }
+      if (totals.backendTotals.total < codMinOrder || totals.backendTotals.total > codMaxOrder) {
         toast.error(
-          'Cash on Delivery (COD) is only serviceable for order totals between ₹500 and ₹50,000.',
+          `Cash on Delivery (COD) is only serviceable for order totals between ₹${codMinOrder} and ₹${codMaxOrder}.`,
         );
         return;
       }
@@ -372,9 +381,17 @@ export function useCheckoutFlow({
     }
 
     if (paymentOption === 'cod') {
-      if (totals.backendTotals.total < 500) {
+      const codMinOrder = settings?.payments?.codMinOrder ?? 500;
+      const codMaxOrder = settings?.payments?.codMaxOrder ?? 50000;
+      const isCodEnabled = settings?.payments?.enableCOD ?? true;
+
+      if (!isCodEnabled) {
+        toast.error('Cash on Delivery is currently disabled.');
+        return;
+      }
+      if (totals.backendTotals.total < codMinOrder || totals.backendTotals.total > codMaxOrder) {
         toast.error(
-          'Cash on Delivery (COD) is only serviceable for order totals between ₹500 and ₹50,000.',
+          `Cash on Delivery (COD) is only serviceable for order totals between ₹${codMinOrder} and ₹${codMaxOrder}.`,
         );
         return;
       }

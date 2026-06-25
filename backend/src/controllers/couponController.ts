@@ -57,9 +57,21 @@ export const createCoupon = asyncHandler(async (req: Request, res: Response) => 
     discountValue: req.body.discountValue,
     minOrderAmount: req.body.minOrderAmount,
     maxDiscount: req.body.maxDiscount,
+    startDate: req.body.startDate,
     expiryDate: req.body.expiryDate,
     usageLimit: req.body.usageLimit,
     isActive: req.body.isActive,
+    targetType: req.body.targetType,
+    targetProductIds: req.body.targetProductIds,
+    targetCategories: req.body.targetCategories,
+    targetUserTiers: req.body.targetUserTiers,
+    displayLocations: req.body.displayLocations,
+    isFeatured: req.body.isFeatured,
+    isAutoApply: req.body.isAutoApply,
+    cashbackPercentage: req.body.cashbackPercentage,
+    cashbackFixed: req.body.cashbackFixed,
+    stackingRule: req.body.stackingRule,
+    priority: req.body.priority,
   };
   Object.keys(dto).forEach((k) => (dto as any)[k] === undefined && delete (dto as any)[k]);
   const coupon = new Coupon(dto);
@@ -75,9 +87,21 @@ export const updateCoupon = asyncHandler(async (req: Request, res: Response) => 
     discountValue: req.body.discountValue,
     minOrderAmount: req.body.minOrderAmount,
     maxDiscount: req.body.maxDiscount,
+    startDate: req.body.startDate,
     expiryDate: req.body.expiryDate,
     usageLimit: req.body.usageLimit,
     isActive: req.body.isActive,
+    targetType: req.body.targetType,
+    targetProductIds: req.body.targetProductIds,
+    targetCategories: req.body.targetCategories,
+    targetUserTiers: req.body.targetUserTiers,
+    displayLocations: req.body.displayLocations,
+    isFeatured: req.body.isFeatured,
+    isAutoApply: req.body.isAutoApply,
+    cashbackPercentage: req.body.cashbackPercentage,
+    cashbackFixed: req.body.cashbackFixed,
+    stackingRule: req.body.stackingRule,
+    priority: req.body.priority,
   };
   Object.keys(dto).forEach((k) => (dto as any)[k] === undefined && delete (dto as any)[k]);
 

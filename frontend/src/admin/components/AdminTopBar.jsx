@@ -356,12 +356,15 @@ export function AdminTopBar() {
               className="flex items-center gap-2 p-1 rounded-[var(--admin-radius-md)] hover:bg-[var(--admin-surface-hover)] cursor-pointer transition-colors min-h-0"
             >
               <div
-                className="w-8 h-8 rounded-[var(--admin-radius-md)] flex items-center justify-center bg-black"
+                className="w-8 h-8 rounded-[var(--admin-radius-md)] flex items-center justify-center"
                 style={{
+                  backgroundColor: 'var(--admin-text-primary)',
                   boxShadow: 'var(--admin-shadow-xs)',
                 }}
               >
-                <span className="text-white text-[11px] font-bold">{initials}</span>
+                <span className="text-[var(--admin-surface)] text-[11px] font-bold">
+                  {initials}
+                </span>
               </div>
               <div className="hidden xl:block text-left pr-1">
                 <p className="text-[12px] font-semibold text-[var(--admin-text-primary)] leading-tight">

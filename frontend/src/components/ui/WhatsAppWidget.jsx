@@ -13,8 +13,6 @@ export function WhatsAppWidget() {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          drag
-          dragMomentum={false}
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0, x: 100 }}
@@ -38,9 +36,8 @@ export function WhatsAppWidget() {
             href="https://wa.me/919866006648"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-14 h-14 bg-white/95 backdrop-blur-md rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.15)] border border-black/5 hover:border-primary/30 flex items-center justify-center cursor-grab active:cursor-grabbing transition-all duration-500 ease-out group"
+            className="w-14 h-14 bg-white/95 backdrop-blur-md rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.15)] border border-black/5 hover:border-primary/30 flex items-center justify-center transition-all duration-500 ease-out group"
             aria-label="Chat with us on WhatsApp"
-            onDragStart={(e) => e.preventDefault()} // prevent browser image drag
           >
             <div className="w-10 h-10 rounded-full bg-[#25D366]/10 shrink-0 flex items-center justify-center group-hover:bg-[#25D366] transition-colors duration-300">
               <svg

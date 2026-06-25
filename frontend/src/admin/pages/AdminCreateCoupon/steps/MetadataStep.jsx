@@ -13,11 +13,10 @@ export function MetadataStep({ formData, setFormData, isEdit }) {
           <input
             type="text"
             required
-            disabled={isEdit}
             value={formData.code}
             onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
             placeholder="e.g., FESTIVE40"
-            className="admin-input font-mono tracking-wider uppercase disabled:opacity-50"
+            className="admin-input font-mono tracking-wider uppercase"
           />
         </div>
         <div className="space-y-1.5">

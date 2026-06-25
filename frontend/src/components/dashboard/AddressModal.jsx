@@ -70,7 +70,7 @@ export function AddressModal() {
           </div>
 
           <div className="bg-surface-bright z-10 pt-5 pb-4 px-6 flex justify-between items-center border-b border-outline-variant/20 rounded-t-lg shrink-0 relative">
-            <h3 className="font-display text-base text-on-surface uppercase tracking-wider font-bold">
+            <h3 className="text-[11px] font-extrabold text-on-surface uppercase tracking-widest">
               {editingAddressId === 'new' ? 'Add New Site Parameters' : 'Modify Site Parameters'}
             </h3>
             <button
@@ -85,26 +85,26 @@ export function AddressModal() {
           <div className="overflow-y-auto p-6 relative z-10 flex-1 pb-24">
             <form onSubmit={handleAddressSave} className="space-y-6">
               {/* Geolocation Section */}
-              <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
-                <div className="flex items-center justify-between pb-3 border-b border-outline-variant/15 mb-4">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-xs">pin_drop</span>
+              <div className="py-5 border-b border-outline-variant/20">
+                <div className="flex items-center justify-between mb-5">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[12px]">pin_drop</span>
                     Location Coordinates
                   </span>
                   <button
                     type="button"
                     onClick={handleFetchCurrentLocation}
                     disabled={isDetectingLocation}
-                    className="inline-flex items-center gap-1.5 text-[9px] text-primary font-bold uppercase tracking-widest bg-primary/5 hover:bg-primary/10 border border-primary/20 px-3.5 py-1.5 rounded-lg cursor-pointer transition-all disabled:opacity-50 shadow-xs"
+                    className="inline-flex items-center gap-1 text-[8px] text-primary font-bold uppercase tracking-widest bg-primary/5 hover:bg-primary/10 px-2.5 py-1 rounded-full cursor-pointer transition-all disabled:opacity-50"
                   >
-                    <span className="material-symbols-outlined text-[12px] font-bold">
+                    <span className="material-symbols-outlined text-[10px] font-bold">
                       my_location
                     </span>
                     <span>Use Current Location</span>
                   </button>
                 </div>
 
-                <div className="w-full h-44 bg-surface-container-low rounded-lg mb-4 relative overflow-hidden border border-outline-variant/30 z-0">
+                <div className="w-full h-44 bg-surface-container-low rounded-lg mb-4 relative overflow-hidden border border-outline-variant/20 z-0">
                   <MapLocationPicker
                     position={mapPosition}
                     setPosition={setMapPosition}
@@ -116,7 +116,7 @@ export function AddressModal() {
                   <motion.div
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 text-[10px] text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider inline-flex"
+                    className="flex items-center gap-2 text-[10px] text-green-700 bg-green-50/50 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider inline-flex"
                   >
                     <span className="material-symbols-outlined text-xs">share_location</span>
                     <span>

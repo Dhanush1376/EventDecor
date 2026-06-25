@@ -146,7 +146,7 @@ export const CartItemRow = React.memo(function CartItemRow({
                       <span className="material-symbols-outlined text-[13px]">keyboard_return</span>
                       <span>
                         <span className="font-display font-semibold text-on-surface text-[12px]">
-                          {settings.returnPolicyDays || 14} days
+                          {settings?.returnsExchanges?.returnWindowDays || 14} days
                         </span>{' '}
                         return available
                       </span>

@@ -5,7 +5,6 @@ const checkAuthLocal = () => hasSessionMarker();
 
 export const couponService = {
   getAll: async () => {
-    if (!checkAuthLocal()) return Promise.reject(new Error('Not authenticated'));
     const response = await api.get('/coupons');
     return response.data;
   },

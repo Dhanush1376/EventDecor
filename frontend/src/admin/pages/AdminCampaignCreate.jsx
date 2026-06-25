@@ -12,6 +12,15 @@ import logger from '../../utils/core/logger';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
 import { useDraft } from '../hooks/useDraft';
 
+const INITIAL_CAMPAIGN_DATA = {
+  title: '',
+  subject: '',
+  templateId: '',
+  customHtml: '',
+  targetRole: 'all',
+  consentedOnly: true,
+};
+
 export function AdminCampaignCreate() {
   const navigate = useNavigate();
 
@@ -33,14 +42,7 @@ export function AdminCampaignCreate() {
     draftKey: 'admin:campaign:add',
     module: 'Campaigns',
     pageTitle: 'New Campaign',
-    initialData: {
-      title: '',
-      subject: '',
-      templateId: '',
-      customHtml: '',
-      targetRole: 'all',
-      consentedOnly: true,
-    },
+    initialData: INITIAL_CAMPAIGN_DATA,
     enabled: true,
   });
 

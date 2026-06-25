@@ -32,7 +32,7 @@ export function PaymentModal({
                 <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold">
                   MILESTONE TRANSACTION
                 </span>
-                <h3 className="font-display text-lg text-on-surface font-bold">
+                <h3 className="text-[11px] font-extrabold text-on-surface uppercase tracking-widest mt-1">
                   Lodge UPI/Credit Milestone Payment
                 </h3>
               </div>
@@ -46,28 +46,24 @@ export function PaymentModal({
 
             <form onSubmit={handleProcessPayment} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="font-label text-[8px] uppercase tracking-widest text-secondary font-bold block">
-                  Payment Amount (₹)
-                </label>
+                <label className="form-label">Payment Amount (₹)</label>
                 <input
                   type="number"
                   placeholder="Enter amount"
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-outline-variant/30 bg-surface-container-low text-xs font-semibold focus:border-primary outline-none"
+                  className="form-field"
                   required
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-label text-[8px] uppercase tracking-widest text-secondary font-bold block">
-                  Payment Stage Description
-                </label>
+                <label className="form-label">Payment Stage Description</label>
                 <input
                   type="text"
                   value={paymentNote}
                   onChange={(e) => setPaymentNote(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-outline-variant/30 bg-surface-container-low text-xs focus:border-primary outline-none"
+                  className="form-field"
                   required
                 />
               </div>

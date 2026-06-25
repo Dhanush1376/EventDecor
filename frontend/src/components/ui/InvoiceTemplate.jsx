@@ -1,6 +1,15 @@
 import Barcode from 'react-barcode';
 import { QRCodeSVG } from 'qrcode.react';
+import { useQuery } from '@tanstack/react-query';
+import storeSettingsService from '../../services/api/storeSettingsService';
+
 export function InvoiceTemplate({ order, user = {}, onClose }) {
+  const { data: settings } = useQuery({
+    queryKey: ['storeSettings', 'public'],
+    queryFn: () => storeSettingsService.getPublicSettings(),
+    staleTime: 10 * 60 * 1000,
+  });
+
   if (!order) return null;
 
   // Normalize order data to handle differences between Admin, Dashboard, and Success pages
@@ -65,6 +74,17 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
     order.trackingNumber || `SR-${orderId.substring(orderId.length - 8).toUpperCase()}-IN`;
   const trackingQR = `${window.location.origin}/track/${orderId}`;
 
+  const businessName = settings?.general?.storeName || 'Siri Arts & Crafts';
+  const tagline = settings?.general?.tagline || 'Premium Studio & Handicrafts';
+  const address =
+    settings?.general?.contactAddress ||
+    '#28-1-92, South Street\nONGOLE-523001, Prakasam District\nAndhra Pradesh';
+  const gstin = settings?.legal?.gstNumber || '29AAAES9284D1ZX';
+  const contactEmail = settings?.general?.supportEmail || 'support@siriartsandcrafts.com';
+
+  const taxRate = settings?.taxes?.defaultTaxRate || 18;
+  const taxMultiplier = 1 + taxRate / 100;
+
   return (
     <div className="w-full bg-gray-50 md:bg-white rounded-xl">
       <div className="print-invoice-area p-5 sm:p-6 md:p-8 text-black text-[9px] sm:text-xs md:text-sm bg-white font-sans relative shadow-sm print:shadow-none mx-auto w-full max-w-4xl">
@@ -98,16 +118,14 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
         <div className="flex justify-between items-start border-b-2 border-gray-900 pb-4 md:pb-6 mb-4 md:mb-6">
           <div className="w-[55%]">
             <h2 className="text-[14px] sm:text-xl md:text-3xl font-display font-black uppercase tracking-widest text-[var(--color-gold-dark)] leading-tight">
-              Siri Arts & Crafts
+              {businessName}
             </h2>
             <p className="text-[7px] sm:text-[9px] md:text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-0.5 md:mt-1">
-              Premium Studio & Handicrafts
+              {tagline}
             </p>
-            <div className="text-[8px] sm:text-[10px] md:text-[11px] text-gray-600 mt-1.5 md:mt-2 space-y-0.5 md:space-y-1 leading-snug font-light">
-              <p>#28-1-92, South Street</p>
-              <p>ONGOLE-523001, Prakasam District</p>
-              <p>Andhra Pradesh</p>
-              <p className="font-semibold text-black mt-1">GSTIN: 29AAAES9284D1ZX</p>
+            <div className="text-[8px] sm:text-[10px] md:text-[11px] text-gray-600 mt-1.5 md:mt-2 space-y-0.5 md:space-y-1 leading-snug font-light whitespace-pre-wrap">
+              {address}
+              <p className="font-semibold text-black mt-1">GSTIN: {gstin}</p>
             </div>
           </div>
 
@@ -198,9 +216,10 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                 const lineTotal = price * qty;
 
                 // Inclusive GST Calculations
-                const basePrice = price / 1.18;
-                const cgst = (price - basePrice) / 2;
-                const sgst = (price - basePrice) / 2;
+                const basePrice = price / taxMultiplier;
+                const totalTax = price - basePrice;
+                const cgst = totalTax / 2;
+                const sgst = totalTax / 2;
 
                 return (
                   <tr key={idx} className="hover:bg-gray-50/50">
@@ -341,25 +360,29 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                 <tr>
                   <td className="py-0.5 md:py-1 text-gray-600">Taxable Basic Value:</td>
                   <td className="text-right py-0.5 md:py-1 font-mono text-gray-900 font-semibold">
-                    ₹{(total / 1.18).toFixed(2)}
+                    ₹{(total / taxMultiplier).toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-0.5 md:py-1 text-gray-600">Integrated SGST (9%):</td>
+                  <td className="py-0.5 md:py-1 text-gray-600">
+                    Integrated SGST ({taxRate / 2}%):
+                  </td>
                   <td className="text-right py-0.5 md:py-1 font-mono text-gray-900 font-semibold">
-                    ₹{((total - total / 1.18) / 2).toFixed(2)}
+                    ₹{((total - total / taxMultiplier) / 2).toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-0.5 md:py-1 text-gray-600">Integrated CGST (9%):</td>
+                  <td className="py-0.5 md:py-1 text-gray-600">
+                    Integrated CGST ({taxRate / 2}%):
+                  </td>
                   <td className="text-right py-0.5 md:py-1 font-mono text-gray-900 font-semibold">
-                    ₹{((total - total / 1.18) / 2).toFixed(2)}
+                    ₹{((total - total / taxMultiplier) / 2).toFixed(2)}
                   </td>
                 </tr>
                 <tr className="border-t border-dashed border-gray-300 font-bold font-mono">
                   <td className="pt-1 md:pt-2 text-gray-850">Total Taxes (Inclusive):</td>
                   <td className="text-right pt-1 md:pt-2 text-[var(--color-gold-dark)] font-black">
-                    ₹{(total - total / 1.18).toFixed(2)}
+                    ₹{(total - total / taxMultiplier).toFixed(2)}
                   </td>
                 </tr>
               </tbody>
@@ -402,9 +425,9 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
 
         {/* Footer Disclaimer */}
         <div className="mt-6 md:mt-12 text-center text-gray-400 text-[6px] md:text-[10px] border-t border-gray-100 pt-3 md:pt-4 leading-normal font-light">
-          This is a secure computer generated tax invoice issued under Siri Arts & Crafts boutique
+          This is a secure computer generated tax invoice issued under {businessName} boutique
           regulations and requires no physical signatures. For inquiry, reach
-          support@siriartsandcrafts.com.
+          {contactEmail}.
         </div>
       </div>
     </div>

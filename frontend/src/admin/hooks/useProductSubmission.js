@@ -68,6 +68,16 @@ export function useProductSubmission({
       const payload = {
         title: formData.title,
         teluguTitle: formData.teluguTitle || undefined,
+        customerNote: formData.customerNote || undefined,
+        complimentaryGift: formData.complimentaryGift?.enabled
+          ? {
+              enabled: true,
+              name: formData.complimentaryGift.name || undefined,
+              quantity: Number(formData.complimentaryGift.quantity) || 1,
+              description: formData.complimentaryGift.description || undefined,
+              displayBadge: formData.complimentaryGift.displayBadge || undefined,
+            }
+          : { enabled: false },
         slug:
           formData.slug ||
           formData.title

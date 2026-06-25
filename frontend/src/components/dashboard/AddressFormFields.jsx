@@ -4,11 +4,13 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
   return (
     <>
       {/* Contact Information Section */}
-      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
-        <h4 className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-4">
+      {/* Contact Information Section */}
+      <div className="py-5 border-b border-outline-variant/20">
+        <h4 className="text-[9px] font-bold uppercase tracking-widest text-secondary mb-5 flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-[12px]">person</span>
           Contact Details
         </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label htmlFor="dashboard-address-name" className="form-label">
               Receiver Full Name*
@@ -87,11 +89,12 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
       </div>
 
       {/* Address Details Section */}
-      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
-        <h4 className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-4">
+      <div className="py-5">
+        <h4 className="text-[9px] font-bold uppercase tracking-widest text-secondary mb-5 flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-[12px]">home</span>
           Address Information
         </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label htmlFor="dashboard-address-pincode" className="form-label">
               6-Digit Pincode*

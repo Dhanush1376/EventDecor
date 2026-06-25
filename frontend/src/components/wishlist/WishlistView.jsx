@@ -265,7 +265,7 @@ export function WishlistView({ isEmbedded = false }) {
                           setSelectedCategory(null);
                         }}
                         className={`relative flex flex-1 items-center justify-center gap-1.5 px-5 py-2.5 min-h-0 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer border-0 bg-transparent ${
-                          isActive ? 'text-[#8c7335]' : 'text-[#685c57]/70 hover:text-black/90'
+                          isActive ? 'text-black' : 'text-[#685c57]/70 hover:text-black/90'
                         }`}
                       >
                         {/* Active sliding background pill */}
@@ -286,7 +286,7 @@ export function WishlistView({ isEmbedded = false }) {
                         {/* Top-Right Overlapping Badge */}
                         <span
                           className={`absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold border border-white shadow-sm transition-colors z-20 ${
-                            isActive ? 'bg-[#8c7335] text-white' : 'bg-[#e8e3d9] text-[#685c57]'
+                            isActive ? 'bg-black text-white' : 'bg-[#e8e3d9] text-[#685c57]'
                           }`}
                         >
                           {opt.count}
@@ -307,10 +307,10 @@ export function WishlistView({ isEmbedded = false }) {
                       className="flex flex-col items-center cursor-pointer shrink-0 group w-[72px] md:w-[88px]"
                     >
                       <div
-                        className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden transition-all duration-300 flex items-center justify-center relative shrink-0 aspect-square bg-gradient-to-tr from-[#c5a059] via-[#e0c287] to-[#f3dfb6] shadow-inner ${
+                        className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden transition-all duration-300 flex items-center justify-center relative shrink-0 aspect-square bg-[#1a1a1a] shadow-inner ${
                           !selectedCategory
-                            ? 'border-2 border-[#8c7335] ring-4 ring-[#8c7335]/15 scale-105 shadow-md'
-                            : 'border border-outline-variant/10 shadow-xs hover:border-black/25 group-hover:scale-105'
+                            ? 'border-2 border-white ring-4 ring-black/20 scale-105 shadow-md'
+                            : 'border border-outline-variant/10 shadow-xs hover:border-black/50 group-hover:scale-105'
                         }`}
                       >
                         <span className="material-symbols-outlined text-white text-[24px] md:text-[28px] font-light tracking-widest drop-shadow-sm select-none">
@@ -320,7 +320,7 @@ export function WishlistView({ isEmbedded = false }) {
                       <span
                         className={`text-[9.5px] md:text-[10px] font-bold text-center mt-2 tracking-wide transition-colors whitespace-normal leading-tight h-8 flex items-start justify-center w-full ${
                           !selectedCategory
-                            ? 'text-[#8c7335]'
+                            ? 'text-[#1a1a1a]'
                             : 'text-black/50 group-hover:text-black'
                         }`}
                       >
@@ -340,7 +340,7 @@ export function WishlistView({ isEmbedded = false }) {
                           <div
                             className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden transition-all duration-300 flex items-center justify-center relative shrink-0 aspect-square ${
                               isActive
-                                ? 'border-2 border-[#8c7335] ring-4 ring-[#8c7335]/15 scale-105 shadow-md'
+                                ? 'border-2 border-white ring-4 ring-black/20 scale-105 shadow-md'
                                 : 'border border-outline-variant/10 shadow-xs hover:border-black/25 group-hover:scale-105'
                             }`}
                           >
@@ -352,7 +352,7 @@ export function WishlistView({ isEmbedded = false }) {
                           </div>
                           <span
                             className={`text-[9.5px] md:text-[10px] font-bold text-center mt-2 tracking-wide transition-colors whitespace-normal leading-tight h-8 flex items-start justify-center w-full ${
-                              isActive ? 'text-[#8c7335]' : 'text-black/50 group-hover:text-black'
+                              isActive ? 'text-[#1a1a1a]' : 'text-black/50 group-hover:text-black'
                             }`}
                           >
                             {cat.name}

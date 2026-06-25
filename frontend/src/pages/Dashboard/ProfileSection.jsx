@@ -57,21 +57,18 @@ export function ProfileSection() {
       transition={{ duration: 0.3 }}
       className="space-y-4 text-left"
     >
-      <div className="bg-surface-bright border border-outline-variant/30 rounded-lg p-5 flex flex-col gap-1 shadow-2xs">
-        <h2 className="font-semibold text-sm text-on-surface tracking-wide">Profile Settings</h2>
-        <span className="text-[10px] text-on-surface/60 font-light">
-          Update your account profiles, contact parameters, and identity settings.
-        </span>
-      </div>
+      <div className="py-5">
+        <div className="pb-5 mb-5 border-b border-outline-variant/20">
+          <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[12px]">person</span>
+            Profile Settings
+          </h2>
+        </div>
 
-      <div className="bg-surface-bright border border-outline-variant/30 rounded-lg p-5 shadow-2xs">
         <form onSubmit={handleProfileSave} className="space-y-4 max-w-2xl text-[11px]">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label
-                htmlFor="dashboard-profile-name"
-                className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-              >
+              <label htmlFor="dashboard-profile-name" className="form-label mb-1.5">
                 Full Account Name
               </label>
               <input
@@ -81,20 +78,18 @@ export function ProfileSection() {
                 autoComplete="name"
                 value={profileForm.name}
                 onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold text-on-surface"
+                className="form-field"
                 placeholder="Enter your full name"
               />
             </div>
 
             <div>
-              <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5">
-                Registered Email Address
-              </label>
+              <label className="form-label mb-1.5">Registered Email Address</label>
               <input
                 type="email"
                 disabled
                 value={user?.email || ''}
-                className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none font-semibold text-secondary cursor-not-allowed opacity-75"
+                className="form-field opacity-60 cursor-not-allowed"
               />
               <span className="text-[9px] text-secondary/50 block mt-1">
                 Security Note: Primary login email keys cannot be modified.
@@ -104,10 +99,7 @@ export function ProfileSection() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label
-                htmlFor="dashboard-profile-phone"
-                className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-              >
+              <label htmlFor="dashboard-profile-phone" className="form-label mb-1.5">
                 Mobile Number
               </label>
               <input
@@ -116,19 +108,17 @@ export function ProfileSection() {
                 autoComplete="tel"
                 value={profileForm.phone}
                 onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold text-on-surface"
+                className="form-field"
                 placeholder="e.g. 9876543210"
               />
             </div>
 
             <div>
-              <label className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5">
-                Gender Option
-              </label>
+              <label className="form-label mb-1.5">Gender Option</label>
               <select
                 value={profileForm.gender}
                 onChange={(e) => setProfileForm({ ...profileForm, gender: e.target.value })}
-                className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer text-on-surface"
+                className="form-field cursor-pointer"
               >
                 <option value="">Select Gender</option>
                 <option value="male">Male</option>
@@ -139,10 +129,7 @@ export function ProfileSection() {
             </div>
 
             <div className="min-w-0">
-              <label
-                htmlFor="dashboard-profile-dob"
-                className="block text-[9px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-              >
+              <label htmlFor="dashboard-profile-dob" className="form-label mb-1.5">
                 Date Of Birth (DOB)
               </label>
               <input
@@ -151,7 +138,7 @@ export function ProfileSection() {
                 autoComplete="bday"
                 value={profileForm.dateOfBirth}
                 onChange={(e) => setProfileForm({ ...profileForm, dateOfBirth: e.target.value })}
-                className="w-full min-w-0 max-w-full overflow-hidden bg-surface-container-low border border-outline-variant/30 rounded-lg px-2 md:px-4 py-2.5 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer text-on-surface"
+                className="form-field cursor-pointer"
               />
             </div>
           </div>

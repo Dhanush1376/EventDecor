@@ -3,18 +3,12 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAdmin } from '../context/AdminContext';
-import { handleImageError } from '../../utils/media/imageUtils';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import {
   PageHeader,
-  StatCard,
-  ChartCard,
-  ChartTooltip,
-  StatusBadge,
   PeriodSelector,
   SkeletonDashboard,
   AdminToggle,
-  formatCurrency,
   getRelativeTime,
   fadeUp,
   stagger,
@@ -24,20 +18,6 @@ import { AdminDashboardRecents } from '../components/dashboard/AdminDashboardRec
 import { AdminDashboardActivity } from '../components/dashboard/AdminDashboardActivity';
 import { AdminDashboardCharts } from '../components/dashboard/AdminDashboardCharts';
 import { AdminDashboardStats } from '../components/dashboard/AdminDashboardStats';
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-} from 'recharts';
 
 const FALLBACK_DATE = new Date('2026-05-20T00:00:00Z');
 const FALLBACK_PRODUCT_DATE = new Date('2026-05-17T00:00:00Z');

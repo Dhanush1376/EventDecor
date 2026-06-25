@@ -298,17 +298,17 @@ export function AdminGallery() {
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         onClick={() => handleEdit(item)}
-                        className="w-6 h-6 rounded-full bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-accent)] hover:text-white flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                        className="w-8 h-8 !p-0 aspect-square shrink-0 rounded-full bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-warning)] hover:text-white flex items-center justify-center cursor-pointer transition-all active:scale-90"
                         title="Edit"
                       >
-                        <span className="material-symbols-outlined text-[12.5px]">edit</span>
+                        <span className="material-symbols-outlined text-[14px]">edit</span>
                       </button>
                       <button
                         onClick={() => handleDelete(item._id || item.id)}
-                        className="w-6 h-6 rounded-full bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-error)] hover:text-white flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                        className="w-8 h-8 !p-0 aspect-square shrink-0 rounded-full bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-error)] hover:text-white flex items-center justify-center cursor-pointer transition-all active:scale-90"
                         title="Delete"
                       >
-                        <span className="material-symbols-outlined text-[12.5px]">delete</span>
+                        <span className="material-symbols-outlined text-[14px]">delete</span>
                       </button>
                     </div>
                   </div>
@@ -480,17 +480,17 @@ export function AdminGallery() {
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         onClick={() => handleEditCat(cat)}
-                        className="admin-btn admin-btn-icon w-8 h-8 p-0 min-h-0"
+                        className="w-9 h-9 !p-0 aspect-square shrink-0 flex items-center justify-center rounded-full bg-[var(--admin-warning-light)] text-[var(--admin-warning)] hover:bg-[var(--admin-warning)] hover:text-white transition-all cursor-pointer"
                         title="Edit"
                       >
-                        <span className="material-symbols-outlined text-[14px]">edit</span>
+                        <span className="material-symbols-outlined text-[15px]">edit</span>
                       </button>
                       <button
                         onClick={() => deleteCustomCategory('events', cat.id)}
-                        className="admin-btn admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-error)] hover:bg-[var(--admin-error-light)]"
+                        className="w-9 h-9 !p-0 aspect-square shrink-0 flex items-center justify-center rounded-full bg-[var(--admin-error-light)] text-[var(--admin-error)] hover:bg-[var(--admin-error)] hover:text-white transition-all cursor-pointer"
                         title="Delete"
                       >
-                        <span className="material-symbols-outlined text-[14px]">delete</span>
+                        <span className="material-symbols-outlined text-[15px]">delete</span>
                       </button>
                     </div>
                   </div>

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import toast from 'react-hot-toast';
 import logger from '../utils/core/logger';
 
 const GSI_SCRIPT_SRC = 'https://accounts.google.com/gsi/client';

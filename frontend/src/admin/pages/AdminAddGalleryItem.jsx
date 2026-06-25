@@ -1,7 +1,7 @@
 import { m as motion } from 'framer-motion';
 import { ImageUpload } from '../components/ImageUpload';
 import { VideoUpload } from '../components/VideoUpload';
-import { PageHeader, stagger } from '../components/AdminUIKit';
+import { PageHeader, stagger, AdminToggle } from '../components/AdminUIKit';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
@@ -39,6 +39,14 @@ export function AdminAddGalleryItem() {
     initialData: {
       title: '',
       teluguTitle: '',
+      customerNote: '',
+      complimentaryGift: {
+        enabled: false,
+        name: '',
+        quantity: 1,
+        description: '',
+        displayBadge: '',
+      },
       category: '',
       event: '',
       style: '',
@@ -67,6 +75,14 @@ export function AdminAddGalleryItem() {
             setNewItem({
               title: item.title || '',
               teluguTitle: item.teluguTitle || '',
+              customerNote: item.customerNote || '',
+              complimentaryGift: item.complimentaryGift || {
+                enabled: false,
+                name: '',
+                quantity: 1,
+                description: '',
+                displayBadge: '',
+              },
               category: item.category || '',
               event: item.event || '',
               style: item.style || '',
@@ -106,6 +122,7 @@ export function AdminAddGalleryItem() {
         ...prev,
         title: prev.title || 'Royal Jasmine Backdrop',
         teluguTitle: prev.teluguTitle || 'స్వర్ణ మల్లె పందిరి',
+        customerNote: prev.customerNote || '',
         category: prev.category || 'Traditional',
         event: prev.event || 'Wedding',
         style: prev.style || 'Temple Heritage',
@@ -333,6 +350,141 @@ export function AdminAddGalleryItem() {
                   className="admin-input"
                   placeholder="సిరి వివాహ అలంకరణ"
                 />
+              </div>
+            </div>
+
+            {/* Product Notes & Complimentary Gift Information */}
+            <div
+              className={`p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-4`}
+            >
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)] mb-1">
+                  Customer Note / Important Information
+                </p>
+                <p className="text-[11px] text-[var(--admin-text-secondary)] mb-2">
+                  Displays on the storefront detail page as a Designer's Note. Supports multi-line
+                  text.
+                </p>
+                <textarea
+                  rows={3}
+                  value={newItem.customerNote || ''}
+                  onChange={(e) => setNewItem({ ...newItem, customerNote: e.target.value })}
+                  placeholder="e.g. Crafted with pure brass... Please note that slight color variations may occur."
+                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20 resize-none"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-[var(--admin-border)]/50">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">
+                      Complimentary Gift Included
+                    </p>
+                    <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">
+                      Offer a free gift with this showcase.
+                    </p>
+                  </div>
+                  <AdminToggle
+                    checked={newItem.complimentaryGift?.enabled || false}
+                    onChange={() =>
+                      setNewItem((prev) => ({
+                        ...prev,
+                        complimentaryGift: {
+                          ...prev.complimentaryGift,
+                          enabled: !prev.complimentaryGift?.enabled,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+
+                {newItem.complimentaryGift?.enabled && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+                        Gift Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Welcome Chocolate Gift"
+                        value={newItem.complimentaryGift?.name || ''}
+                        onChange={(e) =>
+                          setNewItem((prev) => ({
+                            ...prev,
+                            complimentaryGift: {
+                              ...prev.complimentaryGift,
+                              name: e.target.value,
+                            },
+                          }))
+                        }
+                        className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-xl px-4 py-2 text-[12.5px] outline-none transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+                        Quantity
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={newItem.complimentaryGift?.quantity || 1}
+                        onChange={(e) =>
+                          setNewItem((prev) => ({
+                            ...prev,
+                            complimentaryGift: {
+                              ...prev.complimentaryGift,
+                              quantity: parseInt(e.target.value, 10) || 1,
+                            },
+                          }))
+                        }
+                        className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-xl px-4 py-2 text-[12.5px] outline-none transition-all"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+                        Gift Description (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Premium assorted Belgian chocolates."
+                        value={newItem.complimentaryGift?.description || ''}
+                        onChange={(e) =>
+                          setNewItem((prev) => ({
+                            ...prev,
+                            complimentaryGift: {
+                              ...prev.complimentaryGift,
+                              description: e.target.value,
+                            },
+                          }))
+                        }
+                        className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-xl px-4 py-2 text-[12.5px] outline-none transition-all"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+                        Display Badge (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. FREE GIFT"
+                        value={newItem.complimentaryGift?.displayBadge || ''}
+                        onChange={(e) =>
+                          setNewItem((prev) => ({
+                            ...prev,
+                            complimentaryGift: {
+                              ...prev.complimentaryGift,
+                              displayBadge: e.target.value,
+                            },
+                          }))
+                        }
+                        className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-xl px-4 py-2 text-[12.5px] outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

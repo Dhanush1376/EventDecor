@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
 import { ProductCoupons } from './ProductCoupons';
+import { ProductNoteCard } from './ProductNoteCard';
 import { useQuery } from '@tanstack/react-query';
 import { couponService } from '../../services/domainServices';
 
@@ -205,6 +206,12 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
         </div>
       </div>
 
+      {/* Product Notes & Complimentary Gifts Section */}
+      <ProductNoteCard
+        customerNote={product.customerNote}
+        complimentaryGift={product.complimentaryGift}
+      />
+
       {/* Available Coupons & Savings Section */}
       <ProductCoupons product={product} />
 
@@ -393,8 +400,8 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
           {canPurchase && (
             <button
               ref={atcRef}
-              onClick={product.stock <= 0 ? undefined : handleAddToCart}
-              disabled={product.stock <= 0}
+              onClick={product.stock <= 0 || added ? undefined : handleAddToCart}
+              disabled={product.stock <= 0 || added}
               className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-xl transition-all font-bold px-4 ${
                 product.stock <= 0
                   ? 'bg-stone-200 text-stone-400 cursor-not-allowed'

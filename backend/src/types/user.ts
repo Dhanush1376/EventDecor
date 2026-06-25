@@ -43,7 +43,18 @@ export interface IUser extends ISoftDeleted {
   }>;
   notificationPreferences?: {
     email: boolean;
-    marketing: boolean;
+    sms: boolean;
+    whatsapp: boolean;
+    inApp: boolean;
+    push: boolean;
+    categories: {
+      orderUpdates: boolean;
+      promotions: boolean;
+      security: boolean;
+      newsletter: boolean;
+      bookingUpdates: boolean;
+      rentalUpdates: boolean;
+    };
   };
   accountPreferences?: {
     theme: string;

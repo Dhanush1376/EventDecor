@@ -4,6 +4,16 @@ export const createProductSchema = z
   .object({
     title: z.string().min(2, 'Title must be at least 2 characters'),
     teluguTitle: z.string().optional(),
+    customerNote: z.string().max(2000).optional(),
+    complimentaryGift: z
+      .object({
+        enabled: z.boolean().optional(),
+        name: z.string().max(100).optional(),
+        quantity: z.number().min(1).optional(),
+        description: z.string().max(500).optional(),
+        displayBadge: z.string().max(50).optional(),
+      })
+      .optional(),
     slug: z.string().min(2, 'Slug must be at least 2 characters'),
     category: z.string().min(2, 'Category is required'),
     material: z.string().optional(),

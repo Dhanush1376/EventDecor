@@ -69,6 +69,7 @@ export function LocationSelectorModal({
         resizeObserverRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Leaflet.js Dynamic Script Injector (Refactored to use local import)

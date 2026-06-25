@@ -7,23 +7,18 @@ export default function ProfileTab({
   isUpdatingProfile,
 }) {
   return (
-    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs space-y-6">
-      <div className="pb-4 border-b border-outline-variant/40">
-        <h2 className="font-bold text-base text-on-surface uppercase tracking-wider">
+    <div className="py-5">
+      <div className="pb-5 mb-5 border-b border-outline-variant/20">
+        <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-[12px]">person</span>
           Profile Settings
         </h2>
-        <span className="text-[11px] text-secondary font-light">
-          Update your account profiles, contact parameters, and identity settings.
-        </span>
       </div>
 
       <form onSubmit={handleProfileSave} className="space-y-5 max-w-2xl text-[11px]">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label
-              htmlFor="dashboard-profile-name"
-              className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-profile-name" className="form-label mb-1.5">
               Full Account Name
             </label>
             <input
@@ -39,14 +34,12 @@ export default function ProfileTab({
           </div>
 
           <div>
-            <label className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
-              Registered Email Address
-            </label>
+            <label className="form-label mb-1.5">Registered Email Address</label>
             <input
               type="email"
               disabled
               value={user?.email || ''}
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none font-semibold text-secondary cursor-not-allowed"
+              className="form-field opacity-60 cursor-not-allowed"
             />
             <span className="text-[9px] text-secondary/50 block mt-1">
               Security Note: Primary login email keys cannot be modified.
@@ -56,10 +49,7 @@ export default function ProfileTab({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div>
-            <label
-              htmlFor="dashboard-profile-phone"
-              className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-profile-phone" className="form-label mb-1.5">
               Mobile Number
             </label>
             <input
@@ -74,13 +64,11 @@ export default function ProfileTab({
           </div>
 
           <div>
-            <label className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5">
-              Gender Option
-            </label>
+            <label className="form-label mb-1.5">Gender Option</label>
             <select
               value={profileForm.gender}
               onChange={(e) => setProfileForm({ ...profileForm, gender: e.target.value })}
-              className="w-full bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
+              className="form-field cursor-pointer"
             >
               <option value="">Select Gender</option>
               <option value="male">Male</option>
@@ -91,10 +79,7 @@ export default function ProfileTab({
           </div>
 
           <div className="min-w-0">
-            <label
-              htmlFor="dashboard-profile-dob"
-              className="block text-[10px] uppercase font-bold text-secondary tracking-widest mb-1.5"
-            >
+            <label htmlFor="dashboard-profile-dob" className="form-label mb-1.5">
               Date Of Birth (DOB)
             </label>
             <input
@@ -103,7 +88,7 @@ export default function ProfileTab({
               autoComplete="bday"
               value={profileForm.dateOfBirth}
               onChange={(e) => setProfileForm({ ...profileForm, dateOfBirth: e.target.value })}
-              className="w-full min-w-0 max-w-full overflow-hidden bg-white border border-outline-variant/30 rounded-lg px-2 md:px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
+              className="form-field cursor-pointer"
             />
           </div>
         </div>

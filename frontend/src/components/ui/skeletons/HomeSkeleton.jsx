@@ -1,7 +1,4 @@
 import React from 'react';
-import { Skeleton } from '../SkeletonBase';
-import { ProductCardSkeleton } from './ProductSkeletons';
-import { AddressBarSkeleton } from './CommonSkeletons';
 
 export function HomeSkeleton() {
   return (

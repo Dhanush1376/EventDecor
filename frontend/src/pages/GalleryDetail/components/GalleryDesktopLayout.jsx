@@ -4,6 +4,7 @@ import { m as motion } from 'framer-motion';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 import { ShareButton } from '../../../components/ui/ShareButton';
 import { LinkedProductCard } from './LinkedProductCard';
+import { ProductNoteCard } from '../../../components/ui/ProductNoteCard';
 import { fadeUp, scaleIn } from './GalleryAnimations';
 
 export function GalleryDesktopLayout({
@@ -171,6 +172,12 @@ export function GalleryDesktopLayout({
               {item.teluguTitle}
             </p>
           )}
+          <div className="mt-4">
+            <ProductNoteCard
+              customerNote={item.customerNote}
+              complimentaryGift={item.complimentaryGift}
+            />
+          </div>
         </motion.div>
 
         {/* Description */}

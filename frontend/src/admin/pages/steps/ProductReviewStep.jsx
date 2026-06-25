@@ -86,9 +86,46 @@ export function ProductReviewStep({ formData, setFormData }) {
 
         {/* Summary Data Review list */}
         <div className="col-span-1 sm:col-span-2 p-5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-4 text-[12px]">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] border-b border-[var(--admin-border)]/60 pb-1.5 mb-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] border-b border-[var(--admin-border)]/60 pb-1.5 mb-4">
             Curation Credentials Summary
           </p>
+
+          <div className="flex items-start gap-4 mb-4 pb-4 border-b border-[var(--admin-border)]/40">
+            {formData.images && formData.images.length > 0 ? (
+              <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-[var(--admin-accent)]/20 shadow-sm shrink-0">
+                <img
+                  src={formData.images[0]}
+                  className="w-full h-full object-cover"
+                  alt="Primary Cover"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-[var(--admin-accent)]/90 backdrop-blur-sm text-white text-[8px] font-extrabold tracking-widest text-center py-0.5 uppercase">
+                  Primary
+                </div>
+              </div>
+            ) : (
+              <div className="w-20 h-20 rounded-xl bg-[var(--admin-surface)] border border-dashed border-[var(--admin-border)] flex flex-col items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[var(--admin-text-tertiary)] text-[20px]">
+                  image_not_supported
+                </span>
+                <span className="text-[8px] font-bold text-[var(--admin-text-tertiary)] mt-1 uppercase">
+                  No Image
+                </span>
+              </div>
+            )}
+
+            <div className="flex-1 flex flex-col justify-center space-y-1 pt-1">
+              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[10px]">
+                Product Overview
+              </span>
+              <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
+                {formData.title || 'Untitled Product'}
+              </span>
+              <span className="font-bold text-[var(--admin-accent)] text-[13px]">
+                ₹{Number(formData.price || 0).toLocaleString()}
+              </span>
+            </div>
+          </div>
+
           <div className="space-y-3">
             <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
               <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
@@ -150,12 +187,46 @@ export function ProductReviewStep({ formData, setFormData }) {
                 {formData.featured ? 'Yes' : 'No'}
               </span>
             </div>
-            <div className="flex flex-col sm:flex-row sm:justify-between pb-1 gap-1">
+            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
               <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
                 Show in Gallery
               </span>
               <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
                 {formData.showInGallery ? 'Yes' : 'No'}
+              </span>
+            </div>
+
+            {/* New Added Fields */}
+            {formData.customerNote && (
+              <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+                <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
+                  Customer Note
+                </span>
+                <span className="font-bold text-[var(--admin-text-primary)] sm:text-right max-w-[200px] truncate">
+                  {formData.customerNote}
+                </span>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
+                Personalization
+              </span>
+              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
+                {formData.customizationConfig?.enabled
+                  ? `Yes (${formData.customizationConfig.label || 'Default Label'})`
+                  : 'No'}
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:justify-between pb-1 gap-1">
+              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
+                Complimentary Gift
+              </span>
+              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
+                {formData.complimentaryGift?.hasComplimentaryGift
+                  ? `Yes (${formData.complimentaryGift.giftQuantity || 1}x ${formData.complimentaryGift.giftName || 'Gift'})`
+                  : 'No'}
               </span>
             </div>
           </div>

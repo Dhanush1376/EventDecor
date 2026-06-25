@@ -289,7 +289,7 @@ export function AuthProvider({ children }) {
         setIntendedAction(null);
       }
     },
-    [intendedAction],
+    [intendedAction, navigate],
   );
 
   const contextValue = useMemo(

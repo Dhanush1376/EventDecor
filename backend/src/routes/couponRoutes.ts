@@ -18,7 +18,7 @@ router.post('/apply', requireAuth, applyCoupon);
 router.get('/product/:productId', optionalAuth, getProductCoupons);
 
 // Admin & Authenticated Routes
-router.get('/', requireAuth, getCoupons);
+router.get('/', optionalAuth, getCoupons);
 router.post('/', requireAuth, requireAdmin, createCoupon);
 router.put('/:id', requireAuth, requireAdmin, updateCoupon);
 router.delete('/:id', requireAuth, requireAdmin, deleteCoupon);

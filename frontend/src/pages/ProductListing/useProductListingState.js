@@ -66,7 +66,7 @@ export function useProductListingState() {
 
   const queryParams = {
     page: pageParam,
-    limit: 16,
+    limit: 50,
     search: searchParam,
     category: categoryParam !== 'All' ? categoryParam : undefined,
     sort: sortMap[sortBy] || 'newest',

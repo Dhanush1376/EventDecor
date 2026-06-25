@@ -5,31 +5,31 @@
 .admin-section-root.dark {
   color-scheme: dark;
 
-  --admin-bg: #09090b;
-  --admin-bg-subtle: #0f0f12;
-  --admin-surface: #18181b;
-  --admin-surface-hover: #1f1f23;
-  --admin-surface-muted: #27272a;
-  --admin-surface-raised: #1c1c20;
-  --admin-surface-overlay: rgba(0, 0, 0, 0.7);
+  --admin-bg: #1a1815; /* Warm deep dark */
+  --admin-bg-subtle: #211f1b;
+  --admin-surface: #26241f;
+  --admin-surface-hover: #2d2a24;
+  --admin-surface-muted: #302d27;
+  --admin-surface-raised: #2a2823;
+  --admin-surface-overlay: rgba(26, 24, 21, 0.8);
 
   --admin-border: rgba(255, 255, 255, 0.08);
   --admin-border-subtle: rgba(255, 255, 255, 0.04);
-  --admin-border-strong: rgba(255, 255, 255, 0.12);
-  --admin-border-focus: #818cf8;
+  --admin-border-strong: rgba(255, 255, 255, 0.15);
+  --admin-border-focus: #c1a77e;
 
-  --admin-text-primary: #f4f4f5;
-  --admin-text-secondary: #a1a1aa;
-  --admin-text-tertiary: #71717a;
-  --admin-text-placeholder: #52525b;
-  --admin-text-inverse: #09090b;
+  --admin-text-primary: #f4efe6; /* Ivory text */
+  --admin-text-secondary: #bdb5a6;
+  --admin-text-tertiary: #8c8578;
+  --admin-text-placeholder: #666157;
+  --admin-text-inverse: #1a1815;
 
-  --admin-accent: #d4af37;
-  --admin-accent-hover: #c49a3c;
-  --admin-accent-light: rgba(212, 175, 55, 0.12);
-  --admin-accent-muted: rgba(212, 175, 55, 0.1);
-  --admin-accent-subtle: rgba(212, 175, 55, 0.05);
-  --admin-accent-text: #f1d592;
+  --admin-accent: #c1a77e; /* Soft Gold */
+  --admin-accent-hover: #a68a64;
+  --admin-accent-light: rgba(193, 167, 126, 0.12);
+  --admin-accent-muted: rgba(193, 167, 126, 0.1);
+  --admin-accent-subtle: rgba(193, 167, 126, 0.05);
+  --admin-accent-text: #f4efe6;
 
   --admin-success-light: rgba(5, 150, 105, 0.12);
   --admin-success-border: rgba(5, 150, 105, 0.25);

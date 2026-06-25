@@ -1,6 +1,5 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { OptimizedImage } from '../ui/OptimizedImage';
-import { useState } from 'react';
 import { useReviewForm } from './useReviewForm';
 import { REVIEW_SAMPLE_IMAGES } from '../../constants/placeholderImages';
 
@@ -336,48 +335,40 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">
-                      Your Full Name
-                    </label>
+                    <label className="form-label mb-1.5">Your Full Name</label>
                     <input
                       type="text"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="e.g. Meera Kapoor"
-                      className="w-full bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[var(--color-gold-dark)] font-medium"
+                      className="form-field"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">
-                      Celebration Event
-                    </label>
+                    <label className="form-label mb-1.5">Celebration Event</label>
                     <input
                       type="text"
                       value={eventType}
                       onChange={(e) => setEventType(e.target.value)}
                       placeholder="e.g. Royal Haldi & Engagement"
-                      className="w-full bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[var(--color-gold-dark)] font-medium"
+                      className="form-field"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] block mb-1.5">
-                      Favorite Decor Piece
-                    </label>
+                    <label className="form-label mb-1.5">Favorite Decor Piece</label>
                     <input
                       type="text"
                       value={favoriteElement}
                       onChange={(e) => setFavoriteElement(e.target.value)}
                       placeholder="e.g. Antique Gold Mandap Arch"
-                      className="w-full bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[var(--color-gold-dark)] font-medium"
+                      className="form-field"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)]">
-                      Your Detailed Review
-                    </label>
+                    <label className="form-label mb-0">Your Detailed Review</label>
                     <button
                       type="button"
                       onClick={triggerAiPolish}
@@ -403,7 +394,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     placeholder="Describe the atmosphere, guest reactions, before & after venue transformation, and artisan care..."
-                    className="w-full bg-white border border-[#D4AF37]/30 rounded-2xl p-4 text-xs leading-relaxed outline-none focus:border-[var(--color-gold-dark)] transition-colors"
+                    className="form-field resize-y pt-4"
                   />
                 </div>
 
@@ -480,7 +471,7 @@ export function PostReviewModal({ isOpen, onClose, onSubmit }) {
                     value={newMediaUrl}
                     onChange={(e) => setNewMediaUrl(e.target.value)}
                     placeholder="Paste an image or video URL here (e.g. from Google Photos / Unsplash)..."
-                    className="flex-1 bg-white border border-[#D4AF37]/30 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[var(--color-gold-dark)]"
+                    className="form-field flex-1"
                   />
                   <button
                     type="submit"

@@ -632,7 +632,7 @@ export function MyCustomOrders() {
                     value={chatMessage}
                     onChange={(e) => setChatMessage(e.target.value)}
                     placeholder="Type a message..."
-                    className="flex-1 min-w-0 bg-white border border-black/10 rounded-full px-4 py-2 text-[13px] outline-none focus:border-[var(--color-gold)] transition-colors shadow-sm"
+                    className="form-field flex-1 min-w-0"
                   />
                   <button
                     type="submit"

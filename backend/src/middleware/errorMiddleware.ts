@@ -177,6 +177,9 @@ const errorMiddleware = (err: any, req: Request, res: Response, _next: NextFunct
     responsePayload.stack = err.stack;
   }
 
+  // Prevent caching of error responses
+  res.setHeader('Cache-Control', 'no-store');
+
   res.status(statusCode).json(responsePayload);
 };
 

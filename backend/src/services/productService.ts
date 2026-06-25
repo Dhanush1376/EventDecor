@@ -287,12 +287,12 @@ class ProductService {
 
     const { filter, correctedQuery } = await this.buildProductFilterQuery(queryParams, isAdmin);
 
-    let sortOptions: any = { createdAt: -1 };
+    let sortOptions: any = { createdAt: -1, _id: 1 };
     if (sort) {
-      if (sort === 'price_asc') sortOptions = { price: 1 };
-      else if (sort === 'price_desc') sortOptions = { price: -1 };
-      else if (sort === 'newest') sortOptions = { createdAt: -1 };
-      else if (sort === 'rating') sortOptions = { rating: -1 };
+      if (sort === 'price_asc') sortOptions = { price: 1, _id: 1 };
+      else if (sort === 'price_desc') sortOptions = { price: -1, _id: 1 };
+      else if (sort === 'newest') sortOptions = { createdAt: -1, _id: 1 };
+      else if (sort === 'rating') sortOptions = { rating: -1, _id: 1 };
     }
 
     const filterHash = JSON.stringify(filter);

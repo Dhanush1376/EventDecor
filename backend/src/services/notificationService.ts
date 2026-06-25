@@ -166,7 +166,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     if (typeVal === 'marketing') {
       if (userIdVal) {
         const user = await User.findById(userIdVal);
-        if (user && user.notificationPreferences?.marketing === false) {
+        if (user && user.notificationPreferences?.categories?.promotions === false) {
           logger.info(
             `Skipped marketing email to registered user ${emailVal} due to subscription opt-out.`,
           );
@@ -356,7 +356,7 @@ export const runCampaignDispatch = async (campaignId: string) => {
 
     // Opt-in check
     if (campaign.targetAudience.consentedOnly) {
-      filter['notificationPreferences.marketing'] = { $ne: false };
+      filter['notificationPreferences.categories.promotions'] = { $ne: false };
     }
 
     const users = await User.find(filter).select('_id email name');

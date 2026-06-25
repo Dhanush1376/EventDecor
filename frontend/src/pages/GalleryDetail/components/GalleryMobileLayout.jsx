@@ -3,6 +3,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { ShareButton } from '../../../components/ui/ShareButton';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 import { MandalaArtDecor } from '../../../components/ui/MandalaArtDecor';
+import { ProductNoteCard } from '../../../components/ui/ProductNoteCard';
 
 export function GalleryMobileLayout({
   item,
@@ -102,6 +103,17 @@ export function GalleryMobileLayout({
               <h2 className="font-display text-[20px] text-black leading-tight font-bold tracking-tight">
                 {item.title}.
               </h2>
+              {item.teluguTitle && (
+                <p className="font-body text-[13px] text-black/40 font-medium">
+                  {item.teluguTitle}
+                </p>
+              )}
+              <div className="mt-3">
+                <ProductNoteCard
+                  customerNote={item.customerNote}
+                  complimentaryGift={item.complimentaryGift}
+                />
+              </div>
             </div>
 
             {/* Connecting Line */}

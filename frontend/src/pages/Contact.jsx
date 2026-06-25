@@ -7,12 +7,20 @@ import { useState } from 'react';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { inquiryService } from '../services/domainServices';
 import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
+import storeSettingsService from '../services/api/storeSettingsService';
 import { MOTION_PRESETS, EASE, DURATION } from '../constants/design-tokens';
 
 import logger from '../utils/core/logger';
 
 export function Contact() {
   const { contact, loading } = useWebsiteContent();
+  const { data: settings, isLoading: settingsLoading } = useQuery({
+    queryKey: ['storeSettings', 'public'],
+    queryFn: () => storeSettingsService.getPublicSettings(),
+    staleTime: 10 * 60 * 1000,
+  });
+
   const [formState, setFormState] = useState('idle'); // idle, sending, success
   const [formData, setFormData] = useState({
     name: '',
@@ -49,10 +57,35 @@ export function Contact() {
     }
   };
 
-  const contactMethods = contact?.contactMethods || [];
-  const _studioHours = contact?.studioHours || [];
+  const contactMethods = [
+    {
+      title: 'Studio Address',
+      value:
+        settings?.contact?.address || contact?.address || '#28-1-92, South Street, ONGOLE-523001',
+      icon: 'location_on',
+      link: settings?.contact?.googleMapsUrl || '#',
+    },
+    {
+      title: 'Email Us',
+      value: settings?.contact?.email || contact?.email || 'support@siriartsandcrafts.com',
+      icon: 'mail',
+      link: `mailto:${settings?.contact?.email || contact?.email || 'support@siriartsandcrafts.com'}`,
+    },
+    {
+      title: 'Call Us',
+      value: settings?.contact?.phone || contact?.phone || '+91 9999999999',
+      icon: 'phone',
+      link: `tel:${settings?.contact?.phone || contact?.phone || '+91 9999999999'}`,
+    },
+    {
+      title: 'Support Hours',
+      value: settings?.contact?.supportHours || 'Mon - Sat, 10 AM to 6 PM',
+      icon: 'schedule',
+      link: '#',
+    },
+  ];
 
-  if (loading) return <ContactSkeleton />;
+  if (loading || settingsLoading) return <ContactSkeleton />;
 
   return (
     <div className="bg-[var(--color-surface-ivory)] min-h-screen pt-24 md:pt-32 pb-20 relative overflow-hidden selection:bg-primary/20">
@@ -141,16 +174,13 @@ export function Contact() {
             </div>
           </div>
 
-          {/* Right Side: Redesigned Luxury Minimalistic Form Card */}
+          {/* Right Side: Redesigned Luxury Minimalistic Form */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: DURATION.slow, ease: EASE.smooth }}
-            className="bg-gradient-to-b from-[#fcfbf9]/95 to-[#f4f1ea]/90 backdrop-blur-xl border border-[#d0c5af]/30 p-8 md:p-12 relative overflow-hidden rounded-[32px] shadow-[0_32px_80px_-10px_rgba(27,24,20,0.12)]"
+            className="relative w-full"
           >
-            {/* Top gold accent line */}
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-primary/30 via-primary to-primary/30" />
-
             {/* Success Overlay */}
             <AnimatePresence>
               {formState === 'success' && (
@@ -191,10 +221,7 @@ export function Contact() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative group">
-                  <label
-                    htmlFor="contact-name"
-                    className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300"
-                  >
+                  <label htmlFor="contact-name" className="form-label mb-1.5">
                     Your Name <span className="text-error font-normal">*</span>
                   </label>
                   <input
@@ -205,15 +232,12 @@ export function Contact() {
                     placeholder="Full Name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-white/50 text-[13px] text-stone-900 placeholder:text-stone-400 border border-[#d0c5af]/30 focus:border-[#735c00] rounded-xl px-5 py-4 transition-all duration-300 outline-none focus:ring-4 focus:ring-[#735c00]/5 shadow-2xs"
+                    className="form-field"
                   />
                 </div>
 
                 <div className="relative group">
-                  <label
-                    htmlFor="contact-email"
-                    className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300"
-                  >
+                  <label htmlFor="contact-email" className="form-label mb-1.5">
                     Email Address <span className="text-error font-normal">*</span>
                   </label>
                   <input
@@ -224,17 +248,14 @@ export function Contact() {
                     placeholder="email@example.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full bg-white/50 text-[13px] text-stone-900 placeholder:text-stone-400 border border-[#d0c5af]/30 focus:border-[#735c00] rounded-xl px-5 py-4 transition-all duration-300 outline-none focus:ring-4 focus:ring-[#735c00]/5 shadow-2xs"
+                    className="form-field"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative group">
-                  <label
-                    htmlFor="contact-phone"
-                    className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300"
-                  >
+                  <label htmlFor="contact-phone" className="form-label mb-1.5">
                     Phone (Optional)
                   </label>
                   <input
@@ -244,15 +265,12 @@ export function Contact() {
                     placeholder="+91"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full bg-white/50 text-[13px] text-stone-900 placeholder:text-stone-400 border border-[#d0c5af]/30 focus:border-[#735c00] rounded-xl px-5 py-4 transition-all duration-300 outline-none focus:ring-4 focus:ring-[#735c00]/5 shadow-2xs"
+                    className="form-field"
                   />
                 </div>
 
                 <div className="relative group">
-                  <label
-                    htmlFor="contact-subject"
-                    className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300"
-                  >
+                  <label htmlFor="contact-subject" className="form-label mb-1.5">
                     Inquiry Nature
                   </label>
                   <div className="relative">
@@ -260,7 +278,7 @@ export function Contact() {
                       id="contact-subject"
                       value={formData.subject}
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      className="w-full bg-white/50 text-[13px] text-stone-900 border border-[#d0c5af]/30 focus:border-[#735c00] rounded-xl px-5 py-4 transition-all duration-300 outline-none focus:ring-4 focus:ring-[#735c00]/5 shadow-2xs appearance-none cursor-pointer"
+                      className="form-field cursor-pointer appearance-none !pr-8"
                     >
                       <option value="General Inquiry">General Inquiry</option>
                       <option value="Wedding Decoration">Wedding Decoration</option>
@@ -268,7 +286,7 @@ export function Contact() {
                       <option value="Custom Product Order">Custom Product Order</option>
                       <option value="Collaboration">Collaboration</option>
                     </select>
-                    <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#735c00]/60 text-[16px]">
+                    <span className="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-secondary text-[14px]">
                       unfold_more
                     </span>
                   </div>
@@ -276,10 +294,7 @@ export function Contact() {
               </div>
 
               <div className="relative group">
-                <label
-                  htmlFor="contact-message"
-                  className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[#735c00]/60 mb-2 group-focus-within:text-[#735c00] transition-colors duration-300"
-                >
+                <label htmlFor="contact-message" className="form-label mb-1.5">
                   Your Vision <span className="text-error font-normal">*</span>
                 </label>
                 <textarea
@@ -289,14 +304,14 @@ export function Contact() {
                   placeholder="Tell us about your event or project..."
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full bg-white/50 text-[13px] text-stone-900 placeholder:text-stone-400 border border-[#d0c5af]/30 focus:border-[#735c00] rounded-xl px-5 py-4 transition-all duration-300 outline-none focus:ring-4 focus:ring-[#735c00]/5 shadow-2xs resize-none"
+                  className="form-field resize-y"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={formState === 'sending'}
-                className="w-full py-4.5 bg-black hover:bg-[#735c00] text-white rounded-xl font-label text-[10px] uppercase tracking-[0.25em] font-bold flex items-center justify-center gap-3 transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-50 group cursor-pointer"
+                className="btn-primary w-full py-3 rounded-full font-bold uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 group cursor-pointer mt-4"
               >
                 {formState === 'sending' ? (
                   <>

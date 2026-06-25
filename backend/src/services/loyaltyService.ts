@@ -6,6 +6,7 @@ import Coupon from '../models/Coupon';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import { saveUniqueReferralCode } from '../utils/referralCode';
+import storeSettingsService from './StoreSettingsService';
 
 export class LoyaltyService {
   /**
@@ -34,7 +35,8 @@ export class LoyaltyService {
         return;
       }
 
-      const welcomeCash = 100;
+      const settings = await storeSettingsService.getSettings();
+      const welcomeCash = settings.loyalty.welcomeBonus;
       const updateQuery: Record<string, unknown> = {
         $inc: { walletBalance: welcomeCash },
       };
@@ -70,9 +72,9 @@ export class LoyaltyService {
           {
             code,
             discountType: 'percentage',
-            discountValue: 10,
-            minOrderAmount: 499,
-            maxDiscount: 200,
+            discountValue: settings.loyalty.welcomeCouponDiscount,
+            minOrderAmount: settings.loyalty.welcomeCouponMinOrder,
+            maxDiscount: settings.loyalty.welcomeCouponMaxDiscount,
             startDate: new Date(),
             expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             usageLimit: 1,
@@ -118,9 +120,12 @@ export class LoyaltyService {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
+      const settings = await storeSettingsService.getSettings();
+      const refereeBonus = settings.loyalty.referralBonusReferee;
+
       await User.findByIdAndUpdate(
         userId,
-        { $set: { referredBy: referrer._id }, $inc: { walletBalance: 50 } },
+        { $set: { referredBy: referrer._id }, $inc: { walletBalance: refereeBonus } },
         { session },
       );
 
@@ -129,7 +134,7 @@ export class LoyaltyService {
           {
             userId,
             type: 'credit',
-            amount: 50,
+            amount: refereeBonus,
             source: 'referral_bonus',
             description: `Applied referral code of ${referrer.name || 'Friend'} - Welcomed with Siri Cash!`,
             status: 'active',
@@ -163,13 +168,15 @@ export class LoyaltyService {
         return;
       }
 
-      // 1. Calculate Siri Coins points earned (1 Coin per ₹10 spent on the order subtotal)
-      const coinsEarned = Math.round(order.subtotal / 10);
+      const settings = await storeSettingsService.getSettings();
+
+      // 1. Calculate Siri Coins points earned
+      const coinsEarned = Math.round(order.subtotal * settings.loyalty.coinsPerRupee);
 
       // 2. Calculate Cashback percentage based on loyalty tier
-      const { LOYALTY_TIERS } = require('../constants/loyaltyTiers');
       const currentTier =
-        LOYALTY_TIERS.find((t: any) => t.tier === user.loyaltyTier) || LOYALTY_TIERS[0];
+        settings.loyalty.tiers.find((t: any) => t.name === user.loyaltyTier) ||
+        (settings.loyalty.tiers.length > 0 ? settings.loyalty.tiers[0] : { cashbackRate: 0.02 });
       const cashbackRate = currentTier.cashbackRate;
 
       const cashbackEarned = Math.round((order.total || totalSpend) * cashbackRate);
@@ -245,8 +252,10 @@ export class LoyaltyService {
         return;
       }
 
-      // Credit ₹150 to Referrer atomically
-      const referrerBonus = 150;
+      const settings = await storeSettingsService.getSettings();
+
+      // Credit Referrer atomically
+      const referrerBonus = settings.loyalty.referralBonusReferrer;
       await User.findByIdAndUpdate(
         referrerId,
         {
@@ -269,8 +278,8 @@ export class LoyaltyService {
         { session },
       );
 
-      // Credit ₹50 Extra to Referee as welcome wallet cash atomically
-      const refereeBonus = 50;
+      // Credit Referee as welcome wallet cash atomically
+      const refereeBonus = settings.loyalty.referralBonusReferee;
       await User.findByIdAndUpdate(
         refereeId,
         {
@@ -325,8 +334,9 @@ export class LoyaltyService {
       ]);
       const lifetimeSpend = result[0]?.lifetimeSpend || 0;
 
+      const settings = await storeSettingsService.getSettings();
       const { getTierBySpend } = require('../constants/loyaltyTiers');
-      const newTier = getTierBySpend(lifetimeSpend);
+      const newTier = getTierBySpend(lifetimeSpend, settings.loyalty.tiers);
 
       if (user.loyaltyTier !== newTier) {
         const oldTier = user.loyaltyTier;
@@ -360,14 +370,16 @@ export class LoyaltyService {
         return;
       }
 
-      // Determine review credits reward (Text: ₹10, Photo: ₹25, Video: ₹50)
-      let rewardAmount = 10;
+      const settings = await storeSettingsService.getSettings();
+
+      // Determine review credits reward
+      let rewardAmount = settings.loyalty.reviewRewardText;
       let description = 'Text Review Credit';
       if (hasVideo) {
-        rewardAmount = 50;
+        rewardAmount = settings.loyalty.reviewRewardVideo;
         description = 'Video Review Gold Credit';
       } else if (hasPhoto) {
-        rewardAmount = 25;
+        rewardAmount = settings.loyalty.reviewRewardPhoto;
         description = 'Photo Review Silver Credit';
       }
 
@@ -377,7 +389,7 @@ export class LoyaltyService {
         {
           $inc: {
             walletBalance: rewardAmount,
-            siriCoins: 15,
+            siriCoins: settings.loyalty.reviewCoinsBonus,
           },
         },
         { session },

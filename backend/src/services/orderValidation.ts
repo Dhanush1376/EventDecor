@@ -2,8 +2,7 @@ import Product from '../models/Product';
 import User from '../models/User';
 import Coupon from '../models/Coupon';
 import ApiError from '../utils/ApiError';
-import { cmsCache } from '../utils/cache/MemoryCache';
-import ContentSection from '../models/ContentSection';
+import storeSettingsService from '../services/StoreSettingsService';
 
 export class OrderValidationService {
   static async validateTotals(userId: string, data: any) {
@@ -12,9 +11,10 @@ export class OrderValidationService {
       throw new ApiError(400, 'Items array is required');
     }
 
-    const MAX_QUANTITY_PER_ITEM = 50;
+    const settings = await storeSettingsService.getSettings();
 
-    const MAX_ITEMS_PER_ORDER = 20;
+    const MAX_QUANTITY_PER_ITEM = settings.orders.maxQuantityPerItem;
+    const MAX_ITEMS_PER_ORDER = settings.orders.maxItemsPerOrder;
 
     if (items.length > MAX_ITEMS_PER_ORDER) {
       throw new ApiError(400, 'Too many items in order');
@@ -184,23 +184,15 @@ export class OrderValidationService {
     }
 
     const { paymentMethod, useWallet } = data;
-    const shippingFee = subtotal > 2000 || subtotal === 0 ? 0 : 100;
-    const platformFee = 0;
+    const shippingFee =
+      subtotal > settings.shipping.freeShippingThreshold || subtotal === 0
+        ? 0
+        : settings.shipping.deliveryCharge;
+    const platformFee = settings.orders.platformFee;
 
     let codFee = 0;
     if (paymentMethod && paymentMethod.toLowerCase() === 'cod') {
-      try {
-        const settingsSection = await cmsCache.getOrSet('studio_settings', async () => {
-          return await ContentSection.findOne({ sectionKey: 'studio_settings' });
-        });
-        if (settingsSection && settingsSection.data && settingsSection.data.codFee) {
-          codFee = Number(settingsSection.data.codFee) || 0;
-        } else {
-          codFee = 90;
-        }
-      } catch {
-        codFee = 90;
-      }
+      codFee = settings.payments.codFee;
     }
 
     const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee - discount);
@@ -212,14 +204,17 @@ export class OrderValidationService {
 
     const total = preliminaryTotal - walletDeduction + depositTotal;
 
-    // Estimate Siri Coins (1 Siri Coin per ₹10 spent on subtotal)
-    const coinsToEarn = Math.round(subtotal / 10);
+    // Estimate Siri Coins
+    const coinsToEarn = Math.round(subtotal * settings.loyalty.coinsPerRupee);
 
     // Estimate Cashback percentage based on membership tier
-    let cashbackRate = 0.02; // Bronze: 2%
-    if (loyaltyTier === 'Silver') cashbackRate = 0.05;
-    else if (loyaltyTier === 'Gold') cashbackRate = 0.08;
-    else if (loyaltyTier === 'Platinum') cashbackRate = 0.12;
+    let cashbackRate = 0;
+    const tierConfig = settings.loyalty.tiers.find((t) => t.name === loyaltyTier);
+    if (tierConfig) {
+      cashbackRate = tierConfig.cashbackRate;
+    } else if (settings.loyalty.tiers.length > 0) {
+      cashbackRate = settings.loyalty.tiers[0].cashbackRate; // Default to first tier if not found
+    }
 
     let estimatedCashback = Math.round(total * cashbackRate);
 

@@ -89,13 +89,26 @@ connection.on('error', (err: any) => {
 const defaultQueueOptions: QueueOptions = {
   connection: connection as any,
   defaultJobOptions: {
-    attempts: 3,
+    attempts: 5,
     backoff: {
       type: 'exponential',
-      delay: 2000,
+      delay: 5000,
     },
     removeOnComplete: true,
-    removeOnFail: { count: 1000 },
+    removeOnFail: { count: 5000 },
+  },
+};
+
+const notificationQueueOptions: QueueOptions = {
+  connection: connection as any,
+  defaultJobOptions: {
+    attempts: 7, // Enterprise grade reliability for notifications
+    backoff: {
+      type: 'exponential',
+      delay: 5000,
+    },
+    removeOnComplete: true,
+    removeOnFail: { count: 10000 },
   },
 };
 
@@ -121,8 +134,8 @@ export const initQueues = async () => {
     // Explicitly trigger connection since lazyConnect: true is set
     await connection.connect();
 
-    emailQueue = new Queue('emailQueue', defaultQueueOptions);
-    notificationQueue = new Queue('notificationQueue', defaultQueueOptions);
+    emailQueue = new Queue('emailQueue', notificationQueueOptions);
+    notificationQueue = new Queue('notificationQueue', notificationQueueOptions);
     loyaltyQueue = new Queue('loyaltyQueue', defaultQueueOptions);
     recommendationQueue = new Queue('recommendationQueue', defaultQueueOptions);
     webhookQueue = new Queue('webhookQueue', defaultQueueOptions);

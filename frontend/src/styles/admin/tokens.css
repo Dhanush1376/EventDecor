@@ -19,61 +19,61 @@
     'Segoe UI',
     sans-serif !important;
 
-  /* ── Color Palette: Modern SaaS Light Theme ── */
-  --admin-bg: #fafafa;
-  --admin-bg-subtle: #f5f5f5;
-  --admin-surface: #ffffff;
-  --admin-surface-hover: #f9fafb;
-  --admin-surface-muted: #f3f4f6;
+  /* ── Color Palette: Cream & Ivory Theme ── */
+  --admin-bg: #fdfbf7; /* Light Ivory */
+  --admin-bg-subtle: #f6f4eb; /* Soft Cream */
+  --admin-surface: #ffffff; /* Pure white cards for crisp contrast */
+  --admin-surface-hover: #faf7f0; /* Cream hover */
+  --admin-surface-muted: #f2efe5; /* Darker cream for inputs */
   --admin-surface-raised: #ffffff;
-  --admin-surface-overlay: rgba(0, 0, 0, 0.4);
+  --admin-surface-overlay: rgba(60, 54, 42, 0.4); /* Warm overlay */
 
-  --admin-border: #e5e7eb;
-  --admin-border-subtle: #f3f4f6;
-  --admin-border-strong: #d1d5db;
-  --admin-border-focus: #475569;
+  --admin-border: #e8e4d9; /* Warm border */
+  --admin-border-subtle: #f2efe5;
+  --admin-border-strong: #d4cebb;
+  --admin-border-focus: #8b7355; /* Accent gold/brown */
 
-  --admin-text-primary: #111827;
-  --admin-text-secondary: #374151; /* Increased contrast from #4B5563 */
-  --admin-text-tertiary: #6b7280; /* Increased contrast from #9CA3AF */
-  --admin-text-placeholder: #9ca3af;
+  --admin-text-primary: #3c362a; /* Deep warm brown/black */
+  --admin-text-secondary: #5c5444;
+  --admin-text-tertiary: #8a816f;
+  --admin-text-placeholder: #b0a896;
   --admin-text-inverse: #ffffff;
 
-  /* Accent: Warm Professional Slate */
-  --admin-accent: #334155;
-  --admin-accent-hover: #475569;
-  --admin-accent-light: #f1f5f9;
-  --admin-accent-muted: rgba(51, 65, 85, 0.08);
-  --admin-accent-subtle: rgba(51, 65, 85, 0.04);
-  --admin-accent-text: #1e293b;
+  /* Accent: Warm Elegant Gold/Brown */
+  --admin-accent: #a68a64; /* Soft Gold/Camel */
+  --admin-accent-hover: #8b7355; /* Deeper Gold */
+  --admin-accent-light: #f4f0e6; /* Warm Accent Bg */
+  --admin-accent-muted: rgba(166, 138, 100, 0.12);
+  --admin-accent-subtle: rgba(166, 138, 100, 0.05);
+  --admin-accent-text: #594a36;
 
   /* Semantic Colors */
-  --admin-success: #10b981;
-  --admin-success-light: #ecfdf5;
-  --admin-success-border: #a7f3d0;
-  --admin-warning: #f59e0b;
-  --admin-warning-light: #fffbeb;
-  --admin-warning-border: #fde68a;
-  --admin-error: #ef4444;
-  --admin-error-light: #fef2f2;
-  --admin-error-border: #fecaca;
-  --admin-info: #3b82f6;
-  --admin-info-light: #eff6ff;
-  --admin-info-border: #bfdbfe;
+  --admin-success: #7a8b76; /* Sage Green */
+  --admin-success-light: #f2f5f0;
+  --admin-success-border: #d1d9cd;
+  --admin-warning: #c29b62; /* Ochre */
+  --admin-warning-light: #f9f6f0;
+  --admin-warning-border: #e8dfcd;
+  --admin-error: #bc6c5c; /* Terracotta */
+  --admin-error-light: #f9f2f0;
+  --admin-error-border: #e6d0cc;
+  --admin-info: #6b8ead; /* Slate Blue */
+  --admin-info-light: #f0f4f8;
+  --admin-info-border: #c8d7e3;
 
   /* ── Domain Colors (Visual Hierarchy) ── */
-  --admin-domain-revenue: #10b981;
-  --admin-domain-revenue-bg: #ecfdf5;
-  --admin-domain-orders: #3b82f6;
-  --admin-domain-orders-bg: #eff6ff;
-  --admin-domain-products: #8b5cf6;
-  --admin-domain-products-bg: #f5f3ff;
-  --admin-domain-users: #f59e0b;
-  --admin-domain-users-bg: #fffbeb;
-  --admin-domain-settings: #64748b;
-  --admin-domain-settings-bg: #f8fafc;
-  --admin-domain-danger: #ef4444;
-  --admin-domain-danger-bg: #fef2f2;
+  --admin-domain-revenue: #7a8b76;
+  --admin-domain-revenue-bg: #f2f5f0;
+  --admin-domain-orders: #6b8ead;
+  --admin-domain-orders-bg: #f0f4f8;
+  --admin-domain-products: #9b82a3; /* Muted Mauve */
+  --admin-domain-products-bg: #f5f2f7;
+  --admin-domain-users: #c29b62;
+  --admin-domain-users-bg: #f9f6f0;
+  --admin-domain-settings: #8a816f;
+  --admin-domain-settings-bg: #f7f6f2;
+  --admin-domain-danger: #bc6c5c;
+  --admin-domain-danger-bg: #f9f2f0;
 
   /* ── Typography Scale ── */
   --admin-text-xs: 11px;
@@ -131,14 +131,14 @@
   --admin-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 
   /* ── Chart Colors (Modern SaaS Palette) ── */
-  --admin-chart-1: #111827;
-  --admin-chart-2: #6366f1;
-  --admin-chart-3: #8b5cf6;
-  --admin-chart-4: #ec4899;
-  --admin-chart-5: #10b981;
-  --admin-chart-6: #f59e0b;
-  --admin-chart-7: #0ea5e9;
-  --admin-chart-8: #3b82f6;
+  --admin-chart-1: #3c362a; /* Deep Brown */
+  --admin-chart-2: #8b7355; /* Warm Gold */
+  --admin-chart-3: #7a8b76; /* Sage */
+  --admin-chart-4: #bc6c5c; /* Terracotta */
+  --admin-chart-5: #c29b62; /* Ochre */
+  --admin-chart-6: #6b8ead; /* Slate Blue */
+  --admin-chart-7: #9b82a3; /* Mauve */
+  --admin-chart-8: #8a816f; /* Warm Grey */
 
   /* ── Layout ── */
   --admin-sidebar-width: 260px;

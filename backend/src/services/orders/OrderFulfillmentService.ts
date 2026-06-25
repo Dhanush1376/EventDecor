@@ -9,6 +9,7 @@ import { PaymentStateMachine } from '../payments/PaymentStateMachine';
 import { PaymentRefundService } from '../PaymentRefundService';
 import { OrderRollbackService } from './OrderRollbackService';
 import OutboxEvent from '../../models/OutboxEvent';
+import storeSettingsService from '../../services/StoreSettingsService';
 
 export class OrderFulfillmentService {
   static async updateOrderStatus(
@@ -21,6 +22,8 @@ export class OrderFulfillmentService {
     let finalOrder: any;
     let triggerPurchaseRewards = false;
     let triggerReversalRewards = false;
+
+    const settings = await storeSettingsService.getSettings();
 
     // Compatibility Mapping for lowercase status strings
     let finalStatus = status;
@@ -78,7 +81,7 @@ export class OrderFulfillmentService {
               order.courierCharges =
                 courierCharges !== undefined
                   ? courierCharges
-                  : Math.round((order.shippingFee || 120) + 30);
+                  : Math.round((order.shippingFee || settings.shipping.deliveryCharge) + 30);
             }
             order.statusHistory.push({
               status: 'COD Collected',
@@ -92,7 +95,8 @@ export class OrderFulfillmentService {
             const charges =
               courierCharges !== undefined
                 ? courierCharges
-                : order.courierCharges || Math.round((order.shippingFee || 120) + 30);
+                : order.courierCharges ||
+                  Math.round((order.shippingFee || settings.shipping.deliveryCharge) + 30);
             order.courierCharges = charges;
             order.settledAmount = Math.max(0, order.total - charges);
             order.earnings = order.settledAmount;

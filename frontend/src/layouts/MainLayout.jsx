@@ -2,6 +2,7 @@ import { useEffect, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { TopNavbar } from '../components/layout/TopNavbar';
+import { GlobalAnnouncementBanner } from '../components/layout/GlobalAnnouncementBanner';
 import { Footer } from '../components/layout/Footer';
 import { BottomNav } from '../components/layout/BottomNav';
 import { CartDrawer } from '../components/layout/CartDrawer';
@@ -11,6 +12,7 @@ import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { WhatsAppWidget } from '../components/ui/WhatsAppWidget';
+import { FloatingOfferCard } from '../components/promotions/FloatingOfferCard';
 import { getRouteSkeletonVariant, RouteSkeleton } from '../components/ui/RouteSkeleton';
 import { AuthGate } from '../components/auth/AuthGate';
 import { ScrollToTopButton } from '../components/ui';
@@ -71,6 +73,7 @@ export function MainLayout() {
         </div>
       )}
 
+      <GlobalAnnouncementBanner />
       <TopNavbar />
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <main id="main-content" className="flex-1 relative" tabIndex={-1}>
@@ -87,6 +90,7 @@ export function MainLayout() {
       </main>
       {pathname !== '/cart' && <Footer />}
       <BottomNav />
+      <FloatingOfferCard />
       <WhatsAppWidget />
       <ScrollToTopButton />
       <ConsentPopup />

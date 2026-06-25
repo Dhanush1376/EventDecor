@@ -2,6 +2,8 @@ const LoyaltySkeleton = () => <div className="animate-pulse bg-gray-200 h-48 rou
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useQuery } from '@tanstack/react-query';
+import storeSettingsService from '../../services/api/storeSettingsService';
 import { loyaltyService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
@@ -12,6 +14,15 @@ export function LoyaltyPanel() {
   const [referralInput, setReferralInput] = useState('');
   const [submittingReferral, setSubmittingReferral] = useState(false);
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+
+  const { data: settings } = useQuery({
+    queryKey: ['storeSettings', 'public'],
+    queryFn: () => storeSettingsService.getPublicSettings(),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const referrerReward = settings?.loyalty?.referrerReward || 150;
+  const refereeReward = settings?.loyalty?.refereeReward || 50;
 
   const fetchLoyaltyData = async () => {
     setLoading(true);
@@ -196,11 +207,23 @@ export function LoyaltyPanel() {
 
           <div className="border-t border-white/10 pt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center text-[9px] sm:text-[10px] z-10 gap-3 sm:gap-0">
             <div className={`${tier.text} opacity-70 leading-relaxed pr-2`}>
-              {data.loyaltyTier === 'Bronze' && '✦ Earn 2% Cashback & 1 Coin per ₹10 spent'}
-              {data.loyaltyTier === 'Silver' && '✦ Earn 5% Cashback & 1 Coin per ₹10 spent'}
-              {data.loyaltyTier === 'Gold' && '✦ Earn 8% Cashback & 1 Coin per ₹10 spent'}
-              {data.loyaltyTier === 'Platinum' &&
-                '✦ Earn 12% Platinum Cashback & VIP Priority Perks'}
+              {(() => {
+                const currentTier = settings?.loyalty?.tiers?.find(
+                  (t) => t.name === data.loyaltyTier,
+                );
+                const percent =
+                  currentTier?.cashbackPercent ||
+                  (data.loyaltyTier === 'Platinum'
+                    ? 12
+                    : data.loyaltyTier === 'Gold'
+                      ? 8
+                      : data.loyaltyTier === 'Silver'
+                        ? 5
+                        : 2);
+                if (data.loyaltyTier === 'Platinum')
+                  return `✦ Earn ${percent}% Platinum Cashback & VIP Priority Perks`;
+                return `✦ Earn ${percent}% Cashback & ${settings?.loyalty?.earnRatePoints || 1} Coin per ₹${settings?.loyalty?.earnRateAmount || 10} spent`;
+              })()}
             </div>
             <span className="font-mono text-[9px] text-white/50 tracking-wider bg-black/20 px-2 py-1 rounded self-start sm:self-auto">
               SIRI-PASS-{data.referralCode?.split('-')[2] || '9999'}
@@ -279,9 +302,12 @@ export function LoyaltyPanel() {
               </h4>
               <span className="text-[10px] text-secondary font-light block">
                 Share your code. They get{' '}
-                <strong className="text-on-surface font-semibold">₹50 welcome cash</strong>. You
-                earn <strong className="text-on-surface font-semibold">₹150</strong> on their first
-                order!
+                <strong className="text-on-surface font-semibold">
+                  ₹{refereeReward} welcome cash
+                </strong>
+                . You earn{' '}
+                <strong className="text-on-surface font-semibold">₹{referrerReward}</strong> on
+                their first order!
               </span>
             </div>
           </div>
@@ -320,7 +346,8 @@ export function LoyaltyPanel() {
                 Have a Referral Code?
               </h4>
               <span className="text-[10px] text-secondary font-light block">
-                Claim ₹50 onboarding wallet credit instantly by entering a friend's referral code.
+                Claim ₹{refereeReward} onboarding wallet credit instantly by entering a friend's
+                referral code.
               </span>
             </div>
           </div>
@@ -343,7 +370,7 @@ export function LoyaltyPanel() {
                 disabled={submittingReferral}
                 className="bg-primary/10 hover:bg-primary text-primary hover:text-white px-3 py-1.5 rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors cursor-pointer shrink-0 min-w-[80px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submittingReferral ? 'Claiming...' : 'Claim ₹50'}
+                {submittingReferral ? 'Claiming...' : `Claim ₹${refereeReward}`}
               </button>
             </div>
           </form>

@@ -321,18 +321,23 @@ class RentalService {
     const startOfMonth = new Date(targetYear, targetMonth, 1);
     const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59);
 
-    const bookings = await RentalCalendar.find({
-      product: productId,
+    const filter: any = {
       status: 'booked',
       $or: [{ startDate: { $lte: endOfMonth }, endDate: { $gte: startOfMonth } }],
-    })
+    };
+    if (productId) {
+      filter.product = productId;
+    }
+
+    const bookings = await RentalCalendar.find(filter)
       .populate('rentalOrder', 'rentalOrderId user productTitle status durationDays')
       .sort({ startDate: 1 })
       .lean();
 
-    const product = await Product.findById(productId)
-      .select('title rentalStock rentalEnabled')
-      .lean();
+    let product = null;
+    if (productId) {
+      product = await Product.findById(productId).select('title rentalStock rentalEnabled').lean();
+    }
 
     return { product, bookings, month: targetMonth, year: targetYear };
   }

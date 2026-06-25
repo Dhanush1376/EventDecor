@@ -326,15 +326,13 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
 
             {/* Comment */}
             <div>
-              <label className="font-label text-[10px] uppercase tracking-widest text-black/40 font-bold block mb-2">
-                Your Experience
-              </label>
+              <label className="form-label mb-1.5">Your Experience</label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows={5}
                 placeholder="Tell others about the quality, craftsmanship, and delivery experience..."
-                className="w-full px-4 py-3 rounded-2xl border border-black/10 bg-neutral-50 text-sm font-body text-black placeholder:text-black/30 outline-none focus:border-primary focus:bg-white transition-all resize-none"
+                className="form-field resize-y pt-4"
               />
               <p className="text-[10px] text-black/30 mt-1 text-right">{comment.length} chars</p>
             </div>

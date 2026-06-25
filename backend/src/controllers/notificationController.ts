@@ -69,7 +69,20 @@ export const saveConsentPreference = asyncHandler(async (req: Request, res: Resp
     if (user) {
       user.notificationPreferences = {
         email: updateNotifications ?? user.notificationPreferences?.email ?? true,
-        marketing: marketingEmails ?? user.notificationPreferences?.marketing ?? true,
+        sms: user.notificationPreferences?.sms ?? false,
+        whatsapp: user.notificationPreferences?.whatsapp ?? false,
+        inApp: user.notificationPreferences?.inApp ?? true,
+        push: user.notificationPreferences?.push ?? true,
+        categories: {
+          orderUpdates: user.notificationPreferences?.categories?.orderUpdates ?? true,
+          promotions:
+            marketingEmails ?? user.notificationPreferences?.categories?.promotions ?? true,
+          security: user.notificationPreferences?.categories?.security ?? true,
+          newsletter:
+            marketingEmails ?? user.notificationPreferences?.categories?.newsletter ?? true,
+          bookingUpdates: user.notificationPreferences?.categories?.bookingUpdates ?? true,
+          rentalUpdates: user.notificationPreferences?.categories?.rentalUpdates ?? true,
+        },
       };
       await user.save();
     }
@@ -177,7 +190,12 @@ export const unsubscribeRecipient = asyncHandler(async (req: Request, res: Respo
   // 1. Update user settings if user exists
   await User.updateMany(
     { email: lowercaseEmail },
-    { $set: { 'notificationPreferences.marketing': false } },
+    {
+      $set: {
+        'notificationPreferences.categories.promotions': false,
+        'notificationPreferences.categories.newsletter': false,
+      },
+    },
   );
 
   // 2. Update general visitor consent preferences

@@ -7,21 +7,22 @@ import { useQuery } from '@tanstack/react-query';
 import { policyService } from '../services/domainServices';
 import { createSafeHtml } from '../utils/security/sanitize';
 
-export function Returns() {
+export function GenericPolicyPage({ slug, defaultTitle }) {
   const {
     data: response,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['policy', 'return-policy'],
-    queryFn: () => policyService.getBySlug('return-policy'),
+    queryKey: ['policy', slug],
+    queryFn: () => policyService.getBySlug(slug),
   });
 
-  const returns = response?.data || {
-    title: 'Returns & Refunds',
+  const policy = response?.data || {
+    title: defaultTitle,
     content: '<p>Policy content is not available.</p>',
     updatedAt: new Date().toISOString(),
   };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -29,13 +30,10 @@ export function Returns() {
       transition={{ duration: 0.6 }}
       className="bg-surface min-h-screen pt-24 pb-32 font-body text-on-surface selection:bg-primary/20"
     >
-      <SEO
-        title="Returns & Refunds"
-        description="Understand our returns, exchanges, and refund policies at Siri Arts & Crafts."
-      />
+      <SEO title={policy.title} description={`Read our ${policy.title} at Siri Arts & Crafts.`} />
 
       <div className="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12">
-        {/* Help Center Header - Huge Typography */}
+        {/* Help Center Header */}
         <div className="mb-12 md:mb-20 text-center md:text-left">
           <nav className="text-[10px] uppercase font-bold text-on-surface-variant tracking-[0.2em] mb-6 flex items-center justify-center md:justify-start gap-3">
             <Link to="/" className="hover:text-primary transition-colors">
@@ -44,16 +42,16 @@ export function Returns() {
             <span className="w-1 h-1 rounded-full bg-outline-variant/50"></span>
             <span>Help Center</span>
             <span className="w-1 h-1 rounded-full bg-outline-variant/50"></span>
-            <span className="text-on-surface">Returns</span>
+            <span className="text-on-surface">{defaultTitle}</span>
           </nav>
           <h2 className="text-2xl md:text-3xl font-body font-semibold text-on-surface mb-4">
-            {isLoading ? <Skeleton className="h-10 w-64" /> : returns.title}
+            {isLoading ? <Skeleton className="h-10 w-64" /> : policy.title}
           </h2>
           <p className="text-[12px] text-on-surface-variant uppercase tracking-widest font-medium">
             {isLoading ? (
               <Skeleton className="h-4 w-40" />
             ) : (
-              `Last updated: ${new Date(returns.updatedAt).toLocaleDateString()}`
+              `Last updated: ${new Date(policy.updatedAt).toLocaleDateString()}`
             )}
           </p>
         </div>
@@ -63,7 +61,6 @@ export function Returns() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-24">
           <PolicySidebar />
 
-          {/* Main Content Area - Editorial Flow */}
           <main className="lg:col-span-8 xl:col-span-7">
             <div className="prose prose-sm max-w-none prose-headings:font-body prose-headings:font-semibold prose-headings:text-on-surface prose-p:text-on-surface/80 prose-p:leading-relaxed prose-p:font-normal prose-li:text-on-surface/80 prose-li:font-normal prose-li:leading-relaxed space-y-8">
               {isLoading ? (
@@ -77,13 +74,13 @@ export function Returns() {
               ) : (
                 <div
                   className="text-[13px] text-on-surface/80 leading-relaxed font-normal space-y-3"
-                  dangerouslySetInnerHTML={createSafeHtml(returns.content)}
+                  dangerouslySetInnerHTML={createSafeHtml(policy.content)}
                 />
               )}
             </div>
 
             <div className="mt-24 pt-12 border-t border-outline-variant/20 text-[10px] text-on-surface-variant uppercase tracking-[0.2em] text-center md:text-left">
-              © 2026 Siri Arts & Crafts. All Rights Reserved.
+              © {new Date().getFullYear()} Siri Arts & Crafts. All Rights Reserved.
             </div>
           </main>
         </div>

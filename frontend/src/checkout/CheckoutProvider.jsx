@@ -4,10 +4,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useRazorpay } from '../hooks/useRazorpay';
-import { orderService, cmsService } from '../services/domainServices';
-import rentalService from '../services/api/rentalService';
+import storeSettingsService from '../services/api/storeSettingsService';
 import { useQuery } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 import logger from '../utils/core/logger';
 import { PINCODE_MAP, UPI_REGEX } from './checkoutConstants';
 import { persistentStorage } from '../utils/storage/persistentStorage';
@@ -50,10 +48,10 @@ export function CheckoutProvider({ children }) {
   }, [isAuthenticated, navigate, openAuthModal]);
 
   const { data: settingsData } = useQuery({
-    queryKey: ['cms', 'section', 'storeSettings'],
+    queryKey: ['storeSettings', 'public'],
     queryFn: async () => {
-      const res = await cmsService.getSection('storeSettings');
-      return res.success ? res.data : res;
+      const data = await storeSettingsService.getPublicSettings();
+      return data;
     },
     staleTime: 10 * 60 * 1000,
   });
@@ -77,13 +75,7 @@ export function CheckoutProvider({ children }) {
       ? rentalCart?.summary?.subtotal || 0
       : purchaseCart?.summary?.subtotal || 0;
 
-  React.useEffect(() => {
-    if (!activeItems || activeItems.length === 0) {
-      if (!orderCompleteRef.current) {
-        navigate('/cart', { replace: true });
-      }
-    }
-  }, [activeItems, navigate]);
+  // Empty line since we moved useEffect down
 
   const [activeStep, setActiveStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -161,7 +153,16 @@ export function CheckoutProvider({ children }) {
     setIsProcessing,
     paymentOption,
     setPaymentOption,
+    settings,
   });
+
+  React.useEffect(() => {
+    if (!activeItems || activeItems.length === 0) {
+      if (!orderCompleteRef.current) {
+        navigate('/cart', { replace: true });
+      }
+    }
+  }, [activeItems, navigate, orderCompleteRef]);
 
   const value = {
     items,

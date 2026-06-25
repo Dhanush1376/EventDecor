@@ -6,6 +6,29 @@ import { getErrorMessage } from '../../../utils/core/errorHelpers';
 import { useDraft } from '../../hooks/useDraft';
 import logger from '../../../utils/core/logger';
 
+const INITIAL_COUPON_DATA = {
+  code: '',
+  discountType: 'percentage',
+  discountValue: '',
+  minOrderAmount: '',
+  maxDiscount: '',
+  startDate: new Date().toISOString().split('T')[0],
+  expiryDate: '',
+  usageLimit: '',
+  isActive: true,
+  targetType: 'all',
+  targetProductIds: [],
+  targetCategories: [],
+  targetUserTiers: [],
+  displayLocations: ['checkout'],
+  isFeatured: false,
+  isAutoApply: false,
+  cashbackPercentage: '',
+  cashbackFixed: '',
+  stackingRule: 'exclusive',
+  priority: '1',
+};
+
 export function useCreateCoupon() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -32,28 +55,7 @@ export function useCreateCoupon() {
     draftKey: isEdit ? `admin:coupons:edit:${id}` : 'admin:coupons:add',
     module: 'Coupons',
     pageTitle: isEdit ? `Edit Coupon ${id}` : 'New Coupon',
-    initialData: {
-      code: '',
-      discountType: 'percentage',
-      discountValue: '',
-      minOrderAmount: '',
-      maxDiscount: '',
-      startDate: new Date().toISOString().split('T')[0],
-      expiryDate: '',
-      usageLimit: '',
-      isActive: true,
-      targetType: 'all',
-      targetProductIds: [],
-      targetCategories: [],
-      targetUserTiers: [],
-      displayLocations: ['checkout'],
-      isFeatured: false,
-      isAutoApply: false,
-      cashbackPercentage: '',
-      cashbackFixed: '',
-      stackingRule: 'exclusive',
-      priority: '1',
-    },
+    initialData: INITIAL_COUPON_DATA,
     initialPageState: { activeStep: 0, mobileTab: 'form' },
     enabled: true,
   });

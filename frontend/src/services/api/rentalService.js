@@ -82,7 +82,10 @@ const rentalService = {
   },
 
   adminGetCalendar: async (productId, month, year) => {
-    const res = await api.get(`${RENTAL_BASE}/admin/calendar/${productId}`, {
+    const path = productId
+      ? `${RENTAL_BASE}/admin/calendar/${productId}`
+      : `${RENTAL_BASE}/admin/calendar`;
+    const res = await api.get(path, {
       params: { month, year },
     });
     return res.data;

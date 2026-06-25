@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import { sendEmail } from '../../utils/email/sendEmail';
 import { getFrontendUrl } from '../../utils/getFrontendUrl';
 import { getTeamInviteEmailTemplate } from '../../utils/email/emailTemplates';
+import storeSettingsService from '../StoreSettingsService';
 
 export class UserService {
   static async updateUserRole(targetUserId: string, newRole: string, actorRole: string) {
@@ -119,6 +120,8 @@ export class UserService {
       await User.findOneAndUpdate({ _id: user._id }, { $set: { cart: user.cart } });
     }
 
+    const settings = await storeSettingsService.getSettings();
+
     const computeSummary = (items: any[], isRental: boolean) => {
       let subtotal = 0;
       let depositTotal = 0;
@@ -147,8 +150,11 @@ export class UserService {
         subtotal += itemPrice * item.quantity;
       });
 
-      const shippingFee = subtotal > 2000 || subtotal === 0 ? 0 : 100;
-      const platformFee = 0;
+      const shippingFee =
+        subtotal > settings.shipping.freeShippingThreshold || subtotal === 0
+          ? 0
+          : settings.shipping.deliveryCharge;
+      const platformFee = settings.orders.platformFee;
       const discount = 0;
       const total = subtotal + shippingFee + depositTotal - discount;
 

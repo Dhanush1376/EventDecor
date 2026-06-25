@@ -1,5 +1,6 @@
 import { m as motion } from 'framer-motion';
 import { useCheckout } from './CheckoutProvider';
+import { useActiveCoupons } from '../hooks/useActiveCoupons';
 
 export default function CheckoutSidebar() {
   const {
@@ -33,8 +34,13 @@ export default function CheckoutSidebar() {
     checkoutSteps,
   } = useCheckout();
 
-  const siriCoinEarnRate = settings?.siriCoinEarnRate ?? 10;
-  const cashbackRate = settings?.cashbackRate ?? 4;
+  const { data: activeCoupons = [] } = useActiveCoupons();
+  const checkoutCoupons = activeCoupons.filter((c) => c.displayLocations?.includes('checkout'));
+
+  const siriCoinEarnRate = (settings?.loyalty?.coinsPerRupee || 0.1) * 100;
+  const cashbackRate = settings?.loyalty?.tiers?.[0]?.cashbackRate
+    ? settings.loyalty.tiers[0].cashbackRate * 100
+    : 4;
 
   const activeTotal =
     orderType === 'rental' ? rentalCostBreakdown?.totalAmount || 0 : backendTotals?.total || 0;
@@ -110,22 +116,57 @@ export default function CheckoutSidebar() {
             </h4>
 
             {!appliedCoupon || !couponValid ? (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="COUPON CODE"
-                  value={couponInput}
-                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                  className="flex-1 bg-white border border-outline-variant/30 rounded-lg px-3 py-1.5 text-xs outline-none uppercase font-bold focus:border-primary transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={handleApplyCoupon}
-                  className="btn-primary rounded-full font-bold text-[10px] sm:text-xs uppercase tracking-wider px-4 py-1.5 transition-colors cursor-pointer shadow-md"
-                >
-                  Apply
-                </button>
-              </div>
+              <>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="COUPON CODE"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    className="flex-1 bg-white border border-outline-variant/30 rounded-lg px-3 py-1.5 text-xs outline-none uppercase font-bold focus:border-primary transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    className="btn-primary rounded-full font-bold text-[10px] sm:text-xs uppercase tracking-wider px-4 py-1.5 transition-colors cursor-pointer shadow-md"
+                  >
+                    Apply
+                  </button>
+                </div>
+
+                {/* Coupon Choice Tray */}
+                {checkoutCoupons.length > 0 && (!appliedCoupon || !couponValid) && (
+                  <div className="mt-4 pt-3 border-t border-outline-variant/30">
+                    <h5 className="text-[9px] uppercase tracking-widest font-bold text-secondary mb-2">
+                      Available Coupons
+                    </h5>
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x">
+                      {checkoutCoupons.map((coupon) => (
+                        <div
+                          key={coupon.code}
+                          onClick={() => {
+                            setCouponInput(coupon.code);
+                          }}
+                          className="snap-start shrink-0 w-[180px] p-2.5 rounded-lg border border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
+                        >
+                          <div className="flex justify-between items-center mb-0.5">
+                            <span className="font-mono text-[11px] font-bold text-on-surface bg-white/60 px-1 rounded shadow-sm">
+                              {coupon.code}
+                            </span>
+                            <span className="text-[9px] font-bold text-primary">Tap to use</span>
+                          </div>
+                          <p className="text-[10px] text-secondary leading-tight">
+                            {coupon.discountType === 'percentage'
+                              ? `${coupon.discountValue}% OFF`
+                              : `₹${coupon.discountValue} OFF`}
+                            {coupon.minOrderAmount > 0 && ` on ₹${coupon.minOrderAmount}+`}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg flex items-center justify-between text-xs text-primary">
                 <div className="flex items-center gap-1.5">
@@ -460,7 +501,7 @@ export default function CheckoutSidebar() {
                   <span className="material-symbols-outlined text-sm text-primary">
                     change_circle
                   </span>
-                  Easy {settings?.returnPolicyDays || 14}-day returns
+                  Easy {settings?.returnsExchanges?.returnWindowDays || 14}-day returns
                 </p>
               )}
             </div>

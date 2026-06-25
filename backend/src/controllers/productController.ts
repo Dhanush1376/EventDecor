@@ -202,11 +202,16 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
     You are an expert Indian handicraft catalog analyst for "Siri Arts & Crafts", a premium wedding and festive decor ecommerce platform.
     Your job is to analyze the uploaded product image carefully and extract ONLY accurate, clean, customer-friendly information.
 
-    Please perform a rigorous 4-stage analysis:
-    STAGE 1 — OBJECT DETECTION: Identify the exact object (e.g. coconut, tray, plate, basket, garland, welcome board, mandala, floral decor, pooja item).
-    STAGE 2 — MATERIAL DETECTION: Detect specific craft materials used (e.g. silk thread, beads, pearls, stones, brass, fabric, wood, coconut shell).
-    STAGE 3 — CULTURAL CONTEXT DETECTION: Determine cultural use cases (e.g. Hindu wedding, Telugu heritage, engagement, haldi, mehendi, pooja, return gift, housewarming, festival).
+    ${title ? `The admin has provided the title: "${title}"` : ''}
+
+    Please perform a rigorous 7-stage analysis:
+    STAGE 1 — OBJECT DETECTION: Identify the exact object (e.g. coconut, tray, plate, basket, garland, welcome board, mandala, floral decor, pooja item, chocolate gift cones, dry fruit hamper, flower basket, gift box).
+    STAGE 2 — MATERIAL DETECTION: Detect specific craft materials used (e.g. silk thread, beads, pearls, stones, brass, fabric, wood, coconut shell, chocolate, dry fruits, flowers).
+    STAGE 3 — CULTURAL CONTEXT DETECTION: Determine cultural use cases (e.g. Hindu wedding, Telugu heritage, engagement, haldi, mehendi, pooja, return gift, housewarming, festival, birthday, corporate event).
     STAGE 4 — CUSTOMER-FRIENDLY TITLE GENERATION: Generate a clean, elegant, human-readable title.
+    STAGE 5 — PERSONALIZATION ANALYSIS: Determine if this product supports customer personalization (names, messages, colors, themes). If yes, generate specific personalization instructions.
+    STAGE 6 — CUSTOMER NOTE GENERATION: Generate professional, product-specific important notes for customers (handling instructions, variations disclaimer, storage tips, ideal occasions).
+    STAGE 7 — QUANTITY ESTIMATION: Using the image, title, description, and price, estimate the quantity of items visible (e.g. number of cones, pieces, packs, trays, baskets). Use "approximately" when estimating.
 
     Available Store Categories: ${JSON.stringify(categoryList || [])}
 
@@ -227,6 +232,29 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
         - "telugu_keywords": Generate 3 to 5 transliterated Telugu search terms (written in English script) that local customers would use (e.g., ["kobbari", "kobbari bondam", "kobbari bondalu"] for a decorated coconut; ["pasupu", "kumkuma", "thambulam"] for a pooja/gifting plate).
         - "event_associations": String array mapping this product to specific events where it is used (e.g., ["Wedding", "Housewarming", "Pooja", "BabyShower"]).
         - "search_aliases": Array of alternate names/synonyms users might search for in English or Hindi (e.g., ["nariyal decor", "wedding coconut", "decorated shadi nariyal"]).
+
+    14. PERSONALIZATION CONFIG: Analyze the product type and generate context-aware personalization instructions.
+        - "personalization_enabled": boolean — true ONLY if the product genuinely supports customization (e.g. hampers with messages, welcome boards with names, gift boxes with themes). Set false for simple decor items.
+        - "personalization_label": A short label for the personalization input (e.g. "Customization Details", "Gift Message", "Bride & Groom Names").
+        - "personalization_placeholder": A specific, multi-line placeholder with bullet-pointed instructions. Examples:
+          For a Dry Fruit Hamper: "• Mention preferred dry fruit varieties (Cashew, Almond, Pistachio, Raisins, Dates)\\n• Mention any allergy concerns\\n• Enter your custom gift message for the recipient\\n• Mention ribbon color or theme preference"
+          For a Chocolate Bouquet: "• Mention preferred chocolate brands or flavors\\n• Add recipient's name for a personalized tag\\n• Mention preferred wrapping color"
+          For a Wedding Return Gift: "• Enter bride & groom names\\n• Wedding date\\n• Function name (e.g. Reception, Haldi)\\n• Preferred color theme"
+          For a Flower Basket: "• Mention preferred flower colors\\n• Fresh or artificial flowers preferred?\\n• Enter your gift message"
+        - "personalization_helper": A short helper text for the admin (e.g. "Customers can customize this for their event").
+
+    15. CUSTOMER NOTE: Generate a professional, product-specific multi-line note that will be displayed on the storefront.
+        - "customer_note": A multi-line string with bullet points using "• " prefix. This note should contain ONLY relevant, accurate information. Never generate generic placeholder text.
+          Examples:
+          For a Dry Fruit Gift Basket (₹3499): "• Contains approximately 30 premium assorted dry fruit cones\\n• Dry fruit varieties may vary slightly based on seasonal availability while maintaining the same premium quality\\n• Decorative accessories shown are for presentation purposes and may vary\\n• Ideal for weddings, housewarming ceremonies, festive gifting, and corporate events"
+          For a Chocolate Gift Hamper (₹1799): "• Includes approximately 20 handcrafted chocolate gift cones\\n• Chocolates are packed hygienically and carefully to maintain freshness\\n• Store in a cool and dry place\\n• Decorative flowers and accessories may vary depending on availability"
+          For a Brass Product: "• Handcrafted by skilled artisans\\n• Minor color and finish variations are natural characteristics of handmade products"
+          For a Rental Product: "• Rental duration and security deposit apply\\n• Product must be returned in its original condition"
+
+    16. QUANTITY ESTIMATION: Analyze the image, title, and price to estimate the number of individual items.
+        - "estimated_quantity": An integer estimate of the number of items visible/included (e.g. number of cones, chocolates, baskets, trays). Use the price as a guide: ₹299→~5 cones, ₹899→~10, ₹1799→~20, ₹3499→~30.
+        - "estimated_quantity_unit": The unit of measurement (e.g. "Chocolate Cones", "Dry Fruit Packs", "Gift Baskets", "Decorative Items", "Pieces").
+        - If you cannot determine the quantity, set estimated_quantity to 1 and estimated_quantity_unit to "Set".
 
     Please output a clean JSON object matching the following structure strictly (do not include any markdown block ticks, just raw JSON):
     {
@@ -250,7 +278,14 @@ export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response
       "customizationNote": "Enter names to be printed",
       "telugu_keywords": ["transliterated_telugu_1", "transliterated_telugu_2"],
       "event_associations": ["Wedding", "Pooja"],
-      "search_aliases": ["alias1", "alias2"]
+      "search_aliases": ["alias1", "alias2"],
+      "personalization_enabled": true,
+      "personalization_label": "Customization Details",
+      "personalization_placeholder": "• Specific instruction 1\\n• Specific instruction 2\\n• Specific instruction 3",
+      "personalization_helper": "Customers can customize this gift for their event",
+      "customer_note": "• Product-specific note line 1\\n• Product-specific note line 2\\n• Product-specific note line 3",
+      "estimated_quantity": 20,
+      "estimated_quantity_unit": "Chocolate Cones"
     }
   `;
 
@@ -370,7 +405,7 @@ export const refineAiProduct = asyncHandler(async (req: Request, res: Response) 
       },
       signal: groqController.signal,
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.3-70b-versatile',
         messages,
         response_format: { type: 'json_object' },
         temperature: 0.2,
@@ -401,7 +436,13 @@ export const refineAiProduct = asyncHandler(async (req: Request, res: Response) 
   }
 
   try {
-    const parsedData = JSON.parse(textResponse.trim());
+    let cleanJson = textResponse.trim();
+    if (cleanJson.startsWith('```json')) {
+      cleanJson = cleanJson.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (cleanJson.startsWith('```')) {
+      cleanJson = cleanJson.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    const parsedData = JSON.parse(cleanJson);
     res
       .status(200)
       .json(new ApiResponse(true, 'AI specifications refined successfully', parsedData));

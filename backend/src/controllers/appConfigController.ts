@@ -48,3 +48,16 @@ export const createOrUpdateConfig = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
+
+export const deleteConfig = async (req: Request, res: Response) => {
+  try {
+    const config = await AppConfig.findByIdAndDelete(req.params.id);
+    if (!config) {
+      return res.status(404).json({ success: false, message: 'Configuration not found' });
+    }
+    res.status(200).json({ success: true, data: config });
+  } catch (error: any) {
+    logger.error('Error deleting config', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};

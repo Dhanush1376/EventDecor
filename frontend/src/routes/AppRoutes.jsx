@@ -94,10 +94,9 @@ const EventCustomerDashboard = lazy(() =>
 const EventShowcases = lazy(() =>
   import('../pages/EventShowcases').then((m) => ({ default: m.EventShowcases })),
 );
-const Shipping = lazy(() => import('../pages/Shipping').then((m) => ({ default: m.Shipping })));
-const Returns = lazy(() => import('../pages/Returns').then((m) => ({ default: m.Returns })));
-const Privacy = lazy(() => import('../pages/Privacy').then((m) => ({ default: m.Privacy })));
-const Terms = lazy(() => import('../pages/Terms').then((m) => ({ default: m.Terms })));
+const GenericPolicyPage = lazy(() =>
+  import('../pages/GenericPolicyPage').then((m) => ({ default: m.GenericPolicyPage })),
+);
 const AcceptInvite = lazy(() =>
   import('../pages/AcceptInvite').then((m) => ({ default: m.AcceptInvite })),
 );
@@ -303,10 +302,54 @@ export function AppRoutes() {
                 }
               />
               <Route path="/showcases" element={<EventShowcases />} />
-              <Route path="/shipping" element={<Shipping />} />
-              <Route path="/returns" element={<Returns />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
+              <Route
+                path="/shipping"
+                element={
+                  <GenericPolicyPage slug="shipping-policy" defaultTitle="Shipping Policy" />
+                }
+              />
+              <Route
+                path="/returns"
+                element={
+                  <GenericPolicyPage slug="return-policy" defaultTitle="Returns & Exchanges" />
+                }
+              />
+              <Route
+                path="/exchange"
+                element={
+                  <GenericPolicyPage slug="exchange-policy" defaultTitle="Exchange Policy" />
+                }
+              />
+              <Route
+                path="/refund"
+                element={<GenericPolicyPage slug="refund-policy" defaultTitle="Refund Policy" />}
+              />
+              <Route
+                path="/cancellation"
+                element={
+                  <GenericPolicyPage
+                    slug="cancellation-policy"
+                    defaultTitle="Cancellation Policy"
+                  />
+                }
+              />
+              <Route
+                path="/privacy"
+                element={<GenericPolicyPage slug="privacy-policy" defaultTitle="Privacy Policy" />}
+              />
+              <Route
+                path="/terms"
+                element={
+                  <GenericPolicyPage
+                    slug="terms-and-conditions"
+                    defaultTitle="Terms & Conditions"
+                  />
+                }
+              />
+              <Route
+                path="/faq"
+                element={<GenericPolicyPage slug="faq" defaultTitle="Frequently Asked Questions" />}
+              />
               <Route path="/accept-invite" element={<AcceptInvite />} />
               <Route path="/coupons" element={<Coupons />} />
               <Route path="*" element={<NotFound />} />
@@ -327,6 +370,7 @@ export function AppRoutes() {
               <Route path="homepage" element={<AdminContent />} />
               <Route path="products" element={<AdminProducts />} />
               <Route path="settings" element={<AdminSettings />} />
+
               <Route path="config" element={<AdminConfig />} />
               <Route path="layouts" element={<AdminLayouts />} />
               <Route path="policies" element={<AdminPolicies />} />

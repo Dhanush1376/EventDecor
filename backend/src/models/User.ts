@@ -73,7 +73,18 @@ const UserSchema: Schema = new Schema(
     },
     notificationPreferences: {
       email: { type: Boolean, default: true },
-      marketing: { type: Boolean, default: true },
+      sms: { type: Boolean, default: false },
+      whatsapp: { type: Boolean, default: false },
+      inApp: { type: Boolean, default: true },
+      push: { type: Boolean, default: true },
+      categories: {
+        orderUpdates: { type: Boolean, default: true },
+        promotions: { type: Boolean, default: true },
+        security: { type: Boolean, default: true },
+        newsletter: { type: Boolean, default: true },
+        bookingUpdates: { type: Boolean, default: true },
+        rentalUpdates: { type: Boolean, default: true },
+      },
     },
     accountPreferences: {
       theme: { type: String, default: 'light' },

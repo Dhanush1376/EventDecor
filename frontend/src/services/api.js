@@ -1,7 +1,5 @@
 import axios from 'axios';
 import logger from '../utils/core/logger';
-import { getApiUrl } from '../config/apiConfig';
-import { normalizeApiError } from '../utils/api/apiErrors';
 import { getCachedGet, setCachedGet, clearApiCache } from '../utils/api/apiCache';
 import {
   hasSessionMarker,

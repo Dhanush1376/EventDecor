@@ -34,7 +34,7 @@ export function AddAddressModal({
             className="fixed bottom-0 left-0 right-0 z-[101] bg-surface-container-low rounded-t-2xl sm:rounded-t-3xl max-h-[90vh] w-full max-w-[800px] mx-auto shadow-2xl flex flex-col"
           >
             <div className="bg-surface-bright z-10 pt-5 pb-4 px-6 flex justify-between items-center border-b border-outline-variant/20 rounded-t-2xl sm:rounded-t-3xl shrink-0">
-              <h2 className="font-display text-base font-bold text-on-surface uppercase tracking-wider">
+              <h2 className="text-[11px] font-extrabold text-on-surface uppercase tracking-widest">
                 {newAddress?.id ? 'Edit Address' : 'Add New Address'}
               </h2>
               <button
@@ -56,7 +56,8 @@ export function AddAddressModal({
                   )}
 
                   <div className="py-6 border-b border-outline-variant/20">
-                    <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider mb-5">
+                    <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 mb-5">
+                      <span className="material-symbols-outlined text-[12px]">person</span>
                       Contact Details
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -109,7 +110,8 @@ export function AddAddressModal({
                   </div>
 
                   <div className="py-6 border-b border-outline-variant/20">
-                    <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider mb-5">
+                    <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 mb-5">
+                      <span className="material-symbols-outlined text-[12px]">home</span>
                       Address Details
                     </h2>
 
@@ -255,7 +257,8 @@ export function AddAddressModal({
                   </div>
 
                   <div className="py-6">
-                    <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider mb-5">
+                    <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 mb-5">
+                      <span className="material-symbols-outlined text-[12px]">local_shipping</span>
                       Destination & Options
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">

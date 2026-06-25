@@ -50,7 +50,7 @@ export function EmailInputForm({
             id="auth-email-input"
             type="email"
             required
-            className="w-full bg-surface-container-low/50 border border-outline-variant/35 rounded-xl pl-10 pr-4 py-3.5 font-body text-[14px] text-on-surface-variant outline-none transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/5"
+            className="form-field !pl-11 !text-[12px]"
             placeholder={isFocused ? 'e.g. creative@siriartsandcrafts.com' : ''}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -116,7 +116,7 @@ export function TwoFactorForm({ totpCode, setTotpCode, verify2FA, isLoading, res
         autoComplete="one-time-code"
         value={totpCode}
         onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-        className="w-full text-center font-display text-[20px] tracking-[0.3em] bg-surface-container-low/50 border border-outline-variant/35 rounded-xl py-3.5 outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/5 font-bold"
+        className="form-field !text-center !font-display !text-[20px] !tracking-[0.3em] !font-bold !py-3"
         placeholder="000000"
       />
       <button
@@ -179,12 +179,12 @@ export function OtpVerificationForm({
             onKeyDown={(e) => handleKeyDown(e, idx)}
             onPaste={handlePaste}
             aria-label={`Digit ${idx + 1} of verification code`}
-            className={`w-8 h-11 xs:w-9 xs:h-12 text-center font-display text-[16px] xs:text-[18px] bg-surface-container-low/50 border rounded-xl outline-none transition-all shadow-inner focus:shadow-md focus:ring-4 focus:ring-primary/5 ${
+            className={`w-8 h-11 xs:w-9 xs:h-12 text-center font-display text-[16px] xs:text-[18px] bg-transparent border-b-2 outline-none transition-all ${
               error
-                ? 'border-error text-error ring-1 ring-error'
+                ? 'border-error text-error'
                 : digit
                   ? 'border-primary text-primary font-semibold'
-                  : 'border-outline-variant/40 text-on-surface-variant focus:border-primary'
+                  : 'border-outline-variant/30 text-on-surface-variant focus:border-primary'
             }`}
           />
         ))}

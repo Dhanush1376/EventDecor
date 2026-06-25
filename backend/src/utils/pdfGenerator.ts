@@ -1,4 +1,5 @@
 import type { Response } from 'express';
+import storeSettingsService from '../services/StoreSettingsService';
 
 export type InvoicePdfData = {
   orderId: string;
@@ -11,7 +12,7 @@ export type InvoicePdfData = {
   total: number;
 };
 
-const writeInvoiceContent = (doc: any, orderData: InvoicePdfData): void => {
+const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any): void => {
   const brandColor = '#735c00';
   const textColor = '#1a1a1a';
   const grayColor = '#555555';
@@ -19,24 +20,29 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData): void => {
 
   // --- HEADER ---
   // Left: Brand & Address
-  doc.fillColor(brandColor).font('Helvetica-Bold').fontSize(24).text('Siri Arts & Crafts', 50, 50);
+  doc
+    .fillColor(brandColor)
+    .font('Helvetica-Bold')
+    .fontSize(24)
+    .text(settings.general.storeName || 'Siri Arts & Crafts', 50, 50);
   doc
     .fillColor(grayColor)
     .font('Helvetica-Bold')
     .fontSize(10)
-    .text('PREMIUM STUDIO & HANDICRAFTS', 50, 75);
-  doc
-    .fillColor(grayColor)
-    .font('Helvetica')
-    .fontSize(9)
-    .text('#28-1-92, South Street', 50, 90)
-    .text('ONGOLE-523001, Prakasam District', 50, 102)
-    .text('Andhra Pradesh', 50, 114);
+    .text(settings.storefront.seoDescription || 'PREMIUM STUDIO & HANDICRAFTS', 50, 75);
+
+  const addressLines = (settings.contact.address || '').split(', ');
+  let currentY = 90;
+  addressLines.slice(0, 3).forEach((line: string) => {
+    doc.fillColor(grayColor).font('Helvetica').fontSize(9).text(line.trim(), 50, currentY);
+    currentY += 12;
+  });
+
   doc
     .fillColor(textColor)
     .font('Helvetica-Bold')
     .fontSize(9)
-    .text('GSTIN: 29AAAES9284D1ZX', 50, 126);
+    .text(`GSTIN: ${settings.taxes.gstNumber || 'N/A'}`, 50, 126);
 
   // Right: Invoice Info
   doc
@@ -92,8 +98,10 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData): void => {
   doc.text('ITEM DESIGN CURATION', 50, tableTop);
   doc.text('QTY', 260, tableTop, { align: 'center', width: 30 });
   doc.text('UNIT PRICE', 300, tableTop, { align: 'right', width: 60 });
-  doc.text('CGST(9%)', 370, tableTop, { align: 'right', width: 50 });
-  doc.text('SGST(9%)', 430, tableTop, { align: 'right', width: 50 });
+  const cgstRatePercent = (settings.taxes.cgstRate * 100).toFixed(1);
+  const sgstRatePercent = (settings.taxes.sgstRate * 100).toFixed(1);
+  doc.text(`CGST(${cgstRatePercent}%)`, 370, tableTop, { align: 'right', width: 50 });
+  doc.text(`SGST(${sgstRatePercent}%)`, 430, tableTop, { align: 'right', width: 50 });
   doc.text('TOTAL', 490, tableTop, { align: 'right', width: 60 });
 
   doc
@@ -111,9 +119,11 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData): void => {
     const qty = item.quantity;
     const price = item.price;
     const lineTotal = price * qty;
-    const basePrice = price / 1.18;
-    const cgst = (price - basePrice) / 2;
-    const sgst = (price - basePrice) / 2;
+    const taxMultiplier = 1 + settings.taxes.gstRate;
+    const basePrice = price / taxMultiplier;
+    const totalLineTax = price - basePrice;
+    const cgst = totalLineTax * (settings.taxes.cgstRate / settings.taxes.gstRate);
+    const sgst = totalLineTax * (settings.taxes.sgstRate / settings.taxes.gstRate);
 
     doc.fillColor(textColor).font('Helvetica-Bold').text(item.name, 50, y, { width: 200 });
     doc.fillColor(grayColor).font('Helvetica');
@@ -168,7 +178,8 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData): void => {
     .fontSize(8)
     .text('GST TAX ASSESSMENT BREAKDOWN', 60, y + 10);
 
-  const totalBase = orderData.total / 1.18;
+  const taxMultiplier = 1 + settings.taxes.gstRate;
+  const totalBase = orderData.total / taxMultiplier;
   const totalTax = orderData.total - totalBase;
 
   doc
@@ -183,20 +194,30 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData): void => {
   doc
     .fillColor(grayColor)
     .font('Helvetica')
-    .text('Integrated SGST (9%):', 60, y + 38);
+    .text(`Integrated SGST (${(settings.taxes.sgstRate * 100).toFixed(1)}%):`, 60, y + 38);
   doc
     .fillColor(textColor)
     .font('Helvetica-Bold')
-    .text(`Rs. ${(totalTax / 2).toFixed(2)}`, 200, y + 38, { width: 90, align: 'right' });
+    .text(
+      `Rs. ${(totalTax * (settings.taxes.sgstRate / settings.taxes.gstRate)).toFixed(2)}`,
+      200,
+      y + 38,
+      { width: 90, align: 'right' },
+    );
 
   doc
     .fillColor(grayColor)
     .font('Helvetica')
-    .text('Integrated CGST (9%):', 60, y + 51);
+    .text(`Integrated CGST (${(settings.taxes.cgstRate * 100).toFixed(1)}%):`, 60, y + 51);
   doc
     .fillColor(textColor)
     .font('Helvetica-Bold')
-    .text(`Rs. ${(totalTax / 2).toFixed(2)}`, 200, y + 51, { width: 90, align: 'right' });
+    .text(
+      `Rs. ${(totalTax * (settings.taxes.cgstRate / settings.taxes.gstRate)).toFixed(2)}`,
+      200,
+      y + 51,
+      { width: 90, align: 'right' },
+    );
 
   doc
     .moveTo(60, y + 63)
@@ -231,23 +252,26 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData): void => {
 };
 
 /** Stream PDF directly to HTTP response (chunked; no full-file RAM buffer). */
-export const streamInvoicePDFToResponse = (
+export const streamInvoicePDFToResponse = async (
   res: Response,
   orderData: InvoicePdfData,
   filename: string,
-): void => {
+): Promise<void> => {
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+  const settings = await storeSettingsService.getSettings();
 
   const PDFDocumentClass = require('pdfkit');
   const doc = new PDFDocumentClass({ margin: 50 });
   doc.pipe(res);
-  writeInvoiceContent(doc, orderData);
+  writeInvoiceContent(doc, orderData, settings);
   doc.end();
 };
 
 /** In-memory PDF for email attachments (buffers chunks; not used for HTTP download). */
 export const generateInvoicePDF = async (orderData: InvoicePdfData): Promise<Buffer> => {
+  const settings = await storeSettingsService.getSettings();
   return new Promise((resolve, reject) => {
     try {
       const PDFDocumentClass = require('pdfkit');
@@ -258,7 +282,7 @@ export const generateInvoicePDF = async (orderData: InvoicePdfData): Promise<Buf
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
-      writeInvoiceContent(doc, orderData);
+      writeInvoiceContent(doc, orderData, settings);
       doc.end();
     } catch (error) {
       reject(error);

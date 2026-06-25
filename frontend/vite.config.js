@@ -149,7 +149,20 @@ export default defineConfig({
         ws: true,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
+            if (
+              err.code === 'ECONNREFUSED' ||
+              err.code === 'ECONNABORTED' ||
+              err.code === 'ECONNRESET'
+            ) {
+              return; // Suppress expected dev proxy errors
+            }
             console.warn('[Vite Proxy Error] Failed to connect to backend target:', err.message);
+          });
+          proxy.on('proxyReqWs', (proxyReq, req, socket, options, head) => {
+            socket.on('error', (err) => {
+              if (err.code === 'ECONNABORTED' || err.code === 'ECONNRESET') return;
+              console.error('[Vite WS Proxy Error]', err.message);
+            });
           });
         },
       },
@@ -160,7 +173,22 @@ export default defineConfig({
         ws: true,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
+            if (
+              err.code === 'ECONNREFUSED' ||
+              err.code === 'ECONNABORTED' ||
+              err.code === 'ECONNRESET'
+            ) {
+              return; // Suppress expected dev proxy errors
+            }
             console.warn('[Vite Proxy Error] Failed to connect to backend target:', err.message);
+          });
+          proxy.on('proxyReqWs', (proxyReq, req, socket, options, head) => {
+            // Remove noisy default listeners that dump stack traces on expected socket closes
+            socket.removeAllListeners('error');
+            socket.on('error', (err) => {
+              if (err.code === 'ECONNABORTED' || err.code === 'ECONNRESET') return;
+              console.error('[Vite WS Proxy Error]', err.message);
+            });
           });
         },
       },

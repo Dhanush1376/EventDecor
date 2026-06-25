@@ -50,6 +50,7 @@ export const registerApiRoutes = (
   apiRouter.use('/users', noCacheMiddleware, lazyRouter('./userRoutes'));
   apiRouter.use('/inquiries', lazyRouter('./inquiryRoutes'));
   apiRouter.use('/notifications', lazyRouter('./notificationRoutes'));
+  apiRouter.use('/notification-center', lazyRouter('./notificationCenterRoutes'));
   apiRouter.use('/policies', lazyRouter('./policyRoutes'));
   apiRouter.use('/custom-orders', lazyRouter('./customOrderRoutes'));
   apiRouter.use('/loyalty', lazyRouter('./loyaltyRoutes'));
@@ -71,6 +72,7 @@ export const registerApiRoutes = (
 
   // Dynamic Configuration & Architecture Routes
   apiRouter.use('/config', lazyRouter('./appConfigRoutes'));
+  apiRouter.use('/settings', lazyRouter('./storeSettingsRoutes'));
   apiRouter.use('/categories', lazyRouter('./categoryRoutes'));
   apiRouter.use('/layouts', lazyRouter('./pageLayoutRoutes'));
   apiRouter.use('/search', lazyRouter('./searchRoutes'));

@@ -7,8 +7,12 @@ export function PolicySidebar() {
   const policies = [
     { title: 'Shipping Policy', path: '/shipping' },
     { title: 'Returns & Exchanges', path: '/returns' },
+    { title: 'Exchange Policy', path: '/exchange' },
+    { title: 'Refund Policy', path: '/refund' },
+    { title: 'Cancellation Policy', path: '/cancellation' },
     { title: 'Privacy Policy', path: '/privacy' },
     { title: 'Terms & Conditions', path: '/terms' },
+    { title: 'FAQ', path: '/faq' },
   ];
 
   return (
@@ -49,8 +53,12 @@ export function MobilePolicyNav() {
   const policies = [
     { title: 'Shipping', path: '/shipping' },
     { title: 'Returns', path: '/returns' },
+    { title: 'Exchange', path: '/exchange' },
+    { title: 'Refund', path: '/refund' },
+    { title: 'Cancellation', path: '/cancellation' },
     { title: 'Privacy', path: '/privacy' },
     { title: 'Terms', path: '/terms' },
+    { title: 'FAQ', path: '/faq' },
   ];
 
   return (

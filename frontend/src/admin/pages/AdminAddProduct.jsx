@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { ProductMediaStep } from './steps/ProductMediaStep';
 import { ProductInfoStep } from './steps/ProductInfoStep';
@@ -6,7 +6,7 @@ import { ProductVariantsStep } from './steps/ProductVariantsStep';
 import { ProductSeoStep } from './steps/ProductSeoStep';
 import { ProductPricingStep } from './steps/ProductPricingStep';
 import { ProductReviewStep } from './steps/ProductReviewStep';
-import { AdminToggle, SkeletonForm } from '../components/AdminUIKit';
+import { SkeletonForm } from '../components/AdminUIKit';
 import { LivePreviewCard } from '../components/LivePreviewCard';
 import { AiCurationOverlay } from '../components/AiCurationOverlay';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
@@ -14,7 +14,6 @@ import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { DraftConflictViewer } from '../components/DraftConflictViewer';
 import { useNavigate, useParams } from 'react-router-dom';
-import { productService } from '../../services/domainServices';
 import { useProductForm } from '../hooks/useProductForm';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
@@ -22,7 +21,6 @@ import { useProductAI } from '../hooks/useProductAI';
 import { useProductValidation } from '../hooks/useProductValidation';
 import { useProductSubmission } from '../hooks/useProductSubmission';
 import { useQueryClient } from '@tanstack/react-query';
-import logger from '../../utils/core/logger';
 
 const _fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 const slideIn = {

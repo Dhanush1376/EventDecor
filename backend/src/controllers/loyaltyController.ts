@@ -11,10 +11,11 @@ import { LoyaltyService } from '../services/loyaltyService';
 import { saveUniqueReferralCode } from '../utils/referralCode';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import { updateProductRating } from './reviewController';
-import { LOYALTY_TIERS } from '../constants/loyaltyTiers';
+import storeSettingsService from '../services/StoreSettingsService';
 
 export const getLoyaltyTiers = asyncHandler(async (req: Request, res: Response) => {
-  res.status(200).json(new ApiResponse(true, 'Loyalty tiers fetched', LOYALTY_TIERS));
+  const settings = await storeSettingsService.getSettings();
+  res.status(200).json(new ApiResponse(true, 'Loyalty tiers fetched', settings.loyalty.tiers));
 });
 
 export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Response) => {
@@ -47,22 +48,24 @@ export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Respon
   ]);
   const lifetimeSpend = spendAggregation[0]?.totalSpend || 0;
 
-  const currentTierIndex = LOYALTY_TIERS.findIndex((t: any) => t.tier === user.loyaltyTier);
-  const nextTierObj = LOYALTY_TIERS[currentTierIndex + 1];
+  const settings = await storeSettingsService.getSettings();
+  const loyaltyTiers = settings.loyalty.tiers || [];
+  const currentTierIndex = loyaltyTiers.findIndex((t: any) => t.name === user.loyaltyTier);
+  const nextTierObj = loyaltyTiers[currentTierIndex + 1];
   let nextTier: string;
   let spendRequired: number;
   let progressPercentage: number;
 
   if (nextTierObj) {
-    nextTier = nextTierObj.tier;
+    nextTier = nextTierObj.name;
     spendRequired = Math.max(0, nextTierObj.minSpend - lifetimeSpend);
-    const currentTierSpend = LOYALTY_TIERS[currentTierIndex].minSpend;
+    const currentTierSpend = currentTierIndex >= 0 ? loyaltyTiers[currentTierIndex].minSpend : 0;
     const tierRange = nextTierObj.minSpend - currentTierSpend;
     const currentProgress = lifetimeSpend - currentTierSpend;
-    progressPercentage = Math.max(
-      0,
-      Math.min(100, Math.round((currentProgress / tierRange) * 100)),
-    );
+    progressPercentage =
+      tierRange > 0
+        ? Math.max(0, Math.min(100, Math.round((currentProgress / tierRange) * 100)))
+        : 100;
   } else {
     nextTier = 'None (Max Tier reached)';
     spendRequired = 0;

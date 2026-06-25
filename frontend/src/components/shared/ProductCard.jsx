@@ -354,8 +354,8 @@ export const ProductCard = React.memo(function ProductCard({
             ) : (
               <>
                 <button
-                  onClick={isOutOfStock ? undefined : handleAddToCart}
-                  disabled={isOutOfStock}
+                  onClick={isOutOfStock || added ? undefined : handleAddToCart}
+                  disabled={isOutOfStock || added}
                   className={`w-full py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all duration-500 cursor-pointer flex items-center justify-center ${
                     isOutOfStock
                       ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
@@ -443,8 +443,8 @@ export const ProductCard = React.memo(function ProductCard({
             </button>
           ) : (
             <button
-              onClick={isOutOfStock ? undefined : handleAddToCart}
-              disabled={isOutOfStock}
+              onClick={isOutOfStock || added ? undefined : handleAddToCart}
+              disabled={isOutOfStock || added}
               className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
                 isOutOfStock
                   ? 'bg-stone-300 text-stone-500 cursor-not-allowed'

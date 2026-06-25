@@ -5,6 +5,7 @@ import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect, useCallback } from 'react';
 import { userService, cmsService, notificationService } from '../../services/domainServices';
+import storeSettingsService from '../../services/api/storeSettingsService';
 import { useAuth } from '../../context/AuthContext';
 import { useAdmin } from '../context/AdminContext';
 import toast from 'react-hot-toast';
@@ -14,13 +15,24 @@ import { useDraft } from '../hooks/useDraft';
 
 // Settings Panels
 import { ProfilePanel } from '../components/settings/ProfilePanel';
-import { BusinessPanel } from '../components/settings/BusinessPanel';
-import { ShippingPanel } from '../components/settings/ShippingPanel';
 import { BrandingPanel } from '../components/settings/BrandingPanel';
-import { PaymentsPanel } from '../components/settings/PaymentsPanel';
 import { WhatsAppPanel } from '../components/settings/WhatsAppPanel';
 import { SecurityPanel } from '../components/settings/SecurityPanel';
 import { EmailSmtpPanel } from '../components/settings/EmailSmtpPanel';
+import {
+  GeneralSettingsPanel,
+  ShippingSettingsPanel,
+  PaymentSettingsPanel,
+  ReturnSettingsPanel,
+  CancellationSettingsPanel,
+  LoyaltySettingsPanel,
+  OrderSettingsPanel,
+  TaxSettingsPanel,
+  ContactSettingsPanel,
+  LegalSettingsPanel,
+  NotificationSettingsPanel,
+  StorefrontSettingsPanel,
+} from '../components/settings/StoreSettingsPanels';
 
 export function AdminSettings() {
   const { user: authUser, setUser: setAuthUser } = useAuth();
@@ -41,18 +53,15 @@ export function AdminSettings() {
     toggleAutoPublish,
   } = useAdmin();
 
-  // Reset Lockout Controls Local State
   const [resetCodePhrase, setResetCodePhrase] = useState('');
   const [resetCheck1, setResetCheck1] = useState(false);
   const [resetCheck2, setResetCheck2] = useState(false);
   const [resetCheck3, setResetCheck3] = useState(false);
   const [resetExecuting, setResetExecuting] = useState(false);
 
-  // Search and Filters for Audit Logs
   const [auditSearchQuery, setAuditSearchQuery] = useState('');
   const [auditActorFilter, setAuditActorFilter] = useState('all');
 
-  // SMTP Live Diagnostics State
   const [testRecipientEmail, setTestRecipientEmail] = useState('');
   const [testingSmtp, setTestingSmtp] = useState(false);
   const [smtpTestResult, setSmtpTestResult] = useState(null);
@@ -101,7 +110,6 @@ export function AdminSettings() {
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
 
-  // Dynamic Profile State
   const [profileForm, setProfileForm] = useState({
     name: '',
     email: '',
@@ -109,7 +117,8 @@ export function AdminSettings() {
     role: 'manager',
   });
 
-  // Dynamic Business & Portal Settings State
+  const [storeSettings, setStoreSettings] = useState(null);
+
   const {
     formData: settings,
     setFormData: setSettings,
@@ -125,22 +134,9 @@ export function AdminSettings() {
     module: 'Settings',
     pageTitle: 'Global Settings',
     initialData: {
-      businessName: 'Siri Arts & Crafts',
-      tagline: '',
-      businessEmail: 'Sirisha.atmakuri@gmail.com',
-      phoneNumber: '+91 98660 06648',
-      gstNumber: 'GSTIN123456789',
-      address: '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
       primaryColor: 'var(--color-gold-dark)',
       secondaryColor: '#F8F9FB',
       fontFamily: 'Playfair Display + Inter',
-      freeShippingThreshold: '2000',
-      standardShippingFee: '99',
-      expressShippingFee: '249',
-      codFee: '90',
-      deliveryEstimate: '5-7',
-      razorpayKeyId: '',
-      upiId: 'siriarts@upi',
       whatsappNumber: '+91 98660 06648',
       whatsappMessage: 'Hello! Thank you for reaching Siri Arts & Crafts.',
     },
@@ -221,11 +217,9 @@ export function AdminSettings() {
     }
   };
 
-  // Sync profile and settings from database CMS on load
   const syncSettingsData = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Sync User Profile
       try {
         const profRes = await userService.getProfile();
         if (profRes?.success && profRes?.data) {
@@ -235,24 +229,30 @@ export function AdminSettings() {
             phone: profRes.data.phone || authUser?.phone || '+91 98660 06648',
             role: profRes.data.role || authUser?.role || 'admin',
           });
-        } else {
-          setProfileForm({
-            name: authUser?.name || 'Siri Master Admin',
-            email: authUser?.email || 'admin@siriartsandcrafts.com',
-            phone: authUser?.phone || '+91 98660 06648',
-            role: authUser?.role || 'admin',
-          });
         }
-      } catch {
-        setProfileForm({
-          name: authUser?.name || 'Siri Master Admin',
-          email: authUser?.email || 'admin@siriartsandcrafts.com',
-          phone: authUser?.phone || '+91 98660 06648',
-          role: authUser?.role || 'admin',
+      } catch {}
+
+      try {
+        const storeRes = await storeSettingsService.getAdminSettings();
+        setStoreSettings(storeRes || {});
+      } catch (err) {
+        logger.error('Could not fetch store settings', err);
+        setStoreSettings({
+          general: {},
+          shipping: {},
+          payments: {},
+          returnsExchanges: {},
+          cancellation: {},
+          loyalty: {},
+          orders: {},
+          taxes: {},
+          notifications: {},
+          storefront: {},
+          contact: {},
+          legal: {},
         });
       }
 
-      // 2. Sync Mongoose CMS settings
       try {
         const cmsRes = await cmsService.getSection('studio_settings');
         const rawSection = cmsRes?.data ?? cmsRes;
@@ -263,14 +263,9 @@ export function AdminSettings() {
             razorpayKeySecret: _removedKey,
             ...safeSettings
           } = sectionData;
-          setSettings((prev) => ({
-            ...prev,
-            ...safeSettings,
-          }));
+          setSettings((prev) => ({ ...prev, ...safeSettings }));
         }
-      } catch {
-        // silent fallback to default initial settings
-      }
+      } catch {}
     } catch (_err) {
       logger.warn('Could not sync remote settings, using local configuration.');
     } finally {
@@ -279,10 +274,7 @@ export function AdminSettings() {
   }, [authUser, setSettings]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      syncSettingsData();
-    }, 0);
-    return () => clearTimeout(timer);
+    syncSettingsData();
   }, [syncSettingsData]);
 
   const handleProfileSave = async (e) => {
@@ -294,12 +286,8 @@ export function AdminSettings() {
         phone: profileForm.phone,
       });
       if (res.success) {
-        toast.success('Profile updated', {
-          icon: '👤',
-        });
-        if (setAuthUser && res.data) {
-          setAuthUser(res.data);
-        }
+        toast.success('Profile updated', { icon: '👤' });
+        if (setAuthUser && res.data) setAuthUser(res.data);
       }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to update profile details.'));
@@ -312,14 +300,11 @@ export function AdminSettings() {
     e.preventDefault();
     setSaving(true);
     try {
-      // Write configurations straight to WebsiteContent CMS collection
       const { razorpaySecret: _s, razorpayKeySecret: _k, ...settingsToSave } = settings;
       const res = await cmsService.updateSection('studio_settings', settingsToSave);
       if (res) {
         await deleteDraft();
-        toast.success('Settings saved', {
-          icon: '⚙️',
-        });
+        toast.success('Settings saved', { icon: '⚙️' });
       }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to commit settings changes.'));
@@ -328,20 +313,64 @@ export function AdminSettings() {
     }
   };
 
-  if (loading) {
+  const handleStoreSettingsSave = (sectionId) => async (e) => {
+    if (e) e.preventDefault();
+    setSaving(true);
+    try {
+      const formData = storeSettings[sectionId];
+      const res = await storeSettingsService.updateSection(sectionId, formData);
+      setStoreSettings((prev) => ({ ...prev, [sectionId]: res[sectionId] || formData }));
+      toast.success(`${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)} settings saved`);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to save settings.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStoreSettingsChange = (sectionId) => (e) => {
+    const { name, value, type, checked } = e.target;
+    setStoreSettings((prev) => ({
+      ...prev,
+      [sectionId]: {
+        ...prev[sectionId],
+        [name]: type === 'checkbox' ? checked : value,
+      },
+    }));
+  };
+
+  const handleStoreSettingsCustomChange = (sectionId) => (name, value) => {
+    setStoreSettings((prev) => ({
+      ...prev,
+      [sectionId]: {
+        ...prev[sectionId],
+        [name]: value,
+      },
+    }));
+  };
+
+  if (loading || !storeSettings) {
     return <SkeletonDashboard />;
   }
 
-  // Settings structural layout
   const sectionsList = [
     { id: 'profile', title: 'Profile & Account', icon: 'person' },
-    { id: 'business', title: 'Business Information', icon: 'store' },
-    { id: 'shipping', title: 'Shipping & Fulfillment', icon: 'local_shipping' },
-    { id: 'branding', title: 'Portal Visual Branding', icon: 'palette' },
-    { id: 'payments', title: 'Payment Integrations', icon: 'payments' },
+    { id: 'general', title: 'General Info', icon: 'store' },
+    { id: 'branding', title: 'Visual Branding', icon: 'palette' },
+    { id: 'shipping', title: 'Shipping & Delivery', icon: 'local_shipping' },
+    { id: 'payments', title: 'Payment Methods', icon: 'payments' },
+    { id: 'returnsExchanges', title: 'Returns & Exchanges', icon: 'sync' },
+    { id: 'cancellation', title: 'Cancellation', icon: 'cancel' },
+    { id: 'loyalty', title: 'Loyalty & Rewards', icon: 'card_giftcard' },
+    { id: 'orders', title: 'Order Limits', icon: 'shopping_bag' },
+    { id: 'taxes', title: 'Taxes & Invoicing', icon: 'receipt' },
+    { id: 'notifications', title: 'Notifications', icon: 'notifications' },
+    { id: 'storefront', title: 'Storefront SEO', icon: 'travel_explore' },
+    { id: 'contact', title: 'Contact Details', icon: 'contact_phone' },
+    { id: 'legal', title: 'Legal & Company', icon: 'gavel' },
     { id: 'whatsapp', title: 'WhatsApp Automations', icon: 'chat' },
     { id: 'security', title: 'Security & Operations', icon: 'shield' },
-    { id: 'email', title: 'Email & SMTP Diagnostics', icon: 'mail' },
+    { id: 'email', title: 'Email Diagnostics', icon: 'mail' },
   ];
 
   return (
@@ -352,7 +381,6 @@ export function AdminSettings() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-        {/* Navigation Sidebar */}
         <motion.div
           variants={fadeUp}
           className="admin-card p-3 h-fit lg:sticky lg:top-24 space-y-1 admin-settings-nav"
@@ -381,9 +409,7 @@ export function AdminSettings() {
           ))}
         </motion.div>
 
-        {/* Dynamic Panels Workspace */}
-        <motion.div variants={fadeUp} className="admin-card p-6 md:p-8">
-          {/* Header Description */}
+        <motion.div variants={fadeUp} className="admin-card p-6 md:p-8 min-h-[600px]">
           <div className="flex items-center gap-4 mb-8 pb-5 border-b border-[var(--admin-border-subtle)]">
             <div className="w-12 h-12 rounded-[var(--admin-radius-md)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-primary)]">
               <span className="material-symbols-outlined text-[24px]">
@@ -398,16 +424,14 @@ export function AdminSettings() {
                 <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium">
                   Update details for {sectionsList[activeSection].title} in database
                 </p>
-                {sectionsList[activeSection].id !== 'profile' &&
-                  sectionsList[activeSection].id !== 'security' &&
-                  sectionsList[activeSection].id !== 'email' && (
-                    <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
-                  )}
+                {(sectionsList[activeSection].id === 'branding' ||
+                  sectionsList[activeSection].id === 'whatsapp') && (
+                  <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
+                )}
               </div>
             </div>
           </div>
 
-          {/* Form Actions router */}
           {sectionsList[activeSection].id === 'profile' && (
             <ProfilePanel
               profileForm={profileForm}
@@ -418,22 +442,20 @@ export function AdminSettings() {
             />
           )}
 
-          {sectionsList[activeSection].id === 'business' && (
-            <BusinessPanel
-              settings={settings}
-              setSettings={setSettings}
-              handleGlobalSettingsSave={handleGlobalSettingsSave}
-              syncSettingsData={syncSettingsData}
+          {sectionsList[activeSection].id === 'general' && (
+            <GeneralSettingsPanel
+              formData={storeSettings.general || {}}
+              handleChange={handleStoreSettingsChange('general')}
+              handleSave={handleStoreSettingsSave('general')}
               saving={saving}
             />
           )}
 
           {sectionsList[activeSection].id === 'shipping' && (
-            <ShippingPanel
-              settings={settings}
-              setSettings={setSettings}
-              handleGlobalSettingsSave={handleGlobalSettingsSave}
-              syncSettingsData={syncSettingsData}
+            <ShippingSettingsPanel
+              formData={storeSettings.shipping || {}}
+              handleChange={handleStoreSettingsChange('shipping')}
+              handleSave={handleStoreSettingsSave('shipping')}
               saving={saving}
             />
           )}
@@ -449,11 +471,92 @@ export function AdminSettings() {
           )}
 
           {sectionsList[activeSection].id === 'payments' && (
-            <PaymentsPanel
-              settings={settings}
-              setSettings={setSettings}
-              handleGlobalSettingsSave={handleGlobalSettingsSave}
-              syncSettingsData={syncSettingsData}
+            <PaymentSettingsPanel
+              formData={storeSettings.payments || {}}
+              handleChange={handleStoreSettingsChange('payments')}
+              handleSave={handleStoreSettingsSave('payments')}
+              saving={saving}
+            />
+          )}
+
+          {sectionsList[activeSection].id === 'returnsExchanges' && (
+            <ReturnSettingsPanel
+              formData={storeSettings.returnsExchanges || {}}
+              handleChange={handleStoreSettingsChange('returnsExchanges')}
+              handleSave={handleStoreSettingsSave('returnsExchanges')}
+              saving={saving}
+            />
+          )}
+
+          {sectionsList[activeSection].id === 'cancellation' && (
+            <CancellationSettingsPanel
+              formData={storeSettings.cancellation || {}}
+              handleChange={handleStoreSettingsChange('cancellation')}
+              handleSave={handleStoreSettingsSave('cancellation')}
+              saving={saving}
+            />
+          )}
+
+          {sectionsList[activeSection].id === 'loyalty' && (
+            <LoyaltySettingsPanel
+              formData={storeSettings.loyalty || {}}
+              handleChange={handleStoreSettingsChange('loyalty')}
+              handleCustomChange={handleStoreSettingsCustomChange('loyalty')}
+              handleSave={handleStoreSettingsSave('loyalty')}
+              saving={saving}
+            />
+          )}
+
+          {sectionsList[activeSection].id === 'orders' && (
+            <OrderSettingsPanel
+              formData={storeSettings.orders || {}}
+              handleChange={handleStoreSettingsChange('orders')}
+              handleSave={handleStoreSettingsSave('orders')}
+              saving={saving}
+            />
+          )}
+
+          {sectionsList[activeSection].id === 'taxes' && (
+            <TaxSettingsPanel
+              formData={storeSettings.taxes || {}}
+              handleChange={handleStoreSettingsChange('taxes')}
+              handleSave={handleStoreSettingsSave('taxes')}
+              saving={saving}
+            />
+          )}
+
+          {sectionsList[activeSection].id === 'notifications' && (
+            <NotificationSettingsPanel
+              formData={storeSettings.notifications || {}}
+              handleChange={handleStoreSettingsChange('notifications')}
+              handleSave={handleStoreSettingsSave('notifications')}
+              saving={saving}
+            />
+          )}
+
+          {sectionsList[activeSection].id === 'storefront' && (
+            <StorefrontSettingsPanel
+              formData={storeSettings.storefront || {}}
+              handleChange={handleStoreSettingsChange('storefront')}
+              handleSave={handleStoreSettingsSave('storefront')}
+              saving={saving}
+            />
+          )}
+
+          {sectionsList[activeSection].id === 'contact' && (
+            <ContactSettingsPanel
+              formData={storeSettings.contact || {}}
+              handleChange={handleStoreSettingsChange('contact')}
+              handleSave={handleStoreSettingsSave('contact')}
+              saving={saving}
+            />
+          )}
+
+          {sectionsList[activeSection].id === 'legal' && (
+            <LegalSettingsPanel
+              formData={storeSettings.legal || {}}
+              handleChange={handleStoreSettingsChange('legal')}
+              handleSave={handleStoreSettingsSave('legal')}
               saving={saving}
             />
           )}
@@ -517,7 +620,6 @@ export function AdminSettings() {
         moduleName="Settings"
         lastSavedAt={lastSavedAt}
       />
-
       <UnsavedChangesGuard blocker={blocker} />
     </motion.div>
   );

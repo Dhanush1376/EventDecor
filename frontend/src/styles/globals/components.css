@@ -71,21 +71,30 @@
 
   /* ─── Unified Form System ─── */
   .form-field {
-    @apply w-full bg-surface-container-low text-[11px] leading-tight text-on-surface;
-    @apply placeholder:text-on-surface-variant/50;
-    border: 1px solid var(--color-outline-variant, #d0c5af);
-    border-color: rgba(208, 197, 175, 0.4);
-    border-radius: var(--radius-sm); /* Even sharper, more modern corners */
-    padding: 6px 10px;
+    @apply w-full bg-transparent text-[11px] leading-tight text-on-surface;
+    @apply placeholder:text-[10px] placeholder:text-on-surface-variant/50;
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 0;
+    padding: 8px 0px;
     font-family: var(--font-body);
     transition: all var(--duration-normal) var(--ease-smooth);
     box-shadow: none; /* Remove heavy shadow to flatten it out */
   }
 
   .form-field:focus {
-    border-color: var(--color-primary-container);
-    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+    border-color: transparent;
+    border-bottom-color: var(--color-primary);
+    box-shadow: 0 1px 0 0 var(--color-primary);
     outline: none;
+  }
+
+  .form-field:-webkit-autofill,
+  .form-field:-webkit-autofill:hover,
+  .form-field:-webkit-autofill:focus,
+  .form-field:-webkit-autofill:active {
+    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: var(--color-on-surface) !important;
   }
 
   .form-label {

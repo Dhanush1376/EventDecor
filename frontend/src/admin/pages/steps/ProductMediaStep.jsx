@@ -202,7 +202,7 @@ export function ProductMediaStep({
                       Primary
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                     {idx !== 0 && (
                       <button
                         type="button"
@@ -219,10 +219,10 @@ export function ProductMediaStep({
                           });
                           toast.success('Updated primary listing image');
                         }}
-                        className="w-7 h-7 bg-[var(--admin-surface)] text-[var(--admin-accent)] rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                        className="!w-10 !h-10 !p-0 !min-w-0 !min-h-0 shrink-0 aspect-square bg-[var(--admin-surface)] text-[var(--admin-accent)] rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
                         title="Make Primary"
                       >
-                        <span className="material-symbols-outlined text-[14px]">star</span>
+                        <span className="material-symbols-outlined text-[18px]">star</span>
                       </button>
                     )}
                     <button
@@ -237,10 +237,10 @@ export function ProductMediaStep({
                           };
                         });
                       }}
-                      className="w-7 h-7 bg-[var(--admin-error)] text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                      className="!w-10 !h-10 !p-0 !min-w-0 !min-h-0 shrink-0 aspect-square bg-[var(--admin-error)] text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
                       title="Delete"
                     >
-                      <span className="material-symbols-outlined text-[14px]">delete</span>
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
                     </button>
                   </div>
                 </div>

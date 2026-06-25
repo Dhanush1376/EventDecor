@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import Product from '../../models/Product';
 import RentalOrder from '../../models/RentalOrder';
 import RentalPolicy from '../../models/RentalPolicy';
@@ -9,6 +9,7 @@ import { RazorpayGateway } from '../../utils/payment/RazorpayGateway';
 import { DistributedLock } from '../../utils/DistributedLock';
 import { RentalAvailabilityService } from './RentalAvailabilityService';
 import OutboxEvent from '../../models/OutboxEvent';
+import storeSettingsService from '../StoreSettingsService';
 
 export class RentalCheckoutService {
   static async calculateRentalCost(productId: string, startDate: Date, endDate: Date) {
@@ -65,9 +66,11 @@ export class RentalCheckoutService {
     }
 
     rentalCharge = Math.round(rentalCharge * 100) / 100;
+
+    const settings = await storeSettingsService.getSettings();
     const securityDeposit = product.securityDeposit || 0;
-    const deliveryCharge = 0;
-    const taxRate = 0.18;
+    const deliveryCharge = settings.shipping.deliveryCharge;
+    const taxRate = settings.taxes.gstRate;
     const tax = Math.round(rentalCharge * taxRate * 100) / 100;
     const totalAmount =
       Math.round((rentalCharge + securityDeposit + deliveryCharge + tax) * 100) / 100;

@@ -12,6 +12,7 @@ import { LoyaltyService } from '../services/loyaltyService';
 import { notificationQueue } from '../jobs/queues';
 import { EventBookingMailService } from '../services/eventBookingMailService';
 import { CustomOrderMailService } from '../services/customOrderMailService';
+import storeSettingsService from '../services/StoreSettingsService';
 
 /**
  * OutboxProcessor — Processes ALL outbox event types.
@@ -74,15 +75,35 @@ export const processOutboxEvents = async () => {
 async function processEvent(event: any): Promise<void> {
   const adminEmails = getAdminEmails();
   const { sendDirectEmail } = require('../services/notificationService');
+  const settings = await storeSettingsService.getSettings();
 
   switch (`${event.aggregateType}:${event.eventType}`) {
     // ─── ORDER EVENTS ───────────────────────────────────────────────
     case 'Order:OrderCreated': {
-      const order = await Order.findById(event.aggregateId);
+      const order = await Order.findById(event.aggregateId).populate('items.product');
       const user = await User.findById(event.payload.userId);
 
       if (order && user) {
-        await OrderNotificationService.dispatchOrderConfirmation(order, user, adminEmails);
+        // [MIGRATION]: Replaced OrderNotificationService with Universal NotificationEngine
+        const { NotificationEngine } = require('../services/notifications/NotificationEngine');
+        const { NotificationEvent } = require('../services/notifications/types');
+
+        await NotificationEngine.notify(NotificationEvent.ORDER_CREATED, {
+          aggregateId: order._id.toString(),
+          userId: user._id.toString(),
+          data: {
+            customerInfo: { name: user.name, email: user.email },
+            orderDetails: {
+              id: order._id.toString(),
+              total: order.total,
+              subtotal: order.subtotal,
+              tax: 0,
+              shipping: order.shippingFee,
+            },
+            products: order.items,
+            deliveryInfo: { expectedDelivery: '5-7 business days' },
+          },
+        });
       }
       break;
     }
@@ -95,7 +116,7 @@ async function processEvent(event: any): Promise<void> {
           await sendDirectEmail({
             email: user.email,
             subject: 'Payment Failed — Your Order Was Not Placed',
-            customHtml: `<p>Hi ${user.name || 'there'},</p><p>Unfortunately, your payment could not be verified for your recent order attempt. If money was deducted, it will be automatically refunded within 5-7 business days.</p><p>If you believe this is an error, please contact our support team.</p>`,
+            customHtml: `<p>Hi ${user.name || 'there'},</p><p>Unfortunately, your payment could not be verified for your recent order attempt. If money was deducted, it will be automatically refunded within ${settings.cancellation.refundTimeline || '5-7 business days'}.</p><p>If you believe this is an error, please contact our support team.</p>`,
             type: 'order',
             action: 'payment_failed',
           });
@@ -368,7 +389,7 @@ async function processEvent(event: any): Promise<void> {
           Deductions: ₹${depositAmount - refundAmount}<br/>
           <strong>Refund Amount: ₹${refundAmount}</strong></p>
           ${deductions?.length ? '<p>Deductions breakdown:</p><ul>' + deductions.map((d: any) => `<li>${d.reason}: ₹${d.amount}</li>`).join('') + '</ul>' : ''}
-          <p>The refund should reflect in your original payment method in 5-7 business days.</p>`,
+          <p>The refund should reflect in your original payment method in ${settings.cancellation.refundTimeline || '5-7 business days'}.</p>`,
           type: 'rental',
           action: 'rental_deposit_refund',
         });

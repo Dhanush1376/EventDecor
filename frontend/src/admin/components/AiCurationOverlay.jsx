@@ -91,39 +91,69 @@ export function AiCurationOverlay({
 
               {/* Attribute Grid */}
               <div className="grid grid-cols-2 gap-4">
-                {/* Category */}
-                <div className="p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-1.5 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
+                {/* Category & Price */}
+                <div className="col-span-2 sm:col-span-1 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-2">
+                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
                     Category Mapped
                   </span>
-                  <div className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-0.5 rounded-lg text-[11px] sm:text-[11px] font-bold border border-purple-200">
-                    <span className="material-symbols-outlined text-[11px] sm:text-[11px]">
+                  <div className="inline-flex items-center gap-1.5 bg-[var(--admin-surface)] text-[var(--admin-text-primary)] px-2.5 py-1 rounded-lg text-[12px] font-bold border border-[var(--admin-border)]">
+                    <span className="material-symbols-outlined text-[14px] text-[var(--admin-accent)]">
                       category
                     </span>
                     {aiAnalysisResult.category || 'General Decor'}
                   </div>
                 </div>
 
-                {/* Occasion / Style */}
-                <div className="p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-1.5 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                    Style & Theme
+                <div className="col-span-2 sm:col-span-1 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-2">
+                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
+                    Estimated Price
                   </span>
-                  <p className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)]">
-                    {aiAnalysisResult.style || 'Traditional Indian'}
+                  <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+                    ₹{aiAnalysisResult.price || '0'}
                   </p>
                 </div>
 
+                {/* Badges & Quantity */}
+                <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
+                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
+                    Storefront Highlights
+                  </span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {aiAnalysisResult.badges && aiAnalysisResult.badges.length > 0 && (
+                      <div className="flex gap-2">
+                        {aiAnalysisResult.badges.map((b, idx) => (
+                          <span
+                            key={idx}
+                            className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm"
+                          >
+                            {b}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {aiAnalysisResult.estimated_quantity &&
+                      aiAnalysisResult.estimated_quantity > 1 && (
+                        <div className="flex items-center gap-1 bg-[var(--admin-surface)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                          <span className="material-symbols-outlined text-[13px] text-[var(--admin-accent)]">
+                            inventory_2
+                          </span>
+                          ~{aiAnalysisResult.estimated_quantity}{' '}
+                          {aiAnalysisResult.estimated_quantity_unit || 'Items'}
+                        </div>
+                      )}
+                  </div>
+                </div>
+
                 {/* Materials Chips */}
-                <div className="col-span-2 p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-2 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
+                <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
+                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
                     Auto-Detected Craft Materials
                   </span>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {(aiAnalysisResult.materials || []).map((m, idx) => (
                       <span
                         key={idx}
-                        className="bg-amber-50 text-[var(--admin-accent)] px-2.5 py-0.5 rounded-full text-[11px] sm:text-[11px] font-bold border border-[var(--admin-accent)]/20 flex items-center gap-1"
+                        className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)] px-3 py-1 rounded-full text-[12px] font-medium border border-[var(--admin-border)] flex items-center gap-1.5 shadow-sm"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)]" />
                         {m}
@@ -132,75 +162,71 @@ export function AiCurationOverlay({
                   </div>
                 </div>
 
-                {/* Color Palette */}
-                <div className="col-span-2 p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-2 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                    Color Palette Extracted
-                  </span>
-                  <div className="flex flex-wrap gap-3">
-                    {(aiAnalysisResult.colors || []).map((c, idx) => {
-                      const colorMap = {
-                        gold: '#FFD700',
-                        green: '#1b4d3e',
-                        red: '#c62828',
-                        maroon: '#5d001e',
-                        ivory: '#fbf6eb',
-                        yellow: '#fbc02d',
-                        pink: '#f06292',
-                        brass: '#000000',
-                        bronze: '#cd7f32',
-                      };
-                      const hex = colorMap[c.toLowerCase()] || '#64748B';
-                      const isLight = c.toLowerCase() === 'ivory';
-                      return (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-1.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] px-2.5 py-1 rounded-xl shadow-sm"
-                        >
-                          <span
-                            className={`w-3 h-3 rounded-full shadow-inner border ${isLight ? 'border-[var(--admin-border-strong)]' : 'border-transparent'}`}
-                            style={{ backgroundColor: hex }}
-                          />
-                          <span className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] capitalize">
-                            {c}
-                          </span>
-                        </div>
-                      );
-                    })}
+                {/* Customer Note */}
+                {aiAnalysisResult.customer_note && (
+                  <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
+                    <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[15px] text-[var(--admin-accent)]">
+                        info
+                      </span>
+                      Generated Customer Note
+                    </span>
+                    <div className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl p-3">
+                      <p className="text-[12.5px] text-[var(--admin-text-primary)] font-medium whitespace-pre-wrap leading-relaxed">
+                        {aiAnalysisResult.customer_note.replace(/\\n/g, '\n')}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Customization Note */}
-                {aiAnalysisResult.isCustomizable && (
-                  <div className="col-span-2 p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl space-y-1.5 shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-extrabold text-blue-800 uppercase tracking-wider block">
+                {/* Personalization Note */}
+                {aiAnalysisResult.personalization_enabled && (
+                  <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
                         Auto-Detected Personalization
                       </span>
-                      <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest flex items-center gap-0.5">
-                        <span className="material-symbols-outlined text-[10px]">check_circle</span>
+                      <span className="bg-[var(--admin-accent)] text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 shadow-sm">
+                        <span className="material-symbols-outlined text-[11px]">check_circle</span>
                         Enabled
                       </span>
                     </div>
-                    <p className="text-[12px] text-blue-900 font-medium">
-                      Label:{' '}
-                      <span className="font-bold italic">
-                        "{aiAnalysisResult.customizationNote}"
-                      </span>
-                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] text-[var(--admin-text-secondary)] font-bold uppercase tracking-wider">
+                          Label
+                        </p>
+                        <p className="text-[12.5px] text-[var(--admin-text-primary)] font-medium bg-[var(--admin-surface)] px-3 py-2 rounded-xl border border-[var(--admin-border)]">
+                          {aiAnalysisResult.personalization_label}
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] text-[var(--admin-text-secondary)] font-bold uppercase tracking-wider">
+                          Instructions / Placeholder
+                        </p>
+                        <p className="text-[12px] text-[var(--admin-text-primary)] font-medium whitespace-pre-wrap bg-[var(--admin-surface)] px-3 py-2 rounded-xl border border-[var(--admin-border)] leading-relaxed">
+                          {aiAnalysisResult.personalization_placeholder?.replace(/\\n/g, '\n')}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 {/* Tags Generation */}
-                <div className="col-span-2 p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-2 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
+                <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
+                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
                     SEO Collections & Search Tags
                   </span>
-                  <div className="flex flex-wrap gap-1">
-                    {(aiAnalysisResult.tags || []).map((t, idx) => (
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      ...(aiAnalysisResult.tags || []),
+                      ...(aiAnalysisResult.telugu_keywords || []),
+                      ...(aiAnalysisResult.search_aliases || []),
+                    ].map((t, idx) => (
                       <span
                         key={idx}
-                        className="bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] px-2 py-0.5 rounded-lg text-[11px] sm:text-[11px] sm:text-[11px] font-semibold border border-[var(--admin-border)]"
+                        className="bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] px-2.5 py-1 rounded-lg text-[11.5px] font-medium border border-[var(--admin-border)] shadow-sm"
                       >
                         #{t}
                       </span>
@@ -208,43 +234,53 @@ export function AiCurationOverlay({
                   </div>
                 </div>
 
-                {/* Description */}
-                <div className="col-span-2 p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl space-y-1.5 shadow-sm">
-                  <span className="text-[11px] font-extrabold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-                    Premium Curation Description
-                  </span>
-                  <p className="text-[11px] sm:text-[11px] text-[#555] leading-relaxed italic">
-                    "{aiAnalysisResult.description}"
-                  </p>
+                {/* Description & URL */}
+                <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-4">
+                  <div className="space-y-2">
+                    <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
+                      Premium Curation Description
+                    </span>
+                    <p className="text-[13px] text-[var(--admin-text-primary)] leading-relaxed bg-[var(--admin-surface)] border border-[var(--admin-border)] p-3 rounded-xl">
+                      {aiAnalysisResult.description}
+                    </p>
+                  </div>
+                  <div className="space-y-2 pt-3 border-t border-[var(--admin-border)]/50">
+                    <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
+                      Generated URL Slug
+                    </span>
+                    <p className="text-[12px] text-[var(--admin-text-tertiary)] font-mono bg-[var(--admin-surface)] border border-[var(--admin-border)] px-3 py-1.5 rounded-lg inline-block">
+                      /{aiAnalysisResult.slug}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Chat Box for AI Refinement */}
-            <div className="px-6 pb-2">
+            <div className="px-6 pb-4 pt-2">
               <form
                 onSubmit={handleAiChatSubmit}
-                className="flex items-center gap-2 bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] rounded-xl p-1.5 focus-within:border-[var(--admin-accent)]/50 transition-colors"
+                className="flex items-center gap-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl p-1.5 focus-within:border-[var(--admin-accent)] focus-within:ring-2 focus-within:ring-[var(--admin-accent)]/20 transition-all shadow-sm"
               >
                 <input
                   type="text"
                   value={aiChatInput}
                   onChange={(e) => setAiChatInput(e.target.value)}
                   placeholder="Ask AI to change title, category, style, etc..."
-                  className="flex-1 bg-transparent !border-none text-[12px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] px-3 py-1.5 focus:outline-none focus:!border-none focus:!outline-none focus:!ring-0"
+                  className="flex-1 bg-transparent border-0 !border-none outline-none !outline-none focus:ring-0 focus:!ring-0 shadow-none text-[12.5px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] px-3 py-2"
                   disabled={isAILearning}
                 />
                 <button
                   type="submit"
                   disabled={!aiChatInput.trim() || isAILearning}
-                  className="bg-[var(--admin-accent)] text-white p-1.5 rounded-lg flex items-center justify-center disabled:opacity-50 cursor-pointer hover:brightness-110 transition-all"
+                  className="bg-[var(--admin-accent)] text-white px-3 py-2 rounded-lg flex items-center justify-center disabled:opacity-50 cursor-pointer hover:brightness-110 transition-all shadow-sm"
                 >
                   {isAILearning ? (
-                    <span className="material-symbols-outlined text-[16px] animate-spin">
+                    <span className="material-symbols-outlined text-[18px] animate-spin">
                       refresh
                     </span>
                   ) : (
-                    <span className="material-symbols-outlined text-[16px] pr-0.5">send</span>
+                    <span className="material-symbols-outlined text-[18px] pr-0.5">send</span>
                   )}
                 </button>
               </form>

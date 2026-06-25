@@ -1,15 +1,11 @@
-export const LOYALTY_TIERS = [
-  { tier: 'Bronze', minSpend: 0, cashbackRate: 0.02 },
-  { tier: 'Silver', minSpend: 5000, cashbackRate: 0.05 },
-  { tier: 'Gold', minSpend: 15000, cashbackRate: 0.08 },
-  { tier: 'Platinum', minSpend: 40000, cashbackRate: 0.12 },
-];
+export const getTierBySpend = (spend: number, tiers: any[]): string => {
+  let highestTier = tiers.length > 0 ? tiers[0].name : 'Bronze';
+  // Assuming tiers are sorted by minSpend ascending. If not, we should sort them.
+  const sortedTiers = [...tiers].sort((a, b) => a.minSpend - b.minSpend);
 
-export const getTierBySpend = (spend: number): string => {
-  let highestTier = 'Bronze';
-  for (const t of LOYALTY_TIERS) {
+  for (const t of sortedTiers) {
     if (spend >= t.minSpend) {
-      highestTier = t.tier;
+      highestTier = t.name;
     }
   }
   return highestTier;

@@ -18,6 +18,15 @@ export interface INotificationLog extends Document {
     url: string;
     clickedAt: Date;
   }>;
+  sender: string;
+  templateName?: string;
+  bounce?: boolean;
+  spam?: boolean;
+  spamReportedAt?: Date;
+  bouncedAt?: Date;
+  failureReason?: string;
+  priority?: 'critical' | 'high' | 'normal' | 'low';
+  sendTime?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +64,19 @@ const NotificationLogSchema: Schema = new Schema(
         clickedAt: { type: Date, default: Date.now },
       },
     ],
+    sender: { type: String, default: 'system@siriarts.in' },
+    templateName: { type: String },
+    bounce: { type: Boolean, default: false },
+    bouncedAt: { type: Date },
+    spam: { type: Boolean, default: false },
+    spamReportedAt: { type: Date },
+    failureReason: { type: String },
+    priority: {
+      type: String,
+      enum: ['critical', 'high', 'normal', 'low'],
+      default: 'normal',
+    },
+    sendTime: { type: Date },
   },
   { timestamps: true },
 );

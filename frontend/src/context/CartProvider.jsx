@@ -1,13 +1,10 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { CartStateContext, CartDispatchContext } from './CartContext';
 import { useCartQuery, useCartMutations } from '../hooks/useCartQueries';
 import { useOptimisticCartMutation } from '../hooks/useOptimisticCartMutation';
-import { transformDbCart, cleanRentalInfo } from '../utils/ecommerce/cartCalculations';
-import toast from 'react-hot-toast';
-import logger from '../utils/core/logger';
+import { transformDbCart } from '../utils/ecommerce/cartCalculations';
 import { persistentStorage } from '../utils/storage/persistentStorage';
-import { userService, couponService } from '../services/domainServices';
 import { useCartMerge } from '../hooks/useCartMerge';
 import { useAutoApplyCoupon } from '../hooks/useAutoApplyCoupon';
 export function CartProvider({ children }) {
