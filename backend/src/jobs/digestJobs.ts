@@ -1,12 +1,13 @@
-const cron = require('node-cron');
 import logger from '../config/logger';
 import { NotificationEngine } from '../services/notifications/NotificationEngine';
 import { NotificationEvent } from '../services/notifications/types';
 import { withCronLock } from '../utils/cronLock';
 
-export const initDigestJobs = () => {
+export const initDigestJobs = async () => {
+  const cron = await import('node-cron');
+
   // Daily Sales Report - Runs at 11:55 PM every day
-  cron.schedule('55 23 * * *', async () => {
+  cron.default.schedule('55 23 * * *', async () => {
     await withCronLock('daily-sales-digest', 60, async () => {
       try {
         logger.info('[DIGEST JOBS] Generating Daily Sales Report...');
@@ -32,7 +33,7 @@ export const initDigestJobs = () => {
   });
 
   // Weekly Sales Report - Runs Sunday at 11:59 PM
-  cron.schedule('59 23 * * 0', async () => {
+  cron.default.schedule('59 23 * * 0', async () => {
     await withCronLock('weekly-sales-digest', 60, async () => {
       try {
         logger.info('[DIGEST JOBS] Generating Weekly Report...');
@@ -56,7 +57,7 @@ export const initDigestJobs = () => {
   });
 
   // Monthly Analytics Report - Runs 1st of every month at 1:00 AM
-  cron.schedule('0 1 1 * *', async () => {
+  cron.default.schedule('0 1 1 * *', async () => {
     await withCronLock('monthly-analytics-digest', 60, async () => {
       try {
         logger.info('[DIGEST JOBS] Generating Monthly Report...');
