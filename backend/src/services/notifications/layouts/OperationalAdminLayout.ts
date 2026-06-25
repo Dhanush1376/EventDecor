@@ -1,4 +1,4 @@
-export const OperationalAdminLayout = (content: string, preheader: string = '') => `
+export const OperationalAdminLayout = (content: string, _preheader: string = '') => `
 <!DOCTYPE html>
 <html lang="en">
 <head>

@@ -4,7 +4,7 @@ export class EmailAdapter {
   public static async send(recipient: any, payload: any, priority: string) {
     try {
       const emailProvider = require('../../../emailProvider').default;
-      const { html, subject, preheader, attachments } = payload;
+      const { html, subject, preheader: _preheader, attachments } = payload;
 
       logger.info(`[EMAIL ADAPTER] Enqueueing email to ${recipient.email} - Priority: ${priority}`);
 

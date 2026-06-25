@@ -4,7 +4,6 @@ import { withCronLock } from '../utils/cronLock';
 import { getAdminEmails } from '../config/adminConfig';
 import Order from '../models/Order';
 import User from '../models/User';
-import { OrderNotificationService } from '../services/orders/OrderNotificationService';
 import EventBooking from '../models/EventBooking';
 import RentalOrder from '../models/RentalOrder';
 import * as Sentry from '@sentry/node';

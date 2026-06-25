@@ -1,7 +1,14 @@
 import { MetadataGrid, InvoiceTable, CTAButton } from '../../components';
 
 export const OrderCreatedAdminTemplate = (data: any) => {
-  const { customerInfo, customerStats, orderDetails, products, finance, deliveryInfo } = data;
+  const {
+    customerInfo,
+    customerStats,
+    orderDetails,
+    products,
+    finance,
+    deliveryInfo: _deliveryInfo,
+  } = data;
 
   const productRows = products.map((p: any) => ({
     description: `${p.name} (SKU: ${p.sku})`,

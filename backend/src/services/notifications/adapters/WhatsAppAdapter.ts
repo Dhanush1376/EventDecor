@@ -1,7 +1,7 @@
 import logger from '../../../config/logger';
 
 export class WhatsAppAdapter {
-  public static async send(recipient: any, payload: any, priority: string) {
+  public static async send(recipient: any, _payload: any, _priority: string) {
     try {
       if (!recipient.phone) {
         logger.debug('[WHATSAPP ADAPTER] No phone number provided. Skipping.');
