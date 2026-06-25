@@ -1,4 +1,4 @@
-import * as cron from 'node-cron';
+const cron = require('node-cron');
 import logger from '../config/logger';
 import { NotificationEngine } from '../services/notifications/NotificationEngine';
 import { NotificationEvent } from '../services/notifications/types';
