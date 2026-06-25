@@ -2,6 +2,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { customOrderService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
+import { Skeleton } from './Skeleton';
 
 export function DynamicCustomOrderWizard({
   onComplete,
@@ -93,8 +94,48 @@ export function DynamicCustomOrderWizard({
 
   if (loadingConfig) {
     return (
-      <div className="p-20 text-center animate-pulse">
-        Loading dynamic custom order configuration...
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start w-full">
+        {/* LEFT PANEL SKELETON */}
+        <div className="hidden lg:block lg:col-span-4 bg-white/70 backdrop-blur-md rounded-[2.5rem] border border-black/5 p-8 shadow-sm space-y-6">
+          <Skeleton className="h-3 w-1/3 mb-2 rounded-full" />
+          <Skeleton className="h-6 w-3/4 mb-6 rounded-full" />
+          <div className="space-y-4 pt-4 border-t border-black/5">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="w-6 h-6 rounded-full shrink-0" />
+                <Skeleton className="h-4 w-2/3 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT PANEL SKELETON */}
+        <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-black/5 p-6 md:p-10 shadow-sm relative min-h-[460px] flex flex-col">
+          {/* Smart Progress Bar Skeleton */}
+          <div className="mb-8 shrink-0">
+            <div className="flex justify-between mb-2">
+              <Skeleton className="h-3 w-1/4 rounded-full" />
+              <Skeleton className="h-3 w-1/12 rounded-full" />
+            </div>
+            <Skeleton className="h-1.5 w-full rounded-full" />
+          </div>
+
+          {/* Form Fields Skeleton */}
+          <div className="space-y-6 flex-1">
+            <Skeleton className="h-6 w-1/3 mb-4 rounded-full" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Skeleton className="h-14 w-full rounded-2xl" />
+              <Skeleton className="h-14 w-full rounded-2xl" />
+              <Skeleton className="h-14 w-full rounded-2xl md:col-span-2" />
+            </div>
+          </div>
+
+          {/* Navigation Buttons Skeleton */}
+          <div className="flex justify-between items-center mt-10 pt-6 border-t border-black/5 shrink-0">
+            <Skeleton className="h-10 w-24 rounded-full" />
+            <Skeleton className="h-10 w-32 rounded-full" />
+          </div>
+        </div>
       </div>
     );
   }

@@ -1,108 +1,51 @@
-import { Link } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
 import { StackedSectionWrapper } from '../../components/layout/StackedSectionWrapper';
-import { MandalaElement } from '../../components/ui/MandalaElement';
 import { CloudinaryImage } from '../../components/ui/CloudinaryImage';
+import { Link } from 'react-router-dom';
 
 export function AboutGallery({ galleryPreview }) {
   if (!galleryPreview || galleryPreview.length === 0) return null;
 
   return (
-    <StackedSectionWrapper index={6} isLast={true} bgClass="bg-surface">
-      <section className="py-24 md:py-40 bg-surface border-t border-black/5 relative">
-        <MandalaElement
-          size={600}
-          duration={200}
-          variant={2}
-          className="absolute top-1/2 right-0 opacity-[0.02] pointer-events-none translate-x-1/2"
-          skipFade
-        />
-
-        <div className="max-w-7xl mx-auto px-6 md:px-12 text-center mb-16 md:mb-20">
-          <motion.span
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            className="font-label-sm text-[10px] uppercase tracking-[0.4em] text-primary font-bold mb-4 block"
-          >
-            Visual Stories
-          </motion.span>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="font-headline text-[42px] md:text-[56px] leading-[1.1] tracking-tight"
-          >
-            The Studio Gallery
-          </motion.h2>
+    <StackedSectionWrapper index={5} isLast={true} bgClass="bg-surface">
+      <section className="py-24 md:py-40 relative">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 mb-12 md:mb-16">
+          <div>
+            <span className="font-label-sm text-[10px] uppercase tracking-[0.4em] text-primary font-bold mb-4 block">
+              Portfolio
+            </span>
+            <h2 className="font-headline text-[42px] md:text-[56px] leading-[1.1] tracking-tight">
+              Featured Works
+            </h2>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 md:px-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+          {galleryPreview.slice(0, 4).map((item, i) => (
+            <div
+              key={item._id || i}
+              className="aspect-square rounded-2xl overflow-hidden relative group"
+            >
+              <CloudinaryImage
+                src={item.image || item.url}
+                alt={item.title || 'Gallery item'}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+            </div>
+          ))}
         </div>
 
-        <div className="max-w-[1440px] mx-auto px-6 md:px-12 columns-2 md:columns-3 lg:columns-4 gap-4 md:gap-6">
-          {galleryPreview.map((item, i) => {
-            const dynamicHeight =
-              !item.height || item.height === 'aspect-square'
-                ? i % 4 === 0
-                  ? 'aspect-[2/3]'
-                  : i % 4 === 1
-                    ? 'aspect-square'
-                    : i % 4 === 2
-                      ? 'aspect-[4/5]'
-                      : 'aspect-[3/4]'
-                : item.height;
-
-            return (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{ delay: i * 0.05, duration: 0.6 }}
-                key={item._id || item.id}
-                className="break-inside-avoid mb-4 md:mb-6 rounded-[24px] md:rounded-[40px] overflow-hidden group relative bg-white shadow-sm border border-black/[0.03] cursor-pointer"
-              >
-                <Link
-                  to={`/gallery?id=${item._id || item.id}`}
-                  className="block w-full h-full rounded-[inherit]"
-                >
-                  <div
-                    className={`relative ${dynamicHeight} w-full overflow-hidden rounded-[inherit]`}
-                  >
-                    <CloudinaryImage
-                      src={item.image}
-                      alt={item.title}
-                      className="transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
-                      containerClassName="w-full h-full"
-                      loading="lazy"
-                      width={400}
-                      height={500}
-                    />
-                    <div className="absolute inset-0 bg-primary/20 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                    {/* Overlay Info */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-6 text-center backdrop-blur-[2px] duration-500">
-                      <span className="material-symbols-outlined text-white text-[32px] font-light mb-2 scale-50 group-hover:scale-100 transition-transform duration-500">
-                        visibility
-                      </span>
-                      <p className="text-white font-display text-[16px] md:text-[18px] mb-1">
-                        {item.title}
-                      </p>
-                      <p className="text-white/60 font-label-sm text-[8px] uppercase tracking-widest">
-                        {item.event}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        <div className="text-center mt-16 md:mt-24">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 mt-12 md:mt-16 flex justify-center">
           <Link
             to="/gallery"
-            className="inline-flex items-center justify-center gap-3 px-8 md:px-10 py-4 md:py-5 bg-white border border-black/5 rounded-full font-label-sm text-[10px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em] text-on-surface hover:bg-primary hover:text-white hover:border-primary transition-all duration-500 font-bold shadow-sm hover:shadow-luxury group"
+            className="relative overflow-hidden inline-flex items-center justify-center bg-[#1a1a1a] text-white px-8 py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.2)] font-bold group"
           >
-            Explore Full Portfolio
-            <span className="material-symbols-outlined text-[16px] md:text-[18px] group-hover:translate-x-1 transition-transform">
-              east
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              View Gallery
+              <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform duration-300">
+                arrow_forward
+              </span>
             </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
           </Link>
         </div>
       </section>

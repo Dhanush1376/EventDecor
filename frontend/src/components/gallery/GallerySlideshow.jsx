@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
-import { SearchBar } from '../ui/SearchBar';
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useWishlist } from '../../context/WishlistContext';
@@ -163,7 +162,7 @@ export function GallerySlideshow({
           className="fixed inset-0 z-[1000] bg-white flex items-center justify-center cursor-default"
         >
           <div
-            className="w-full h-full flex flex-col items-center justify-between p-4 md:p-6 cursor-default relative overflow-hidden"
+            className="w-full h-full flex flex-col items-center justify-between p-0 cursor-default relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Preload adjacent images */}
@@ -193,19 +192,6 @@ export function GallerySlideshow({
                 {items.length > 0 ? `${currentIndex + 1} / ${items.length}` : '0 / 0'}
               </span>
 
-              <div className="flex-1 max-w-md h-10">
-                <SearchBar
-                  value={searchQuery}
-                  onChange={onSearchChange}
-                  onCameraClick={() => {
-                    onClose();
-                    navigate('/collections?visual=true');
-                  }}
-                  placeholder="Search themes, colors..."
-                  className="w-full !h-full !rounded-full bg-[#fcfbf9]/90 backdrop-blur-md shadow-sm !px-5 text-[12px] flex items-center border border-black/10 outline-none focus:outline-none"
-                />
-              </div>
-
               <button
                 onClick={onClose}
                 className="w-10 h-10 min-h-0 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors shrink-0"
@@ -215,7 +201,7 @@ export function GallerySlideshow({
             </div>
 
             {/* Main Image Container */}
-            <div className="relative w-full flex-1 flex items-center justify-center overflow-hidden my-3 min-h-0">
+            <div className="relative w-full flex-1 flex items-center justify-center overflow-hidden min-h-0">
               {items.length === 0 ? (
                 <div className="text-center py-20 px-6 max-w-md">
                   <span className="material-symbols-outlined text-[48px] text-[#C4A87C] mb-4 block">
@@ -257,7 +243,7 @@ export function GallerySlideshow({
                         handlePrev();
                       }
                     }}
-                    className="w-full h-full flex items-center justify-center px-4 cursor-grab active:cursor-grabbing"
+                    className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {currentItem?.video ? (
@@ -266,13 +252,13 @@ export function GallerySlideshow({
                         controls
                         playsInline
                         preload="none"
-                        className="max-w-full max-h-full object-contain rounded-none shadow-md"
+                        className="w-full h-full object-contain rounded-none shadow-md"
                       />
                     ) : (
                       <CloudinaryImage
                         src={displayImage}
                         alt={currentItem?.title || ''}
-                        className="max-w-full max-h-full object-contain rounded-none shadow-[0_6px_25px_rgba(0,0,0,0.06)]"
+                        className="w-full h-full object-contain rounded-none shadow-[0_6px_25px_rgba(0,0,0,0.06)]"
                         width={currentItem?.imageWidth || 1200}
                         height={currentItem?.imageHeight || 1200}
                         fetchPriority="high"
@@ -315,15 +301,15 @@ export function GallerySlideshow({
             {/* Bottom Information & Thumbnails Strip */}
             {items.length > 0 && currentItem && (
               <div
-                className="w-full flex flex-col items-center gap-4 px-4 pb-2 shrink-0 z-10"
+                className="w-full flex flex-col items-center gap-3 px-4 pb-2 shrink-0 z-10"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex flex-col items-center gap-3 w-full">
+                <div className="flex flex-col items-center gap-2 w-full">
                   <div className="flex flex-col items-center text-center gap-1.5">
                     <span className="px-3 py-0.5 rounded-full bg-[#FAF6F0] border border-[#C4A87C]/30 text-[#C4A87C] text-[9px] uppercase tracking-[0.2em] font-bold">
                       {currentItem.category}
                     </span>
-                    <h2 className="text-black font-display text-xl md:text-2xl font-normal tracking-tight">
+                    <h2 className="text-black font-display text-lg md:text-xl font-normal tracking-tight m-0">
                       {currentItem.title}
                     </h2>
                   </div>
@@ -335,7 +321,7 @@ export function GallerySlideshow({
                       className="w-9 h-9 min-h-0 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 transition-all shadow-sm active:scale-95 bg-white"
                     >
                       <span
-                        className={`material-symbols-outlined text-[16px] transition-colors ${isWishlisted(currentId) ? 'text-red-500 font-fill' : 'text-black/60'}`}
+                        className={`material-symbols-outlined text-[18px] transition-colors ${isWishlisted(currentId) ? 'text-red-500 font-fill' : 'text-black/60'}`}
                       >
                         favorite
                       </span>
@@ -344,7 +330,7 @@ export function GallerySlideshow({
                     {currentItem.type === 'product' && (
                       <button
                         onClick={() => addItem(currentItem, 1, currentItem.variants?.[0] || null)}
-                        className="h-9 px-5 rounded-full bg-black text-white text-[9px] font-bold tracking-widest uppercase hover:bg-black/80 transition-all shadow-sm active:scale-95 flex items-center gap-2"
+                        className="h-9 px-5 rounded-full bg-black text-white text-[9.5px] font-bold tracking-widest uppercase hover:bg-black/80 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
                       >
                         <span className="material-symbols-outlined text-[14px]">local_mall</span>
                         Shop
@@ -354,10 +340,10 @@ export function GallerySlideshow({
                     <Link
                       to={`/gallery/${currentId}`}
                       onClick={onClose}
-                      className="h-9 px-5 rounded-full border border-black/10 bg-white text-black text-[9px] font-bold tracking-[0.15em] uppercase hover:border-primary transition-all shadow-sm group flex items-center gap-2 active:scale-95"
+                      className="h-9 px-5 rounded-full border border-black/10 bg-white text-black text-[9.5px] font-bold tracking-[0.15em] uppercase hover:border-primary transition-all shadow-sm group flex items-center gap-1.5 active:scale-95"
                     >
                       Details
-                      <span className="material-symbols-outlined text-[12px] group-hover:translate-x-0.5 transition-transform">
+                      <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">
                         east
                       </span>
                     </Link>
@@ -368,7 +354,7 @@ export function GallerySlideshow({
                 <div
                   ref={thumbnailContainerRef}
                   onScroll={handleThumbnailScroll}
-                  className="w-full flex items-center gap-2.5 overflow-x-auto no-scrollbar py-2 snap-x snap-mandatory px-[calc(50vw-24px)] md:px-[calc(50%-20px)] border-t border-black/5 mt-1"
+                  className="w-full flex items-center gap-2.5 overflow-x-auto no-scrollbar py-2 snap-x snap-mandatory px-[calc(50vw-20px)] md:px-[calc(50%-20px)] border-t border-black/5 mt-1"
                 >
                   {items.map((item, idx) => {
                     const isSelected = idx === currentIndex;
@@ -383,10 +369,10 @@ export function GallerySlideshow({
                           setDirection(idx > currentIndex ? 1 : -1);
                           if (onSelect) onSelect(idx);
                         }}
-                        className={`relative shrink-0 w-11 h-11 rounded-lg overflow-hidden border-2 transition-all duration-300 snap-center ${
+                        className={`relative shrink-0 w-10 h-10 rounded-md overflow-hidden transition-all duration-300 snap-center ${
                           isSelected
-                            ? 'border-[#C4A87C] scale-105 shadow-sm'
-                            : 'border-transparent opacity-50 hover:opacity-100'
+                            ? 'opacity-100 scale-110 shadow-md ring-1 ring-black/10'
+                            : 'opacity-40 scale-95 hover:opacity-100 hover:scale-100'
                         }`}
                       >
                         {isNearby ? (

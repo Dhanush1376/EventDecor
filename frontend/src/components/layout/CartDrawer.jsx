@@ -158,10 +158,10 @@ export function CartDrawer({ isOpen, onClose }) {
                   <Link
                     to="/collections"
                     onClick={onClose}
-                    className="group inline-flex items-center gap-2 text-white bg-[#1a1a1a] hover:bg-black transition-all px-6 py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.2em] font-bold shadow-md hover:shadow-xl active:scale-[0.98]"
+                    className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-1.5 font-label text-[10.5px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
                   >
                     <span>Explore Collections</span>
-                    <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
+                    <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
                       arrow_forward
                     </span>
                   </Link>
