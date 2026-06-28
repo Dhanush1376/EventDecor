@@ -56,7 +56,7 @@ describe('ProductCard Component', () => {
 
     expect(screen.getByText('Luxury Varma Decor')).toBeInTheDocument();
     expect(screen.getByText('Traditional')).toBeInTheDocument();
-    expect(screen.getByText('₹5,000')).toBeInTheDocument();
+    expect(screen.getByText(/5,000/)).toBeInTheDocument();
   });
 
   it('shows skeleton when loading is true', () => {

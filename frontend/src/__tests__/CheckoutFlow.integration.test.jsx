@@ -206,7 +206,7 @@ describe('Checkout Flow Integration', () => {
 
     api.get.mockImplementation((url) => {
       if (url === '/users/addresses') {
-        return Promise.resolve({ data: [] });
+        return Promise.resolve({ data: { success: true, data: [] } });
       }
       if (url === '/coupons') {
         return Promise.resolve({ data: [] });
