@@ -11,6 +11,26 @@ jest.mock('../models/Product');
 jest.mock('../services/InventoryService');
 jest.mock('../utils/payment/RazorpayGateway');
 jest.mock('../models/OutboxEvent');
+jest.mock('../models/StoreSettings', () => ({
+  findOne: jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue(null),
+  }),
+  create: jest.fn().mockResolvedValue({
+    orders: { maxQuantityPerItem: 10, maxItemsPerOrder: 50 },
+    shipping: { freeShippingThreshold: 5000, deliveryCharge: 100 },
+    payments: { codFee: 50 },
+  }),
+}));
+jest.mock('../services/StoreSettingsService', () => ({
+  __esModule: true,
+  default: {
+    getSettings: jest.fn().mockResolvedValue({
+      orders: { maxQuantityPerItem: 10, maxItemsPerOrder: 50 },
+      shipping: { freeShippingThreshold: 5000, deliveryCharge: 100 },
+      payments: { codFee: 50 },
+    }),
+  },
+}));
 jest.mock('../services/orders/OrderIdempotencyManager', () => ({
   OrderIdempotencyManager: {
     acquireLock: jest.fn().mockResolvedValue(true),
