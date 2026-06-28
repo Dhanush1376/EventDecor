@@ -7,7 +7,7 @@ const policies = [
   {
     title: 'Privacy Policy',
     slug: 'privacy-policy',
-    status: 'published' as 'published',
+    status: 'published' as const,
     seoMetadata: {
       title: 'Privacy Policy - Siri Arts & Crafts',
       description: 'Learn how Siri Arts & Crafts collects, uses, and protects your personal data.',
@@ -22,7 +22,7 @@ const policies = [
   {
     title: 'Terms & Conditions',
     slug: 'terms-and-conditions',
-    status: 'published' as 'published',
+    status: 'published' as const,
     seoMetadata: {
       title: 'Terms & Conditions - Siri Arts & Crafts',
       description:
@@ -36,7 +36,7 @@ const policies = [
   {
     title: 'Shipping & Delivery Policy',
     slug: 'shipping-policy',
-    status: 'published' as 'published',
+    status: 'published' as const,
     seoMetadata: {
       title: 'Shipping & Delivery Policy - Siri Arts & Crafts',
       description:
@@ -52,7 +52,7 @@ const policies = [
   {
     title: 'Return Policy',
     slug: 'return-policy',
-    status: 'published' as 'published',
+    status: 'published' as const,
     seoMetadata: {
       title: 'Return Policy - Siri Arts & Crafts',
       description: 'Our policy regarding returning standard retail products.',
@@ -67,7 +67,7 @@ const policies = [
   {
     title: 'Exchange Policy',
     slug: 'exchange-policy',
-    status: 'published' as 'published',
+    status: 'published' as const,
     seoMetadata: {
       title: 'Exchange Policy - Siri Arts & Crafts',
       description: 'Information on how to exchange items purchased from our store.',
@@ -82,7 +82,7 @@ const policies = [
   {
     title: 'Refund Policy',
     slug: 'refund-policy',
-    status: 'published' as 'published',
+    status: 'published' as const,
     seoMetadata: {
       title: 'Refund Policy - Siri Arts & Crafts',
       description: 'Guidelines on how and when refunds are processed.',
@@ -97,7 +97,7 @@ const policies = [
   {
     title: 'Cancellation Policy',
     slug: 'cancellation-policy',
-    status: 'published' as 'published',
+    status: 'published' as const,
     seoMetadata: {
       title: 'Cancellation Policy - Siri Arts & Crafts',
       description: 'Cancellation terms for orders, event bookings, and rentals.',

@@ -38,7 +38,7 @@ async function migratePolicies() {
       try {
         const parsed = JSON.parse(policy.content);
         if (Array.isArray(parsed)) isJson = true;
-      } catch (e) {}
+      } catch (_e) {}
 
       if (isJson) {
         console.log(`Policy ${policy.slug} is already JSON. Skipping.`);
