@@ -81,7 +81,7 @@ export function ProductCoupons({ product }) {
         </span>
       </div>
 
-      <div className="flex sm:grid sm:grid-cols-3 gap-3 overflow-x-auto sm:overflow-x-visible no-scrollbar pb-3 sm:pb-0 snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="flex sm:grid sm:grid-cols-3 gap-3 overflow-x-auto sm:overflow-x-visible no-scrollbar pb-3 sm:pb-0 snap-x snap-mandatory -mx-[18px] pl-[18px] pr-[18px] scroll-pl-[18px] sm:mx-0 sm:px-0">
         {initialCoupons.map((coupon, idx) => (
           <div
             key={coupon._id || coupon.id || idx}

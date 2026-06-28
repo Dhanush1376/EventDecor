@@ -19,7 +19,7 @@ export function SettingsSection() {
     if (user) {
       setPrefsForm({
         email: user.notificationPreferences?.email !== false,
-        marketing: user.notificationPreferences?.marketing !== false,
+        marketing: user.notificationPreferences?.categories?.promotions !== false,
         theme: user.accountPreferences?.theme || 'light',
         language: user.accountPreferences?.language || 'en',
       });
@@ -33,7 +33,7 @@ export function SettingsSection() {
       const payload = {
         notificationPreferences: {
           email: prefsForm.email,
-          marketing: prefsForm.marketing,
+          categories: { promotions: prefsForm.marketing },
         },
         accountPreferences: {
           theme: prefsForm.theme,
@@ -129,23 +129,21 @@ export function SettingsSection() {
             </div>
           </div>
 
-          <div className="flex justify-end pt-4">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+          <div className="pt-6 flex justify-end">
+            <button
               disabled={isPreferencesSaving}
               type="submit"
-              className="btn-primary px-6 py-2.5 rounded-full font-bold uppercase tracking-widest text-[9px] inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+              className="bg-[#2A2927] hover:bg-black text-white px-6 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPreferencesSaving ? (
-                <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
+                <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-[13px]">tune</span>
-                  <span>Save Preferences</span>
+                  <span className="material-symbols-outlined text-[16px]">tune</span>
+                  <span>SAVE PREFERENCES</span>
                 </>
               )}
-            </motion.button>
+            </button>
           </div>
         </form>
       </div>

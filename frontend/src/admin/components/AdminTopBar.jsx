@@ -81,7 +81,7 @@ export function AdminTopBar() {
           <button
             aria-label="Open menu"
             onClick={toggleMobileSidebar}
-            className="lg:hidden admin-btn-icon min-h-0 p-2"
+            className="lg:!hidden admin-btn-icon min-h-0 p-2"
           >
             <span className="material-symbols-outlined text-[20px]">menu</span>
           </button>
@@ -89,7 +89,7 @@ export function AdminTopBar() {
           {/* Desktop sidebar toggle */}
           <button
             onClick={toggleSidebar}
-            className="hidden lg:flex admin-btn-icon min-h-0 p-2"
+            className="!hidden lg:!inline-flex admin-btn-icon min-h-0 p-2"
             title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             <span className="material-symbols-outlined text-[20px]">

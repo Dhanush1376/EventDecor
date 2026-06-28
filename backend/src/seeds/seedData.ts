@@ -699,13 +699,13 @@ const galleryInspirations = [
 const seed = async () => {
   // 1. Seed Protection & Read-Only Production Mode
   if (process.env.NODE_ENV === 'production') {
-    logger.error('❌ FATAL: seedData.ts cannot be run in production mode.');
+    logger.error('FATAL: seedData.ts cannot be run in production mode.');
     process.exit(1);
   }
 
   const MONGO_URI = process.env.MONGO_URI || '';
   if (MONGO_URI.includes('mongodb.net') || MONGO_URI.includes('mongodb+srv')) {
-    logger.error('❌ FATAL: seedData.ts cannot be run against an Atlas cluster.');
+    logger.error('FATAL: seedData.ts cannot be run against an Atlas cluster.');
     process.exit(1);
   }
 

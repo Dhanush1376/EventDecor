@@ -35,6 +35,7 @@ const WIZARD_STEPS = [
   { id: 'variants', label: 'Attributes & Variants', icon: 'tune' },
   { id: 'seo', label: 'SEO Settings', icon: 'search' },
   { id: 'pricing', label: 'Pricing & Stock', icon: 'payments' },
+  { id: 'returns', label: 'Returns & Policy', icon: 'assignment_return' },
   { id: 'review', label: 'Review & Publish', icon: 'verified' },
 ];
 

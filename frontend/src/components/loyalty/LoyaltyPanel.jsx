@@ -468,12 +468,17 @@ export function LoyaltyPanel() {
                       </span>
 
                       {!data.coupons || data.coupons.length === 0 ? (
-                        <div className="text-center py-10 space-y-2">
-                          <span className="material-symbols-outlined text-secondary/40 text-4xl">
-                            local_activity
-                          </span>
-                          <p className="text-xs font-semibold text-secondary/70">
-                            No coupons available right now.
+                        <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[40vh] my-4">
+                          <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
+                            <span className="material-symbols-outlined text-[20px]">
+                              local_activity
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
+                            No Active Coupons
+                          </h3>
+                          <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px]">
+                            There are currently no promotional vouchers available. Check back later!
                           </p>
                         </div>
                       ) : (
@@ -622,9 +627,16 @@ export function LoyaltyPanel() {
             })}
           </div>
         ) : (
-          <div className="text-center py-8 text-[11px] text-secondary italic">
-            No transactions found. Make purchases, write reviews, or invite friends to accumulate
-            Siri Cash!
+          <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[40vh] mt-4">
+            <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
+              <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+            </div>
+            <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
+              No Transactions Found
+            </h3>
+            <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px]">
+              Make purchases, write reviews, or invite friends to accumulate Siri Cash!
+            </p>
           </div>
         )}
       </div>

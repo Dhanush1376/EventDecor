@@ -127,6 +127,32 @@ export class PaymentRefundService {
         { $set: { status: 'completed', razorpayRefundId: rzpRefund.id } },
       );
       logger.info(`[REFUND] Successfully processed refund ${refundRecord._id} via Razorpay`);
+
+      // Update Order payment status if applicable
+      if (refundRecord.entityType === 'Order') {
+        const Order = require('../models/Order').default;
+        const newStatus = refundRecord.isPartial ? 'partially_refunded' : 'refunded';
+        await Order.findByIdAndUpdate(refundRecord.entityId, { paymentStatus: newStatus });
+      }
+
+      // Emit refund socket event
+      const { emitAdminNotification, emitUserEvent } = require('../socket');
+      const payload = {
+        refundId: refundRecord._id,
+        status: 'completed',
+        amount: refundRecord.amount,
+      };
+      if (refundRecord.entityType === 'Order') {
+        const Order = require('../models/Order').default;
+        const order = await Order.findById(refundRecord.entityId);
+        if (order) emitUserEvent(order.user.toString(), 'refund:status_updated', payload);
+      }
+      emitAdminNotification({
+        type: 'refund_status',
+        title: 'Refund Completed',
+        message: `Refund for ${refundRecord.entityType} completed`,
+        data: payload,
+      });
     } catch (err: any) {
       logger.error(`[REFUND] Error processing refund ${refundRecord._id}:`, err);
 
@@ -237,6 +263,30 @@ export class PaymentRefundService {
         refundRecord.razorpayRefundId = razorpayRefundId;
         await refundRecord.save({ session });
         logger.info(`[REFUND WEBHOOK] Refund ${refundRecord._id} marked as completed`);
+
+        if (refundRecord.entityType === 'Order') {
+          const Order = require('../models/Order').default;
+          const newStatus = refundRecord.isPartial ? 'partially_refunded' : 'refunded';
+          await Order.findByIdAndUpdate(
+            refundRecord.entityId,
+            { paymentStatus: newStatus },
+            { session },
+          );
+          const order = await Order.findById(refundRecord.entityId).session(session);
+          const { emitAdminNotification, emitUserEvent } = require('../socket');
+          const payload = {
+            refundId: refundRecord._id,
+            status: 'completed',
+            amount: refundRecord.amount,
+          };
+          if (order) emitUserEvent(order.user.toString(), 'refund:status_updated', payload);
+          emitAdminNotification({
+            type: 'refund_status',
+            title: 'Refund Completed',
+            message: `Refund for ${refundRecord.entityType} completed via webhook`,
+            data: payload,
+          });
+        }
       } else if (event === 'refund.failed') {
         refundRecord.status = 'failed';
         refundRecord.errorDetails = 'Failed via Razorpay webhook';

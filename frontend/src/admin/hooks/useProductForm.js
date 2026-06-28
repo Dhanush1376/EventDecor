@@ -102,6 +102,14 @@ export function useProductForm({ id, isEditMode }) {
         maxLength: 500,
         helperText: '',
       },
+      returnSettings: {
+        isReturnable: false,
+        returnWindowDays: 7,
+        restockingFeePercentage: 0,
+        isExchangeable: false,
+        exchangeWindowDays: 7,
+        requiresInspection: true,
+      },
     }),
     [],
   );
@@ -202,6 +210,14 @@ export function useProductForm({ id, isEditMode }) {
                 placeholder: 'Enter customization details',
                 maxLength: 500,
                 helperText: '',
+              },
+              returnSettings: p.returnSettings || {
+                isReturnable: false,
+                returnWindowDays: 7,
+                restockingFeePercentage: 0,
+                isExchangeable: false,
+                exchangeWindowDays: 7,
+                requiresInspection: true,
               },
             });
             if (p.rentalEnabled) setShowRentalSettings(true);

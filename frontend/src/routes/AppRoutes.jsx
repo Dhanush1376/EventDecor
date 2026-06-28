@@ -144,9 +144,9 @@ const AdminInquiries = lazy(() =>
 const AdminCustomers = lazy(() =>
   import('../admin/pages/AdminCustomers').then((m) => ({ default: m.AdminCustomers })),
 );
-const AdminCustomerProfile = lazy(() =>
-  import('../admin/pages/AdminCustomerProfile').then((m) => ({ default: m.AdminCustomerProfile })),
-);
+const AdminCustomerIntelligence = lazy(() => import('../admin/pages/AdminCustomerIntelligence'));
+const AdminExecutiveDashboard = lazy(() => import('../admin/pages/ExecutiveDashboard'));
+const AdminCustomerProfile = lazy(() => import('../admin/pages/CustomerProfile360'));
 const AdminGallery = lazy(() =>
   import('../admin/pages/AdminGallery').then((m) => ({ default: m.AdminGallery })),
 );
@@ -235,6 +235,17 @@ const AdminVisualSearch = lazy(() =>
   import('../admin/pages/AdminVisualSearch').then((m) => ({ default: m.AdminVisualSearch })),
 );
 const AdminServiceAreas = lazy(() => import('../admin/pages/AdminServiceAreas'));
+
+// Returns & Exchanges (Admin)
+const AdminReturnDashboard = lazy(() => import('../admin/pages/returns/AdminReturnDashboard'));
+const AdminReturnRequests = lazy(() => import('../admin/pages/returns/AdminReturnRequests'));
+const AdminReturnDetail = lazy(() => import('../admin/pages/returns/AdminReturnDetail'));
+const AdminExchangeRequests = lazy(() => import('../admin/pages/returns/AdminExchangeRequests'));
+const AdminRefundDashboard = lazy(() => import('../admin/pages/returns/AdminRefundDashboard'));
+const AdminPickupManagement = lazy(() => import('../admin/pages/returns/AdminPickupManagement'));
+const AdminReturnAnalytics = lazy(() => import('../admin/pages/returns/AdminReturnAnalytics'));
+const AdminFraudDetection = lazy(() => import('../admin/pages/returns/AdminFraudDetection'));
+const AdminReturnSettings = lazy(() => import('../admin/pages/returns/AdminReturnSettings'));
 
 export function AppRoutes() {
   return (
@@ -387,6 +398,8 @@ export function AppRoutes() {
               <Route path="service-areas" element={<AdminServiceAreas />} />
               <Route path="custom-orders" element={<AdminInquiries />} />
               <Route path="customers" element={<AdminCustomers />} />
+              <Route path="executive" element={<AdminExecutiveDashboard />} />
+              <Route path="customers/intelligence" element={<AdminCustomerIntelligence />} />
               <Route path="customers/:customerId" element={<AdminCustomerProfile />} />
               <Route path="gallery" element={<AdminGallery />} />
               <Route path="gallery/add" element={<AdminAddGalleryItem />} />
@@ -416,6 +429,16 @@ export function AppRoutes() {
               <Route path="system-users" element={<AdminSystemUsers />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="visual-search" element={<AdminVisualSearch />} />
+
+              <Route path="returns" element={<AdminReturnDashboard />} />
+              <Route path="returns/requests" element={<AdminReturnRequests />} />
+              <Route path="returns/requests/:id" element={<AdminReturnDetail />} />
+              <Route path="returns/exchanges" element={<AdminExchangeRequests />} />
+              <Route path="returns/refunds" element={<AdminRefundDashboard />} />
+              <Route path="returns/pickups" element={<AdminPickupManagement />} />
+              <Route path="returns/analytics" element={<AdminReturnAnalytics />} />
+              <Route path="returns/fraud" element={<AdminFraudDetection />} />
+              <Route path="returns/settings" element={<AdminReturnSettings />} />
             </Route>
           </Routes>
         </Suspense>

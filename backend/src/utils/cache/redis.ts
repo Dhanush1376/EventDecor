@@ -2,8 +2,11 @@ import { createClient } from 'redis';
 export type RedisClientType = ReturnType<typeof createClient>;
 import * as Sentry from '@sentry/node';
 import logger from '../../config/logger';
-import { AlertingService } from '../../services/AlertingService';
 
+export let redisAlertHandler: (title: string, details: any) => Promise<void> = async () => {};
+export const setRedisAlertHandler = (handler: typeof redisAlertHandler) => {
+  redisAlertHandler = handler;
+};
 const getRedisUrl = () => process.env.REDIS_URL?.trim();
 const isTlsRedis = () => {
   const url = getRedisUrl();
@@ -42,7 +45,7 @@ const createRedisConfig = () => {
       }
 
       if (isProduction && retries > 10 && retries % 10 === 0) {
-        AlertingService.databaseAlert('Redis Reconnection Loop', {
+        redisAlertHandler('Redis Reconnection Loop', {
           error: `Redis has been trying to reconnect for ${retries} attempts.`,
         }).catch((e) => logger.error('Alert failed:', e));
       }
@@ -88,7 +91,7 @@ export const initRedis = async (): Promise<void> => {
               `[REDIS ${name}] Upstash Free Limit Exceeded. Gracefully disconnecting to prevent reconnect loops.`,
             );
             if (process.env.NODE_ENV === 'production') {
-              AlertingService.databaseAlert('Redis Max Limit Exceeded', {
+              redisAlertHandler('Redis Max Limit Exceeded', {
                 error: 'Upstash Free Limit Exceeded, disconnecting Redis.',
               }).catch((e) => logger.error('Alert failed:', e));
             }
@@ -99,7 +102,7 @@ export const initRedis = async (): Promise<void> => {
         } else if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
           logger.warn(`[REDIS ${name}] Transient network issue (${err.code}).`);
           if (process.env.NODE_ENV === 'production' && !(global as any).redisDisconnectAlerted) {
-            AlertingService.databaseAlert('Redis Disconnected', {
+            redisAlertHandler('Redis Disconnected', {
               error: err.message,
               code: err.code,
             }).catch(() => {});
@@ -134,9 +137,9 @@ export const initRedis = async (): Promise<void> => {
 
     await Promise.all([redisClient.connect(), pubClient.connect(), subClient.connect()]);
 
-    logger.info(`✅ Redis Clients Connected successfully${isTlsRedis() ? ' (TLS)' : ''}`);
+    logger.info(`Redis Clients Connected successfully${isTlsRedis() ? '(TLS)' : ''}`);
   } catch (err: any) {
-    logger.error(`🚨 [REDIS CRITICAL] Failed to connect on startup: ${err.message}`);
+    logger.error(`[REDIS CRITICAL] Failed to connect on startup: ${err.message}`);
     const isProduction = process.env.NODE_ENV === 'production';
     const requireRedis = process.env.REQUIRE_REDIS === 'true';
     const multiInstance = resolveMultiInstance();
@@ -147,7 +150,7 @@ export const initRedis = async (): Promise<void> => {
     } else {
       logger.warn('Running without Redis fallback (local dev).');
       if (isProduction) {
-        AlertingService.databaseAlert('Redis Fallback Mode', {
+        redisAlertHandler('Redis Fallback Mode', {
           error: 'Redis initialization failed. Running in memory fallback mode.',
         }).catch((e) => logger.error('Alert failed:', e));
       }

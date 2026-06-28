@@ -9,7 +9,8 @@ import ApiError from '../../utils/ApiError';
 import logger from '../../config/logger';
 import storeSettingsService from '../../services/StoreSettingsService';
 import WalletTransaction from '../../models/WalletTransaction';
-import { debitWalletBalance, creditWalletBalance } from '../../utils/payment/walletMutations';
+import { debitWalletBalance } from '../../utils/payment/walletMutations';
+import PaymentAttempt from '../../models/PaymentAttempt';
 import { LogisticsService } from '../../services/logisticsService';
 import { OrderIdempotencyManager } from './OrderIdempotencyManager';
 import OutboxEvent from '../../models/OutboxEvent';
@@ -132,48 +133,36 @@ export class OrderCheckoutService {
 
       let walletDeducted = false;
       let walletDeduction = 0;
-      let user: any;
       let order: any;
 
       let discount = 0;
       let couponValid = false;
 
+      // Only VALIDATE the coupon here, DO NOT increment usedCount yet (unless COD)
+      let couponDoc: any = null;
       if (couponCode) {
-        const coupon = await Coupon.findOneAndUpdate(
-          {
-            code: couponCode.toUpperCase(),
-            isActive: true,
-            $or: [{ usageLimit: null }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }],
-          },
-          {
-            $inc: { usedCount: 1 },
-            $push: { usedBy: { userId, orderId: pendingOrderId } },
-          },
-          { returnDocument: 'after', session },
-        );
+        couponDoc = await Coupon.findOne({
+          code: couponCode.toUpperCase(),
+          isActive: true,
+          $or: [{ usageLimit: null }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }],
+        }).session(session);
 
-        if (coupon && new Date() <= coupon.expiryDate && subtotal >= coupon.minOrderAmount) {
+        if (
+          couponDoc &&
+          new Date() <= couponDoc.expiryDate &&
+          subtotal >= couponDoc.minOrderAmount
+        ) {
           couponValid = true;
-          if (coupon.discountType === 'percentage') {
-            discount = (subtotal * coupon.discountValue) / 100;
-            if (coupon.maxDiscount && discount > coupon.maxDiscount) {
-              discount = coupon.maxDiscount;
+          if (couponDoc.discountType === 'percentage') {
+            discount = (subtotal * couponDoc.discountValue) / 100;
+            if (couponDoc.maxDiscount && discount > couponDoc.maxDiscount) {
+              discount = couponDoc.maxDiscount;
             }
           } else {
-            discount = coupon.discountValue;
+            discount = couponDoc.discountValue;
           }
           discount = Math.round(discount);
         } else {
-          if (coupon) {
-            await Coupon.findOneAndUpdate(
-              { _id: coupon._id, 'usedBy.orderId': pendingOrderId, usedCount: { $gt: 0 } },
-              {
-                $inc: { usedCount: -1 },
-                $pull: { usedBy: { orderId: pendingOrderId } },
-              },
-              { session },
-            );
-          }
           throw new ApiError(400, 'Coupon is invalid, expired, or usage limit reached');
         }
       }
@@ -185,7 +174,7 @@ export class OrderCheckoutService {
 
       const shippingFee =
         subtotal > settings.shipping.freeShippingThreshold ? 0 : settings.shipping.deliveryCharge;
-      user = await User.findById(userId).session(session);
+      const user = await User.findById(userId).session(session);
       const preliminaryTotal = Math.max(
         0,
         subtotal + shippingFee + codFee + depositTotal - discount,
@@ -194,34 +183,12 @@ export class OrderCheckoutService {
       if (useWallet && user) {
         const potentialWalletDeduction = Math.min(preliminaryTotal, user.walletBalance || 0);
         if (potentialWalletDeduction > 0) {
-          const updatedUser = await debitWalletBalance(userId, potentialWalletDeduction, session);
-          if (updatedUser) {
-            walletDeduction = potentialWalletDeduction;
-            walletDeducted = true;
-            user = updatedUser;
-          } else {
-            throw new ApiError(400, 'Insufficient wallet balance.');
-          }
+          walletDeduction = potentialWalletDeduction;
+          walletDeducted = true;
         }
       }
 
       const total = preliminaryTotal - walletDeduction;
-
-      if (walletDeducted && walletDeduction > 0 && user) {
-        await WalletTransaction.create(
-          [
-            {
-              userId: user._id,
-              type: 'debit',
-              amount: walletDeduction,
-              source: 'checkout_redeem',
-              description: `Redeemed Siri Cash at checkout`,
-              status: 'active',
-            },
-          ],
-          { session },
-        );
-      }
 
       const randomSeq = crypto.randomBytes(3).toString('hex').toUpperCase();
       const invoiceNumber = `INV-${new Date().getFullYear()}-${randomSeq}`;
@@ -233,6 +200,36 @@ export class OrderCheckoutService {
       const qrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
 
       if (isCod) {
+        // FOR COD: Perform all actual database mutations (Coupon, Wallet, Order)
+        if (couponValid && couponDoc) {
+          await Coupon.findByIdAndUpdate(
+            couponDoc._id,
+            {
+              $inc: { usedCount: 1 },
+              $push: { usedBy: { userId, orderId: pendingOrderId } },
+            },
+            { session },
+          );
+        }
+
+        if (walletDeducted && walletDeduction > 0) {
+          const updatedUser = await debitWalletBalance(userId, walletDeduction, session);
+          if (!updatedUser) throw new ApiError(400, 'Insufficient wallet balance.');
+          await WalletTransaction.create(
+            [
+              {
+                userId: userId,
+                type: 'debit',
+                amount: walletDeduction,
+                source: 'checkout_redeem',
+                description: `Redeemed Siri Cash at checkout`,
+                status: 'active',
+              },
+            ],
+            { session },
+          );
+        }
+
         order = new Order({
           _id: pendingOrderId,
           user: userId,
@@ -323,77 +320,9 @@ export class OrderCheckoutService {
         );
         return resultCod;
       } else {
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-        // ENTERPRISE FIX: Create Order FIRST, then Razorpay order.
-        //
-        // Previously: Razorpay order created OUTSIDE the transaction.
-        // If the process crashed between Razorpay.create() and Order.save(),
-        // a real Razorpay order existed with no matching DB record â€” the
-        // customer's money could be charged with no order to fulfill.
-        //
-        // Now: Save Order in 'pending' state first (inside transaction),
-        // commit, then create Razorpay order, then atomically link them.
-        // If Razorpay fails, the Order exists for reconciliation recovery.
-        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-        order = new Order({
-          _id: pendingOrderId,
-          user: userId,
-          items: orderItems,
-          shippingAddress,
-          orderType: 'purchase',
-          depositTotal,
-          subtotal,
-          shippingFee,
-          discount,
-          codFee: 0,
-          walletDeduction,
-          total,
-          couponCode: couponValid ? couponCode.toUpperCase() : undefined,
-          paymentMethod: 'razorpay',
-          paymentStatus: 'pending',
-          orderStatus: 'Payment Pending',
-          reservationIds,
-          statusHistory: [
-            {
-              status: 'Payment Pending',
-              note: 'Order initiated via Checkout',
-              updatedBy: 'system',
-            },
-          ],
-          invoiceNumber,
-          trackingNumber,
-          courierPartner,
-          weight: 1.8,
-          dimensions: { length: 30, width: 20, height: 15 },
-          packageType: 'Standard Box',
-          barcodeData,
-          qrCodeData,
-          notes,
-          needByDate,
-          idempotencyKey,
-        });
-
-        await order.save({ session });
-        await OutboxEvent.create(
-          [
-            {
-              aggregateId: order._id.toString(),
-              aggregateType: 'Order',
-              eventType: 'OrderInitiated',
-              payload: {
-                orderId: order._id.toString(),
-                userId: userId,
-                type: 'online',
-              },
-            },
-          ],
-          { session },
-        );
-
-        await session.commitTransaction();
-
-        // â”€â”€ Razorpay Order Creation (OUTSIDE transaction, AFTER Order is persisted) â”€â”€
+        // FOR RAZORPAY: Do NOT save the Order, do NOT increment coupon usage, do NOT deduct wallet.
+        // We only reserve the inventory (already done above with TTL) and create a PaymentAttempt.
+        await session.commitTransaction(); // Commit the inventory reservations so the TTL applies
 
         const options = {
           amount: Math.round(total * 100),
@@ -405,99 +334,54 @@ export class OrderCheckoutService {
         try {
           razorpayOrder = await RazorpayGateway.createOrder(options);
         } catch (err: any) {
-          logger.error('Razorpay order creation failed. Initiating compensation flow...', err);
-
-          // Compensation flow
-          try {
-            // 1. Update order status to failed
-            await Order.findByIdAndUpdate(pendingOrderId, {
-              orderStatus: 'Failed',
-              paymentStatus: 'failed',
-              $push: {
-                statusHistory: {
-                  status: 'Failed',
-                  note: 'Razorpay order creation failed',
-                  updatedBy: 'system',
-                },
-              },
-            });
-
-            // 2. Refund wallet if used
-            if (walletDeducted && walletDeduction > 0 && user) {
-              await creditWalletBalance(userId, walletDeduction);
-              await WalletTransaction.create({
-                userId: user._id,
-                type: 'credit',
-                amount: walletDeduction,
-                source: 'refund',
-                description: `Refund for failed checkout (Gateway error)`,
-                status: 'active',
-              });
-            }
-
-            // 3. Rollback coupon usage
-            if (couponValid && couponCode) {
-              await Coupon.findOneAndUpdate(
-                { code: couponCode.toUpperCase() },
-                {
-                  $inc: { usedCount: -1 },
-                  $pull: { usedBy: { orderId: pendingOrderId } },
-                },
-              );
-            }
-
-            // 4. Release inventory reservations
-            for (const resId of reservationIds) {
-              await InventoryService.cancelReservation(resId.toString(), undefined);
-            }
-          } catch (compErr: any) {
-            logger.error(`[CRITICAL] Compensation failed for Order ${pendingOrderId}:`, compErr);
-            const { AlertingService } = require('../AlertingService');
-            await AlertingService.paymentFailure('Checkout Compensation Failure', {
-              orderId: pendingOrderId.toString(),
-              error: compErr.message,
-            });
+          logger.error('Razorpay order creation failed.', err);
+          // Release reservations manually since we failed instantly
+          for (const resId of reservationIds) {
+            await InventoryService.cancelReservation(resId.toString(), undefined);
           }
-
           throw new ApiError(
             502,
             'Payment gateway temporarily unavailable. Please try checking out again.',
           );
         }
 
-        // Atomically link Razorpay order ID to the saved Order (with retry loop)
-        let linkRetries = 3;
-        let isLinked = false;
-        while (linkRetries > 0 && !isLinked) {
-          try {
-            await Order.findByIdAndUpdate(pendingOrderId, {
-              $set: { razorpayOrderId: razorpayOrder.id },
-            });
-            isLinked = true;
-          } catch (linkErr: any) {
-            linkRetries--;
-            if (linkRetries === 0) {
-              logger.error(
-                `[CRITICAL] Failed to link Razorpay Order ID ${razorpayOrder.id} to Order ${pendingOrderId} after 3 attempts:`,
-                linkErr,
-              );
-              // Order exists but lacks razorpayOrderId.
-              // If customer pays, webhook won't find the order.
+        const attemptData = {
+          pendingOrderId,
+          userId,
+          orderItems,
+          shippingAddress,
+          orderType: 'purchase',
+          depositTotal,
+          subtotal,
+          shippingFee,
+          discount,
+          codFee: 0,
+          walletDeduction,
+          total,
+          couponCode: couponValid ? couponCode.toUpperCase() : undefined,
+          paymentMethod: 'razorpay',
+          reservationIds,
+          invoiceNumber,
+          trackingNumber,
+          courierPartner,
+          barcodeData,
+          qrCodeData,
+          notes,
+          needByDate,
+          idempotencyKey,
+        };
 
-              const { AlertingService } = require('../AlertingService');
-              await AlertingService.paymentFailure('Order Link Failure', {
-                orderId: pendingOrderId.toString(),
-                razorpayOrderId: razorpayOrder.id,
-                error: linkErr.message,
-              });
-            } else {
-              await new Promise((res) => setTimeout(res, 500));
-            }
-          }
-        }
+        await PaymentAttempt.create({
+          razorpayOrderId: razorpayOrder.id,
+          userId: userId,
+          type: 'purchase',
+          status: 'initiated',
+          orderData: attemptData,
+        });
 
         const resultOnline = {
-          order: { ...order.toObject(), razorpayOrderId: razorpayOrder.id },
+          // Send back a placeholder object so frontend doesn't crash if it reads order._id
+          order: { _id: pendingOrderId, total, idempotencyKey, razorpayOrderId: razorpayOrder.id },
           razorpayOrder: {
             id: razorpayOrder.id,
             amount: razorpayOrder.amount,

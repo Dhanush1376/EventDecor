@@ -4,6 +4,8 @@ import { orderService } from '../services/domainServices';
 import rentalService from '../services/api/rentalService';
 import { useUserAddresses, useRecentlyViewed } from './useUserQueries';
 
+const EMPTY_ARRAY = [];
+
 /**
  * useDashboardData - retrieves orders, rentals, addresses, and recently viewed in parallel using TanStack Query.
  */
@@ -47,11 +49,43 @@ export function useDashboardData(userId) {
     queryClient.invalidateQueries({ queryKey: ['user', 'recentlyViewed'] });
   }, [queryClient, userId]);
 
+  const setOrders = useCallback(
+    (data) => {
+      if (userId) {
+        queryClient.setQueryData(['dashboard', 'orders', userId], data);
+      }
+    },
+    [queryClient, userId],
+  );
+
+  const setRentals = useCallback(
+    (data) => {
+      if (userId) {
+        queryClient.setQueryData(['dashboard', 'rentals', userId], data);
+      }
+    },
+    [queryClient, userId],
+  );
+
+  const setAddresses = useCallback(
+    (data) => {
+      queryClient.setQueryData(['user', 'addresses'], data);
+    },
+    [queryClient],
+  );
+
+  const setRecentlyViewed = useCallback(
+    (data) => {
+      queryClient.setQueryData(['user', 'recentlyViewed'], data);
+    },
+    [queryClient],
+  );
+
   return {
-    orders: ordersQuery.data || [],
-    rentals: rentalsQuery.data || [],
-    addresses: addressesQuery.data || [],
-    recentlyViewed: recentlyViewedQuery.data || [],
+    orders: ordersQuery.data || EMPTY_ARRAY,
+    rentals: rentalsQuery.data || EMPTY_ARRAY,
+    addresses: addressesQuery.data || EMPTY_ARRAY,
+    recentlyViewed: recentlyViewedQuery.data || EMPTY_ARRAY,
     isOrdersLoading: ordersQuery.isLoading,
     isRentalsLoading: rentalsQuery.isLoading,
     isAddressesLoading: addressesQuery.isLoading,
@@ -60,21 +94,9 @@ export function useDashboardData(userId) {
       ordersQuery.error || rentalsQuery.error || addressesQuery.error || recentlyViewedQuery.error,
     refetch,
     // Keep setter functions for signature compatibility
-    setOrders: (data) => {
-      if (userId) {
-        queryClient.setQueryData(['dashboard', 'orders', userId], data);
-      }
-    },
-    setRentals: (data) => {
-      if (userId) {
-        queryClient.setQueryData(['dashboard', 'rentals', userId], data);
-      }
-    },
-    setAddresses: (data) => {
-      queryClient.setQueryData(['user', 'addresses'], data);
-    },
-    setRecentlyViewed: (data) => {
-      queryClient.setQueryData(['user', 'recentlyViewed'], data);
-    },
+    setOrders,
+    setRentals,
+    setAddresses,
+    setRecentlyViewed,
   };
 }

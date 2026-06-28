@@ -18,9 +18,9 @@ export function EventsSection() {
       transition={{ duration: 0.3 }}
       className="space-y-4 text-left"
     >
-      <div className="bg-surface-bright border border-outline-variant/30 rounded-lg p-5 flex flex-col gap-1 shadow-2xs">
-        <h2 className="font-semibold text-sm text-on-surface tracking-wide">My Event Bookings</h2>
-        <span className="text-[10px] text-on-surface/60 font-light">
+      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 flex flex-col gap-2 shadow-xs text-left">
+        <h2 className="font-bold text-[18px] text-on-surface tracking-tight">My Event Bookings</h2>
+        <span className="text-[11px] text-secondary font-medium">
           Track your reserved setups, theme boards, milestone deposits, and site lead coordinates.
         </span>
       </div>

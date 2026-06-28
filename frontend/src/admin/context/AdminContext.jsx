@@ -58,7 +58,7 @@ const mapDbCustomerToFrontend = (c) => {
   const lastOrderDate = c.updatedAt
     ? new Date(c.updatedAt).toISOString().split('T')[0]
     : '2026-05-15';
-  const city = c.addresses && c.addresses[0] ? c.addresses[0].city : 'Ongole';
+  const city = c.addresses && c.addresses[0] ? c.addresses[0].city : 'Unknown';
 
   return {
     id: c._id || c.id || 'CUS-UNKNOWN',
@@ -144,7 +144,7 @@ export function AdminProvider({ children }) {
       try {
         const [customersRes, reviewsRes, statsRes, eventsRes, auditLogsRes, alertsRes] =
           await Promise.allSettled([
-            userService.getAll({ limit: 50, role: 'user' }),
+            userService.getAll({ role: 'customer' }),
             reviewService.getAll({ limit: 50 }),
             analyticsService.getDashboardStats(),
             eventService.getAll({ limit: 50 }),

@@ -253,10 +253,7 @@ export function NetworkProvider({ children }) {
 
           if (isClientError) {
             // Discard client/validation errors to prevent queue blockage but notify user
-            logger.error(
-              `⚠️ [Offline Sync] Permanent sync rejection for ${item.description}:`,
-              error,
-            );
+            logger.error(`[Offline Sync] Permanent sync rejection for ${item.description}:`, error);
             dequeueRequest(item.id);
             failedCount++;
             succeeded = true; // Break loop
@@ -264,7 +261,7 @@ export function NetworkProvider({ children }) {
             // Server error or timeout: Wait with exponential backoff before retry
             const delay = Math.pow(2, attempts) * 1000;
             logger.warn(
-              `🔄 [Offline Sync] Sync attempt ${attempts} failed for ${item.description}. Retrying in ${delay}ms...`,
+              `[Offline Sync] Sync attempt ${attempts} failed for ${item.description}. Retrying in ${delay}ms...`,
             );
             await new Promise((res) => setTimeout(res, delay));
           }

@@ -1,4 +1,13 @@
-import { createContext, useContext, useState, useEffect, useMemo, useRef, Profiler } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+  Profiler,
+} from 'react';
 import { logRenderMetrics } from '../utils/performance/profilerLogger';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './AuthContext';
@@ -117,6 +126,10 @@ export function DashboardProvider({ children }) {
       return orders.filter(
         (o) => o.orderType !== 'rental' && !o.items?.some((i) => i.type === 'rental'),
       );
+    if (orderFilter === 'RETURNS')
+      return orders.filter(
+        (o) => o.hasActiveReturn || o.returnRequestIds?.length > 0 || o.returnRequests?.length > 0,
+      );
     return orders;
   }, [orders, orderFilter]);
 
@@ -166,152 +179,210 @@ export function DashboardProvider({ children }) {
   }, [orders, selectedOrderId, selectedOrder]);
 
   // Avatar Upload
-  const handleAvatarClick = () => {
+  const handleAvatarClick = useCallback(() => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
-  };
+  }, []);
 
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleAvatarChange = useCallback(
+    async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file format');
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Image file size should not exceed 2MB');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('avatar', file);
-
-    setIsUploadingAvatar(true);
-    const toastId = toast.loading('Uploading secure avatar image...');
-    try {
-      const res = await userService.uploadAvatar(formData);
-      if (res.success) {
-        toast.success('Profile avatar updated successfully!', { id: toastId });
-        await checkAuth();
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file format');
+        return;
       }
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to upload avatar', { id: toastId });
-    } finally {
-      setIsUploadingAvatar(false);
-    }
-  };
+
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('Image file size should not exceed 2MB');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      setIsUploadingAvatar(true);
+      const toastId = toast.loading('Uploading secure avatar image...');
+      try {
+        const res = await userService.uploadAvatar(formData);
+        if (res.success) {
+          toast.success('Profile avatar updated successfully!', { id: toastId });
+          await checkAuth();
+        }
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to upload avatar', { id: toastId });
+      } finally {
+        setIsUploadingAvatar(false);
+      }
+    },
+    [checkAuth],
+  );
 
   // Address Handlers
-  const handleAddressEdit = (addr) => {
+  const handleAddressEdit = useCallback((addr) => {
     setEditingAddressId(addr._id || addr.id);
     setIsAddressModalOpen(true);
-  };
+  }, []);
 
-  const handleDeleteAddress = async (id) => {
+  const handleDeleteAddress = useCallback(async (id) => {
     if (!window.confirm('Are you sure you want to delete this address?')) return;
     const toastId = toast.loading('Removing address...');
     try {
       await userService.deleteAddress(id);
       toast.success('Address deleted successfully!', { id: toastId });
-      await fetchAddressesList();
+      refetchDashboardData();
     } catch (_err) {
       toast.error('Failed to delete address', { id: toastId });
     }
-  };
+  }, []);
 
-  const handleSetDefaultAddress = async (id) => {
+  const handleSetDefaultAddress = useCallback(async (id) => {
     const toastId = toast.loading('Setting default parameters...');
     try {
       await userService.setDefaultAddress(id);
       toast.success('Default delivery address set!', { id: toastId });
-      await fetchAddressesList();
+      refetchDashboardData();
     } catch (_err) {
       toast.error('Failed to set default address', { id: toastId });
     }
-  };
+  }, []);
 
-  const downloadInvoice = (orderId) => {
-    const targetOrder = orders.find((o) => (o._id || o.id) === orderId);
-    if (targetOrder) {
-      setSelectedInvoiceOrder(targetOrder);
-    } else {
-      toast.error('Invoice data currently unavailable. Refreshing feed.');
-    }
-  };
+  const downloadInvoice = useCallback(
+    (orderId) => {
+      const targetOrder = orders.find((o) => (o._id || o.id) === orderId);
+      if (targetOrder) {
+        setSelectedInvoiceOrder(targetOrder);
+      } else {
+        toast.error('Invoice data currently unavailable. Refreshing feed.');
+      }
+    },
+    [orders],
+  );
 
-  const contextValue = {
-    user,
-    logout,
-    checkAuth,
-    openAuthModal,
-    wishlistItems,
-    removeFromWishlist,
-    cartCount,
-    cartItems,
-    updateQuantity,
-    removeItem,
-    fileInputRef,
-    addressText,
-    phoneText,
-    whatsappUrl,
-    activeTab,
-    setActiveTab,
-    mobileShowContent,
-    setMobileShowContent,
+  const contextValue = useMemo(
+    () => ({
+      user,
+      logout,
+      checkAuth,
+      openAuthModal,
+      wishlistItems,
+      removeFromWishlist,
+      cartCount,
+      cartItems,
+      updateQuantity,
+      removeItem,
+      fileInputRef,
+      addressText,
+      phoneText,
+      whatsappUrl,
+      activeTab,
+      setActiveTab,
+      mobileShowContent,
+      setMobileShowContent,
 
-    isUploadingAvatar,
+      isUploadingAvatar,
 
-    selectedOrderId,
-    setSelectedOrderId,
-    selectedOrderItemIndex,
-    setSelectedOrderItemIndex,
-    isPriceDetailsOpen,
-    setIsPriceDetailsOpen,
-    orders,
-    rentals,
-    setOrders,
-    addresses,
-    setAddresses,
-    recentlyViewed,
-    setRecentlyViewed,
-    isOrdersLoading,
-    isRentalsLoading,
-    isAddressesLoading,
-    isLoadingRecentlyViewed,
-    refetchDashboardData,
+      selectedOrderId,
+      setSelectedOrderId,
+      selectedOrderItemIndex,
+      setSelectedOrderItemIndex,
+      isPriceDetailsOpen,
+      setIsPriceDetailsOpen,
+      orders,
+      rentals,
+      setOrders,
+      addresses,
+      setAddresses,
+      recentlyViewed,
+      setRecentlyViewed,
+      isOrdersLoading,
+      isRentalsLoading,
+      isAddressesLoading,
+      isLoadingRecentlyViewed,
+      refetchDashboardData,
 
-    editingAddressId,
-    setEditingAddressId,
-    addressFormData,
-    setAddressFormData,
+      editingAddressId,
+      setEditingAddressId,
+      addressFormData,
+      setAddressFormData,
 
-    isAddressModalOpen,
-    setIsAddressModalOpen,
-    selectedInvoiceOrder,
-    setSelectedInvoiceOrder,
-    reviewingProduct,
-    setReviewingProduct,
+      isAddressModalOpen,
+      setIsAddressModalOpen,
+      selectedInvoiceOrder,
+      setSelectedInvoiceOrder,
+      reviewingProduct,
+      setReviewingProduct,
 
-    orderFilter,
-    setOrderFilter,
-    filteredOrders,
-    dashboardCounts,
-    orderItems,
-    selectedOrder,
-    selectedItem,
+      orderFilter,
+      setOrderFilter,
+      filteredOrders,
+      dashboardCounts,
+      orderItems,
+      selectedOrder,
+      selectedItem,
 
-    handleAvatarClick,
-    handleAvatarChange,
+      handleAvatarClick,
+      handleAvatarChange,
 
-    handleAddressEdit,
+      handleAddressEdit,
 
-    handleDeleteAddress,
-    handleSetDefaultAddress,
-    downloadInvoice,
-  };
+      handleDeleteAddress,
+      handleSetDefaultAddress,
+      downloadInvoice,
+    }),
+    [
+      user,
+      logout,
+      checkAuth,
+      openAuthModal,
+      wishlistItems,
+      removeFromWishlist,
+      cartCount,
+      cartItems,
+      updateQuantity,
+      removeItem,
+      addressText,
+      phoneText,
+      whatsappUrl,
+      activeTab,
+      mobileShowContent,
+      isUploadingAvatar,
+      selectedOrderId,
+      selectedOrderItemIndex,
+      isPriceDetailsOpen,
+      orders,
+      rentals,
+      addresses,
+      recentlyViewed,
+      isOrdersLoading,
+      isRentalsLoading,
+      isAddressesLoading,
+      isLoadingRecentlyViewed,
+      refetchDashboardData,
+      editingAddressId,
+      addressFormData,
+      isAddressModalOpen,
+      selectedInvoiceOrder,
+      reviewingProduct,
+      orderFilter,
+      filteredOrders,
+      dashboardCounts,
+      orderItems,
+      selectedOrder,
+      selectedItem,
+      setOrders,
+      setAddresses,
+      setRecentlyViewed,
+      handleAvatarClick,
+      handleAvatarChange,
+      handleAddressEdit,
+      handleDeleteAddress,
+      handleSetDefaultAddress,
+      downloadInvoice,
+    ],
+  );
 
   return (
     <Profiler id="DashboardContext" onRender={logRenderMetrics}>

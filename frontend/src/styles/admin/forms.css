@@ -16,6 +16,27 @@
   min-height: 38px;
 }
 
+.admin-section-root .admin-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.admin-section-root .admin-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--admin-text-tertiary);
+  font-size: 20px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.admin-section-root .admin-search-wrapper .admin-input {
+  padding-left: 40px;
+}
+
 .admin-section-root .admin-input::placeholder {
   color: var(--admin-text-placeholder);
 }

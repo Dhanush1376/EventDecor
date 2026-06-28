@@ -11,91 +11,20 @@ const sessionCache = new MemoryCache({ defaultTtlMs: 30 * 60 * 1000, maxKeys: 10
 const coldStartCache = new MemoryCache({ defaultTtlMs: 15 * 60 * 1000, maxKeys: 10 });
 const ctrCache = new MemoryCache({ defaultTtlMs: 24 * 60 * 60 * 1000, maxKeys: 30 });
 
-const isRedisReady = (): boolean => {
-  return Boolean(redisClient && redisClient.isReady);
-};
+import {
+  tieredCacheGet as cacheGet,
+  tieredCacheSet,
+  tieredCacheDel as cacheDel,
+  isRedisReady,
+} from '../../utils/cache/tieredCache';
 
-/**
- * Unified cache get — tries MemoryCache first (L1 Cache), then Redis.
- */
-async function cacheGet<T>(key: string, fallbackCache: MemoryCache): Promise<T | null> {
-  // L1 Cache check
-  const memCached = fallbackCache.get<T>(key);
-  if (memCached !== undefined && memCached !== null) {
-    return memCached;
-  }
-
-  if (isRedisReady()) {
-    try {
-      const raw = await redisClient!.get(key);
-      if (raw) {
-        const parsed = JSON.parse(raw) as T;
-        // Populate L1 cache on Redis hit
-        fallbackCache.set(key, parsed);
-        return parsed;
-      }
-    } catch (err: any) {
-      if (err.message && err.message.includes('max requests limit exceeded')) {
-        if (!(global as any).upstashWarningLogged) {
-          logger.warn(`[RECO CACHE] Upstash Limit Exceeded. Suppressing further Redis warnings.`);
-          (global as any).upstashWarningLogged = true;
-        }
-      } else {
-        logger.warn(`[RECO CACHE] Redis GET failed for ${key}: ${err.message}`);
-      }
-    }
-  }
-  return null;
-}
-
-/**
- * Unified cache set — writes to Redis (with TTL in seconds) and MemoryCache simultaneously.
- */
 async function cacheSet<T>(
   key: string,
   value: T,
   ttlSeconds: number,
   fallbackCache: MemoryCache,
 ): Promise<void> {
-  const ttlMs = ttlSeconds * 1000;
-  fallbackCache.set(key, value, ttlMs);
-
-  if (isRedisReady()) {
-    try {
-      await redisClient!.setEx(key, ttlSeconds, JSON.stringify(value));
-    } catch (err: any) {
-      if (err.message && err.message.includes('max requests limit exceeded')) {
-        if (!(global as any).upstashWarningLogged) {
-          logger.warn(`[RECO CACHE] Upstash Limit Exceeded. Suppressing further Redis warnings.`);
-          (global as any).upstashWarningLogged = true;
-        }
-      } else {
-        logger.warn(`[RECO CACHE] Redis SET failed for ${key}: ${err.message}`);
-      }
-    }
-  }
-}
-
-/**
- * Unified cache delete.
- */
-async function cacheDel(key: string, fallbackCache: MemoryCache): Promise<void> {
-  fallbackCache.delete(key);
-
-  if (isRedisReady()) {
-    try {
-      await redisClient!.del(key);
-    } catch (err: any) {
-      if (err.message && err.message.includes('max requests limit exceeded')) {
-        if (!(global as any).upstashWarningLogged) {
-          logger.warn(`[RECO CACHE] Upstash Limit Exceeded. Suppressing further Redis warnings.`);
-          (global as any).upstashWarningLogged = true;
-        }
-      } else {
-        logger.warn(`[RECO CACHE] Redis DEL failed for ${key}: ${err.message}`);
-      }
-    }
-  }
+  return tieredCacheSet(key, value, ttlSeconds * 1000, fallbackCache);
 }
 
 // ────────────────────────────────────────────────

@@ -12,6 +12,26 @@
     border-color var(--admin-duration-normal) var(--admin-ease);
 }
 
+.admin-section-root .admin-card-header {
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid var(--admin-border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-section-root .admin-card-title {
+  font-size: var(--admin-text-lg);
+  font-weight: 700;
+  color: var(--admin-text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.admin-section-root .admin-card-body {
+  padding: 24px;
+}
+
 .admin-section-root .admin-card:hover {
   box-shadow: var(--admin-shadow-sm);
 }

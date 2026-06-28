@@ -146,13 +146,20 @@ export function useAddressManagement({
         if (addr.road || addr.street) streetParts.push(addr.road || addr.street);
         if (addr.suburb) streetParts.push(addr.suburb);
         if (addr.neighbourhood) streetParts.push(addr.neighbourhood);
-        const addressString =
-          streetParts.length > 0
-            ? streetParts.join(', ')
-            : data.display_name?.split(',').slice(0, 3).join(',').trim() || '';
+        const displayParts = data.display_name ? data.display_name.split(',') : [];
+        const fullAddress =
+          displayParts.length > 4
+            ? displayParts.slice(0, -4).join(',').trim()
+            : displayParts.join(',').trim() || streetParts.join(', ');
 
         const landmark =
-          addr.amenity || addr.shop || addr.office || addr.tourism || addr.leisure || '';
+          addr.amenity ||
+          addr.shop ||
+          addr.office ||
+          addr.tourism ||
+          addr.leisure ||
+          addr.building ||
+          '';
 
         setAddressFormData((prev) => ({
           ...prev,
@@ -160,7 +167,7 @@ export function useAddressManagement({
           city: newCity,
           state: newState,
           locality: newLocality || prev.locality,
-          addressString: addressString || prev.addressString,
+          addressString: fullAddress || prev.addressString,
           landmark: landmark || prev.landmark || newLocality || newCity,
           latitude: lat,
           longitude: lng,

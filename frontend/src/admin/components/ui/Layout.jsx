@@ -1,6 +1,6 @@
 import React from 'react';
 import { m as motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { fadeUp } from './utils';
 import { LiveBadge } from './Indicators';
 
@@ -14,6 +14,7 @@ export function PageHeader({
   mobileRow = false,
   headerAction,
   backButton,
+  breadcrumbs,
 }) {
   const navigate = useNavigate();
   return (
@@ -43,7 +44,7 @@ export function PageHeader({
           )}
           {icon && (
             <div
-              className="w-10 h-10 rounded-[var(--admin-radius-lg)] flex items-center justify-center shrink-0"
+              className="w-10 h-10 rounded-[var(--admin-radius-lg)] flex items-center justify-center shrink-0 mt-1"
               style={{
                 backgroundColor: `var(--admin-domain-${iconColor || 'settings'}-bg)`,
                 color: `var(--admin-domain-${iconColor || 'settings'})`,
@@ -53,6 +54,27 @@ export function PageHeader({
             </div>
           )}
           <div className="min-w-0 flex-1">
+            {breadcrumbs && breadcrumbs.length > 0 && (
+              <nav className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--admin-text-tertiary)] mb-1">
+                {breadcrumbs.map((crumb, idx) => (
+                  <React.Fragment key={idx}>
+                    {crumb.path ? (
+                      <Link
+                        to={crumb.path}
+                        className="hover:text-[var(--admin-text-primary)] transition-colors"
+                      >
+                        {crumb.label}
+                      </Link>
+                    ) : (
+                      <span className="text-[var(--admin-text-secondary)]">{crumb.label}</span>
+                    )}
+                    {idx < breadcrumbs.length - 1 && (
+                      <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </nav>
+            )}
             <h1 className="text-[20px] sm:text-[26px] font-bold text-[var(--admin-text-primary)] font-display tracking-tight leading-tight flex items-center gap-2">
               {title}
             </h1>

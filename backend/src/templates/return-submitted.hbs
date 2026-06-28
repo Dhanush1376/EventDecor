@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Return Request Received</title>
+  <style>
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.6; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .card { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .title { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #111827; }
+    .item { display: flex; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e5e7eb; }
+    .item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .item-img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; margin-right: 15px; }
+    .item-details { flex: 1; }
+    .btn { display: inline-block; background-color: #4f46e5; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: 500; margin-top: 20px; }
+    .footer { text-align: center; font-size: 14px; color: #6b7280; margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Return Request Received</h1>
+    </div>
+    
+    <p>Hello,</p>
+    <p>We've received your return request <strong>{{returnRequest.returnId}}</strong>. Our team will review it shortly. Below is a summary of your request:</p>
+    
+    <div class="card">
+      <div class="title">Return Details</div>
+      {{#each returnRequest.items}}
+      <div class="item">
+        <img src="{{this.imageSrc}}" alt="{{this.title}}" class="item-img">
+        <div class="item-details">
+          <div style="font-weight: 500;">{{this.title}}</div>
+          <div style="font-size: 14px; color: #4b5563;">Qty: {{this.returnQuantity}}</div>
+          <div style="font-size: 14px; color: #4b5563;">Reason: {{this.reason}}</div>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+    
+    <p>We typically process return requests within 24-48 hours. You'll receive another email once your request has been reviewed.</p>
+    
+    <div style="text-align: center;">
+      <a href="https://yourstore.com/dashboard/returns/{{returnRequest._id}}" class="btn">Track Return Status</a>
+    </div>
+    
+    <div class="footer">
+      <p>If you have any questions, please contact our support team.</p>
+      <p>&copy; 2026 EventDecor. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

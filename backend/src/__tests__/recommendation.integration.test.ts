@@ -91,6 +91,18 @@ jest.mock('../models/UserPreferenceProfile', () => ({
   },
 }));
 
+jest.mock('../models/Gallery', () => ({
+  __esModule: true,
+  default: {
+    find: jest.fn().mockImplementation(() => ({
+      select: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue([]),
+    })),
+  },
+}));
+
 describe('Recommendation API integration', () => {
   const dummyProductId = '6a18315776e357ead3a22319';
 

@@ -41,7 +41,7 @@ export const initDataMonitorJob = () => {
 
               if (dropAmount > 0 && (dropPercentage > 5 || dropAmount > 50)) {
                 const alertMsg = `Sudden drop detected in ${collName}: ${prevCount} -> ${currentCount} (Dropped by ${dropAmount})`;
-                logger.error(`[DATA MONITOR] 🚨 ${alertMsg}`);
+                logger.error(`[DATA MONITOR] ${alertMsg}`);
                 dropsDetected.push(alertMsg);
                 emergencyTriggered = true;
               }

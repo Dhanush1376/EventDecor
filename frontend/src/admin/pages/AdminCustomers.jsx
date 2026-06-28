@@ -160,7 +160,7 @@ export function AdminCustomers() {
                         {c.name}
                       </p>
                       <p className="text-[11px] text-[var(--admin-text-tertiary)] font-medium uppercase tracking-wider mt-0.5">
-                        {c.city || 'Ongole'}
+                        {c.city || 'Unknown'}
                       </p>
                     </div>
                   </div>

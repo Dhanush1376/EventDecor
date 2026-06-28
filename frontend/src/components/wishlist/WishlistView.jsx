@@ -368,52 +368,40 @@ export function WishlistView({ isEmbedded = false }) {
 
           {/* Empty State */}
           {enhancedItems.length === 0 ? (
-            <div className="space-y-20">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="text-center max-w-2xl mx-auto py-16 md:py-24"
-              >
-                {/* Minimalist Premium Icon Container */}
-                <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-6 mx-auto relative">
-                  <div className="absolute inset-0 bg-primary/15 rounded-full blur-xl" />
-                  <span className="material-symbols-outlined text-primary text-[30px] relative z-10">
-                    favorite
-                  </span>
+            <div className="space-y-12">
+              <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[40vh] mt-6">
+                <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
+                  <span className="material-symbols-outlined text-[20px]">favorite</span>
                 </div>
-
-                <h2 className="font-display text-[22px] text-on-surface tracking-tight mb-2">
-                  Your wishlist is empty.
-                </h2>
-                <p className="font-body text-[13px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed mb-8">
+                <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
+                  Your wishlist is empty
+                </h3>
+                <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px] mb-6">
                   Explore our collections and save your favorite items here.
                 </p>
-
                 <div className="flex justify-center">
                   <Link
                     to="/collections"
-                    className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
+                    className="px-6 py-2.5 bg-black hover:bg-gray-900 text-white border-0 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1.5"
                   >
-                    <span>Explore Collections</span>
-                    <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-                      arrow_forward
-                    </span>
+                    Explore Collections
+                    <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
                   </Link>
                 </div>
-              </motion.div>
+              </div>
 
               {/* Recommendations */}
-              <div className="pt-12 border-t border-outline-variant/20">
-                <div className="flex items-center justify-between mb-8">
-                  <h3 className="font-display text-xl md:text-2xl font-bold text-on-surface">
+              <div className="pt-8 border-t border-outline-variant/20">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-bold text-[12px] uppercase tracking-widest text-on-surface">
                     Trending Masterpieces
                   </h3>
                   <Link
                     to="/collections"
-                    className="text-[11px] font-bold text-primary uppercase tracking-widest hover:underline"
+                    className="text-[9px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
                   >
                     View All
+                    <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -436,18 +424,23 @@ export function WishlistView({ isEmbedded = false }) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center py-16 md:py-24 text-[#685c57]/60 text-sm"
+              className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[30vh] mt-6"
             >
-              <span className="material-symbols-outlined text-[32px] text-[#685c57]/30 mb-2 block">
-                info
-              </span>
-              No{' '}
-              {itemTypeFilter === 'product'
-                ? 'products'
-                : itemTypeFilter === 'event'
-                  ? 'events'
-                  : 'items'}{' '}
-              match the active filters.
+              <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
+                <span className="material-symbols-outlined text-[20px]">filter_list_off</span>
+              </div>
+              <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
+                No Matches Found
+              </h3>
+              <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px]">
+                No{' '}
+                {itemTypeFilter === 'product'
+                  ? 'products'
+                  : itemTypeFilter === 'event'
+                    ? 'events'
+                    : 'items'}{' '}
+                match the active filters.
+              </p>
             </motion.div>
           ) : (
             /* Grid Layout matching retail platforms with smooth staggered micro-animations */

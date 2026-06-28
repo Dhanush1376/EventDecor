@@ -74,7 +74,7 @@ export default function ProfileTab({
               <option value="male">Male</option>
               <option value="female">Female</option>
               <option value="other">Other / Custom</option>
-              <option value="prefer-not-to-say">Prefer Not To Disclose</option>
+              <option value="prefer_not_to_say">Prefer Not To Disclose</option>
             </select>
           </div>
 

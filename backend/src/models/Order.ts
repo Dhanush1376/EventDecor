@@ -123,6 +123,9 @@ const OrderSchema: Schema = new Schema(
     courierCharges: { type: Number, default: 0 },
     earnings: { type: Number, default: 0 },
     reservationIds: [{ type: Schema.Types.ObjectId, ref: 'InventoryReservation' }],
+    returnRequestIds: [{ type: Schema.Types.ObjectId, ref: 'ReturnRequest' }],
+    refundStatus: { type: String, enum: ['none', 'partial', 'full'], default: 'none' },
+    hasActiveReturn: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

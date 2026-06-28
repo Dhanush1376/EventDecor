@@ -77,9 +77,9 @@ export function AdminRentalOrders() {
       const q = searchQuery.toLowerCase();
       const matchSearch =
         !searchQuery ||
-        r._id.toLowerCase().includes(q) ||
+        r._id?.toLowerCase()?.includes(q) ||
         (r.userId?.name || r.user?.name || '').toLowerCase().includes(q) ||
-        r.productTitle?.toLowerCase().includes(q);
+        r.productTitle?.toLowerCase()?.includes(q);
       return matchStatus && matchSearch;
     });
   }, [rentals, filterStatus, searchQuery]);
@@ -256,7 +256,7 @@ export function AdminRentalOrders() {
                                       : 'bg-amber-100 text-amber-700'
                               }`}
                             >
-                              {r.status.replace('_', ' ')}
+                              {r.status?.replace('_', ' ') || 'unknown'}
                             </span>
                           </td>
                           <td className="text-right" onClick={(e) => e.stopPropagation()}>

@@ -28,7 +28,7 @@ export function DashboardLayout() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-surface-container-low min-h-screen pt-24 pb-32 font-body text-on-surface modern-sans-headings"
+      className="bg-surface-container-low min-h-screen pt-20 pb-24 md:pb-12 font-body text-on-surface modern-sans-headings"
     >
       <SEO
         title="Your Premium Studio Account"
@@ -67,19 +67,23 @@ export function DashboardLayout() {
 
       <AnimatePresence>
         {selectedInvoiceOrder && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm"
-            onClick={() => setSelectedInvoiceOrder(null)}
-          >
+          <>
+            {/* Backdrop */}
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md no-print"
+              onClick={() => setSelectedInvoiceOrder(null)}
+            />
+            {/* Modal Container */}
+            <motion.div
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 250 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-surface w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl"
+              className="invoice-modal-container fixed bottom-0 left-0 right-0 mx-auto w-full max-w-3xl max-h-[92vh] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] z-[101] overflow-y-auto custom-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
             >
               <React.Suspense
                 fallback={
@@ -95,7 +99,7 @@ export function DashboardLayout() {
                 />
               </React.Suspense>
             </motion.div>
-          </motion.div>
+          </>
         )}
       </AnimatePresence>
     </motion.div>

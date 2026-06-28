@@ -253,71 +253,85 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-[99999] flex justify-end items-end md:items-stretch">
+    <div className="fixed inset-0 z-[99999] flex justify-center items-end sm:items-center p-0 sm:p-4">
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/45 backdrop-blur-xs"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Drawer Panel */}
+      {/* Modal Card / Drawer */}
       <motion.div
-        variants={drawerVariants}
+        variants={{
+          initial: { opacity: 0, y: '100%' },
+          animate: { opacity: 1, y: 0 },
+          exit: { opacity: 0, y: '100%' },
+        }}
         initial="initial"
         animate="animate"
         exit="exit"
-        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-        className="relative bg-white w-full md:w-[480px] h-[85vh] md:h-screen rounded-t-[32px] md:rounded-t-none md:rounded-l-[32px] shadow-2xl flex flex-col z-[100000]"
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="relative bg-surface w-full max-w-lg h-[85vh] sm:h-auto sm:max-h-[90vh] rounded-t-[24px] sm:rounded-lg shadow-2xl flex flex-col z-[100000] font-body text-left border-t sm:border border-outline-variant/30"
       >
+        {/* Drawer Drag Handle (Mobile Only) */}
+        <div className="w-full flex justify-center pt-3 pb-1 sm:hidden absolute top-0 left-0 z-10">
+          <div className="w-12 h-1.5 bg-outline-variant/40 rounded-full" />
+        </div>
+
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-black/5 shrink-0">
+        <div className="flex items-center justify-between p-5 pt-8 sm:pt-5 border-b border-outline-variant/20 shrink-0 bg-surface-bright rounded-t-[24px] sm:rounded-t-lg">
           <div>
-            <h3 className="font-display text-xl font-bold text-black">Write a Review</h3>
-            <p className="font-body text-[12px] text-black/40 mt-0.5 line-clamp-1">
+            <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[14px]">edit_note</span>
+              Write a Review
+            </h2>
+            <p className="font-body text-[11px] text-on-surface mt-1 font-bold line-clamp-1">
               {productTitle}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 min-h-0 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center transition-all"
+            className="w-8 h-8 rounded-lg hover:bg-surface-container-low flex items-center justify-center transition-all text-secondary"
           >
-            <span className="material-symbols-outlined text-[18px] text-black">close</span>
+            <span className="material-symbols-outlined text-[16px]">close</span>
           </button>
         </div>
 
         {/* Scrollable Form Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
-          <form onSubmit={handleSubmit} className="space-y-6 pb-8">
+        <div className="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar bg-surface">
+          <form onSubmit={handleSubmit} className="space-y-4 pb-4">
             {/* User Profile Info */}
-            <div className="flex items-center gap-3 p-4 bg-neutral-50 rounded-2xl border border-black/5">
-              <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                <span className="font-display text-primary text-sm font-bold">{userInitials}</span>
+            <div className="flex items-center gap-3 p-4 bg-surface-bright rounded-lg border border-outline-variant/40 shadow-xs">
+              <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                <span className="font-display text-primary text-[10px] font-bold uppercase">
+                  {userInitials}
+                </span>
               </div>
               <div>
-                <p className="font-body text-[10px] uppercase tracking-wider text-black/40 font-bold">
+                <p className="font-body text-[8px] uppercase tracking-widest text-secondary font-bold">
                   Reviewing as
                 </p>
-                <p className="font-body text-sm font-semibold text-black leading-tight">
+                <p className="font-body text-[10px] font-bold text-on-surface uppercase tracking-wider mt-0.5">
                   {user?.name || 'Customer'}
                 </p>
               </div>
             </div>
 
             {/* Star Picker */}
-            <div className="flex flex-col items-center gap-2 py-5 bg-amber-50/50 rounded-2xl border border-amber-100/70">
-              <p className="font-label text-[10px] uppercase tracking-widest text-black/40 font-bold">
+            <div className="flex flex-col items-center gap-2 py-5 bg-surface-bright rounded-lg border border-outline-variant/40 shadow-xs">
+              <p className="font-label text-[9px] uppercase tracking-widest text-secondary font-bold">
                 Your Rating
               </p>
-              <StarRating value={rating} interactive size={36} onChange={setRating} />
+              <StarRating value={rating} interactive size={28} onChange={setRating} />
               {rating > 0 && (
                 <motion.p
                   key={rating}
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="font-body text-sm font-semibold text-amber-700"
+                  className="font-body text-[10px] font-bold uppercase tracking-widest text-amber-600 mt-1"
                 >
                   {ratingLabels[rating]}
                 </motion.p>
@@ -325,28 +339,34 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
             </div>
 
             {/* Comment */}
-            <div>
-              <label className="form-label mb-1.5">Your Experience</label>
+            <div className="bg-surface-bright rounded-lg border border-outline-variant/40 shadow-xs p-5 space-y-3">
+              <label className="text-[9px] uppercase tracking-widest text-secondary font-bold flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[14px]">comment</span>
+                Your Experience
+              </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                rows={5}
+                rows={4}
                 placeholder="Tell others about the quality, craftsmanship, and delivery experience..."
-                className="form-field resize-y pt-4"
+                className="w-full bg-transparent border-b border-outline-variant/30 focus:border-primary outline-none py-2 text-[11px] text-on-surface placeholder:text-secondary/50 resize-none transition-colors"
               />
-              <p className="text-[10px] text-black/30 mt-1 text-right">{comment.length} chars</p>
+              <p className="text-[9px] text-secondary/70 font-mono text-right">
+                {comment.length} chars
+              </p>
             </div>
 
             {/* Photo Uploader */}
-            <div>
-              <label className="font-label text-[10px] uppercase tracking-widest text-black/40 font-bold block mb-2">
+            <div className="bg-surface-bright rounded-lg border border-outline-variant/40 shadow-xs p-5 space-y-3">
+              <label className="text-[9px] uppercase tracking-widest text-secondary font-bold flex items-center gap-1.5 mb-2">
+                <span className="material-symbols-outlined text-[14px]">photo_camera</span>
                 Add Photos (Max 5)
               </label>
               <div className="flex flex-wrap gap-2.5">
                 {previews.map((preview, idx) => (
                   <div
                     key={idx}
-                    className="relative w-16 h-16 rounded-xl overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs group flex-shrink-0"
+                    className="relative w-14 h-14 rounded-lg overflow-hidden border border-outline-variant/30 bg-surface-container shadow-sm group flex-shrink-0"
                   >
                     <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                     <button
@@ -355,16 +375,16 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
                         setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
                         setPreviews((prev) => prev.filter((_, i) => i !== idx));
                       }}
-                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center cursor-pointer transition-all scale-90 group-hover:scale-100"
+                      className="absolute top-1 right-1 w-4 h-4 rounded bg-black/70 hover:bg-black text-white flex items-center justify-center cursor-pointer transition-all opacity-0 group-hover:opacity-100"
                     >
                       <span className="material-symbols-outlined text-[10px]">close</span>
                     </button>
                   </div>
                 ))}
                 {selectedFiles.length < 5 && (
-                  <label className="w-16 h-16 rounded-xl border border-dashed border-black/20 hover:border-primary/50 bg-neutral-50 hover:bg-primary/5 flex flex-col items-center justify-center cursor-pointer transition-all gap-0.5 text-black/40 hover:text-primary flex-shrink-0">
-                    <span className="material-symbols-outlined text-[18px]">add_a_photo</span>
-                    <span className="text-[8px] font-bold uppercase tracking-wider">Add</span>
+                  <label className="w-14 h-14 rounded-lg border border-dashed border-outline-variant/50 hover:border-primary bg-surface-container-lowest hover:bg-primary/5 flex flex-col items-center justify-center cursor-pointer transition-all gap-0.5 text-secondary hover:text-primary flex-shrink-0">
+                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    <span className="text-[7px] font-bold uppercase tracking-wider">Add</span>
                     <input
                       type="file"
                       multiple
@@ -384,20 +404,22 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={submitting || rating === 0}
-              className="w-full h-12 bg-primary text-white rounded-full font-label text-[11px] uppercase tracking-widest font-bold hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
-            >
-              {submitting ? (
-                <div className="skeleton-box inline-block w-4 h-4 rounded-md animate-pulse" />
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-[16px]">rate_review</span>
-                  Submit Review
-                </>
-              )}
-            </button>
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={submitting || rating === 0}
+                className="w-full px-6 py-3 bg-black hover:bg-gray-900 text-white font-bold uppercase tracking-widest text-[9px] rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed border-0"
+              >
+                {submitting ? (
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[14px]">send</span>
+                    Submit Review
+                  </>
+                )}
+              </button>
+            </div>
           </form>
         </div>
       </motion.div>

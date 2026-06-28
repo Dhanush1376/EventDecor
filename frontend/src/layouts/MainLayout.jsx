@@ -91,8 +91,10 @@ export function MainLayout() {
       {pathname !== '/cart' && <Footer />}
       <BottomNav />
       <FloatingOfferCard />
-      <WhatsAppWidget />
-      <ScrollToTopButton />
+      <div className="fixed bottom-[calc(80px+env(safe-area-inset-bottom,0px))] md:bottom-8 right-4 md:right-10 z-[40] flex flex-col gap-4 items-center pointer-events-none">
+        <ScrollToTopButton />
+        <WhatsAppWidget />
+      </div>
       <ConsentPopup />
     </div>
   );

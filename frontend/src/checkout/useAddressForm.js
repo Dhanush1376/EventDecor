@@ -32,8 +32,28 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
         const newState = addr.state || '';
         const newLocality =
           addr.suburb || addr.neighbourhood || addr.road || addr.residential || '';
-        const newLandmark = addr.amenity || addr.building || addr.shop || '';
-        const newHouse = addr.house_number || addr.name || '';
+
+        const streetParts = [];
+        if (addr.house_number) streetParts.push(addr.house_number);
+        if (addr.building || addr.name) streetParts.push(addr.building || addr.name);
+        if (addr.road || addr.street) streetParts.push(addr.road || addr.street);
+        if (addr.suburb) streetParts.push(addr.suburb);
+        if (addr.neighbourhood) streetParts.push(addr.neighbourhood);
+
+        const displayParts = data.display_name ? data.display_name.split(',') : [];
+        const fullAddress =
+          displayParts.length > 4
+            ? displayParts.slice(0, -4).join(',').trim()
+            : displayParts.join(',').trim() || streetParts.join(', ');
+
+        const newLandmark =
+          addr.amenity ||
+          addr.shop ||
+          addr.office ||
+          addr.tourism ||
+          addr.leisure ||
+          addr.building ||
+          '';
 
         setNewAddress((prev) => ({
           ...prev,
@@ -42,7 +62,7 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
           state: newState,
           locality: newLocality || prev.locality,
           landmark: newLandmark || prev.landmark || newLocality || newCity,
-          address: newHouse || prev.address,
+          address: fullAddress || prev.address,
           latitude: lat,
           longitude: lng,
         }));

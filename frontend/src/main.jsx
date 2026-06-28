@@ -31,7 +31,7 @@ if (!isPrerendering()) {
   logStartupDiagnostics();
 }
 
-// ─── Global Error Handler for Outdated Bundles (Chunk Loading Errors) ───
+// Global Error Handler for Outdated Bundles (Chunk Loading Errors)
 window.addEventListener(
   'error',
   (event) => {
@@ -62,7 +62,7 @@ window.addEventListener(
   true,
 ); // Use capture phase to catch resource load errors
 
-// ─── Pre-warm backend (Render cold start) ───
+// Pre-warm backend (Render cold start)
 const warmBackend = () => {
   const root = getApiRootUrl();
   const healthUrl = root.startsWith('/') ? `${root}/readiness` : `${root}/readiness`;

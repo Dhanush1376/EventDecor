@@ -243,7 +243,7 @@ export function AdminOrders() {
       {/* Controls row: view modes, search/filters, export buttons */}
       {viewMode === 'table' && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="w-full flex flex-col sm:flex-row gap-4">
+          <div className="w-full flex flex-col sm:flex-row justify-between gap-4">
             <div className="sm:max-w-md w-full">
               <FilterBar
                 filters={['All', ...allStatuses]}
@@ -261,10 +261,10 @@ export function AdminOrders() {
                   <button
                     key={type}
                     onClick={() => setFilterOrderType(type)}
-                    className={`px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                    className={`px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider transition-colors border ${
                       filterOrderType === type
-                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]'
-                        : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-secondary)]'
+                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border-[var(--admin-border)]'
+                        : 'border-transparent text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-secondary)]'
                     }`}
                   >
                     {type}

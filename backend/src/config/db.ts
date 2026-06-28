@@ -185,14 +185,14 @@ class DatabaseManager {
 
     // Reuse existing connection if ready
     if (mongoose.connection.readyState === 1) {
-      logger.info('🟢 [DATABASE] Reusing established MongoDB connection singleton');
+      logger.info('[DATABASE] Reusing established MongoDB connection singleton');
       return mongoose;
     }
 
     // Await existing connection attempt if currently connecting
     if (mongoose.connection.readyState === 2 && this.cachedConnectionPromise) {
       logger.info(
-        '🟡 [DATABASE] MongoDB connection already in progress, awaiting existing promise...',
+        '[DATABASE] MongoDB connection already in progress, awaiting existing promise...',
       );
       return this.cachedConnectionPromise;
     }
@@ -221,7 +221,7 @@ class DatabaseManager {
     // Register connection lifecycle event listeners
     if (mongoose.connection.listeners('connected').length === 0) {
       mongoose.connection.on('connected', () => {
-        logger.info('🟢 [DATABASE] MongoDB connection established');
+        logger.info('[DATABASE] MongoDB connection established');
         this.reconnectAttempts = 0; // Reset reconnect count on successful connection
         this.startHealthCheck(); // Start monitoring health pings
 
@@ -241,21 +241,21 @@ class DatabaseManager {
       });
 
       mongoose.connection.on('error', (err) => {
-        logger.error(`🔴 [DATABASE] MongoDB connection error: ${err.message}`);
+        logger.error(`[DATABASE] MongoDB connection error: ${err.message}`);
       });
 
       mongoose.connection.on('disconnected', () => {
-        logger.warn('🟡 [DATABASE] MongoDB disconnected. Auto-reconnection attempt in progress...');
+        logger.warn('[DATABASE] MongoDB disconnected. Auto-reconnection attempt in progress...');
         this.handleDisconnection();
       });
 
       mongoose.connection.on('reconnected', () => {
-        logger.info('🟢 [DATABASE] MongoDB reconnected successfully');
+        logger.info('[DATABASE] MongoDB reconnected successfully');
         this.reconnectAttempts = 0;
       });
 
       mongoose.connection.on('close', () => {
-        logger.info('⚪ [DATABASE] MongoDB connection closed');
+        logger.info('[DATABASE] MongoDB connection closed');
         this.stopHealthCheck();
       });
     }
@@ -264,12 +264,12 @@ class DatabaseManager {
 
     const attemptConnection = async (attempt: number = 1): Promise<typeof mongoose> => {
       try {
-        logger.info(`🔄 [DATABASE] Connecting to MongoDB (Attempt ${attempt}/${maxRetries})...`);
+        logger.info(`[DATABASE] Connecting to MongoDB (Attempt ${attempt}/${maxRetries})...`);
         const conn = await mongoose.connect(MONGO_URI, options);
-        logger.info('🚀 [DATABASE] MongoDB Connection Succeeded');
+        logger.info('[DATABASE] MongoDB Connection Succeeded');
         return conn;
       } catch (err: any) {
-        logger.error(`❌ [DATABASE] MongoDB connection attempt ${attempt} failed: ${err.message}`);
+        logger.error(`[DATABASE] MongoDB connection attempt ${attempt} failed: ${err.message}`);
 
         if (attempt === maxRetries) {
           this.cachedConnectionPromise = null; // Reset cached promise on final failure to allow retry triggers later
@@ -280,7 +280,7 @@ class DatabaseManager {
 
         // Exponential backoff with jitter (up to 15s) to prevent thundering herd
         const delay = Math.min(1000 * Math.pow(2, attempt), 15000) + Math.random() * 1000;
-        logger.info(`🔄 [DATABASE] Retrying MongoDB connection in ${Math.round(delay)}ms...`);
+        logger.info(`[DATABASE] Retrying MongoDB connection in ${Math.round(delay)}ms...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
         return attemptConnection(attempt + 1);
       }
@@ -366,7 +366,7 @@ class DatabaseManager {
       this.lastPingTime = new Date();
       this.totalFailedPings++;
 
-      logger.error('🔴 [DATABASE] Active health ping failed:', err);
+      logger.error('[DATABASE] Active health ping failed:', err);
       this.triggerSelfHealing();
       return false;
     }
@@ -377,7 +377,7 @@ class DatabaseManager {
    */
   private triggerSelfHealing() {
     if (this.isReconnecting) {
-      logger.info('🟡 [DATABASE] Self-healing already in progress. Skipping duplicate trigger.');
+      logger.info('[DATABASE] Self-healing already in progress. Skipping duplicate trigger.');
       return;
     }
 

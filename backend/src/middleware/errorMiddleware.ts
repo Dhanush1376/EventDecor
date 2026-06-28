@@ -2,7 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import { requestContextStorage } from './requestTracker';
-
+/**
+ * Global Error Handling Middleware
+ *
+ * Intercepts all unhandled exceptions and known error classes (Mongoose, JWT, etc.)
+ * Translates them into a standardized JSON response format.
+ * Redacts sensitive PII and system internals in production.
+ */
 const errorMiddleware = (err: any, req: Request, res: Response, _next: NextFunction) => {
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';

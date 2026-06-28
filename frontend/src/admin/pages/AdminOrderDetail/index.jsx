@@ -11,6 +11,7 @@ import { OrderItems } from './OrderItems';
 import { OrderLogistics } from './OrderLogistics';
 import { OrderShipping } from './OrderShipping';
 import { OrderRentalActions } from './OrderRentalActions';
+import { OrderReturnCard } from './OrderReturnCard';
 import { useOrderScanner } from './hooks/useOrderScanner';
 
 export function AdminOrderDetail() {
@@ -122,6 +123,7 @@ export function AdminOrderDetail() {
               settlementCharges={settlementCharges}
               setSettlementCharges={setSettlementCharges}
             />
+            <OrderReturnCard order={order} />
             <OrderItems order={order} />
           </div>
 
@@ -146,11 +148,13 @@ export function AdminOrderDetail() {
               onClick={() => setShowStickerModal(false)}
               className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] no-print"
             />
+            {/* Modal Container */}
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="invoice-modal-container fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] md:w-full md:max-w-3xl max-h-[calc(100vh-2rem)] md:max-h-[90vh] bg-[var(--admin-surface)] rounded-[var(--admin-radius-2xl)] shadow-[var(--admin-shadow-2xl)] z-[101] overflow-y-auto custom-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 250 }}
+              className="invoice-modal-container fixed bottom-0 left-0 right-0 mx-auto w-full max-w-3xl max-h-[92vh] bg-[var(--admin-surface)] rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] z-[101] overflow-y-auto custom-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
             >
               <style type="text/css" media="print">
                 {`

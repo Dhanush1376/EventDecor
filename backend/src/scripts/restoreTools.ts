@@ -30,13 +30,13 @@ const runRestore = async () => {
 
   // 1. Critical Safeguards
   if (process.env.NODE_ENV === 'production') {
-    logger.error('❌ FATAL: restoreTools.ts cannot be run in production mode.');
+    logger.error('FATAL: restoreTools.ts cannot be run in production mode.');
     process.exit(1);
   }
 
   const MONGO_URI = process.env.MONGO_URI || '';
   if (MONGO_URI.includes('mongodb.net') || MONGO_URI.includes('mongodb+srv')) {
-    logger.error('❌ FATAL: restoreTools.ts cannot be run against an Atlas cluster.');
+    logger.error('FATAL: restoreTools.ts cannot be run against an Atlas cluster.');
     process.exit(1);
   }
 

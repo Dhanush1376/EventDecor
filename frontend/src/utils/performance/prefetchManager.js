@@ -80,21 +80,30 @@ class PrefetchManager {
         if (id && id !== ':id') {
           await this.queryClient.prefetchQuery({
             queryKey: ['product', id],
-            queryFn: async () => productService.getById(id),
+            queryFn: async () => {
+              const res = await productService.getById(id);
+              return res.success ? res.data : res;
+            },
             staleTime: 1000 * 60 * 10,
           });
         }
       } else if (route === '/collections' || route.startsWith('/collections?')) {
         await this.queryClient.prefetchQuery({
           queryKey: ['products', { page: 1, limit: 12, sort: 'newest' }],
-          queryFn: async () => productService.getAll({ page: 1, limit: 12, sort: 'newest' }),
+          queryFn: async () => {
+            const res = await productService.getAll({ page: 1, limit: 12, sort: 'newest' });
+            return res.success ? res.data : res;
+          },
           staleTime: 1000 * 60 * 5,
         });
       } else if (route === '/checkout') {
         if (hasSessionMarker()) {
           await this.queryClient.prefetchQuery({
             queryKey: ['checkout', 'addresses'],
-            queryFn: async () => userService.getAddresses(),
+            queryFn: async () => {
+              const res = await userService.getAddresses();
+              return res.success ? res.data : res;
+            },
             staleTime: 1000 * 60 * 3,
           });
         }
@@ -102,7 +111,10 @@ class PrefetchManager {
         if (hasSessionMarker()) {
           await this.queryClient.prefetchQuery({
             queryKey: ['dashboard', 'orders'],
-            queryFn: async () => orderService.getMyOrders({ limit: 10 }),
+            queryFn: async () => {
+              const res = await orderService.getMyOrders({ limit: 10 });
+              return res.success ? res.data : res;
+            },
             staleTime: 1000 * 60 * 2,
           });
         }

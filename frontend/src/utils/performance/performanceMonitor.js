@@ -41,9 +41,9 @@ class PerformanceMonitor {
 
     if (loadTimeMs > 2000) {
       this.metrics.slowImages.push(entry);
-      if (this.isDev) {
-        logger.warn(`[PerfMonitor] Slow image load detected: ${loadTimeMs}ms for ${url}`);
-      }
+      // if (this.isDev) {
+      //   logger.warn(`[PerfMonitor] Slow image load detected: ${loadTimeMs}ms for ${url}`);
+      // }
       // Future: Send to analytics endpoint
     }
   }
@@ -207,30 +207,7 @@ class PerformanceMonitor {
   }
 
   printDashboard() {
-    if (!this.isDev) return;
-    const report = this.getImageLoadReport();
-
-    console.groupCollapsed(
-      '%c 🚀 Performance Dashboard',
-      'background: #222; color: #bada55; padding: 4px; border-radius: 4px;',
-    );
-    logger.info(`LCP: ${Math.round(this.metrics.lcp)}ms`);
-    logger.info(`CLS: ${this.metrics.cls.toFixed(3)}`);
-    logger.info(`FID: ${Math.round(this.metrics.fid)}ms`);
-    logger.info(`INP: ${Math.round(this.metrics.inp)}ms`);
-    if (report) {
-      logger.info('--- Image Performance ---');
-
-      console.table({
-        Count: report.count,
-        Average: report.average + 'ms',
-        P50: report.p50 + 'ms',
-        P95: report.p95 + 'ms',
-        SlowCount: report.slowCount,
-      });
-    }
-
-    console.groupEnd();
+    return; // Disabled to prevent console spam
   }
 }
 

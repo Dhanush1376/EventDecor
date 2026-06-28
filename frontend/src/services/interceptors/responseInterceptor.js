@@ -53,7 +53,9 @@ export const createResponseInterceptor = ({
 
     // Don't treat database readiness guard 503s as generic transient errors to avoid 2-minute UI hangs
     const isTransientError =
-      (!error.response || TRANSIENT_STATUSES.has(status) || normalized.isTimeout) &&
+      ((!error.response && error.code !== 'ERR_NO_SESSION') ||
+        TRANSIENT_STATUSES.has(status) ||
+        normalized.isTimeout) &&
       !isDatabaseDown;
 
     const maxRetries = isGet ? MAX_GET_RETRIES : MAX_MUTATION_RETRIES;

@@ -2,7 +2,8 @@ const cron = require('node-cron');
 import Product from '../models/Product';
 import User from '../models/User';
 import logger from '../config/logger';
-import { sendEmail } from '../utils/email/sendEmail';
+import { sendDirectEmail } from '../services/notificationService';
+import { getOtpEmailTemplate } from '../utils/email/emailTemplates';
 import { exec } from 'child_process';
 import path from 'path';
 import fs from 'fs';
@@ -60,10 +61,14 @@ const handleAnomaly = async (message: string) => {
   const alertEmail = process.env.SUPER_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
   if (alertEmail) {
     try {
-      await sendEmail({
+      await sendDirectEmail({
         email: alertEmail,
         subject: 'URGENT: Database Integrity Alert - Siri Arts & Crafts',
-        message: `The health monitor has detected anomalous database activity:\n\n${message}\n\nAn emergency backup has been triggered. Please review the system immediately.`,
+        customHtml: getOtpEmailTemplate(
+          `The health monitor has detected anomalous database activity:\n\n${message}\n\nAn emergency backup has been triggered. Please review the system immediately.`,
+        ),
+        type: 'security',
+        action: 'system_alert',
       });
       logger.info(`[HEALTH MONITOR] Alert email sent to ${alertEmail}`);
     } catch (err: any) {

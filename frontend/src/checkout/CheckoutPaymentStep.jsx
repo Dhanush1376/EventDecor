@@ -367,7 +367,7 @@ export default function CheckoutPaymentStep() {
                                 type="button"
                                 onClick={handleSendCodOtp}
                                 disabled={isSendingOtp || isProcessing}
-                                className="mt-3 px-5 py-2 bg-on-surface-variant text-surface rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-primary-container hover:text-on-primary-container transition-all shadow-sm w-fit disabled:opacity-70 disabled:cursor-not-allowed"
+                                className="mt-3.5 px-5 py-2.5 bg-on-surface-variant text-surface rounded-md text-[11px] font-bold uppercase tracking-widest hover:bg-primary-container hover:text-on-primary-container transition-all shadow-sm w-full disabled:opacity-70 disabled:cursor-not-allowed"
                               >
                                 {isSendingOtp ? 'SENDING...' : 'VERIFY OTP'}
                               </button>

@@ -13,11 +13,13 @@ export function useUserSocket() {
 }
 
 export function UserSocketProvider({ children }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const queryClient = useQueryClient();
   const socketRef = useRef(null);
 
   useEffect(() => {
+    if (loading) return;
+
     if (!isAuthenticated || !user) {
       if (socketRef.current) {
         socketRef.current.disconnect();
@@ -34,7 +36,7 @@ export function UserSocketProvider({ children }) {
     const socket = socketIO(`${socketServerUrl}/user`, {
       transports: ['websocket', 'polling'],
       withCredentials: true,
-      auth: { token },
+      auth: (cb) => cb({ token: getAccessToken() }),
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
@@ -61,14 +63,27 @@ export function UserSocketProvider({ children }) {
       queryClient.invalidateQueries({ queryKey: ['order'] });
     });
 
+    socket.on('return:status_updated', (data) => {
+      logger.dev(`[WEBSOCKET] Return ${data?.returnId} status updated to ${data?.status}`);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['returns'] });
+    });
+
+    socket.on('return:created', (data) => {
+      logger.dev(`[WEBSOCKET] Return ${data?.returnId} created`);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['returns'] });
+    });
+
     socket.on('connect_error', (err) => {
+      if (err.message.includes('Token missing')) return;
       logger.warn('[WEBSOCKET] User connection error:', err.message);
     });
 
     return () => {
       socket.disconnect();
     };
-  }, [isAuthenticated, user, queryClient]);
+  }, [isAuthenticated, user, queryClient, loading]);
 
   return (
     <UserSocketContext.Provider value={socketRef.current}>{children}</UserSocketContext.Provider>

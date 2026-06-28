@@ -763,7 +763,7 @@ export async function initRecommendationSystem(): Promise<void> {
     // Warm cold start feed
     await getColdStartFeed({ limit: 20 });
 
-    logger.info('[RECO ENGINE] ✅ Recommendation system initialized');
+    logger.info('[RECO ENGINE] Recommendation system initialized');
 
     // In background, start a catalog precomputation if cache is cold
     if (process.env.ENABLE_WORKERS !== 'false' && process.env.NODE_ENV !== 'test') {

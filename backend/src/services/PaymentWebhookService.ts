@@ -1,19 +1,16 @@
 import mongoose from 'mongoose';
 import Order from '../models/Order';
 import logger from '../config/logger';
-import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import PaymentAudit from '../models/PaymentAudit';
 import { PaymentStateMachine } from './payments/PaymentStateMachine';
+import PaymentAttempt from '../models/PaymentAttempt';
 import PaymentWebhookEvent from '../models/PaymentWebhookEvent';
 import OutboxEvent from '../models/OutboxEvent';
-import * as Sentry from '@sentry/node';
 import { webhookQueue } from '../jobs/queues';
 import { bumpAdminAnalyticsCacheVersion } from '../utils/cache/cacheVersion';
 import AnalyticsService from './analyticsService';
 import crypto from 'crypto';
-import { InventoryService } from './InventoryService';
 import { UnifiedWebhookRouter } from './payments/UnifiedWebhookRouter';
-import Product from '../models/Product';
 
 export class PaymentWebhookService {
   /**
@@ -123,208 +120,41 @@ export class PaymentWebhookService {
       const razorpay_order_id = paymentEntity?.order_id;
       const razorpay_payment_id = paymentEntity?.id;
 
-      if (razorpay_payment_id) {
-        const alreadyPaidByPaymentId = await Order.findOne({
-          razorpayPaymentId: razorpay_payment_id,
-          paymentStatus: 'paid',
-        }).lean();
-        if (alreadyPaidByPaymentId) {
-          logger.info(
-            `[PAYMENT WEBHOOK IDEMPOTENCY] Payment ${razorpay_payment_id} already processed`,
-          );
-          return { status: 200, message: 'Webhook idempotency: payment already processed' };
-        }
-      }
-
       if (!razorpay_order_id || !razorpay_payment_id) {
         return { status: 200, message: 'Skipped: missing entity details' };
       }
 
-      const session = await mongoose.startSession();
-      session.startTransaction();
+      const paymentData = {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature: signature || 'webhook_bypass',
+      };
 
       try {
-        const order: any = await Order.findOneAndUpdate(
-          {
-            razorpayOrderId: razorpay_order_id,
-            paymentStatus: { $in: ['pending', 'failed'] },
-          } as any,
-          { $set: { paymentStatus: 'processing' } },
-          { returnDocument: 'after', session },
+        const { PaymentVerificationService } = require('./PaymentVerificationService');
+        await PaymentVerificationService.verifyPayment(paymentData, 'system', 'admin', 'webhook');
+
+        await PaymentWebhookEvent.updateOne(
+          { razorpayEventId: eventId },
+          { $set: { status: 'processed', updatedAt: new Date() } },
         );
 
-        if (!order) {
-          const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id }).session(
-            session,
-          );
-          if (existingOrder?.paymentStatus === 'paid') {
-            await session.abortTransaction();
-            return { status: 200, message: 'Already paid' };
-          }
-          if (existingOrder?.paymentStatus === 'processing') {
-            await session.abortTransaction();
-            return { status: 200, message: 'Currently being processed by another worker' };
-          }
-          await session.abortTransaction();
-          return { status: 200, message: 'Skipped: Order not found or closed' };
-        }
+        AnalyticsService.clearCache();
+        await bumpAdminAnalyticsCacheVersion();
 
-        const expectedAmount = Math.round(order.total * 100);
-        const isAmountValid = paymentEntity.amount === expectedAmount;
-        const isCurrencyValid = paymentEntity.currency === 'INR';
-
-        const isValid = isAmountValid && isCurrencyValid;
-
-        await PaymentAudit.create(
-          [
-            {
-              orderId: order._id,
-              userId: order.user,
-              razorpayOrderId: razorpay_order_id,
-              razorpayPaymentId: razorpay_payment_id,
-              eventType: 'webhook_received',
-              status: isValid ? 'success' : 'tampered',
-              amountExpected: expectedAmount,
-              amountReceived: Number(paymentEntity.amount),
-              currencyReceived: String(paymentEntity.currency),
-              signatureValid: true,
-              notes: `Amount Match: ${isAmountValid}, Currency Match: ${isCurrencyValid}, Event: ${event}`,
-              rawPayload: JSON.stringify(paymentEntity),
-            },
-          ],
-          { session },
-        );
-
-        if (!isValid) {
-          await session.abortTransaction();
-
-          await PaymentAudit.create({
-            orderId: order._id,
-            userId: order.user,
-            razorpayOrderId: razorpay_order_id,
-            razorpayPaymentId: razorpay_payment_id,
-            eventType: 'webhook_received',
-            status: 'tampered',
-            amountExpected: expectedAmount,
-            amountReceived: Number(paymentEntity.amount),
-            currencyReceived: String(paymentEntity.currency),
-            signatureValid: true,
-            notes: `Amount Match: ${isAmountValid}, Currency Match: ${isCurrencyValid}, Event: ${event}`,
-            rawPayload: JSON.stringify(paymentEntity),
-          });
-
+        return { status: 200, message: 'Payment successfully captured via Webhook' };
+      } catch (err: any) {
+        if (err.statusCode === 409 || err.statusCode === 400) {
+          // If 409: Currently being processed by frontend callback
+          // If 400: Tampered/Invalid signature (already handled/logged by verifyPayment)
           await PaymentWebhookEvent.updateOne(
             { razorpayEventId: eventId },
             { $set: { status: 'processed', updatedAt: new Date() } },
           );
-
-          if (paymentEntity.status === 'captured') {
-            try {
-              await RazorpayGateway.initiateRefund(razorpay_payment_id, {
-                amount: paymentEntity.amount,
-              });
-              logger.info(
-                `[PAYMENT REFUND] Automatically refunded tampered webhook payment ${razorpay_payment_id}`,
-              );
-            } catch (refundErr) {
-              Sentry.captureException(refundErr, {
-                tags: { critical: 'checkout_failure', tampered: 'true' },
-                extra: { razorpay_payment_id },
-              });
-            }
-          }
-
-          return {
-            status: 200,
-            message: 'Webhook processed but validation failed due to tampering',
-          };
+          return { status: 200, message: err.message };
         }
-
-        // Confirm inventory reservations via InventoryService (with audit trail)
-        if (order.reservationIds && order.reservationIds.length > 0) {
-          for (const resId of order.reservationIds) {
-            await InventoryService.confirmReservation(resId.toString(), session);
-          }
-        } else {
-          // Fallback for older orders
-          const InventoryLog = require('../models/InventoryLog').default;
-          for (const item of order.items) {
-            const prod = await Product.findByIdAndUpdate(
-              item.productId,
-              { $inc: { stock: -item.quantity, reservedStock: -item.quantity } },
-              { session, returnDocument: 'after' },
-            );
-            if (prod) {
-              await InventoryLog.create(
-                [
-                  {
-                    product: item.productId,
-                    previousStock: prod.stock + item.quantity,
-                    newStock: prod.stock,
-                    delta: -item.quantity,
-                    reason: 'order_placed',
-                    orderId: order._id,
-                    referenceType: 'Order',
-                    performedBy: 'system',
-                    note: `Stock deducted via webhook fallback. Stock: ${prod.stock + item.quantity} -> ${prod.stock}`,
-                  },
-                ],
-                { session },
-              );
-            }
-          }
-        }
-
-        PaymentStateMachine.transition(
-          order,
-          'paid',
-          `Payment captured successfully via Razorpay Webhook [Event: ${event}]`,
-        );
-        order.orderStatus = 'Confirmed';
-        order.razorpayPaymentId = razorpay_payment_id;
-        order.razorpaySignature = signature;
-
-        await order.save({ session });
-
-        await OutboxEvent.create(
-          [
-            {
-              aggregateId: order._id.toString(),
-              aggregateType: 'Order',
-              eventType: 'OrderCreated',
-              payload: {
-                orderId: order._id.toString(),
-                userId: order.user,
-                type: 'email',
-                amount: order.total,
-              },
-            },
-          ],
-          { session },
-        );
-
-        const User = require('../models/User').default;
-        await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
-
-        // ENTERPRISE FIX: Mark webhook as processed INSIDE the transaction
-        // to prevent re-processing if the status update fails separately
-        await PaymentWebhookEvent.updateOne(
-          { razorpayEventId: eventId },
-          { $set: { status: 'processed', updatedAt: new Date() } },
-        ).session(session);
-
-        await session.commitTransaction();
-      } catch (dbErr) {
-        await session.abortTransaction();
-        throw dbErr;
-      } finally {
-        session.endSession();
+        throw err;
       }
-
-      AnalyticsService.clearCache();
-      await bumpAdminAnalyticsCacheVersion();
-
-      return { status: 200, message: 'Payment successfully captured via Webhook' };
     }
 
     if (event === 'payment.failed') {
@@ -361,20 +191,11 @@ export class PaymentWebhookService {
             { $set: { status: 'processed', updatedAt: new Date() } },
           ).session(session);
 
-          const order = await Order.findOneAndUpdate(
-            { razorpayOrderId: razorpay_order_id, paymentStatus: 'pending' },
-            { $set: { paymentStatus: 'failed' } },
+          const attempt = await PaymentAttempt.findOneAndUpdate(
+            { razorpayOrderId: razorpay_order_id, status: 'initiated' },
+            { $set: { status: 'failed' } },
             { session, returnDocument: 'after' },
           );
-
-          if (order) {
-            PaymentStateMachine.transition(
-              order,
-              'failed',
-              `Payment failed webhook received. Error: ${paymentEntity.error_description || 'Unknown'}`,
-            );
-            await order.save({ session });
-          }
 
           await session.commitTransaction();
         } catch (err) {
@@ -527,3 +348,9 @@ export class PaymentWebhookService {
     return { status: 200, message: 'Webhook event received and processed' };
   }
 }
+
+// Wire up circular dependency (UnifiedWebhookRouter -> PaymentWebhookService -> UnifiedWebhookRouter)
+import { setOrderWebhookHandler } from './payments/UnifiedWebhookRouter';
+setOrderWebhookHandler(
+  PaymentWebhookService.processRazorpayWebhookCore.bind(PaymentWebhookService),
+);

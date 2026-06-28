@@ -167,7 +167,7 @@ export function AuthModal() {
                     className="space-y-8"
                   >
                     {/* Headings */}
-                    <div className="space-y-1.5">
+                    <div className="text-left mb-8 sm:mb-10 space-y-1.5 sm:space-y-2">
                       <h2 className="font-display text-[24px] sm:text-[28px] leading-tight text-on-surface-variant font-light">
                         {step === '2fa'
                           ? 'Enter Authenticator Code'
@@ -179,7 +179,7 @@ export function AuthModal() {
                         <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
                           {step === '2fa'
                             ? 'Enter the 6-digit code from your authenticator app.'
-                            : 'Experience passwordless, secure entry to our store.'}
+                            : 'Log in or register with your email'}
                         </p>
                       )}
                       {step === 'otp' && (

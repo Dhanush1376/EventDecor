@@ -5,11 +5,10 @@ dns.setDefaultResultOrder('ipv4first');
 
 import logger from './src/config/logger';
 
-// ──── Early diagnostic output (secure) ────
-logger.info(`[BOOT DIAGNOSTIC] NODE_ENV=${process.env.NODE_ENV}`);
-logger.info(`[BOOT DIAGNOSTIC] PORT=${process.env.PORT || '(not set, defaulting to 5000)'}`);
-logger.info(`[BOOT DIAGNOSTIC] MONGO_URI=${process.env.MONGO_URI ? 'SET' : 'NOT SET'}`);
-// ──── End diagnostic output ────
+// Early diagnostic output (secure)
+logger.info(`[STARTUP] NODE_ENV=${process.env.NODE_ENV}`);
+logger.info(`[STARTUP] PORT=${process.env.PORT || '(not set, defaulting to 5000)'}`);
+logger.info(`[STARTUP] MONGO_URI=${process.env.MONGO_URI ? 'SET' : 'NOT SET'}`);
 
 import { auditEnvOnStartup } from './src/config/secretAudit';
 auditEnvOnStartup();
@@ -19,14 +18,23 @@ import app from './src/app';
 import connectDB from './src/config/db';
 import { ensureIndexes } from './src/config/ensureIndexes';
 import { generateSitemap } from './src/utils/sitemapGenerator';
-import { initSocket, getIO } from './src/socket';
+import { initSocket, getIO, emitAdminNotification } from './src/socket';
 import { initJobs } from './src/jobs/cronJobs';
-import { initRedis, closeRedisConnections } from './src/utils/cache/redis';
+import { initRedis, closeRedisConnections, setRedisAlertHandler } from './src/utils/cache/redis';
 import { initWorkers, closeWorkers } from './src/jobs/workers';
 import { initQueues, closeQueues } from './src/jobs/queues';
 import { initRecommendationSystem } from './src/services/recommendation/recommendationEngine';
 import { startDbAuditor } from './src/config/dbAuditor';
+import { AlertingService, setAlertingNotificationHandlers } from './src/services/AlertingService';
+import {
+  sendDirectEmail,
+  createAdminNotification,
+  setSocketNotificationHandler,
+} from './src/services/notificationService';
 
+// Wire up circular dependencies
+setAlertingNotificationHandlers(sendDirectEmail, createAdminNotification);
+setSocketNotificationHandler(emitAdminNotification);
 import * as Sentry from '@sentry/node';
 import mongoose from 'mongoose';
 
@@ -35,7 +43,7 @@ import { Server } from 'http';
 let server: Server;
 
 const handleFatalError = async (error: Error, source: string) => {
-  logger.error(`🚨 CRITICAL PROCESS ERROR [${source}]: ${error.message}`, { stack: error.stack });
+  logger.error(`[PROCESS] Critical error [${source}]: ${error.message}`, { stack: error.stack });
 
   if (process.env.SENTRY_DSN) {
     try {
@@ -92,7 +100,7 @@ process.on('unhandledRejection', (reason: any) => {
     error.message.includes('Socket already setup') ||
     error.message.includes('Max retries reached')
   ) {
-    logger.warn(`⚠️ Ignored unhandledRejection (Redis/Socket issue): ${error.message}`);
+    logger.warn(`[PROCESS] Ignored unhandledRejection (Redis/Socket issue): ${error.message}`);
     return;
   }
 
@@ -107,7 +115,7 @@ const initializeServicesProgressively = async (httpServer: Server) => {
     // 1. Connect to Database (retry internally, throw if fails)
     logger.info('[STARTUP] Progressive Init: Connecting to MongoDB...');
     await connectDB();
-    logger.info('🟢 [STARTUP] MongoDB connected successfully');
+    logger.info('[STARTUP] MongoDB connected successfully');
 
     // 1.a Start Forensic Database Auditor
     startDbAuditor();
@@ -127,12 +135,15 @@ const initializeServicesProgressively = async (httpServer: Server) => {
     // 3. Initialize Redis (graceful fallback if REQUIRE_REDIS=false)
     logger.info('[STARTUP] Progressive Init: Initializing Redis...');
     let redisReady = false;
+    // 3. Connect Cache & Queues (Redis -> BullMQ)
+    // Inject dependency to break circular imports between Redis and Alerting
+    setRedisAlertHandler(AlertingService.databaseAlert.bind(AlertingService));
     try {
       await initRedis();
       redisReady = true;
-      logger.info('🟢 [STARTUP] Redis initialized successfully');
+      logger.info('[STARTUP] Redis initialized successfully');
     } catch (err: any) {
-      logger.error(`❌ [REDIS] Initialization error: ${err.message}`);
+      logger.error(`[REDIS] Initialization error: ${err.message}`);
       if (process.env.REQUIRE_REDIS === 'true') {
         throw new Error(`CRITICAL: Redis is required but failed to initialize: ${err.message}`);
       }
@@ -141,9 +152,9 @@ const initializeServicesProgressively = async (httpServer: Server) => {
     // 4. Initialize Socket.io (now that Redis connection is ready or failed, it can bind its adapter)
     try {
       initSocket(httpServer);
-      logger.info('🟢 [STARTUP] Socket.io initialized successfully');
+      logger.info('[STARTUP] Socket.io initialized successfully');
     } catch (err: any) {
-      logger.error(`❌ [SOCKET.IO] Initialization error: ${err.message}`);
+      logger.error(`[SOCKET.IO] Initialization error: ${err.message}`);
     }
 
     // 5. Initialize BullMQ Queues and Workers
@@ -151,9 +162,9 @@ const initializeServicesProgressively = async (httpServer: Server) => {
       try {
         await initQueues();
         await initWorkers();
-        logger.info('🟢 [STARTUP] BullMQ queues and workers initialized');
+        logger.info('[STARTUP] BullMQ queues and workers initialized');
       } catch (err: any) {
-        logger.error(`❌ [BULLMQ] Initialization error: ${err.message}`);
+        logger.error(`[BULLMQ] Initialization error: ${err.message}`);
         if (process.env.REQUIRE_REDIS === 'true') {
           throw err;
         }
@@ -162,15 +173,15 @@ const initializeServicesProgressively = async (httpServer: Server) => {
 
     // 6. Initialize Recommendation System (warm caches — non-blocking, non-fatal)
     initRecommendationSystem().catch((err: any) => {
-      logger.warn(`⚠️ [RECO] Recommendation system init skipped: ${err.message}`);
+      logger.warn(`[RECO] Recommendation system init skipped: ${err.message}`);
     });
 
     // 7. Initialize Background Cron/Jobs
     try {
       initJobs();
-      logger.info('🟢 [STARTUP] Background cron/jobs initialized');
+      logger.info('[STARTUP] Background cron/jobs initialized');
     } catch (err: any) {
-      logger.error(`❌ [STARTUP] Jobs initialization error: ${err.message}`);
+      logger.error(`[STARTUP] Jobs initialization error: ${err.message}`);
     }
 
     // 8. Auto-generate sitemap
@@ -180,10 +191,10 @@ const initializeServicesProgressively = async (httpServer: Server) => {
 
     const bootEndTime = performance.now();
     logger.info(
-      `⚡ [STARTUP] Progressive boot sequence completed in ${((bootEndTime - bootStartTime) / 1000).toFixed(2)}s`,
+      `[STARTUP] Progressive boot sequence completed in ${((bootEndTime - bootStartTime) / 1000).toFixed(2)}s`,
     );
   } catch (error: any) {
-    logger.error('🚨 CRITICAL SERVICE INITIALIZATION ERROR:', error);
+    logger.error('[STARTUP] Critical service initialization error:', error);
     // Trigger fatal error shutdown handling
     handleFatalError(error, 'progressiveInitialization');
   }
@@ -200,7 +211,7 @@ const startServer = async () => {
     // 1. Start Express Server Immediately
     server = app.listen(PORT, '0.0.0.0', () => {
       logger.info(
-        `🚀 [STARTUP] Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`,
+        `[STARTUP] Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`,
       );
       if (typeof process.send === 'function') {
         process.send('ready');

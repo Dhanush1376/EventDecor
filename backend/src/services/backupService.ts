@@ -244,7 +244,7 @@ export class BackupService {
    * Creates an emergency snapshot of all critical collections
    */
   public async createEmergencySnapshot(reason: string): Promise<string> {
-    logger.warn(`[BackupService] 🚨 Triggering EMERGENCY snapshot. Reason: ${reason}`);
+    logger.warn(`[BackupService] Triggering EMERGENCY snapshot. Reason: ${reason}`);
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const targetDir = path.join(this.backupRoot, 'emergency', timestamp);
 

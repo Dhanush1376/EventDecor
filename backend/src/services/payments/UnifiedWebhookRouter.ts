@@ -1,12 +1,21 @@
-﻿import Order from '../../models/Order';
+import Order from '../../models/Order';
 import EventBooking from '../../models/EventBooking';
 import RentalOrder from '../../models/RentalOrder';
 import logger from '../../config/logger';
-import { PaymentWebhookService } from '../PaymentWebhookService';
 import { EventBookingWebhookHandler } from './EventBookingWebhookHandler';
 import { RentalWebhookHandler } from './RentalWebhookHandler';
 
 import PaymentWebhookEvent from '../../models/PaymentWebhookEvent';
+
+export let processOrderWebhookHandler: (
+  event: string,
+  body: any,
+  signature: string,
+  eventId: string,
+) => Promise<any>;
+export const setOrderWebhookHandler = (handler: typeof processOrderWebhookHandler) => {
+  processOrderWebhookHandler = handler;
+};
 
 /**
  * UnifiedWebhookRouter â€” Routes Razorpay webhook events to the correct entity handler.
@@ -26,9 +35,15 @@ export class UnifiedWebhookRouter {
    * Uses indexed lookups on all three collections.
    */
   static async identifyEntity(razorpayOrderId: string): Promise<{
-    entityType: 'Order' | 'EventBooking' | 'RentalOrder' | null;
+    entityType: 'Order' | 'EventBooking' | 'RentalOrder' | 'PaymentAttempt' | null;
     entityId: string | null;
   }> {
+    // Check PaymentAttempt first (for new uncreated orders)
+    const PaymentAttempt = require('../../models/PaymentAttempt').default;
+    const attempt = await PaymentAttempt.findOne({ razorpayOrderId }).select('_id').lean();
+    if (attempt) {
+      return { entityType: 'PaymentAttempt', entityId: attempt._id.toString() };
+    }
     // Check Order first (most common)
     const order = await Order.findOne({ razorpayOrderId }).select('_id').lean();
     if (order) {
@@ -97,12 +112,7 @@ export class UnifiedWebhookRouter {
 
       if (!razorpayOrderId) {
         // Dispute events and other non-payment events still route to the order handler
-        return await PaymentWebhookService.processRazorpayWebhookCore(
-          event,
-          body,
-          signature,
-          eventId,
-        );
+        return await processOrderWebhookHandler(event, body, signature, eventId);
       }
 
       // Identify which entity this payment belongs to
@@ -124,13 +134,9 @@ export class UnifiedWebhookRouter {
 
       let result;
       switch (entityType) {
+        case 'PaymentAttempt':
         case 'Order':
-          result = await PaymentWebhookService.processRazorpayWebhookCore(
-            event,
-            body,
-            signature,
-            eventId,
-          );
+          result = await processOrderWebhookHandler(event, body, signature, eventId);
           break;
         case 'EventBooking':
           result = await EventBookingWebhookHandler.handleWebhookEvent(

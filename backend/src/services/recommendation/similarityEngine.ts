@@ -1,5 +1,6 @@
 import Product from '../../models/Product';
 import Event from '../../models/Event';
+import ShowcaseCollection from '../../models/ShowcaseCollection';
 import UserInteraction from '../../models/UserInteraction';
 import { RecommendationCache } from './recommendationCache';
 import { escapeRegex } from '../../services/searchService';
@@ -317,6 +318,122 @@ export async function getComplementaryItems(
     }));
   } catch (err: any) {
     logger.error(`[SIMILARITY ENGINE] Error in complementary items: ${err.message}`);
+    return [];
+  }
+}
+
+/**
+ * FAST FALLBACKS (Used directly by controllers for zero-latency responses)
+ */
+
+export async function getFastFallbackSimilar(
+  targetType: string,
+  targetId: string,
+  limit: number,
+): Promise<any[]> {
+  try {
+    if (targetType === 'product') {
+      const product = await Product.findById(targetId).select('category').lean();
+      if (!product) return [];
+
+      const products = await Product.find({
+        category: product.category,
+        _id: { $ne: targetId },
+        isActive: true,
+      })
+        .select(
+          '_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+        )
+        .limit(limit)
+        .lean();
+
+      return products.map((p) => ({
+        _id: (p._id as any).toString(),
+        targetType: 'product',
+        title: p.title,
+        imageSrc: p.imageSrc,
+        category: p.category,
+        price: p.price,
+        rating: p.rating,
+        reviews: p.reviews,
+        slug: p.slug,
+        rentalEnabled: p.rentalEnabled,
+        availabilityMode: p.availabilityMode,
+        rentalPricing: p.rentalPricing,
+        securityDeposit: p.securityDeposit,
+        isDepositRefundable: p.isDepositRefundable,
+      }));
+    } else if (targetType === 'event') {
+      const event = await Event.findById(targetId).select('category').lean();
+      if (!event) return [];
+
+      const events = await Event.find({
+        category: event.category,
+        _id: { $ne: targetId },
+        isActive: true,
+      })
+        .select('_id title image category style basePrice')
+        .limit(limit)
+        .lean();
+
+      return events.map((e) => ({
+        _id: (e._id as any).toString(),
+        targetType: 'event',
+        title: e.title,
+        image: e.image,
+        category: e.category,
+        style: e.style,
+        basePrice: e.basePrice,
+      }));
+    }
+    return [];
+  } catch (err: any) {
+    logger.error(`[SIMILARITY ENGINE] Error in fast fallback similar: ${err.message}`);
+    return [];
+  }
+}
+
+export async function getFastFallbackCompleteSetup(
+  targetType: string,
+  targetId: string,
+  limit: number,
+): Promise<any[]> {
+  try {
+    if (targetType === 'product') {
+      return getFastFallbackSimilar(targetType, targetId, limit);
+    } else {
+      let eventCategory: string | undefined;
+      const event = await Event.findById(targetId).select('category').lean();
+      if (event) {
+        eventCategory = event.category;
+      } else {
+        const showcase = await ShowcaseCollection.findById(targetId).select('category').lean();
+        if (showcase) eventCategory = showcase.category;
+      }
+
+      if (!eventCategory) return [];
+
+      const fallbackEvents = await Event.find({
+        category: eventCategory,
+        _id: { $ne: targetId },
+        isActive: true,
+      })
+        .select('_id title image category style basePrice')
+        .limit(limit)
+        .lean();
+
+      return fallbackEvents.map((e) => ({
+        _id: (e._id as any).toString(),
+        targetType: 'event',
+        title: e.title,
+        image: e.image,
+        category: e.category,
+        style: e.style,
+        basePrice: e.basePrice,
+      }));
+    }
+  } catch (err: any) {
+    logger.error(`[SIMILARITY ENGINE] Error in fast fallback setup: ${err.message}`);
     return [];
   }
 }

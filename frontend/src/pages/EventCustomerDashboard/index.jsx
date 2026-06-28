@@ -63,21 +63,21 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
 
       <div className={isEmbedded ? '' : 'max-w-[1300px] mx-auto px-4 relative z-10'}>
         {!isEmbedded && (
-          <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-black/5 pb-6">
+          <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-black/5 pb-6">
             <div className="space-y-1">
-              <span className="font-label text-[10px] md:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block">
-                PORTFOLIO STUDIO
+              <span className="text-[10px] uppercase tracking-[0.3em] text-secondary font-bold block">
+                Portfolio Studio
               </span>
-              <h2 className="font-display text-[26px] md:text-[44px] text-black font-light tracking-tight leading-none">
+              <h2 className="font-bold text-[32px] md:text-[40px] text-on-surface tracking-tight leading-none">
                 My Event Design Center.
               </h2>
             </div>
             <Link
               to="/events"
-              className="bg-black text-white px-6 py-2.5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors self-start md:self-auto flex items-center gap-1.5"
+              className="bg-[#2A2927] hover:bg-black text-white px-6 py-3 rounded-[32px] font-bold text-[9px] uppercase tracking-widest transition-all self-start md:self-auto flex items-center gap-2 shadow-lg"
             >
-              Browse Events & Setups
-              <span className="material-symbols-outlined text-[14px] normal-case">add</span>
+              BROWSE EVENTS & SETUPS
+              <span className="material-symbols-outlined text-[14px]">add</span>
             </Link>
           </div>
         )}
@@ -104,25 +104,23 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
             <DashboardSkeleton />
           )
         ) : bookings.length === 0 ? (
-          <div className="text-center py-20 bg-surface-bright rounded-lg border border-outline-variant/30 shadow-2xs max-w-xl mx-auto px-6 space-y-6">
-            <div className="w-20 h-20 bg-primary/5 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="material-symbols-outlined text-[36px] normal-case">event_busy</span>
+          <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[40vh]">
+            <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
+              <span className="material-symbols-outlined text-[20px]">event_busy</span>
             </div>
-            <div className="space-y-2">
-              <h3 className="font-display text-xl text-black font-bold">No Active Events</h3>
-              <p className="font-body text-black/45 text-xs max-w-sm mx-auto leading-relaxed">
-                You have no active event setups. Explore our collections today.
-              </p>
-            </div>
+            <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
+              No Active Events
+            </h3>
+            <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px] mb-6">
+              You have no active event setups. Explore our collections today.
+            </p>
             <div className="flex justify-center">
               <Link
                 to="/events"
-                className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary cursor-pointer"
+                className="px-6 py-2.5 bg-black hover:bg-gray-900 text-white border-0 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1.5"
               >
-                <span>Browse Events & Setups</span>
-                <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-                  arrow_forward
-                </span>
+                Browse Events & Setups
+                <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
               </Link>
             </div>
           </div>

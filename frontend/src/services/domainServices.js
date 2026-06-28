@@ -22,3 +22,4 @@ export { default as rentalService } from './api/rentalService';
 export { visualSearchService } from './api/visualSearchService';
 export { blogService } from './api/blogService';
 export { locationService } from './api/locationService';
+export { customerIntelligenceService } from './api/customerIntelligenceService';

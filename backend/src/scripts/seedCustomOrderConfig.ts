@@ -10,13 +10,13 @@ import { connectDB } from '../config/db';
 const seedConfig = async () => {
   // 1. Critical Safeguards
   if (process.env.NODE_ENV === 'production') {
-    console.error('❌ FATAL: seedCustomOrderConfig.ts cannot be run in production mode.');
+    console.error('FATAL: seedCustomOrderConfig.ts cannot be run in production mode.');
     process.exit(1);
   }
 
   const MONGO_URI = process.env.MONGO_URI || '';
   if (MONGO_URI.includes('mongodb.net') || MONGO_URI.includes('mongodb+srv')) {
-    console.error('❌ FATAL: seedCustomOrderConfig.ts cannot be run against an Atlas cluster.');
+    console.error('FATAL: seedCustomOrderConfig.ts cannot be run against an Atlas cluster.');
     process.exit(1);
   }
 

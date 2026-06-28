@@ -129,7 +129,7 @@ export const initQueues = async () => {
 
   const requireRedis = process.env.REQUIRE_REDIS === 'true';
   try {
-    logger.info('🔄 [BULLMQ] Connecting and initializing queues...');
+    logger.info('[BULLMQ] Connecting and initializing queues...');
 
     // Explicitly trigger connection since lazyConnect: true is set
     await connection.connect();
@@ -144,9 +144,9 @@ export const initQueues = async () => {
     deadLetterQueue = new Queue('deadLetterQueue', defaultQueueOptions);
 
     queuesInitialized = true;
-    logger.info('🟢 [BULLMQ] Queues initialized successfully');
+    logger.info('[BULLMQ] Queues initialized successfully');
   } catch (err: any) {
-    logger.error(`🔴 [BULLMQ] Failed to initialize queues: ${err.message}`);
+    logger.error(`[BULLMQ] Failed to initialize queues: ${err.message}`);
     if (requireRedis) {
       throw err;
     } else {

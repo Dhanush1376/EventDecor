@@ -18,7 +18,7 @@ const isCloudinaryUrl = (value: string): boolean => /res\.cloudinary\.com/i.test
 export const assertSeedImagesCloudinaryOnly = (payload: unknown): void => {
   if (process.env.SEED_IMAGES_SOURCE !== 'cloudinary') {
     logger.error(
-      '❌ SEED_IMAGES_SOURCE must be set to "cloudinary". Add SEED_IMAGES_SOURCE=cloudinary to .env before seeding.'
+      '❌ SEED_IMAGES_SOURCE must be set to "cloudinary". Add SEED_IMAGES_SOURCE=cloudinary to .env before seeding.',
     );
     process.exit(1);
   }
@@ -27,7 +27,9 @@ export const assertSeedImagesCloudinaryOnly = (payload: unknown): void => {
 
   for (const pattern of FORBIDDEN_HOST_PATTERNS) {
     if (pattern.test(serialized)) {
-      logger.error(`❌ Seed data contains forbidden external image host (${pattern}). Use Cloudinary URLs only.`);
+      logger.error(
+        `Seed data contains forbidden external image host (${pattern}). Use Cloudinary URLs only.`,
+      );
       process.exit(1);
     }
   }
@@ -36,7 +38,7 @@ export const assertSeedImagesCloudinaryOnly = (payload: unknown): void => {
   for (const url of urlMatches) {
     if (!isHttpUrl(url)) continue;
     if (isCloudinaryUrl(url)) continue;
-    logger.error(`❌ Seed data contains non-Cloudinary URL: ${url}`);
+    logger.error(`Seed data contains non-Cloudinary URL: ${url}`);
     process.exit(1);
   }
 };

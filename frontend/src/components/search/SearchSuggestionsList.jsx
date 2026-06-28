@@ -15,8 +15,13 @@ export function SearchSuggestionsList({
   onExecuteSearch,
   isMobile,
 }) {
-  const showSuggestions = suggestions.length > 0 && query.trim().length >= 2;
-  const showNoResults = !loading && query.trim().length >= 2 && suggestions.length === 0;
+  const hasProducts = suggestions.some((s) => s.type === 'product');
+  const displaySuggestions = hasProducts
+    ? suggestions.filter((s) => s.type !== 'keyword')
+    : suggestions;
+
+  const showSuggestions = displaySuggestions.length > 0 && query.trim().length >= 2;
+  const showNoResults = !loading && query.trim().length >= 2 && displaySuggestions.length === 0;
 
   return (
     <>
@@ -53,7 +58,7 @@ export function SearchSuggestionsList({
       {/* Suggestions List */}
       {showSuggestions && (
         <div className={isMobile ? 'divide-y divide-stone-100' : 'py-2'}>
-          {suggestions.map((item, idx) => (
+          {displaySuggestions.map((item, idx) => (
             <button
               key={item.id}
               data-suggestion

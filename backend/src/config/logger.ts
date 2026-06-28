@@ -1,6 +1,20 @@
 import winston from 'winston';
 import { Syslog } from 'winston-syslog';
-import { requestContextStorage } from '../middleware/requestTracker';
+import { requestContextStorage } from '../utils/requestContext';
+
+/**
+ * Application Logger Configuration
+ *
+ * Implements a structured JSON logging strategy with automatic context injection
+ * (requestId, userId, ip) and deep secret redaction.
+ *
+ * Transports:
+ * - Error log: Dedicated file for error-level logs (rotated)
+ * - Combined log: All standard logs (rotated)
+ * - Payments log: Dedicated audit trail for transaction events (rotated, long retention)
+ * - Console: JSON in production, colorized simple format in development
+ * - Webhook/Syslog: Optional external drains (Datadog, Papertrail)
+ */
 
 // Winston format to dynamically extract the active context and inject request metadata
 const requestContextFormat = winston.format((info) => {

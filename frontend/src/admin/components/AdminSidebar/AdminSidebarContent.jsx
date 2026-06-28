@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SiriLogo } from '../../../components/ui/SiriLogo';
+import { useAuth } from '../../../context/AuthContext';
 
 export function AdminSidebarContent({
   sidebarOpen,
@@ -17,6 +18,7 @@ export function AdminSidebarContent({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   return (
     <div
@@ -138,6 +140,13 @@ export function AdminSidebarContent({
                     className="space-y-0.5"
                   >
                     {section.items.map((item, ii) => {
+                      if (
+                        item.path === '/admin/executive' &&
+                        !['super_admin', 'manager'].includes(user?.role)
+                      ) {
+                        return null; // Restrict Executive Summary
+                      }
+
                       const isActive =
                         location.pathname === item.path ||
                         (item.path !== '/admin' && location.pathname.startsWith(item.path));

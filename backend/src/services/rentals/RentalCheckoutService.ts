@@ -10,6 +10,7 @@ import { DistributedLock } from '../../utils/DistributedLock';
 import { RentalAvailabilityService } from './RentalAvailabilityService';
 import OutboxEvent from '../../models/OutboxEvent';
 import storeSettingsService from '../StoreSettingsService';
+import PaymentAttempt from '../../models/PaymentAttempt';
 
 export class RentalCheckoutService {
   static async calculateRentalCost(productId: string, startDate: Date, endDate: Date) {
@@ -175,6 +176,7 @@ export class RentalCheckoutService {
         const session = await mongoose.startSession();
         session.startTransaction();
         let rentalOrder;
+        const pendingOrderId = new mongoose.Types.ObjectId();
 
         try {
           const availabilityCheck = await RentalAvailabilityService.checkAvailability(
@@ -186,50 +188,52 @@ export class RentalCheckoutService {
           if (!availabilityCheck.available)
             throw new ApiError(400, availabilityCheck.reason || 'Product fully booked');
 
-          const rentalOrders = await RentalOrder.create(
-            [
-              {
-                user: userId,
-                product: productId,
-                productTitle: product.title,
-                productImage: product.imageSrc,
-                rentalStartDate: costBreakdown.startDate,
-                rentalEndDate: costBreakdown.endDate,
-                durationDays: costBreakdown.durationDays,
-                rentalRate: costBreakdown.rentalRate,
-                rentalCharge: costBreakdown.rentalCharge,
-                securityDeposit: costBreakdown.securityDeposit,
-                deliveryCharge: costBreakdown.deliveryCharge,
-                tax: costBreakdown.tax,
-                totalAmount: costBreakdown.totalAmount,
-                status: isCod ? 'confirmed' : 'pending',
-                paymentMethod: isCod ? 'cod' : 'razorpay',
-                paymentStatus: isCod ? 'Pending COD' : 'pending',
-                shippingAddress,
-                identityDocuments: identityDocuments || [],
-                agreementAcceptedAt: new Date(),
-                statusHistory: [
-                  {
-                    status: isCod ? 'confirmed' : 'pending',
-                    note: isCod ? 'Rental COD order placed' : 'Rental order created',
-                  },
-                ],
-              },
-            ],
-            { session },
-          );
-          rentalOrder = rentalOrders[0];
-
-          // NATIVE MONGODB LOCKING
-          await RentalAvailabilityService.lockDates(
-            productId,
-            rentalOrder._id.toString(),
-            availabilityCheck.unitNumber as number,
-            availabilityCheck.requestedDates as string[],
-            session,
-          );
-
           if (isCod) {
+            const rentalOrders = await RentalOrder.create(
+              [
+                {
+                  _id: pendingOrderId,
+                  user: userId,
+                  product: productId,
+                  productTitle: product.title,
+                  productImage: product.imageSrc,
+                  rentalStartDate: costBreakdown.startDate,
+                  rentalEndDate: costBreakdown.endDate,
+                  durationDays: costBreakdown.durationDays,
+                  rentalRate: costBreakdown.rentalRate,
+                  rentalCharge: costBreakdown.rentalCharge,
+                  securityDeposit: costBreakdown.securityDeposit,
+                  deliveryCharge: costBreakdown.deliveryCharge,
+                  tax: costBreakdown.tax,
+                  totalAmount: costBreakdown.totalAmount,
+                  status: 'confirmed',
+                  paymentMethod: 'cod',
+                  paymentStatus: 'Pending COD',
+                  shippingAddress,
+                  identityDocuments: identityDocuments || [],
+                  agreementAcceptedAt: new Date(),
+                  statusHistory: [
+                    {
+                      status: 'confirmed',
+                      note: 'Rental COD order placed',
+                    },
+                  ],
+                },
+              ],
+              { session },
+            );
+            rentalOrder = rentalOrders[0];
+
+            // NATIVE MONGODB LOCKING (Permanent for COD)
+            await RentalAvailabilityService.lockDates(
+              productId,
+              rentalOrder._id.toString(),
+              availabilityCheck.unitNumber as number,
+              availabilityCheck.requestedDates as string[],
+              session,
+              false,
+            );
+
             await OutboxEvent.create(
               [
                 {
@@ -241,20 +245,32 @@ export class RentalCheckoutService {
               ],
               { session },
             );
-          }
 
-          await session.commitTransaction();
-          session.endSession();
+            await session.commitTransaction();
+            session.endSession();
+
+            return { rentalOrder };
+          } else {
+            // FOR RAZORPAY: Just lock dates temporarily, do not create RentalOrder yet
+            await RentalAvailabilityService.lockDates(
+              productId,
+              pendingOrderId.toString(),
+              availabilityCheck.unitNumber as number,
+              availabilityCheck.requestedDates as string[],
+              session,
+              true, // isTemporary
+            );
+
+            await session.commitTransaction();
+            session.endSession();
+          }
         } catch (error) {
           await session.abortTransaction();
           session.endSession();
           throw error;
         }
 
-        if (isCod) return { rentalOrder };
-
-        // ENTERPRISE FIX: Create Razorpay order AFTER DB commit with circuit breaker
-
+        // ENTERPRISE FIX: Create Razorpay order AFTER DB commit (with temp dates locked)
         let razorpayOrder;
         try {
           const { razorpayCircuitBreaker } = require('../../utils/CircuitBreaker');
@@ -262,24 +278,48 @@ export class RentalCheckoutService {
             RazorpayGateway.createOrder({
               amount: Math.round(costBreakdown.totalAmount * 100),
               currency: 'INR',
-              receipt: `rental_${rentalOrder._id}`,
+              receipt: `rental_${pendingOrderId}`,
               notes: { type: 'rental', productId, userId },
             }),
           );
         } catch (err) {
           logger.error('Razorpay rental order creation failed:', err);
-          throw new ApiError(
-            502,
-            'Payment gateway temporarily unavailable. Your rental has been reserved and will be available to retry shortly.',
-          );
+          // Auto-release the lock since payment failed to initiate
+          await RentalAvailabilityService.releaseDates(pendingOrderId.toString());
+          throw new ApiError(502, 'Payment gateway temporarily unavailable. Please try again.');
         }
 
-        await RentalOrder.findByIdAndUpdate(rentalOrder._id, {
-          $set: { razorpayOrderId: razorpayOrder.id },
+        const attemptData = {
+          pendingOrderId,
+          userId,
+          product: productId,
+          productTitle: product.title,
+          productImage: product.imageSrc,
+          rentalStartDate: costBreakdown.startDate,
+          rentalEndDate: costBreakdown.endDate,
+          durationDays: costBreakdown.durationDays,
+          rentalRate: costBreakdown.rentalRate,
+          rentalCharge: costBreakdown.rentalCharge,
+          securityDeposit: costBreakdown.securityDeposit,
+          deliveryCharge: costBreakdown.deliveryCharge,
+          tax: costBreakdown.tax,
+          totalAmount: costBreakdown.totalAmount,
+          paymentMethod: 'razorpay',
+          shippingAddress,
+          identityDocuments: identityDocuments || [],
+          agreementAcceptedAt: new Date(),
+        };
+
+        await PaymentAttempt.create({
+          razorpayOrderId: razorpayOrder.id,
+          userId: userId,
+          type: 'rental',
+          status: 'initiated',
+          orderData: attemptData,
         });
 
         return {
-          rentalOrder,
+          rentalOrder: { _id: pendingOrderId, total: costBreakdown.totalAmount },
           razorpayOrderId: razorpayOrder.id,
           razorpayKeyId: process.env.RAZORPAY_KEY_ID,
           amount: Math.round(costBreakdown.totalAmount * 100),

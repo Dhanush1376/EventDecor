@@ -201,7 +201,7 @@ export class CircuitBreakerError extends Error {
   }
 }
 
-// ─── Pre-configured Circuit Breakers ──────────────────────────────
+// Pre-configured Circuit Breakers
 // Singleton instances for shared use across the application
 
 export const razorpayCircuitBreaker = new CircuitBreaker({

@@ -29,6 +29,8 @@ export const logRenderMetrics = (
 
   // Log to console if it's a slow render or every 10th render to avoid spamming
   if (actualDuration > 10 || stat.renderCount % 5 === 0) {
+    // Disabled console table to prevent console noise
+    /*
     console.table({
       Component: id,
       Phase: phase,
@@ -37,6 +39,7 @@ export const logRenderMetrics = (
       'Total Renders': stat.renderCount,
       'Avg Duration (ms)': (stat.totalActualDuration / stat.renderCount).toFixed(2),
     });
+    */
   }
 };
 

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import visualSearchService from '../services/api/visualSearchService';
 
 /**
@@ -273,23 +273,42 @@ export function useVisualSearch() {
     setScanStatus('');
   }, [previewUrl]);
 
-  return {
-    isOpen,
-    isEnabled,
-    configLoaded,
-    config,
-    phase,
-    previewUrl,
-    results,
-    error,
-    scanProgress,
-    scanStatus,
-    open,
-    close,
-    handleImageSelect,
-    retry,
-    reset,
-  };
+  return useMemo(
+    () => ({
+      isOpen,
+      isEnabled,
+      configLoaded,
+      config,
+      phase,
+      previewUrl,
+      results,
+      error,
+      scanProgress,
+      scanStatus,
+      open,
+      close,
+      handleImageSelect,
+      retry,
+      reset,
+    }),
+    [
+      isOpen,
+      isEnabled,
+      configLoaded,
+      config,
+      phase,
+      previewUrl,
+      results,
+      error,
+      scanProgress,
+      scanStatus,
+      open,
+      close,
+      handleImageSelect,
+      retry,
+      reset,
+    ],
+  );
 }
 
 export default useVisualSearch;

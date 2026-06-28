@@ -12,6 +12,7 @@ Siri Arts & Crafts is an enterprise-grade, high-performance digital sanctuary de
 ## 📋 Table of Contents
 
 - [System Architecture](#system-architecture)
+- [Engineering Documentation & Guides](#engineering-documentation--guides)
 - [Getting Started & Local Development](#getting-started--local-development)
 - [Production Security & Hardening Features](#production-security--hardening-features)
 - [Environment Configuration](#environment-configuration)
@@ -19,6 +20,36 @@ Siri Arts & Crafts is an enterprise-grade, high-performance digital sanctuary de
 - [Monorepo Orchestration Scripts](#monorepo-orchestration-scripts)
 - [Contributing](#contributing)
 - [License](#license)
+
+---
+
+## 📚 Engineering Documentation & Guides
+
+We maintain a comprehensive suite of engineering documentation to help developers understand, run, and extend the EventDecor platform.
+
+**Developer Experience:**
+
+- [Local Development Guide](./docs/guides/local-development.md)
+- [Troubleshooting Guide](./docs/guides/troubleshooting.md)
+- [Contribution Guide](./CONTRIBUTING.md)
+
+**Architecture Diagrams:**
+
+- [System Context Diagram](./docs/architecture/system-context.md)
+- [Database Schema (ER Diagram)](./docs/architecture/database-schema.md)
+- [Authentication Flow](./docs/architecture/authentication.md)
+- [Payment & Checkout Flow](./docs/architecture/payments.md)
+- [Discovery & Recommendation Engine](./docs/architecture/discovery-engine.md)
+- [Notification Pipeline](./docs/architecture/notifications.md)
+
+**Engineering Specs:**
+
+- [Folder Structure & Domains](./docs/engineering/folder-structure.md)
+- [Request Lifecycle](./docs/engineering/request-lifecycle.md)
+- [Redis Cache Strategy](./docs/engineering/redis-cache.md)
+- [BullMQ Queue Processing](./docs/engineering/queue-processing.md)
+- [Deployment & CI/CD](./docs/engineering/deployment.md)
+- [Architecture Decision Records (ADRs)](./docs/architecture/ADRs/)
 
 ---
 

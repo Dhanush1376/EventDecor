@@ -149,7 +149,7 @@ export const initJobs = () => {
 
   // 5. Daily Health Heartbeat
   cron.schedule('0 9 * * *', () => {
-    logger.info('☀️ Daily server heartbeat: System is healthy.');
+    logger.info('☀ Daily server heartbeat: System is healthy.');
   });
 
   // 6. Payment & Refund reconciliation (Hourly)
@@ -398,6 +398,22 @@ export const initJobs = () => {
 
   // 20. Initialize Real-Time Data Drop Monitor
   initDataMonitorJob();
+
+  // 21. Daily Customer Intelligence Snapshot (00:05 AM)
+  cron.schedule('5 0 * * *', async () => {
+    await withCronLock('analytics-daily-snapshot', 3600, async () => {
+      const { generateDailyAnalyticsSnapshot } = require('./analyticsSnapshotJob');
+      await generateDailyAnalyticsSnapshot();
+    });
+  });
+
+  // 22. Return & Exchange Reconciliation (Every 6 hours)
+  cron.schedule('0 */6 * * *', async () => {
+    await withCronLock('return-reconciliation', 55 * 60, async () => {
+      const { ReturnReconciliationJob } = require('./ReturnReconciliationJob');
+      await ReturnReconciliationJob.run();
+    });
+  });
 
   logger.info('⏰ Background jobs initialized (distributed locks active when REDIS_URL is set)');
 };

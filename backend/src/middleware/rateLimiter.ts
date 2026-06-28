@@ -135,9 +135,7 @@ export const createRateLimiter = (
   };
 };
 
-// ==========================================
 // Specific Limiters
-// ==========================================
 
 // Global limiter: 500 requests per 15 minutes per IP
 export const globalLimiter = createRateLimiter('globalLimiter', {

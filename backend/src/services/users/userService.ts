@@ -5,7 +5,7 @@ import ApiError from '../../utils/ApiError';
 import { STAFF_ROLES, canActorAssignRole } from '../../config/adminConfig';
 import { canonicalizeEmail } from '../../utils/email/emailHelper';
 import crypto from 'crypto';
-import { sendEmail } from '../../utils/email/sendEmail';
+import { sendDirectEmail } from '../notificationService';
 import { getFrontendUrl } from '../../utils/getFrontendUrl';
 import { getTeamInviteEmailTemplate } from '../../utils/email/emailTemplates';
 import storeSettingsService from '../StoreSettingsService';
@@ -213,13 +213,113 @@ export class UserService {
     const acceptUrl = `${frontendUrl}/accept-invite?token=${token}`;
     const emailHtml = getTeamInviteEmailTemplate(acceptUrl, role, permissions || 'Full Access');
 
-    await sendEmail({
+    await sendDirectEmail({
       email: cleanEmail,
       subject: 'Invitation to join Siri Arts & Crafts Admin Team',
-      message: `You are invited to join the Siri Arts & Crafts team as an ${role}. Visit here to accept: ${acceptUrl}`,
-      html: emailHtml,
+      customHtml: emailHtml,
+      type: 'security',
+      action: 'team_invite',
     });
 
     return invite;
+  }
+
+  static async trackRecentlyViewed(userId: string, productId: string) {
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(404, 'User not found');
+
+    if (!user.recentlyViewed) user.recentlyViewed = [];
+
+    user.recentlyViewed = user.recentlyViewed.filter(
+      (item: any) => item.product.toString() !== productId,
+    );
+
+    user.recentlyViewed.unshift({ product: productId as any, viewedAt: new Date() });
+
+    if (user.recentlyViewed.length > 20) {
+      user.recentlyViewed = user.recentlyViewed.slice(0, 20);
+    }
+
+    await user.save();
+    return user.recentlyViewed;
+  }
+
+  static async updatePreferences(
+    userId: string,
+    notificationPreferences: any,
+    accountPreferences: any,
+  ) {
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(404, 'User not found');
+
+    if (notificationPreferences) {
+      if (notificationPreferences.categories && user.notificationPreferences?.categories) {
+        notificationPreferences.categories = {
+          ...user.notificationPreferences.categories,
+          ...notificationPreferences.categories,
+        };
+      }
+      user.notificationPreferences = {
+        ...user.notificationPreferences,
+        ...notificationPreferences,
+      };
+    }
+    if (accountPreferences) {
+      user.accountPreferences = {
+        ...user.accountPreferences,
+        ...accountPreferences,
+      };
+    }
+
+    await user.save();
+    return {
+      notificationPreferences: user.notificationPreferences,
+      accountPreferences: user.accountPreferences,
+    };
+  }
+
+  static async uploadAvatar(userId: string, file: any) {
+    const { deleteFromCloudinary, extractPublicId } = require('../../utils/cloudinary');
+    const logger = require('../../config/logger').default;
+
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(404, 'User not found');
+
+    if (user.avatar) {
+      const publicId = extractPublicId(user.avatar);
+      if (publicId) {
+        deleteFromCloudinary(publicId).catch((err: any) =>
+          logger.error(`Failed to clean up old avatar: ${err}`),
+        );
+      }
+    }
+
+    user.avatar = file.path || file.secure_url;
+    await user.save();
+
+    return user.avatar;
+  }
+  static async updateProfile(userId: string, updateData: any) {
+    const { name, email, phone, gender, dateOfBirth } = updateData;
+
+    if (email) {
+      const cleanEmail = canonicalizeEmail(email);
+      const existingUser = await User.findOne({ email: cleanEmail, _id: { $ne: userId } });
+      if (existingUser) {
+        throw new ApiError(400, 'An account with this email address already exists');
+      }
+    }
+
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(404, 'User not found');
+
+    if (name !== undefined) user.name = name;
+    if (email !== undefined) user.email = canonicalizeEmail(email);
+    if (phone !== undefined) user.phone = phone;
+    if (gender !== undefined) user.gender = gender;
+    if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
+
+    await user.save();
+    return user;
   }
 }

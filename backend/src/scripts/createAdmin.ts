@@ -26,7 +26,7 @@ const createAdmin = async () => {
       );
       existingUser.role = 'admin';
       await existingUser.save();
-      logger.info('✅ User updated to admin successfully!');
+      logger.info('User updated to admin successfully!');
     } else {
       logger.info(`Creating new admin user: ${email}...`);
       await User.create({
@@ -35,13 +35,13 @@ const createAdmin = async () => {
         role: 'admin',
         isVerified: true,
       });
-      logger.info('✅ Admin user created successfully!');
-      logger.info(`📧 Email: ${email}`);
+      logger.info('Admin user created successfully!');
+      logger.info(`� Email: ${email}`);
     }
 
     process.exit(0);
   } catch (error) {
-    logger.error(`❌ Operation failed: ${error}`);
+    logger.error(`Operation failed: ${error}`);
     process.exit(1);
   }
 };

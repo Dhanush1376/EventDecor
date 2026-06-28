@@ -33,10 +33,10 @@
   --admin-border-strong: #d4cebb;
   --admin-border-focus: #8b7355; /* Accent gold/brown */
 
-  --admin-text-primary: #3c362a; /* Deep warm brown/black */
-  --admin-text-secondary: #5c5444;
-  --admin-text-tertiary: #8a816f;
-  --admin-text-placeholder: #b0a896;
+  --admin-text-primary: #000000; /* Pure Black */
+  --admin-text-secondary: #000000;
+  --admin-text-tertiary: #000000;
+  --admin-text-placeholder: #000000;
   --admin-text-inverse: #ffffff;
 
   /* Accent: Warm Elegant Gold/Brown */

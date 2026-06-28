@@ -9,10 +9,10 @@ const createIndexes = async () => {
   try {
     await connectDB();
     await ensureIndexes();
-    logger.info('✅ Index creation script completed.');
+    logger.info('Index creation script completed.');
     process.exit(0);
   } catch (error) {
-    logger.error('❌ Failed to build indexes:', error);
+    logger.error('Failed to build indexes:', error);
     process.exit(1);
   }
 };

@@ -23,6 +23,7 @@ const CSRF_EXEMPT_SUFFIXES = [
   '/tracking/session',
   '/tracking/event',
   '/tracking/batch',
+  '/analytics/events',
 ];
 
 const generateToken = (): string => crypto.randomBytes(32).toString('hex');

@@ -5,23 +5,40 @@ import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import PaymentAudit from '../models/PaymentAudit';
-import { PaymentStateMachine } from './payments/PaymentStateMachine';
 import OutboxEvent from '../models/OutboxEvent';
 import * as Sentry from '@sentry/node';
 import { InventoryService } from './InventoryService';
 import Product from '../models/Product';
-import InventoryLog from '../models/InventoryLog';
 import User from '../models/User';
 import AnalyticsService from './analyticsService';
+import PaymentAttempt from '../models/PaymentAttempt';
+import Coupon from '../models/Coupon';
+import WalletTransaction from '../models/WalletTransaction';
+import { debitWalletBalance } from '../utils/payment/walletMutations';
+import RentalOrder from '../models/RentalOrder';
+import { RentalAvailabilityService } from './rentals/RentalAvailabilityService';
+import EventBooking from '../models/EventBooking';
+import { EventResourcePlanningService } from './eventBooking/EventResourcePlanningService';
+import BookingMessage from '../models/BookingMessage';
+import { PaymentRefundService } from './PaymentRefundService';
 
 export class PaymentVerificationService {
-  static async verifyPayment(paymentData: any, userId: string, role: string) {
+  static async verifyPayment(
+    paymentData: any,
+    userId: string,
+    role: string,
+    source: 'frontend' | 'webhook' = 'frontend',
+  ) {
     const razorpay_order_id = paymentData.razorpay_order_id || paymentData.razorpayOrderId;
     const razorpay_payment_id = paymentData.razorpay_payment_id || paymentData.razorpayPaymentId;
     const razorpay_signature = paymentData.razorpay_signature || paymentData.razorpaySignature;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    if (!razorpay_order_id || !razorpay_payment_id) {
       throw new ApiError(400, 'Missing payment verification parameters');
+    }
+
+    if (source === 'frontend' && !razorpay_signature) {
+      throw new ApiError(400, 'Missing payment signature');
     }
 
     const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -35,8 +52,10 @@ export class PaymentVerificationService {
     const expectedHash = Buffer.from(digest, 'utf8');
     const signatureHash = Buffer.from(razorpay_signature || '', 'utf8');
     const isSignatureValid =
-      expectedHash.length === signatureHash.length &&
-      crypto.timingSafeEqual(expectedHash, signatureHash);
+      source === 'webhook'
+        ? true
+        : expectedHash.length === signatureHash.length &&
+          crypto.timingSafeEqual(expectedHash, signatureHash);
 
     // Fetch payment from Razorpay API BEFORE starting the transaction
     let fetchedPayment;
@@ -49,46 +68,73 @@ export class PaymentVerificationService {
 
     const session = await mongoose.startSession();
     session.startTransaction();
-    let order: any;
+    let finalOrder: any;
 
     try {
-      order = await Order.findOneAndUpdate(
+      const attempt = await PaymentAttempt.findOneAndUpdate(
         {
           razorpayOrderId: razorpay_order_id,
-          paymentStatus: { $in: ['pending', 'failed'] },
-        } as any,
-        { $set: { paymentStatus: 'processing' } },
+          status: { $in: ['initiated', 'failed'] },
+        },
+        { $set: { status: 'processing' } },
         { returnDocument: 'after', session },
       );
 
-      if (!order) {
-        const existingOrder = await Order.findOne({ razorpayOrderId: razorpay_order_id });
-        if (existingOrder && existingOrder.paymentStatus === 'paid') {
+      if (!attempt) {
+        const existingAttempt = await PaymentAttempt.findOne({
+          razorpayOrderId: razorpay_order_id,
+        }).session(session);
+        if (existingAttempt && existingAttempt.status === 'success') {
           logger.info(
-            `[PAYMENT REDUNDANCY] Payment already processed successfully for order: ${existingOrder._id}`,
+            `[PAYMENT REDUNDANCY] Payment already processed successfully for intent: ${existingAttempt._id}`,
+          );
+
+          let existingDoc;
+          if (existingAttempt.type === 'purchase') {
+            existingDoc = await Order.findById(existingAttempt.orderData.pendingOrderId).session(
+              session,
+            );
+          } else if (existingAttempt.type === 'rental') {
+            existingDoc = await RentalOrder.findById(
+              existingAttempt.orderData.pendingOrderId,
+            ).session(session);
+          } else if (existingAttempt.type === 'event_booking') {
+            existingDoc = await EventBooking.findById(
+              existingAttempt.orderData.pendingOrderId,
+            ).session(session);
+          }
+
+          await session.abortTransaction();
+          session.endSession();
+          return existingDoc;
+        }
+        if (existingAttempt && existingAttempt.status === 'processing') {
+          logger.info(
+            `[PAYMENT RACE] Intent ${existingAttempt._id} is actively being processed by a webhook.`,
           );
           await session.abortTransaction();
           session.endSession();
-          return existingOrder;
-        }
-        if (existingOrder && existingOrder.paymentStatus === 'processing') {
-          logger.info(
-            `[PAYMENT RACE] Order ${existingOrder._id} is actively being processed by a webhook.`,
+          // Ideally poll here, but for now just return error to let client retry
+          throw new ApiError(
+            409,
+            'Payment is currently being processed. Please check back in a few seconds.',
           );
-          await session.abortTransaction();
-          session.endSession();
-          return existingOrder;
         }
-        throw new ApiError(404, 'Order record not found or cannot be locked for processing');
+        throw new ApiError(404, 'Checkout intent not found or cannot be locked for processing');
       }
 
-      if (order.user.toString() !== userId && role !== 'admin') {
-        order.paymentStatus = 'pending';
-        await order.save({ session });
+      if (attempt.userId.toString() !== userId && role !== 'admin') {
+        attempt.status = 'initiated';
+        await attempt.save({ session });
         throw new ApiError(403, 'You are not authorized to verify this payment');
       }
 
-      const expectedAmount = Math.round(order.total * 100);
+      const expectedAmount = Math.round(
+        attempt.type === 'purchase' || attempt.type === 'rental'
+          ? attempt.orderData.total * 100
+          : attempt.orderData.depositAmount * 100,
+      );
+
       const isAmountValid = Number(fetchedPayment.amount) === expectedAmount;
       const isCurrencyValid = fetchedPayment.currency === 'INR';
       const isOrderValid = fetchedPayment.order_id === razorpay_order_id;
@@ -101,7 +147,7 @@ export class PaymentVerificationService {
       await PaymentAudit.create(
         [
           {
-            orderId: order._id,
+            orderId: attempt.orderData.pendingOrderId, // Assuming we use pendingOrderId for all
             userId: userId,
             razorpayOrderId: razorpay_order_id,
             razorpayPaymentId: razorpay_payment_id,
@@ -119,23 +165,9 @@ export class PaymentVerificationService {
       );
 
       if (!isValid) {
-        await session.abortTransaction();
-
-        await PaymentAudit.create({
-          orderId: order._id,
-          userId: userId,
-          razorpayOrderId: razorpay_order_id,
-          razorpayPaymentId: razorpay_payment_id,
-          eventType: 'verification_attempt',
-          status: !isSignatureValid ? 'failed' : 'tampered',
-          amountExpected: expectedAmount,
-          amountReceived: Number(Number(fetchedPayment.amount)),
-          currencyReceived: String(fetchedPayment.currency),
-          signatureValid: isSignatureValid,
-          notes: `Signature: ${isSignatureValid}, Amount Match: ${isAmountValid}, Status: ${fetchedPayment.status}`,
-          rawPayload: JSON.stringify(fetchedPayment),
-        });
-
+        attempt.status = 'failed';
+        await attempt.save({ session });
+        await session.commitTransaction();
         session.endSession();
 
         if (fetchedPayment && fetchedPayment.status === 'captured') {
@@ -154,89 +186,300 @@ export class PaymentVerificationService {
           }
         }
 
-        Sentry.captureException(new Error(`Payment untrusted for order ${order._id}`), {
+        Sentry.captureException(new Error(`Payment untrusted for attempt ${attempt._id}`), {
           tags: { critical: 'checkout_failure' },
-          extra: { orderId: order._id, razorpay_order_id, razorpay_payment_id },
+          extra: { attemptId: attempt._id, razorpay_order_id, razorpay_payment_id },
         });
 
         throw new ApiError(400, 'Invalid payment details. Payment untrusted.');
       }
 
-      // Confirm inventory reservations via InventoryService (with audit trail)
-      if (order.reservationIds && order.reservationIds.length > 0) {
-        for (const resId of order.reservationIds) {
-          await InventoryService.confirmReservation(resId.toString(), session);
-        }
-      } else {
-        // Fallback if older order without reservations
-        for (const item of order.items) {
-          const product = await Product.findByIdAndUpdate(
-            item.productId,
-            { $inc: { stock: -item.quantity, reservedStock: -item.quantity } },
+      // Valid payment. Let's create the actual order/booking based on attempt.type
+      const orderData = attempt.orderData;
+
+      if (attempt.type === 'purchase') {
+        // --- PURCHASE VERIFICATION ---
+        if (orderData.couponCode) {
+          const couponDoc = await Coupon.findOneAndUpdate(
+            { code: orderData.couponCode, isActive: true },
+            {
+              $inc: { usedCount: 1 },
+              $push: { usedBy: { userId, orderId: orderData.pendingOrderId } },
+            },
             { session, returnDocument: 'after' },
           );
+          if (!couponDoc) {
+            logger.warn(
+              `Coupon ${orderData.couponCode} became invalid during processing, but order is paid. Continuing.`,
+            );
+          }
+        }
 
-          if (product) {
-            await InventoryLog.create(
+        if (orderData.walletDeduction > 0) {
+          const user = await User.findById(userId).session(session);
+          if (user && user.walletBalance >= orderData.walletDeduction) {
+            await debitWalletBalance(userId, orderData.walletDeduction, session);
+            await WalletTransaction.create(
               [
                 {
-                  product: item.productId,
-                  previousStock: product.stock + item.quantity,
-                  newStock: product.stock,
-                  delta: -item.quantity,
-                  reason: 'order_placed',
-                  orderId: order._id.toString(),
-                  performedBy: 'system',
-                  note: `Direct deduction for legacy order verification (no reservation found)`,
+                  userId,
+                  type: 'debit',
+                  amount: orderData.walletDeduction,
+                  source: 'checkout_redeem',
+                  description: `Redeemed Siri Cash at checkout`,
+                  status: 'active',
                 },
               ],
               { session },
             );
           }
         }
-      }
 
-      for (const item of order.items) {
-        if (item.productId) {
-          await Product.findByIdAndUpdate(
-            item.productId,
-            { $inc: { sold: item.quantity || 1 } },
-            { session },
-          );
+        for (const item of orderData.orderItems) {
+          if (item.productId) {
+            await Product.findByIdAndUpdate(
+              item.productId,
+              { $inc: { sold: item.quantity || 1 } },
+              { session },
+            );
+          }
         }
+
+        const orderedProductIds = orderData.orderItems.map((item: any) => item.productId);
+        await User.findByIdAndUpdate(
+          userId,
+          { $pull: { cart: { product: { $in: orderedProductIds } } } },
+          { session },
+        );
+
+        if (orderData.reservationIds && orderData.reservationIds.length > 0) {
+          for (const resId of orderData.reservationIds) {
+            await InventoryService.confirmReservation(resId.toString(), session);
+          }
+        }
+
+        finalOrder = await Order.create(
+          [
+            {
+              _id: orderData.pendingOrderId,
+              user: userId,
+              items: orderData.orderItems,
+              shippingAddress: orderData.shippingAddress,
+              subtotal: orderData.subtotal,
+              shippingFee: orderData.shippingFee,
+              discount: orderData.discount,
+              codFee: orderData.codFee,
+              walletDeduction: orderData.walletDeduction,
+              total: orderData.total,
+              couponCode: orderData.couponCode,
+              paymentMethod: orderData.paymentMethod,
+              paymentStatus: 'paid',
+              orderStatus: 'Confirmed',
+              reservationIds: orderData.reservationIds,
+              statusHistory: [
+                {
+                  status: 'Confirmed',
+                  note: 'Payment verified and order confirmed',
+                },
+              ],
+              invoiceNumber: orderData.invoiceNumber,
+              trackingNumber: orderData.trackingNumber,
+              courierPartner: orderData.courierPartner,
+              barcodeData: orderData.barcodeData,
+              qrCodeData: orderData.qrCodeData,
+              notes: orderData.notes,
+              needByDate: orderData.needByDate,
+              idempotencyKey: orderData.idempotencyKey,
+              razorpayOrderId: razorpay_order_id,
+              razorpayPaymentId: razorpay_payment_id,
+              razorpaySignature: razorpay_signature,
+            },
+          ],
+          { session },
+        ).then((res) => res[0] as any);
+
+        await OutboxEvent.create(
+          [
+            {
+              aggregateId: finalOrder._id.toString(),
+              aggregateType: 'Order',
+              eventType: 'OrderCreated',
+              payload: {
+                orderId: finalOrder._id.toString(),
+                userId: userId,
+                type: 'online',
+                amount: finalOrder.total,
+              },
+            },
+          ],
+          { session },
+        );
+      } else if (attempt.type === 'rental') {
+        // --- RENTAL VERIFICATION ---
+        await RentalAvailabilityService.confirmDates(orderData.pendingOrderId.toString(), session);
+
+        finalOrder = await RentalOrder.create(
+          [
+            {
+              _id: orderData.pendingOrderId,
+              user: userId,
+              product: orderData.product,
+              productTitle: orderData.productTitle,
+              productImage: orderData.productImage,
+              rentalStartDate: orderData.rentalStartDate,
+              rentalEndDate: orderData.rentalEndDate,
+              durationDays: orderData.durationDays,
+              rentalRate: orderData.rentalRate,
+              rentalCharge: orderData.rentalCharge,
+              securityDeposit: orderData.securityDeposit,
+              deliveryCharge: orderData.deliveryCharge,
+              tax: orderData.tax,
+              totalAmount: orderData.totalAmount,
+              status: 'confirmed',
+              paymentMethod: 'razorpay',
+              paymentStatus: 'paid',
+              shippingAddress: orderData.shippingAddress,
+              identityDocuments: orderData.identityDocuments,
+              agreementAcceptedAt: orderData.agreementAcceptedAt,
+              razorpayOrderId: razorpay_order_id,
+              razorpayPaymentId: razorpay_payment_id,
+              razorpaySignature: razorpay_signature,
+              statusHistory: [
+                {
+                  status: 'confirmed',
+                  note: 'Payment verified and rental order confirmed',
+                },
+              ],
+            },
+          ],
+          { session },
+        ).then((res) => res[0]);
+
+        await OutboxEvent.create(
+          [
+            {
+              aggregateId: finalOrder._id.toString(),
+              aggregateType: 'RentalOrder',
+              eventType: 'RentalCreated',
+              payload: { orderId: finalOrder._id.toString(), userId, type: 'online' },
+            },
+          ],
+          { session },
+        );
+      } else if (attempt.type === 'event_booking') {
+        // --- EVENT BOOKING VERIFICATION ---
+        try {
+          await EventResourcePlanningService.claimSlotAtomically(
+            new Date(orderData.date),
+            orderData.pendingOrderId.toString(),
+            session,
+          );
+        } catch (err: any) {
+          if (err.statusCode === 409) {
+            // Initiate refund since date is now full
+            await PaymentRefundService.initiateAsyncRefund({
+              amount: orderData.depositAmount,
+              currency: 'INR',
+              originalTransactionId: razorpay_payment_id,
+              entityType: 'EventBooking',
+              entityId: orderData.pendingOrderId,
+            }).catch((refundErr: any) =>
+              logger.error(
+                `[CRITICAL] Failed to enqueue refund for event booking overlap:`,
+                refundErr,
+              ),
+            );
+            throw new ApiError(
+              409,
+              'Payment was successful, but the date was just fully booked by others. A full refund will be processed within 5-7 business days.',
+            );
+          }
+          throw err;
+        }
+
+        finalOrder = await EventBooking.create(
+          [
+            {
+              _id: orderData.pendingOrderId,
+              bookingId: orderData.bookingId || orderData.pendingOrderId.toString(),
+              user: userId,
+              eventPackage: orderData.eventPackage,
+              title: orderData.title,
+              eventType: orderData.eventType,
+              date: orderData.date,
+              rentalDurationDays: orderData.rentalDurationDays,
+              timing: orderData.timing,
+              guestCount: orderData.guestCount,
+              venue: orderData.venue,
+              customization: orderData.customization,
+              selectedAddons: orderData.selectedAddons,
+              inspirationImages: orderData.inspirationImages,
+              pricing: {
+                rentalFee: orderData.basePrice,
+                setupCharges: 0,
+                transportationCost: 0,
+                addOnCharges: orderData.addOnCharges,
+                depositAmount: orderData.depositAmount,
+                totalPrice: orderData.totalPrice,
+                pendingBalance: orderData.totalPrice - orderData.depositAmount,
+                paymentStatus: 'partial',
+              },
+              payments: [
+                {
+                  amount: orderData.depositAmount,
+                  date: new Date(),
+                  transactionId: razorpay_payment_id,
+                  status: 'success',
+                  note: 'Initial 50% deposit via Razorpay',
+                },
+              ],
+              status: 'confirmed',
+              statusHistory: [
+                {
+                  status: 'confirmed',
+                  timestamp: new Date(),
+                  note: 'Payment verified and booking confirmed',
+                  updatedBy: userId,
+                },
+              ],
+              clientApproved: true,
+              idempotencyKey: orderData.idempotencyKey,
+              razorpayOrderId: razorpay_order_id,
+              razorpayPaymentId: razorpay_payment_id,
+              razorpaySignature: razorpay_signature,
+            },
+          ],
+          { session },
+        ).then((res) => res[0]);
+
+        await BookingMessage.create(
+          [
+            {
+              bookingId: finalOrder._id,
+              sender: 'admin',
+              message:
+                'Payment verified! Your luxury event design is now CONFIRMED. Our artisans will review your floorplans.',
+              timestamp: new Date(),
+            },
+          ],
+          { session },
+        );
+
+        await OutboxEvent.create(
+          [
+            {
+              aggregateId: finalOrder._id.toString(),
+              aggregateType: 'EventBooking',
+              eventType: 'BookingConfirmed',
+              payload: { bookingId: finalOrder._id.toString(), userId },
+            },
+          ],
+          { session },
+        );
       }
 
-      PaymentStateMachine.transition(order, 'paid', 'Payment verified and order confirmed');
-      order.orderStatus = 'Confirmed';
-      order.razorpayPaymentId = razorpay_payment_id;
-      order.razorpaySignature = razorpay_signature;
-      order.statusHistory.push({
-        status: 'Confirmed',
-        note: 'Payment verified and order confirmed',
-      });
-
-      await order.save({ session });
-
-      // Use Outbox Pattern to decouple side-effects (e.g. Emails, PDFs)
-      await OutboxEvent.create(
-        [
-          {
-            aggregateId: order._id.toString(),
-            aggregateType: 'Order',
-            eventType: 'OrderCreated',
-            payload: {
-              orderId: order._id.toString(),
-              userId: userId,
-              type: 'online',
-              amount: order.total,
-            },
-          },
-        ],
-        { session },
-      );
-
-      // Assuming cart clearance should be an event too, but doing it directly for user is fine
-      await User.findByIdAndUpdate(order.user, { $set: { cart: [] } }, { session });
+      attempt.status = 'success';
+      await attempt.save({ session });
 
       await session.commitTransaction();
     } catch (error) {
@@ -249,8 +492,8 @@ export class PaymentVerificationService {
     }
 
     AnalyticsService.clearCache();
+    logger.info(`Payment verified and entity created successfully: ${finalOrder._id}`);
 
-    logger.info(`Payment successful for order: ${order._id}`);
-    return order;
+    return finalOrder;
   }
 }

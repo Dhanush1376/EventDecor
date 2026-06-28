@@ -86,7 +86,7 @@ export const startDbAuditor = () => {
       logger.error(`[DB AUDITOR] Change stream error: ${err.message}`);
     });
 
-    logger.info('🛡️  [DB AUDITOR] Forensic Change Stream Watcher started.');
+    logger.info('� [DB AUDITOR] Forensic Change Stream Watcher started.');
   } catch (err: any) {
     logger.error(`[DB AUDITOR] Failed to start change stream: ${err.message}`);
   }

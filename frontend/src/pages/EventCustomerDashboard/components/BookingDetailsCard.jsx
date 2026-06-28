@@ -1,12 +1,13 @@
 export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
   return (
-    <div className="bg-surface-bright rounded-lg border border-outline-variant/30 p-5 space-y-5 shadow-2xs relative overflow-hidden text-[11px]">
-      <div className="flex flex-col md:flex-row justify-between items-start border-b border-black/5 pb-4 gap-4 md:gap-0">
-        <div>
-          <span className="font-label text-[9px] text-primary uppercase tracking-[0.2em] font-bold block mb-1">
+    <div className="bg-surface-bright rounded-lg border border-outline-variant/40 p-6 space-y-6 shadow-xs relative overflow-hidden text-left">
+      <div className="flex flex-col md:flex-row justify-between items-start border-b border-black/5 pb-5 gap-4 md:gap-0">
+        <div className="space-y-1">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[12px]">event_available</span>
             Booking Details
           </span>
-          <h2 className="font-display text-[22px] text-black font-light tracking-tight">
+          <h2 className="font-bold text-[18px] text-on-surface tracking-tight">
             {selectedBooking.title}
           </h2>
         </div>
@@ -14,31 +15,31 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
           <button
             type="button"
             onClick={() => setIsMobileChatOpen(true)}
-            className="lg:hidden flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-lg font-label text-[9px] uppercase tracking-wider font-bold shadow-md active:scale-95 transition-transform"
+            className="lg:hidden flex items-center justify-center gap-1.5 bg-[#2A2927] hover:bg-black text-white px-4 py-2 rounded-[32px] font-bold text-[9px] uppercase tracking-widest shadow-sm cursor-pointer transition-colors border-0"
           >
             <span className="material-symbols-outlined text-[14px]">forum</span>
             Chat
           </button>
-          <span className="bg-stone-100 text-stone-700 px-3 py-2 rounded-full font-label text-[9px] uppercase tracking-widest font-bold">
+          <span className="bg-surface-bright border border-outline-variant/40 text-secondary px-4 py-2 rounded-[32px] font-bold text-[9px] uppercase tracking-widest shadow-sm flex items-center justify-center">
             ID: {selectedBooking._id?.substring(18).toUpperCase()}
           </span>
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
-        <div className="space-y-0.5">
-          <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">
+        <div className="space-y-1">
+          <span className="text-[8px] font-bold uppercase tracking-widest text-secondary block">
             Event Style
           </span>
-          <span className="font-body text-xs text-black font-bold capitalize">
+          <span className="text-on-surface font-semibold text-[11px] capitalize block">
             {selectedBooking.eventType}
           </span>
         </div>
-        <div className="space-y-0.5">
-          <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">
+        <div className="space-y-1">
+          <span className="text-[8px] font-bold uppercase tracking-widest text-secondary block">
             Event Date
           </span>
-          <span className="font-body text-xs text-black font-bold">
+          <span className="text-on-surface font-semibold text-[11px] block">
             {new Date(selectedBooking.date).toLocaleDateString('en-IN', {
               weekday: 'short',
               year: 'numeric',
@@ -47,36 +48,38 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
             })}
           </span>
         </div>
-        <div className="space-y-0.5">
-          <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">
+        <div className="space-y-1">
+          <span className="text-[8px] font-bold uppercase tracking-widest text-secondary block">
             Timing Window
           </span>
-          <span className="font-body text-xs text-black font-semibold">
+          <span className="text-on-surface font-semibold text-[11px] block">
             {selectedBooking.timing?.start} - {selectedBooking.timing?.end}
           </span>
         </div>
-        <div className="space-y-1.5 col-span-2 sm:col-span-3 lg:col-span-2 bg-primary/5 p-4 rounded-lg border border-primary/10 relative overflow-hidden">
-          <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold block mb-1">
+
+        <div className="space-y-2 col-span-2 sm:col-span-3 lg:col-span-2 bg-surface-container-lowest p-4 rounded-lg border border-outline-variant/30">
+          <span className="text-[8px] font-bold uppercase tracking-widest text-secondary block">
             Setup Destination Address
           </span>
           {selectedBooking.venue?.name && (
-            <span className="font-display text-xs text-on-surface font-bold flex items-center gap-1.5 leading-none">
-              <span className="material-symbols-outlined text-primary text-[16px]">storefront</span>
+            <span className="text-on-surface font-bold text-[12px] flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[14px]">storefront</span>
               {selectedBooking.venue.name}
             </span>
           )}
-          <span className="font-body text-[11px] text-secondary font-light block leading-relaxed">
+          <span className="text-[11px] text-secondary font-medium block leading-relaxed">
             {selectedBooking.venue?.address || 'Address pending finalization'}
           </span>
-          <div className="flex flex-wrap items-center gap-3 pt-1">
+
+          <div className="flex flex-wrap items-center gap-2 pt-2">
             {selectedBooking.venue?.city && (
-              <span className="font-body text-[9px] text-secondary font-semibold bg-surface-container px-2 py-0.5 rounded-full">
-                City: {selectedBooking.venue.city}
+              <span className="text-[9px] font-bold uppercase tracking-widest text-secondary bg-surface-bright border border-outline-variant/30 px-2.5 py-1 rounded-[32px]">
+                {selectedBooking.venue.city}
               </span>
             )}
             {selectedBooking.venue?.pincode && (
-              <span className="font-body text-[9px] text-secondary font-semibold bg-surface-container px-2 py-0.5 rounded-full">
-                Pincode: {selectedBooking.venue.pincode}
+              <span className="text-[9px] font-bold uppercase tracking-widest text-secondary bg-surface-bright border border-outline-variant/30 px-2.5 py-1 rounded-[32px]">
+                {selectedBooking.venue.pincode}
               </span>
             )}
             {selectedBooking.venue?.googleMapsLink && (
@@ -84,20 +87,20 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
                 href={selectedBooking.venue.googleMapsLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-label text-[8px] uppercase tracking-wider text-primary font-bold hover:underline flex items-center gap-0.5"
+                className="text-[9px] font-bold uppercase tracking-widest text-on-surface hover:text-[#2A2927] hover:underline flex items-center gap-1 ml-auto"
               >
-                <span className="material-symbols-outlined text-[12px]">directions</span> Open
-                Navigation
+                <span className="material-symbols-outlined text-[12px]">directions</span> Navigate
               </a>
             )}
           </div>
         </div>
-        <div className="space-y-0.5">
-          <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">
+
+        <div className="space-y-1">
+          <span className="text-[8px] font-bold uppercase tracking-widest text-secondary block">
             Setup Type
           </span>
-          <span className="font-body text-xs text-black font-bold">
-            {selectedBooking.venue?.isOutdoor ? '🍀 Outdoor Lawn' : '🏛️ Indoor Banquet'}
+          <span className="text-on-surface font-semibold text-[11px] block">
+            {selectedBooking.venue?.isOutdoor ? 'Outdoor Lawn' : 'Indoor Banquet'}
           </span>
         </div>
       </div>

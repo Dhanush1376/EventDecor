@@ -1,6 +1,9 @@
 import Barcode from 'react-barcode';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { useQuery } from '@tanstack/react-query';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { useState, useRef } from 'react';
 import storeSettingsService from '../../services/api/storeSettingsService';
 
 export function InvoiceTemplate({ order, user = {}, onClose }) {
@@ -9,6 +12,9 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
     queryFn: () => storeSettingsService.getPublicSettings(),
     staleTime: 10 * 60 * 1000,
   });
+
+  const [isDownloading, setIsDownloading] = useState(false);
+  const printRef = useRef(null);
 
   if (!order) return null;
 
@@ -85,35 +91,73 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
   const taxRate = settings?.taxes?.defaultTaxRate || 18;
   const taxMultiplier = 1 + taxRate / 100;
 
-  return (
-    <div className="w-full bg-gray-50 md:bg-white rounded-xl">
-      <div className="print-invoice-area p-5 sm:p-6 md:p-8 text-black text-[9px] sm:text-xs md:text-sm bg-white font-sans relative shadow-sm print:shadow-none mx-auto w-full max-w-4xl">
-        {/* Close Button / Controls (Hidden in print) */}
-        <div className="no-print flex justify-between items-center pb-3 md:pb-4 mb-4 md:mb-6 border-b border-gray-100">
-          <h3 className="font-display text-sm md:text-md font-bold uppercase tracking-wider text-[var(--color-gold-dark)]">
-            Tax Invoice
-          </h3>
-          <div className="flex items-center gap-2 md:gap-3">
-            <button
-              onClick={() => window.print()}
-              className="flex items-center justify-center gap-2 px-4 md:px-6 h-8 md:h-10 bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-800 text-white rounded-full font-bold uppercase tracking-[0.2em] text-[8px] md:text-[10px] transition-all duration-300 shadow-md hover:shadow-lg active:scale-95"
-            >
-              <span className="material-symbols-outlined text-[13px] md:text-base">print</span>
-              <span>Print</span>
-            </button>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-white border border-gray-200 hover:border-gray-400 hover:bg-gray-50 hover:text-red-500 rounded-full transition-all duration-300 text-gray-500 shadow-sm hover:shadow-md active:scale-95 group"
-              >
-                <span className="material-symbols-outlined text-[16px] md:text-[20px] transition-transform duration-300 group-hover:rotate-90">
-                  close
-                </span>
-              </button>
-            )}
-          </div>
-        </div>
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const element = printRef.current;
+      if (!element) throw new Error('Invoice element not found');
 
+      // Temporarily hide the close/download buttons before taking screenshot
+      const controls = element.querySelector('.no-print');
+      if (controls) controls.style.display = 'none';
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
+
+      if (controls) controls.style.display = 'flex';
+
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      // Add a 10mm margin around the invoice box on the A4 page
+      const margin = 10;
+      const pdfWidth = pdf.internal.pageSize.getWidth() - margin * 2;
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'JPEG', margin, margin, pdfWidth, pdfHeight);
+      pdf.save(`Invoice_${invoiceNumber}.pdf`);
+    } catch (err) {
+      console.error('Invoice download failed', err);
+    }
+    setIsDownloading(false);
+  };
+
+  return (
+    <div className="w-full bg-gray-50 md:bg-white rounded-xl p-4 md:p-6 mx-auto max-w-4xl">
+      {/* Close Button / Controls (Hidden in print) */}
+      <div className="no-print flex justify-between items-center pb-3 md:pb-4 mb-4 md:mb-5">
+        <h3 className="font-display text-sm md:text-md font-bold uppercase tracking-wider text-black">
+          Tax Invoice
+        </h3>
+        <div className="flex items-center gap-2 md:gap-3">
+          <button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 min-w-0 min-h-0 aspect-square p-0 shrink-0 bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-800 text-white rounded-full transition-all duration-300 shadow-md hover:shadow-lg active:scale-95 disabled:opacity-70 disabled:cursor-wait"
+          >
+            <span className="material-symbols-outlined text-[16px] md:text-[20px]">
+              {isDownloading ? 'hourglass_top' : 'download'}
+            </span>
+          </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 min-w-0 min-h-0 aspect-square p-0 shrink-0 bg-white border border-gray-200 hover:border-red-200 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors duration-200 text-gray-500 shadow-sm active:scale-95"
+            >
+              <span className="material-symbols-outlined text-[16px] md:text-[20px]">close</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div
+        ref={printRef}
+        id="invoice-download-area"
+        className="print-invoice-area p-5 sm:p-6 md:p-8 text-black text-[9px] sm:text-xs md:text-sm bg-white font-sans relative shadow-sm print:shadow-none w-full border border-gray-200 rounded-xl"
+      >
         {/* Tax Invoice Header */}
         <div className="flex justify-between items-start border-b-2 border-gray-900 pb-4 md:pb-6 mb-4 md:mb-6">
           <div className="w-[55%]">
@@ -402,12 +446,12 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                 AWB: <strong className="text-black font-mono font-bold">{trackingNumber}</strong>
               </p>
               <div className="pt-1 md:pt-3">
-                <Barcode
-                  value={trackingNumber}
-                  height={20}
-                  width={1}
-                  displayValue={false}
-                  margin={0}
+                <QRCodeCanvas
+                  value={trackingQR}
+                  size={60}
+                  level="H"
+                  includeMargin={true}
+                  className="rounded"
                 />
               </div>
             </div>
@@ -417,7 +461,14 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                 Scan
               </h3>
               <div className="w-12 h-12 md:w-20 md:h-20">
-                <QRCodeSVG value={trackingQR} width="100%" height="100%" level="M" />
+                <Barcode
+                  value={trackingNumber}
+                  height={20}
+                  width={1}
+                  displayValue={false}
+                  margin={0}
+                  renderer="canvas"
+                />
               </div>
             </div>
           </div>

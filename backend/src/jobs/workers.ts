@@ -30,13 +30,13 @@ export const initWorkers = async () => {
 
   const shouldRunWorkers = process.env.ENABLE_WORKERS !== 'false';
   if (!shouldRunWorkers) {
-    logger.info('ℹ️ [WORKER] Background workers are disabled via ENABLE_WORKERS=false');
+    logger.info('[WORKER] Background workers are disabled via ENABLE_WORKERS=false');
     workersInitialized = true;
     return;
   }
 
   try {
-    logger.info('🔄 [WORKER] Initializing background workers...');
+    logger.info('[WORKER] Initializing background workers...');
 
     if (usingFallback) {
       logger.info(
@@ -229,7 +229,9 @@ export const initWorkers = async () => {
                       _id: { $in: productIds },
                       isActive: true,
                     })
-                      .select('_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+                      .select(
+                        '_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+                      )
                       .lean();
 
                     const enrichedComp = compItems
@@ -498,9 +500,9 @@ export const initWorkers = async () => {
     });
 
     workersInitialized = true;
-    logger.info('🟢 [WORKER] Background workers initialized successfully');
+    logger.info('[WORKER] Background workers initialized successfully');
   } catch (err: any) {
-    logger.error(`🔴 [WORKER] Failed to initialize workers: ${err.message}`);
+    logger.error(`[WORKER] Failed to initialize workers: ${err.message}`);
     // Workers failure shouldn't crash the server unless REQUIRE_REDIS is true
     if (process.env.REQUIRE_REDIS === 'true') {
       throw err;
@@ -510,7 +512,7 @@ export const initWorkers = async () => {
 
 export const closeWorkers = async () => {
   if (workersInitialized) {
-    logger.info('🛑 [WORKER] Shutting down workers gracefully...');
+    logger.info('� [WORKER] Shutting down workers gracefully...');
     const closePromises = [
       emailWorker?.close(),
       notificationWorker?.close(),
@@ -522,6 +524,6 @@ export const closeWorkers = async () => {
     ].filter(Boolean);
 
     await Promise.allSettled(closePromises);
-    logger.info('✅ [WORKER] All workers closed.');
+    logger.info('[WORKER] All workers closed.');
   }
 };

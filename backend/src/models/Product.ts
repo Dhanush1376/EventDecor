@@ -75,6 +75,18 @@ export interface IProduct extends ISoftDeleted {
   aiCategory?: string;
   aiAttributes?: Record<string, string>;
   imageHash?: string;
+
+  // Return Settings
+  returnSettings?: {
+    returnWindow?: number;
+    exchangeWindow?: number;
+    refundType?: 'full' | 'partial' | 'store_credit' | 'no_refund';
+    restockingFeePercent?: number;
+    returnShippingFee?: number;
+    inspectionRequired?: boolean;
+    replacementAllowed?: boolean;
+  };
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -158,6 +170,21 @@ const ProductSchema: Schema = new Schema(
     aiCategory: { type: String, trim: true },
     aiAttributes: { type: Schema.Types.Mixed, default: {} },
     imageHash: { type: String, trim: true, index: true },
+
+    // Return Settings
+    returnSettings: {
+      returnWindow: { type: Number, default: null },
+      exchangeWindow: { type: Number, default: null },
+      refundType: {
+        type: String,
+        enum: ['full', 'partial', 'store_credit', 'no_refund'],
+        default: 'full',
+      },
+      restockingFeePercent: { type: Number, default: 0 },
+      returnShippingFee: { type: Number, default: 0 },
+      inspectionRequired: { type: Boolean, default: true },
+      replacementAllowed: { type: Boolean, default: true },
+    },
   },
   {
     timestamps: true,

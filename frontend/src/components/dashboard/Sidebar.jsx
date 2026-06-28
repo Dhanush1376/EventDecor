@@ -33,6 +33,7 @@ export function Sidebar() {
   else if (path.includes('/collections')) activeTab = 'collections';
   else if (path.includes('/shopping-bag')) activeTab = 'shopping-bag';
   else if (path.includes('/wallet')) activeTab = 'loyalty';
+  else if (path.includes('/returns')) activeTab = 'returns';
 
   const handleTabClick = (tabName, route) => {
     navigate(route);
@@ -172,6 +173,23 @@ export function Sidebar() {
           >
             <span>My Rentals</span>
             <span className="material-symbols-outlined text-xs text-[#8c7335]">inventory_2</span>
+          </motion.button>
+
+          <motion.button
+            role="tab"
+            aria-selected={activeTab === 'returns'}
+            whileHover={{ x: 3 }}
+            onClick={() => handleTabClick('returns', '/dashboard/returns')}
+            className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
+              activeTab === 'returns'
+                ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                : 'text-on-surface hover:bg-surface-container-low'
+            }`}
+          >
+            <span>Returns & Exchanges</span>
+            <span className="material-symbols-outlined text-xs text-secondary">
+              assignment_return
+            </span>
           </motion.button>
         </div>
 

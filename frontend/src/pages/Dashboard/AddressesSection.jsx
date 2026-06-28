@@ -51,10 +51,23 @@ export function AddressesSection() {
               });
               setIsAddressModalOpen(true);
             }}
-            className="w-6 h-6 p-0 min-h-0 rounded-full border border-primary/50 text-primary bg-transparent flex items-center justify-center cursor-pointer hover:bg-primary hover:text-surface transition-all shrink-0"
+            className="w-8 h-8 p-0 min-h-0 rounded-full border border-primary/50 text-primary bg-transparent flex items-center justify-center cursor-pointer hover:bg-primary hover:text-surface transition-all shrink-0 shadow-sm"
             title="Add New Delivery Destination"
           >
-            <span className="material-symbols-outlined text-[12px] font-bold">add</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
           </motion.button>
         </div>
       </div>
@@ -67,29 +80,26 @@ export function AddressesSection() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <AnimatePresence>
-            {addresses.map((addr) => (
-              <AddressCard key={addr._id || addr.id} addr={addr} />
-            ))}
+            {[...addresses]
+              .sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0))
+              .map((addr) => (
+                <AddressCard key={addr._id || addr.id} addr={addr} />
+              ))}
           </AnimatePresence>
         </div>
       )}
 
       {addresses.length === 0 && !isAddressesLoading && (
-        <div className="text-center max-w-2xl mx-auto py-16 md:py-24 animate-fade-in">
-          <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-6 mx-auto relative">
-            <div className="absolute inset-0 bg-primary/15 rounded-full blur-xl" />
-            <span className="material-symbols-outlined text-primary text-[30px] relative z-10">
-              pin_drop
-            </span>
+        <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[40vh]">
+          <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
+            <span className="material-symbols-outlined text-[20px]">pin_drop</span>
           </div>
-
-          <h2 className="font-display text-[22px] text-on-surface tracking-tight mb-2">
+          <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
             No Delivery Sites
-          </h2>
-          <p className="font-body text-[13px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed mb-8">
+          </h3>
+          <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px] mb-6">
             Configure your delivery locations or event site parameters here.
           </p>
-
           <div className="flex justify-center">
             <button
               onClick={() => {
@@ -114,12 +124,10 @@ export function AddressesSection() {
                 });
                 setIsAddressModalOpen(true);
               }}
-              className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary bg-transparent border-0 cursor-pointer outline-none"
+              className="px-6 py-2.5 bg-black hover:bg-gray-900 text-white border-0 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer outline-none"
             >
-              <span>Add New Site</span>
-              <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-                arrow_forward
-              </span>
+              Add New Site
+              <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
             </button>
           </div>
         </div>

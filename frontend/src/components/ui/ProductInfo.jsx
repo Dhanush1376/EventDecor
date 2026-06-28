@@ -130,7 +130,7 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
                   workspace_premium
                 </span>
               </div>
-              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl">
+              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl z-10">
                 Bestseller
               </span>
             </div>
@@ -139,10 +139,34 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
             <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
               <span className="material-symbols-outlined text-[16px] text-on-surface">draw</span>
             </div>
-            <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl">
+            <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl z-10">
               Handmade
             </span>
           </div>
+          {product.returnSettings?.isReturnable && (
+            <div className="relative group/badge">
+              <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-[16px] text-on-surface">
+                  assignment_return
+                </span>
+              </div>
+              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl z-10">
+                {product.returnSettings.returnWindowDays} Days Returnable
+              </span>
+            </div>
+          )}
+          {product.returnSettings?.isExchangeable && (
+            <div className="relative group/badge">
+              <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-[16px] text-on-surface">
+                  swap_horiz
+                </span>
+              </div>
+              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl z-10">
+                {product.returnSettings.exchangeWindowDays} Days Exchangeable
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

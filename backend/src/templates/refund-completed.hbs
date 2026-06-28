@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Refund Completed</title>
+  <style>
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.6; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .card { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .title { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #166534; }
+    .amount { font-size: 32px; font-weight: bold; color: #166534; margin: 10px 0; }
+    .btn { display: inline-block; background-color: #4f46e5; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: 500; margin-top: 20px; }
+    .footer { text-align: center; font-size: 14px; color: #6b7280; margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Your Refund is Completed!</h1>
+    </div>
+    
+    <p>Hello,</p>
+    <p>Your return request <strong>{{returnRequest.returnId}}</strong> is now complete, and your refund has been successfully processed.</p>
+    
+    <div class="card">
+      <div class="title">Refund Details</div>
+      <div class="amount">₹{{returnRequest.refundBreakdown.grandTotal}}</div>
+      <p><strong>Refund Method:</strong> {{returnRequest.refundMethod}}</p>
+      <p>Please note that depending on your bank, it may take 3-5 business days for the amount to reflect in your account if you chose the original payment method.</p>
+    </div>
+    
+    <div style="text-align: center;">
+      <a href="https://yourstore.com/dashboard/returns/{{returnRequest._id}}" class="btn">View Return Details</a>
+    </div>
+    
+    <div class="footer">
+      <p>Thank you for shopping with us.</p>
+      <p>&copy; 2026 EventDecor. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

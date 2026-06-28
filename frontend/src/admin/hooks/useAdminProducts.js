@@ -91,7 +91,7 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction }) {
     try {
       const res = await productService.getAdminAll({ limit: 100 });
       if (res.success) {
-        const list = res.data?.data || [];
+        const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
         setProducts(list.map(mapDbProductToFrontend));
       }
     } catch (_err) {

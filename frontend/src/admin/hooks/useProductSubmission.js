@@ -112,7 +112,7 @@ export function useProductSubmission({
         seoDescription: formData.seoDescription || undefined,
         featured: Boolean(formData.featured),
         isActive: Boolean(formData.isActive),
-        isNonRefundable: Boolean(formData.isNonRefundable),
+        isNonRefundable: !formData.returnSettings?.isReturnable,
         showInGallery: Boolean(formData.showInGallery),
         variants: formData.variants,
         // Rental fields
@@ -139,6 +139,14 @@ export function useProductSubmission({
           maxLength: Number(formData.customizationConfig?.maxLength) || 500,
           helperText: formData.customizationConfig?.helperText || '',
         },
+        returnSettings: formData.returnSettings
+          ? {
+              returnWindow: formData.returnSettings.returnWindowDays,
+              exchangeWindow: formData.returnSettings.exchangeWindowDays,
+              restockingFeePercent: formData.returnSettings.restockingFeePercentage,
+              inspectionRequired: formData.returnSettings.requiresInspection,
+            }
+          : undefined,
       };
 
       const res = isEditMode

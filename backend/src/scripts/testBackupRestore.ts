@@ -24,9 +24,9 @@ export async function verifyBackup(backupDir: string): Promise<boolean> {
     try {
       const content = fs.readFileSync(filePath, 'utf8');
       const data = JSON.parse(content);
-      console.log(`[VerifyRestore] ✅ ${file} - Valid JSON (${data.length} records)`);
+      console.log(`[VerifyRestore] ${file} - Valid JSON (${data.length} records)`);
     } catch (err: any) {
-      console.error(`[VerifyRestore] ❌ ${file} - Failed to parse: ${err.message}`);
+      console.error(`[VerifyRestore] ${file} - Failed to parse: ${err.message}`);
       allValid = false;
     }
   }

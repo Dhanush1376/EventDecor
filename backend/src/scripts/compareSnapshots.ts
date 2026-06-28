@@ -34,9 +34,9 @@ for (let i = 0; i < oldData.length; i++) {
 }
 
 if (differences === 0) {
-  console.log('✅ Visual Search output is IDENTICAL post-refactoring!');
+  console.log('Visual Search output is IDENTICAL post-refactoring!');
   process.exit(0);
 } else {
-  console.error(`❌ Found ${differences} differences in output.`);
+  console.error(`Found ${differences} differences in output.`);
   process.exit(1);
 }

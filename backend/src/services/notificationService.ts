@@ -9,8 +9,14 @@ import User from '../models/User';
 import logger from '../config/logger';
 import { sendEmail as smartSendEmail } from './emailProvider';
 import AdminNotification from '../models/AdminNotification';
-import { emitAdminNotification } from '../socket';
 import { getBackendUrl } from '../utils/getBackendUrl';
+
+export let socketEmitAdminNotificationHandler: (notification: any) => void = () => {};
+export const setSocketNotificationHandler = (
+  handler: typeof socketEmitAdminNotificationHandler,
+) => {
+  socketEmitAdminNotificationHandler = handler;
+};
 
 // Initialize handlebars helpers
 handlebars.registerHelper('formatCurrency', function (value) {
@@ -454,7 +460,7 @@ export const createAdminNotification = async (payload: {
     await notification.save();
 
     // Emit via WebSocket to all connected admins instantly
-    emitAdminNotification(notification);
+    socketEmitAdminNotificationHandler(notification);
 
     return notification;
   } catch (error) {

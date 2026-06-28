@@ -98,12 +98,14 @@ export class RentalAvailabilityService {
     unitNumber: number,
     dates: string[],
     session: mongoose.ClientSession,
+    isTemporary: boolean = false,
   ) {
     const blocks = dates.map((date) => ({
       product: productId,
       rentalOrder: rentalOrderId,
       date,
       unitNumber,
+      expiresAt: isTemporary ? new Date(Date.now() + 15 * 60 * 1000) : undefined,
     }));
 
     try {
@@ -117,6 +119,17 @@ export class RentalAvailabilityService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Confirm temporary locked dates (unset expiresAt)
+   */
+  static async confirmDates(rentalOrderId: string, session?: mongoose.ClientSession) {
+    await RentalDayBlock.updateMany(
+      { rentalOrder: rentalOrderId },
+      { $unset: { expiresAt: 1 } },
+      { session },
+    );
   }
 
   /**

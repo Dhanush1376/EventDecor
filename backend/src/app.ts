@@ -6,14 +6,16 @@ import { securityHeadersMiddleware } from './middleware/helmetMiddleware';
 import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
 import { xssSanitize } from './utils/security/xssSanitizer';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 
 import cookieParser from 'cookie-parser';
 import { globalLimiter, apiFloodingLimiter } from './middleware/rateLimiter';
 import errorMiddleware from './middleware/errorMiddleware';
 import { registerApiRoutes } from './routes/registerApiRoutes';
-import healthRoutes from './routes/healthRoutes';
-import metricsRoutes from './routes/metricsRoutes';
-import { HealthController } from './controllers/healthController';
+import healthRoutes from './routes/system/healthRoutes';
+import metricsRoutes from './routes/system/metricsRoutes';
+import { HealthController } from './controllers/system/healthController';
 import logger from './config/logger';
 import { getSocketAdapterMode } from './config/socketState';
 import { generateSitemap } from './utils/sitemapGenerator';
@@ -33,8 +35,6 @@ import { noCacheMiddleware } from './middleware/noCacheMiddleware';
 import { requestTimeout } from './middleware/queryTimeout';
 import { getDbMetrics } from './config/db';
 import { cacheHeadersMiddleware } from './middleware/cacheHeaders';
-
-// Removed xss-clean inner requirement
 
 const app: Application = express();
 
@@ -58,7 +58,7 @@ app.use(requestTrackerMiddleware);
 app.use(metricsTrackerMiddleware);
 app.use(cacheHeadersMiddleware);
 
-// 0. Initialize Sentry
+// Initialize Sentry Error Tracking
 if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -66,15 +66,15 @@ if (process.env.SENTRY_DSN) {
   });
 }
 
-// 1. Security Middlewares
+// Security Middlewares
 app.use(securityHeadersMiddleware);
 app.use(secretLeakInterceptor);
 
-// 2. CORS Configuration
+// CORS Configuration
 app.options(/.*/, corsHandler); // Pre-flight global handler
 app.use(corsMiddleware);
 
-// ─── Razorpay Webhook (MUST be registered BEFORE body parsing middleware) ───
+// Razorpay Webhook (MUST be registered BEFORE body parsing middleware)
 // Razorpay HMAC signature verification requires the raw, unparsed request body.
 // Parsing with express.json() + XSS sanitization corrupts the payload and breaks signature checks.
 app.post(
@@ -113,7 +113,7 @@ app.post(
   },
 );
 
-// 3. Request Parsing (MUST be before sanitization)
+// Request Parsing (MUST be before sanitization)
 // Pre-validate body size before parsing to prevent CPU exhaustion on XSS sanitization
 app.use((req: Request, res: Response, next) => {
   if (
@@ -148,7 +148,7 @@ if (process.env.DISABLE_LOGGING !== 'true') {
   app.use(requestLogger);
 }
 
-// 4. Sanitization & Performance
+// Sanitization & Performance
 if (process.env.DISABLE_COMPRESSION !== 'true') {
   app.use(compression({ level: 6, threshold: 1024 }));
 }
@@ -314,18 +314,16 @@ app.use('/api/v1/upload', (req: Request, res: Response, next: express.NextFuncti
   next();
 });
 
-// 7. API Routes
+// API Routes Registration
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 registerApiRoutes(app, '/api/v1', 'v1');
 
-// 8. Sentry Error Handler (must be before any other error middleware)
+// Sentry Error Handler (must be before any other error middleware)
 if (process.env.SENTRY_DSN) {
   Sentry.setupExpressErrorHandler(app);
 }
 
-// 9. Global Error Handler
+// Global Error Handler
 app.use(errorMiddleware);
 
-// Trigger reload for .env change
 export default app;
-
-// trigger restart

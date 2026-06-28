@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import EventBooking from '../../models/EventBooking';
 import Event from '../../models/Event';
 import User from '../../models/User';
@@ -13,6 +13,7 @@ import OutboxEvent from '../../models/OutboxEvent';
 import PaymentAudit from '../../models/PaymentAudit';
 import { EventBookingStateMachine } from './EventBookingStateMachine';
 import { EventResourcePlanningService } from './EventResourcePlanningService';
+import PaymentAttempt from '../../models/PaymentAttempt';
 
 export class EventBookingCheckoutService {
   static async initializeBookingCheckout(userId: string, data: any) {
@@ -126,53 +127,6 @@ export class EventBookingCheckoutService {
         }
       }
 
-      // ENTERPRISE FIX: Create booking FIRST
-      const bookings = await EventBooking.create(
-        [
-          {
-            bookingId,
-            user: userId,
-            eventPackage: eventPackageId || null,
-            title: title || `${eventType || 'Special'} Celebration`,
-            eventType: eventType || 'Wedding',
-            date: new Date(date),
-            rentalDurationDays: durationDays,
-            timing: timing || { start: '10:00 AM', end: '10:00 PM' },
-            guestCount: parseInt(guestCount) || 100,
-            venue: venue || { address: 'TBD', isOutdoor: false },
-            customization: customization || {},
-            selectedAddons: selectedAddons || [],
-            inspirationImages: inspirationImages || [],
-            pricing: {
-              rentalFee: basePrice,
-              setupCharges: 0,
-              transportationCost: 0,
-              addOnCharges,
-              depositAmount,
-              totalPrice,
-              pendingBalance: totalPrice,
-              paymentStatus: 'unpaid',
-            },
-            payments: [],
-            status: 'pending_payment',
-            statusHistory: [
-              {
-                status: 'pending_payment',
-                timestamp: new Date(),
-                note: 'Booking checkout initialized',
-                updatedBy: 'system',
-              },
-            ],
-            assignedTeam: [],
-            rentedInventory: [],
-            clientApproved: false,
-            idempotencyKey,
-          },
-        ],
-        { session },
-      );
-
-      booking = bookings[0];
       await session.commitTransaction();
     } catch (err: any) {
       await session.abortTransaction();
@@ -186,18 +140,21 @@ export class EventBookingCheckoutService {
       session.endSession();
     }
 
-    // ENTERPRISE FIX: Create Razorpay order AFTER booking is committed
+    const pendingOrderId = new mongoose.Types.ObjectId();
+
     const options = {
       amount: depositAmount * 100,
       currency: 'INR',
-      receipt: `receipt_${booking._id}`,
+      receipt: `receipt_${pendingOrderId}`,
       payment_capture: 1,
     };
 
-    let order;
+    let razorpayOrder;
     try {
       const { razorpayCircuitBreaker } = require('../../utils/CircuitBreaker');
-      order = await razorpayCircuitBreaker.execute(() => RazorpayGateway.createOrder(options));
+      razorpayOrder = await razorpayCircuitBreaker.execute(() =>
+        RazorpayGateway.createOrder(options),
+      );
     } catch (err: any) {
       logger.error('Razorpay event booking order creation failed:', err);
       throw new ApiError(
@@ -206,14 +163,39 @@ export class EventBookingCheckoutService {
       );
     }
 
-    // Atomically link Razorpay order ID
-    await EventBooking.findByIdAndUpdate(booking._id, {
-      $set: { razorpayOrderId: order.id },
+    const attemptData = {
+      pendingOrderId,
+      bookingId,
+      userId,
+      eventPackage: eventPackageId || null,
+      title: title || `${eventType || 'Special'} Celebration`,
+      eventType: eventType || 'Wedding',
+      date: new Date(date),
+      rentalDurationDays: durationDays,
+      timing: timing || { start: '10:00 AM', end: '10:00 PM' },
+      guestCount: parseInt(guestCount) || 100,
+      venue: venue || { address: 'TBD', isOutdoor: false },
+      customization: customization || {},
+      selectedAddons: selectedAddons || [],
+      inspirationImages: inspirationImages || [],
+      basePrice,
+      addOnCharges,
+      depositAmount,
+      totalPrice,
+      idempotencyKey,
+    };
+
+    await PaymentAttempt.create({
+      razorpayOrderId: razorpayOrder.id,
+      userId: userId,
+      type: 'event_booking',
+      status: 'initiated',
+      orderData: attemptData,
     });
 
     return {
-      bookingId: booking._id,
-      razorpayOrderId: order.id,
+      bookingId: pendingOrderId,
+      razorpayOrderId: razorpayOrder.id,
       amount: depositAmount,
       currency: 'INR',
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID,

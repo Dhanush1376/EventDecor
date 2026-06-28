@@ -15,6 +15,9 @@ export class OrderQueryService {
     if (query.paymentStatus) {
       filter.paymentStatus = query.paymentStatus;
     }
+    if (query.user) {
+      filter.user = query.user;
+    }
 
     const [orders, total] = await Promise.all([
       Order.find(filter)

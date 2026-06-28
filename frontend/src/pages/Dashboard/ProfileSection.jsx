@@ -124,7 +124,7 @@ export function ProfileSection() {
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other / Custom</option>
-                <option value="prefer-not-to-say">Prefer Not To Disclose</option>
+                <option value="prefer_not_to_say">Prefer Not To Disclose</option>
               </select>
             </div>
 
@@ -143,23 +143,21 @@ export function ProfileSection() {
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+          <div className="pt-6 flex justify-end">
+            <button
               disabled={isUpdatingProfile}
               type="submit"
-              className="btn-primary px-6 py-2.5 rounded-full font-bold uppercase tracking-widest text-[9px] inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+              className="bg-[#2A2927] hover:bg-black text-white px-6 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUpdatingProfile ? (
-                <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
+                <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-[13px]">save</span>
-                  <span>Commit Profile Updates</span>
+                  <span className="material-symbols-outlined text-[16px]">save</span>
+                  <span>COMMIT PROFILE UPDATES</span>
                 </>
               )}
-            </motion.button>
+            </button>
           </div>
         </form>
       </div>

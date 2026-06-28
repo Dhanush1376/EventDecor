@@ -39,7 +39,7 @@ export function EmailInputForm({
             htmlFor="auth-email-input"
             className={`absolute transition-all duration-300 pointer-events-none font-bold ${
               isFocused || email
-                ? 'text-[9px] -top-2 left-4 bg-white px-1.5 text-primary tracking-[0.2em] uppercase z-10'
+                ? 'text-[9px] -top-2 left-4 bg-[#faf9f6] px-1.5 text-primary tracking-[0.2em] uppercase z-10'
                 : 'text-[12px] top-1/2 -translate-y-1/2 left-10 text-on-surface-variant/40 tracking-[0.15em] uppercase'
             }`}
           >

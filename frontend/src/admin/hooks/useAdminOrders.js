@@ -137,7 +137,7 @@ export function useAdminOrders({ activeRole, safetyLock, logAdminAction }) {
     try {
       const res = await orderService.getAll({ limit: 50 });
       if (res.success) {
-        const list = res.data?.data || [];
+        const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
         setOrders(list.map(mapDbOrderToFrontend));
       }
     } catch (err) {

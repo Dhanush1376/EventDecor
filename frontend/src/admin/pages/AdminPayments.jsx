@@ -96,8 +96,18 @@ export function AdminPayments() {
       .map((o) => {
         const orderNum = o.id && o.id.length > 8 ? o.id.slice(-6).toUpperCase() : o.id;
         const paymentMethod = o.rawOrder?.paymentMethod || (o.payment === 'COD' ? 'COD' : 'UPI');
-        const statusLabel =
-          o.payment === 'Paid' ? 'Completed' : o.status === 'Cancelled' ? 'Refunded' : 'Pending';
+        const refundStatus = o.rawOrder?.refundStatus;
+        let statusLabel = 'Pending';
+
+        if (o.payment === 'Paid') {
+          statusLabel = 'Completed';
+          if (refundStatus === 'completed') statusLabel = 'Refunded';
+          else if (refundStatus === 'partial') statusLabel = 'Partially Refunded';
+          else if (refundStatus === 'failed') statusLabel = 'Refund Failed';
+          else if (o.status === 'Cancelled') statusLabel = 'Refunded';
+        } else if (o.status === 'Cancelled') {
+          statusLabel = 'Refunded';
+        }
 
         return {
           id: `TXN-${o.rawOrder?.paymentInfo?.razorpayPaymentId?.slice(-8).toUpperCase() || o.id.slice(-8).toUpperCase()}`,

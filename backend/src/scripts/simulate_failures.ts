@@ -13,17 +13,17 @@ async function runTests() {
 
   // First attempt should succeed
   await OrderIdempotencyManager.acquireLock(testOrderId, 'test_payment_123');
-  logger.info('✅ First request registered successfully.');
+  logger.info('First request registered successfully.');
 
   try {
     // Second attempt should fail with ApiError 409
     await OrderIdempotencyManager.acquireLock(testOrderId, 'test_payment_123');
-    logger.error('❌ Failed! Duplicate request was allowed.');
+    logger.error('Failed! Duplicate request was allowed.');
   } catch (err: any) {
     if (err.statusCode === 409) {
-      logger.info('✅ Duplicate request correctly rejected with 409 Conflict.');
+      logger.info('Duplicate request correctly rejected with 409 Conflict.');
     } else {
-      logger.error('❌ Failed with unexpected error:', err);
+      logger.error('Failed with unexpected error:', err);
     }
   }
 
@@ -33,19 +33,19 @@ async function runTests() {
 
   const lock1 = await DistributedLock.acquireLock(resourceKey, 10);
   if (lock1) {
-    logger.info('✅ First lock acquired successfully.');
+    logger.info('First lock acquired successfully.');
   }
 
   const lock2 = await DistributedLock.acquireLock(resourceKey, 10);
   if (!lock2) {
-    logger.info('✅ Second lock attempt correctly rejected (Race Condition Prevented).');
+    logger.info('Second lock attempt correctly rejected (Race Condition Prevented).');
   } else {
-    logger.error('❌ Failed! Second lock was acquired concurrently.');
+    logger.error('Failed! Second lock was acquired concurrently.');
   }
 
   if (lock1) {
     await DistributedLock.releaseLock(resourceKey, lock1);
-    logger.info('✅ Lock released safely.');
+    logger.info('Lock released safely.');
   }
 
   logger.info('\\n--- Enterprise Failure Tests Completed ---');

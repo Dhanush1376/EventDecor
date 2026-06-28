@@ -10,18 +10,73 @@ import storeSettingsService from './StoreSettingsService';
 
 export class LoyaltyService {
   /**
-   * Generates a unique, elegant referral code for a new customer
+   * Computes all loyalty dashboard metrics including aggregations
    */
-  static generateReferralCode(name: string): string {
-    const prefix = 'SIRI';
-    const sanitized = name
-      .toUpperCase()
-      .replace(/[^A-Z]/g, '')
-      .slice(0, 3);
-    const rand = Math.floor(1000 + Math.random() * 9000);
-    return `${prefix}-${sanitized || 'ART'}-${rand}`;
-  }
+  static async getDashboardData(userId: string) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
 
+    if (!user.referralCode) {
+      user.referralCode = await saveUniqueReferralCode(user._id, user.name);
+    }
+
+    const transactions = await WalletTransaction.find({ userId })
+      .populate('orderId', 'invoiceNumber total')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const activeCoupons = await Coupon.find({
+      isActive: true,
+      expiryDate: { $gt: new Date() },
+    }).lean();
+
+    const spendAggregation = await Order.aggregate([
+      { $match: { user: user._id, orderStatus: { $nin: ['Cancelled', 'Refunded'] } } },
+      { $group: { _id: null, totalSpend: { $sum: '$total' } } },
+    ]);
+    const lifetimeSpend = spendAggregation[0]?.totalSpend || 0;
+
+    const settings = await storeSettingsService.getSettings();
+    const loyaltyTiers = settings.loyalty.tiers || [];
+    const currentTierIndex = loyaltyTiers.findIndex((t: any) => t.name === user.loyaltyTier);
+    const nextTierObj = loyaltyTiers[currentTierIndex + 1];
+
+    let nextTier: string;
+    let spendRequired: number;
+    let progressPercentage: number;
+
+    if (nextTierObj) {
+      nextTier = nextTierObj.name;
+      spendRequired = Math.max(0, nextTierObj.minSpend - lifetimeSpend);
+      const currentTierSpend = currentTierIndex >= 0 ? loyaltyTiers[currentTierIndex].minSpend : 0;
+      const tierRange = nextTierObj.minSpend - currentTierSpend;
+      const currentProgress = lifetimeSpend - currentTierSpend;
+      progressPercentage =
+        tierRange > 0
+          ? Math.max(0, Math.min(100, Math.round((currentProgress / tierRange) * 100)))
+          : 100;
+    } else {
+      nextTier = 'None (Max Tier reached)';
+      spendRequired = 0;
+      progressPercentage = 100;
+    }
+
+    return {
+      walletBalance: user.walletBalance || 0,
+      siriCoins: user.siriCoins || 0,
+      loyaltyTier: user.loyaltyTier || 'Bronze',
+      referralCode: user.referralCode,
+      referralsCount: user.referralsCount || 0,
+      lifetimeSpend,
+      nextTier,
+      spendRequired,
+      progressPercentage,
+      transactions,
+      coupons: activeCoupons,
+    };
+  }
   /**
    * Welcomes a newly registered user with onboarding credits and generates their referral code
    */

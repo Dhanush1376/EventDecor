@@ -1,4 +1,3 @@
-import { m as motion } from 'framer-motion';
 import { StackedSectionWrapper } from '../../components/layout/StackedSectionWrapper';
 import { CloudinaryImage } from '../../components/ui/CloudinaryImage';
 import { Link } from 'react-router-dom';

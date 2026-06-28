@@ -5,6 +5,17 @@ import { getAdminEmails } from '../config/adminConfig';
 export type AlertSeverity = 'critical' | 'high' | 'medium' | 'low';
 export type AlertChannel = 'email' | 'sentry' | 'webhook' | 'log';
 
+export let sendDirectEmailHandler: (options: any) => void | Promise<any> = () => {};
+export let createAdminNotificationHandler: (options: any) => Promise<any> = async () => {};
+
+export const setAlertingNotificationHandlers = (
+  emailHandler: typeof sendDirectEmailHandler,
+  adminHandler: typeof createAdminNotificationHandler,
+) => {
+  sendDirectEmailHandler = emailHandler;
+  createAdminNotificationHandler = adminHandler;
+};
+
 export interface AlertPayload {
   title: string;
   message: string;
@@ -157,7 +168,6 @@ export class AlertingService {
       const recipients = getAdminEmails();
       if (recipients.length === 0) return;
 
-      const { sendDirectEmail } = require('./notificationService');
       const severityEmoji =
         payload.severity === 'critical' ? '🚨' : payload.severity === 'high' ? '⚠️' : 'ℹ️';
 
@@ -166,7 +176,7 @@ export class AlertingService {
         : '';
 
       for (const email of recipients) {
-        await sendDirectEmail({
+        await sendDirectEmailHandler({
           email,
           subject: `${severityEmoji} [${payload.severity.toUpperCase()}] ${payload.title}`,
           customHtml: `
@@ -240,8 +250,7 @@ export class AlertingService {
 
   private static async sendAdminNotification(payload: AlertPayload): Promise<void> {
     try {
-      const { createAdminNotification } = require('./notificationService');
-      await createAdminNotification({
+      await createAdminNotificationHandler({
         title: `${payload.severity === 'critical' ? '🚨' : '⚠️'} ${payload.title}`,
         message: payload.message,
         type: payload.category === 'payment' ? 'payment' : 'system',

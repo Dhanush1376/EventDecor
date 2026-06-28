@@ -62,32 +62,29 @@ export function OrdersSection() {
           )}
 
           {orderItems.length === 0 && !isOrdersLoading && (
-            <div className="text-center max-w-2xl mx-auto py-16 md:py-24 animate-fade-in">
-              <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-6 mx-auto relative">
-                <div className="absolute inset-0 bg-primary/15 rounded-full blur-xl" />
-                <span className="material-symbols-outlined text-primary text-[30px] relative z-10">
-                  receipt_long
-                </span>
+            <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[40vh]">
+              <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
+                <span className="material-symbols-outlined text-[20px]">receipt_long</span>
               </div>
 
-              <h2 className="font-display text-[22px] text-on-surface tracking-tight mb-2">
+              <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
                 No Orders Found
-              </h2>
-              <p className="font-body text-[13px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed mb-8">
+              </h3>
+              <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px] mb-6">
                 {orderFilter === 'PURCHASE'
                   ? 'Explore our collections and discover beautiful decor pieces.'
-                  : 'Browse our premium catalog to reserve items for your events.'}
+                  : orderFilter === 'RENTAL'
+                    ? 'Browse our premium catalog to reserve items for your events.'
+                    : 'You have no active returns or exchanges.'}
               </p>
 
               <div className="flex justify-center">
                 <Link
                   to="/collections"
-                  className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-2 font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
+                  className="px-6 py-2.5 bg-black hover:bg-gray-900 text-white border-0 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1.5"
                 >
-                  <span>Explore Collection</span>
-                  <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-                    arrow_forward
-                  </span>
+                  Explore Collection
+                  <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
                 </Link>
               </div>
             </div>

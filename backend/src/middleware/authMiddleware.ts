@@ -382,7 +382,7 @@ export const requireSuperAdmin = asyncHandler(
 
     const isRootAdmin = req.user.role === 'super_admin' || req.user.role === 'owner';
     if (isRootAdmin) {
-      // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
+      // Backend safetyLock check for Mutating Admin Actions
       await checkSafetyLock(req);
 
       logAdminAudit(req, res);
@@ -428,7 +428,7 @@ export const requireRole = (allowedRoles: string[]) => {
     // Owner and Super Admin always get access
     const isRootAdmin = req.user.role === 'super_admin' || req.user.role === 'owner';
     if (isRootAdmin || allowedRoles.includes(req.user.role)) {
-      // --- UE-04: Backend safetyLock check for Mutating Admin Actions ---
+      // Backend safetyLock check for Mutating Admin Actions
       await checkSafetyLock(req);
 
       logAdminAudit(req, res);
@@ -437,4 +437,8 @@ export const requireRole = (allowedRoles: string[]) => {
       throw new ApiError(403, 'Access denied. You do not have the required role for this action.');
     }
   });
+};
+
+export const authorize = (...allowedRoles: string[]) => {
+  return requireRole(allowedRoles);
 };

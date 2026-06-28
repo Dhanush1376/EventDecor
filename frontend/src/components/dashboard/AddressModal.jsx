@@ -137,32 +137,27 @@ export function AddressModal() {
           {/* Sticky Action Footer */}
           <div className="bg-surface-bright border-t border-outline-variant/20 p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] mt-auto shrink-0 z-20 absolute bottom-0 left-0 right-0">
             <div className="w-full flex gap-4 max-w-lg mx-auto">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="button"
+              <button
                 onClick={() => setIsAddressModalOpen(false)}
-                className="flex-1 bg-transparent text-on-surface font-bold uppercase tracking-widest text-[10px] py-3 rounded-full border border-outline-variant/40 hover:bg-surface-container-low transition-colors cursor-pointer"
+                className="flex-1 bg-surface-bright text-secondary py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] shadow-sm border border-outline-variant/30 flex justify-center items-center cursor-pointer hover:bg-surface transition-colors"
               >
                 Cancel
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              </button>
+              <button
                 disabled={isAddressSaving}
                 onClick={handleAddressSave}
                 type="submit"
-                className="flex-1 btn-primary py-3 rounded-full font-bold uppercase tracking-widest text-[10px] shadow-md flex justify-center items-center gap-1.5 disabled:opacity-75 cursor-pointer !text-white"
+                className="flex-1 bg-[#2A2927] hover:bg-black text-white px-6 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isAddressSaving ? (
-                  <div className="skeleton-box inline-block w-3 h-3 rounded-md animate-pulse" />
+                  <div className="skeleton-box inline-block w-4 h-4 rounded-md animate-pulse" />
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-xs">save</span>
-                    <span>{editingAddressId === 'new' ? 'Add Address' : 'Save Changes'}</span>
+                    <span className="material-symbols-outlined text-[16px]">save</span>
+                    <span>{editingAddressId === 'new' ? 'ADD ADDRESS' : 'SAVE CHANGES'}</span>
                   </>
                 )}
-              </motion.button>
+              </button>
             </div>
           </div>
         </motion.div>

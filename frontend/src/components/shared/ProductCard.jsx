@@ -42,6 +42,8 @@ export const ProductCard = React.memo(function ProductCard({
   cartType = 'purchase',
   stock,
   rentalStock,
+  selectionMode = false,
+  isSelected = false,
 }) {
   const navigate = useNavigate();
   const { isWishlisted } = useWishlistState();
@@ -175,36 +177,40 @@ export const ProductCard = React.memo(function ProductCard({
           />
         </Link>
         {/* Floating Utility Actions */}
-        <div className="absolute top-2 right-3 md:top-3 md:right-4 z-20 flex flex-col gap-2">
-          <button
-            onClick={handleWishlist}
-            className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} relative min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96] overflow-hidden`}
-            aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          >
-            <AnimatePresence>
-              {isRippling && (
-                <motion.div
-                  initial={{ scale: 0, opacity: 0.5 }}
-                  animate={{ scale: 2.5, opacity: 0 }}
-                  transition={{ duration: 0.4, ease: 'easeOut' }}
-                  className={`absolute inset-0 rounded-full origin-center pointer-events-none ${wishlisted ? 'bg-black/10' : 'bg-[#ff2d55]/20'}`}
-                />
-              )}
-            </AnimatePresence>
-            <motion.span
-              animate={{
-                scale: wishlisted ? [1, 1.4, 1] : 1,
-                color: wishlisted ? '#ff2d55' : '#1a1817',
-                fontVariationSettings: wishlisted ? "'FILL' 1, 'wght' 300" : "'FILL' 0, 'wght' 300",
-              }}
-              whileTap={{ scale: 0.8 }}
-              transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-              className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
+        {!selectionMode && (
+          <div className="absolute top-2 right-3 md:top-3 md:right-4 z-20 flex flex-col gap-2">
+            <button
+              onClick={handleWishlist}
+              className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} relative min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96] overflow-hidden`}
+              aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
             >
-              favorite
-            </motion.span>
-          </button>
-        </div>{' '}
+              <AnimatePresence>
+                {isRippling && (
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0.5 }}
+                    animate={{ scale: 2.5, opacity: 0 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className={`absolute inset-0 rounded-full origin-center pointer-events-none ${wishlisted ? 'bg-black/10' : 'bg-[#ff2d55]/20'}`}
+                  />
+                )}
+              </AnimatePresence>
+              <motion.span
+                animate={{
+                  scale: wishlisted ? [1, 1.4, 1] : 1,
+                  color: wishlisted ? '#ff2d55' : '#1a1817',
+                  fontVariationSettings: wishlisted
+                    ? "'FILL' 1, 'wght' 300"
+                    : "'FILL' 0, 'wght' 300",
+                }}
+                whileTap={{ scale: 0.8 }}
+                transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
+                className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
+              >
+                favorite
+              </motion.span>
+            </button>
+          </div>
+        )}
         {/* Badges */}
         <div className="absolute top-2 left-3 md:top-3 md:left-4 flex flex-row items-center -space-x-2 md:-space-x-3 z-10">
           {itemType === 'event' ? (
@@ -303,24 +309,108 @@ export const ProductCard = React.memo(function ProductCard({
           )}
         </div>
         {/* Immersive Hover Actions (Desktop Only) */}
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 lg:group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-6 pointer-events-none lg:group-hover:pointer-events-auto">
-          <div className="space-y-2 transform translate-y-4 lg:group-hover:translate-y-0 transition-transform duration-500">
-            {itemType === 'event' ? (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    navigate(getProductRoute('event', productId));
-                  }}
-                  className="w-full py-3 bg-[#e0d6b8] hover:bg-white text-[#1a1c1a] rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
-                >
-                  <span className="material-symbols-outlined text-[14px]">event</span>
-                  Book Setup
-                </button>
-                <button
-                  onClick={(e) => {
-                    if (onQuickView) {
+        {!selectionMode && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 lg:group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-6 pointer-events-none lg:group-hover:pointer-events-auto">
+            <div className="space-y-2 transform translate-y-4 lg:group-hover:translate-y-0 transition-transform duration-500">
+              {itemType === 'event' ? (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      navigate(getProductRoute('event', productId));
+                    }}
+                    className="w-full py-3 bg-[#e0d6b8] hover:bg-white text-[#1a1c1a] rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">event</span>
+                    Book Setup
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      if (onQuickView) {
+                        onQuickView(e, {
+                          id,
+                          _id,
+                          title,
+                          teluguTitle,
+                          nameTE,
+                          teluguName,
+                          price,
+                          rentalPrice,
+                          oldPrice,
+                          rating,
+                          imageSrc,
+                          hoverImage,
+                          category,
+                          badges,
+                          itemType,
+                          setupTimeHours,
+                          inclusions,
+                        });
+                      } else {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate(getProductRoute('event', productId));
+                      }
+                    }}
+                    className="w-full bg-white/10 backdrop-blur-md text-white py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
+                  >
+                    Quick View
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={isOutOfStock || added ? undefined : handleAddToCart}
+                    disabled={isOutOfStock || added}
+                    className={`w-full py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all duration-500 cursor-pointer flex items-center justify-center ${
+                      isOutOfStock
+                        ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                        : added
+                          ? 'bg-[#e0d6b8] text-[#1a1c1a]'
+                          : 'bg-white text-black hover:bg-[#e0d6b8] hover:text-[#1a1c1a]'
+                    }`}
+                  >
+                    <AnimatePresence mode="wait">
+                      {added ? (
+                        <motion.span
+                          key="added"
+                          initial={{ opacity: 0, scale: 0.85 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.85 }}
+                          transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                          className="flex items-center justify-center gap-1.5"
+                        >
+                          <motion.span
+                            initial={{ scale: 0.5, rotate: -30 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{
+                              delay: 0.05,
+                              type: 'spring',
+                              stiffness: 400,
+                              damping: 15,
+                            }}
+                            className="material-symbols-outlined text-[14px]"
+                          >
+                            check
+                          </motion.span>
+                          <span>Added</span>
+                        </motion.span>
+                      ) : (
+                        <motion.span
+                          key="add"
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          {isOutOfStock ? 'Out of Stock' : 'Add to Bag'}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </button>
+                  <button
+                    onClick={(e) =>
                       onQuickView(e, {
                         id,
                         _id,
@@ -329,159 +419,94 @@ export const ProductCard = React.memo(function ProductCard({
                         nameTE,
                         teluguName,
                         price,
-                        rentalPrice,
                         oldPrice,
                         rating,
                         imageSrc,
                         hoverImage,
                         category,
                         badges,
-                        itemType,
-                        setupTimeHours,
-                        inclusions,
-                      });
-                    } else {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      navigate(getProductRoute('event', productId));
+                      })
                     }
-                  }}
-                  className="w-full bg-white/10 backdrop-blur-md text-white py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
+                    className="w-full bg-white/10 backdrop-blur-md text-white py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
+                  >
+                    Quick View
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile & Tablet Quick Add Button */}
+        {!selectionMode && (
+          <div className="xl:hidden absolute bottom-3 right-3 z-20">
+            {itemType === 'event' ? (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate(getProductRoute('event', productId));
+                }}
+                className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
+                aria-label="Book setup"
+              >
+                <span
+                  className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
                 >
-                  Quick View
-                </button>
-              </>
+                  event
+                </span>
+              </button>
             ) : (
-              <>
-                <button
-                  onClick={isOutOfStock || added ? undefined : handleAddToCart}
-                  disabled={isOutOfStock || added}
-                  className={`w-full py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all duration-500 cursor-pointer flex items-center justify-center ${
-                    isOutOfStock
-                      ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                      : added
-                        ? 'bg-[#e0d6b8] text-[#1a1c1a]'
-                        : 'bg-white text-black hover:bg-[#e0d6b8] hover:text-[#1a1c1a]'
-                  }`}
-                >
-                  <AnimatePresence mode="wait">
-                    {added ? (
-                      <motion.span
-                        key="added"
-                        initial={{ opacity: 0, scale: 0.85 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.85 }}
-                        transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                        className="flex items-center justify-center gap-1.5"
-                      >
-                        <motion.span
-                          initial={{ scale: 0.5, rotate: -30 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          transition={{ delay: 0.05, type: 'spring', stiffness: 400, damping: 15 }}
-                          className="material-symbols-outlined text-[14px]"
-                        >
-                          check
-                        </motion.span>
-                        <span>Added</span>
-                      </motion.span>
-                    ) : (
-                      <motion.span
-                        key="add"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        {isOutOfStock ? 'Out of Stock' : 'Add to Bag'}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </button>
-                <button
-                  onClick={(e) =>
-                    onQuickView(e, {
-                      id,
-                      _id,
-                      title,
-                      teluguTitle,
-                      nameTE,
-                      teluguName,
-                      price,
-                      oldPrice,
-                      rating,
-                      imageSrc,
-                      hoverImage,
-                      category,
-                      badges,
-                    })
-                  }
-                  className="w-full bg-white/10 backdrop-blur-md text-white py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
-                >
-                  Quick View
-                </button>
-              </>
+              <button
+                onClick={isOutOfStock || added ? undefined : handleAddToCart}
+                disabled={isOutOfStock || added}
+                className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
+                  isOutOfStock
+                    ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                    : added
+                      ? 'bg-[#e0d6b8] text-[#1a1c1a] cursor-pointer'
+                      : 'bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] cursor-pointer'
+                }`}
+                aria-label="Add to bag"
+              >
+                <AnimatePresence mode="wait">
+                  {added ? (
+                    <motion.span
+                      key="check"
+                      initial={{ opacity: 0, scale: 0.5, rotate: -30 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      exit={{ opacity: 0, scale: 0.5, rotate: 30 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                      className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
+                    >
+                      check
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="add"
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                      transition={{ duration: 0.2 }}
+                      className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
+                    >
+                      {isOutOfStock ? 'remove_shopping_cart' : 'add'}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
             )}
           </div>
-        </div>
-        {/* Mobile & Tablet Quick Add Button */}
-        <div className="xl:hidden absolute bottom-3 right-3 z-20">
-          {itemType === 'event' ? (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                navigate(getProductRoute('event', productId));
-              }}
-              className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
-              aria-label="Book setup"
-            >
-              <span
-                className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
-              >
-                event
-              </span>
-            </button>
-          ) : (
-            <button
-              onClick={isOutOfStock || added ? undefined : handleAddToCart}
-              disabled={isOutOfStock || added}
-              className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
-                isOutOfStock
-                  ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                  : added
-                    ? 'bg-[#e0d6b8] text-[#1a1c1a] cursor-pointer'
-                    : 'bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] cursor-pointer'
-              }`}
-              aria-label="Add to bag"
-            >
-              <AnimatePresence mode="wait">
-                {added ? (
-                  <motion.span
-                    key="check"
-                    initial={{ opacity: 0, scale: 0.5, rotate: -30 }}
-                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                    exit={{ opacity: 0, scale: 0.5, rotate: 30 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                    className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
-                  >
-                    check
-                  </motion.span>
-                ) : (
-                  <motion.span
-                    key="add"
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.5 }}
-                    transition={{ duration: 0.2 }}
-                    className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
-                  >
-                    {isOutOfStock ? 'remove_shopping_cart' : 'add'}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </button>
-          )}
-        </div>
+        )}
+
+        {/* Selection Overlay */}
+        {selectionMode && isSelected && (
+          <div className="absolute inset-0 bg-black/5 ring-4 ring-inset ring-black rounded-2xl z-30 pointer-events-none flex items-center justify-center transition-all">
+            <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center shadow-lg animate-scale-in">
+              <span className="material-symbols-outlined text-[24px]">check</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div
@@ -529,9 +554,9 @@ export const ProductCard = React.memo(function ProductCard({
         <div className="mt-auto flex flex-col justify-end">
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span
-              className={`font-display font-bold text-black leading-none ${compact ? 'text-[13px] md:text-[14px]' : 'text-[14px] md:text-[17px]'}`}
+              className={`font-display lining-nums font-bold text-black leading-none ${compact ? 'text-[13px] md:text-[14px]' : 'text-[14px] md:text-[17px]'}`}
             >
-              ₹
+              {'Rs. '}
               {formatPrice(
                 itemType === 'event'
                   ? rentalPrice || price
@@ -557,9 +582,9 @@ export const ProductCard = React.memo(function ProductCard({
             </span>
             {itemType !== 'event' && !isRental && numericOldPrice > numericPrice && canPurchase && (
               <span
-                className={`font-display text-black/40 line-through ${compact ? 'text-[9px] md:text-[10px]' : 'text-[10px] md:text-[11px]'}`}
+                className={`font-display lining-nums text-black/40 line-through ${compact ? 'text-[9px] md:text-[10px]' : 'text-[10px] md:text-[11px]'}`}
               >
-                ₹{formatPrice(numericOldPrice)}
+                Rs. {formatPrice(numericOldPrice)}
               </span>
             )}
           </div>
@@ -567,7 +592,7 @@ export const ProductCard = React.memo(function ProductCard({
             <span
               className={`text-black/50 font-bold uppercase tracking-widest mt-0.5 ${compact ? 'text-[8px]' : 'text-[9px] md:text-[10px]'}`}
             >
-              Rental Price (Deposit: ₹{formatPrice(resolvedDeposit)})
+              Rental Price (Deposit: Rs. {formatPrice(resolvedDeposit)})
             </span>
           )}
           {itemType !== 'event' && !isRental && canRent && !canPurchase && (

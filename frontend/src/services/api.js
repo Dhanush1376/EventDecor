@@ -269,5 +269,3 @@ if (typeof window !== 'undefined') {
     }
   });
 }
-
-// Trigger HMR to clear pendingGetRequests and apiCache

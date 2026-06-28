@@ -21,6 +21,7 @@ function BaseOptimizedImage({
   aspectRatio,
   eager = false,
   skipObserver = false,
+  priority,
   ...props
 }) {
   const [isLoaded, setIsLoaded] = useState(eager || loading === 'eager');

@@ -520,14 +520,14 @@ export function CartDrawer({ isOpen, onClose }) {
                   </span>
                 </div>
 
-                <div className="pt-2 space-y-2">
+                <div className="pt-4 pb-2 space-y-2.5 flex flex-col">
                   <Link
                     to="/checkout"
                     onMouseEnter={() =>
                       prefetchManager.prefetchRoute('/checkout', { kind: 'hover' })
                     }
                     onClick={onClose}
-                    className="relative overflow-hidden block w-full bg-[#1a1a1a] text-white py-3 rounded-full font-label text-[11px] uppercase tracking-[0.15em] text-center hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.2)] font-bold group"
+                    className="relative overflow-hidden block w-full bg-[#1a1a1a] text-white py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] text-center hover:bg-black active:scale-[0.98] transition-all duration-300 shadow-md font-bold group"
                   >
                     <span className="relative z-10 flex items-center justify-center gap-2">
                       Proceed to Checkout
@@ -540,11 +540,9 @@ export function CartDrawer({ isOpen, onClose }) {
                   <Link
                     to="/cart"
                     onClick={onClose}
-                    className="block w-full text-center py-2 font-label text-[10px] uppercase tracking-[0.15em] text-black/50 hover:text-primary transition-colors font-bold group"
+                    className="block w-full text-center py-3 rounded-full font-label text-[11px] uppercase tracking-[0.15em] text-[#1a1a1a] bg-transparent hover:bg-black/5 border border-black/10 active:scale-[0.98] transition-all duration-300 font-bold group"
                   >
-                    <span className="border-b border-transparent group-hover:border-primary pb-0.5 transition-colors">
-                      View Full Bag
-                    </span>
+                    View Full Bag
                   </Link>
                 </div>
               </div>

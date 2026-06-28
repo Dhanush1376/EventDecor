@@ -22,6 +22,7 @@ const RentalDayBlockSchema: Schema = new Schema(
     date: { type: String, required: true },
     unitNumber: { type: Number, required: true },
     rentalOrder: { type: Schema.Types.ObjectId, ref: 'RentalOrder', required: true },
+    expiresAt: { type: Date, index: { expires: 0 }, default: undefined },
   },
   { timestamps: true },
 );

@@ -37,61 +37,68 @@ export const registerApiRoutes = (
   const apiRouter = express.Router();
   apiRouter.use(attachApiVersion(apiVersion));
 
-  apiRouter.use('/products', lazyRouter('./productRoutes'));
-  apiRouter.use('/upload', lazyRouter('./uploadRoutes'));
-  apiRouter.use('/auth', noCacheMiddleware, lazyRouter('./authRoutes'));
-  apiRouter.use('/events', lazyRouter('./eventRoutes'));
-  apiRouter.use('/orders', noCacheMiddleware, lazyRouter('../routes/orderRoutes'));
-  apiRouter.use('/cms', lazyRouter('./cmsRoutes'));
-  apiRouter.use('/analytics', noCacheMiddleware, lazyRouter('./analyticsRoutes'));
-  apiRouter.use('/gallery', lazyRouter('./galleryRoutes'));
-  apiRouter.use('/reviews', lazyRouter('./reviewRoutes'));
-  apiRouter.use('/coupons', lazyRouter('./couponRoutes'));
-  apiRouter.use('/users', noCacheMiddleware, lazyRouter('./userRoutes'));
-  apiRouter.use('/inquiries', lazyRouter('./inquiryRoutes'));
-  apiRouter.use('/notifications', lazyRouter('./notificationRoutes'));
-  apiRouter.use('/notification-center', lazyRouter('./notificationCenterRoutes'));
-  apiRouter.use('/policies', lazyRouter('./policyRoutes'));
-  apiRouter.use('/custom-orders', lazyRouter('./customOrderRoutes'));
-  apiRouter.use('/loyalty', lazyRouter('./loyaltyRoutes'));
-  apiRouter.use('/event-bookings', lazyRouter('./eventBookingRoutes'));
-  apiRouter.use('/showcases', lazyRouter('./showcaseRoutes'));
-  apiRouter.use('/admin', noCacheMiddleware, lazyRouter('./adminSystemRoutes'));
-  apiRouter.use('/admin/invites', noCacheMiddleware, lazyRouter('./adminInviteRoutes'));
-  apiRouter.use('/recommendations', lazyRouter('./recommendationRoutes'));
-  apiRouter.use('/tracking', lazyRouter('./trackingRoutes'));
+  apiRouter.use('/products', lazyRouter('./products/productRoutes'));
+  apiRouter.use('/upload', lazyRouter('./media/uploadRoutes'));
+  apiRouter.use('/auth', noCacheMiddleware, lazyRouter('./auth/authRoutes'));
+  apiRouter.use('/events', lazyRouter('./events/eventRoutes'));
+  apiRouter.use('/orders', noCacheMiddleware, lazyRouter('./commerce/orderRoutes'));
+  apiRouter.use('/cms', lazyRouter('./cms/cmsRoutes'));
+  apiRouter.use('/analytics', noCacheMiddleware, lazyRouter('./system/analyticsRoutes'));
+  apiRouter.use('/gallery', lazyRouter('./cms/galleryRoutes'));
+  apiRouter.use('/reviews', lazyRouter('./products/reviewRoutes'));
+  apiRouter.use('/coupons', lazyRouter('./commerce/couponRoutes'));
+  apiRouter.use('/users', noCacheMiddleware, lazyRouter('./users/userRoutes'));
+  apiRouter.use('/inquiries', lazyRouter('./customer/inquiryRoutes'));
+  apiRouter.use('/notifications', lazyRouter('./notifications/notificationRoutes'));
+  apiRouter.use('/notification-center', lazyRouter('./notifications/notificationCenterRoutes'));
+  apiRouter.use('/policies', lazyRouter('./customer/policyRoutes'));
+  apiRouter.use('/custom-orders', lazyRouter('./commerce/customOrderRoutes'));
+  apiRouter.use('/loyalty', lazyRouter('./users/loyaltyRoutes'));
+  apiRouter.use('/event-bookings', lazyRouter('./events/eventBookingRoutes'));
+  apiRouter.use('/showcases', lazyRouter('./cms/showcaseRoutes'));
+  apiRouter.use('/admin', noCacheMiddleware, lazyRouter('./system/adminSystemRoutes'));
+  apiRouter.use('/admin/invites', noCacheMiddleware, lazyRouter('./auth/adminInviteRoutes'));
+  apiRouter.use('/returns', noCacheMiddleware, lazyRouter('./returns/returnRoutes'));
+  apiRouter.use('/exchanges', noCacheMiddleware, lazyRouter('./returns/exchangeRoutes'));
+  apiRouter.use('/recommendations', lazyRouter('./discovery/recommendationRoutes'));
+  apiRouter.use('/tracking', lazyRouter('./system/trackingRoutes'));
   apiRouter.use(
     '/analytics/recommendations',
     noCacheMiddleware,
-    lazyRouter('./recommendationAnalyticsRoutes'),
+    lazyRouter('./discovery/recommendationAnalyticsRoutes'),
+  );
+  apiRouter.use(
+    '/customer-intelligence',
+    noCacheMiddleware,
+    lazyRouter('./system/customerIntelligenceRoutes'),
   );
 
-  apiRouter.use('/refunds', noCacheMiddleware, lazyRouter('./refundRoutes'));
+  apiRouter.use('/refunds', noCacheMiddleware, lazyRouter('./commerce/refundRoutes'));
 
   // Aggregated endpoints
 
   // Dynamic Configuration & Architecture Routes
-  apiRouter.use('/config', lazyRouter('./appConfigRoutes'));
-  apiRouter.use('/settings', lazyRouter('./storeSettingsRoutes'));
-  apiRouter.use('/categories', lazyRouter('./categoryRoutes'));
-  apiRouter.use('/layouts', lazyRouter('./pageLayoutRoutes'));
-  apiRouter.use('/search', lazyRouter('./searchRoutes'));
-  apiRouter.use('/media', lazyRouter('./mediaRoutes'));
+  apiRouter.use('/config', lazyRouter('./system/appConfigRoutes'));
+  apiRouter.use('/settings', lazyRouter('./system/storeSettingsRoutes'));
+  apiRouter.use('/categories', lazyRouter('./products/categoryRoutes'));
+  apiRouter.use('/layouts', lazyRouter('./cms/pageLayoutRoutes'));
+  apiRouter.use('/search', lazyRouter('./discovery/searchRoutes'));
+  apiRouter.use('/media', lazyRouter('./media/mediaRoutes'));
 
   // AI Visual Search
-  apiRouter.use('/visual-search', lazyRouter('./visualSearchRoutes'));
+  apiRouter.use('/visual-search', lazyRouter('./discovery/visualSearchRoutes'));
 
   // Rental System Routes
-  apiRouter.use('/rentals', noCacheMiddleware, lazyRouter('./rentalRoutes'));
-  apiRouter.use('/rental-policies', lazyRouter('./rentalPolicyRoutes'));
-  apiRouter.use('/service-areas', lazyRouter('./serviceAreaRoutes'));
+  apiRouter.use('/rentals', noCacheMiddleware, lazyRouter('./rentals/rentalRoutes'));
+  apiRouter.use('/rental-policies', lazyRouter('./rentals/rentalPolicyRoutes'));
+  apiRouter.use('/service-areas', lazyRouter('./customer/serviceAreaRoutes'));
 
   // Social Preview Metadata
-  apiRouter.use('/social', lazyRouter('./socialRoutes'));
+  apiRouter.use('/social', lazyRouter('./customer/socialRoutes'));
 
   // CMS/Content Routes
-  apiRouter.use('/blogs', lazyRouter('./blogRoutes'));
-  apiRouter.use('/locations', lazyRouter('./locationRoutes'));
+  apiRouter.use('/blogs', lazyRouter('./cms/blogRoutes'));
+  apiRouter.use('/locations', lazyRouter('./customer/locationRoutes'));
 
   app.use(prefix, apiRouter);
 };

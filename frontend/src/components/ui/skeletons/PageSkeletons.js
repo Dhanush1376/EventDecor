@@ -17,3 +17,4 @@ export { DashboardSkeleton } from './DashboardSkeleton';
 export { FAQSkeleton } from './FAQSkeleton';
 export { LoyaltySkeleton } from './LoyaltySkeleton';
 export { AuthSkeleton } from './AuthSkeleton';
+export { ReturnExchangeSkeleton } from './ReturnExchangeSkeleton';

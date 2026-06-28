@@ -10,6 +10,17 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { pubClient, subClient } from './utils/cache/redis';
 import { checkSocketConnectionRateLimit } from './utils/socketConnectionRateLimit';
 
+/**
+ * Socket.io Server Configuration
+ *
+ * Defines the real-time communication layer with two isolated namespaces:
+ * - /admin: High-priority alerts and dashboard updates (enforces single active session per user)
+ * - /user: Customer-specific order tracking and notifications
+ * - /visitor: Public namespace for live traffic analytics (unauthenticated)
+ *
+ * Uses Redis Adapter when REQUIRE_REDIS=true or multi-instance is detected to
+ * prevent split-brain delivery across nodes. Falls back to in-memory for local dev.
+ */
 let io: Server;
 
 type SocketUser = { _id: { toString(): string }; role: string; email: string };
@@ -173,6 +184,61 @@ const registerNamespace = (namespace: Namespace, options: { adminOnly?: boolean 
   });
 };
 
+// In-memory active visitor registry for throttling heartbeats
+const activeVisitors = new Map<string, any>();
+
+// Broadcast active visitors to admins every 5 seconds
+setInterval(() => {
+  if (!io) return;
+  const ioServer = io;
+  if (!ioServer) return;
+
+  const adminSockets = ioServer.of('/admin').sockets.size;
+  if (adminSockets === 0) return; // No admins connected, skip broadcast
+
+  const now = Date.now();
+  const visitorsArray = [];
+
+  // Clean stale and build broadcast payload
+  for (const [socketId, data] of activeVisitors.entries()) {
+    if (now - data.lastSeen > 60000) {
+      activeVisitors.delete(socketId);
+    } else {
+      visitorsArray.push(data);
+    }
+  }
+
+  // Push aggregated state to admins
+  if (visitorsArray.length > 0) {
+    ioServer.of('/admin').to('admin-alerts').emit('live:visitor_sync', {
+      activeCount: visitorsArray.length,
+      visitors: visitorsArray,
+      timestamp: now,
+    });
+  }
+}, 5000);
+
+const registerVisitorNamespace = (namespace: Namespace) => {
+  // Unauthenticated namespace for live traffic analytics
+  namespace.on('connection', (socket: Socket) => {
+    logger.debug('[Socket /visitor] Connected', { socketId: socket.id });
+
+    socket.on('visitor:heartbeat', (data) => {
+      // Buffer the live heartbeat
+      activeVisitors.set(socket.id, {
+        ...data,
+        socketId: socket.id,
+        lastSeen: Date.now(),
+      });
+    });
+
+    socket.on('disconnect', () => {
+      activeVisitors.delete(socket.id);
+      logger.debug('[Socket /visitor] Disconnected', { socketId: socket.id });
+    });
+  });
+};
+
 export const initSocket = (server: HttpServer) => {
   const hasRedisAdapter = !!(pubClient && subClient);
   assertRedisForSocket(hasRedisAdapter);
@@ -220,9 +286,10 @@ export const initSocket = (server: HttpServer) => {
 
   registerNamespace(io.of('/admin'), { adminOnly: true });
   registerNamespace(io.of('/user'), { adminOnly: false });
+  registerVisitorNamespace(io.of('/visitor'));
 
   logger.info(
-    `[SOCKET] Namespaces ready (/admin, /user) — adapter: ${hasRedisAdapter ? 'redis' : 'memory'}`,
+    `[SOCKET] Namespaces ready (/admin, /user, /visitor) — adapter: ${hasRedisAdapter ? 'redis' : 'memory'}`,
   );
   return io;
 };
