@@ -276,7 +276,12 @@ export function AdminProvider({ children }) {
     if (!token) return;
 
     const rawApiUrl = getApiRootUrl();
-    const socketServerUrl = rawApiUrl;
+    let socketServerUrl = rawApiUrl;
+    if (socketServerUrl.endsWith('/api/v1')) {
+      socketServerUrl = socketServerUrl.slice(0, -7);
+    } else if (socketServerUrl.endsWith('/api')) {
+      socketServerUrl = socketServerUrl.slice(0, -4);
+    }
 
     const socket = socketIO(`${socketServerUrl}/admin`, {
       auth: { token },

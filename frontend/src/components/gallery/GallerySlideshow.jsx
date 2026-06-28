@@ -307,9 +307,7 @@ export function GallerySlideshow({
               >
                 <div className="flex flex-col items-center gap-1.5 md:gap-2 w-full">
                   <div className="flex flex-col items-center text-center gap-1 md:gap-1.5">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#FAF6F0] border border-[#C4A87C]/30 text-[#C4A87C] text-[8px] md:text-[9px] uppercase tracking-[0.2em] font-bold">
-                      {currentItem.category}
-                    </span>
+                    {/* Category pill hidden per request */}
                     <h2 className="text-black font-display text-base md:text-xl font-normal tracking-tight m-0">
                       {currentItem.title}
                     </h2>
@@ -370,10 +368,10 @@ export function GallerySlideshow({
                           setDirection(idx > currentIndex ? 1 : -1);
                           if (onSelect) onSelect(idx);
                         }}
-                        className={`w-11 h-11 md:w-16 md:h-16 shrink-0 rounded-[12px] md:rounded-2xl overflow-hidden relative transition-all duration-300 snap-center outline-none ${
+                        className={`w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-[16px] md:rounded-[20px] overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] snap-center outline-none ${
                           isSelected
-                            ? 'ring-2 ring-black ring-offset-2 scale-[1.05] shadow-md z-10'
-                            : 'opacity-50 hover:opacity-100 border border-black/10'
+                            ? 'scale-[1.15] shadow-[0_8px_20px_-6px_rgba(196,168,124,0.4)] z-10 opacity-100'
+                            : 'scale-[0.9] opacity-40 hover:opacity-80 hover:scale-100'
                         }`}
                         aria-label={`Go to slide ${idx + 1}`}
                       >

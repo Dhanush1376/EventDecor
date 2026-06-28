@@ -96,6 +96,27 @@ export function ProductListing() {
       ),
       { duration: 5000, position: 'bottom-right' },
     );
+
+    if (promoCoupon) {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (promoCoupon.targetType === 'categories' && promoCoupon.targetCategories?.length) {
+          next.set('collection', promoCoupon.targetCategories.join(','));
+        } else if (promoCoupon.targetType === 'products' && promoCoupon.targetProductIds?.length) {
+          next.set('ids', promoCoupon.targetProductIds.join(','));
+        }
+        next.set('coupon', promoCoupon.code);
+        return next;
+      });
+      // Scroll down to the grid
+      setTimeout(() => {
+        const el = document.getElementById('artisan-collection');
+        if (el) {
+          const y = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 50);
+    }
   };
 
   const websiteContent = useWebsiteContent();

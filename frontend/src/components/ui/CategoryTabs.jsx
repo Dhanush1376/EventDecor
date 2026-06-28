@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 
 export function CategoryTabs({ categories = [], activeCategory, onCategoryChange }) {
   const scrollRef = useRef(null);
+  const activeTabRef = useRef(null);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
 
@@ -19,6 +20,21 @@ export function CategoryTabs({ categories = [], activeCategory, onCategoryChange
     window.addEventListener('resize', checkScroll);
     return () => window.removeEventListener('resize', checkScroll);
   }, [categories]);
+
+  useEffect(() => {
+    if (activeTabRef.current && scrollRef.current) {
+      const container = scrollRef.current;
+      const tab = activeTabRef.current;
+
+      // Scroll the container so that the active tab is at the left edge
+      const scrollPos = tab.offsetLeft - 8; // 8px for slight breathing room
+
+      container.scrollTo({
+        left: scrollPos,
+        behavior: 'smooth',
+      });
+    }
+  }, [activeCategory]);
 
   if (!categories.length) return null;
 
@@ -54,6 +70,7 @@ export function CategoryTabs({ categories = [], activeCategory, onCategoryChange
             return (
               <button
                 key={cat}
+                ref={isActive ? activeTabRef : null}
                 onClick={() => onCategoryChange?.(cat)}
                 role="tab"
                 aria-selected={isActive}

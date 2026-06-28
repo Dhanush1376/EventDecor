@@ -357,10 +357,6 @@ export function AppRoutes() {
                   />
                 }
               />
-              <Route
-                path="/faq"
-                element={<GenericPolicyPage slug="faq" defaultTitle="Frequently Asked Questions" />}
-              />
               <Route path="/accept-invite" element={<AcceptInvite />} />
               <Route path="/coupons" element={<Coupons />} />
               <Route path="*" element={<NotFound />} />

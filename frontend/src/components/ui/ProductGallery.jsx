@@ -103,22 +103,24 @@ export function ProductGallery({ images = [], product }) {
     <div className="flex flex-col-reverse lg:flex-row gap-4 md:gap-6 items-start w-full select-none">
       {/* Thumbnail Strip */}
       <div
-        className="w-full lg:w-20 flex lg:flex-col gap-3 sm:gap-4 overflow-x-auto lg:overflow-y-auto no-scrollbar py-2 px-1"
+        className="w-full lg:w-[85px] flex lg:flex-col gap-3 sm:gap-4 overflow-x-auto lg:overflow-y-auto no-scrollbar py-3 px-2 lg:px-3 items-center"
         style={{ scrollbarWidth: 'none' }}
       >
         {images.map((img, idx) => (
           <button
             key={idx}
             onClick={() => handleThumbnailClick(idx)}
-            className={`shrink-0 w-14 sm:w-16 md:w-20 lg:w-full aspect-square rounded-full overflow-hidden transition-all duration-500 relative group cursor-pointer ${
-              selectedIdx === idx ? 'opacity-100' : 'opacity-40 hover:opacity-100'
+            className={`shrink-0 w-12 sm:w-14 md:w-16 lg:w-[60px] aspect-square rounded-[16px] md:rounded-[20px] overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative group cursor-pointer ${
+              selectedIdx === idx
+                ? 'scale-[1.15] shadow-[0_8px_20px_-6px_rgba(196,168,124,0.4)] z-10 opacity-100'
+                : 'scale-[0.9] opacity-40 hover:opacity-80 hover:scale-100'
             }`}
           >
             <OptimizedImage
               src={img}
               alt={`Thumbnail ${idx + 1}`}
               containerClassName="w-full h-full"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none rounded-full"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none rounded-[16px] md:rounded-[20px]"
               width={100}
               height={100}
             />
@@ -304,17 +306,17 @@ export function ProductGallery({ images = [], product }) {
                           });
                         }
                       }}
-                      className={`shrink-0 w-12 h-12 rounded-[20px] overflow-hidden border-2 transition-all duration-300 snap-center ${
+                      className={`shrink-0 w-12 sm:w-14 md:w-16 lg:w-[60px] aspect-square rounded-[16px] md:rounded-[20px] overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] snap-center outline-none group cursor-pointer ${
                         selectedIdx === idx
-                          ? 'border-[#8b7e6a] scale-110 shadow-lg shadow-[#8b7e6a]/20'
-                          : 'border-[#d4cbbf] opacity-50 hover:opacity-90'
+                          ? 'scale-[1.15] shadow-[0_8px_20px_-6px_rgba(196,168,124,0.4)] z-10 opacity-100'
+                          : 'scale-[0.9] opacity-40 hover:opacity-80 hover:scale-100'
                       }`}
                     >
                       <OptimizedImage
                         src={img}
                         alt={`Thumbnail ${idx + 1}`}
                         containerClassName="w-full h-full"
-                        className="w-full h-full object-cover pointer-events-none rounded-[18px]"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none rounded-[16px] md:rounded-[20px]"
                         width={100}
                         height={100}
                       />

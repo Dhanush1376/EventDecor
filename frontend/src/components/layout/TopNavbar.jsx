@@ -528,12 +528,12 @@ export function TopNavbar() {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-0 w-full h-full bg-surface-bright z-[120] lg:hidden px-6 py-6 flex flex-col overflow-y-auto overflow-x-hidden"
           >
-            {/* Decorative Mandala Background - Positioned to bleed off the right edge */}
+            {/* Decorative Mandala Background - Positioned to bleed off the left edge */}
             <MandalaArtDecor
               variant={2}
               size={700}
               opacity={0.06}
-              className="absolute -top-[10%] -right-[40%] pointer-events-none"
+              className="absolute -top-[10%] -left-[40%] pointer-events-none"
               spinDuration={200}
               blendMode="multiply"
             />
@@ -556,14 +556,14 @@ export function TopNavbar() {
             </div>
 
             {/* Massive Luxury Typography Navigation */}
-            <div className="flex-grow flex flex-col justify-center px-4 mb-12">
-              <ul className="space-y-5 relative z-10">
+            <div className="flex-grow flex flex-col justify-center items-end px-4 mb-12">
+              <ul className="space-y-5 relative z-10 flex flex-col items-end">
                 {navLinks.map((link, idx) => {
                   const active = isActive(link.href);
                   return (
                     <motion.li
                       key={idx}
-                      initial={{ opacity: 0, x: -20 }}
+                      initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{
                         delay: 0.1 + idx * 0.05,
@@ -573,10 +573,10 @@ export function TopNavbar() {
                     >
                       <Link
                         onClick={() => setIsOpen(false)}
-                        className={`group flex items-center font-label font-bold uppercase tracking-[0.2em] text-[16px] md:text-[20px] transition-all duration-500 ${
+                        className={`group flex items-center text-right font-label font-bold uppercase tracking-[0.2em] text-[16px] md:text-[20px] transition-all duration-500 ${
                           active
                             ? 'text-primary'
-                            : 'text-on-surface hover:text-primary hover:translate-x-2'
+                            : 'text-on-surface hover:text-primary hover:-translate-x-2'
                         }`}
                         to={link.href}
                       >

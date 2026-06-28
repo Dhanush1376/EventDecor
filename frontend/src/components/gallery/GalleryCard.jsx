@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import React from 'react';
+import { useWishlist } from '../../context/WishlistContext';
 
 const CardContent = React.memo(function CardContent({
   item,
@@ -11,6 +12,23 @@ const CardContent = React.memo(function CardContent({
   minH,
   eager,
 }) {
+  const { toggleItem, isWishlisted } = useWishlist();
+
+  const linkedProd = item.linkedProducts?.length > 0 ? item.linkedProducts[0] : null;
+  const isLiked = linkedProd && isWishlisted(linkedProd._id || linkedProd.id);
+
+  const handleWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (linkedProd) {
+      toggleItem({
+        ...linkedProd,
+        id: linkedProd._id || linkedProd.id,
+        image: linkedProd.imageSrc,
+      });
+    }
+  };
+
   return (
     <div
       style={{
@@ -77,6 +95,28 @@ const CardContent = React.memo(function CardContent({
               </div>
               <span className="ml-2 md:ml-3 md:absolute md:left-full md:top-1/2 md:-translate-y-1/2 px-2 md:px-3 py-1 md:py-1.5 bg-primary/90 md:bg-primary text-white text-[8px] md:text-[9px] uppercase tracking-[0.15em] md:tracking-[0.2em] rounded-full opacity-100 md:opacity-0 md:group-hover/shop:opacity-100 transition-all duration-300 whitespace-nowrap font-bold shadow-xl backdrop-blur-md border border-white/10">
                 Shop look
+              </span>
+            </div>
+          )}
+          {/* Wishlist Circle */}
+          {item.linkedProducts?.length > 0 && (
+            <div className="relative group/wishlist flex items-center">
+              <div
+                onClick={handleWishlist}
+                className="w-7 h-7 md:w-8 md:h-8 bg-white/95 backdrop-blur-md text-black rounded-full shadow-lg border border-black/10 flex items-center justify-center transform transition-all duration-500 hover:scale-110 cursor-pointer"
+              >
+                <span
+                  className="material-symbols-outlined text-[14px] md:text-[16px] transition-colors"
+                  style={{
+                    fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0",
+                    color: isLiked ? '#ff2d55' : 'inherit',
+                  }}
+                >
+                  favorite
+                </span>
+              </div>
+              <span className="ml-2 md:ml-3 md:absolute md:left-full md:top-1/2 md:-translate-y-1/2 px-2 md:px-3 py-1 md:py-1.5 bg-white/90 md:bg-white text-black text-[8px] md:text-[9px] uppercase tracking-[0.15em] md:tracking-[0.2em] rounded-full opacity-100 md:opacity-0 md:group-hover/wishlist:opacity-100 transition-all duration-300 whitespace-nowrap font-bold shadow-xl backdrop-blur-md border border-black/10">
+                {isLiked ? 'Wishlisted' : 'Wishlist'}
               </span>
             </div>
           )}

@@ -95,11 +95,7 @@ export function GalleryMobileLayout({
           />
           <div className="flex items-center justify-between gap-2 mb-8 relative z-10">
             <div className="space-y-1 flex-shrink max-w-[50%]">
-              <div className="flex items-center gap-2">
-                <span className="font-label text-[9px] uppercase tracking-[0.3em] text-primary font-bold">
-                  {item.category}
-                </span>
-              </div>
+              <div className="flex items-center gap-2">{/* Category hidden per request */}</div>
               <h2 className="font-display text-[20px] text-black leading-tight font-bold tracking-tight">
                 {item.title}.
               </h2>

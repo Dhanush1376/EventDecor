@@ -108,7 +108,7 @@ export function OrderDetail() {
   const isNonRefundable =
     typeof item.productId === 'object' ? item.productId?.isNonRefundable : false;
   const isReturnExchangeBlocked =
-    returnRequest || isNonRefundable || isReturned || isRefunded || isCancelled;
+    !isDelivered || returnRequest || isNonRefundable || isReturned || isRefunded || isCancelled;
 
   return (
     <div className="space-y-4 text-left font-body">

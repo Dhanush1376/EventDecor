@@ -28,6 +28,7 @@ export const ProductListingGrid = React.memo(
     totalPages,
     pageParam,
     setSearchParams,
+    searchParams,
     openQuickView,
   }) => {
     return (
@@ -128,6 +129,34 @@ export const ProductListingGrid = React.memo(
                 >
                   <span className="material-symbols-outlined text-[16px]">close</span>
                   Clear Visual Search
+                </button>
+              </div>
+            )}
+
+            {searchParams?.get('coupon') && (
+              <div className="mb-8 px-6 py-4 bg-emerald-50 text-emerald-800 rounded-[20px] border border-emerald-200 text-[14px] font-medium flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-[20px] text-emerald-600">
+                    local_offer
+                  </span>
+                  <span>
+                    Showing eligible items for coupon:{' '}
+                    <strong className="font-bold">{searchParams.get('coupon')}</strong>
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setSearchParams((prev) => {
+                      const params = new URLSearchParams(prev);
+                      params.delete('coupon');
+                      params.delete('collection');
+                      params.delete('ids');
+                      return params;
+                    });
+                  }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-[12px] font-bold transition-colors"
+                >
+                  Clear Filter
                 </button>
               </div>
             )}

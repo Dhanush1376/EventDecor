@@ -29,7 +29,12 @@ export function UserSocketProvider({ children }) {
     }
 
     const rawApiUrl = getApiRootUrl();
-    const socketServerUrl = rawApiUrl.endsWith('/api') ? rawApiUrl.slice(0, -4) : rawApiUrl;
+    let socketServerUrl = rawApiUrl;
+    if (socketServerUrl.endsWith('/api/v1')) {
+      socketServerUrl = socketServerUrl.slice(0, -7);
+    } else if (socketServerUrl.endsWith('/api')) {
+      socketServerUrl = socketServerUrl.slice(0, -4);
+    }
 
     const token = getAccessToken();
 

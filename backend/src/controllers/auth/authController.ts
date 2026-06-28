@@ -221,11 +221,7 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
     return res.status(200).json(new ApiResponse(true, 'Profile fetched', cached));
   }
 
-  const user = await User.findById(userId)
-    .select(
-      'name email phone role avatar walletBalance siriCoins loyaltyTier referralCode createdAt',
-    )
-    .lean();
+  const user = await User.findById(userId).select('-password -twoFactorSecret').lean();
   if (!user) {
     throw new ApiError(404, 'User session not found in database');
   }

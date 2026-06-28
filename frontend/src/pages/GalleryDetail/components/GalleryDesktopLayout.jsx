@@ -139,28 +139,7 @@ export function GalleryDesktopLayout({
 
       {/* ─── RIGHT: Detail Panel ─── */}
       <div className="px-5 md:px-0 py-6 md:py-0 space-y-7 md:space-y-8">
-        {/* Category & Style Tags */}
-        <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-          custom={0}
-          className="flex items-center gap-2.5 flex-wrap"
-        >
-          <span className="px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] uppercase tracking-[0.2em] font-bold border border-primary/15">
-            {item.category}
-          </span>
-          {item.style && (
-            <span className="px-3.5 py-1.5 rounded-full bg-black/5 text-black/50 text-[10px] uppercase tracking-[0.2em] font-bold border border-black/5">
-              {item.style}
-            </span>
-          )}
-          {item.event && (
-            <span className="px-3.5 py-1.5 rounded-full bg-black/5 text-black/50 text-[10px] uppercase tracking-[0.2em] font-bold border border-black/5">
-              {item.event}
-            </span>
-          )}
-        </motion.div>
+        {/* Category & Style Tags Removed per request */}
 
         {/* Title */}
         <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}>

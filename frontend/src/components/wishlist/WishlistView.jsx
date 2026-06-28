@@ -369,25 +369,27 @@ export function WishlistView({ isEmbedded = false }) {
           {/* Empty State */}
           {enhancedItems.length === 0 ? (
             <div className="space-y-12">
-              <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[40vh] mt-6">
-                <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
-                  <span className="material-symbols-outlined text-[20px]">favorite</span>
+              <div className="flex flex-col items-center justify-center min-h-[50vh] mt-6 text-center">
+                <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-[#f6f5f3] flex items-center justify-center mb-6">
+                  <span className="material-symbols-outlined text-[24px] md:text-[28px] text-[#9c8965] font-light">
+                    favorite_border
+                  </span>
                 </div>
-                <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
+                <h3 className="font-display text-[28px] md:text-[34px] text-[#1a1a1a] mb-3 tracking-tight leading-tight">
                   Your wishlist is empty
                 </h3>
-                <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px] mb-6">
-                  Explore our collections and save your favorite items here.
+                <p className="text-[#8c8c8c] text-[13px] md:text-[15px] font-light max-w-[320px] mb-10 leading-relaxed">
+                  Discover our curated pieces and start building your dream event.
                 </p>
-                <div className="flex justify-center">
-                  <Link
-                    to="/collections"
-                    className="px-6 py-2.5 bg-black hover:bg-gray-900 text-white border-0 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1.5"
-                  >
-                    Explore Collections
-                    <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
-                  </Link>
-                </div>
+                <Link
+                  to="/collections"
+                  className="group flex items-center gap-2 text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70"
+                >
+                  Explore Collections
+                  <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">
+                    arrow_forward
+                  </span>
+                </Link>
               </div>
 
               {/* Recommendations */}

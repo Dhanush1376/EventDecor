@@ -92,7 +92,7 @@ export function Footer() {
                   className="text-[10px] md:text-[11px] text-on-surface-variant/70 hover:text-primary transition-colors"
                   to="/custom-orders"
                 >
-                  Bespoke
+                  Custom Orders
                 </Link>
                 <Link
                   className="text-[10px] md:text-[11px] text-on-surface-variant/70 hover:text-primary transition-colors"
@@ -265,12 +265,6 @@ export function Footer() {
               className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
             >
               Terms
-            </Link>
-            <Link
-              to="/faq"
-              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
-            >
-              FAQ
             </Link>
           </div>
         </div>

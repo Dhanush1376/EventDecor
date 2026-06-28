@@ -283,6 +283,7 @@ export function AdminSettings() {
     try {
       const res = await userService.updateProfile({
         name: profileForm.name,
+        email: profileForm.email,
         phone: profileForm.phone,
       });
       if (res.success) {

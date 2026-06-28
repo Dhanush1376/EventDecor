@@ -3,11 +3,16 @@ import { m as motion } from 'framer-motion';
 import { PolicySidebar, MobilePolicyNav } from '../components/layout/PolicySidebar';
 import { SEO } from '../components/seo/SEO';
 import { Skeleton } from '../components/ui';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { policyService } from '../services/domainServices';
 import { createSafeHtml } from '../utils/security/sanitize';
+import { useEffect } from 'react';
+import { io } from 'socket.io-client';
+import { getApiRootUrl } from '../config/apiConfig';
+import logger from '../utils/core/logger';
 
 export function GenericPolicyPage({ slug, defaultTitle }) {
+  const queryClient = useQueryClient();
   const {
     data: response,
     isLoading,
@@ -16,6 +21,31 @@ export function GenericPolicyPage({ slug, defaultTitle }) {
     queryKey: ['policy', slug],
     queryFn: () => policyService.getBySlug(slug),
   });
+
+  useEffect(() => {
+    const rawApiUrl = getApiRootUrl();
+    let socketServerUrl = rawApiUrl;
+    if (socketServerUrl.endsWith('/api/v1')) {
+      socketServerUrl = socketServerUrl.slice(0, -7);
+    } else if (socketServerUrl.endsWith('/api')) {
+      socketServerUrl = socketServerUrl.slice(0, -4);
+    }
+
+    const socket = io(`${socketServerUrl}/visitor`, {
+      transports: ['websocket', 'polling'],
+    });
+
+    socket.on('policy-updated', (data) => {
+      if (data?.slug === slug) {
+        logger.info(`[PolicySync] Real-time update received for ${slug}, invalidating cache.`);
+        queryClient.invalidateQueries({ queryKey: ['policy', slug] });
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [slug, queryClient]);
 
   const policy = response?.data || {
     title: defaultTitle,
@@ -47,13 +77,13 @@ export function GenericPolicyPage({ slug, defaultTitle }) {
           <h2 className="text-2xl md:text-3xl font-body font-semibold text-on-surface mb-4">
             {isLoading ? <Skeleton className="h-10 w-64" /> : policy.title}
           </h2>
-          <p className="text-[12px] text-on-surface-variant uppercase tracking-widest font-medium">
+          <div className="text-[12px] text-on-surface-variant uppercase tracking-widest font-medium">
             {isLoading ? (
               <Skeleton className="h-4 w-40" />
             ) : (
               `Last updated: ${new Date(policy.updatedAt).toLocaleDateString()}`
             )}
-          </p>
+          </div>
         </div>
 
         <MobilePolicyNav />
@@ -62,7 +92,7 @@ export function GenericPolicyPage({ slug, defaultTitle }) {
           <PolicySidebar />
 
           <main className="lg:col-span-8 xl:col-span-7">
-            <div className="prose prose-sm max-w-none prose-headings:font-body prose-headings:font-semibold prose-headings:text-on-surface prose-p:text-on-surface/80 prose-p:leading-relaxed prose-p:font-normal prose-li:text-on-surface/80 prose-li:font-normal prose-li:leading-relaxed space-y-8">
+            <div className="prose prose-sm max-w-none prose-headings:font-body prose-headings:font-bold prose-headings:text-on-surface prose-p:text-on-surface/80 prose-p:leading-relaxed prose-p:font-normal prose-li:text-on-surface/80 prose-li:font-normal prose-li:leading-relaxed space-y-8">
               {isLoading ? (
                 <div className="space-y-4">
                   <Skeleton className="h-6 w-full" />
@@ -72,10 +102,39 @@ export function GenericPolicyPage({ slug, defaultTitle }) {
               ) : isError ? (
                 <div className="text-red-500">Failed to load policy. Please try again later.</div>
               ) : (
-                <div
-                  className="text-[13px] text-on-surface/80 leading-relaxed font-normal space-y-3"
-                  dangerouslySetInnerHTML={createSafeHtml(policy.content)}
-                />
+                (() => {
+                  try {
+                    const sets = JSON.parse(policy.content);
+                    if (Array.isArray(sets)) {
+                      return (
+                        <div className="space-y-8">
+                          {sets.map((set, i) => (
+                            <div key={i} className="space-y-3">
+                              {set.heading && (
+                                <h2 className="font-bold text-[15px] text-on-surface">
+                                  {set.heading}
+                                </h2>
+                              )}
+                              {set.paragraph && (
+                                <p className="text-[13px] text-on-surface/80 leading-relaxed font-normal whitespace-pre-wrap">
+                                  {set.paragraph}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+                  } catch (e) {}
+
+                  // Fallback for legacy raw HTML content
+                  return (
+                    <div
+                      className="text-[13px] text-on-surface/80 leading-relaxed font-normal space-y-3 [&_h2]:font-bold [&_h2]:text-[15px] [&_h2]:text-on-surface [&_h2]:mt-8 [&_h2:first-child]:mt-0 [&_h2]:mb-3 [&_p]:mb-4"
+                      dangerouslySetInnerHTML={createSafeHtml(policy.content)}
+                    />
+                  );
+                })()
               )}
             </div>
 

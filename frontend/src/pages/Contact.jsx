@@ -3,15 +3,19 @@ import { MandalaElement } from '../components/ui/MandalaElement';
 import { SEO } from '../components/seo/SEO';
 import { Link } from 'react-router-dom';
 import { ContactSkeleton } from '../components/ui/Skeleton';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { inquiryService } from '../services/domainServices';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import storeSettingsService from '../services/api/storeSettingsService';
 import { MOTION_PRESETS, EASE, DURATION } from '../constants/design-tokens';
+import { useCategories } from '../hooks/useProductQueries';
+import { useAuth } from '../context/AuthContext';
 
 import logger from '../utils/core/logger';
+
+import GPSMap from './GPSMapLazy';
 
 export function Contact() {
   const { contact, loading } = useWebsiteContent();
@@ -21,21 +25,40 @@ export function Contact() {
     staleTime: 10 * 60 * 1000,
   });
 
+  const { data: categories = [] } = useCategories();
+
+  const { user } = useAuth();
+
   const [formState, setFormState] = useState('idle'); // idle, sending, success
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
+    name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || '' : '',
+    email: user?.email || '',
+    phone: user?.phone || '',
     subject: 'General Inquiry',
     message: '',
   });
+  const [otherSubject, setOtherSubject] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        name:
+          prev.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || '',
+        email: prev.email || user.email || '',
+        phone: prev.phone || user.phone || '',
+      }));
+    }
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormState('sending');
 
+    const finalSubject = formData.subject === 'Other' ? `Other: ${otherSubject}` : formData.subject;
+
     try {
-      const response = await inquiryService.create(formData);
+      const response = await inquiryService.create({ ...formData, subject: finalSubject });
       if (response.success) {
         setFormState('success');
         toast.success('Inquiry sent successfully!');
@@ -46,6 +69,7 @@ export function Contact() {
           subject: 'General Inquiry',
           message: '',
         });
+        setOtherSubject('');
       } else {
         setFormState('idle');
         toast.error('Failed to send inquiry. Please try again.');
@@ -63,25 +87,29 @@ export function Contact() {
       value:
         settings?.contact?.address || contact?.address || '#28-1-92, South Street, ONGOLE-523001',
       icon: 'location_on',
-      link: settings?.contact?.googleMapsUrl || '#',
+      link: 'https://www.google.com/maps/place/Siri+Arts+%26+Crafts/@15.5024512,80.0450481,17z/data=!3m1!4b1!4m6!3m5!1s0x3a4b01495510d675:0xe98014cae349dbea!8m2!3d15.502446!4d80.047623!16s%2Fg%2F11scb6jg5_?entry=ttu&g_ep=EgoyMDI2MDYyNC4wIKXMDSoASAFQAw%3D%3D',
+      target: '_blank',
     },
     {
       title: 'Email Us',
       value: settings?.contact?.email || contact?.email || 'support@siriartsandcrafts.com',
       icon: 'mail',
       link: `mailto:${settings?.contact?.email || contact?.email || 'support@siriartsandcrafts.com'}`,
+      target: '_self',
     },
     {
       title: 'Call Us',
       value: settings?.contact?.phone || contact?.phone || '+91 9999999999',
       icon: 'phone',
       link: `tel:${settings?.contact?.phone || contact?.phone || '+91 9999999999'}`,
+      target: '_self',
     },
     {
       title: 'Support Hours',
       value: settings?.contact?.supportHours || 'Mon - Sat, 10 AM to 6 PM',
       icon: 'schedule',
       link: '#',
+      target: '_self',
     },
   ];
 
@@ -90,7 +118,7 @@ export function Contact() {
   return (
     <div className="bg-[var(--color-surface-ivory)] min-h-screen pt-24 md:pt-32 pb-20 relative overflow-hidden selection:bg-primary/20">
       <SEO
-        title="Concierge | Siri Arts"
+        title="Contact Us | Siri Arts"
         description="Connect with our design studio for bespoke heritage decor consultations and curated event masteries."
       />
 
@@ -108,70 +136,82 @@ export function Contact() {
       />
 
       <main className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center gap-3 font-label text-[10px] md:text-[12px] uppercase tracking-[0.3em] text-on-surface-variant/40 font-bold mb-12">
-          <Link to="/" className="hover:text-primary transition-colors">
-            Studio
-          </Link>
-          <span className="opacity-30">/</span>
-          <span className="text-on-surface font-bold">Concierge</span>
-        </nav>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
-          {/* Left Side: Editorial Content */}
-          <div className="space-y-12">
-            <div className="space-y-6">
-              <motion.span
-                {...MOTION_PRESETS.fadeIn}
-                className="font-label-sm text-[12px] text-primary uppercase tracking-[0.4em] font-bold block"
-              >
-                Connect with our Studio
-              </motion.span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start pt-4">
+          {/* Left Side: Modern Editorial Content & Leaflet Map */}
+          <div className="flex flex-col justify-center lg:sticky lg:top-32 lg:pb-32">
+            <div className="space-y-4">
               <motion.h1
                 {...MOTION_PRESETS.fadeInUp}
-                className="font-display text-4xl md:text-6xl text-on-surface leading-[1.1]"
+                className="font-display text-4xl lg:text-5xl text-on-surface leading-tight"
               >
-                Let's Curate Your <br />
-                <span>Masterpiece.</span>
+                Let's Connect.
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: DURATION.slow, ease: EASE.smooth }}
-                className="font-body text-on-surface-variant/70 text-lg leading-relaxed max-w-lg"
+                className="font-body text-on-surface-variant/70 text-sm leading-relaxed max-w-sm mb-6"
               >
-                Whether you're planning a grand royal wedding or a sacred intimate pooja, our studio
-                is dedicated to weaving your vision into a heritage reality.
+                Have a question or planning an event? Our team is ready to assist you.
               </motion.p>
             </div>
 
-            {/* Contact Methods Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-8 border-t border-outline-variant/30">
+            {/* Contact Methods (Information Hub) */}
+            <div className="flex flex-col gap-2 mb-8 w-full max-w-md">
               {contactMethods.map((method, idx) => (
                 <motion.a
                   key={method.title}
                   href={method.link}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  target={method.target}
+                  rel={method.target === '_blank' ? 'noopener noreferrer' : undefined}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
                   transition={{
                     delay: 0.2 + idx * 0.1,
                     duration: DURATION.slow,
                     ease: EASE.smooth,
                   }}
-                  className="group block space-y-3"
+                  className="flex items-center gap-3 p-3 rounded-[16px] border border-outline-variant/10 bg-white/40"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-primary text-[20px] group-hover:scale-110 transition-transform">
+                  <div className="w-8 h-8 rounded-full bg-[var(--color-gold)]/10 flex items-center justify-center shrink-0 shadow-sm">
+                    <span className="material-symbols-outlined text-[16px] text-[var(--color-gold-dark)]">
                       {method.icon}
                     </span>
-                    <span className="form-label !mb-0 !ml-0">{method.title}</span>
                   </div>
-                  <p className="font-display text-xl text-on-surface group-hover:text-primary transition-colors">
-                    {method.value}
-                  </p>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-label text-[9px] uppercase tracking-[0.2em] text-secondary font-bold">
+                      {method.title}
+                    </span>
+                    <span className="font-body text-[12px] text-on-surface font-semibold leading-relaxed break-words">
+                      {method.value}
+                    </span>
+                  </div>
                 </motion.a>
               ))}
             </div>
+
+            <motion.a
+              href="https://www.google.com/maps/place/Siri+Arts+%26+Crafts/@15.5024512,80.0450481,17z/data=!3m1!4b1!4m6!3m5!1s0x3a4b01495510d675:0xe98014cae349dbea!8m2!3d15.502446!4d80.047623!16s%2Fg%2F11scb6jg5_?entry=ttu&g_ep=EgoyMDI2MDYyNC4wIKXMDSoASAFQAw%3D%3D"
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: DURATION.slow, ease: EASE.smooth }}
+              className="h-48 md:h-72 w-full max-w-md rounded-[24px] overflow-hidden shadow-sm border border-outline-variant/20 bg-white block relative group cursor-pointer"
+            >
+              {/* Invisible overlay to block map interactions and capture clicks */}
+              <div className="absolute inset-0 z-[1000] bg-transparent" />
+
+              <GPSMap address={{ latitude: '15.502446', longitude: '80.047623' }} />
+
+              {/* Hover indicator */}
+              <div className="absolute inset-0 z-[1010] bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+                <div className="bg-white/95 backdrop-blur text-black px-5 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                  <span>Open in Google Maps</span>
+                  <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                </div>
+              </div>
+            </motion.a>
           </div>
 
           {/* Right Side: Redesigned Luxury Minimalistic Form */}
@@ -179,7 +219,7 @@ export function Contact() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: DURATION.slow, ease: EASE.smooth }}
-            className="relative w-full"
+            className="relative w-full h-full flex flex-col justify-center"
           >
             {/* Success Overlay */}
             <AnimatePresence>
@@ -198,8 +238,7 @@ export function Contact() {
                     Message Received
                   </h2>
                   <p className="font-body text-on-surface-variant/70 text-xs mb-8 max-w-[260px] leading-relaxed">
-                    Our design concierge will review your inquiry and respond within 24 business
-                    hours.
+                    Our design studio will review your inquiry and respond within 24 business hours.
                   </p>
                   <button
                     onClick={() => setFormState('idle')}
@@ -211,18 +250,21 @@ export function Contact() {
               )}
             </AnimatePresence>
 
-            <div className="flex items-center gap-2 mb-8 select-none">
+            <div className="flex items-center gap-2 mb-8 select-none border-b border-outline-variant/20 pb-6">
               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="font-label text-[9px] uppercase tracking-[0.25em] text-primary font-bold">
-                Studio Concierge
+              <span className="font-label text-xs uppercase tracking-[0.25em] text-secondary font-bold">
+                Send a Message
               </span>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="space-y-5 text-black">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="relative group">
-                  <label htmlFor="contact-name" className="form-label mb-1.5">
-                    Your Name <span className="text-error font-normal">*</span>
+                  <label
+                    htmlFor="contact-name"
+                    className="form-label mb-1.5 text-[10px] font-semibold text-black"
+                  >
+                    Your Name <span className="text-error font-bold">*</span>
                   </label>
                   <input
                     id="contact-name"
@@ -232,13 +274,16 @@ export function Contact() {
                     placeholder="Full Name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="form-field"
+                    className="form-field py-2.5 px-3 text-[12px] text-black bg-surface focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent transition-all"
                   />
                 </div>
 
                 <div className="relative group">
-                  <label htmlFor="contact-email" className="form-label mb-1.5">
-                    Email Address <span className="text-error font-normal">*</span>
+                  <label
+                    htmlFor="contact-email"
+                    className="form-label mb-1.5 text-[10px] font-semibold text-black"
+                  >
+                    Email Address <span className="text-error font-bold">*</span>
                   </label>
                   <input
                     id="contact-email"
@@ -248,15 +293,19 @@ export function Contact() {
                     placeholder="email@example.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="form-field"
+                    className="form-field py-2.5 px-3 text-[12px] text-black bg-surface focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent transition-all"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="relative group">
-                  <label htmlFor="contact-phone" className="form-label mb-1.5">
-                    Phone (Optional)
+                  <label
+                    htmlFor="contact-phone"
+                    className="form-label mb-1.5 text-[10px] font-semibold text-black"
+                    required
+                  >
+                    Phone
                   </label>
                   <input
                     id="contact-phone"
@@ -265,71 +314,107 @@ export function Contact() {
                     placeholder="+91"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="form-field"
+                    className="form-field py-2.5 px-3 text-[12px] text-black bg-surface focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent transition-all"
                   />
                 </div>
 
                 <div className="relative group">
-                  <label htmlFor="contact-subject" className="form-label mb-1.5">
-                    Inquiry Nature
+                  <label
+                    htmlFor="contact-subject"
+                    className="form-label mb-1.5 text-[10px] font-semibold text-black"
+                  >
+                    How can we help you? <span className="text-error font-bold">*</span>
                   </label>
                   <div className="relative">
                     <select
                       id="contact-subject"
+                      required
                       value={formData.subject}
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      className="form-field cursor-pointer appearance-none !pr-8"
+                      className="form-field cursor-pointer appearance-none !pr-8 py-2.5 px-3 text-[12px] text-black bg-surface focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent transition-all"
                     >
                       <option value="General Inquiry">General Inquiry</option>
-                      <option value="Wedding Decoration">Wedding Decoration</option>
-                      <option value="Pooja Setup">Pooja Setup</option>
-                      <option value="Custom Product Order">Custom Product Order</option>
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
                       <option value="Collaboration">Collaboration</option>
+                      <option value="Other">Other</option>
                     </select>
-                    <span className="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-secondary text-[14px]">
+                    <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-black text-[18px]">
                       unfold_more
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="relative group">
-                <label htmlFor="contact-message" className="form-label mb-1.5">
-                  Your Vision <span className="text-error font-normal">*</span>
+              <AnimatePresence>
+                {formData.subject === 'Other' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                    animate={{ opacity: 1, height: 'auto', marginTop: 20 }}
+                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                    className="relative group overflow-hidden"
+                  >
+                    <label
+                      htmlFor="contact-other"
+                      className="form-label mb-1.5 text-[10px] font-semibold text-black"
+                    >
+                      Please specify <span className="text-error font-bold">*</span>
+                    </label>
+                    <input
+                      id="contact-other"
+                      type="text"
+                      required
+                      placeholder="Briefly describe your inquiry..."
+                      value={otherSubject}
+                      onChange={(e) => setOtherSubject(e.target.value)}
+                      className="form-field py-2.5 px-3 text-[12px] text-black bg-surface focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent transition-all"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="relative group pt-1">
+                <label
+                  htmlFor="contact-message"
+                  className="form-label mb-1.5 text-[10px] font-semibold text-black"
+                >
+                  Tell us about your event... <span className="text-error font-bold">*</span>
                 </label>
                 <textarea
                   id="contact-message"
                   required
                   rows={4}
-                  placeholder="Tell us about your event or project..."
+                  placeholder="Share the details, vision, or any specific requests..."
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="form-field resize-y"
+                  className="form-field resize-y py-3 px-3 text-[12px] text-black bg-surface focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent transition-all"
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={formState === 'sending'}
-                className="btn-primary w-full py-3 rounded-full font-bold uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 group cursor-pointer mt-4"
-              >
-                {formState === 'sending' ? (
-                  <>
-                    <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
-                    Transmitting...
-                  </>
-                ) : (
-                  <>
-                    Submit Inquiry
-                    <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
-                      trending_flat
-                    </span>
-                  </>
-                )}
-              </button>
-              <p className="text-center font-body text-[10px] text-on-surface-variant/40 italic">
-                By submitting, you agree to our privacy policy and boutique terms.
-              </p>
+              <div className="pt-4 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={formState === 'sending'}
+                  className="btn-primary w-full md:w-auto px-8 py-3 rounded-full font-bold uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 group cursor-pointer"
+                >
+                  {formState === 'sending' ? (
+                    <>
+                      <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
+                      Transmitting...
+                    </>
+                  ) : (
+                    <>
+                      Send Message
+                      <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
+                        send
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           </motion.div>
         </div>

@@ -74,6 +74,24 @@ export function PromoBanner() {
           boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
         },
       });
+
+      if (bannerCoupon) {
+        const params = new URLSearchParams();
+        if (bannerCoupon.targetType === 'categories' && bannerCoupon.targetCategories?.length) {
+          params.append('collection', bannerCoupon.targetCategories.join(','));
+        } else if (
+          bannerCoupon.targetType === 'products' &&
+          bannerCoupon.targetProductIds?.length
+        ) {
+          params.append('ids', bannerCoupon.targetProductIds.join(','));
+        }
+        params.append('coupon', bannerCoupon.code);
+        navigate(`/collections?${params.toString()}`);
+        return;
+      } else {
+        navigate(`/collections?coupon=${couponCode}`);
+        return;
+      }
     }
     if (promoLink) {
       navigate(promoLink);

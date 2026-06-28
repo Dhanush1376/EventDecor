@@ -264,6 +264,7 @@ export const uploadAvatarController = asyncHandler(async (req: any, res: Respons
   }
 
   const avatar = await UserService.uploadAvatar(req.user.id, req.file);
+  await invalidateUserSessionCaches(String(req.user.id));
   res.status(200).json(new ApiResponse(true, 'Avatar uploaded successfully', { avatar }));
 });
 

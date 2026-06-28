@@ -1,12 +1,15 @@
 import { z } from 'zod';
 
 export const updateProfileSchema = z.object({
-  body: z.object({
-    name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
-    phone: z.string().optional(),
-    gender: z.string().optional(),
-    dateOfBirth: z.string().optional(),
-  }),
+  body: z
+    .object({
+      name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
+      email: z.string().email('Valid email address is required').max(100).optional(),
+      phone: z.string().optional(),
+      gender: z.string().optional(),
+      dateOfBirth: z.string().optional(),
+    })
+    .passthrough(),
 });
 
 export const addressSchema = z.object({

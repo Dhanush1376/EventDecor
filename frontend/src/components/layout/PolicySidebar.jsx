@@ -12,7 +12,6 @@ export function PolicySidebar() {
     { title: 'Cancellation Policy', path: '/cancellation' },
     { title: 'Privacy Policy', path: '/privacy' },
     { title: 'Terms & Conditions', path: '/terms' },
-    { title: 'FAQ', path: '/faq' },
   ];
 
   return (
@@ -58,7 +57,6 @@ export function MobilePolicyNav() {
     { title: 'Cancellation', path: '/cancellation' },
     { title: 'Privacy', path: '/privacy' },
     { title: 'Terms', path: '/terms' },
-    { title: 'FAQ', path: '/faq' },
   ];
 
   return (

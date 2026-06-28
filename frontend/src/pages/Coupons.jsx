@@ -1,6 +1,7 @@
 import { m as motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { couponService } from '../services/domainServices';
 import { fadeUp, staggerContainer } from '../animations/variants';
 import toast from 'react-hot-toast';
@@ -9,13 +10,18 @@ import logger from '../utils/core/logger';
 export function Coupons() {
   const [coupons, setCoupons] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCoupons = async () => {
       try {
-        const res = await couponService.getCoupons();
-        if (res?.data) {
-          const activeCoupons = res.data.filter(
+        const res = await couponService.getAll();
+        if (res?.data || Array.isArray(res)) {
+          const list =
+            res.data?.data ||
+            res.data?.items ||
+            (Array.isArray(res.data) ? res.data : Array.isArray(res) ? res : []);
+          const activeCoupons = list.filter(
             (c) => c.isActive && new Date(c.expiryDate) > new Date(),
           );
           setCoupons(activeCoupons);
@@ -29,9 +35,19 @@ export function Coupons() {
     fetchCoupons();
   }, []);
 
-  const handleCopy = (code) => {
-    navigator.clipboard.writeText(code);
-    toast.success('Coupon code copied to clipboard!');
+  const handleShopNow = (coupon) => {
+    navigator.clipboard.writeText(coupon.code);
+    toast.success(`Coupon ${coupon.code} copied! Redirecting to shop...`);
+
+    const params = new URLSearchParams();
+    if (coupon.targetType === 'categories' && coupon.targetCategories?.length) {
+      params.append('collection', coupon.targetCategories.join(','));
+    } else if (coupon.targetType === 'products' && coupon.targetProductIds?.length) {
+      params.append('ids', coupon.targetProductIds.join(','));
+    }
+    params.append('coupon', coupon.code);
+
+    navigate(`/collections?${params.toString()}`);
   };
 
   return (
@@ -108,10 +124,10 @@ export function Coupons() {
                   )}
 
                   <button
-                    onClick={() => handleCopy(coupon.code)}
+                    onClick={() => handleShopNow(coupon)}
                     className="w-full py-3 bg-[var(--color-gold-dark)] text-white font-bold text-[12px] uppercase tracking-[0.15em] rounded-xl hover:bg-[var(--color-gold)] transition-colors active:scale-[0.98]"
                   >
-                    Copy Code
+                    Copy Code & Shop Now
                   </button>
                 </div>
               </motion.div>

@@ -19,11 +19,17 @@ export function SearchDiscovery({
   return (
     <div className="py-2 relative overflow-hidden min-h-[400px]">
       {/* Mandala Background Watermark */}
-      <div className="absolute bottom-0 right-0 translate-x-[20%] translate-y-[20%] pointer-events-none opacity-[0.12] md:opacity-[0.08] z-0 mix-blend-normal">
+      <div
+        className="absolute top-0 right-0 translate-x-[15%] -translate-y-[15%] pointer-events-none opacity-[0.12] md:opacity-[0.08] z-0 mix-blend-normal"
+        style={{
+          WebkitMaskImage: 'radial-gradient(circle, black 30%, transparent 70%)',
+          maskImage: 'radial-gradient(circle, black 30%, transparent 70%)',
+        }}
+      >
         <img
           src={MANDALA_VARIANT_URLS[1]}
           alt=""
-          className="w-[120vw] h-[120vw] md:w-[700px] md:h-[700px] object-contain dark:invert animate-[spin_120s_linear_infinite]"
+          className="w-[120vw] h-[120vw] md:w-[650px] md:h-[650px] object-contain dark:invert animate-[spin_120s_linear_infinite]"
         />
       </div>
 

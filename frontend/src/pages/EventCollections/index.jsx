@@ -191,6 +191,17 @@ export function EventCollections() {
       ),
       { duration: 5000, position: 'bottom-right' },
     );
+
+    if (promoCoupon) {
+      const params = new URLSearchParams();
+      if (promoCoupon.targetType === 'categories' && promoCoupon.targetCategories?.length) {
+        params.append('collection', promoCoupon.targetCategories.join(','));
+      } else if (promoCoupon.targetType === 'products' && promoCoupon.targetProductIds?.length) {
+        params.append('ids', promoCoupon.targetProductIds.join(','));
+      }
+      params.append('coupon', promoCoupon.code);
+      navigate(`/collections?${params.toString()}`);
+    }
   };
 
   // Fetch data

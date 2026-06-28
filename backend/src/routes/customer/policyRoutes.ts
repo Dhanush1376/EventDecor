@@ -6,6 +6,8 @@ import {
   createPolicy,
   updatePolicy,
   deletePolicy,
+  getPolicyVersions,
+  restorePolicyVersion,
 } from '../../controllers/customer/policyController';
 import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 
@@ -21,5 +23,7 @@ router.get('/:id', getPolicyById);
 router.post('/', createPolicy);
 router.put('/:id', updatePolicy);
 router.delete('/:id', deletePolicy);
+router.get('/:id/versions', getPolicyVersions);
+router.post('/:id/versions/:version/restore', restorePolicyVersion);
 
 export default router;

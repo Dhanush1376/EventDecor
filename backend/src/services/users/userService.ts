@@ -253,22 +253,31 @@ export class UserService {
     if (!user) throw new ApiError(404, 'User not found');
 
     if (notificationPreferences) {
-      if (notificationPreferences.categories && user.notificationPreferences?.categories) {
-        notificationPreferences.categories = {
-          ...user.notificationPreferences.categories,
-          ...notificationPreferences.categories,
-        };
+      if (!user.notificationPreferences) user.notificationPreferences = {} as any;
+      if (typeof notificationPreferences.email === 'boolean') {
+        user.notificationPreferences!.email = notificationPreferences.email;
       }
-      user.notificationPreferences = {
-        ...user.notificationPreferences,
-        ...notificationPreferences,
-      };
+      if (
+        notificationPreferences.categories &&
+        typeof notificationPreferences.categories.promotions === 'boolean'
+      ) {
+        if (!user.notificationPreferences!.categories)
+          user.notificationPreferences!.categories = {} as any;
+        user.notificationPreferences!.categories!.promotions =
+          notificationPreferences.categories.promotions;
+      }
+      user.markModified('notificationPreferences');
     }
+
     if (accountPreferences) {
-      user.accountPreferences = {
-        ...user.accountPreferences,
-        ...accountPreferences,
-      };
+      if (!user.accountPreferences) user.accountPreferences = {} as any;
+      if (accountPreferences.theme) {
+        user.accountPreferences!.theme = accountPreferences.theme;
+      }
+      if (accountPreferences.language) {
+        user.accountPreferences!.language = accountPreferences.language;
+      }
+      user.markModified('accountPreferences');
     }
 
     await user.save();
@@ -299,11 +308,9 @@ export class UserService {
 
     return user.avatar;
   }
-  static async updateProfile(userId: string, updateData: any) {
-    const { name, email, phone, gender, dateOfBirth } = updateData;
-
-    if (email) {
-      const cleanEmail = canonicalizeEmail(email);
+  static async updateProfile(userId: string, updateData: Record<string, any>) {
+    if (updateData.email) {
+      const cleanEmail = canonicalizeEmail(updateData.email);
       const existingUser = await User.findOne({ email: cleanEmail, _id: { $ne: userId } });
       if (existingUser) {
         throw new ApiError(400, 'An account with this email address already exists');
@@ -313,11 +320,36 @@ export class UserService {
     const user = await User.findById(userId);
     if (!user) throw new ApiError(404, 'User not found');
 
-    if (name !== undefined) user.name = name;
-    if (email !== undefined) user.email = canonicalizeEmail(email);
-    if (phone !== undefined) user.phone = phone;
-    if (gender !== undefined) user.gender = gender;
-    if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
+    // Fields that should never be updated via mass assignment
+    const protectedFields = [
+      '_id',
+      'id',
+      'role',
+      'passwordHash',
+      'twoFactorSecret',
+      'walletBalance',
+      'siriCoins',
+      'loyaltyTier',
+      'isVerified',
+      'googleId',
+      'providers',
+      'createdAt',
+      'updatedAt',
+      'cart',
+      'wishlist',
+      'recentlyViewed',
+      'avatar', // Handled via dedicated uploadAvatar endpoint
+    ];
+
+    Object.keys(updateData).forEach((key) => {
+      if (!protectedFields.includes(key) && updateData[key] !== undefined) {
+        if (key === 'email') {
+          user.email = canonicalizeEmail(updateData[key]);
+        } else {
+          (user as any)[key] = updateData[key];
+        }
+      }
+    });
 
     await user.save();
     return user;

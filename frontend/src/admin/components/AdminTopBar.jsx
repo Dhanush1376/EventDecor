@@ -98,9 +98,9 @@ export function AdminTopBar() {
           </button>
 
           {/* Breadcrumbs (Desktop) */}
-          <div className="hidden lg:flex items-center gap-1.5 ml-1 mr-4 select-none">
+          <div className="hidden lg:flex items-center gap-1.5 ml-1 mr-4 select-none min-w-0">
             <span
-              className="text-[12px] font-semibold text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer transition-colors"
+              className="text-[12px] font-semibold text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer transition-colors shrink-0"
               onClick={() => navigate('/admin')}
             >
               Admin
@@ -112,16 +112,17 @@ export function AdminTopBar() {
                 .slice(1)
                 .map((segment, index, arr) => (
                   <React.Fragment key={index}>
-                    <span className="material-symbols-outlined text-[14px] text-[var(--admin-border-strong)]">
+                    <span className="material-symbols-outlined text-[14px] text-[var(--admin-border-strong)] shrink-0">
                       chevron_right
                     </span>
                     <span
-                      className={`text-[12px] font-semibold capitalize ${index === arr.length - 1 ? 'text-[var(--admin-text-primary)]' : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer transition-colors'}`}
+                      className={`text-[12px] font-semibold capitalize truncate ${index === arr.length - 1 ? 'text-[var(--admin-text-primary)]' : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer transition-colors'}`}
                       onClick={() => {
                         if (index < arr.length - 1) {
                           navigate('/admin/' + arr.slice(0, index + 1).join('/'));
                         }
                       }}
+                      title={segment.replace(/-/g, ' ')}
                     >
                       {segment.replace(/-/g, ' ')}
                     </span>
@@ -132,7 +133,7 @@ export function AdminTopBar() {
           {/* Search Trigger — Desktop */}
           <button
             onClick={() => setSearchPaletteOpen(true)}
-            className="hidden md:flex items-center gap-2.5 flex-1 max-w-[240px] xl:max-w-[380px] px-3 py-2 rounded-[var(--admin-radius-lg)] cursor-pointer transition-all duration-150 text-left min-h-0 group"
+            className="hidden md:flex items-center gap-2.5 flex-1 min-w-0 max-w-[240px] xl:max-w-[380px] px-3 py-2 rounded-[var(--admin-radius-lg)] cursor-pointer transition-all duration-150 text-left min-h-0 group"
             style={{
               background: 'var(--admin-bg-subtle)',
               border: '1px solid var(--admin-border-subtle)',
@@ -141,7 +142,7 @@ export function AdminTopBar() {
             <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-tertiary)] shrink-0">
               search
             </span>
-            <span className="text-[12px] text-[var(--admin-text-placeholder)] font-normal flex-1 truncate group-hover:text-[var(--admin-text-tertiary)] transition-colors">
+            <span className="text-[12px] text-[var(--admin-text-placeholder)] font-normal flex-1 min-w-0 truncate group-hover:text-[var(--admin-text-tertiary)] transition-colors">
               Search products, orders, customers...
             </span>
             <div className="hidden lg:flex items-center gap-1 ml-auto shrink-0 select-none">
@@ -358,7 +359,7 @@ export function AdminTopBar() {
               <div
                 className="w-8 h-8 rounded-[var(--admin-radius-md)] flex items-center justify-center"
                 style={{
-                  backgroundColor: 'var(--admin-text-primary)',
+                  backgroundColor: '#A07D5A', // Matches the storefront button color as requested
                   boxShadow: 'var(--admin-shadow-xs)',
                 }}
               >

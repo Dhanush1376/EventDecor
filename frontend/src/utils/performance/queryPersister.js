@@ -76,7 +76,22 @@ export const subscribeToQueryCache = (queryClient) => {
         version: 2,
       };
 
-      const serialized = JSON.stringify(payload);
+      // Safely stringify to prevent circular reference crashes (e.g. from Axios Errors)
+      const getCircularReplacer = () => {
+        const seen = new WeakSet();
+        return (key, value) => {
+          if (typeof value === 'object' && value !== null) {
+            if (value instanceof Error) {
+              return { message: value.message, name: value.name };
+            }
+            if (seen.has(value)) return;
+            seen.add(value);
+          }
+          return value;
+        };
+      };
+
+      const serialized = JSON.stringify(payload, getCircularReplacer());
 
       if (serialized.length > MAX_PERSIST_SIZE_BYTES) {
         logger.warn('[QueryPersister] Cache size exceeds 500KB limit. Skipping persistence.');

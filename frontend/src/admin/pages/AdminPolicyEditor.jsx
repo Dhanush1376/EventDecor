@@ -1,10 +1,11 @@
-import { m as motion } from 'framer-motion';
-import { SkeletonDashboard, stagger } from '../components/AdminUIKit';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { SkeletonDashboard, stagger, AdminSkeleton } from '../components/AdminUIKit';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { policyService } from '../../services/domainServices';
+import api from '../../services/api';
 import { createSafeHtml } from '../../utils/security/sanitize';
 import { toast } from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
@@ -17,7 +18,6 @@ export function AdminPolicyEditor() {
 
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('write'); // 'write' or 'preview'
 
   const {
     formData,
@@ -93,6 +93,61 @@ export function AdminPolicyEditor() {
 
   if (loading) return <SkeletonDashboard />;
 
+  const getSets = () => {
+    if (!formData.content) return [{ heading: '', paragraph: '' }];
+
+    try {
+      const parsed = JSON.parse(formData.content);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {
+      if (typeof window !== 'undefined') {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(formData.content, 'text/html');
+        const newSets = [];
+        let currentHeading = '';
+        let currentParagraphs = [];
+
+        Array.from(doc.body.children).forEach((el) => {
+          if (el.tagName.match(/^H[1-6]$/i)) {
+            if (currentHeading || currentParagraphs.length > 0) {
+              newSets.push({ heading: currentHeading, paragraph: currentParagraphs.join('\n\n') });
+            }
+            currentHeading = el.textContent.trim();
+            currentParagraphs = [];
+          } else {
+            const text = el.textContent.trim();
+            if (text) currentParagraphs.push(text);
+          }
+        });
+
+        if (currentHeading || currentParagraphs.length > 0) {
+          newSets.push({ heading: currentHeading, paragraph: currentParagraphs.join('\n\n') });
+        }
+
+        if (newSets.length > 0) return newSets;
+      }
+    }
+    return [{ heading: '', paragraph: '' }];
+  };
+
+  const handleSetChange = (index, field, value) => {
+    const sets = getSets();
+    sets[index][field] = value;
+    setFormData({ ...formData, content: JSON.stringify(sets) });
+  };
+
+  const addSet = () => {
+    const sets = getSets();
+    sets.push({ heading: '', paragraph: '' });
+    setFormData({ ...formData, content: JSON.stringify(sets) });
+  };
+
+  const removeSet = (index) => {
+    const sets = getSets();
+    sets.splice(index, 1);
+    setFormData({ ...formData, content: JSON.stringify(sets) });
+  };
+
   const editorContent = (
     <div className="space-y-6 flex-1 pb-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -120,42 +175,59 @@ export function AdminPolicyEditor() {
         </div>
       </div>
 
-      <div className="space-y-2 pt-4">
-        <div className="flex items-center border-b border-[var(--admin-border-subtle)]">
-          <button
-            onClick={() => setActiveTab('write')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors cursor-pointer bg-transparent border-none ${activeTab === 'write' ? 'border-[var(--admin-accent)] text-[var(--admin-text-primary)]' : 'border-transparent text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'}`}
-          >
-            Write (HTML)
-          </button>
-          <button
-            onClick={() => setActiveTab('preview')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors cursor-pointer bg-transparent border-none ${activeTab === 'preview' ? 'border-[var(--admin-accent)] text-[var(--admin-text-primary)]' : 'border-transparent text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'}`}
-          >
-            Preview
-          </button>
-        </div>
-
-        <div className="mt-4 min-h-[300px]">
-          {activeTab === 'write' ? (
-            <textarea
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder="<p>Enter your policy content here using HTML tags...</p>"
-              className="admin-textarea w-full h-[300px] p-4 font-mono text-sm bg-[var(--admin-bg-subtle)]"
-            />
-          ) : (
-            <div
-              className="prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-[var(--admin-text-primary)] prose-p:text-[var(--admin-text-secondary)] prose-p:leading-relaxed p-6 border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)] bg-[var(--admin-surface)]"
-              dangerouslySetInnerHTML={createSafeHtml(
-                formData.content || '<p class="text-gray-400">No content provided yet.</p>',
-              )}
-            />
-          )}
-        </div>
+      <div className="space-y-4 pt-4 mt-4 min-h-[300px]">
+        <h3 className="text-xs font-bold text-[var(--admin-text-primary)] uppercase tracking-wider mb-2">
+          Policy Content
+        </h3>
+        <AnimatePresence>
+          {getSets().map((set, index) => (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              key={index}
+              className="p-4 border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-md)] bg-[var(--admin-surface)] relative group"
+            >
+              <button
+                onClick={() => removeSet(index)}
+                className="absolute top-3 right-3 text-[var(--admin-error)] opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-[var(--admin-error-light)] rounded"
+                title="Remove Set"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete</span>
+              </button>
+              <div className="space-y-4 pt-2">
+                <div className="space-y-1">
+                  <label className="admin-label text-[10px]">Heading</label>
+                  <input
+                    type="text"
+                    value={set.heading || ''}
+                    onChange={(e) => handleSetChange(index, 'heading', e.target.value)}
+                    className="admin-input font-bold"
+                    placeholder="e.g. 1. Order Cancellations"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="admin-label text-[10px]">Paragraph</label>
+                  <textarea
+                    value={set.paragraph || ''}
+                    onChange={(e) => handleSetChange(index, 'paragraph', e.target.value)}
+                    className="admin-textarea min-h-[100px]"
+                    placeholder="Standard orders can be canceled..."
+                  />
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        <button
+          onClick={addSet}
+          className="admin-btn admin-btn-outline w-full py-3 mt-2 border-dashed border-2 hover:bg-[var(--admin-surface-muted)]"
+        >
+          <span className="material-symbols-outlined text-[18px]">add</span> Add Set
+        </button>
       </div>
 
-      <div className="border-t border-[var(--admin-border-subtle)] pt-6 space-y-4">
+      <div className="border-t border-[var(--admin-border-subtle)] pt-6 space-y-4 mt-16">
         <h3 className="text-xs font-bold text-[var(--admin-text-primary)] uppercase tracking-wider">
           Search Engine Optimization
         </h3>
@@ -227,7 +299,6 @@ export function AdminPolicyEditor() {
       variants={stagger}
       className="max-w-4xl mx-auto space-y-6 pb-24"
     >
-      {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center sticky top-0 bg-[var(--admin-surface)] z-10 py-4 border-b border-[var(--admin-border-subtle)]">
         <div className="flex items-center gap-4">
           <button onClick={handleCancelAction} className="admin-btn admin-btn-icon">
@@ -235,7 +306,7 @@ export function AdminPolicyEditor() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-[var(--admin-text-primary)] tracking-tight">
-              {isNew ? 'New Policy' : 'Edit Policy'}
+              {isNew ? 'New Policy' : `Edit Policy (v${formData.version || 1})`}
             </h1>
           </div>
         </div>

@@ -251,8 +251,8 @@ export function GalleryInner() {
 
       <MandalaElement className="absolute -top-40 -left-40 opacity-[0.06]" size={800} />
       <MandalaElement
-        className="absolute -bottom-[350px] -right-[350px] opacity-[0.04]"
-        size={1000}
+        className="absolute -bottom-[150px] -right-[150px] opacity-[0.08] pointer-events-none"
+        size={900}
         variant={2}
       />
 

@@ -5,6 +5,7 @@ export interface IPolicy extends Document {
   slug: string;
   content: string;
   status: 'draft' | 'published';
+  version: number;
   seoMetadata?: {
     title?: string;
     description?: string;
@@ -22,13 +23,14 @@ const PolicySchema: Schema = new Schema(
       enum: ['draft', 'published'],
       default: 'draft',
     },
+    version: { type: Number, default: 1 },
     seoMetadata: {
       title: { type: String, default: '' },
       description: { type: String, default: '' },
     },
     lastUpdatedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model<IPolicy>('Policy', PolicySchema);
