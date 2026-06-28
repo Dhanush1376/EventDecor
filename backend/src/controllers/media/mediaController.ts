@@ -7,7 +7,7 @@ import logger from '../../config/logger';
 import ApiError from '../../utils/ApiError';
 
 // Define paths relative to src/controllers
-const FRONTEND_PUBLIC_DIR = path.resolve(__dirname, '../../../frontend/public');
+const FRONTEND_PUBLIC_DIR = path.resolve(__dirname, '../../../../frontend/public');
 const CACHE_DIR = path.resolve(__dirname, '../../cache');
 
 // Ensure Cache directory exists

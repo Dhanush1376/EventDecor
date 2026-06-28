@@ -13,6 +13,7 @@ describe('RentalCheckoutService Integration', () => {
   let replset: MongoMemoryReplSet;
   let mongoose: typeof import('mongoose');
   let Product: any;
+  let PaymentAttempt: any;
   let RentalOrder: any;
   let RentalCheckoutService: any;
   let storeSettingsService: any;
@@ -42,12 +43,14 @@ describe('RentalCheckoutService Integration', () => {
 
     // Dynamic imports to ensure they use the new mongoose connection
     Product = require('../models/Product').default;
+    PaymentAttempt = require('../models/PaymentAttempt').default;
     RentalOrder = require('../models/RentalOrder').default;
     RentalCheckoutService =
       require('../services/rentals/RentalCheckoutService').RentalCheckoutService;
 
     // Initialize collections to prevent transaction catalog change errors
     await RentalOrder.createCollection();
+    await PaymentAttempt.createCollection();
 
     const product = await Product.create({
       title: 'Mock Rental Product',
@@ -162,13 +165,15 @@ describe('RentalCheckoutService Integration', () => {
 
       expect(result).toBeDefined();
       expect(result.rentalOrder).toBeDefined();
-      expect(result.rentalOrder.status).toBe('pending');
-      expect(result.rentalOrder.paymentMethod).toBe('razorpay');
+      expect(result.rentalOrder._id).toBeDefined();
       expect(result.razorpayOrderId).toBe('order_mock123'); // from the mock
 
       const dbOrder = await RentalOrder.findById(result.rentalOrder._id);
-      expect(dbOrder).not.toBeNull();
-      expect(dbOrder!.durationDays).toBe(3);
+      expect(dbOrder).toBeNull(); // Not created yet
+
+      const attempt = await PaymentAttempt.findOne({ razorpayOrderId: 'order_mock123' });
+      expect(attempt).not.toBeNull();
+      expect(attempt!.orderData.durationDays).toBe(3);
     });
   });
 });

@@ -1,11 +1,13 @@
 import { tieredCacheGet, tieredCacheSet } from '../../src/utils/cache/tieredCache';
 import { MemoryCache } from '../../src/utils/cache/MemoryCache';
-import redisClient from '../../src/utils/cache/redis';
+import { redisClient } from '../../src/utils/cache/redis';
 
 jest.mock('../../src/utils/cache/redis', () => ({
-  get: jest.fn(),
-  set: jest.fn(),
-  isReady: true,
+  redisClient: {
+    get: jest.fn(),
+    set: jest.fn(),
+    isReady: true,
+  },
 }));
 
 describe('tieredCache', () => {

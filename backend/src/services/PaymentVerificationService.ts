@@ -25,7 +25,7 @@ import { PaymentRefundService } from './PaymentRefundService';
 export class PaymentVerificationService {
   static async verifyPayment(
     paymentData: any,
-    userId: string,
+    invokerId: string,
     role: string,
     source: 'frontend' | 'webhook' = 'frontend',
   ) {
@@ -123,11 +123,13 @@ export class PaymentVerificationService {
         throw new ApiError(404, 'Checkout intent not found or cannot be locked for processing');
       }
 
-      if (attempt.userId.toString() !== userId && role !== 'admin') {
+      if (attempt.userId.toString() !== invokerId && role !== 'admin') {
         attempt.status = 'initiated';
         await attempt.save({ session });
         throw new ApiError(403, 'You are not authorized to verify this payment');
       }
+
+      const userId = attempt.userId.toString();
 
       const expectedAmount = Math.round(
         attempt.type === 'purchase' || attempt.type === 'rental'
@@ -148,7 +150,7 @@ export class PaymentVerificationService {
         [
           {
             orderId: attempt.orderData.pendingOrderId, // Assuming we use pendingOrderId for all
-            userId: userId,
+            userId: attempt.userId,
             razorpayOrderId: razorpay_order_id,
             razorpayPaymentId: razorpay_payment_id,
             eventType: 'verification_attempt',

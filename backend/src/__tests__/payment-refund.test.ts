@@ -1,9 +1,17 @@
 import { PaymentRefundService } from '../services/PaymentRefundService';
+import mongoose from 'mongoose';
 import RefundRecord from '../models/RefundRecord';
 import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import { refundQueue } from '../jobs/queues';
 
 jest.mock('../models/RefundRecord');
+jest.mock('../models/Order', () => ({
+  __esModule: true,
+  default: {
+    findByIdAndUpdate: jest.fn().mockResolvedValue({}),
+    findById: jest.fn().mockResolvedValue({ user: 'user_123' }),
+  },
+}));
 jest.mock('../utils/payment/RazorpayGateway');
 jest.mock('../jobs/queues', () => ({
   refundQueue: { add: jest.fn() },
@@ -23,7 +31,7 @@ describe('PaymentRefundService', () => {
       amount: 500,
       originalTransactionId: 'txn_123',
       entityType: 'Order',
-      entityId: 'order_123',
+      entityId: new mongoose.Types.ObjectId().toHexString(),
     });
 
     expect(RefundRecord.create).toHaveBeenCalled();
@@ -38,7 +46,7 @@ describe('PaymentRefundService', () => {
       amount: 500,
       originalTransactionId: 'txn_123',
       entityType: 'Order',
-      entityId: 'order_123',
+      entityId: new mongoose.Types.ObjectId().toHexString(),
     };
 
     // Mock atomic claim success
