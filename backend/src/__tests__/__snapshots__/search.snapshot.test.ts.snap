@@ -861,6 +861,16 @@ exports[`Search Endpoints - Exact Ranking & Snapshot Validation GET /api/v1/sear
       ],
       "budgetFriendly": [
         {
+          "id": "6a3ec9732f40c7dbae2a3f97",
+          "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1782499643/siri-arts-crafts/products/ujqgj4hybkxdmskxrzyh.jpg",
+          "matchSource": "fallback_new",
+          "price": 1999,
+          "score": 1,
+          "slug": "birthday-bestie-gift-box",
+          "title": "Birthday Bestie Gift Box",
+          "type": "product",
+        },
+        {
           "id": "6a3c31f28d7a02cb71a1f5b8",
           "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1782329803/siri-arts-crafts/products/ssgsbidk1krlzsi08ggh.jpg",
           "matchSource": "fallback_new",
@@ -890,16 +900,6 @@ exports[`Search Endpoints - Exact Ranking & Snapshot Validation GET /api/v1/sear
           "title": "Chocolate Gift Favors",
           "type": "product",
         },
-        {
-          "id": "6a3c30c38d7a02cb71a1f582",
-          "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1782329494/siri-arts-crafts/products/ip1bjmxnvxh6dqbmrzqr.jpg",
-          "matchSource": "fallback_new",
-          "price": 1200,
-          "score": 1,
-          "slug": "gold-pooja-diya",
-          "title": "Gold Pooja Diya",
-          "type": "product",
-        },
       ],
       "popularChoices": [
         {
@@ -913,16 +913,6 @@ exports[`Search Endpoints - Exact Ranking & Snapshot Validation GET /api/v1/sear
           "type": "product",
         },
         {
-          "id": "6a275711dccad738269ad33e",
-          "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1780963058/siri-arts-crafts/products/qzze8coxteocr9wzqbim.jpg",
-          "matchSource": "fallback_popular",
-          "price": 2000,
-          "score": 1,
-          "slug": "ganesh-coconut-decor",
-          "title": "Ganesh Coconut Decor",
-          "type": "product",
-        },
-        {
           "id": "6a19cb169875c9a89386d920",
           "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024558/eventdecor_migration/hgvuv234fqdoa2b05mul.jpg",
           "matchSource": "fallback_popular",
@@ -930,6 +920,16 @@ exports[`Search Endpoints - Exact Ranking & Snapshot Validation GET /api/v1/sear
           "score": 1,
           "slug": "wooden-wedding-ring-tray",
           "title": "Wooden Wedding Ring Tray",
+          "type": "product",
+        },
+        {
+          "id": "6a275711dccad738269ad33e",
+          "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1780963058/siri-arts-crafts/products/qzze8coxteocr9wzqbim.jpg",
+          "matchSource": "fallback_popular",
+          "price": 2000,
+          "score": 1,
+          "slug": "ganesh-coconut-decor",
+          "title": "Ganesh Coconut Decor",
           "type": "product",
         },
         {
@@ -987,6 +987,16 @@ exports[`Search Endpoints - Exact Ranking & Snapshot Validation GET /api/v1/sear
       ],
       "trending": [
         {
+          "id": "6a3c31738d7a02cb71a1f5ae",
+          "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1782329628/siri-arts-crafts/products/vvuj6q3p1ynudews1f8k.jpg",
+          "matchSource": "fallback_new",
+          "price": 999,
+          "score": 1,
+          "slug": "chocolate-gift-favors",
+          "title": "Chocolate Gift Favors",
+          "type": "product",
+        },
+        {
           "id": "6a3c30c38d7a02cb71a1f582",
           "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1782329494/siri-arts-crafts/products/ip1bjmxnvxh6dqbmrzqr.jpg",
           "matchSource": "fallback_new",
@@ -1014,16 +1024,6 @@ exports[`Search Endpoints - Exact Ranking & Snapshot Validation GET /api/v1/sear
           "score": 1,
           "slug": "floral-ring-tray-2",
           "title": "Floral Ring Tray",
-          "type": "product",
-        },
-        {
-          "id": "6a341c3615693d6710e78f7a",
-          "image": "https://res.cloudinary.com/drxgnnzeb/image/upload/v1781799718/siri-arts-crafts/products/pgndnrhojhzfzx28sjnz.jpg",
-          "matchSource": "fallback_new",
-          "price": 1999,
-          "score": 1,
-          "slug": "rose-chocolate-bouquet",
-          "title": "Rose Chocolate Bouquet",
           "type": "product",
         },
       ],
