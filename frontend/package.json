@@ -18,6 +18,7 @@
     "axios": "^1.18.1",
     "browser-image-compression": "^2.0.2",
     "canvas-confetti": "^1.9.4",
+    "date-fns": "^4.4.0",
     "dompurify": "^3.4.11",
     "framer-motion": "^12.41.0",
     "html2canvas": "^1.4.1",
