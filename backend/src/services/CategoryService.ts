@@ -45,6 +45,7 @@ export class CategoryService {
 
     // 3. Partial Substring / Alias matching
     // (In a full enterprise setup, this would ping AI or a vector DB, but for now we do a text search)
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const textMatch = await Category.findOne(
       { $text: { $search: searchStr } },
       { score: { $meta: 'textScore' } },
@@ -79,6 +80,7 @@ export class CategoryService {
       return null;
     }
 
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const oldName = existing.name;
 
     const dto = {

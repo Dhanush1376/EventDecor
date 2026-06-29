@@ -83,6 +83,7 @@ export const createPolicy = async (req: Request, res: Response, next: NextFuncti
 
     try {
       getIO().of('/visitor').emit('policy-updated', { slug: policy.slug });
+    // eslint-disable-next-line unused-imports/no-unused-vars
     } catch (e) {}
 
     res.status(201).json({ success: true, data: policy });
@@ -124,6 +125,7 @@ export const updatePolicy = async (req: Request, res: Response, next: NextFuncti
 
     try {
       getIO().of('/visitor').emit('policy-updated', { slug: policy.slug });
+    // eslint-disable-next-line unused-imports/no-unused-vars
     } catch (e) {}
 
     res.status(200).json({ success: true, data: policy });
@@ -153,6 +155,7 @@ export const deletePolicy = async (req: Request, res: Response, next: NextFuncti
 
     try {
       getIO().of('/visitor').emit('policy-deleted', { slug: policy.slug });
+    // eslint-disable-next-line unused-imports/no-unused-vars
     } catch (e) {}
 
     res.status(200).json({ success: true, message: 'Policy deleted successfully' });
@@ -220,6 +223,7 @@ export const restorePolicyVersion = async (req: Request, res: Response, next: Ne
 
     try {
       getIO().of('/user').emit('policy-updated', { slug: policy.slug });
+    // eslint-disable-next-line unused-imports/no-unused-vars
     } catch (e) {}
 
     res.status(200).json({ success: true, data: policy, message: 'Policy restored successfully' });

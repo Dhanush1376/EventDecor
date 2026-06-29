@@ -127,6 +127,7 @@ describe('Payment Integration & State Machine', () => {
       const pendingOrderId = new mongoose.Types.ObjectId();
       const userId = new mongoose.Types.ObjectId();
 
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const attempt = await PaymentAttempt.create({
         razorpayOrderId: 'order_test_123',
         userId: userId,

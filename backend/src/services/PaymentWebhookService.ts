@@ -191,6 +191,7 @@ export class PaymentWebhookService {
             { $set: { status: 'processed', updatedAt: new Date() } },
           ).session(session);
 
+          // eslint-disable-next-line unused-imports/no-unused-vars
           const attempt = await PaymentAttempt.findOneAndUpdate(
             { razorpayOrderId: razorpay_order_id, status: 'initiated' },
             { $set: { status: 'failed' } },

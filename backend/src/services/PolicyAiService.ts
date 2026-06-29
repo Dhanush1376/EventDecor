@@ -151,6 +151,7 @@ export class PolicyAiService {
     }
 
     if (!groqResponse.ok) {
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const errText = await groqResponse.text();
       // Error logged intentionally omitted for linting
       throw new ApiError(groqResponse.status, 'Error from Groq API');

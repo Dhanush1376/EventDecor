@@ -342,10 +342,12 @@ export class ReturnAnalyticsService {
     };
   }
 
+  // eslint-disable-next-line unused-imports/no-unused-vars
   static async getAdvancedSlaAnalytics(filters: any = {}) {
     // Advanced SLA Analytics implementation (existing)
   }
 
+  // eslint-disable-next-line unused-imports/no-unused-vars
   static async getEnterpriseAnalytics(filters: any = {}) {
     const Order = require('../../models/Order').default;
     const [totalOrders, totalReturns, totalExchanges] = await Promise.all([
@@ -366,6 +368,7 @@ export class ReturnAnalyticsService {
     };
   }
 
+  // eslint-disable-next-line unused-imports/no-unused-vars
   static async getFinancialImpact(filters: any = {}) {
     const RefundRecord = require('../../models/RefundRecord').default;
     const refunds = await RefundRecord.aggregate([

@@ -30,8 +30,6 @@ import {
 import { exportMyData, eraseMyAccount } from '../../controllers/customer/privacyController';
 import {
   requireAuth,
-  requireSuperAdmin,
-  requireRole,
   requireAdmin,
 } from '../../middleware/authMiddleware';
 import { validateRequest } from '../../middleware/zodValidationMiddleware';

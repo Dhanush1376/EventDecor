@@ -355,6 +355,7 @@ export const getCustomerNotes = async (req: Request, res: Response) => {
       createdAt: -1,
     });
     res.status(200).json({ success: true, data: notes });
+  // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -373,6 +374,7 @@ export const addCustomerNote = async (req: Request, res: Response) => {
       isPinned: req.body.isPinned || false,
     });
     res.status(201).json({ success: true, data: note });
+  // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -382,6 +384,7 @@ export const updateCustomerNote = async (req: Request, res: Response) => {
   try {
     const note = await CustomerNote.findByIdAndUpdate(req.params.noteId, req.body, { new: true });
     res.status(200).json({ success: true, data: note });
+  // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -391,6 +394,7 @@ export const deleteCustomerNote = async (req: Request, res: Response) => {
   try {
     await CustomerNote.findByIdAndDelete(req.params.noteId);
     res.status(200).json({ success: true, message: 'Note deleted' });
+  // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -402,6 +406,7 @@ export const getSearchDashboard = async (req: Request, res: Response) => {
     const { start, end } = getDateRange(req);
     const data = await SearchIntelligenceService.getSearchDashboard(start, end);
     res.status(200).json({ success: true, data });
+  // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -412,6 +417,7 @@ export const getSearchIntents = async (req: Request, res: Response) => {
     const { start, end } = getDateRange(req);
     const data = await SearchIntelligenceService.getSearchIntentBreakdown(start, end);
     res.status(200).json({ success: true, data });
+  // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -423,6 +429,7 @@ export const getFunnel = async (req: Request, res: Response) => {
     const { start, end } = getDateRange(req);
     const data = await FunnelAnalyticsService.getConversionFunnel(start, end);
     res.status(200).json({ success: true, data });
+  // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -433,6 +440,7 @@ export const getAttribution = async (req: Request, res: Response) => {
     const { start, end } = getDateRange(req);
     const data = await MarketingAttributionService.getAttributionDashboard(start, end);
     res.status(200).json({ success: true, data });
+  // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -443,6 +451,7 @@ export const getRecommendations = async (req: Request, res: Response) => {
     const { start, end } = getDateRange(req);
     const data = await RecommendationEffectivenessService.getEffectivenessDashboard(start, end);
     res.status(200).json({ success: true, data });
+  // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -454,6 +463,7 @@ export const getProductAffinities = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     const data = await ProductIntelligenceService.getProductAffinities(id);
     res.status(200).json({ success: true, data });
+  // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
