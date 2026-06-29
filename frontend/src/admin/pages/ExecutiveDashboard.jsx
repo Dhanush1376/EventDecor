@@ -18,7 +18,7 @@ export default function ExecutiveDashboard() {
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const res = await api.get('/analytics/executive-summary');
+        const res = await api.get('/customer-intelligence/executive-summary');
         if (res.data?.success) {
           setData(res.data.data);
         }

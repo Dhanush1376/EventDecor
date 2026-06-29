@@ -43,6 +43,7 @@ export const useReturnManagement = () => {
     } catch (err) {
       handleError(err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSnackbar]);
 
   const fetchReturnsList = useCallback(
@@ -58,6 +59,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [showSnackbar],
   );
 
@@ -74,6 +76,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [showSnackbar],
   );
 
@@ -89,6 +92,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [showSnackbar],
   );
 
@@ -231,6 +235,7 @@ export const useReturnManagement = () => {
     } catch (err) {
       handleError(err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSnackbar]);
 
   const fetchPickupList = useCallback(
@@ -245,6 +250,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [showSnackbar],
   );
 
@@ -260,6 +266,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [showSnackbar],
   );
 
@@ -275,6 +282,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [showSnackbar],
   );
 
@@ -290,6 +298,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [showSnackbar],
   );
 
@@ -305,6 +314,7 @@ export const useReturnManagement = () => {
     } catch (err) {
       handleError(err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSnackbar]);
 
   const fetchReturnSettings = useCallback(async () => {
@@ -317,6 +327,7 @@ export const useReturnManagement = () => {
     } catch (err) {
       handleError(err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSnackbar]);
 
   const saveReturnSettings = async (data) => {

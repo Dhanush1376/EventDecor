@@ -38,6 +38,7 @@ export default function TimelineTab({ customerId }) {
 
   useEffect(() => {
     fetchTimeline(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerId, filter]);
 
   const getIcon = (iconString) => {

@@ -35,12 +35,12 @@ export function getRelativeTime(date) {
 }
 
 export const CHART_COLORS = [
-  '#6366F1', // Indigo
-  '#8B5CF6', // Violet
-  '#06B6D4', // Cyan
-  '#10B981', // Emerald
-  '#F59E0B', // Amber
-  '#EC4899', // Pink
-  '#F97316', // Orange
-  '#14B8A6', // Teal
+  '#3c362a', // Deep Brown
+  '#8b7355', // Warm Gold
+  '#7a8b76', // Sage
+  '#bc6c5c', // Terracotta
+  '#c29b62', // Ochre
+  '#6b8ead', // Slate Blue
+  '#9b82a3', // Mauve
+  '#8a816f', // Warm Grey
 ];

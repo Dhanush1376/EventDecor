@@ -13,7 +13,7 @@ export function ProductVariantsStep({
 }) {
   return (
     <div className="space-y-5">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div className="mb-4">
         <div>
           <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">
             Variants & Tags
@@ -22,19 +22,6 @@ export function ProductVariantsStep({
             Define attributes, variations, and storefront badges.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleAIFill}
-          disabled={isAIGenerating}
-          className="bg-[var(--admin-accent)] text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer"
-        >
-          {isAIGenerating ? (
-            <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
-          ) : (
-            <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-          )}
-          {isAIGenerating ? 'Analyzing Curation...' : 'Auto-Fill with AI'}
-        </button>
       </div>
 
       {/* Badge Pill Inputs */}

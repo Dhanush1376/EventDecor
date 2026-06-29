@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import { PageHeader, StatusBadge, AdminSkeleton, fadeUp, stagger } from '../components/AdminUIKit';
+import { PageHeader, StatusBadge, SkeletonTable, fadeUp, stagger } from '../components/AdminUIKit';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { policyService } from '../../services/domainServices';
@@ -49,7 +49,15 @@ export function AdminPolicies() {
     {
       key: 'updatedAt',
       label: 'Last Updated',
-      render: (val) => new Date(val).toLocaleDateString(),
+      render: (val) =>
+        new Date(val).toLocaleString('en-US', {
+          month: 'numeric',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        }),
     },
     {
       key: 'actions',
@@ -58,15 +66,17 @@ export function AdminPolicies() {
         <div className="flex gap-3">
           <button
             onClick={() => navigate(`/admin/policies/edit/${row._id}`)}
-            className="text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:underline text-xs font-bold tracking-wider cursor-pointer bg-transparent border-none p-0"
+            className="text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] transition-colors cursor-pointer bg-transparent border-none p-1 rounded hover:bg-[var(--admin-accent)]/10 flex items-center justify-center"
+            title="Edit Policy"
           >
-            EDIT
+            <span className="material-symbols-outlined text-[18px]">edit</span>
           </button>
           <button
             onClick={() => handleDelete(row._id)}
-            className="text-[var(--admin-error)] hover:text-red-700 hover:underline text-xs font-bold tracking-wider cursor-pointer bg-transparent border-none p-0"
+            className="text-[var(--admin-error)] hover:text-red-700 transition-colors cursor-pointer bg-transparent border-none p-1 rounded hover:bg-[var(--admin-error)]/10 flex items-center justify-center"
+            title="Delete Policy"
           >
-            DELETE
+            <span className="material-symbols-outlined text-[18px]">delete</span>
           </button>
         </div>
       ),
@@ -90,11 +100,7 @@ export function AdminPolicies() {
 
       <motion.div variants={fadeUp} className="admin-card p-6 overflow-hidden">
         {loading ? (
-          <div className="space-y-4">
-            <AdminSkeleton className="h-12 w-full rounded-[var(--admin-radius-md)]" />
-            <AdminSkeleton className="h-12 w-full rounded-[var(--admin-radius-md)]" />
-            <AdminSkeleton className="h-12 w-full rounded-[var(--admin-radius-md)]" />
-          </div>
+          <SkeletonTable cols={4} rows={4} className="border-0 shadow-none bg-transparent" />
         ) : policies.length === 0 ? (
           <div className="text-center py-12 text-[var(--admin-text-tertiary)]">
             <span className="material-symbols-outlined text-4xl mb-3 opacity-50">description</span>

@@ -240,12 +240,12 @@ const AdminReturnDashboard = () => {
                   <AreaChart data={trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorReturns" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={CHART_COLORS[0]} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={CHART_COLORS[0]} stopOpacity={0} />
+                        <stop offset="5%" stopColor={CHART_COLORS[3]} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={CHART_COLORS[3]} stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="colorExchanges" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={CHART_COLORS[1]} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={CHART_COLORS[1]} stopOpacity={0} />
+                        <stop offset="5%" stopColor={CHART_COLORS[5]} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={CHART_COLORS[5]} stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -277,7 +277,7 @@ const AdminReturnDashboard = () => {
                     <Area
                       type="monotone"
                       dataKey="returns"
-                      stroke={CHART_COLORS[0]}
+                      stroke={CHART_COLORS[3]}
                       strokeWidth={2}
                       fillOpacity={1}
                       fill="url(#colorReturns)"
@@ -286,7 +286,7 @@ const AdminReturnDashboard = () => {
                     <Area
                       type="monotone"
                       dataKey="exchanges"
-                      stroke={CHART_COLORS[1]}
+                      stroke={CHART_COLORS[5]}
                       strokeWidth={2}
                       fillOpacity={1}
                       fill="url(#colorExchanges)"

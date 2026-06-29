@@ -13,8 +13,10 @@ export const getProducts = asyncHandler(async (req: Request, res: Response) => {
   const mid = performance.now();
   logger.info(`[Timing] ProductService + MongoQuery: ${(mid - start).toFixed(3)}ms`);
 
-  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
-  res.status(200).json(new ApiResponse(true, 'Products fetched successfully', result));
+  if (!res.headersSent) {
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+    res.status(200).json(new ApiResponse(true, 'Products fetched successfully', result));
+  }
   const end = performance.now();
   logger.info(`[Timing] ResponseSerialization: ${(end - mid).toFixed(3)}ms`);
 });
@@ -27,11 +29,13 @@ export const getDynamicFilters = asyncHandler(async (req: Request, res: Response
 
 export const getAdminProducts = asyncHandler(async (req: Request, res: Response) => {
   const result = await ProductService.getAllProducts(req.query, true); // true = isAdmin
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('Surrogate-Control', 'no-store');
-  res.status(200).json(new ApiResponse(true, 'Admin products fetched successfully', result));
+  if (!res.headersSent) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    res.status(200).json(new ApiResponse(true, 'Admin products fetched successfully', result));
+  }
 });
 
 export const getProductById = asyncHandler(async (req: Request, res: Response) => {

@@ -263,7 +263,7 @@ export function AdminSidebarContent({
       >
         <NavLink
           to="/"
-          className={`flex items-center gap-2.5 px-3 py-2 rounded-[var(--admin-radius-md)] text-[13px] font-semibold text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] transition-all min-h-[36px] ${
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-[var(--admin-radius-md)] text-[13px] font-bold text-white bg-[var(--admin-accent)] hover:brightness-110 shadow-sm transition-all min-h-[36px] ${
             !sidebarOpen ? 'justify-center px-1' : ''
           }`}
         >

@@ -53,13 +53,18 @@ export function useProductSubmission({
   };
 
   // Submit Handler
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, options = { stayOnPage: false }) => {
     if (e) e.preventDefault();
     if (formData.images.length > 0 && !formData.imageSrc) {
       setFormData((prev) => ({ ...prev, imageSrc: prev.images[0] }));
       formData.imageSrc = formData.images[0]; // also set locally for the check below
     }
-    if (!formData.title || !formData.price || !formData.category || !formData.imageSrc) {
+    if (
+      !formData.title ||
+      !formData.price ||
+      (!formData.category && !formData.primaryCategory) ||
+      !formData.imageSrc
+    ) {
       return toast.error('Please fill in all mandatory fields before publishing');
     }
 
@@ -84,7 +89,7 @@ export function useProductSubmission({
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/(^-|-$)/g, ''),
-        category: formData.category,
+        category: formData.primaryCategory || formData.category,
         material: formData.material || undefined,
         tags:
           typeof formData.tags === 'string'
@@ -165,7 +170,12 @@ export function useProductSubmission({
             logger.error('Failed to refresh products state', err);
           }
         }
-        handleSuccessAction();
+        if (!options.stayOnPage) {
+          handleSuccessAction();
+        } else if (!isEditMode && res.data?.product?._id) {
+          window.history.replaceState(null, '', `/admin/products/edit/${res.data.product._id}`);
+          // trigger a reload or refresh if we want, but window.history is smooth
+        }
       }
     } catch (err) {
       toast.error(err?.response?.data?.message || err?.message || 'Failed to save product listing');

@@ -5,6 +5,7 @@ import { ProductInfoStep } from './steps/ProductInfoStep';
 import { ProductVariantsStep } from './steps/ProductVariantsStep';
 import { ProductSeoStep } from './steps/ProductSeoStep';
 import { ProductPricingStep } from './steps/ProductPricingStep';
+import { ProductReturnStep } from './steps/ProductReturnStep';
 import { ProductReviewStep } from './steps/ProductReviewStep';
 import { SkeletonForm } from '../components/AdminUIKit';
 import { LivePreviewCard } from '../components/LivePreviewCard';
@@ -456,8 +457,12 @@ export function AdminAddProduct({ editId }) {
                     setShowRentalSettings={setShowRentalSettings}
                   />
                 )}
-                {/* STEP 6: REVIEW & PUBLISH */}
+                {/* STEP 6: RETURNS & POLICY */}
                 {currentStep === 5 && (
+                  <ProductReturnStep formData={formData} setFormData={setFormData} />
+                )}
+                {/* STEP 7: REVIEW & PUBLISH */}
+                {currentStep === 6 && (
                   <ProductReviewStep formData={formData} setFormData={setFormData} />
                 )}
               </motion.div>
@@ -476,21 +481,43 @@ export function AdminAddProduct({ editId }) {
             </button>
 
             {currentStep < WIZARD_STEPS.length - 1 ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={isCompressing || isLoading}
-                className="px-6 py-2.5 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold hover:brightness-110 flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md disabled:opacity-50 disabled:pointer-events-none"
-              >
-                Continue
-                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={(e) => handleSubmit(e, { stayOnPage: true })}
+                  disabled={isLoading || isCompressing}
+                  className="px-5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] rounded-full text-[12px] font-bold hover:bg-[var(--admin-bg-subtle)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">
+                        {isEditMode ? 'save' : 'publish'}
+                      </span>
+                      {isEditMode ? 'Update' : 'Publish'}
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={isCompressing || isLoading}
+                  className="px-6 py-2.5 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold hover:brightness-110 flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  Continue
+                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </button>
+              </div>
             ) : (
               <button
                 type="button"
-                onClick={handleSubmit}
-                disabled={isLoading}
-                className="px-7 py-3 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold uppercase tracking-wider hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                onClick={(e) => handleSubmit(e, { stayOnPage: false })}
+                disabled={isLoading || isCompressing}
+                className="px-7 py-3 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold uppercase tracking-wider hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
                 {isLoading ? (
                   <>

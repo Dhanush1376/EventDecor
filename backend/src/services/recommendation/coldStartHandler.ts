@@ -18,7 +18,7 @@ export interface ColdStartRecommendation {
   source: string;
   title?: string;
   image?: string;
-  category?: string;
+  primaryCategory?: string;
   price?: number;
   rentalEnabled?: boolean;
   availabilityMode?: string;
@@ -56,19 +56,21 @@ export async function getColdStartFeed(
     // 2. Featured/popular products from DB
     const [featuredProducts, popularEvents, topGallery] = await Promise.all([
       Product.find({ isActive: true, featured: true })
-        .select('_id title imageSrc category price rating tags rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable')
+        .select(
+          '_id title imageSrc primaryCategory price rating tags rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+        )
         .sort({ rating: -1, reviews: -1 })
         .limit(12)
         .lean(),
 
       Event.find({ isActive: true })
-        .select('_id title image category style basePrice features')
+        .select('_id title image primaryCategory style basePrice features')
         .sort({ basePrice: -1 })
         .limit(8)
         .lean(),
 
       Gallery.find({ isActive: true })
-        .select('_id title image category style tags views likes')
+        .select('_id title image primaryCategory style tags views likes')
         .sort({ views: -1, likes: -1 })
         .limit(8)
         .lean(),
@@ -77,7 +79,7 @@ export async function getColdStartFeed(
     // Score and add featured products
     for (const product of featuredProducts) {
       const seasonalBoost = computeSeasonalBoost(
-        product.category,
+        product.primaryCategory?.toString(),
         undefined,
         product.tags,
         seasonalContext,
@@ -99,7 +101,7 @@ export async function getColdStartFeed(
         source: trendingItem ? 'trending+featured' : 'featured',
         title: product.title,
         image: product.imageSrc,
-        category: product.category,
+        primaryCategory: product.primaryCategory?.toString(),
         price: product.price,
         rentalEnabled: product.rentalEnabled,
         availabilityMode: product.availabilityMode,
@@ -112,7 +114,7 @@ export async function getColdStartFeed(
     // Score and add popular events
     for (const event of popularEvents) {
       const seasonalBoost = computeSeasonalBoost(
-        event.category,
+        event.primaryCategory?.toString(),
         event.style,
         event.features,
         seasonalContext,
@@ -128,7 +130,7 @@ export async function getColdStartFeed(
         source: 'popular',
         title: event.title,
         image: event.image,
-        category: event.category,
+        primaryCategory: event.primaryCategory?.toString(),
         price: event.basePrice,
       });
     }
@@ -136,7 +138,7 @@ export async function getColdStartFeed(
     // Score and add top gallery items
     for (const gallery of topGallery) {
       const seasonalBoost = computeSeasonalBoost(
-        gallery.category,
+        gallery.primaryCategory?.toString(),
         gallery.style,
         gallery.tags,
         seasonalContext,
@@ -153,7 +155,7 @@ export async function getColdStartFeed(
         source: 'popular-gallery',
         title: gallery.title,
         image: gallery.image,
-        category: gallery.category,
+        primaryCategory: gallery.primaryCategory?.toString(),
       });
     }
 

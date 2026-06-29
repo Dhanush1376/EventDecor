@@ -282,7 +282,7 @@ export const getSeasonal = async (req: Request, res: Response) => {
       targetType: 'product',
       title: p.title,
       imageSrc: p.imageSrc,
-      category: p.category,
+      category: p.primaryCategory?.toString()?.toString(),
       price: p.price,
       rating: p.rating,
       reviews: p.reviews,
@@ -293,7 +293,12 @@ export const getSeasonal = async (req: Request, res: Response) => {
       rentalPricing: p.rentalPricing,
       securityDeposit: p.securityDeposit,
       isDepositRefundable: p.isDepositRefundable,
-      seasonalBoost: computeSeasonalBoost(p.category, undefined, p.tags, seasonal),
+      seasonalBoost: computeSeasonalBoost(
+        p.primaryCategory?.toString(),
+        undefined,
+        p.tags,
+        seasonal,
+      ),
     }));
 
     return res.status(200).json({
@@ -509,7 +514,7 @@ async function enrichTrendingItems(items: any[]): Promise<any[]> {
         title: full.title,
         imageSrc: full.imageSrc,
         image: full.image,
-        category: full.category,
+        category: full.primaryCategory?.toString()?.toString()?.toString(),
         style: full.style,
         price: full.price,
         basePrice: full.basePrice,

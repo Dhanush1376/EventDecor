@@ -236,6 +236,7 @@ export function DashboardProvider({ children }) {
     } catch (_err) {
       toast.error('Failed to delete address', { id: toastId });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSetDefaultAddress = useCallback(async (id) => {
@@ -247,6 +248,7 @@ export function DashboardProvider({ children }) {
     } catch (_err) {
       toast.error('Failed to set default address', { id: toastId });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const downloadInvoice = useCallback(

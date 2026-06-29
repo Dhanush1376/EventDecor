@@ -27,16 +27,16 @@ export function useShowcaseForm({ id, isEditMode, navigate }) {
     initialData: {
       title: '',
       subtitle: '',
-      category: 'engagement_gift',
-      rentalPrice: 15000,
+      category: '',
+      rentalPrice: '',
       description: '',
       image: '',
       galleryImages: ['', ''],
-      inclusionsText:
-        'Traditional carved wooden ring tray, Beaded shagun boxes, Mogra garland drops',
-      colorPalette: '#8B0000, #FFD700, #FFF8DC',
-      suggestedProps: 'Traditional carved wooden ring tray, Beaded shagun boxes',
-      setupTimeHours: 2,
+      inclusionsText: '',
+      inclusions: [],
+      colorPalette: '',
+      suggestedProps: '',
+      setupTimeHours: '',
       seoTitle: '',
       seoDescription: '',
       isActive: true,
@@ -72,7 +72,10 @@ export function useShowcaseForm({ id, isEditMode, navigate }) {
                 sc.gallery && sc.gallery.length > 0
                   ? [...sc.gallery, '', ''].slice(0, 2)
                   : ['', ''],
-              inclusionsText: sc.inclusions ? sc.inclusions.map((i) => i.name).join(', ') : '',
+              inclusionsText: '',
+              inclusions: sc.inclusions
+                ? sc.inclusions.map((i, idx) => ({ ...i, id: i._id || i.id || Date.now() + idx }))
+                : [],
               colorPalette: sc.colorPalette ? sc.colorPalette.join(', ') : '',
               suggestedProps: sc.suggestedProps ? sc.suggestedProps.join(', ') : '',
               setupTimeHours: sc.setupTimeHours || 2,

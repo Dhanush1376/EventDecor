@@ -179,7 +179,7 @@ Output ONLY a valid, raw JSON object (without markdown code blocks) representing
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: systemPrompt }],
         temperature: 0.3,
         max_tokens: 800,

@@ -32,7 +32,7 @@ export function ProductDetails() {
   useRecommendationTracker({
     targetType: 'product',
     targetId: product?._id || product?.id || id,
-    category: product?.category,
+    category: product?.primaryCategory?.name || product?.category,
     price: product?.price || product?.basePrice,
     tags: product?.tags,
   });
@@ -182,7 +182,7 @@ export function ProductDetails() {
         }
       >
         <RecommendationSystem
-          category={product.category}
+          category={product.primaryCategory?.name || product.category}
           currentProductId={product._id || product.id || id}
         />
       </React.Suspense>

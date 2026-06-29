@@ -110,8 +110,8 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
       {/* Category & Badge Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 md:gap-3">
-          <span className="font-label text-[11px] md:text-[12px] text-primary uppercase tracking-[0.4em] font-medium">
-            {product.category || 'Artisanal Collection'}
+          <span className="font-label text-[11px] uppercase tracking-[0.2em] font-bold text-on-surface-variant/80">
+            {product.primaryCategory?.name || product.category || 'Artisanal Collection'}
           </span>
           {(product.collection || product.subcategory) && (
             <>

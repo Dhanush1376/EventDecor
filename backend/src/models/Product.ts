@@ -21,7 +21,8 @@ export interface IProduct extends ISoftDeleted {
     displayBadge?: string;
   };
   slug: string;
-  category: string;
+  primaryCategory: mongoose.Types.ObjectId;
+  secondaryCategories: mongoose.Types.ObjectId[];
   material?: string;
   tags: string[];
   price: number;
@@ -104,7 +105,8 @@ const ProductSchema: Schema = new Schema(
       displayBadge: { type: String, trim: true },
     },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    category: { type: String, required: true, trim: true },
+    primaryCategory: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
+    secondaryCategories: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
     material: { type: String, trim: true },
     tags: [{ type: String, trim: true }],
     price: { type: Number, required: true, min: 0 },
@@ -193,27 +195,29 @@ const ProductSchema: Schema = new Schema(
 
 // Indexes
 ProductSchema.index(
-  { title: 'text', description: 'text', category: 'text', tags: 'text', teluguTitle: 'text' },
+  { title: 'text', description: 'text', tags: 'text', teluguTitle: 'text' },
   {
     name: 'FullTextIndex',
-    weights: { title: 10, category: 5, tags: 5, description: 1, teluguTitle: 8 },
+    weights: { title: 10, tags: 5, description: 1, teluguTitle: 8 },
   },
 );
-ProductSchema.index({ category: 1 });
+ProductSchema.index({ primaryCategory: 1 });
+ProductSchema.index({ secondaryCategories: 1 });
 ProductSchema.index({ featured: 1 });
 ProductSchema.index({ isActive: 1 });
 ProductSchema.index({ slug: 1, isActive: 1 });
 
 // High-Performance Production Compound Indexes
-ProductSchema.index({ isActive: 1, category: 1, price: 1 });
-ProductSchema.index({ isActive: 1, category: 1, price: -1 });
-ProductSchema.index({ isActive: 1, category: 1, rating: -1 });
-ProductSchema.index({ isActive: 1, category: 1, createdAt: -1 });
+ProductSchema.index({ isActive: 1, primaryCategory: 1, price: 1 });
+ProductSchema.index({ isActive: 1, primaryCategory: 1, price: -1 });
+ProductSchema.index({ isActive: 1, primaryCategory: 1, rating: -1 });
+ProductSchema.index({ isActive: 1, primaryCategory: 1, createdAt: -1 });
+ProductSchema.index({ isActive: 1, secondaryCategories: 1, createdAt: -1 });
 ProductSchema.index({ isActive: 1, featured: 1, createdAt: -1 });
 
 // Rental Indexes
-ProductSchema.index({ isActive: 1, rentalEnabled: 1, category: 1 });
-ProductSchema.index({ isActive: 1, availabilityMode: 1, category: 1 });
+ProductSchema.index({ isActive: 1, rentalEnabled: 1, primaryCategory: 1 });
+ProductSchema.index({ isActive: 1, availabilityMode: 1, primaryCategory: 1 });
 
 // AI Visual Search Index
 ProductSchema.index({ isActive: 1, aiTags: 1 }, { sparse: true });

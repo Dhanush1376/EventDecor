@@ -1,7 +1,6 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { SEO } from '../components/seo/SEO';
-import { Link } from 'react-router-dom';
 import { ContactSkeleton } from '../components/ui/Skeleton';
 import { useState, useEffect } from 'react';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';

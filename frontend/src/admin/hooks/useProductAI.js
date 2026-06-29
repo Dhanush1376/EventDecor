@@ -85,7 +85,8 @@ export function useProductAI({
       { key: 'title', value: aiAnalysisResult.english_title },
       { key: 'teluguTitle', value: aiAnalysisResult.telugu_title },
       { key: 'slug', value: aiAnalysisResult.slug },
-      { key: 'category', value: aiAnalysisResult.category },
+      { key: 'primaryCategory', value: aiAnalysisResult.primary_category },
+      { key: 'secondaryCategories', value: aiAnalysisResult.secondary_categories || [] },
       { key: 'material', value: (aiAnalysisResult.materials || []).join(',') },
       {
         key: 'tags',
@@ -112,6 +113,8 @@ export function useProductAI({
       { key: '_personalization', value: aiAnalysisResult.personalization_enabled },
       // Customer note (from AI)
       { key: 'customerNote', value: aiAnalysisResult.customer_note },
+      // Variants (from AI)
+      { key: '_variants', value: aiAnalysisResult.suggested_variants || [] },
     ];
 
     let index = 0;
@@ -143,9 +146,16 @@ export function useProductAI({
 
       setFocusedField(field.key);
 
-      // Dynamic dynamic categories aggregator
-      if (field.key === 'category' && field.value && !categoriesList.includes(field.value)) {
+      // Dynamic categories aggregator
+      if (field.key === 'primaryCategory' && field.value && !categoriesList.includes(field.value)) {
         setCategoriesList((prev) => [...prev, field.value].sort());
+      }
+      if (field.key === 'secondaryCategories' && Array.isArray(field.value)) {
+        field.value.forEach((cat) => {
+          if (cat && !categoriesList.includes(cat)) {
+            setCategoriesList((prev) => [...prev, cat].sort());
+          }
+        });
       }
 
       // Apply personalization config from AI
@@ -193,7 +203,19 @@ export function useProductAI({
           ...prev,
           customerNote: note || prev.customerNote,
         }));
-      } else {
+      } else if (
+        field.key === '_variants' &&
+        Array.isArray(field.value) &&
+        field.value.length > 0
+      ) {
+        setFormData((prev) => {
+          if (prev.variants && prev.variants.length > 0) return prev; // don't overwrite if user already added variants
+          return {
+            ...prev,
+            variants: field.value.map((v, i) => ({ ...v, id: Date.now() + i })),
+          };
+        });
+      } else if (!field.key.startsWith('_')) {
         setFormData((prev) => ({
           ...prev,
           [field.key]: field.value || prev[field.key],

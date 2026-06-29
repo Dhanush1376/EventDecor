@@ -13,10 +13,10 @@ export function ProductInfoStep({
 }) {
   return (
     <div className="space-y-5">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
+      <div className="flex flex-row justify-between items-start gap-3">
+        <div className="flex-1 pr-2">
           <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Product Info</h2>
-          <p className="text-[11px] text-[var(--admin-text-secondary)]">
+          <p className="text-[10px] sm:text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
             Detail product info, category, and materials.
           </p>
         </div>
@@ -24,14 +24,18 @@ export function ProductInfoStep({
           type="button"
           onClick={handleAIFill}
           disabled={isAIGenerating}
-          className="bg-[var(--admin-accent)] text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer"
+          className="bg-[var(--admin-accent)] text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer shrink-0 mt-1 sm:mt-0"
+          title="Auto-Fill with AI"
         >
           {isAIGenerating ? (
             <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
           ) : (
-            <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+            <span className="material-symbols-outlined text-[15px] sm:text-[14px]">smart_toy</span>
           )}
-          {isAIGenerating ? 'Analyzing Image & Title...' : 'Auto-Fill with AI'}
+          <span className="hidden sm:inline">
+            {isAIGenerating ? 'Analyzing Image & Title...' : 'Auto-Fill with AI'}
+          </span>
+          <span className="sm:hidden">{isAIGenerating ? 'AI...' : 'AI Fill'}</span>
         </button>
       </div>
 
@@ -92,13 +96,13 @@ export function ProductInfoStep({
         <div className="col-span-2 sm:col-span-1">
           <div className="flex justify-between items-center h-5 mb-1.5">
             <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
-              Category <span className="text-error">*</span>
+              Primary Category <span className="text-error">*</span>
             </label>
             <button
               type="button"
               onClick={() => {
                 setIsCustomCategory(!isCustomCategory);
-                setFormData({ ...formData, category: '' });
+                setFormData({ ...formData, primaryCategory: '' });
               }}
               className="text-[11px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer flex items-center gap-0.5"
             >
@@ -112,16 +116,16 @@ export function ProductInfoStep({
             <input
               type="text"
               required
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              value={formData.primaryCategory}
+              onChange={(e) => setFormData({ ...formData, primaryCategory: e.target.value })}
               placeholder="Traditional Urlis, Brass Lamps"
               className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
             />
           ) : (
             <select
               required
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              value={formData.primaryCategory}
+              onChange={(e) => setFormData({ ...formData, primaryCategory: e.target.value })}
               className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
             >
               <option value="">Select Category</option>
@@ -132,6 +136,48 @@ export function ProductInfoStep({
               ))}
             </select>
           )}
+        </div>
+
+        <div className="col-span-2">
+          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+            Secondary Categories (Optional)
+          </label>
+          <div className="flex flex-wrap gap-2 p-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl max-h-40 overflow-y-auto">
+            {categoriesList
+              .filter((c) => c !== formData.primaryCategory)
+              .map((c) => {
+                const isSelected = formData.secondaryCategories?.includes(c);
+                return (
+                  <button
+                    type="button"
+                    key={c}
+                    onClick={() => {
+                      const current = formData.secondaryCategories || [];
+                      if (isSelected) {
+                        setFormData({
+                          ...formData,
+                          secondaryCategories: current.filter((cat) => cat !== c),
+                        });
+                      } else {
+                        setFormData({ ...formData, secondaryCategories: [...current, c] });
+                      }
+                    }}
+                    className={`px-3 py-1 text-[11px] font-semibold rounded-full border transition-all ${
+                      isSelected
+                        ? 'bg-[var(--admin-accent)] text-white border-[var(--admin-accent)]'
+                        : 'bg-white text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                );
+              })}
+            {categoriesList.length === 0 && (
+              <p className="text-[11px] text-[var(--admin-text-tertiary)] italic py-1">
+                No other categories available.
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="col-span-2 sm:col-span-1">

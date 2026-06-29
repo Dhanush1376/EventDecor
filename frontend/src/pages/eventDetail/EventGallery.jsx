@@ -164,8 +164,8 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
 
       {/* Lightbox Overlay */}
       {isLightboxOpen && (
-        <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-lg flex flex-col">
-          <div className="flex justify-between items-center p-4 md:p-6 text-white absolute top-0 w-full z-10">
+        <div className="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-lg flex flex-col">
+          <div className="flex justify-between items-center p-4 md:p-6 text-black absolute top-0 w-full z-10">
             <div className="font-label-sm tracking-widest text-xs uppercase opacity-60">
               {activeGalleryIndex + 1} / {event.gallery?.length || 1}
             </div>

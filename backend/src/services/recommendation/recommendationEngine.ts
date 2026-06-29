@@ -177,14 +177,14 @@ export async function getPersonalizedRecommendations(
     // Pre-compute category distribution for diversity scoring
     const categoryCounts = new Map<string, number>();
     for (const c of candidates) {
-      const cat = (c.category || 'other').toLowerCase();
+      const cat = (c.primaryCategory || 'other').toLowerCase();
       categoryCounts.set(cat, (categoryCounts.get(cat) || 0) + 1);
     }
     const totalCandidates = candidates.length;
 
     const scoredItems: (RecommendedItem & { rawScore: number })[] = candidates.map((item) => {
       const id = (item._id as any).toString();
-      const itemCategory = item.category || '';
+      const itemCategory = item.primaryCategory || '';
       const itemStyle = (item as any).style || '';
       const itemTags = (item as any).tags || [];
       const _itemPrice = (item as any).price || (item as any).basePrice || 0;
@@ -249,7 +249,7 @@ export async function getPersonalizedRecommendations(
         title: (item as any).title,
         imageSrc: (item as any).imageSrc,
         image: (item as any).image,
-        category: itemCategory,
+        primaryCategory: itemCategory,
         style: itemStyle,
         price: (item as any).price,
         basePrice: (item as any).basePrice,
@@ -352,7 +352,7 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
   try {
     if (ctx.targetType === 'event' || ctx.page === 'events') {
       const events = await Event.find({ isActive: true })
-        .select('_id title image category style basePrice features colorPalette createdAt')
+        .select('_id title image primaryCategory style basePrice features colorPalette createdAt')
         .sort({ createdAt: -1 })
         .limit(limit)
         .maxTimeMS(3000)
@@ -361,7 +361,7 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
       candidates.push(...events);
     } else if (ctx.targetType === 'gallery' || ctx.page === 'gallery') {
       const galleries = await Gallery.find({ isActive: true })
-        .select('_id title image category style tags views likes createdAt')
+        .select('_id title image primaryCategory style tags views likes createdAt')
         .sort({ createdAt: -1 })
         .limit(limit)
         .maxTimeMS(3000)
@@ -379,13 +379,13 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
           .limit(Math.floor(limit * 0.6))
           .lean(),
         Event.find({ isActive: true })
-          .select('_id title image category style basePrice features createdAt')
+          .select('_id title image primaryCategory style basePrice features createdAt')
           .sort({ createdAt: -1 })
           .limit(Math.floor(limit * 0.4))
           .lean(),
         ctx.page !== 'homepage'
           ? Gallery.find({ isActive: true })
-              .select('_id title image category style tags views likes createdAt')
+              .select('_id title image primaryCategory style tags views likes createdAt')
               .sort({ views: -1 })
               .limit(Math.floor(limit * 0.25))
               .lean()
@@ -435,8 +435,8 @@ function applyDiversityFilter(items: any[]): any[] {
     const lastTwo = result.slice(-2);
     const wouldTriple =
       lastTwo.length === 2 &&
-      lastTwo[0].category === item.category &&
-      lastTwo[1].category === item.category;
+      lastTwo[0].primaryCategory === item.primaryCategory &&
+      lastTwo[1].primaryCategory === item.primaryCategory;
 
     if (wouldTriple) {
       deferred.push(item);
@@ -460,7 +460,7 @@ async function enrichItems(items: ColdStartRecommendation[]): Promise<Recommende
     title: item.title,
     imageSrc: item.image,
     image: item.image,
-    category: item.category,
+    primaryCategory: item.primaryCategory,
     price: item.price,
     rentalEnabled: item.rentalEnabled,
     availabilityMode: item.availabilityMode,
@@ -503,7 +503,7 @@ export async function getSimilarRecommendations(
         .lean();
     } else if (targetType === 'event') {
       fullItems = await Event.find({ _id: { $in: ids }, isActive: true })
-        .select('_id title image category style basePrice')
+        .select('_id title image primaryCategory style basePrice')
         .lean();
     }
 
@@ -521,7 +521,7 @@ export async function getSimilarRecommendations(
           title: full.title,
           imageSrc: full.imageSrc,
           image: full.image,
-          category: full.category,
+          primaryCategory: full.primaryCategory,
           style: full.style,
           price: full.price,
           basePrice: full.basePrice,
@@ -563,7 +563,7 @@ export async function enrichScoredItems(
       : Promise.resolve([]),
     eventIds.length > 0
       ? Event.find({ _id: { $in: eventIds }, isActive: true })
-          .select('_id title image category style basePrice')
+          .select('_id title image primaryCategory style basePrice')
           .lean()
       : Promise.resolve([]),
   ]);
@@ -584,7 +584,7 @@ export async function enrichScoredItems(
         title: full.title,
         imageSrc: full.imageSrc,
         image: full.image,
-        category: full.category,
+        primaryCategory: full.primaryCategory,
         style: full.style,
         price: full.price,
         basePrice: full.basePrice,
@@ -607,7 +607,7 @@ export async function enrichScoredItems(
  */
 export async function precomputeCatalogRecommendations(): Promise<void> {
   try {
-    const products = await Product.find({ isActive: true }).select('_id category').lean();
+    const products = await Product.find({ isActive: true }).select('_id primaryCategory').lean();
     const events = await Event.find({ isActive: true }).select('_id style').lean();
 
     logger.info(
@@ -624,7 +624,11 @@ export async function precomputeCatalogRecommendations(): Promise<void> {
       await findSimilarProducts(productId, { limit: 12 });
 
       // Complete setup (complementary)
-      const compItems = await getComplementaryItems(p.category || '', [productId], { limit: 8 });
+      const compItems = await getComplementaryItems(
+        p.primaryCategory?.toString() || '',
+        [productId],
+        { limit: 8 },
+      );
       const productIds = compItems.map((i) => i.targetId);
       const fullProducts = await Product.find({ _id: { $in: productIds }, isActive: true })
         .select(
@@ -643,7 +647,7 @@ export async function precomputeCatalogRecommendations(): Promise<void> {
                 source: 'complete-setup',
                 title: full.title,
                 imageSrc: full.imageSrc,
-                category: full.category,
+                primaryCategory: full.primaryCategory,
                 price: full.price,
                 rating: full.rating,
                 reviews: full.reviews,

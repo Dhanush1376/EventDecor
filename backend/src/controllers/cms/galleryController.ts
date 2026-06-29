@@ -13,11 +13,18 @@ function escapeRegex(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function buildGalleryFilterQuery(queryParams: any) {
+async function buildGalleryFilterQuery(queryParams: any) {
   const { category, event, search, type, style, ...dynamicFilters } = queryParams;
 
   const filter: any = { isActive: true };
-  if (category && String(category).toLowerCase() !== 'all') filter.category = category;
+  if (category && String(category).toLowerCase() !== 'all') {
+    const catDoc = await Category.findOne({ name: category, type: 'gallery' });
+    if (catDoc) {
+      filter.primaryCategory = catDoc._id;
+    } else {
+      filter.primaryCategory = null; // force empty result
+    }
+  }
   if (event && String(event).toLowerCase() !== 'all') filter.event = event;
   if (type && String(type).toLowerCase() !== 'all') filter.type = type;
   if (style && String(style).toLowerCase() !== 'all') filter.style = style;
@@ -69,10 +76,11 @@ function buildGalleryFilterQuery(queryParams: any) {
 
 export const getGalleryItems = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
-  const { filter, sortQuery } = buildGalleryFilterQuery(req.query);
+  const { filter, sortQuery } = await buildGalleryFilterQuery(req.query);
 
   const [items, totalCount] = await Promise.all([
     Gallery.find(filter)
+      .populate('primaryCategory', 'name slug')
       .select('-colorPalette -story -similarInspirations -likedBy -tags')
       .sort(sortQuery)
       .skip(skip)
@@ -81,19 +89,24 @@ export const getGalleryItems = asyncHandler(async (req: Request, res: Response) 
     Gallery.countDocuments(filter),
   ]);
 
+  const mappedItems = items.map((item: any) => ({
+    ...item,
+    category: item.primaryCategory?.name || '',
+  }));
+
   res
     .status(200)
     .json(
       new ApiResponse(
         true,
         'Gallery items fetched',
-        formatPaginationResponse(items, totalCount, page, limit),
+        formatPaginationResponse(mappedItems, totalCount, page, limit),
       ),
     );
 });
 
 export const getDynamicGalleryFilters = asyncHandler(async (req: Request, res: Response) => {
-  const { filter } = buildGalleryFilterQuery(req.query);
+  const { filter } = await buildGalleryFilterQuery(req.query);
 
   const facetPipeline: any = {
     categories: [{ $sortByCount: '$category' }],
@@ -176,6 +189,20 @@ export const getGalleryById = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const createGalleryItem = asyncHandler(async (req: Request | any, res: Response) => {
+  if (req.body.category && !req.body.primaryCategory) {
+    let catDoc = await Category.findOne({ name: req.body.category, type: 'gallery' });
+    if (!catDoc) {
+      catDoc = new Category({
+        name: req.body.category,
+        slug: req.body.category.toLowerCase().replace(/\s+/g, '-'),
+        type: 'gallery',
+        isActive: true,
+      });
+      await catDoc.save();
+    }
+    req.body.primaryCategory = catDoc._id;
+  }
+
   const item = new Gallery(req.body);
   await item.save();
   await ChangeTracker.trackChange('Gallery', item._id, null, item.toObject(), req.user, 'create');
@@ -184,6 +211,20 @@ export const createGalleryItem = asyncHandler(async (req: Request | any, res: Re
 });
 
 export const updateGalleryItem = asyncHandler(async (req: Request | any, res: Response) => {
+  if (req.body.category && !req.body.primaryCategory) {
+    let catDoc = await Category.findOne({ name: req.body.category, type: 'gallery' });
+    if (!catDoc) {
+      catDoc = new Category({
+        name: req.body.category,
+        slug: req.body.category.toLowerCase().replace(/\s+/g, '-'),
+        type: 'gallery',
+        isActive: true,
+      });
+      await catDoc.save();
+    }
+    req.body.primaryCategory = catDoc._id;
+  }
+
   const oldItem = await Gallery.findById(req.params.id);
 
   const item = await Gallery.findByIdAndUpdate(req.params.id, req.body, {
@@ -265,7 +306,10 @@ export const likeGalleryItem = asyncHandler(async (req: any, res: Response) => {
   res.status(200).json(new ApiResponse(true, 'Gallery item liked', item));
 });
 
+import Category from '../../models/Category';
+
 export const getGalleryCategories = asyncHandler(async (req: Request, res: Response) => {
-  const categories = await Gallery.distinct('category', { isActive: true });
-  res.status(200).json(new ApiResponse(true, 'Gallery categories fetched', categories));
+  const categories = await Category.find({ type: 'gallery', isActive: true }).select('name').lean();
+  const categoryNames = categories.map((c) => c.name);
+  res.status(200).json(new ApiResponse(true, 'Gallery categories fetched', categoryNames));
 });

@@ -207,9 +207,6 @@ const AdminTeam = lazy(() =>
 const AdminSettings = lazy(() =>
   import('../admin/pages/AdminSettings').then((m) => ({ default: m.AdminSettings })),
 );
-const AdminSystemUsers = lazy(() =>
-  import('../admin/pages/AdminSystemUsers').then((m) => ({ default: m.AdminSystemUsers })),
-);
 const AdminCategories = lazy(() =>
   import('../admin/pages/AdminCategories').then((m) => ({ default: m.AdminCategories })),
 );
@@ -313,49 +310,20 @@ export function AppRoutes() {
                 }
               />
               <Route path="/showcases" element={<EventShowcases />} />
-              <Route
-                path="/shipping"
-                element={
-                  <GenericPolicyPage slug="shipping-policy" defaultTitle="Shipping Policy" />
-                }
-              />
-              <Route
-                path="/returns"
-                element={
-                  <GenericPolicyPage slug="return-policy" defaultTitle="Returns & Exchanges" />
-                }
-              />
-              <Route
-                path="/exchange"
-                element={
-                  <GenericPolicyPage slug="exchange-policy" defaultTitle="Exchange Policy" />
-                }
-              />
-              <Route
-                path="/refund"
-                element={<GenericPolicyPage slug="refund-policy" defaultTitle="Refund Policy" />}
-              />
+              <Route path="/policy/:slug" element={<GenericPolicyPage />} />
+              {/* Legacy routes redirect to dynamic paths */}
+              <Route path="/shipping" element={<Navigate to="/policy/shipping-policy" replace />} />
+              <Route path="/returns" element={<Navigate to="/policy/return-policy" replace />} />
+              <Route path="/exchange" element={<Navigate to="/policy/exchange-policy" replace />} />
+              <Route path="/refund" element={<Navigate to="/policy/refund-policy" replace />} />
               <Route
                 path="/cancellation"
-                element={
-                  <GenericPolicyPage
-                    slug="cancellation-policy"
-                    defaultTitle="Cancellation Policy"
-                  />
-                }
+                element={<Navigate to="/policy/cancellation-policy" replace />}
               />
-              <Route
-                path="/privacy"
-                element={<GenericPolicyPage slug="privacy-policy" defaultTitle="Privacy Policy" />}
-              />
+              <Route path="/privacy" element={<Navigate to="/policy/privacy-policy" replace />} />
               <Route
                 path="/terms"
-                element={
-                  <GenericPolicyPage
-                    slug="terms-and-conditions"
-                    defaultTitle="Terms & Conditions"
-                  />
-                }
+                element={<Navigate to="/policy/terms-and-conditions" replace />}
               />
               <Route path="/accept-invite" element={<AcceptInvite />} />
               <Route path="/coupons" element={<Coupons />} />
@@ -422,7 +390,6 @@ export function AppRoutes() {
               <Route path="campaigns/templates/edit/:id" element={<AdminTemplateCreate />} />
               <Route path="content" element={<AdminContent />} />
               <Route path="team" element={<AdminTeam />} />
-              <Route path="system-users" element={<AdminSystemUsers />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="visual-search" element={<AdminVisualSearch />} />
 

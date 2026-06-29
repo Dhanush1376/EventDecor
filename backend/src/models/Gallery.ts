@@ -12,7 +12,8 @@ export interface IGallery extends ISoftDeleted {
     description?: string;
     displayBadge?: string;
   };
-  category: string;
+  primaryCategory: mongoose.Types.ObjectId;
+  secondaryCategories: mongoose.Types.ObjectId[];
   event?: string;
   style?: string;
   image: string;
@@ -46,7 +47,8 @@ const GallerySchema: Schema = new Schema(
       description: { type: String, trim: true },
       displayBadge: { type: String, trim: true },
     },
-    category: { type: String, required: true },
+    primaryCategory: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
+    secondaryCategories: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
     event: { type: String },
     style: { type: String },
     image: { type: String, required: true },
@@ -74,24 +76,25 @@ GallerySchema.index(
   {
     title: 'text',
     tags: 'text',
-    category: 'text',
     style: 'text',
     teluguTitle: 'text',
     description: 'text',
   },
   {
     name: 'FullTextIndex',
-    weights: { title: 10, tags: 8, category: 5, style: 5, teluguTitle: 8, description: 1 },
+    weights: { title: 10, tags: 8, style: 5, teluguTitle: 8, description: 1 },
   },
 );
-GallerySchema.index({ category: 1 });
+GallerySchema.index({ primaryCategory: 1 });
+GallerySchema.index({ secondaryCategories: 1 });
 GallerySchema.index({ event: 1 });
 GallerySchema.index({ type: 1 });
 
 // High-Performance Production Compound Indexes
-GallerySchema.index({ isActive: 1, category: 1, createdAt: -1 });
+GallerySchema.index({ isActive: 1, primaryCategory: 1, createdAt: -1 });
+GallerySchema.index({ isActive: 1, secondaryCategories: 1, createdAt: -1 });
 GallerySchema.index({ isActive: 1, type: 1, createdAt: -1 });
-GallerySchema.index({ isActive: 1, category: 1, views: -1 }); // Recommendation candidate fetch (views sort)
+GallerySchema.index({ isActive: 1, primaryCategory: 1, views: -1 }); // Recommendation candidate fetch (views sort)
 GallerySchema.index({ isActive: 1, views: -1 }); // Global popularity sort (cold-start feed)
 
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';

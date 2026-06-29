@@ -3,10 +3,32 @@ import Policy from '../../models/Policy';
 import VersionHistory from '../../models/VersionHistory';
 import ApiError from '../../utils/ApiError';
 import { getIO } from '../../socket';
+import { PolicyAiService } from '../../services/PolicyAiService';
 
+export const generatePolicyAi = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { topic, existingPolicy } = req.body;
+    if (!topic) throw new ApiError(400, 'Topic is required');
+    const result = await PolicyAiService.generatePolicy(topic, existingPolicy);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
 export const getAllPolicies = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const policies = await Policy.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: policies });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPublicPolicies = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const policies = await Policy.find({ status: 'published' })
+      .select('title slug')
+      .sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: policies });
   } catch (error) {
     next(error);

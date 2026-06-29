@@ -20,12 +20,12 @@ export function LivePreviewCard({ formData, mobileTab }) {
         {/* Luxury Card Rendering using real ProductCard */}
         <div className="w-full max-w-[340px] mx-auto bg-white rounded-2xl shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border)]/60 p-2">
           <ProductCard
-            title={formData.title || 'Traditional Sanskriti Masterpiece'}
+            title={formData.title || 'Product Title'}
             teluguTitle={formData.teluguTitle}
             price={Number(formData.price || 0)}
             oldPrice={formData.oldPrice ? Number(formData.oldPrice) : null}
             imageSrc={formData.imageSrc}
-            category={formData.category || 'Category Unassigned'}
+            category={formData.category || 'Category'}
             badges={
               formData.badges
                 ? formData.badges
@@ -39,7 +39,7 @@ export function LivePreviewCard({ formData, mobileTab }) {
             availabilityMode={formData.availabilityMode}
             rentalPricing={formData.rentalPricing}
             isNonRefundable={formData.isNonRefundable}
-            rating={4.9}
+            rating={0}
             onQuickView={(e) => e.preventDefault()}
           />
         </div>

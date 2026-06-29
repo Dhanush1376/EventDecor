@@ -36,6 +36,7 @@ export const ReturnDetailPage = () => {
 
   useEffect(() => {
     fetchDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, navigate]);
 
   useEffect(() => {
@@ -58,6 +59,7 @@ export const ReturnDetailPage = () => {
     return () => {
       socket.off('return:status_updated', handleUpdate);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, returnRequest]);
 
   if (loading) return <ReturnExchangeSkeleton />;

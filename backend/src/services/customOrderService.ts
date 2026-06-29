@@ -217,7 +217,7 @@ export class CustomOrderService {
       productId: product._id.toString(),
       title: product.title,
       imageSrc: product.imageSrc,
-      category: product.category,
+      category: product.primaryCategory?.toString()?.toString()?.toString(),
       price: product.price,
       description: product.description,
       variants: product.variants?.map((v: any) => ({
@@ -235,7 +235,7 @@ export class CustomOrderService {
       customerName: user.name,
       customerPhone: payload.customerPhone || user.phone,
       occasion: 'Product Customization',
-      productType: product.category || 'Custom Product',
+      productType: product.primaryCategory || 'Custom Product',
       productId: product._id,
       productSnapshot,
       customizationData: payload.customizationData || [],

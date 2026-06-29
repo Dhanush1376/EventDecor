@@ -9,41 +9,91 @@ export function GallerySkeleton() {
     'aspect-[3/4]',
     'aspect-[2/3]',
     'aspect-square',
+    'aspect-[4/5]',
+    'aspect-[3/4]',
   ];
 
   return (
-    <div className="py-16 md:py-29 relative overflow-hidden bg-surface">
-      <div className="max-w-[1440px] mx-auto px-[clamp(22px,4.5vw,72px)]">
-        {/* Header */}
-        <div className="text-center mb-14 md:mb-22 relative z-10">
-          <div className="inline-flex items-center gap-3 px-3.5 py-1.5 rounded-full border border-primary/10 bg-primary/5 mb-5.5">
-            <Skeleton className="h-[9px] w-28 rounded-full" />
-          </div>
-          <Skeleton className="h-[32px] sm:h-[42px] md:h-[58px] w-[60%] max-w-[400px] mx-auto" />
+    <div className="bg-[#fcfbf9] min-h-screen pt-20 md:pt-28 pb-32 md:pb-20">
+      {/* Editorial Header Hero */}
+      <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-4 md:pt-6 mb-12">
+        <div className="hidden md:flex items-center gap-2 mb-6">
+          <Skeleton className="h-3 w-12 rounded-full" />
+          <Skeleton className="h-3 w-3 rounded-full" />
+          <Skeleton className="h-3 w-32 rounded-full" />
         </div>
+        <div className="max-w-2xl">
+          <Skeleton className="h-3 w-24 mb-4 rounded-full" />
+          <Skeleton className="h-[40px] md:h-[56px] w-[80%] max-w-[400px] mb-6 rounded-[12px]" />
+          <Skeleton className="h-5 w-full max-w-[500px] mb-2 rounded-full" />
+          <Skeleton className="h-5 w-[80%] max-w-[400px] rounded-full" />
+        </div>
+      </section>
 
-        {/* Masonry grid */}
-        <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-5.5 space-y-3 md:space-y-5.5 relative z-10 px-0 md:px-4">
-          {aspectPatterns.map((aspect, i) => (
-            <div
-              key={i}
-              className={`break-inside-avoid relative w-full ${aspect} rounded-[22px] md:rounded-[28px] overflow-hidden bg-surface border border-black/5`}
-            >
-              <Skeleton className="absolute inset-0 w-full h-full !rounded-none" />
+      {/* Sticky Navigation Bar */}
+      <nav className="mb-8 md:mb-12 px-3 md:px-margin-desktop max-w-max-width mx-auto">
+        <div className="bg-transparent border-none shadow-none rounded-[2rem] py-3 md:p-4 lg:p-2 w-full flex flex-col lg:flex-row gap-4 lg:gap-6">
+          <div className="w-full lg:w-72 xl:w-80 flex items-center gap-1.5 shrink-0">
+            <Skeleton className="h-[44px] w-full rounded-full" />
+            <Skeleton className="h-11 w-11 rounded-full lg:hidden shrink-0" />
+            <Skeleton className="h-11 w-11 rounded-full lg:hidden shrink-0" />
+          </div>
+          <div className="hidden lg:flex items-center justify-between gap-6 flex-1">
+            <div className="flex gap-4">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-10 w-24 rounded-full" />
+              ))}
             </div>
-          ))}
-
-          {/* Cinematic View All CTA Skeleton */}
-          <div className="break-inside-avoid relative rounded-[22px] md:rounded-[28px] overflow-hidden shadow-ambient border border-primary/10 bg-primary/5 flex flex-col items-center justify-center p-7 aspect-[4/5] w-full">
-            <Skeleton
-              variant="circle"
-              className="w-14 h-14 mb-5.5 border border-primary/20 !bg-primary/10"
-            />
-            <Skeleton className="h-[22px] w-[140px] mb-2" />
-            <Skeleton className="h-[9px] w-[80px]" />
+            <div className="flex gap-3">
+              <Skeleton className="h-[44px] w-48 rounded-full" />
+              <Skeleton className="h-[44px] w-40 rounded-full" />
+            </div>
           </div>
         </div>
-      </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
+        <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
+          {/* Sidebar */}
+          <aside className="hidden lg:block w-full lg:w-64 xl:w-72 flex-shrink-0">
+            <div className="space-y-8">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="space-y-4">
+                  <Skeleton className="h-5 w-24 rounded-full mb-4" />
+                  {[...Array(4)].map((_, j) => (
+                    <div key={j} className="flex items-center gap-3">
+                      <Skeleton className="w-5 h-5 rounded-[6px]" />
+                      <Skeleton className="h-4 w-32 rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          {/* Masonry Grid */}
+          <div className="flex-1">
+            {/* Mobile Tabs */}
+            <div className="flex lg:hidden gap-3 mb-6 overflow-hidden">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-10 w-24 rounded-full shrink-0" />
+              ))}
+            </div>
+
+            <div className="columns-2 md:columns-2 lg:columns-4 xl:columns-4 gap-2 md:gap-3 space-y-2 md:space-y-3">
+              {aspectPatterns.map((aspect, i) => (
+                <div
+                  key={i}
+                  className={`break-inside-avoid relative w-full ${aspect} rounded-[16px] md:rounded-[24px] overflow-hidden bg-surface border border-black/5`}
+                >
+                  <Skeleton className="absolute inset-0 w-full h-full !rounded-none" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

@@ -21,6 +21,10 @@ import { AIVisionHUD } from '../components/showcase-wizard/AIVisionHUD';
 import { useShowcaseForm, WIZARD_STEPS } from '../hooks/useShowcaseForm';
 import { useShowcaseAI } from '../hooks/useShowcaseAI';
 import { useShowcaseSubmission } from '../hooks/useShowcaseSubmission';
+import { useShowcaseValidation } from '../hooks/useShowcaseValidation';
+import { DraftConflictViewer } from '../components/DraftConflictViewer';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAdmin } from '../context/AdminContext';
 
 const slideIn = {
   hidden: { opacity: 0, x: 20 },
@@ -46,15 +50,36 @@ export function AdminAddShowcase() {
     blocker,
     currentStep,
     setCurrentStep,
+    pageState,
+    setPageState,
     mobileTab,
     setMobileTab,
     isLoading,
+    setIsLoading,
     categories,
     setCategories,
-    isStepValid,
-    handleNext,
-    handlePrev,
   } = useShowcaseForm({ id, isEditMode, navigate });
+
+  const queryClient = useQueryClient();
+  const { refreshProducts } = useAdmin(); // Using context for refetching if applicable
+
+  const [serverData, _setServerData] = useState(null);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [_lastDraftSaved, setLastDraftSaved] = useState(null);
+
+  // Local Autosave (in-memory only)
+  useEffect(() => {
+    if (!isEditMode && formData.title) {
+      const timeoutId = setTimeout(() => {
+        setLastDraftSaved(new Date());
+      }, 1500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [formData, isEditMode]);
+
+  const handleCancelAction = useCallback(() => {
+    navigate('/admin/events');
+  }, [navigate]);
 
   // 2. AI Vision Logic
   const {
@@ -70,13 +95,36 @@ export function AdminAddShowcase() {
     handleApplyAISpecs,
   } = useShowcaseAI({ formData, setFormData, setCategories, setCurrentStep });
 
+  const { getStepErrors, isStepValid, handleNext, handlePrev } = useShowcaseValidation({
+    currentStep,
+    setCurrentStep,
+    formData,
+    setFormData,
+    WIZARD_STEPS,
+    showAIHUD,
+    handleCancelAction,
+    setLastDraftSaved,
+    setPageState,
+  });
+
   // 3. Submission Logic
-  const { isSaving, handleSubmit } = useShowcaseSubmission({
+  const {
+    isSaving,
+    handleSubmit,
+    newInclusion,
+    setNewInclusion,
+    handleAddInclusion,
+    handleRemoveInclusion,
+  } = useShowcaseSubmission({
     isEditMode,
     id,
     formData,
+    setFormData,
     deleteDraft,
     navigate,
+    queryClient,
+    refreshProducts,
+    setIsLoading,
   });
 
   // Local Component State (Media compression only)
@@ -84,31 +132,7 @@ export function AdminAddShowcase() {
   const [compressionProgress, setCompressionProgress] = useState(0);
   const [compressionStats, setCompressionStats] = useState([]);
 
-  const handleCancelAction = useCallback(() => {
-    navigate('/admin/events');
-  }, [navigate]);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.altKey && e.key === 'ArrowRight') {
-        e.preventDefault();
-        handleNext();
-      }
-      if (e.altKey && e.key === 'ArrowLeft') {
-        e.preventDefault();
-        handlePrev();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        toast.success('Draft saved (in-memory)!', { duration: 1500 });
-      }
-      if (e.key === 'Escape') {
-        handleCancelAction();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentStep, formData, handleNext, handlePrev, handleCancelAction]);
+  // Keyboard listeners are now handled by useShowcaseValidation
 
   const colors = formData.colorPalette
     ? formData.colorPalette
@@ -389,6 +413,10 @@ export function AdminAddShowcase() {
                     formData={formData}
                     setFormData={setFormData}
                     focusedField={focusedField}
+                    newInclusion={newInclusion}
+                    setNewInclusion={setNewInclusion}
+                    handleAddInclusion={handleAddInclusion}
+                    handleRemoveInclusion={handleRemoveInclusion}
                   />
                 )}
                 {currentStep === 3 && (
@@ -417,27 +445,50 @@ export function AdminAddShowcase() {
             <button
               type="button"
               onClick={handlePrev}
-              disabled={currentStep === 0}
+              disabled={currentStep === 0 || isCompressing || isLoading}
               className="px-5 py-2.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] rounded-full text-[12px] font-bold hover:bg-[#E5E7EB]/45 cursor-pointer disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95"
             >
               Back
             </button>
 
             {currentStep < WIZARD_STEPS.length - 1 ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                className="px-6 py-2.5 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold hover:brightness-110 flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md"
-              >
-                Continue
-                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={(e) => handleSubmit(e, { stayOnPage: true })}
+                  disabled={isLoading || isCompressing || isSaving}
+                  className="px-5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] rounded-full text-[12px] font-bold hover:bg-[var(--admin-bg-subtle)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">
+                        {isEditMode ? 'save' : 'publish'}
+                      </span>
+                      {isEditMode ? 'Update' : 'Publish'}
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={isCompressing || isLoading || isSaving}
+                  className="px-6 py-2.5 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold hover:brightness-110 flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  Continue
+                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </button>
+              </div>
             ) : (
               <button
                 type="button"
-                onClick={handleSubmit}
-                disabled={isSaving}
-                className="px-7 py-3 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold uppercase tracking-wider hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                onClick={(e) => handleSubmit(e, { stayOnPage: false })}
+                disabled={isLoading || isCompressing || isSaving}
+                className="px-7 py-3 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold uppercase tracking-wider hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
                 {isSaving ? (
                   <>
@@ -473,21 +524,14 @@ export function AdminAddShowcase() {
           {/* Luxury Card Rendering using real ProductCard */}
           <div className="w-full max-w-[340px] mx-auto bg-white rounded-2xl shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border)]/60 p-2">
             <ProductCard
-              title={formData.title || 'Traditional Sanskriti Masterpiece'}
+              title={formData.title || 'Showcase Title'}
               rentalPrice={Number(formData.rentalPrice || 0)}
               imageSrc={formData.image}
-              category={formData.category?.replace('_', ' ') || 'Category Unassigned'}
-              setupTimeHours={Number(formData.setupTimeHours || 2)}
-              inclusions={
-                formData.inclusionsText
-                  ? formData.inclusionsText
-                      .split(',')
-                      .map((i) => i.trim())
-                      .filter(Boolean)
-                  : []
-              }
+              category={formData.category?.replace('_', ' ') || 'Category'}
+              setupTimeHours={Number(formData.setupTimeHours || 0)}
+              inclusions={(formData.inclusions || []).map((i) => i.name).filter(Boolean)}
               itemType="event"
-              rating={4.9}
+              rating={0}
               onQuickView={(e) => e.preventDefault()}
             />
           </div>
@@ -511,6 +555,18 @@ export function AdminAddShowcase() {
         onDiscard={discardDraft}
         moduleName="Showcases"
         lastSavedAt={lastSavedAt}
+      />
+
+      <DraftConflictViewer
+        isOpen={showConflictModal}
+        serverData={serverData}
+        draftData={formData}
+        onKeepServer={() => {
+          setFormData(serverData);
+          setShowConflictModal(false);
+        }}
+        onKeepDraft={() => setShowConflictModal(false)}
+        moduleName="Showcase"
       />
 
       <UnsavedChangesGuard blocker={blocker} />

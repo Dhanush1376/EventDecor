@@ -121,14 +121,14 @@
 
 /* Primary */
 .admin-section-root .admin-btn-primary {
-  background: var(--admin-accent-light);
-  color: var(--admin-accent);
-  border-color: rgba(51, 65, 85, 0.15);
+  background: var(--admin-accent);
+  color: #ffffff;
+  border-color: var(--admin-accent);
 }
 
 .admin-section-root .admin-btn-primary:hover {
-  background: var(--admin-accent-muted);
-  border-color: rgba(51, 65, 85, 0.25);
+  filter: brightness(1.1);
+  border-color: var(--admin-accent);
 }
 
 /* Secondary */

@@ -10,6 +10,14 @@ class PolicyService {
   }
 
   /**
+   * Fetch all published policies (Public)
+   */
+  async getPublicPolicies() {
+    const response = await api.get('/policies/public/list');
+    return response.data;
+  }
+
+  /**
    * Fetch a single policy by slug (Public)
    */
   async getBySlug(slug) {

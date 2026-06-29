@@ -12,6 +12,7 @@ export function ProductSelectionBottomSheet({ isOpen, onClose, onSelect, selecte
     if (isOpen && products.length === 0) {
       fetchProducts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const fetchProducts = async () => {

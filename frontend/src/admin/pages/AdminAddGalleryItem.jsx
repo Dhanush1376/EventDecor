@@ -11,6 +11,7 @@ import { galleryService, productService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
 import { useDraft } from '../hooks/useDraft';
+import { AdminSkeleton } from '../components/ui/Skeletons';
 
 export function AdminAddGalleryItem() {
   const navigate = useNavigate();
@@ -178,7 +179,87 @@ export function AdminAddGalleryItem() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-[var(--admin-text-secondary)]">Loading...</div>;
+    return (
+      <div className="space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="space-y-2">
+            <AdminSkeleton className="w-48 h-8 rounded-lg" />
+            <AdminSkeleton className="w-64 h-4 rounded-md" />
+          </div>
+          <AdminSkeleton className="w-32 h-10 rounded-lg hidden sm:block" />
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+          {/* Left Column */}
+          <div className="lg:col-span-5 space-y-5 sm:space-y-6">
+            <div className="admin-card p-5 sm:p-6 space-y-5">
+              <div className="space-y-2">
+                <AdminSkeleton className="w-32 h-4 rounded" />
+                <AdminSkeleton className="w-full aspect-square rounded-xl" />
+              </div>
+              <div className="space-y-2 pt-4 border-t border-[var(--admin-border-subtle)]">
+                <AdminSkeleton className="w-32 h-4 rounded" />
+                <AdminSkeleton className="w-full h-12 rounded-xl" />
+              </div>
+              <AdminSkeleton className="w-full h-10 rounded-xl mt-4" />
+            </div>
+            <div className="admin-card p-5 sm:p-6 space-y-4">
+              <AdminSkeleton className="w-40 h-4 rounded" />
+              <AdminSkeleton className="w-full h-32 rounded-xl" />
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="lg:col-span-7 space-y-4 sm:space-y-6">
+            <div className="admin-card p-5 sm:p-6 space-y-5">
+              <AdminSkeleton className="w-40 h-4 rounded mb-2" />
+              <div className="grid grid-cols-2 gap-3">
+                <AdminSkeleton className="w-full h-16 rounded-xl" />
+                <AdminSkeleton className="w-full h-16 rounded-xl" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                <div className="space-y-2">
+                  <AdminSkeleton className="w-24 h-4 rounded" />
+                  <AdminSkeleton className="w-full h-10 rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <AdminSkeleton className="w-24 h-4 rounded" />
+                  <AdminSkeleton className="w-full h-10 rounded-xl" />
+                </div>
+              </div>
+
+              <div className="space-y-2 mt-6">
+                <AdminSkeleton className="w-full h-32 rounded-xl" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                <div className="space-y-2">
+                  <AdminSkeleton className="w-24 h-4 rounded" />
+                  <AdminSkeleton className="w-full h-10 rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <AdminSkeleton className="w-24 h-4 rounded" />
+                  <AdminSkeleton className="w-full h-10 rounded-xl" />
+                </div>
+              </div>
+
+              <div className="space-y-2 mt-6">
+                <AdminSkeleton className="w-32 h-4 rounded" />
+                <AdminSkeleton className="w-full h-20 rounded-xl" />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <AdminSkeleton className="w-24 h-10 rounded-xl" />
+              <AdminSkeleton className="w-32 h-10 rounded-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -136,13 +136,13 @@ export class ProductAiService {
       3. NO KEYWORD STUFFING: Do not repeat terms or stack a long list of attributes. A bad example is "Luxurious Premium Traditional Grand Decorative Engagement Ring Ceremony Presentation Tray". A good example is "Floral Ring Tray".
       4. CUSTOMER-FRIENDLY DESCRIPTION: Write a brief, simple, and elegant 2-sentence description. Use simple language that a normal customer instantly understands. Avoid robotic, overly technical, or repetitive jargon.
       5. CULTURAL ACCURACY: Intelligently understand traditional Indian wedding ceremonies (Telugu heritage, Tamil, Kannada, etc.) and generate accurate names for decorated coconuts, thambulam plates, welcome boards, and ring trays.
-      6. Choose the most accurate, clean category from the list.
+      6. CATEGORY MATCHING (MULTI-CATEGORY): Determine the single best 'primary_category' from the Available Store Categories. Then suggest 1 to 5 relevant 'secondary_categories'. If the exact name doesn't exist, suggest a logical new category name.
       7. Generate a clean Telugu translation in Telugu script (e.g., "తాంబూలం ప్లేట్", "కొబ్బరి డెకర్").
       8. Generate a clean, simple, short SEO-friendly slug.
       9. Suggest an estimated, realistic price in INR (e.g., 999, 1500, 2500) based on the intricacy and materials.
       10. Suggest 1 or 2 catchy storefront badges (e.g. "Bestseller", "Trending", "Limited Edition").
       11. CUSTOMIZATION DETECTION: Intelligently determine if this specific item is commonly personalized with text/names by customers (e.g. welcome boards, ring trays, named coconuts). If yes, set "isCustomizable" to true and provide a "customizationNote" prompt for the customer (e.g., "Enter names to be printed").
-      12. CONFIDENCE SCORE: Output an accurate "confidence" integer (between 1 and 100) representing your certainty about the detected object class. DO NOT just hardcode 95; evaluate the image clarity and ambiguity.
+      12. CONFIDENCE SCORES: Output an accurate "confidence" integer (between 1 and 100) representing your certainty about the detected object class. ALSO output "category_confidence" object mapping the primary/secondary categories to confidence percentages (1-100).
       13. TELUGU SEARCH ALIASES & KEYWORDS:
           - "telugu_keywords": Generate 3 to 5 transliterated Telugu search terms (written in English script) that local customers would use (e.g., ["kobbari", "kobbari bondam", "kobbari bondalu"] for a decorated coconut; ["pasupu", "kumkuma", "thambulam"] for a pooja/gifting plate).
           - "event_associations": String array mapping this product to specific events where it is used (e.g., ["Wedding", "Housewarming", "Pooja", "BabyShower"]).
@@ -171,6 +171,9 @@ export class ProductAiService {
           - "estimated_quantity_unit": The unit of measurement (e.g. "Chocolate Cones", "Dry Fruit Packs", "Gift Baskets", "Decorative Items", "Pieces").
           - If you cannot determine the quantity, set estimated_quantity to 1 and estimated_quantity_unit to "Set".
 
+      17. VARIANTS GENERATION: Suggest realistic product variations (e.g., Size, Color, Material) if applicable.
+          - "suggested_variants": An array of objects with "name" (Attribute like 'Size' or 'Color'), "value" (Specific choice like 'Large' or 'Red'), and "price" (Price adjustment relative to base price, e.g. 0, 100, -50).
+
       Please output a clean JSON object matching the following structure strictly (do not include any markdown block ticks, just raw JSON):
       {
         "detected_object": "Exact detected object class name",
@@ -178,8 +181,12 @@ export class ProductAiService {
         "english_title": "Short, clean 2-5 word title (e.g. Floral Ring Tray)",
         "telugu_title": "Natural Telugu translated title in Telugu script",
         "slug": "simple-url-slug",
-        "category": "Store category mapped",
-        "subcategory": "Store subcategory mapped",
+        "primary_category": "Main Category Name",
+        "secondary_categories": ["Related Category 1", "Related Category 2"],
+        "category_confidence": {
+          "Main Category Name": 98,
+          "Related Category 1": 85
+        },
         "materials": ["Material 1", "Material 2"],
         "colors": ["Color 1", "Color 2"],
         "style": "Decoration style",
@@ -200,7 +207,11 @@ export class ProductAiService {
         "personalization_helper": "Customers can customize this gift for their event",
         "customer_note": "• Product-specific note line 1\n• Product-specific note line 2\n• Product-specific note line 3",
         "estimated_quantity": 20,
-        "estimated_quantity_unit": "Chocolate Cones"
+        "estimated_quantity_unit": "Chocolate Cones",
+        "suggested_variants": [
+          { "name": "Size", "value": "Standard", "price": 0 },
+          { "name": "Size", "value": "Large", "price": 200 }
+        ]
       }
     `;
 

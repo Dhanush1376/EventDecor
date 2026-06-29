@@ -1,6 +1,14 @@
 import React from 'react';
 
-export function AestheticsStep({ formData, setFormData, focusedField }) {
+export function AestheticsStep({
+  formData,
+  setFormData,
+  focusedField,
+  newInclusion = { name: '', defaultQty: 1, condition: 'excellent' },
+  setNewInclusion = () => {},
+  handleAddInclusion = () => {},
+  handleRemoveInclusion = () => {},
+}) {
   return (
     <div className="space-y-5">
       <div>
@@ -66,21 +74,58 @@ export function AestheticsStep({ formData, setFormData, focusedField }) {
           />
         </div>
 
-        <div className="col-span-2 sm:col-span-1">
-          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-            Inclusions (comma-separated)
-          </label>
-          <textarea
-            rows={3}
-            value={formData.inclusionsText}
-            onChange={(e) => setFormData({ ...formData, inclusionsText: e.target.value })}
-            placeholder="Lotus brass urli, Jasmine rope runners..."
-            className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all resize-none ${
-              focusedField === 'inclusionsText'
-                ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
-                : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
-            }`}
-          />
+        {/* Dynamic Inclusions Constructor */}
+        <div className="col-span-2 p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">
+            Included Items & Props
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+            <input
+              type="text"
+              placeholder="Item Name (e.g. Lotus brass urli)"
+              value={newInclusion.name}
+              onChange={(e) => setNewInclusion({ ...newInclusion, name: e.target.value })}
+              className="bg-[var(--admin-surface)] rounded-lg px-2.5 py-2.5 text-[12px] border border-[var(--admin-border)] outline-none w-full col-span-1 sm:col-span-2"
+            />
+            <input
+              type="number"
+              placeholder="Qty (e.g. 1)"
+              value={newInclusion.defaultQty}
+              onChange={(e) =>
+                setNewInclusion({ ...newInclusion, defaultQty: Number(e.target.value) })
+              }
+              className="bg-[var(--admin-surface)] rounded-lg px-2.5 py-2.5 text-[12px] border border-[var(--admin-border)] outline-none w-full"
+            />
+            <button
+              type="button"
+              onClick={handleAddInclusion}
+              className="bg-[var(--admin-accent)] text-white text-[11px] sm:text-[11px] font-bold uppercase py-2.5 rounded-lg hover:brightness-110 cursor-pointer w-full transition-transform active:scale-95 shadow-sm"
+            >
+              Add Item
+            </button>
+          </div>
+
+          {/* Rendered inclusions list */}
+          {(formData.inclusions || []).length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-2">
+              {formData.inclusions.map((i) => (
+                <span
+                  key={i.id}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[11px] sm:text-[11px] rounded-lg text-[var(--admin-text-primary)] font-medium"
+                >
+                  <span className="text-[var(--admin-text-secondary)]">{i.name}</span>
+                  <span className="text-[var(--admin-accent)] font-bold">(x{i.defaultQty})</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveInclusion(i.id)}
+                    className="text-[var(--admin-error)] hover:text-[var(--admin-error)] ml-1 flex items-center justify-center cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">close</span>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="col-span-2 sm:col-span-1">

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
 import { PolicySidebar, MobilePolicyNav } from '../components/layout/PolicySidebar';
 import { SEO } from '../components/seo/SEO';
@@ -10,8 +10,11 @@ import { useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { getApiRootUrl } from '../config/apiConfig';
 import logger from '../utils/core/logger';
+import { MandalaElement } from '../components/ui/MandalaElement';
 
-export function GenericPolicyPage({ slug, defaultTitle }) {
+export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
+  const { slug: paramSlug } = useParams();
+  const slug = propSlug || paramSlug;
   const queryClient = useQueryClient();
   const {
     data: response,
@@ -20,9 +23,13 @@ export function GenericPolicyPage({ slug, defaultTitle }) {
   } = useQuery({
     queryKey: ['policy', slug],
     queryFn: () => policyService.getBySlug(slug),
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!slug,
   });
 
   useEffect(() => {
+    if (!slug) return;
     const rawApiUrl = getApiRootUrl();
     let socketServerUrl = rawApiUrl;
     if (socketServerUrl.endsWith('/api/v1')) {
@@ -58,11 +65,19 @@ export function GenericPolicyPage({ slug, defaultTitle }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
-      className="bg-surface min-h-screen pt-24 pb-32 font-body text-on-surface selection:bg-primary/20"
+      className="bg-surface min-h-screen pt-24 pb-12 font-body text-on-surface selection:bg-primary/20 relative overflow-hidden"
     >
+      <MandalaElement
+        variant={1}
+        className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 text-primary opacity-5 md:opacity-10 pointer-events-none"
+      />
+      <MandalaElement
+        variant={2}
+        className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 text-primary opacity-5 md:opacity-10 pointer-events-none"
+      />
       <SEO title={policy.title} description={`Read our ${policy.title} at Siri Arts & Crafts.`} />
 
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 relative z-10">
         {/* Help Center Header */}
         <div className="mb-12 md:mb-20 text-center md:text-left">
           <nav className="text-[10px] uppercase font-bold text-on-surface-variant tracking-[0.2em] mb-6 flex items-center justify-center md:justify-start gap-3">
@@ -72,7 +87,7 @@ export function GenericPolicyPage({ slug, defaultTitle }) {
             <span className="w-1 h-1 rounded-full bg-outline-variant/50"></span>
             <span>Help Center</span>
             <span className="w-1 h-1 rounded-full bg-outline-variant/50"></span>
-            <span className="text-on-surface">{defaultTitle}</span>
+            <span className="text-on-surface">{defaultTitle || policy?.title || 'Policy'}</span>
           </nav>
           <h2 className="text-2xl md:text-3xl font-body font-semibold text-on-surface mb-4">
             {isLoading ? <Skeleton className="h-10 w-64" /> : policy.title}
@@ -94,10 +109,20 @@ export function GenericPolicyPage({ slug, defaultTitle }) {
           <main className="lg:col-span-8 xl:col-span-7">
             <div className="prose prose-sm max-w-none prose-headings:font-body prose-headings:font-bold prose-headings:text-on-surface prose-p:text-on-surface/80 prose-p:leading-relaxed prose-p:font-normal prose-li:text-on-surface/80 prose-li:font-normal prose-li:leading-relaxed space-y-8">
               {isLoading ? (
-                <div className="space-y-4">
-                  <Skeleton className="h-6 w-full" />
-                  <Skeleton className="h-6 w-5/6" />
-                  <Skeleton className="h-6 w-4/6" />
+                <div className="space-y-12">
+                  <div className="space-y-4">
+                    <Skeleton className="h-8 w-1/3 mb-6" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-11/12" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-4/5" />
+                  </div>
+                  <div className="space-y-4">
+                    <Skeleton className="h-8 w-1/4 mb-6" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-10/12" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
                 </div>
               ) : isError ? (
                 <div className="text-red-500">Failed to load policy. Please try again later.</div>
@@ -136,10 +161,6 @@ export function GenericPolicyPage({ slug, defaultTitle }) {
                   );
                 })()
               )}
-            </div>
-
-            <div className="mt-24 pt-12 border-t border-outline-variant/20 text-[10px] text-on-surface-variant uppercase tracking-[0.2em] text-center md:text-left">
-              © {new Date().getFullYear()} Siri Arts & Crafts. All Rights Reserved.
             </div>
           </main>
         </div>

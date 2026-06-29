@@ -5,6 +5,7 @@ import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { CONTACT_EMAIL, SOCIAL_INSTAGRAM, SOCIAL_PINTEREST } from '../../constants/brandEnv';
 import { useQuery } from '@tanstack/react-query';
 import storeSettingsService from '../../services/api/storeSettingsService';
+import { policyService } from '../../services/domainServices';
 
 export function Footer() {
   const { contact, footer, navigation } = useWebsiteContent();
@@ -13,6 +14,13 @@ export function Footer() {
     queryFn: () => storeSettingsService.getPublicSettings(),
     staleTime: 10 * 60 * 1000,
   });
+
+  const { data: policiesResponse } = useQuery({
+    queryKey: ['public-policies'],
+    queryFn: () => policyService.getPublicPolicies(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const policies = policiesResponse?.data || [];
 
   const logoText = navigation?.logo?.text || 'SIRI ARTS & CRAFTS';
   const logoWords = logoText.split(' ');
@@ -158,16 +166,6 @@ export function Footer() {
                   </span>
                 </a>
               )}
-              <a
-                aria-label="Email"
-                className="text-on-surface-variant/50 hover:text-primary transition-all flex items-center justify-center gap-1.5 min-w-[40px] min-h-[40px]"
-                href={`mailto:${email}`}
-              >
-                <span className="material-symbols-outlined font-light text-[16px]">mail</span>
-                <span className="font-label-sm text-[10px] uppercase tracking-widest font-bold">
-                  Email
-                </span>
-              </a>
             </div>
           </div>
         </div>
@@ -198,7 +196,7 @@ export function Footer() {
                 </span>
               </div>
               <span className="font-label-sm text-[8px] text-on-surface-variant/70 uppercase tracking-[0.15em] font-bold">
-                Free Shipping*
+                Fast Delivery
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -206,7 +204,7 @@ export function Footer() {
                 <span className="material-symbols-outlined text-[12px] text-primary">refresh</span>
               </div>
               <span className="font-label-sm text-[8px] text-on-surface-variant/70 uppercase tracking-[0.15em] font-bold">
-                Easy Returns
+                Simple Returns
               </span>
             </div>
           </div>
@@ -218,54 +216,17 @@ export function Footer() {
             <p className="font-label-sm text-on-surface-variant/50 tracking-[0.1em] text-[9px] uppercase font-bold">
               © {currentYear} {businessName}.
             </p>
-            <p className="font-body text-on-surface-variant/40 text-[8px] max-w-xl">
-              * Free shipping is available for prepaid orders. Cash on Delivery (COD) and deliveries
-              to certain locations may incur additional charges.
-            </p>
           </div>
           <div className="flex items-center flex-wrap gap-4">
-            <Link
-              to="/privacy"
-              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
-            >
-              Privacy
-            </Link>
-            <Link
-              to="/returns"
-              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
-            >
-              Returns
-            </Link>
-            <Link
-              to="/exchange"
-              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
-            >
-              Exchange
-            </Link>
-            <Link
-              to="/refund"
-              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
-            >
-              Refund
-            </Link>
-            <Link
-              to="/cancellation"
-              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
-            >
-              Cancellation
-            </Link>
-            <Link
-              to="/shipping"
-              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
-            >
-              Shipping
-            </Link>
-            <Link
-              to="/terms"
-              className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
-            >
-              Terms
-            </Link>
+            {policies.map((policy) => (
+              <Link
+                key={policy.slug}
+                to={`/policy/${policy.slug}`}
+                className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
+              >
+                {policy.title}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

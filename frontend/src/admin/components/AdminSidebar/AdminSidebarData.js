@@ -1,6 +1,6 @@
 export const navSections = [
   {
-    label: 'Home',
+    label: 'Dashboard',
     items: [
       {
         label: 'Dashboard',
@@ -19,7 +19,7 @@ export const navSections = [
     ],
   },
   {
-    label: 'Edit Website',
+    label: 'Website Management',
     items: [
       {
         label: 'Dynamic Layouts',
@@ -43,29 +43,43 @@ export const navSections = [
         domain: 'settings',
       },
       {
+        label: 'Draft Manager',
+        icon: 'draft',
+        path: '/admin/drafts',
+        keywords: 'drafts, auto-save, unsaved, offline',
+        domain: 'settings',
+      },
+      {
         label: 'Policy Management',
         icon: 'gavel',
         path: '/admin/policies',
         keywords: 'policy, terms, legal, privacy',
         domain: 'settings',
       },
+      {
+        label: 'View Storefront',
+        icon: 'open_in_new',
+        path: '/',
+        keywords: 'storefront, live, view, public',
+        domain: 'settings',
+      },
     ],
   },
   {
-    label: 'Products & Stock',
+    label: 'Catalog Management',
     items: [
-      {
-        label: 'Categories',
-        icon: 'category',
-        path: '/admin/categories',
-        keywords: 'taxonomy, tags, labels',
-        domain: 'products',
-      },
       {
         label: 'Product List',
         icon: 'inventory_2',
         path: '/admin/products',
         keywords: 'items, stock, catalog',
+        domain: 'products',
+      },
+      {
+        label: 'Categories',
+        icon: 'category',
+        path: '/admin/categories',
+        keywords: 'taxonomy, tags, labels',
         domain: 'products',
       },
       {
@@ -75,10 +89,36 @@ export const navSections = [
         keywords: 'alerts, stock count, storage',
         domain: 'products',
       },
+      {
+        label: 'Visual Search',
+        icon: 'lens_blur',
+        path: '/admin/visual-search',
+        keywords: 'ai, lens, vision, image search',
+        domain: 'settings',
+      },
     ],
   },
   {
-    label: 'Sales & Bookings',
+    label: 'Bookings',
+    items: [
+      {
+        label: 'Event Bookings',
+        icon: 'event',
+        path: '/admin/events',
+        keywords: 'booking, setups, dates',
+        domain: 'orders',
+      },
+      {
+        label: 'Rental Calendar',
+        icon: 'calendar_month',
+        path: '/admin/rental-calendar',
+        keywords: 'schedule, availability, tracking',
+        domain: 'orders',
+      },
+    ],
+  },
+  {
+    label: 'Orders',
     items: [
       {
         label: 'Purchase Orders',
@@ -89,7 +129,7 @@ export const navSections = [
       },
       {
         label: 'Rental Orders',
-        icon: 'inventory_2',
+        icon: 'car_rental',
         path: '/admin/rentals',
         keywords: 'rentals, leases, returns',
         domain: 'orders',
@@ -102,27 +142,6 @@ export const navSections = [
         domain: 'orders',
       },
       {
-        label: 'Customers',
-        icon: 'group',
-        path: '/admin/customers',
-        keywords: 'users, crm, segments, vip',
-        domain: 'users',
-      },
-      {
-        label: 'Customer Intelligence',
-        icon: 'insights',
-        path: '/admin/customers/intelligence',
-        keywords: '360, insights, analytics, segments',
-        domain: 'users',
-      },
-      {
-        label: 'Discount Coupons',
-        icon: 'sell',
-        path: '/admin/coupons',
-        keywords: 'discounts, vouchers',
-        domain: 'revenue',
-      },
-      {
         label: 'Payments',
         icon: 'payments',
         path: '/admin/payments',
@@ -132,7 +151,7 @@ export const navSections = [
     ],
   },
   {
-    label: 'Return Management',
+    label: 'Returns & Refunds',
     items: [
       {
         label: 'Return Dashboard',
@@ -171,7 +190,7 @@ export const navSections = [
       },
       {
         label: 'Return Analytics',
-        icon: 'analytics',
+        icon: 'trending_down',
         path: '/admin/returns/analytics',
         keywords: 'trends, reports, revenue impact',
         domain: 'revenue',
@@ -193,30 +212,49 @@ export const navSections = [
     ],
   },
   {
-    label: 'Bookings & Feedback',
+    label: 'Customers',
     items: [
       {
-        label: 'Event Bookings',
-        icon: 'event',
-        path: '/admin/events',
-        keywords: 'booking, setups, dates',
-        domain: 'orders',
+        label: 'Customers',
+        icon: 'group',
+        path: '/admin/customers',
+        keywords: 'users, crm, segments, vip',
+        domain: 'users',
       },
       {
-        label: 'Rental Calendar',
-        icon: 'calendar_month',
-        path: '/admin/rental-calendar',
-        keywords: 'schedule, availability, tracking',
-        domain: 'orders',
+        label: 'Customer Intelligence',
+        icon: 'insights',
+        path: '/admin/customers/intelligence',
+        keywords: '360, insights, analytics, segments',
+        domain: 'users',
       },
     ],
   },
   {
-    label: 'Reports & Settings',
+    label: 'Marketing & Sales',
+    items: [
+      {
+        label: 'Discount Coupons',
+        icon: 'sell',
+        path: '/admin/coupons',
+        keywords: 'discounts, vouchers',
+        domain: 'revenue',
+      },
+      {
+        label: 'Marketing Emails',
+        icon: 'campaign',
+        path: '/admin/campaigns',
+        keywords: 'marketing, email, newsletters',
+        domain: 'revenue',
+      },
+    ],
+  },
+  {
+    label: 'Analytics',
     items: [
       {
         label: 'Sales Reports',
-        icon: 'analytics',
+        icon: 'query_stats',
         path: '/admin/analytics',
         keywords: 'trends, metrics, profits',
         domain: 'revenue',
@@ -228,20 +266,11 @@ export const navSections = [
         keywords: 'recommendations, trending, metrics',
         domain: 'settings',
       },
-      {
-        label: 'Visual Search',
-        icon: 'lens_blur',
-        path: '/admin/visual-search',
-        keywords: 'ai, lens, vision, image search',
-        domain: 'settings',
-      },
-      {
-        label: 'Marketing Emails',
-        icon: 'campaign',
-        path: '/admin/campaigns',
-        keywords: 'marketing, email, newsletters',
-        domain: 'revenue',
-      },
+    ],
+  },
+  {
+    label: 'Administration',
+    items: [
       {
         label: 'Manage Staff',
         icon: 'groups',
@@ -249,20 +278,11 @@ export const navSections = [
         keywords: 'staff, employees, access, permissions',
         domain: 'users',
       },
-      {
-        label: 'System Users',
-        icon: 'admin_panel_settings',
-        path: '/admin/system-users',
-        keywords: 'admins, super, security, access',
-        domain: 'users',
-      },
-      {
-        label: 'Drafts Manager',
-        icon: 'draft',
-        path: '/admin/drafts',
-        keywords: 'drafts, auto-save, unsaved, offline',
-        domain: 'settings',
-      },
+    ],
+  },
+  {
+    label: 'Settings',
+    items: [
       {
         label: 'Settings',
         icon: 'settings',
@@ -275,13 +295,6 @@ export const navSections = [
         icon: 'settings_suggest',
         path: '/admin/config',
         keywords: 'flags, variables, toggles',
-        domain: 'settings',
-      },
-      {
-        label: 'Store Configurations',
-        icon: 'storefront',
-        path: '/admin/store-config',
-        keywords: 'business rules, policies, shipping, cod, loyalty',
         domain: 'settings',
       },
     ],

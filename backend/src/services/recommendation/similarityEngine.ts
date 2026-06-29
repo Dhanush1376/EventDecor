@@ -67,23 +67,23 @@ export async function findSimilarProducts(
     if (cached) return cached;
 
     const sourceProduct = await Product.findById(productId)
-      .select('category tags price material badges')
+      .select('primaryCategory tags price material badges')
       .lean();
 
     if (!sourceProduct) return [];
 
     // Find candidates in same or related categories
     const relatedCategories = [
-      sourceProduct.category,
-      ...(COMPLEMENTARY_CATEGORIES[sourceProduct.category?.toLowerCase()] || []),
+      sourceProduct.primaryCategory,
+      ...(COMPLEMENTARY_CATEGORIES[sourceProduct.primaryCategory?.toString().toLowerCase()] || []),
     ];
 
     const candidates = await Product.find({
       _id: { $ne: productId },
       isActive: true,
-      category: { $in: relatedCategories.map((c) => new RegExp(escapeRegex(c), 'i')) },
+      category: { $in: relatedCategories.map((c) => new RegExp(escapeRegex(String(c)), 'i')) },
     })
-      .select('_id category tags price material badges')
+      .select('_id primaryCategory tags price material badges')
       .limit(100)
       .lean();
 
@@ -98,7 +98,7 @@ export async function findSimilarProducts(
       if (tagSim > 0) matchedSignals.push('tags');
 
       // Same category
-      if (candidate.category?.toLowerCase() === sourceProduct.category?.toLowerCase()) {
+      if (candidate.primaryCategory?.toString() === sourceProduct.primaryCategory?.toString()) {
         score += 0.25;
         matchedSignals.push('category');
       }
@@ -157,7 +157,7 @@ export async function findSimilarEvents(
     if (cached) return cached;
 
     const sourceEvent = await Event.findById(eventId)
-      .select('category style features colorPalette basePrice')
+      .select('primaryCategory style features colorPalette basePrice')
       .lean();
 
     if (!sourceEvent) return [];
@@ -166,7 +166,7 @@ export async function findSimilarEvents(
       _id: { $ne: eventId },
       isActive: true,
     })
-      .select('_id category style features colorPalette basePrice')
+      .select('_id primaryCategory style features colorPalette basePrice')
       .limit(50)
       .lean();
 
@@ -175,7 +175,7 @@ export async function findSimilarEvents(
       let score = 0;
 
       // Same category
-      if (candidate.category?.toLowerCase() === sourceEvent.category?.toLowerCase()) {
+      if (candidate.primaryCategory?.toString() === sourceEvent.primaryCategory?.toString()) {
         score += 0.3;
         matchedSignals.push('category');
       }
@@ -305,7 +305,7 @@ export async function getComplementaryItems(
       isActive: true,
       category: { $in: complementary.map((c) => new RegExp(escapeRegex(c), 'i')) },
     })
-      .select('_id category')
+      .select('_id primaryCategory')
       .sort({ rating: -1, reviews: -1 })
       .limit(limit)
       .lean();
@@ -333,11 +333,11 @@ export async function getFastFallbackSimilar(
 ): Promise<any[]> {
   try {
     if (targetType === 'product') {
-      const product = await Product.findById(targetId).select('category').lean();
+      const product = await Product.findById(targetId).select('primaryCategory').lean();
       if (!product) return [];
 
       const products = await Product.find({
-        category: product.category,
+        primaryCategory: product.primaryCategory,
         _id: { $ne: targetId },
         isActive: true,
       })
@@ -352,7 +352,7 @@ export async function getFastFallbackSimilar(
         targetType: 'product',
         title: p.title,
         imageSrc: p.imageSrc,
-        category: p.category,
+        category: p.primaryCategory?.toString()?.toString(),
         price: p.price,
         rating: p.rating,
         reviews: p.reviews,
@@ -364,15 +364,15 @@ export async function getFastFallbackSimilar(
         isDepositRefundable: p.isDepositRefundable,
       }));
     } else if (targetType === 'event') {
-      const event = await Event.findById(targetId).select('category').lean();
+      const event = await Event.findById(targetId).select('primaryCategory').lean();
       if (!event) return [];
 
       const events = await Event.find({
-        category: event.category,
+        primaryCategory: event.primaryCategory,
         _id: { $ne: targetId },
         isActive: true,
       })
-        .select('_id title image category style basePrice')
+        .select('_id title image primaryCategory style basePrice')
         .limit(limit)
         .lean();
 
@@ -381,7 +381,7 @@ export async function getFastFallbackSimilar(
         targetType: 'event',
         title: e.title,
         image: e.image,
-        category: e.category,
+        category: e.primaryCategory,
         style: e.style,
         basePrice: e.basePrice,
       }));
@@ -403,9 +403,9 @@ export async function getFastFallbackCompleteSetup(
       return getFastFallbackSimilar(targetType, targetId, limit);
     } else {
       let eventCategory: string | undefined;
-      const event = await Event.findById(targetId).select('category').lean();
+      const event = await Event.findById(targetId).select('primaryCategory').lean();
       if (event) {
-        eventCategory = event.category;
+        eventCategory = event.primaryCategory?.toString();
       } else {
         const showcase = await ShowcaseCollection.findById(targetId).select('category').lean();
         if (showcase) eventCategory = showcase.category;
@@ -414,11 +414,11 @@ export async function getFastFallbackCompleteSetup(
       if (!eventCategory) return [];
 
       const fallbackEvents = await Event.find({
-        category: eventCategory,
+        category: eventCategory as any as any,
         _id: { $ne: targetId },
         isActive: true,
       })
-        .select('_id title image category style basePrice')
+        .select('_id title image primaryCategory style basePrice')
         .limit(limit)
         .lean();
 
@@ -427,7 +427,7 @@ export async function getFastFallbackCompleteSetup(
         targetType: 'event',
         title: e.title,
         image: e.image,
-        category: e.category,
+        category: e.primaryCategory,
         style: e.style,
         basePrice: e.basePrice,
       }));

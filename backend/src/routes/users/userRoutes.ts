@@ -28,7 +28,12 @@ import {
   respondToInvite,
 } from '../../controllers/users/userController';
 import { exportMyData, eraseMyAccount } from '../../controllers/customer/privacyController';
-import { requireAuth, requireSuperAdmin, requireRole } from '../../middleware/authMiddleware';
+import {
+  requireAuth,
+  requireSuperAdmin,
+  requireRole,
+  requireAdmin,
+} from '../../middleware/authMiddleware';
 import { validateRequest } from '../../middleware/zodValidationMiddleware';
 import {
   updateProfileSchema,
@@ -84,19 +89,14 @@ router.get('/me/export', requireAuth, exportMyData);
 router.delete('/me', requireAuth, eraseMyAccount);
 
 // Admin Routes & Team Management
-router.get(
-  '/',
-  requireAuth,
-  requireRole(['super_admin', 'main_admin', 'admin', 'manager', 'coordinator']),
-  getUsers,
-);
-router.get('/team', requireAuth, requireRole(['super_admin', 'main_admin']), getTeamMembers);
-router.post('/team/invite', requireAuth, requireSuperAdmin, inviteTeamMember);
-router.delete('/team/invite/:id', requireAuth, requireSuperAdmin, cancelTeamInvite);
+router.get('/', requireAuth, requireAdmin, getUsers);
+router.get('/team', requireAuth, requireAdmin, getTeamMembers);
+router.post('/team/invite', requireAuth, requireAdmin, inviteTeamMember);
+router.delete('/team/invite/:id', requireAuth, requireAdmin, cancelTeamInvite);
 router.get('/team/invite/details', getInviteDetailsByToken); // Public token check
 router.post('/team/invite/respond', respondToInvite); // Public accept/decline
 
-router.get('/:id', requireAuth, requireRole(['super_admin', 'main_admin']), getUserById);
-router.patch('/:id/role', requireAuth, requireSuperAdmin, updateUserRole);
+router.get('/:id', requireAuth, requireAdmin, getUserById);
+router.patch('/:id/role', requireAuth, requireAdmin, updateUserRole);
 
 export default router;

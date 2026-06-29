@@ -8,6 +8,8 @@ import { categoryCache, MemoryCache } from '../utils/cache/MemoryCache';
 import redisClient from '../utils/cache/redis';
 import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
 import { analyzeQueryWithAI, escapeRegex, getMatchingProductCategory } from './searchService';
+import { CategoryService } from './CategoryService';
+import Category from '../models/Category';
 import ApiError from '../utils/ApiError';
 import { ChangeTracker } from '../utils/ChangeTracker';
 
@@ -27,9 +29,22 @@ function enforceSmartPricing(data: Partial<IProduct>, existingProduct?: IProduct
   if (isManual === true) return;
 
   const price = data.price !== undefined ? Number(data.price) : Number(existingProduct?.price || 0);
-  const category = (
-    data.category !== undefined ? String(data.category) : String(existingProduct?.category || '')
-  ).toLowerCase();
+
+  // Try to find category name from primaryCategory object if populated, or fallback
+  let categoryName = '';
+  if (data.primaryCategory) {
+    categoryName =
+      typeof data.primaryCategory === 'object' && (data.primaryCategory as any).name
+        ? (data.primaryCategory as any).name
+        : String(data.primaryCategory);
+  } else if (existingProduct?.primaryCategory) {
+    categoryName =
+      typeof existingProduct.primaryCategory === 'object' &&
+      (existingProduct.primaryCategory as any).name
+        ? (existingProduct.primaryCategory as any).name
+        : String(existingProduct.primaryCategory);
+  }
+  const category = categoryName.toLowerCase();
 
   if (price > 0 && category) {
     let dailyRate: number;
@@ -105,6 +120,43 @@ function normalizeProductImages(data: Partial<IProduct>, existingProduct?: IProd
   }
 }
 
+async function resolveCategories(data: any) {
+  // Frontend might send 'category' string or 'primaryCategory' string
+  const primaryString = data.primaryCategory || data.category;
+  if (typeof primaryString === 'string') {
+    const matchedId = await CategoryService.intelligentMatch(primaryString);
+    if (matchedId) {
+      data.primaryCategory = matchedId;
+    } else {
+      // Auto-create safe fallback
+      const fallbackCat = await Category.create({
+        name: primaryString.trim(),
+        slug: primaryString
+          .trim()
+          .replace(/[\s\W-]+/g, '-')
+          .toLowerCase(),
+        type: 'product',
+        isActive: true,
+      });
+      data.primaryCategory = fallbackCat._id;
+    }
+  }
+
+  // Handle secondaryCategories array of strings
+  if (data.secondaryCategories && Array.isArray(data.secondaryCategories)) {
+    const resolvedSec = [];
+    for (const sec of data.secondaryCategories) {
+      if (typeof sec === 'string') {
+        const matchedId = await CategoryService.intelligentMatch(sec);
+        if (matchedId) resolvedSec.push(matchedId);
+      } else if (mongoose.Types.ObjectId.isValid(sec as any)) {
+        resolvedSec.push(sec);
+      }
+    }
+    data.secondaryCategories = resolvedSec;
+  }
+}
+
 class ProductService {
   static async buildProductFilterQuery(queryParams: any, isAdmin: boolean = false) {
     const {
@@ -136,7 +188,13 @@ class ProductService {
       }
     }
 
-    if (category && String(category).toLowerCase() !== 'all') filter.category = category;
+    if (category && String(category).toLowerCase() !== 'all') {
+      const catMatchId = await CategoryService.intelligentMatch(String(category));
+      if (catMatchId) {
+        filter.$or = filter.$or || [];
+        filter.$or.push({ primaryCategory: catMatchId }, { secondaryCategories: catMatchId });
+      }
+    }
     if (featured === 'true') filter.featured = true;
 
     // Rental filters
@@ -170,10 +228,19 @@ class ProductService {
         .split(',')
         .map((item) => item.trim())
         .filter((item) => Boolean(item) && item.toLowerCase() !== 'all');
-      if (collections.length > 0)
-        filter.category = {
-          $in: collections.map((item) => new RegExp(`^${escapeRegex(item)}$`, 'i')),
-        };
+      if (collections.length > 0) {
+        const matchedCats = await Category.find({
+          $or: [{ slug: { $in: collections } }, { name: { $in: collections } }],
+        });
+        if (matchedCats.length > 0) {
+          const catIds = matchedCats.map((c) => c._id);
+          filter.$or = filter.$or || [];
+          filter.$or.push(
+            { primaryCategory: { $in: catIds } },
+            { secondaryCategories: { $in: catIds } },
+          );
+        }
+      }
     }
 
     // Dynamic Filters (e.g. ?Color=Red,Blue or ?Size=M)
@@ -240,10 +307,12 @@ class ProductService {
 
       // Apply category from AI if not manually set and it matches database taxonomy
       if (aiAnalysis.category && !category) {
-        const dbCategories = await Product.distinct('category', { isActive: true }).catch(() => []);
+        const dbCategories = await Category.find({ isActive: true })
+          .distinct('name')
+          .catch(() => [] as string[]);
         const matchedCategory = getMatchingProductCategory(aiAnalysis.category, dbCategories);
         if (matchedCategory) {
-          filter.category = new RegExp(`^${escapeRegex(matchedCategory)}$`, 'i');
+          filter.primaryCategory = new RegExp(`^${escapeRegex(matchedCategory)}$`, 'i');
         }
       }
 
@@ -258,11 +327,18 @@ class ProductService {
       const searchOr = [
         { title: { $in: regexPatterns } },
         { teluguTitle: { $in: regexPatterns } },
-        { category: { $in: regexPatterns } },
         { material: { $in: regexPatterns } },
         { tags: { $in: regexPatterns } },
         { description: { $in: regexPatterns } },
       ];
+
+      // Add category text search matching
+      const matchingCats = await Category.find({ name: { $in: regexPatterns } });
+      if (matchingCats.length > 0) {
+        const catIds = matchingCats.map((c) => c._id);
+        searchOr.push({ primaryCategory: { $in: catIds } } as any);
+        searchOr.push({ secondaryCategories: { $in: catIds } } as any);
+      }
 
       // Match colors if detected
       if (aiAnalysis.colors.length > 0) {
@@ -304,6 +380,8 @@ class ProductService {
             ? ''
             : '-description -seoTitle -seoDescription -customizationConfig -variants -dimensions -weight',
         )
+        .populate('primaryCategory', 'name slug type')
+        .populate('secondaryCategories', 'name slug type')
         .sort(sortOptions)
         .skip(skip)
         .limit(limit)
@@ -322,9 +400,15 @@ class ProductService {
 
     // Fetch the product first without updating the counter in DB
     if (isObjectId) {
-      product = await Product.findById(idOrSlug).lean();
+      product = await Product.findById(idOrSlug)
+        .populate('primaryCategory', 'name slug type')
+        .populate('secondaryCategories', 'name slug type')
+        .lean();
     } else {
-      product = await Product.findOne({ slug: idOrSlug.toLowerCase() }).lean();
+      product = await Product.findOne({ slug: idOrSlug.toLowerCase() })
+        .populate('primaryCategory', 'name slug type')
+        .populate('secondaryCategories', 'name slug type')
+        .lean();
     }
 
     if (!product || !product.isActive) return null;
@@ -408,6 +492,7 @@ class ProductService {
 
   static async createProduct(data: Partial<IProduct>, actor?: any) {
     normalizeProductImages(data);
+    await resolveCategories(data);
     enforceSmartPricing(data);
     const product = new Product(data);
     const saved = await product.save();
@@ -425,9 +510,10 @@ class ProductService {
   }
 
   static async updateProduct(id: string, data: Partial<IProduct>, actor?: any) {
-    const oldProduct = await Product.findById(id);
+    const oldProduct = await Product.findById(id).populate('primaryCategory');
     if (oldProduct) {
       normalizeProductImages(data, oldProduct as IProduct);
+      await resolveCategories(data);
       enforceSmartPricing(data, oldProduct as IProduct);
     }
 
@@ -536,7 +622,8 @@ class ProductService {
       if (galleryItem) {
         galleryItem.title = product.title;
         galleryItem.teluguTitle = product.teluguTitle;
-        galleryItem.category = product.category;
+        galleryItem.primaryCategory = product.primaryCategory;
+        galleryItem.secondaryCategories = product.secondaryCategories;
         galleryItem.image = product.imageSrc;
         galleryItem.description = product.description;
         galleryItem.tags = product.tags || [];
@@ -546,7 +633,8 @@ class ProductService {
         galleryItem = new Gallery({
           title: product.title,
           teluguTitle: product.teluguTitle,
-          category: product.category,
+          primaryCategory: product.primaryCategory,
+          secondaryCategories: product.secondaryCategories,
           image: product.imageSrc,
           description: product.description,
           tags: product.tags || [],
@@ -581,15 +669,30 @@ class ProductService {
 
   static async getDistinctCategories() {
     const cacheKey = 'product:distinct_categories';
-    const cached = categoryCache.get<string[]>(cacheKey);
+    const cached = categoryCache.get<any[]>(cacheKey);
     if (cached !== null) {
       logger.info('[CATEGORY CACHE] Cache Hit for distinct categories');
       return cached;
     }
 
     logger.info('[CATEGORY CACHE] Cache Miss. Fetching distinct categories from database');
-    const categories = await Product.distinct('category', { isActive: true });
-    const result = categories.filter(Boolean).sort();
+    // Fetch unique primaryCategory IDs from active products
+    const categoryIds = await Product.distinct('primaryCategory', { isActive: true });
+
+    // Populate them using the Category model to get the { name, slug } objects expected by UI
+    const categories = await Category.find({ _id: { $in: categoryIds }, isActive: true })
+      .select('name slug')
+      .lean();
+
+    // Transform to simple array of names to maintain backward compatibility with some simple frontends,
+    // though the UI might prefer the objects. Let's return just names for now to be safe,
+    // or better, if the UI expects strings, return strings.
+    // The older code returned strings. We will return strings.
+    const result = categories
+      .map((c) => c.name)
+      .filter(Boolean)
+      .sort();
+
     categoryCache.set(cacheKey, result);
     return result;
   }

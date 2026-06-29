@@ -22,6 +22,8 @@ export const ProductCard = React.memo(function ProductCard({
   imageSrc,
   hoverImage,
   category,
+  primaryCategory,
+  secondaryCategories,
   badges = [],
   onQuickView,
   hideDetails = false,
@@ -341,7 +343,9 @@ export const ProductCard = React.memo(function ProductCard({
                           rating,
                           imageSrc,
                           hoverImage,
-                          category,
+                          category: primaryCategory?.name || category,
+                          primaryCategory,
+                          secondaryCategories,
                           badges,
                           itemType,
                           setupTimeHours,
@@ -423,7 +427,9 @@ export const ProductCard = React.memo(function ProductCard({
                         rating,
                         imageSrc,
                         hoverImage,
-                        category,
+                        category: primaryCategory?.name || category,
+                        primaryCategory,
+                        secondaryCategories,
                         badges,
                       })
                     }
@@ -516,7 +522,7 @@ export const ProductCard = React.memo(function ProductCard({
           <span
             className={`text-black/60 font-label uppercase ${compact ? 'text-[7px] tracking-[0.1em]' : 'text-[8px] md:text-[9px] tracking-[0.15em] md:tracking-[0.2em]'} font-bold truncate flex-1 min-w-0`}
           >
-            {category}
+            {primaryCategory?.name || category || 'Uncategorized'}
           </span>
 
           <div className="w-0.5 h-0.5 rounded-full bg-black/10" />

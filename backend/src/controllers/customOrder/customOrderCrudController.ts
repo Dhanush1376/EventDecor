@@ -55,7 +55,7 @@ export const saveDraft = asyncHandler(async (req: Request, res: Response) => {
         productId: product._id.toString(),
         title: product.title,
         imageSrc: product.imageSrc,
-        category: product.category,
+        category: product.primaryCategory?.toString()?.toString()?.toString(),
         price: product.price,
         description: product.description,
         variants: product.variants?.map((v: any) => ({
@@ -66,7 +66,7 @@ export const saveDraft = asyncHandler(async (req: Request, res: Response) => {
         material: product.material,
         dimensions: product.dimensions,
       };
-      draftData.productType = product.category || 'Custom Product';
+      draftData.productType = product.primaryCategory || 'Custom Product';
     }
   }
 

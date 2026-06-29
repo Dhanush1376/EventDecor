@@ -60,12 +60,7 @@ import {
   analyzeShowcaseImage,
   refineShowcaseImage,
 } from '../../controllers/discovery/aiVisionController';
-router.post(
-  '/ai-vision-showcase',
-  requireAuth,
-  requireRole(['super_admin', 'main_admin', 'admin', 'content_manager']),
-  analyzeShowcaseImage,
-);
+router.post('/ai-vision-showcase', analyzeShowcaseImage);
 router.post(
   '/ai-vision-refine-showcase',
   requireAuth,

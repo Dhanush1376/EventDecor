@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 
-export function useProductValidation({
+export function useShowcaseValidation({
   currentStep,
   setCurrentStep,
   formData,
@@ -10,30 +10,23 @@ export function useProductValidation({
   showAIHUD,
   handleCancelAction,
   setLastDraftSaved,
+  setPageState,
 }) {
-  // Form Validation per step
   const getStepErrors = () => {
     const errors = {};
     if (currentStep === 0) {
-      // Check if we have any images in the array or as a primary image string
-      const hasAnyImage = formData.images.length > 0 || !!formData.imageSrc;
-
-      if (formData.images.length > 0 && !formData.imageSrc) {
-        setFormData((prev) => ({ ...prev, imageSrc: prev.images[0] }));
-      }
-
-      if (!hasAnyImage) {
-        errors.imageSrc = 'At least one product image is required';
-      }
+      if (!formData.image) errors.image = 'Cover image is required';
     }
     if (currentStep === 1) {
-      if (!formData.title.trim()) errors.title = 'Product title is required';
-      if (!formData.category && !formData.primaryCategory) errors.category = 'Category is required';
+      if (!formData.title.trim()) errors.title = 'Showcase title is required';
     }
-    if (currentStep === 4) {
-      if (!formData.price || Number(formData.price) <= 0) errors.price = 'Enter a valid price';
-      if (formData.stock === '' || Number(formData.stock) < 0)
-        errors.stock = 'Enter stock quantity';
+    if (currentStep === 2) {
+      if (formData.rentalPrice === '' || Number(formData.rentalPrice) <= 0)
+        errors.rentalPrice = 'A valid rental price is required';
+    }
+    if (currentStep === 3) {
+      if (!formData.description.trim())
+        errors.description = 'Atmospheric narrative description is required';
     }
     return errors;
   };
@@ -51,12 +44,18 @@ export function useProductValidation({
     }
     if (currentStep < WIZARD_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
+      if (setPageState) {
+        setPageState((prev) => ({ ...prev, activeStep: currentStep + 1 }));
+      }
     }
   };
 
   const handlePrev = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      if (setPageState) {
+        setPageState((prev) => ({ ...prev, activeStep: currentStep - 1 }));
+      }
     }
   };
 
@@ -74,12 +73,12 @@ export function useProductValidation({
       // Ctrl+S / Cmd+S to save draft
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        setLastDraftSaved(new Date());
+        if (setLastDraftSaved) setLastDraftSaved(new Date());
         toast.success('Draft saved (in-memory)!', { duration: 1500 });
       }
       // Escape to go back
       if (e.key === 'Escape' && !showAIHUD) {
-        handleCancelAction();
+        if (handleCancelAction) handleCancelAction();
       }
     };
     window.addEventListener('keydown', handleKeyDown);

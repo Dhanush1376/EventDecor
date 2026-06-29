@@ -1,12 +1,12 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { SkeletonDashboard, stagger, AdminSkeleton } from '../components/AdminUIKit';
+import { SkeletonForm, fadeUp } from '../components/AdminUIKit';
+import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { policyService } from '../../services/domainServices';
 import api from '../../services/api';
-import { createSafeHtml } from '../../utils/security/sanitize';
 import { toast } from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
 import { useDraft } from '../hooks/useDraft';
@@ -18,12 +18,27 @@ export function AdminPolicyEditor() {
 
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiTopic, setAiTopic] = useState('');
+
+  const [initialPolicyData, setInitialPolicyData] = useState({
+    title: '',
+    slug: '',
+    content: '',
+    status: 'draft',
+    seoMetadata: { title: '', description: '' },
+  });
 
   const {
     formData,
     setFormData,
-    _draftStatus,
+    pageState,
+    setPageState,
+    draftStatus,
+    hasDraft,
     showRestoreModal,
+    setShowRestoreModal,
     restoreDraft,
     discardDraft,
     deleteDraft,
@@ -33,13 +48,7 @@ export function AdminPolicyEditor() {
     draftKey: isNew ? 'admin:policy:add' : `admin:policy:edit:${id}`,
     module: 'Policies',
     pageTitle: isNew ? 'New Policy' : `Edit Policy ${id}`,
-    initialData: {
-      title: '',
-      slug: '',
-      content: '',
-      status: 'draft',
-      seoMetadata: { title: '', description: '' },
-    },
+    initialData: initialPolicyData,
     enabled: true,
   });
 
@@ -47,7 +56,7 @@ export function AdminPolicyEditor() {
     try {
       const data = await policyService.getById(id);
       if (data.data) {
-        setFormData(data.data);
+        setInitialPolicyData(data.data);
       }
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to load policy'));
@@ -55,6 +64,7 @@ export function AdminPolicyEditor() {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, setFormData, navigate]);
 
   useEffect(() => {
@@ -67,11 +77,19 @@ export function AdminPolicyEditor() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const payload = {
+        ...formData,
+        content:
+          typeof formData.content === 'string'
+            ? formData.content
+            : JSON.stringify(formData.content),
+      };
+
       if (isNew) {
-        await policyService.create(formData);
+        await policyService.create(payload);
         toast.success('Policy created');
       } else {
-        await policyService.update(id, formData);
+        await policyService.update(id, payload);
         toast.success('Policy updated');
       }
       await deleteDraft();
@@ -87,11 +105,62 @@ export function AdminPolicyEditor() {
     navigate('/admin/policies');
   };
 
+  const handleAiAutoFillClick = () => {
+    setAiTopic('');
+    setShowAiModal(true);
+  };
+
+  const executeAiGeneration = async () => {
+    if (!aiTopic.trim()) {
+      toast.error('Please enter a policy topic.');
+      return;
+    }
+
+    setShowAiModal(false);
+    setIsGenerating(true);
+    const toastId = toast.loading(
+      isNew
+        ? 'Analyzing store settings and generating policy...'
+        : 'Analyzing changes and updating policy...',
+    );
+    try {
+      const payload = { topic: aiTopic };
+      if (!isNew) {
+        payload.existingPolicy = formData;
+      }
+      const res = await api.post('/policies/generate', payload);
+      if (res.data?.success && res.data?.data) {
+        const generated = res.data.data;
+        setFormData({
+          ...formData,
+          title: generated.title || formData.title,
+          slug: isNew ? generated.slug || formData.slug : formData.slug,
+          seoMetadata: {
+            title: generated.seoMetadata?.title || formData.seoMetadata?.title || '',
+            description:
+              generated.seoMetadata?.description || formData.seoMetadata?.description || '',
+          },
+          content: JSON.stringify(generated.content || []),
+        });
+        toast.success('Policy auto-filled successfully!', { id: toastId });
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to generate policy'), { id: toastId });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleSuccessAction = () => {
     navigate('/admin/policies');
   };
 
-  if (loading) return <SkeletonDashboard />;
+  if (loading)
+    return (
+      <div className="space-y-6">
+        <SkeletonForm fields={6} />
+      </div>
+    );
 
   const getSets = () => {
     if (!formData.content) return [{ heading: '', paragraph: '' }];
@@ -148,171 +217,226 @@ export function AdminPolicyEditor() {
     setFormData({ ...formData, content: JSON.stringify(sets) });
   };
 
-  const editorContent = (
-    <div className="space-y-6 flex-1 pb-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-1.5">
-          <label className="admin-label">Policy Title</label>
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="e.g. Privacy Policy"
-            className="admin-input text-base font-semibold"
-          />
+  return (
+    <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleCancelAction}
+            className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+          </button>
+          <div>
+            <h2 className="text-[20px] font-bold text-[var(--admin-text-primary)] leading-none mb-1.5 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[22px] text-[var(--admin-accent)]">
+                {isNew ? 'policy' : 'edit_note'}
+              </span>
+              {isNew ? 'Create Policy' : 'Edit Policy'}
+              <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
+            </h2>
+            <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium">
+              {isNew ? 'Configure a new store policy' : `Modifying v${formData.version || 1}`}
+            </p>
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <label className="admin-label">URL Slug</label>
-          <input
-            type="text"
-            value={formData.slug}
-            onChange={(e) =>
-              setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })
-            }
-            placeholder="e.g. privacy-policy"
-            className="admin-input text-base font-mono"
-          />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleAiAutoFillClick}
+            disabled={isGenerating}
+            className="admin-btn h-10 px-4 flex items-center gap-2 rounded-[var(--admin-radius-md)] bg-[#8b7355] text-white hover:bg-[#7a6548] transition-colors font-bold"
+          >
+            <span
+              className={`material-symbols-outlined text-[18px] ${isGenerating ? 'animate-spin' : ''}`}
+            >
+              {isGenerating ? 'sync' : 'auto_awesome'}
+            </span>
+            {isGenerating ? 'Generating...' : 'AI Auto-Fill'}
+          </button>
         </div>
       </div>
 
-      <div className="space-y-4 pt-4 mt-4 min-h-[300px]">
-        <h3 className="text-xs font-bold text-[var(--admin-text-primary)] uppercase tracking-wider mb-2">
-          Policy Content
-        </h3>
-        <AnimatePresence>
-          {getSets().map((set, index) => (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              key={index}
-              className="p-4 border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-md)] bg-[var(--admin-surface)] relative group"
-            >
-              <button
-                onClick={() => removeSet(index)}
-                className="absolute top-3 right-3 text-[var(--admin-error)] opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-[var(--admin-error-light)] rounded"
-                title="Remove Set"
-              >
-                <span className="material-symbols-outlined text-[18px]">delete</span>
-              </button>
-              <div className="space-y-4 pt-2">
-                <div className="space-y-1">
-                  <label className="admin-label text-[10px]">Heading</label>
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"
+      >
+        {/* Main Column */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* General Info */}
+          <div className="admin-card p-6 md:p-8 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <label className="admin-label">
+                  Policy Title <span className="text-[var(--admin-error)]">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="e.g. Privacy Policy"
+                  className="admin-input font-semibold"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="admin-label">
+                  URL Slug <span className="text-[var(--admin-error)]">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.slug}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      slug: e.target.value.toLowerCase().replace(/\s+/g, '-'),
+                    })
+                  }
+                  placeholder="e.g. privacy-policy"
+                  className="admin-input font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-[var(--admin-border-subtle)] pt-6">
+              <h3 className="text-[12px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[16px]">search</span>
+                Search Engine Optimization
+              </h3>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="admin-label text-[11px]">Meta Title</label>
                   <input
                     type="text"
-                    value={set.heading || ''}
-                    onChange={(e) => handleSetChange(index, 'heading', e.target.value)}
-                    className="admin-input font-bold"
-                    placeholder="e.g. 1. Order Cancellations"
+                    value={formData.seoMetadata?.title || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        seoMetadata: { ...formData.seoMetadata, title: e.target.value },
+                      })
+                    }
+                    className="admin-input"
+                    placeholder="Enter meta title"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="admin-label text-[10px]">Paragraph</label>
+                <div className="space-y-1.5">
+                  <label className="admin-label text-[11px]">Meta Description</label>
                   <textarea
-                    value={set.paragraph || ''}
-                    onChange={(e) => handleSetChange(index, 'paragraph', e.target.value)}
-                    className="admin-textarea min-h-[100px]"
-                    placeholder="Standard orders can be canceled..."
+                    value={formData.seoMetadata?.description || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        seoMetadata: { ...formData.seoMetadata, description: e.target.value },
+                      })
+                    }
+                    className="admin-textarea h-24"
+                    placeholder="Enter meta description"
                   />
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-        <button
-          onClick={addSet}
-          className="admin-btn admin-btn-outline w-full py-3 mt-2 border-dashed border-2 hover:bg-[var(--admin-surface-muted)]"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span> Add Set
-        </button>
-      </div>
-
-      <div className="border-t border-[var(--admin-border-subtle)] pt-6 space-y-4 mt-16">
-        <h3 className="text-xs font-bold text-[var(--admin-text-primary)] uppercase tracking-wider">
-          Search Engine Optimization
-        </h3>
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="admin-label">Meta Title</label>
-            <input
-              type="text"
-              value={formData.seoMetadata?.title || ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  seoMetadata: { ...formData.seoMetadata, title: e.target.value },
-                })
-              }
-              className="admin-input"
-              placeholder="Enter meta title"
-            />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <label className="admin-label">Meta Description</label>
-            <textarea
-              value={formData.seoMetadata?.description || ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  seoMetadata: { ...formData.seoMetadata, description: e.target.value },
-                })
-              }
-              className="admin-textarea h-24"
-              placeholder="Enter meta description"
-            />
-          </div>
-        </div>
-      </div>
 
-      <div className="pt-6 border-t border-[var(--admin-border-subtle)] flex items-center justify-end gap-3">
-        <select
-          value={formData.status}
-          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-          className="admin-select min-h-[40px] py-2 w-32"
-        >
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-        </select>
-        <button
-          type="button"
-          onClick={handleCancelAction}
-          className="admin-btn admin-btn-outline min-h-[40px] px-6"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="admin-btn admin-btn-primary min-h-[40px] px-6"
-        >
-          <span className="material-symbols-outlined text-[16px]">{saving ? 'sync' : 'save'}</span>
-          {saving ? 'Saving...' : 'Save Policy'}
-        </button>
-      </div>
-    </div>
-  );
+          {/* Dynamic Content Builder */}
+          <div className="admin-card p-6 md:p-8 space-y-4">
+            <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-tight mb-2 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">article</span>
+              Policy Content
+            </h3>
 
-  return (
-    <motion.div
-      initial="hidden"
-      animate="show"
-      variants={stagger}
-      className="max-w-4xl mx-auto space-y-6 pb-24"
-    >
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center sticky top-0 bg-[var(--admin-surface)] z-10 py-4 border-b border-[var(--admin-border-subtle)]">
-        <div className="flex items-center gap-4">
-          <button onClick={handleCancelAction} className="admin-btn admin-btn-icon">
-            <span className="material-symbols-outlined">arrow_back</span>
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-[var(--admin-text-primary)] tracking-tight">
-              {isNew ? 'New Policy' : `Edit Policy (v${formData.version || 1})`}
-            </h1>
+            <AnimatePresence>
+              {getSets().map((set, index) => (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  key={index}
+                  className="p-5 border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] bg-[var(--admin-surface)] relative group shadow-sm transition-all hover:border-[var(--admin-border)]"
+                >
+                  <button
+                    onClick={() => removeSet(index)}
+                    className="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] text-[var(--admin-error)] opacity-0 group-hover:opacity-100 transition-all hover:bg-[var(--admin-error)] hover:text-white hover:border-transparent rounded-full shadow-sm z-10"
+                    title="Remove Set"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="admin-label text-[10px]">Heading</label>
+                      <input
+                        type="text"
+                        value={set.heading || ''}
+                        onChange={(e) => handleSetChange(index, 'heading', e.target.value)}
+                        className="admin-input font-bold"
+                        placeholder="e.g. 1. Order Cancellations"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="admin-label text-[10px]">Paragraph</label>
+                      <textarea
+                        value={set.paragraph || ''}
+                        onChange={(e) => handleSetChange(index, 'paragraph', e.target.value)}
+                        className="admin-textarea min-h-[120px]"
+                        placeholder="Standard orders can be canceled..."
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            <button
+              onClick={addSet}
+              className="admin-btn-outline w-full py-4 mt-4 border-dashed border-2 rounded-[var(--admin-radius-lg)] hover:bg-[var(--admin-surface-muted)] hover:border-[var(--admin-border)] transition-all flex items-center justify-center gap-2 text-[var(--admin-text-secondary)] text-[12px] font-semibold tracking-wide uppercase"
+            >
+              <span className="material-symbols-outlined text-[18px]">add_circle</span>
+              Add Content Section
+            </button>
           </div>
         </div>
-      </div>
 
-      <div className="admin-card p-6 lg:p-8">{editorContent}</div>
+        {/* Sidebar */}
+        <div className="lg:col-span-4 space-y-6 sticky top-24">
+          <div className="admin-card p-5">
+            <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] mb-3 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">publish</span>
+              Publishing Settings
+            </h3>
+
+            <div className="space-y-2 mb-6">
+              <label className="admin-label text-[11px]">Visibility Status</label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="admin-select"
+              >
+                <option value="draft">Draft (Hidden)</option>
+                <option value="published">Published (Visible)</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-3 border-t border-[var(--admin-border-subtle)] pt-5 mt-5">
+              <button
+                onClick={handleCancelAction}
+                className="admin-btn admin-btn-outline flex-1 h-10 font-bold rounded-[var(--admin-radius-md)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="admin-btn admin-btn-primary flex-1 h-10 font-bold rounded-[var(--admin-radius-md)]"
+              >
+                <span className="material-symbols-outlined text-[16px]">
+                  {saving ? 'sync' : 'save'}
+                </span>
+                {saving ? 'Saving...' : 'Save Policy'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
       <DraftRestoreModal
         isOpen={showRestoreModal}
@@ -322,7 +446,69 @@ export function AdminPolicyEditor() {
         lastSavedAt={lastSavedAt}
       />
 
+      <AnimatePresence>
+        {showAiModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-md bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] shadow-xl overflow-hidden border border-[var(--admin-border)]"
+            >
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4 text-[var(--admin-accent)]">
+                  <span className="material-symbols-outlined text-[24px]">auto_awesome</span>
+                  <h3 className="text-[18px] font-bold text-[var(--admin-text-primary)]">
+                    AI Auto-Fill
+                  </h3>
+                </div>
+                <p className="text-[13px] text-[var(--admin-text-secondary)] mb-5">
+                  {isNew
+                    ? "What policy do you want to generate? The AI will automatically use your store's shipping, refund, and payment settings to write a precise policy."
+                    : 'What changes would you like to make? The AI will update your existing policy based on your instructions and current store settings.'}
+                </p>
+                <div className="space-y-2">
+                  <label className="admin-label">
+                    {isNew ? 'Policy Topic' : 'Instructions for AI'}
+                  </label>
+                  <input
+                    type="text"
+                    value={aiTopic}
+                    onChange={(e) => setAiTopic(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') executeAiGeneration();
+                    }}
+                    placeholder={
+                      isNew
+                        ? 'e.g. Shipping Policy, Refund Policy...'
+                        : 'e.g. Add a clause about 2-day delivery...'
+                    }
+                    className="admin-input"
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-3 px-6 py-4 bg-[var(--admin-surface-muted)] border-t border-[var(--admin-border-subtle)]">
+                <button
+                  onClick={() => setShowAiModal(false)}
+                  className="admin-btn-outline flex-1 h-10 font-bold rounded-[var(--admin-radius-md)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeAiGeneration}
+                  className="admin-btn admin-btn-primary flex-1 h-10 font-bold rounded-[var(--admin-radius-md)] flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[18px]">magic_button</span>
+                  Generate
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <UnsavedChangesGuard blocker={blocker} />
-    </motion.div>
+    </div>
   );
 }

@@ -79,8 +79,13 @@ export function CartProvider({ children }) {
   const summary = activeCartMode === 'purchase' ? purchaseCart.summary : rentalCart.summary;
 
   useEffect(() => {
-    persistentStorage.setItem('siri_cart_cache', { purchaseCart, rentalCart });
-  }, [purchaseCart, rentalCart]);
+    if (!isAuthenticated) {
+      persistentStorage.setItem('siri_cart_cache', { purchaseCart, rentalCart });
+    } else {
+      // Clear cache when authenticated to prevent merging the auth cart with itself on reload
+      persistentStorage.removeItem('siri_cart_cache');
+    }
+  }, [purchaseCart, rentalCart, isAuthenticated]);
 
   const { addItem, attemptAddToCart, removeItem, updateQuantity, clearCart } =
     useOptimisticCartMutation({

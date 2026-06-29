@@ -28,16 +28,49 @@ export function MediaStep({
           <div className="flex gap-2">
             <input
               type="text"
+              id="showcaseDirectUrlInput"
               placeholder="Image URL"
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
               className="flex-1 min-w-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-lg px-3 py-2 text-[11px] outline-none focus:border-[var(--admin-accent)]/40"
             />
             <button
               type="button"
-              onClick={() => {
-                if (formData.image) {
-                  toast.success('URL added successfully!');
+              onClick={async () => {
+                const input = document.getElementById('showcaseDirectUrlInput');
+                if (input.value) {
+                  setIsCompressing(true);
+                  try {
+                    const uploadData = new FormData();
+                    uploadData.append('urls', input.value);
+                    const res = await uploadService.uploadImages(uploadData, 'events');
+                    if (res.success && res.images && res.images.length > 0) {
+                      setFormData((prev) => {
+                        // If no main image, set it
+                        if (!prev.image) {
+                          return { ...prev, image: res.images[0] };
+                        }
+                        // Otherwise try to fill galleryImages
+                        const newGallery = [...(prev.galleryImages || [])];
+                        let added = false;
+                        for (let i = 0; i < newGallery.length; i++) {
+                          if (!newGallery[i]) {
+                            newGallery[i] = res.images[0];
+                            added = true;
+                            break;
+                          }
+                        }
+                        if (!added) {
+                          newGallery.push(res.images[0]);
+                        }
+                        return { ...prev, galleryImages: newGallery };
+                      });
+                      toast.success('Image fetched & optimized!');
+                      input.value = '';
+                    }
+                  } catch (_err) {
+                    toast.error('Failed to upload from URL');
+                  } finally {
+                    setIsCompressing(false);
+                  }
                 }
               }}
               className="shrink-0 bg-[var(--admin-accent)] text-white hover:brightness-110 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-transform active:scale-95 cursor-pointer whitespace-nowrap"
@@ -54,6 +87,7 @@ export function MediaStep({
           </label>
           <input
             type="file"
+            multiple
             accept="image/*"
             onChange={async (e) => {
               const rawFiles = Array.from(e.target.files);
@@ -86,8 +120,26 @@ export function MediaStep({
 
                 const res = await uploadService.uploadImages(uploadData, 'events', onProgress);
                 if (res.success && res.images && res.images.length > 0) {
-                  setFormData((prev) => ({ ...prev, image: res.images[0] }));
-                  toast.success(`Showcase image uploaded successfully!`);
+                  setFormData((prev) => {
+                    const updates = { ...prev };
+                    let imgIdx = 0;
+                    if (!updates.image) {
+                      updates.image = res.images[imgIdx++];
+                    }
+                    const newGallery = [...(updates.galleryImages || ['', ''])];
+                    while (imgIdx < res.images.length) {
+                      const emptySlot = newGallery.findIndex((url) => !url);
+                      if (emptySlot !== -1) {
+                        newGallery[emptySlot] = res.images[imgIdx];
+                      } else {
+                        newGallery.push(res.images[imgIdx]); // append if full
+                      }
+                      imgIdx++;
+                    }
+                    updates.galleryImages = newGallery;
+                    return updates;
+                  });
+                  toast.success(`Showcase media uploaded successfully!`);
                 }
               } catch (err) {
                 let msg =
@@ -112,6 +164,84 @@ export function MediaStep({
             className="w-full text-[11px] text-[var(--admin-text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:uppercase file:tracking-wider file:bg-[var(--admin-accent)] file:text-white hover:file:bg-[var(--admin-accent-hover)] cursor-pointer shadow-sm border border-[var(--admin-border)] rounded-xl p-2 bg-[var(--admin-surface)] focus:border-[var(--admin-accent)] focus:outline-none transition-all"
           />
         </div>
+
+        {/* Gallery Grid */}
+        {(formData.image || (formData.galleryImages && formData.galleryImages.some(Boolean))) && (
+          <div className="pt-2">
+            <h4 className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] uppercase tracking-widest mb-3">
+              Media Gallery
+            </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {/* Primary Image */}
+              {formData.image && (
+                <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-[var(--admin-accent)] group">
+                  <img
+                    src={formData.image}
+                    className="w-full h-full object-cover"
+                    alt="Primary Gallery"
+                  />
+                  <div className="absolute top-1 left-1 bg-[var(--admin-accent)] text-white text-[11px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm z-10 pointer-events-none">
+                    Primary
+                  </div>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, image: '' }))}
+                      className="w-8 h-8 rounded-full bg-[var(--admin-error)] text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                      title="Delete Primary Image"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+              {/* Gallery Images */}
+              {formData.galleryImages &&
+                formData.galleryImages.map((img, idx) =>
+                  img ? (
+                    <div
+                      key={`gallery-${idx}`}
+                      className="relative aspect-square rounded-xl overflow-hidden border-2 border-[var(--admin-border)] group"
+                    >
+                      <img src={img} className="w-full h-full object-cover" alt="Gallery" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => {
+                              const newImage = img;
+                              const oldImage = prev.image;
+                              const newGallery = [...prev.galleryImages];
+                              newGallery[idx] = oldImage || ''; // swap or just push down
+                              return { ...prev, image: newImage, galleryImages: newGallery };
+                            });
+                          }}
+                          className="w-8 h-8 rounded-full bg-[var(--admin-surface)] text-[var(--admin-accent)] flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                          title="Make Primary"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">star</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => {
+                              const newGallery = [...prev.galleryImages];
+                              newGallery[idx] = ''; // clear it
+                              return { ...prev, galleryImages: newGallery };
+                            });
+                          }}
+                          className="w-8 h-8 rounded-full bg-[var(--admin-error)] text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                          title="Delete Image"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : null,
+                )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

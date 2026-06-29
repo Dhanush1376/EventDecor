@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { useCategories } from '../../hooks/useProductQueries';
 import { handleImageError } from '../../utils/media/imageUtils';
+import toast from 'react-hot-toast';
 import {
   PageHeader,
   StatusBadge,
@@ -23,7 +24,10 @@ export function AdminProducts() {
     deleteProduct,
     toggleProductFeatured,
     searchQuery,
-    _refreshProducts,
+    setSearchQuery,
+    websiteContent,
+    updateContent,
+    publishContent,
   } = useAdmin();
   const { data: productCategories = [] } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -31,6 +35,42 @@ export function AdminProducts() {
   const [viewMode, setViewMode] = useState('table');
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // ─── Helpers ───
+  const getIsHeroProduct = (productId) => {
+    return (websiteContent?.hero?.selectedProductIds || []).includes(productId);
+  };
+
+  const toggleHeroProduct = (productId) => {
+    const currentHeroIds = websiteContent?.hero?.selectedProductIds || [];
+
+    let newIds;
+    if (currentHeroIds.includes(productId)) {
+      newIds = currentHeroIds.filter((id) => id !== productId);
+      toast.success('Removed from Hero Carousel');
+    } else {
+      newIds = [...currentHeroIds, productId];
+      toast.success('Added to Hero Carousel');
+    }
+
+    const updatedHero = {
+      ...(websiteContent?.hero || {}),
+      selectedProductIds: newIds,
+    };
+
+    updateContent('hero', updatedHero);
+    publishContent('hero', updatedHero);
+  };
+
+  const handleBulkDelete = async () => {
+    if (window.confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) {
+      for (const id of selectedProducts) {
+        await deleteProduct(id);
+      }
+      setSelectedProducts([]);
+      toast.success(`${selectedProducts.length} products deleted`);
+    }
+  };
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -96,10 +136,17 @@ export function AdminProducts() {
         variants={fadeUp}
         className="admin-card p-2 sm:p-3 hidden md:flex flex-row items-center justify-between gap-2"
       >
-        {/* Mobile Filters (moved to headerAction, but we still need the desktop filters here) */}
-
-        {/* Desktop Filters */}
         <div className="hidden md:flex items-center gap-1.5 flex-1 min-w-0">
+          <div className="admin-search-wrapper flex-1 min-w-[200px] max-w-[300px]">
+            <span className="material-symbols-outlined admin-search-icon">search</span>
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="admin-input h-9 w-full"
+            />
+          </div>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -126,9 +173,25 @@ export function AdminProducts() {
 
         <div className="flex items-center gap-2 shrink-0">
           {selectedProducts.length > 0 && (
-            <span className="admin-badge admin-badge-info h-9 px-2 flex items-center justify-center font-bold text-[10px] hidden sm:inline-flex">
-              {selectedProducts.length} selected
-            </span>
+            <div className="flex items-center gap-2 mr-2 border-r border-[var(--admin-border-subtle)] pr-4 h-9">
+              <span className="admin-badge admin-badge-neutral h-full px-3 flex items-center justify-center font-bold text-[11px] hidden sm:inline-flex bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]">
+                {selectedProducts.length} SELECTED
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                className="admin-btn h-full bg-[var(--admin-error)] text-white hover:opacity-90 border-none px-3 text-[12px] font-bold shadow-sm flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[16px]">delete</span>
+                Delete
+              </button>
+              <button
+                onClick={() => setSelectedProducts([])}
+                className="admin-btn-outline h-full w-9 p-0 flex items-center justify-center shadow-sm"
+                title="Clear Selection"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
           )}
 
           <div className="flex bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 shadow-sm shrink-0">
@@ -156,7 +219,6 @@ export function AdminProducts() {
         </div>
       </motion.div>
 
-      {/* Table / Grid Render */}
       <AnimatePresence mode="wait">
         {dataLoading ? (
           <motion.div key="loading" initial="hidden" animate="show" exit="hidden" variants={fadeUp}>
@@ -222,7 +284,6 @@ export function AdminProducts() {
             variants={fadeUp}
             className="admin-card"
           >
-            {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="admin-table w-full min-w-[900px]">
                 <thead>
@@ -312,18 +373,20 @@ export function AdminProducts() {
                       <td className="text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => toggleProductFeatured(p.id)}
+                            onClick={() => toggleHeroProduct(p.id)}
                             className={`admin-btn-icon w-8 h-8 p-0 min-h-0 ${
-                              p.featured
+                              getIsHeroProduct(p.id)
                                 ? 'text-[var(--admin-warning)]'
                                 : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
                             }`}
-                            title="Toggle Featured"
+                            title="Toggle Hero Carousel"
                           >
                             <span
                               className="material-symbols-outlined text-[18px]"
                               style={{
-                                fontVariationSettings: p.featured ? "'FILL' 1" : "'FILL' 0",
+                                fontVariationSettings: getIsHeroProduct(p.id)
+                                  ? "'FILL' 1"
+                                  : "'FILL' 0",
                               }}
                             >
                               star
@@ -431,9 +494,9 @@ export function AdminProducts() {
                     alt={p.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  {p.featured && (
+                  {getIsHeroProduct(p.id) && (
                     <div className="absolute top-3 left-3 bg-[var(--admin-bg)] text-[var(--admin-text-primary)] px-2.5 py-1 rounded-[var(--admin-radius-sm)] text-[9px] font-extrabold uppercase tracking-widest shadow-[var(--admin-shadow-sm)]">
-                      Featured
+                      Hero Carousel
                     </div>
                   )}
                   <div className="absolute top-3 right-3">
@@ -476,48 +539,68 @@ export function AdminProducts() {
         onClose={() => setIsMobileFilterOpen(false)}
         title="Filter Products"
       >
-        <div>
-          <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
-            Category
-          </label>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="admin-input"
-          >
-            <option value="All">All Categories</option>
-            {productCategories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
-            Status
-          </label>
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="admin-input"
-          >
-            <option value="All">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="low_stock">Low Stock</option>
-            <option value="out_of_stock">Out of Stock</option>
-          </select>
-        </div>
-        <div className="pt-4 flex items-center justify-between">
-          <button
-            onClick={() => {
-              setSelectedCategory('All');
-              setSelectedStatus('All');
-            }}
-            className="text-[12px] font-bold text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
-          >
-            Clear Filters
-          </button>
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
+              Search
+            </label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-[var(--admin-text-tertiary)]">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Search products by name or ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="admin-input pl-10"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
+              Category
+            </label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="admin-input"
+            >
+              <option value="All">All Categories</option>
+              {productCategories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
+              Status
+            </label>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="admin-input"
+            >
+              <option value="All">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="low_stock">Low Stock</option>
+              <option value="out_of_stock">Out of Stock</option>
+            </select>
+          </div>
+          <div className="pt-4 flex items-center justify-between">
+            <button
+              onClick={() => {
+                setSelectedCategory('All');
+                setSelectedStatus('All');
+              }}
+              className="text-[12px] font-bold text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
       </MobileFilterDrawer>
     </motion.div>

@@ -23,16 +23,16 @@ export function EventGrid({
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="flex flex-col group">
-              <Skeleton className="aspect-[4/3] md:aspect-[3/2] w-full rounded-[16px] md:rounded-[32px] mb-3 md:mb-4 border border-black/5" />
+              <div className="relative aspect-[4/3] md:aspect-[3/2] w-full mb-3 md:mb-4 bg-surface rounded-[16px] md:rounded-[32px] border border-black/5 overflow-hidden shadow-sm">
+                <Skeleton className="absolute inset-0 w-full h-full !rounded-none" />
+              </div>
               <div className="flex flex-col flex-1 py-1">
-                <div className="mb-2 md:mb-4">
-                  <Skeleton className="h-2 md:h-2.5 w-16 md:w-24 mb-1.5 md:mb-2.5 rounded-full" />
-                  <Skeleton className="h-4 md:h-6 w-3/4 rounded-full" />
+                <div className="mb-2 md:mb-4 space-y-2">
+                  <Skeleton className="h-2 md:h-2.5 w-16 md:w-24 rounded-full" />
+                  <Skeleton className="h-4 md:h-6 w-[80%] rounded-full" />
                 </div>
                 <div className="flex items-center justify-between pt-2 md:pt-4 border-t border-black/5 mt-auto">
-                  <div className="flex items-center gap-1.5 md:gap-3">
-                    <Skeleton className="h-2.5 md:h-3 w-16 md:w-20 rounded-full" />
-                  </div>
+                  <Skeleton className="h-2.5 md:h-3 w-16 md:w-20 rounded-full" />
                   <Skeleton className="h-2.5 md:h-3 w-12 md:w-16 rounded-full" />
                 </div>
               </div>

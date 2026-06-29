@@ -60,7 +60,8 @@ export function useProductForm({ id, isEditMode }) {
         displayBadge: '',
       },
       slug: '',
-      category: '',
+      primaryCategory: '',
+      secondaryCategories: [],
       material: '',
       tags: '',
       price: '',
@@ -146,9 +147,11 @@ export function useProductForm({ id, isEditMode }) {
           const res = await productService.getById(id);
           if (res.success) {
             const p = res.data;
-            if (p.category && !dbCategories.includes(p.category)) {
-              setCategoriesList((prev) => Array.from(new Set([...prev, p.category])).sort());
+            const pCatName = p.primaryCategory?.name || p.primaryCategory || '';
+            if (pCatName && !dbCategories.includes(pCatName)) {
+              setCategoriesList((prev) => Array.from(new Set([...prev, pCatName])).sort());
             }
+            const pSecCats = (p.secondaryCategories || []).map((c) => c.name || c);
             const dbImages = Array.isArray(p.images) ? p.images : [];
             const allImages = [p.imageSrc, ...dbImages].filter(
               (img) => typeof img === 'string' && img.trim() !== '',
@@ -168,7 +171,8 @@ export function useProductForm({ id, isEditMode }) {
                 displayBadge: '',
               },
               slug: p.slug || '',
-              category: p.category || '',
+              primaryCategory: pCatName,
+              secondaryCategories: pSecCats,
               material: p.material || '',
               tags: p.tags ? p.tags.join(',') : '',
               price: p.price || '',
@@ -241,7 +245,7 @@ export function useProductForm({ id, isEditMode }) {
   // Smart Rental Pricing Auto-calculation
   useEffect(() => {
     if (!formData.isManualRentalPricing && formData.rentalEnabled && formData.price) {
-      const calculated = calculateRentalPricing(formData.price, formData.category);
+      const calculated = calculateRentalPricing(formData.price, formData.primaryCategory);
       if (calculated) {
         setFormData((prev) => {
           if (
@@ -267,7 +271,7 @@ export function useProductForm({ id, isEditMode }) {
     }
   }, [
     formData.price,
-    formData.category,
+    formData.primaryCategory,
     formData.isManualRentalPricing,
     formData.rentalEnabled,
     setFormData,

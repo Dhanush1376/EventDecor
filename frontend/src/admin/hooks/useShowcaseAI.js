@@ -85,7 +85,22 @@ export function useShowcaseAI({ formData, setFormData, setCategories, setCurrent
       { key: 'subtitle', value: aiAnalysisResult.subtitle },
       { key: 'category', value: aiAnalysisResult.categoryId || aiAnalysisResult.category },
       { key: 'description', value: aiAnalysisResult.description },
-      { key: 'inclusionsText', value: aiAnalysisResult.inclusionsText },
+      {
+        key: 'inclusions',
+        value:
+          aiAnalysisResult.inclusions ||
+          (aiAnalysisResult.inclusionsText
+            ? aiAnalysisResult.inclusionsText
+                .split(',')
+                .map((item, idx) => ({
+                  id: Date.now() + idx,
+                  name: item.trim(),
+                  defaultQty: 1,
+                  condition: 'excellent',
+                }))
+                .filter((i) => i.name.length > 0)
+            : []),
+      },
       { key: 'colorPalette', value: aiAnalysisResult.colorPalette },
       { key: 'suggestedProps', value: aiAnalysisResult.suggestedProps },
       {

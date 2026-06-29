@@ -4,7 +4,8 @@ import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDe
 export interface IEvent extends ISoftDeleted {
   title: string;
   subtitle?: string;
-  category: string;
+  primaryCategory: mongoose.Types.ObjectId;
+  secondaryCategories: mongoose.Types.ObjectId[];
   style: string;
   image: string;
   decorCount?: string;
@@ -30,7 +31,8 @@ const EventSchema: Schema = new Schema(
   {
     title: { type: String, required: true },
     subtitle: { type: String },
-    category: { type: String, required: true },
+    primaryCategory: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
+    secondaryCategories: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
     style: { type: String, required: true },
     image: { type: String, required: true },
     decorCount: { type: String },
@@ -55,20 +57,22 @@ const EventSchema: Schema = new Schema(
 );
 
 EventSchema.index(
-  { title: 'text', description: 'text', category: 'text', style: 'text', features: 'text' },
+  { title: 'text', description: 'text', style: 'text', features: 'text' },
   {
     name: 'FullTextIndex',
-    weights: { title: 10, category: 5, style: 5, features: 3, description: 1 },
+    weights: { title: 10, style: 5, features: 3, description: 1 },
   },
 );
-EventSchema.index({ category: 1 });
+EventSchema.index({ primaryCategory: 1 });
+EventSchema.index({ secondaryCategories: 1 });
 EventSchema.index({ style: 1 });
 
 // Compound Indexes for public queries
-EventSchema.index({ isActive: 1, category: 1 });
+EventSchema.index({ isActive: 1, primaryCategory: 1 });
+EventSchema.index({ isActive: 1, secondaryCategories: 1 });
 EventSchema.index({ isActive: 1, style: 1 });
-EventSchema.index({ isActive: 1, category: 1, createdAt: -1 }); // Recommendation candidate fetch
-EventSchema.index({ isActive: 1, category: 1, basePrice: -1 }); // Search price sort
+EventSchema.index({ isActive: 1, primaryCategory: 1, createdAt: -1 }); // Recommendation candidate fetch
+EventSchema.index({ isActive: 1, primaryCategory: 1, basePrice: -1 }); // Search price sort
 EventSchema.index({ isActive: 1, createdAt: -1 }); // Global listing sort
 
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';

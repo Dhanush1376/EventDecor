@@ -97,14 +97,14 @@ export async function getTrendingSearches(
     // Dynamic database-driven fallbacks to make trending queries fully dynamic when session activity is empty
     if (trending.length < limit) {
       const fallbackProducts = await Product.find({ isActive: true })
-        .select('title category tags')
+        .select('title primaryCategory tags')
         .limit(limit * 3)
         .lean();
 
       const extraTerms = new Set<string>();
       for (const p of fallbackProducts) {
-        if (p.category) {
-          extraTerms.add(p.category);
+        if (p.primaryCategory) {
+          extraTerms.add(p.primaryCategory.toString());
         }
         if (p.tags && Array.isArray(p.tags)) {
           p.tags.forEach((t) => {
@@ -409,19 +409,19 @@ export async function getEventCollections(limit: number = 8) {
       'reception',
     ];
 
-    combined.sort((a, b) => {
-      const idxA = priorityKeywords.findIndex((k) => a.toLowerCase().includes(k));
-      const idxB = priorityKeywords.findIndex((k) => b.toLowerCase().includes(k));
+    combined.sort((a: any, b: any) => {
+      const idxA = priorityKeywords.findIndex((k) => String(a).toLowerCase().includes(k));
+      const idxB = priorityKeywords.findIndex((k) => String(b).toLowerCase().includes(k));
 
       if (idxA !== -1 && idxB !== -1) return idxA - idxB;
       if (idxA !== -1) return -1;
       if (idxB !== -1) return 1;
-      return a.localeCompare(b);
+      return String(a).localeCompare(String(b));
     });
 
-    const collections = combined.slice(0, limit).map((c) => ({
-      title: c,
-      icon: getCategoryIcon(c),
+    const collections = combined.slice(0, limit).map((c: any) => ({
+      title: String(c),
+      icon: getCategoryIcon(String(c)),
     }));
 
     await setSearchCache('trending', cacheKey, collections, 24 * 60 * 60 * 1000); // 24 hours
@@ -542,7 +542,7 @@ export async function learnSearchPatterns(): Promise<void> {
     }
 
     const products = await Product.find({ _id: { $in: Array.from(allTargetIds) } })
-      .select('_id title category tags')
+      .select('_id title primaryCategory tags')
       .lean();
 
     const productMap = new Map<string, any>();
@@ -555,7 +555,7 @@ export async function learnSearchPatterns(): Promise<void> {
         if (count >= 3) {
           const prod = productMap.get(targetId);
           if (prod) {
-            const cat = prod.category;
+            const cat = prod.primaryCategory;
             const titleWords = prod.title.toLowerCase().split(/\s+/);
             const queryWords = query.toLowerCase().split(/\s+/);
 

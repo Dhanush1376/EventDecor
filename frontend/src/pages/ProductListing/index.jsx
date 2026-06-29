@@ -22,7 +22,7 @@ import '../../styles/visual-search.css';
 
 export function ProductListing() {
   const { setClaimedCoupon } = useCart();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();

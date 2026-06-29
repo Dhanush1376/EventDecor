@@ -6,26 +6,25 @@ export function EventCollectionsSkeleton() {
   return (
     <div className="bg-surface min-h-screen text-on-surface">
       {/* Hero Section */}
-      <section className="relative min-h-[320px] md:h-[70vh] flex items-center overflow-hidden bg-on-surface-variant">
-        <Skeleton className="w-full h-full absolute inset-0 !rounded-none opacity-50" />
-        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop w-full relative z-10 text-center space-y-4 md:space-y-6">
-          <Skeleton className="h-4 w-40 mx-auto rounded-full" />
-          <Skeleton className="h-[42px] md:h-[72px] w-[80%] md:w-[60%] mx-auto rounded-[12px]" />
-          <Skeleton className="h-4 w-[90%] md:w-[50%] mx-auto rounded-full" />
-          <Skeleton className="h-4 w-[70%] md:w-[40%] mx-auto rounded-full" />
+      <section className="relative h-[60vh] md:h-[75vh] min-h-[400px] flex items-center justify-center overflow-hidden bg-stone-100">
+        <div className="text-center space-y-6 relative z-10 w-full max-w-4xl px-4">
+          <Skeleton className="h-4 w-32 mx-auto rounded-full" />
+          <Skeleton className="h-[48px] md:h-[80px] w-[80%] md:w-[60%] mx-auto rounded-[16px]" />
+          <Skeleton className="h-4 w-[70%] md:w-[50%] mx-auto rounded-full" />
+          <Skeleton className="h-12 w-40 mx-auto rounded-full mt-8" />
         </div>
       </section>
 
       {/* Nav */}
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop -mt-8 md:-mt-12 mb-8 md:mb-12 relative z-50">
+      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop -mt-8 mb-12 relative z-50">
         <div className="bg-white/90 backdrop-blur-xl rounded-[2rem] p-3 md:p-4 shadow-sm flex flex-col lg:flex-row items-center gap-4 lg:gap-6 border border-black/5">
-          <Skeleton className="h-11 lg:h-9 w-full lg:w-72 xl:w-80 rounded-full flex-shrink-0" />
-          <div className="hidden lg:flex items-center gap-4 flex-1 justify-center">
+          <Skeleton className="h-12 lg:h-11 w-full lg:w-72 xl:w-80 rounded-full flex-shrink-0" />
+          <div className="hidden lg:flex items-center gap-4 flex-1 justify-center overflow-hidden">
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-8 w-24 rounded-full" />
+              <Skeleton key={i} className="h-10 w-28 rounded-full flex-shrink-0" />
             ))}
           </div>
-          <Skeleton className="h-11 lg:h-9 w-48 xl:w-52 rounded-full hidden lg:block flex-shrink-0" />
+          <Skeleton className="h-11 w-48 rounded-full hidden lg:block flex-shrink-0" />
         </div>
       </div>
 
@@ -33,25 +32,27 @@ export function EventCollectionsSkeleton() {
       <main className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative pb-12 md:pb-16">
         <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
           {/* Sidebar */}
-          <aside className="hidden lg:block w-full lg:w-64 xl:w-72 flex-shrink-0 space-y-8 pt-2">
-            <Skeleton className="h-6 w-32 mb-6 rounded-full" />
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="space-y-4">
-                <Skeleton className="h-4 w-24 rounded-full mb-2" />
-                {[...Array(4)].map((_, j) => (
-                  <div key={j} className="flex items-center gap-3">
-                    <Skeleton className="w-5 h-5 rounded-[6px]" />
-                    <Skeleton className="h-3 w-32 rounded-full" />
-                  </div>
-                ))}
-              </div>
-            ))}
+          <aside className="hidden lg:block w-full lg:w-64 xl:w-72 flex-shrink-0 pt-2">
+            <div className="space-y-8">
+              <Skeleton className="h-6 w-32 mb-6 rounded-full" />
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="space-y-4">
+                  <Skeleton className="h-4 w-24 rounded-full mb-2" />
+                  {[...Array(4)].map((_, j) => (
+                    <div key={j} className="flex items-center gap-3">
+                      <Skeleton className="w-5 h-5 rounded-[6px]" />
+                      <Skeleton className="h-3 w-32 rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
           </aside>
 
           {/* Grid */}
           <div className="flex-1 min-w-0">
-            <div className="mb-8 md:mb-10 space-y-3">
-              <Skeleton className="h-8 md:h-10 w-48 md:w-64 rounded-full" />
+            <div className="mb-8 md:mb-10 space-y-3 flex flex-col">
+              <Skeleton className="h-8 md:h-10 w-48 md:w-64 rounded-full mb-1" />
               <Skeleton className="h-4 md:h-5 w-40 md:w-48 rounded-full" />
             </div>
 
@@ -62,20 +63,20 @@ export function EventCollectionsSkeleton() {
               ))}
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="flex flex-col group">
-                  <div className="relative aspect-[4/3] md:aspect-[3/2] w-full mb-3 md:mb-4 bg-[#fafafa] rounded-[16px] md:rounded-[32px] border border-black/5 shadow-2xs overflow-hidden">
+                  <div className="relative aspect-[4/3] md:aspect-[3/2] w-full mb-3 md:mb-4 bg-surface rounded-[16px] md:rounded-[32px] border border-black/5 overflow-hidden shadow-sm">
                     <Skeleton className="absolute inset-0 w-full h-full !rounded-none" />
                   </div>
                   <div className="flex flex-col flex-1 py-1">
-                    <div className="mb-2 md:mb-4 space-y-2 md:space-y-3">
-                      <Skeleton className="h-2.5 md:h-3 w-16 md:w-24 rounded-full" />
-                      <Skeleton className="h-4 md:h-5 w-[85%] rounded-full" />
+                    <div className="mb-2 md:mb-4 space-y-2">
+                      <Skeleton className="h-2 md:h-2.5 w-16 md:w-24 rounded-full" />
+                      <Skeleton className="h-4 md:h-6 w-[80%] rounded-full" />
                     </div>
-                    <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-black/5 mt-auto">
-                      <Skeleton className="h-3 md:h-3.5 w-16 md:w-20 rounded-full" />
-                      <Skeleton className="h-3 md:h-3.5 w-12 md:w-16 rounded-full" />
+                    <div className="flex items-center justify-between pt-2 md:pt-4 border-t border-black/5 mt-auto">
+                      <Skeleton className="h-2.5 md:h-3 w-16 md:w-20 rounded-full" />
+                      <Skeleton className="h-2.5 md:h-3 w-12 md:w-16 rounded-full" />
                     </div>
                   </div>
                 </div>

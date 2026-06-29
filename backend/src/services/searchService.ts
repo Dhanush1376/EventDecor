@@ -169,13 +169,13 @@ export async function getAutocomplete(
 
     const [products, events] = await Promise.all([
       Product.find(productQuery)
-        .select('_id title teluguTitle imageSrc category price rating slug')
+        .select('_id title teluguTitle imageSrc primaryCategory price rating slug')
         .sort({ rating: -1, reviews: -1 })
         .limit(5)
         .lean(),
 
       Event.find(eventQuery)
-        .select('_id title category style basePrice slug')
+        .select('_id title primaryCategory style basePrice slug')
         .sort({ basePrice: -1 })
         .limit(3)
         .lean(),
@@ -212,13 +212,13 @@ export async function getAutocomplete(
         id: (p._id as any).toString(),
         title: p.title,
         type: 'product',
-        category: p.category,
+        category: p.primaryCategory?.toString(),
         image: p.imageSrc,
         price: p.price,
         slug: p.slug,
         score: computeSearchScore(
           p.title,
-          p.category,
+          p.primaryCategory?.toString(),
           p.tags || [],
           baseSearchQuery,
           p.teluguTitle,
@@ -232,11 +232,16 @@ export async function getAutocomplete(
         id: (e._id as any).toString(),
         title: e.title,
         type: 'event',
-        category: e.category,
+        category: e.primaryCategory?.toString(),
         image: e.image,
         price: e.basePrice,
         slug: (e as any).slug,
-        score: computeSearchScore(e.title, e.category, e.features || [], normalizedQuery),
+        score: computeSearchScore(
+          e.title,
+          e.primaryCategory?.toString(),
+          e.features || [],
+          normalizedQuery,
+        ),
       });
     }
 
@@ -367,9 +372,15 @@ export async function searchAll(
 
     // Fetch distinct active categories for all three collections to match against predicted category
     const [dbProductCategories, dbEventCategories, dbGalleryCategories] = await Promise.all([
-      Product.distinct('category', { isActive: true }).catch(() => []),
-      Event.distinct('category', { isActive: true }).catch(() => []),
-      Gallery.distinct('category', { isActive: true }).catch(() => []),
+      Product.distinct('primaryCategory', { isActive: true })
+        .then((r) => r.map(String))
+        .catch(() => [] as string[]),
+      Event.distinct('primaryCategory', { isActive: true })
+        .then((r) => r.map(String))
+        .catch(() => [] as string[]),
+      Gallery.distinct('primaryCategory', { isActive: true })
+        .then((r) => r.map(String))
+        .catch(() => [] as string[]),
     ]);
 
     // Apply manual Category filter or predicted intent categories mapped to actual taxonomies
@@ -434,12 +445,17 @@ export async function searchAll(
             for (const p of products) {
               const searchScore = computeSearchScore(
                 p.title,
-                p.category,
+                p.primaryCategory?.toString(),
                 p.tags || [],
                 normalizedQuery,
                 p.teluguTitle,
               );
-              const seasonalBoost = computeSeasonalBoost(p.category, undefined, p.tags, seasonal);
+              const seasonalBoost = computeSeasonalBoost(
+                p.primaryCategory?.toString(),
+                undefined,
+                p.tags,
+                seasonal,
+              );
               const popularityBoost =
                 ((p.rating || 0) / 5) * 0.3 + Math.min((p.reviews || 0) / 100, 0.2);
 
@@ -457,7 +473,7 @@ export async function searchAll(
                 id: productIdStr,
                 title: p.title,
                 type: 'product',
-                category: p.category,
+                category: p.primaryCategory?.toString(),
                 image: p.imageSrc,
                 price: p.price,
                 rating: p.rating,
@@ -467,7 +483,7 @@ export async function searchAll(
                 score: searchScore * seasonalBoost * aiBoost + popularityBoost + interactionBoost,
                 matchSource: getMatchSource(
                   p.title,
-                  p.category,
+                  p.primaryCategory?.toString(),
                   p.tags || [],
                   normalizedQuery,
                   p.teluguTitle,
@@ -487,7 +503,7 @@ export async function searchAll(
 
       promises.push(
         Event.find(eventQuery)
-          .select('_id title category style basePrice features image description')
+          .select('_id title primaryCategory style basePrice features image description')
           .limit(100)
           .maxTimeMS(5000)
           .lean()
@@ -495,11 +511,16 @@ export async function searchAll(
             for (const e of events) {
               const searchScore = computeSearchScore(
                 e.title,
-                e.category,
+                e.primaryCategory?.toString(),
                 e.features || [],
                 normalizedQuery,
               );
-              const seasonalBoost = computeSeasonalBoost(e.category, e.style, e.features, seasonal);
+              const seasonalBoost = computeSeasonalBoost(
+                e.primaryCategory?.toString(),
+                e.style,
+                e.features,
+                seasonal,
+              );
 
               let aiBoost = 1.0;
               if (aiAnalysis.style && e.style?.toLowerCase().includes(aiAnalysis.style))
@@ -516,13 +537,18 @@ export async function searchAll(
                 id: eventIdStr,
                 title: e.title,
                 type: 'event',
-                category: e.category,
+                category: e.primaryCategory?.toString(),
                 style: e.style,
                 image: e.image,
                 price: e.basePrice,
                 tags: e.features,
                 score: searchScore * seasonalBoost * aiBoost + interactionBoost,
-                matchSource: getMatchSource(e.title, e.category, e.features || [], normalizedQuery),
+                matchSource: getMatchSource(
+                  e.title,
+                  e.primaryCategory?.toString(),
+                  e.features || [],
+                  normalizedQuery,
+                ),
               });
             }
           }),
@@ -537,7 +563,7 @@ export async function searchAll(
 
       promises.push(
         Gallery.find(galleryQuery)
-          .select('_id title teluguTitle image category style tags views likes')
+          .select('_id title teluguTitle image primaryCategory style tags views likes')
           .limit(100)
           .maxTimeMS(5000)
           .lean()
@@ -545,7 +571,7 @@ export async function searchAll(
             for (const g of galleries) {
               const searchScore = computeSearchScore(
                 g.title,
-                g.category,
+                g.primaryCategory?.toString(),
                 g.tags || [],
                 normalizedQuery,
                 g.teluguTitle,
@@ -566,14 +592,14 @@ export async function searchAll(
                 id: galleryIdStr,
                 title: g.title,
                 type: 'gallery',
-                category: g.category,
+                category: g.primaryCategory?.toString(),
                 style: g.style,
                 image: g.image,
                 tags: g.tags,
                 score: searchScore * aiBoost + popularityBoost + interactionBoost,
                 matchSource: getMatchSource(
                   g.title,
-                  g.category,
+                  g.primaryCategory?.toString(),
                   g.tags || [],
                   normalizedQuery,
                   g.teluguTitle,

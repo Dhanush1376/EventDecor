@@ -15,7 +15,7 @@ const mapDbProductToFrontend = (p) => {
     id: p._id || p.id || 'PRD-UNKNOWN',
     name: p.title || p.name || 'Handcrafted Decor Piece',
     nameTE: p.teluguTitle || p.nameTE || '',
-    category: p.category || 'Uncategorized',
+    category: p.primaryCategory?.name || p.primaryCategory || 'Uncategorized',
     price: p.price || 0,
     stock: p.stock !== undefined ? p.stock : 10,
     status: fStatus,

@@ -7,16 +7,15 @@ import {
   getMyPendingInvite,
   respondToAdminInvite,
 } from '../../controllers/auth/adminInviteController';
-import { requireAuth, requireRole } from '../../middleware/authMiddleware';
-import { ADMIN_ROLES } from '../../config/adminConfig';
+import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 
 const router = Router();
 
 // --- Administrative Actions (Any Admin can access, further RBAC is in controllers) ---
-router.post('/', requireAuth, requireRole([...ADMIN_ROLES]), createAdminInvite);
-router.get('/pending', requireAuth, requireRole([...ADMIN_ROLES]), getPendingInvites);
-router.get('/history', requireAuth, requireRole([...ADMIN_ROLES]), getInviteHistory);
-router.delete('/:id/revoke', requireAuth, requireRole([...ADMIN_ROLES]), revokeAdminInvite);
+router.post('/', requireAuth, requireAdmin, createAdminInvite);
+router.get('/pending', requireAuth, requireAdmin, getPendingInvites);
+router.get('/history', requireAuth, requireAdmin, getInviteHistory);
+router.delete('/:id/revoke', requireAuth, requireAdmin, revokeAdminInvite);
 
 // --- User Response Actions (Any Authenticated User) ---
 router.get('/my-pending', requireAuth, getMyPendingInvite);

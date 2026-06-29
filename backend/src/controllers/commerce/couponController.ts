@@ -209,7 +209,7 @@ export const getProductCoupons = asyncHandler(async (req: Request, res: Response
       }
     } else if (coupon.targetType === 'categories') {
       const isTargetCategory = coupon.targetCategories?.some(
-        (cat) => cat.toLowerCase() === product.category.toLowerCase(),
+        (cat) => String(cat) === String(product.primaryCategory),
       );
       if (isTargetCategory) {
         tier1.push(coupon);

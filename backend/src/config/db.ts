@@ -95,11 +95,11 @@ class DatabaseManager {
       }
     }
 
-    // Set max connections budget across all instances to a safe Atlas M0 value (20)
+    // Set max connections budget across all instances to a safe value (100)
     // To accommodate horizontal scaling (e.g. 5 containers = max 100 connections total)
-    const TOTAL_BUDGET = 20;
-    const calculatedMax = Math.max(5, Math.floor(TOTAL_BUDGET / instances));
-    const calculatedMin = Math.max(1, Math.floor(calculatedMax / 5));
+    const TOTAL_BUDGET = 100;
+    const calculatedMax = Math.max(10, Math.floor(TOTAL_BUDGET / instances));
+    const calculatedMin = Math.max(2, Math.floor(calculatedMax / 5));
 
     logger.info(
       `[DATABASE] Dynamic connection pool: ${instances} instances detected. Configured maxPoolSize=${calculatedMax}, minPoolSize=${calculatedMin}`,
@@ -210,7 +210,7 @@ class DatabaseManager {
       heartbeatFrequencyMS: 10000, // Perform keep-alive check every 10s
       maxIdleTimeMS: 30000, // Release idle sockets after 30s to conserve database resources
       waitQueueTimeoutMS: 10000, // How long to wait for connection pool slot before failing
-      // family: 4, // Removing forced IPv4 DNS resolution as it causes querySrv ETIMEOUT on some networks
+      family: 4, // Force IPv4 DNS resolution to fix querySrv ETIMEOUT on some networks
       bufferCommands: false, // Disable buffering to fail-fast during transient database issues
       compressors: ['zstd', 'snappy'], // Enable wire protocol network compression
       retryReads: true,

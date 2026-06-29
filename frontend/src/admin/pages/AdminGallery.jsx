@@ -55,12 +55,17 @@ export function AdminGallery() {
     setIsLoading(true);
     try {
       const [res, catRes, prodRes] = await Promise.all([
-        galleryService.getAll(),
+        galleryService.getAll({ limit: 1000 }),
         galleryService.getCategories(),
         productService.getAll({ limit: 150 }),
       ]);
       if (res.success) setItems(res.data.data || res.data.items || res.data || []);
-      if (catRes.success) setCategories(['All', ...catRes.data]);
+      if (catRes.success) {
+        const validCategories = (catRes.data || []).filter(
+          (c) => c && typeof c === 'string' && c.trim() !== '',
+        );
+        setCategories(['All', ...validCategories]);
+      }
       if (prodRes.success)
         setProducts(prodRes.data.data || prodRes.data.items || prodRes.data || []);
     } catch (err) {
@@ -288,39 +293,55 @@ export function AdminGallery() {
 
                 {/* Card Content Area (Beautiful, Clean, 100% Symmetrical below the image) */}
                 <div className="p-3 flex-1 flex flex-col justify-between space-y-2.5">
-                  {/* Category, Event & Actions row */}
+                  {/* Category, Event */}
+                  {(item.category || item.event) && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[9px] font-bold text-[var(--admin-accent)] uppercase tracking-widest truncate">
+                        {item.category} {item.event ? `· ${item.event}` : ''}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Title & Actions row */}
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[9px] font-bold text-[var(--admin-accent)] uppercase tracking-widest truncate">
-                      {item.category} {item.event ? `· ${item.event}` : ''}
-                    </span>
+                    <h3
+                      className="text-[13px] font-semibold text-[var(--admin-text-primary)] line-clamp-1 leading-snug group-hover:text-[var(--admin-accent)] transition-colors duration-200"
+                      title={item.title}
+                    >
+                      {item.title}
+                    </h3>
 
                     {/* Minimal inline Actions */}
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         onClick={() => handleEdit(item)}
-                        className="w-8 h-8 !p-0 aspect-square shrink-0 rounded-full bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-warning)] hover:text-white flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                        className="!p-0 shrink-0 bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-warning)] hover:text-white flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          minWidth: '32px',
+                          minHeight: '32px',
+                          borderRadius: '50%',
+                        }}
                         title="Edit"
                       >
                         <span className="material-symbols-outlined text-[14px]">edit</span>
                       </button>
                       <button
                         onClick={() => handleDelete(item._id || item.id)}
-                        className="w-8 h-8 !p-0 aspect-square shrink-0 rounded-full bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-error)] hover:text-white flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                        className="!p-0 shrink-0 bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-error)] hover:text-white flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          minWidth: '32px',
+                          minHeight: '32px',
+                          borderRadius: '50%',
+                        }}
                         title="Delete"
                       >
                         <span className="material-symbols-outlined text-[14px]">delete</span>
                       </button>
                     </div>
-                  </div>
-
-                  {/* Title */}
-                  <div className="space-y-1">
-                    <h3
-                      className="text-[12.5px] font-semibold text-[var(--admin-text-primary)] line-clamp-1 leading-snug group-hover:text-[var(--admin-accent)] transition-colors duration-200"
-                      title={item.title}
-                    >
-                      {item.title}
-                    </h3>
                   </div>
 
                   {/* Sub-Badges (Type, Video, Linked) */}

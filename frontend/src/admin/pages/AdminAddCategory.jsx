@@ -72,14 +72,17 @@ export function AdminAddCategory() {
 
   const handleNameChange = (e) => {
     const val = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      name: val,
-      slug:
-        prev.slug === prev.name.toLowerCase().replace(/[\s\W-]+/g, '-')
-          ? val.toLowerCase().replace(/[\s\W-]+/g, '-')
-          : prev.slug,
-    }));
+    setFormData((prev) => {
+      const currentName = prev.name || '';
+      const currentSlug = prev.slug || '';
+      const expectedSlug = currentName.toLowerCase().replace(/[\s\W-]+/g, '-');
+      const isAuto = currentSlug === expectedSlug;
+      return {
+        ...prev,
+        name: val,
+        slug: isAuto ? val.toLowerCase().replace(/[\s\W-]+/g, '-') : currentSlug,
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
