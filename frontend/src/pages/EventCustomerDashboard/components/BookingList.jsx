@@ -13,7 +13,7 @@ export function BookingList({ bookings, selectedBooking, handleSelectBooking }) 
             <div
               key={b._id || b.id}
               onClick={() => handleSelectBooking(b)}
-              className={`flex-shrink-0 min-w-[240px] md:min-w-[280px] p-4 rounded-lg border text-left cursor-pointer transition-all ${
+              className={`flex-shrink-0 min-w-[240px] lg:min-w-[280px] p-4 rounded-lg border text-left cursor-pointer transition-all ${
                 isSelected
                   ? 'bg-surface-bright border-primary shadow-2xs ring-1 ring-primary/20 scale-[1.01]'
                   : 'border-outline-variant/30 hover:border-outline-variant bg-surface-bright/70'

@@ -36,7 +36,40 @@ export function AestheticsStep({
               inputMode="decimal"
               value={formData.rentalPrice}
               onChange={(e) => setFormData({ ...formData, rentalPrice: Number(e.target.value) })}
-              className="w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2.5 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40"
+              className={`w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2.5 text-[12.5px] outline-none transition-all ${
+                focusedField === 'rentalPrice'
+                  ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01]'
+                  : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40'
+              }`}
+            />
+          </div>
+        </div>
+
+        <div className="col-span-2 sm:col-span-1">
+          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
+            Striking Price / MRP (₹)
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-secondary)] text-[13px] font-bold">
+              ₹
+            </span>
+            <input
+              type="number"
+              min="1"
+              inputMode="decimal"
+              value={formData.strikingPrice || ''}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  strikingPrice: e.target.value ? Number(e.target.value) : '',
+                })
+              }
+              placeholder="e.g. 20000 (Optional)"
+              className={`w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2.5 text-[12.5px] outline-none transition-all ${
+                focusedField === 'strikingPrice'
+                  ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01]'
+                  : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40'
+              }`}
             />
           </div>
         </div>

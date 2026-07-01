@@ -39,13 +39,10 @@ export class InventoryReconciliationService {
       let needsFix = false;
       const fixPayload: any = {};
 
-      let maxSeverity = 'LOW';
-
       if (product.reservedStock !== actualReserved) {
         discrepancies++;
         const isOrphan = product.reservedStock === 0 && actualReserved > 0;
         const severity = isOrphan ? 'MEDIUM' : 'HIGH';
-        if (maxSeverity !== 'CRITICAL' && maxSeverity !== 'HIGH') maxSeverity = severity;
 
         logger.warn(
           `[INVENTORY RECONCILIATION] [${severity}] Drift on ${product._id}: DB reservedStock=${product.reservedStock}, Actual=${actualReserved}`,
@@ -56,7 +53,6 @@ export class InventoryReconciliationService {
 
       if (product.stock < 0) {
         discrepancies++;
-        maxSeverity = 'CRITICAL';
         logger.warn(
           `[INVENTORY RECONCILIATION] [CRITICAL] Negative stock on ${product._id}: ${product.stock}`,
         );

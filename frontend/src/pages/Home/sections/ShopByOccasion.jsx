@@ -3,7 +3,7 @@ import { m as motion } from 'framer-motion';
 import { SectionHeader } from '../../../components/shared/SectionHeader';
 import { MandalaElement } from '../../../components/ui/MandalaElement';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 
 /**
@@ -16,13 +16,32 @@ export function ShopByOccasion() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
-  if (loading) {
+  const [showcases, setShowcases] = useState([]);
+  const [showcasesLoading, setShowcasesLoading] = useState(true);
+
+  useEffect(() => {
+    import('../../../services/domainServices').then(({ showcaseService }) => {
+      showcaseService
+        .getAll()
+        .then((res) => {
+          const list = res?.data || [];
+          setShowcases(Array.isArray(list) ? list : []);
+        })
+        .catch(() => setShowcases([]))
+        .finally(() => setShowcasesLoading(false));
+    });
+  }, []);
+
+  const config = cms?.shopByOccasion || {};
+  const selectedShowcaseIds = config.selectedShowcaseIds || [];
+
+  if (loading || showcasesLoading) {
     return (
       <section className="h1-section relative overflow-hidden isolate" id="h1-occasions">
         <div className="max-w-[1400px] mx-auto px-6 mb-24 animate-pulse">
-          <div className="flex flex-col items-center text-center mb-8 md:mb-10">
+          <div className="flex flex-col items-center text-center mb-8 lg:mb-10">
             <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2"></div>
-            <div className="h-8 md:h-10 w-56 md:w-72 bg-surface-container-high rounded-full"></div>
+            <div className="h-8 lg:h-10 w-56 lg:w-72 bg-surface-container-high rounded-full"></div>
           </div>
 
           {/* Mobile Swipe Carousel */}
@@ -42,20 +61,17 @@ export function ShopByOccasion() {
     );
   }
 
-  const config = cms?.shopByOccasion || {};
   if (config.isVisible === false) return null;
-  let occasions = config.occasions || [];
 
-  if (occasions.length > 0) {
-    // Ensure backwards compatibility with label and desc fields
-    occasions = occasions
-      .map((occ) => ({
-        ...occ,
-        label: occ.title || occ.label,
-        desc: occ.desc || '',
-      }))
-      .filter((occ) => occ.label && occ.link);
-  }
+  const occasions = showcases
+    .filter((sc) => selectedShowcaseIds.includes(sc._id || sc.id))
+    .map((sc) => ({
+      id: sc._id || sc.id,
+      label: sc.title,
+      desc: sc.category?.replace('_', ' '),
+      link: `/events/${sc._id || sc.id}`,
+      image: sc.image,
+    }));
 
   if (!occasions || occasions.length === 0) {
     return null;
@@ -94,9 +110,10 @@ export function ShopByOccasion() {
       />
       <div className="h1-container relative z-10">
         <SectionHeader
-          kicker={config.kicker}
-          title={config.sectionTitle}
-          seeAllLink={config.seeAllLink}
+          kicker={config.sectionSubtitle !== undefined ? config.sectionSubtitle : config.kicker}
+          title={config.sectionTitle || 'Shop By Occasion'}
+          seeAllLink={config.seeAllLink || '/collections'}
+          hideUnderline={true}
         />
       </div>
 
@@ -134,7 +151,7 @@ export function ShopByOccasion() {
                 onDragEnd={handleDragEnd}
                 animate={{ x, scale, zIndex, opacity, filter: `brightness(${brightness})` }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute w-[75vw] sm:w-[50vw] md:w-[350px] h-[400px] cursor-grab active:cursor-grabbing origin-center"
+                className="absolute w-[75vw] sm:w-[50vw] lg:w-[350px] h-[400px] cursor-grab active:cursor-grabbing origin-center"
               >
                 <Link
                   to={occasion.link}
@@ -243,7 +260,7 @@ export function ShopByOccasion() {
             <div className="absolute inset-0 flex flex-col justify-end p-8">
               {/* Vertical Text (Visible when contracted) */}
               <div className="absolute inset-0 flex flex-col justify-end items-center pb-12 pointer-events-none group-hover:opacity-0 transition-opacity duration-300">
-                <span className="text-white font-serif tracking-[0.2em] text-2xl uppercase -rotate-90 origin-bottom-left absolute left-1/2 -ml-3 bottom-12 whitespace-nowrap opacity-80">
+                <span className="text-white font-serif tracking-widest text-lg xl:text-xl uppercase -rotate-90 origin-bottom-left absolute left-1/2 -ml-3 bottom-12 whitespace-nowrap opacity-80 max-w-[450px] truncate">
                   {occasion.label}
                 </span>
               </div>

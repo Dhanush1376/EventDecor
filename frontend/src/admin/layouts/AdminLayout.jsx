@@ -23,6 +23,7 @@ function AdminLayoutInner() {
 
     safetyLock,
     maintenanceMode,
+    toggleMaintenanceMode,
     showIdleWarning,
     setShowIdleWarning,
     idleSecondsLeft,
@@ -85,8 +86,16 @@ function AdminLayoutInner() {
               exit={{ height: 0, opacity: 0 }}
               className="bg-[var(--admin-warning)] text-white px-4 py-2 flex items-center justify-center gap-1.5 shadow-sm text-center overflow-hidden"
             >
-              <span className="material-symbols-outlined text-[13px]">construction</span>
-              Storefront Shielded — Maintenance Mode Active
+              <div className="flex items-center gap-1.5 flex-1 justify-center">
+                <span className="material-symbols-outlined text-[13px]">construction</span>
+                Storefront Shielded — Maintenance Mode Active
+              </div>
+              <button
+                onClick={toggleMaintenanceMode}
+                className="px-3 py-1 bg-white/20 hover:bg-white/30 text-white rounded text-[10px] font-bold tracking-wider transition-colors"
+              >
+                DISABLE NOW
+              </button>
             </motion.div>
           )}
         </AnimatePresence>

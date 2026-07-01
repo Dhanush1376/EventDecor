@@ -34,11 +34,14 @@ export function CustomOrders() {
   const eventIdQuery = searchParams.get('event');
   const websiteContent = useWebsiteContent();
 
-  const customOrdersContent = websiteContent?.customOrdersPage || {
+  const co = websiteContent?.customOrdersPage || {};
+  const customOrdersContent = {
     hero: {
-      title: 'Custom Event Decor Studio',
-      subtitle: 'Bespoke Curations',
-      description: 'Design your custom decor, get price estimates, and track your orders.',
+      title: co.hero?.title || 'Custom Order',
+      subtitle: co.hero?.subtitle || 'Bespoke Event Curation',
+      description:
+        co.hero?.description ||
+        'Design your custom decor, get price estimates, and track your orders.',
     },
   };
 
@@ -109,7 +112,7 @@ export function CustomOrders() {
     });
 
   return (
-    <div className="relative selection:bg-primary/20 bg-[var(--color-surface-ivory)] min-h-screen text-[var(--color-on-surface)] font-body pt-20 md:pt-32">
+    <div className="relative selection:bg-primary/20 bg-[var(--color-surface-ivory)] min-h-screen text-[var(--color-on-surface)] font-body pt-20 lg:pt-32">
       <SEO
         title="Custom Decor Studio & Consultancy | Siri Arts"
         description="Design your dream Indian ceremony with Siri's interactive digital planning studio. Consult with our Telugu heritage master artisans for bespoke backdrops, floral canopies, and custom pooja trays."
@@ -124,26 +127,26 @@ export function CustomOrders() {
         size={700}
       />
 
-      <main className="max-w-[1440px] mx-auto px-4 md:px-8 pb-20 relative z-10 space-y-6 md:space-y-8">
+      <main className="max-w-[1440px] mx-auto px-4 lg:px-8 pb-20 relative z-10 space-y-6 lg:space-y-8">
         {/* Simple & Luxury Header & Workspace Toggle */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[var(--color-on-surface)]/5 pb-5">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-[var(--color-on-surface)]/5 pb-5">
           <div>
-            <h2 className="text-[24px] md:text-[36px] font-light text-[var(--color-on-surface)] font-display leading-tight">
+            <h2 className="text-[24px] lg:text-[36px] font-light text-[var(--color-on-surface)] font-display leading-tight">
               {customOrdersContent.hero?.title || 'Custom Event Decor Studio'}
             </h2>
-            <p className="text-[12px] md:text-[13px] text-[#685C57] mt-1 font-light tracking-wide max-w-lg">
+            <p className="text-[12px] lg:text-[13px] text-[#685C57] mt-1 font-light tracking-wide max-w-lg">
               {customOrdersContent.hero?.description ||
                 'Design your custom decor, get price estimates, and track your orders.'}
             </p>
           </div>
 
           <div
-            className="flex bg-[#f2efe9] p-1 rounded-full border border-black/5 self-start md:self-auto shadow-inner w-full sm:w-auto overflow-x-auto shrink-0"
+            className="flex bg-[#f2efe9] p-1 rounded-full border border-black/5 self-start lg:self-auto shadow-inner w-full sm:w-auto overflow-x-auto shrink-0"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             <button
               onClick={() => setActiveTab('wizard')}
-              className={`flex-1 sm:flex-initial text-center px-4 md:px-5 py-2.5 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer whitespace-nowrap ${
+              className={`flex-1 sm:flex-initial text-center px-4 lg:px-5 py-2.5 rounded-full text-[10px] lg:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer whitespace-nowrap ${
                 activeTab === 'wizard'
                   ? 'bg-[var(--color-on-surface)] text-white shadow-md'
                   : 'text-[#685C57] hover:text-[var(--color-on-surface)]'
@@ -158,7 +161,7 @@ export function CustomOrders() {
                   setActiveTab('tracker');
                 });
               }}
-              className={`flex-1 sm:flex-initial text-center px-4 md:px-5 py-2.5 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 relative cursor-pointer whitespace-nowrap ${
+              className={`flex-1 sm:flex-initial text-center px-4 lg:px-5 py-2.5 rounded-full text-[10px] lg:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 relative cursor-pointer whitespace-nowrap ${
                 activeTab === 'tracker'
                   ? 'bg-[var(--color-on-surface)] text-white shadow-md'
                   : 'text-[#685C57] hover:text-[var(--color-on-surface)]'

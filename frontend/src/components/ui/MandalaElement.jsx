@@ -48,9 +48,10 @@ export const MandalaElement = React.memo(function MandalaElement({
         height: size,
         maxWidth: '100%',
         maxHeight: '100%',
-        animationDuration: `${duration}s`,
-        animationPlayState: rotate && isInView ? 'running' : 'paused',
+        animation: rotate ? `slow-spin ${duration}s linear infinite` : 'none',
         mixBlendMode: 'darken',
+        WebkitMaskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 75%)',
+        maskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 75%)',
       }}
       loading="lazy"
     />

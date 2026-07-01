@@ -5,11 +5,11 @@ import { Skeleton } from '../SkeletonBase';
 export function ProductListSkeleton() {
   return (
     <div className="bg-surface min-h-screen">
-      <Skeleton className="w-full min-h-[320px] md:h-[70vh] !rounded-none" />
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mt-8 mb-12">
+      <Skeleton className="w-full min-h-[320px] lg:h-[70vh] !rounded-none" />
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop mt-8 mb-12">
         <Skeleton className="h-16 w-full rounded-[2rem]" />
       </div>
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative pb-8 md:pb-24">
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative pb-8 lg:pb-24">
         <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
           <div className="w-full lg:w-64 xl:w-72 flex-shrink-0">
             <Skeleton className="h-[600px] w-full rounded-[2rem]" />
@@ -19,7 +19,7 @@ export function ProductListSkeleton() {
               <Skeleton className="h-10 w-64" />
               <Skeleton className="h-4 w-40" />
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-x-4 lg:gap-x-8 gap-y-8 lg:gap-y-12">
               {[...Array(6)].map((_, i) => (
                 <ProductCardSkeleton key={i} />
               ))}
@@ -55,7 +55,7 @@ export function ProductDetailSkeleton() {
   return (
     <div className="bg-surface min-h-screen">
       {/* Desktop Breadcrumbs Skeleton */}
-      <div className="hidden md:block pt-32 pb-10 max-w-max-width mx-auto px-margin-desktop">
+      <div className="hidden lg:block pt-32 pb-10 max-w-max-width mx-auto px-margin-desktop">
         <div className="flex gap-2 items-center">
           <Skeleton className="h-3 w-16" />
           <Skeleton className="h-3 w-4" />
@@ -65,19 +65,19 @@ export function ProductDetailSkeleton() {
         </div>
       </div>
 
-      <section className="pt-[68px] md:pt-0 pb-12 md:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
+      <section className="pt-[68px] lg:pt-0 pb-12 lg:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
           {/* Image Gallery Skeleton */}
           <div className="space-y-4">
-            <Skeleton className="w-full aspect-[4/5] md:aspect-square rounded-[32px] md:rounded-[40px]" />
+            <Skeleton className="w-full aspect-[4/5] lg:aspect-square rounded-[32px] lg:rounded-[40px]" />
             <div className="flex gap-4 overflow-x-hidden">
               {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="w-20 h-20 md:w-24 md:h-24 rounded-2xl flex-shrink-0" />
+                <Skeleton key={i} className="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl flex-shrink-0" />
               ))}
             </div>
           </div>
           {/* Product Info Skeleton */}
-          <div className="space-y-8 mt-4 md:mt-0">
+          <div className="space-y-8 mt-4 lg:mt-0">
             <div className="space-y-4">
               <Skeleton className="h-4 w-32" />
               <Skeleton className="h-[48px] w-full" />
@@ -123,7 +123,7 @@ export function ProductDetailSkeleton() {
 export function CategorySkeleton() {
   return (
     <div className="flex flex-col items-center gap-3">
-      <Skeleton variant="circle" className="w-16 h-16 md:w-20 md:h-20" />
+      <Skeleton variant="circle" className="w-16 h-16 lg:w-20 lg:h-20" />
       <Skeleton className="h-3 w-20" />
     </div>
   );
@@ -133,11 +133,11 @@ export function RecommendationSkeleton({ horizontal = false }) {
   return (
     <div
       className={
-        horizontal ? 'flex gap-6 overflow-x-hidden' : 'grid grid-cols-2 md:grid-cols-4 gap-6'
+        horizontal ? 'flex gap-6 overflow-x-hidden' : 'grid grid-cols-2 lg:grid-cols-4 gap-6'
       }
     >
       {[...Array(4)].map((_, i) => (
-        <div key={i} className={horizontal ? 'min-w-[240px] md:min-w-[280px]' : ''}>
+        <div key={i} className={horizontal ? 'min-w-[240px] lg:min-w-[280px]' : ''}>
           <ProductCardSkeleton />
         </div>
       ))}

@@ -1,5 +1,12 @@
 import { m as motion } from 'framer-motion';
-import { AdminToggle, fadeUp, SkeletonForm } from '../components/AdminUIKit';
+import {
+  AdminToggle,
+  fadeUp,
+  SkeletonForm,
+  AdminField,
+  AdminInput,
+  SectionHeader,
+} from '../components/AdminUIKit';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
@@ -120,54 +127,42 @@ export function AdminAddCategory() {
   return (
     <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/admin/categories')}
-            className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-          </button>
-          <div>
-            <h2 className="text-[20px] font-bold text-[var(--admin-text-primary)] leading-none mb-1.5 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[22px] text-[var(--admin-accent)]">
-                {isEditMode ? 'edit_note' : 'category'}
-              </span>
-              {isEditMode ? 'Edit Category' : 'Create Category'}
-              <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
-            </h2>
-            <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium">
-              {isEditMode
-                ? 'Update category properties and display scope'
-                : 'Specify name, scope type, and publishing rules'}
-            </p>
-          </div>
-        </div>
-      </div>
+      <SectionHeader
+        icon={isEditMode ? 'edit_note' : 'category'}
+        title={isEditMode ? 'Edit Category' : 'Create Category'}
+        description={
+          isEditMode
+            ? 'Update category properties and display scope'
+            : 'Specify name, scope type, and publishing rules'
+        }
+        onBack={() => navigate('/admin/categories')}
+      />
 
-      <div className="max-w-3xl mx-auto">
+      <div className="w-full mt-6">
+        <div className="flex items-center justify-end mb-4">
+          <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
+        </div>
         <motion.div variants={fadeUp} initial="hidden" animate="show" className="space-y-6">
           <div className="admin-card p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-1.5">
-                <label className="admin-label">
-                  Category Name <span className="text-error">*</span>
-                </label>
-                <input
+              <AdminField
+                label="Category Name"
+                description="The primary display name of the category"
+              >
+                <AdminInput
                   required
                   type="text"
                   placeholder="e.g. Traditional Mandaps"
                   value={formData.name}
                   onChange={handleNameChange}
-                  className="admin-input"
                 />
-              </div>
+              </AdminField>
 
-              <div className="space-y-1.5">
-                <label className="admin-label">
-                  Slug / URL Path <span className="text-error">*</span>
-                </label>
-                <input
+              <AdminField
+                label="Slug / URL Path"
+                description="The URL-friendly identifier for the category"
+              >
+                <AdminInput
                   required
                   type="text"
                   placeholder="e.g. traditional-mandaps"
@@ -178,16 +173,16 @@ export function AdminAddCategory() {
                       slug: e.target.value.toLowerCase().replace(/[\s\W-]+/g, '-'),
                     })
                   }
-                  className="admin-input font-mono"
+                  className="font-mono text-[13px]"
                 />
-              </div>
+              </AdminField>
 
-              <div className="space-y-1.5">
-                <label className="admin-label">
-                  Category Scope Type <span className="text-error">*</span>
-                </label>
+              <AdminField
+                label="Category Scope Type"
+                description="Where this category will be utilized"
+              >
                 <select
-                  className="admin-select"
+                  className="w-full bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-xl px-4 py-3 text-[13px] font-medium text-[var(--admin-text-primary)] transition-all outline-none"
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 >
@@ -196,9 +191,9 @@ export function AdminAddCategory() {
                   <option value="gallery">Inspiration Gallery</option>
                   <option value="global">Global Shared Scope</option>
                 </select>
-              </div>
+              </AdminField>
 
-              <div className="pt-4 border-t border-[var(--admin-border-subtle)]">
+              <div className="pt-4 border-t border-[var(--admin-border-subtle)] mt-2">
                 <AdminToggle
                   label="Publishing Status"
                   description="Enable to display items of this category on the storefront"
@@ -211,14 +206,14 @@ export function AdminAddCategory() {
                 <button
                   type="button"
                   onClick={() => navigate('/admin/categories')}
-                  className="admin-btn admin-btn-outline flex-1 py-3"
+                  className="px-6 py-3 rounded-xl border border-[var(--admin-border-strong)] text-[var(--admin-text-primary)] font-bold text-[13px] hover:bg-[var(--admin-surface-muted)] transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   disabled={submitting}
                   type="submit"
-                  className="admin-btn admin-btn-primary flex-[2] py-3 shadow-md"
+                  className="flex-1 px-6 py-3 rounded-xl bg-[var(--admin-accent)] text-[var(--admin-text-inverse)] font-bold text-[13px] hover:brightness-110 transition-all shadow-[var(--admin-shadow-sm)] disabled:opacity-50"
                 >
                   {submitting ? 'Saving...' : isEditMode ? 'Save Changes' : 'Create Category'}
                 </button>

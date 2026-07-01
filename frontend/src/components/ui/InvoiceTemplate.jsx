@@ -126,28 +126,28 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
   };
 
   return (
-    <div className="w-full bg-gray-50 md:bg-white rounded-xl p-4 md:p-6 mx-auto max-w-4xl">
+    <div className="w-full bg-gray-50 lg:bg-white rounded-xl p-4 lg:p-6 mx-auto max-w-4xl">
       {/* Close Button / Controls (Hidden in print) */}
-      <div className="no-print flex justify-between items-center pb-3 md:pb-4 mb-4 md:mb-5">
-        <h3 className="font-display text-sm md:text-md font-bold uppercase tracking-wider text-black">
+      <div className="no-print flex justify-between items-center pb-3 lg:pb-4 mb-4 lg:mb-5">
+        <h3 className="font-display text-sm lg:text-md font-bold uppercase tracking-wider text-black">
           Tax Invoice
         </h3>
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-2 lg:gap-3">
           <button
             onClick={handleDownload}
             disabled={isDownloading}
-            className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 min-w-0 min-h-0 aspect-square p-0 shrink-0 bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-800 text-white rounded-full transition-all duration-300 shadow-md hover:shadow-lg active:scale-95 disabled:opacity-70 disabled:cursor-wait"
+            className="flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 min-w-0 min-h-0 aspect-square p-0 shrink-0 bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-800 text-white rounded-full transition-all duration-300 shadow-md hover:shadow-lg active:scale-95 disabled:opacity-70 disabled:cursor-wait"
           >
-            <span className="material-symbols-outlined text-[16px] md:text-[20px]">
+            <span className="material-symbols-outlined text-[16px] lg:text-[20px]">
               {isDownloading ? 'hourglass_top' : 'download'}
             </span>
           </button>
           {onClose && (
             <button
               onClick={onClose}
-              className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 min-w-0 min-h-0 aspect-square p-0 shrink-0 bg-white border border-gray-200 hover:border-red-200 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors duration-200 text-gray-500 shadow-sm active:scale-95"
+              className="flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 min-w-0 min-h-0 aspect-square p-0 shrink-0 bg-white border border-gray-200 hover:border-red-200 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors duration-200 text-gray-500 shadow-sm active:scale-95"
             >
-              <span className="material-symbols-outlined text-[16px] md:text-[20px]">close</span>
+              <span className="material-symbols-outlined text-[16px] lg:text-[20px]">close</span>
             </button>
           )}
         </div>
@@ -156,28 +156,28 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
       <div
         ref={printRef}
         id="invoice-download-area"
-        className="print-invoice-area p-5 sm:p-6 md:p-8 text-black text-[9px] sm:text-xs md:text-sm bg-white font-sans relative shadow-sm print:shadow-none w-full border border-gray-200 rounded-xl"
+        className="print-invoice-area p-5 sm:p-6 lg:p-8 text-black text-[9px] sm:text-xs lg:text-sm bg-white font-sans relative shadow-sm print:shadow-none w-full border border-gray-200 rounded-xl"
       >
         {/* Tax Invoice Header */}
-        <div className="flex justify-between items-start border-b-2 border-gray-900 pb-4 md:pb-6 mb-4 md:mb-6">
+        <div className="flex justify-between items-start border-b-2 border-gray-900 pb-4 lg:pb-6 mb-4 lg:mb-6">
           <div className="w-[55%]">
-            <h2 className="text-[14px] sm:text-xl md:text-3xl font-display font-black uppercase tracking-widest text-[var(--color-gold-dark)] leading-tight">
+            <h2 className="text-[14px] sm:text-xl lg:text-3xl font-display font-black uppercase tracking-widest text-[var(--color-gold-dark)] leading-tight">
               {businessName}
             </h2>
-            <p className="text-[7px] sm:text-[9px] md:text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-0.5 md:mt-1">
+            <p className="text-[7px] sm:text-[9px] lg:text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-0.5 lg:mt-1">
               {tagline}
             </p>
-            <div className="text-[8px] sm:text-[10px] md:text-[11px] text-gray-600 mt-1.5 md:mt-2 space-y-0.5 md:space-y-1 leading-snug font-light whitespace-pre-wrap">
+            <div className="text-[8px] sm:text-[10px] lg:text-[11px] text-gray-600 mt-1.5 lg:mt-2 space-y-0.5 lg:space-y-1 leading-snug font-light whitespace-pre-wrap">
               {address}
               <p className="font-semibold text-black mt-1">GSTIN: {gstin}</p>
             </div>
           </div>
 
           <div className="text-right w-[45%]">
-            <h2 className="text-[12px] sm:text-lg md:text-2xl font-black uppercase tracking-wider text-gray-800">
+            <h2 className="text-[12px] sm:text-lg lg:text-2xl font-black uppercase tracking-wider text-gray-800">
               TAX INVOICE
             </h2>
-            <div className="text-[7px] sm:text-[9px] md:text-[11px] text-gray-600 mt-1.5 md:mt-3 space-y-0.5 md:space-y-1">
+            <div className="text-[7px] sm:text-[9px] lg:text-[11px] text-gray-600 mt-1.5 lg:mt-3 space-y-0.5 lg:space-y-1">
               <p>
                 Invoice No: <strong className="text-black font-mono">{invoiceNumber}</strong>
               </p>
@@ -193,28 +193,28 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
         </div>
 
         {/* Billing and Shipping Fields */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-4 md:gap-8 mb-4 md:mb-8">
-          <div className="bg-gray-50 p-2 md:p-4 rounded-xl border border-gray-100 print:bg-white print:border-none print:p-0">
-            <h3 className="font-black text-gray-700 uppercase tracking-widest border-b border-gray-200 pb-1 mb-1.5 md:mb-2 text-[7px] md:text-[10px]">
+        <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-8 mb-4 lg:mb-8">
+          <div className="bg-gray-50 p-2 lg:p-4 rounded-xl border border-gray-100 print:bg-white print:border-none print:p-0">
+            <h3 className="font-black text-gray-700 uppercase tracking-widest border-b border-gray-200 pb-1 mb-1.5 lg:mb-2 text-[7px] lg:text-[10px]">
               Billed To:
             </h3>
-            <p className="font-bold text-gray-900 text-[9px] md:text-xs">{customerName}</p>
+            <p className="font-bold text-gray-900 text-[9px] lg:text-xs">{customerName}</p>
             {customerEmail && (
-              <p className="text-gray-600 mt-0.5 md:mt-1 text-[8px] md:text-[11px] truncate">
+              <p className="text-gray-600 mt-0.5 lg:mt-1 text-[8px] lg:text-[11px] truncate">
                 {customerEmail}
               </p>
             )}
             {customerPhone && (
-              <p className="text-gray-600 mt-0.5 text-[8px] md:text-[11px]">{customerPhone}</p>
+              <p className="text-gray-600 mt-0.5 text-[8px] lg:text-[11px]">{customerPhone}</p>
             )}
           </div>
 
-          <div className="bg-gray-50 p-2 md:p-4 rounded-xl border border-gray-100 print:bg-white print:border-none print:p-0">
-            <h3 className="font-black text-gray-700 uppercase tracking-widest border-b border-gray-200 pb-1 mb-1.5 md:mb-2 text-[7px] md:text-[10px]">
+          <div className="bg-gray-50 p-2 lg:p-4 rounded-xl border border-gray-100 print:bg-white print:border-none print:p-0">
+            <h3 className="font-black text-gray-700 uppercase tracking-widest border-b border-gray-200 pb-1 mb-1.5 lg:mb-2 text-[7px] lg:text-[10px]">
               Shipped To:
             </h3>
-            <p className="text-gray-900 font-semibold text-[9px] md:text-xs">{customerName}</p>
-            <p className="text-gray-600 mt-0.5 md:mt-1 leading-snug text-[8px] md:text-[11px]">
+            <p className="text-gray-900 font-semibold text-[9px] lg:text-xs">{customerName}</p>
+            <p className="text-gray-600 mt-0.5 lg:mt-1 leading-snug text-[8px] lg:text-[11px]">
               {addressLine1}
               {addressLine2 ? `, ${addressLine2}` : ''}
               {pin && (
@@ -228,31 +228,31 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
         </div>
 
         {/* Items Table */}
-        <div className="mb-4 md:mb-8">
+        <div className="mb-4 lg:mb-8">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-gray-100 border-b border-gray-300 font-bold text-[7px] md:text-[10px]">
-                <th className="text-left p-1.5 md:p-3 uppercase tracking-wider text-gray-700">
+              <tr className="bg-gray-100 border-b border-gray-300 font-bold text-[7px] lg:text-[10px]">
+                <th className="text-left p-1.5 lg:p-3 uppercase tracking-wider text-gray-700">
                   Item
                 </th>
-                <th className="text-center p-1.5 md:p-3 uppercase tracking-wider text-gray-700">
+                <th className="text-center p-1.5 lg:p-3 uppercase tracking-wider text-gray-700">
                   Qty
                 </th>
-                <th className="text-right p-1.5 md:p-3 uppercase tracking-wider text-gray-700 hidden sm:table-cell">
+                <th className="text-right p-1.5 lg:p-3 uppercase tracking-wider text-gray-700 hidden sm:table-cell">
                   Price
                 </th>
-                <th className="text-right p-1.5 md:p-3 uppercase tracking-wider text-gray-700 hidden md:table-cell">
+                <th className="text-right p-1.5 lg:p-3 uppercase tracking-wider text-gray-700 hidden lg:table-cell">
                   CGST
                 </th>
-                <th className="text-right p-1.5 md:p-3 uppercase tracking-wider text-gray-700 hidden md:table-cell">
+                <th className="text-right p-1.5 lg:p-3 uppercase tracking-wider text-gray-700 hidden lg:table-cell">
                   SGST
                 </th>
-                <th className="text-right p-1.5 md:p-3 uppercase tracking-wider text-gray-700">
+                <th className="text-right p-1.5 lg:p-3 uppercase tracking-wider text-gray-700">
                   Total
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 text-[8px] md:text-[11px]">
+            <tbody className="divide-y divide-gray-200 text-[8px] lg:text-[11px]">
               {items.map((item, idx) => {
                 const title = item.title || item.name || 'Handcrafted Element';
                 const qty = item.quantity || item.qty || 1;
@@ -267,76 +267,76 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
 
                 return (
                   <tr key={idx} className="hover:bg-gray-50/50">
-                    <td className="p-1.5 md:p-3 font-semibold text-gray-900">
+                    <td className="p-1.5 lg:p-3 font-semibold text-gray-900">
                       {title}
                       {item.variant && item.variant !== 'Default' && (
-                        <span className="block text-[6px] md:text-[9px] text-gray-500 font-light mt-0.5">
+                        <span className="block text-[6px] lg:text-[9px] text-gray-500 font-light mt-0.5">
                           Style: {item.variant}
                         </span>
                       )}
                     </td>
-                    <td className="p-1.5 md:p-3 text-center text-gray-800">{qty}</td>
-                    <td className="p-1.5 md:p-3 text-right font-mono text-gray-600 hidden sm:table-cell">
+                    <td className="p-1.5 lg:p-3 text-center text-gray-800">{qty}</td>
+                    <td className="p-1.5 lg:p-3 text-right font-mono text-gray-600 hidden sm:table-cell">
                       ₹{basePrice.toFixed(2)}
                     </td>
-                    <td className="p-1.5 md:p-3 text-right font-mono text-gray-600 hidden md:table-cell">
+                    <td className="p-1.5 lg:p-3 text-right font-mono text-gray-600 hidden lg:table-cell">
                       ₹{(cgst * qty).toFixed(2)}
                     </td>
-                    <td className="p-1.5 md:p-3 text-right font-mono text-gray-600 hidden md:table-cell">
+                    <td className="p-1.5 lg:p-3 text-right font-mono text-gray-600 hidden lg:table-cell">
                       ₹{(sgst * qty).toFixed(2)}
                     </td>
-                    <td className="p-1.5 md:p-3 text-right font-bold font-mono text-gray-950">
+                    <td className="p-1.5 lg:p-3 text-right font-bold font-mono text-gray-950">
                       ₹{lineTotal.toLocaleString()}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
-            <tfoot className="border-t border-gray-300 text-[8px] md:text-[11px]">
+            <tfoot className="border-t border-gray-300 text-[8px] lg:text-[11px]">
               <tr>
                 <td
-                  className="text-right p-1.5 md:p-2 font-bold text-gray-600 sm:hidden"
+                  className="text-right p-1.5 lg:p-2 font-bold text-gray-600 sm:hidden"
                   colSpan="2"
                 >
                   Gross Subtotal:
                 </td>
                 <td
-                  className="text-right p-1.5 md:p-2 font-bold text-gray-600 hidden sm:table-cell md:hidden"
+                  className="text-right p-1.5 lg:p-2 font-bold text-gray-600 hidden sm:table-cell lg:hidden"
                   colSpan="3"
                 >
                   Gross Subtotal:
                 </td>
                 <td
-                  className="text-right p-1.5 md:p-2 font-bold text-gray-600 hidden md:table-cell"
+                  className="text-right p-1.5 lg:p-2 font-bold text-gray-600 hidden lg:table-cell"
                   colSpan="5"
                 >
                   Gross Subtotal:
                 </td>
-                <td className="text-right p-1.5 md:p-2 font-bold font-mono text-gray-900">
+                <td className="text-right p-1.5 lg:p-2 font-bold font-mono text-gray-900">
                   ₹{subtotal.toLocaleString()}
                 </td>
               </tr>
               {discount > 0 && (
                 <tr>
                   <td
-                    className="text-right p-1.5 md:p-2 font-bold text-green-700 sm:hidden"
+                    className="text-right p-1.5 lg:p-2 font-bold text-green-700 sm:hidden"
                     colSpan="2"
                   >
                     Coupon Discount:
                   </td>
                   <td
-                    className="text-right p-1.5 md:p-2 font-bold text-green-700 hidden sm:table-cell md:hidden"
+                    className="text-right p-1.5 lg:p-2 font-bold text-green-700 hidden sm:table-cell lg:hidden"
                     colSpan="3"
                   >
                     Coupon Discount:
                   </td>
                   <td
-                    className="text-right p-1.5 md:p-2 font-bold text-green-700 hidden md:table-cell"
+                    className="text-right p-1.5 lg:p-2 font-bold text-green-700 hidden lg:table-cell"
                     colSpan="5"
                   >
                     Coupon Discount:
                   </td>
-                  <td className="text-right p-1.5 md:p-2 font-bold font-mono text-green-700">
+                  <td className="text-right p-1.5 lg:p-2 font-bold font-mono text-green-700">
                     -₹{discount.toLocaleString()}
                   </td>
                 </tr>
@@ -344,48 +344,48 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
               {shippingFee > 0 && (
                 <tr>
                   <td
-                    className="text-right p-1.5 md:p-2 font-bold text-gray-600 sm:hidden"
+                    className="text-right p-1.5 lg:p-2 font-bold text-gray-600 sm:hidden"
                     colSpan="2"
                   >
                     Shipping:
                   </td>
                   <td
-                    className="text-right p-1.5 md:p-2 font-bold text-gray-600 hidden sm:table-cell md:hidden"
+                    className="text-right p-1.5 lg:p-2 font-bold text-gray-600 hidden sm:table-cell lg:hidden"
                     colSpan="3"
                   >
                     Shipping:
                   </td>
                   <td
-                    className="text-right p-1.5 md:p-2 font-bold text-gray-600 hidden md:table-cell"
+                    className="text-right p-1.5 lg:p-2 font-bold text-gray-600 hidden lg:table-cell"
                     colSpan="5"
                   >
                     Shipping:
                   </td>
-                  <td className="text-right p-1.5 md:p-2 font-bold font-mono text-gray-900">
+                  <td className="text-right p-1.5 lg:p-2 font-bold font-mono text-gray-900">
                     ₹{shippingFee.toLocaleString()}
                   </td>
                 </tr>
               )}
               <tr className="bg-gray-50 print:bg-white border-t border-double border-gray-900">
                 <td
-                  className="text-right p-2 md:p-3 font-black text-gray-800 text-[8px] md:text-xs uppercase tracking-wider sm:hidden"
+                  className="text-right p-2 lg:p-3 font-black text-gray-800 text-[8px] lg:text-xs uppercase tracking-wider sm:hidden"
                   colSpan="2"
                 >
                   Grand Total (Inc. Taxes):
                 </td>
                 <td
-                  className="text-right p-2 md:p-3 font-black text-gray-800 text-[8px] md:text-xs uppercase tracking-wider hidden sm:table-cell md:hidden"
+                  className="text-right p-2 lg:p-3 font-black text-gray-800 text-[8px] lg:text-xs uppercase tracking-wider hidden sm:table-cell lg:hidden"
                   colSpan="3"
                 >
                   Grand Total (Inc. Taxes):
                 </td>
                 <td
-                  className="text-right p-2 md:p-3 font-black text-gray-800 text-[8px] md:text-xs uppercase tracking-wider hidden md:table-cell"
+                  className="text-right p-2 lg:p-3 font-black text-gray-800 text-[8px] lg:text-xs uppercase tracking-wider hidden lg:table-cell"
                   colSpan="5"
                 >
                   Grand Total (Inc. Taxes):
                 </td>
-                <td className="text-right p-2 md:p-3 font-black font-mono text-[var(--color-gold-dark)] text-[11px] md:text-[15px]">
+                <td className="text-right p-2 lg:p-3 font-black font-mono text-[var(--color-gold-dark)] text-[11px] lg:text-[15px]">
                   ₹{total.toLocaleString()}
                 </td>
               </tr>
@@ -395,37 +395,37 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
 
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           {/* Tax Breakdown Table */}
-          <div className="p-2 md:p-4 bg-gray-50 border border-gray-200 rounded-xl w-full sm:max-w-[50%] print:bg-white print:border-none print:p-0">
-            <h4 className="font-black text-[7px] md:text-[9px] uppercase tracking-widest text-gray-700 border-b border-gray-200 pb-1 mb-1.5 md:mb-2">
+          <div className="p-2 lg:p-4 bg-gray-50 border border-gray-200 rounded-xl w-full sm:max-w-[50%] print:bg-white print:border-none print:p-0">
+            <h4 className="font-black text-[7px] lg:text-[9px] uppercase tracking-widest text-gray-700 border-b border-gray-200 pb-1 mb-1.5 lg:mb-2">
               GST Tax Assessment
             </h4>
-            <table className="w-full text-[7px] md:text-[10px]">
+            <table className="w-full text-[7px] lg:text-[10px]">
               <tbody>
                 <tr>
-                  <td className="py-0.5 md:py-1 text-gray-600">Taxable Basic Value:</td>
-                  <td className="text-right py-0.5 md:py-1 font-mono text-gray-900 font-semibold">
+                  <td className="py-0.5 lg:py-1 text-gray-600">Taxable Basic Value:</td>
+                  <td className="text-right py-0.5 lg:py-1 font-mono text-gray-900 font-semibold">
                     ₹{(total / taxMultiplier).toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-0.5 md:py-1 text-gray-600">
+                  <td className="py-0.5 lg:py-1 text-gray-600">
                     Integrated SGST ({taxRate / 2}%):
                   </td>
-                  <td className="text-right py-0.5 md:py-1 font-mono text-gray-900 font-semibold">
+                  <td className="text-right py-0.5 lg:py-1 font-mono text-gray-900 font-semibold">
                     ₹{((total - total / taxMultiplier) / 2).toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-0.5 md:py-1 text-gray-600">
+                  <td className="py-0.5 lg:py-1 text-gray-600">
                     Integrated CGST ({taxRate / 2}%):
                   </td>
-                  <td className="text-right py-0.5 md:py-1 font-mono text-gray-900 font-semibold">
+                  <td className="text-right py-0.5 lg:py-1 font-mono text-gray-900 font-semibold">
                     ₹{((total - total / taxMultiplier) / 2).toFixed(2)}
                   </td>
                 </tr>
                 <tr className="border-t border-dashed border-gray-300 font-bold font-mono">
-                  <td className="pt-1 md:pt-2 text-gray-850">Total Taxes (Inclusive):</td>
-                  <td className="text-right pt-1 md:pt-2 text-[var(--color-gold-dark)] font-black">
+                  <td className="pt-1 lg:pt-2 text-gray-850">Total Taxes (Inclusive):</td>
+                  <td className="text-right pt-1 lg:pt-2 text-[var(--color-gold-dark)] font-black">
                     ₹{(total - total / taxMultiplier).toFixed(2)}
                   </td>
                 </tr>
@@ -435,17 +435,17 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
 
           {/* Courier, Barcode, and QR Code Info */}
           <div className="flex justify-between items-center w-full sm:w-[45%]">
-            <div className="space-y-0.5 md:space-y-1">
-              <h3 className="font-black text-gray-800 text-[7px] md:text-[10px] uppercase tracking-wider mb-1 md:mb-2">
+            <div className="space-y-0.5 lg:space-y-1">
+              <h3 className="font-black text-gray-800 text-[7px] lg:text-[10px] uppercase tracking-wider mb-1 lg:mb-2">
                 Dispatch Audit
               </h3>
-              <p className="text-[7px] md:text-[11px] text-gray-600">
+              <p className="text-[7px] lg:text-[11px] text-gray-600">
                 Carrier: <strong className="text-black font-semibold">{courierPartner}</strong>
               </p>
-              <p className="text-[7px] md:text-[11px] text-gray-600">
+              <p className="text-[7px] lg:text-[11px] text-gray-600">
                 AWB: <strong className="text-black font-mono font-bold">{trackingNumber}</strong>
               </p>
-              <div className="pt-1 md:pt-3">
+              <div className="pt-1 lg:pt-3">
                 <QRCodeCanvas
                   value={trackingQR}
                   size={60}
@@ -457,10 +457,10 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
             </div>
 
             <div className="flex flex-col items-center">
-              <h3 className="font-black text-gray-800 text-[6px] md:text-[9px] uppercase tracking-wider mb-1 md:mb-2 text-center">
+              <h3 className="font-black text-gray-800 text-[6px] lg:text-[9px] uppercase tracking-wider mb-1 lg:mb-2 text-center">
                 Scan
               </h3>
-              <div className="w-12 h-12 md:w-20 md:h-20">
+              <div className="w-12 h-12 lg:w-20 lg:h-20">
                 <Barcode
                   value={trackingNumber}
                   height={20}
@@ -475,7 +475,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
         </div>
 
         {/* Footer Disclaimer */}
-        <div className="mt-6 md:mt-12 text-center text-gray-400 text-[6px] md:text-[10px] border-t border-gray-100 pt-3 md:pt-4 leading-normal font-light">
+        <div className="mt-6 lg:mt-12 text-center text-gray-400 text-[6px] lg:text-[10px] border-t border-gray-100 pt-3 lg:pt-4 leading-normal font-light">
           This is a secure computer generated tax invoice issued under {businessName} boutique
           regulations and requires no physical signatures. For inquiry, reach
           {contactEmail}.

@@ -1,6 +1,7 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../shared/ProductCard';
 import { RecommendationSkeleton } from '../ui/Skeleton';
+import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 import { useState, useEffect, useMemo } from 'react';
 import {
   useSimilarRecommendations,
@@ -147,14 +148,25 @@ export function RecommendationSystem({
 
   return (
     <section
-      className={`${compact ? 'pt-1 pb-0 md:py-2' : 'pt-6 pb-12 md:pt-10 md:pb-16'} bg-transparent relative overflow-hidden`}
+      className={`${compact ? 'pt-1 pb-0 lg:py-2' : 'pt-6 pb-12 lg:pt-10 lg:pb-16'} bg-transparent relative overflow-hidden`}
     >
       {/* Subtle Glow Accent */}
       <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
 
-      <div className="max-w-max-width mx-auto px-4 md:px-6 lg:px-8 relative z-10">
+      {/* Mandala Aesthetics */}
+      {!compact && (
+        <MandalaArtDecor
+          variant={3}
+          size={800}
+          opacity={0.06}
+          className="-bottom-[300px] -left-[250px]"
+          spinDuration={180}
+        />
+      )}
+
+      <div className="max-w-max-width mx-auto px-4 lg:px-6 lg:px-8 relative z-10">
         {!compact && !hideHeader && (
-          <div className="w-full flex justify-center mb-10 md:mb-14">
+          <div className="w-full flex justify-center mb-10 lg:mb-14">
             <div className="w-full max-w-[180px] flex items-center justify-center gap-3 opacity-60">
               <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#C4A87C] to-[#C4A87C]" />
               <span
@@ -174,7 +186,7 @@ export function RecommendationSystem({
               className={`${
                 compact
                   ? 'text-[11px] uppercase tracking-widest font-bold text-on-surface/80 font-label'
-                  : 'text-xl md:text-2xl font-light tracking-tight text-on-surface font-display'
+                  : 'text-xl lg:text-2xl font-light tracking-tight text-on-surface font-display'
               } leading-tight`}
             >
               {rentalOnly ? 'Rental Masterpieces' : 'You May Also Like'}
@@ -200,8 +212,8 @@ export function RecommendationSystem({
               exit={{ opacity: 0 }}
               className={
                 horizontalScroll
-                  ? `flex gap-4 md:gap-6 ${compact ? 'pb-2' : 'pb-4'} overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar touch-pan-x`
-                  : 'grid grid-cols-2 md:grid-cols-4 gap-6 pb-6'
+                  ? `flex gap-4 lg:gap-6 ${compact ? 'pb-2' : 'pb-4'} overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar touch-pan-x`
+                  : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pb-6'
               }
             >
               {activeList.map((product, idx) => {
@@ -218,7 +230,7 @@ export function RecommendationSystem({
                     {...motionProps}
                     className={
                       horizontalScroll
-                        ? `${compact ? 'w-[140px] sm:w-[160px]' : 'w-[200px] sm:w-[240px] md:w-[280px]'} flex-shrink-0 snap-start`
+                        ? `${compact ? 'w-[140px] sm:w-[160px]' : 'w-[200px] sm:w-[240px] lg:w-[280px]'} flex-shrink-0 snap-start`
                         : 'w-full'
                     }
                   >

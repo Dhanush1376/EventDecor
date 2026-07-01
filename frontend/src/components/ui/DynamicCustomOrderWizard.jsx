@@ -110,7 +110,7 @@ export function DynamicCustomOrderWizard({
         </div>
 
         {/* RIGHT PANEL SKELETON */}
-        <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-black/5 p-6 md:p-10 shadow-sm relative min-h-[460px] flex flex-col">
+        <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-black/5 p-6 lg:p-10 shadow-sm relative min-h-[460px] flex flex-col">
           {/* Smart Progress Bar Skeleton */}
           <div className="mb-8 shrink-0">
             <div className="flex justify-between mb-2">
@@ -126,7 +126,7 @@ export function DynamicCustomOrderWizard({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Skeleton className="h-14 w-full rounded-2xl" />
               <Skeleton className="h-14 w-full rounded-2xl" />
-              <Skeleton className="h-14 w-full rounded-2xl md:col-span-2" />
+              <Skeleton className="h-14 w-full rounded-2xl lg:col-span-2" />
             </div>
           </div>
 
@@ -305,7 +305,7 @@ export function DynamicCustomOrderWizard({
       </div>
 
       {/* RIGHT PANEL: Dynamic Form Renderer */}
-      <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-black/5 p-6 md:p-10 shadow-sm relative overflow-hidden min-h-[460px]">
+      <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-black/5 p-6 lg:p-10 shadow-sm relative overflow-hidden min-h-[460px]">
         {/* Smart Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between text-[10px] font-mono font-bold uppercase tracking-wider mb-2 text-black/50">
@@ -332,7 +332,7 @@ export function DynamicCustomOrderWizard({
               className="space-y-6"
             >
               <div>
-                <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)] mb-4">
+                <h2 className="text-[20px] lg:text-[22px] font-normal font-display text-[var(--color-on-surface)] mb-4">
                   Review Your Request
                 </h2>
                 <div className="bg-[var(--color-surface-ivory)] border border-black/5 rounded-2xl p-6 space-y-6">
@@ -368,7 +368,7 @@ export function DynamicCustomOrderWizard({
                 className="space-y-6"
               >
                 <div>
-                  <h2 className="text-[20px] md:text-[22px] font-normal font-display text-[var(--color-on-surface)]">
+                  <h2 className="text-[20px] lg:text-[22px] font-normal font-display text-[var(--color-on-surface)]">
                     {currentStepConfig.title}
                   </h2>
                   {currentStepConfig.description && (
@@ -379,17 +379,17 @@ export function DynamicCustomOrderWizard({
                 </div>
 
                 {/* RENDER DYNAMIC FIELDS */}
-                <div className="grid grid-cols-12 gap-y-6 gap-x-2 md:gap-x-4 pt-4 items-start">
+                <div className="grid grid-cols-12 gap-y-6 gap-x-2 lg:gap-x-4 pt-4 items-start">
                   {currentStepConfig.fields?.filter(checkCondition).map((field) => {
                     let colClass = 'col-span-12';
                     if (field.type === 'number') {
                       colClass = 'col-span-4'; // 3 per row everywhere
                     } else if (['color', 'date'].includes(field.type)) {
-                      colClass = 'col-span-12 md:col-span-6 lg:col-span-4';
+                      colClass = 'col-span-12 lg:col-span-6 lg:col-span-4';
                     }
                     return (
                       <div key={field.id} className={`space-y-2 ${colClass}`}>
-                        <label className="text-[9px] md:text-[11px] font-bold uppercase text-[var(--color-on-surface)] tracking-wider flex items-center gap-1 mb-2 truncate">
+                        <label className="text-[9px] lg:text-[11px] font-bold uppercase text-[var(--color-on-surface)] tracking-wider flex items-center gap-1 mb-2 truncate">
                           {field.label}
                           {field.required && <span className="text-[var(--color-gold)]">*</span>}
                         </label>
@@ -415,7 +415,7 @@ export function DynamicCustomOrderWizard({
                         )}
 
                         {field.type === 'number' && (
-                          <div className="flex items-center justify-between gap-1 md:gap-3 border-2 border-black/10 hover:border-black/20 rounded-xl p-1 md:p-2 w-full bg-white transition-all">
+                          <div className="flex items-center justify-between gap-1 lg:gap-3 border-2 border-black/10 hover:border-black/20 rounded-xl p-1 lg:p-2 w-full bg-white transition-all">
                             <button
                               type="button"
                               onClick={() =>
@@ -424,9 +424,9 @@ export function DynamicCustomOrderWizard({
                                   Math.max(0, (Number(formData.dynamicData[field.id]) || 0) - 1),
                                 )
                               }
-                              className="w-7 h-8 md:w-10 md:h-10 flex items-center justify-center bg-black/5 hover:bg-black/10 rounded-lg transition-colors cursor-pointer shrink-0"
+                              className="w-7 h-8 lg:w-10 lg:h-10 flex items-center justify-center bg-black/5 hover:bg-black/10 rounded-lg transition-colors cursor-pointer shrink-0"
                             >
-                              <span className="material-symbols-outlined text-[16px] md:text-[20px]">
+                              <span className="material-symbols-outlined text-[16px] lg:text-[20px]">
                                 remove
                               </span>
                             </button>
@@ -437,7 +437,7 @@ export function DynamicCustomOrderWizard({
                               onChange={(e) =>
                                 handleUpdateDynamicField(field.id, Number(e.target.value))
                               }
-                              className="w-full min-w-0 text-center text-[13px] md:text-[16px] font-bold outline-none bg-transparent hide-arrows"
+                              className="w-full min-w-0 text-center text-[13px] lg:text-[16px] font-bold outline-none bg-transparent hide-arrows"
                             />
                             <button
                               type="button"
@@ -447,9 +447,9 @@ export function DynamicCustomOrderWizard({
                                   (Number(formData.dynamicData[field.id]) || 0) + 1,
                                 )
                               }
-                              className="w-7 h-8 md:w-10 md:h-10 flex items-center justify-center bg-[var(--color-gold)] hover:bg-black text-white rounded-lg transition-colors cursor-pointer shrink-0"
+                              className="w-7 h-8 lg:w-10 lg:h-10 flex items-center justify-center bg-[var(--color-gold)] hover:bg-black text-white rounded-lg transition-colors cursor-pointer shrink-0"
                             >
-                              <span className="material-symbols-outlined text-[16px] md:text-[20px]">
+                              <span className="material-symbols-outlined text-[16px] lg:text-[20px]">
                                 add
                               </span>
                             </button>

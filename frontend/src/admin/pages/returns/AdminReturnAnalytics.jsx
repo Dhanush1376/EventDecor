@@ -190,7 +190,7 @@ const AdminReturnAnalytics = () => {
                   <span className="material-symbols-outlined text-[18px] text-[var(--admin-domain-danger)]">
                     trending_down
                   </span>
-                  Revenue Impact (Req #15)
+                  Revenue Impact
                 </h3>
               </div>
               <div className="p-0 flex flex-col divide-y divide-[var(--admin-border-subtle)]">
@@ -236,8 +236,7 @@ const AdminReturnAnalytics = () => {
               </div>
               <div className="p-5">
                 <div className="text-[13px] text-[var(--admin-text-secondary)] leading-relaxed italic bg-[var(--admin-surface-hover)] p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)]">
-                  "Size mismatch is the leading cause of returns for Apparel, accounting for 45% of
-                  total volume. Consider adding detailed sizing charts to product pages."
+                  {analyticsData?.insight || 'Loading insights based on your data...'}
                 </div>
               </div>
             </motion.div>

@@ -309,7 +309,7 @@ export function ProductSummaryCard({ product, onClear }) {
       <div className="absolute top-0 left-0 w-1 h-full bg-[var(--color-gold)]" />
 
       {/* Product Image */}
-      <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border border-black/5 shrink-0 bg-[var(--color-surface-ivory)]">
+      <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-xl overflow-hidden border border-black/5 shrink-0 bg-[var(--color-surface-ivory)]">
         {product.imageSrc ? (
           <OptimizedImage
             src={product.imageSrc}
@@ -330,7 +330,7 @@ export function ProductSummaryCard({ product, onClear }) {
             Customizing
           </span>
         </div>
-        <h4 className="text-[14px] md:text-[16px] font-bold text-[var(--color-on-surface)] truncate leading-tight">
+        <h4 className="text-[14px] lg:text-[16px] font-bold text-[var(--color-on-surface)] truncate leading-tight">
           {product.title}
         </h4>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">

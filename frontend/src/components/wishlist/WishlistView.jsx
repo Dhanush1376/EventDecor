@@ -165,7 +165,7 @@ export function WishlistView({ isEmbedded = false }) {
                 <span className="material-symbols-outlined text-[18px] text-primary">
                   location_on
                 </span>
-                <span className="text-[11px] md:text-xs text-[#1a1817] font-semibold truncate leading-none">
+                <span className="text-[11px] lg:text-xs text-[#1a1817] font-semibold truncate leading-none">
                   {activeAddress
                     ? `${activeAddress.name} - ${activeAddress.addressString || activeAddress.address}, ${activeAddress.locality || ''}, ${activeAddress.city}`
                     : 'Dhanush Atmakuri - Block- 15 (Uni mall)-shop-404 - Nellore'}
@@ -239,10 +239,10 @@ export function WishlistView({ isEmbedded = false }) {
             <>
               <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30 mb-4">
                 <div className="flex items-baseline gap-1.5">
-                  <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-[#1a1c1a]">
+                  <h2 className="font-display text-2xl lg:text-3xl font-bold tracking-tight text-[#1a1c1a]">
                     My Wishlist
                   </h2>
-                  <span className="font-body text-[11px] md:text-xs font-medium text-[#685c57]/60">
+                  <span className="font-body text-[11px] lg:text-xs font-medium text-[#685c57]/60">
                     ({enhancedItems.length} {enhancedItems.length === 1 ? 'item' : 'items'})
                   </span>
                 </div>
@@ -304,21 +304,21 @@ export function WishlistView({ isEmbedded = false }) {
                     {/* "All" Category Circular Item */}
                     <div
                       onClick={() => setSelectedCategory(null)}
-                      className="flex flex-col items-center cursor-pointer shrink-0 group w-[72px] md:w-[88px]"
+                      className="flex flex-col items-center cursor-pointer shrink-0 group w-[72px] lg:w-[88px]"
                     >
                       <div
-                        className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden transition-all duration-300 flex items-center justify-center relative shrink-0 aspect-square bg-[#1a1a1a] shadow-inner ${
+                        className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden transition-all duration-300 flex items-center justify-center relative shrink-0 aspect-square bg-[#1a1a1a] shadow-inner ${
                           !selectedCategory
                             ? 'border-2 border-white ring-4 ring-black/20 scale-105 shadow-md'
                             : 'border border-outline-variant/10 shadow-xs hover:border-black/50 group-hover:scale-105'
                         }`}
                       >
-                        <span className="material-symbols-outlined text-white text-[24px] md:text-[28px] font-light tracking-widest drop-shadow-sm select-none">
+                        <span className="material-symbols-outlined text-white text-[24px] lg:text-[28px] font-light tracking-widest drop-shadow-sm select-none">
                           border_all
                         </span>
                       </div>
                       <span
-                        className={`text-[9.5px] md:text-[10px] font-bold text-center mt-2 tracking-wide transition-colors whitespace-normal leading-tight h-8 flex items-start justify-center w-full ${
+                        className={`text-[9.5px] lg:text-[10px] font-bold text-center mt-2 tracking-wide transition-colors whitespace-normal leading-tight h-8 flex items-start justify-center w-full ${
                           !selectedCategory
                             ? 'text-[#1a1a1a]'
                             : 'text-black/50 group-hover:text-black'
@@ -335,10 +335,10 @@ export function WishlistView({ isEmbedded = false }) {
                         <div
                           key={cat.name}
                           onClick={() => setSelectedCategory(isActive ? null : cat.name)}
-                          className="flex flex-col items-center cursor-pointer shrink-0 group w-[72px] md:w-[88px]"
+                          className="flex flex-col items-center cursor-pointer shrink-0 group w-[72px] lg:w-[88px]"
                         >
                           <div
-                            className={`w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden transition-all duration-300 flex items-center justify-center relative shrink-0 aspect-square ${
+                            className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden transition-all duration-300 flex items-center justify-center relative shrink-0 aspect-square ${
                               isActive
                                 ? 'border-2 border-white ring-4 ring-black/20 scale-105 shadow-md'
                                 : 'border border-outline-variant/10 shadow-xs hover:border-black/25 group-hover:scale-105'
@@ -351,7 +351,7 @@ export function WishlistView({ isEmbedded = false }) {
                             />
                           </div>
                           <span
-                            className={`text-[9.5px] md:text-[10px] font-bold text-center mt-2 tracking-wide transition-colors whitespace-normal leading-tight h-8 flex items-start justify-center w-full ${
+                            className={`text-[9.5px] lg:text-[10px] font-bold text-center mt-2 tracking-wide transition-colors whitespace-normal leading-tight h-8 flex items-start justify-center w-full ${
                               isActive ? 'text-[#1a1a1a]' : 'text-black/50 group-hover:text-black'
                             }`}
                           >
@@ -370,20 +370,20 @@ export function WishlistView({ isEmbedded = false }) {
           {enhancedItems.length === 0 ? (
             <div className="space-y-12">
               <div className="flex flex-col items-center justify-center min-h-[50vh] mt-6 text-center">
-                <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-[#f6f5f3] flex items-center justify-center mb-6">
-                  <span className="material-symbols-outlined text-[24px] md:text-[28px] text-[#9c8965] font-light">
+                <div className="w-24 h-24 lg:w-28 lg:h-28 rounded-full bg-[#f6f5f3] flex items-center justify-center mb-6">
+                  <span className="material-symbols-outlined text-[24px] lg:text-[28px] text-[#9c8965] font-light">
                     favorite_border
                   </span>
                 </div>
-                <h3 className="font-display text-[28px] md:text-[34px] text-[#1a1a1a] mb-3 tracking-tight leading-tight">
+                <h3 className="font-display text-[28px] lg:text-[34px] text-[#1a1a1a] mb-3 tracking-tight leading-tight">
                   Your wishlist is empty
                 </h3>
-                <p className="text-[#8c8c8c] text-[13px] md:text-[15px] font-light max-w-[320px] mb-10 leading-relaxed">
+                <p className="text-[#8c8c8c] text-[13px] lg:text-[15px] font-light max-w-[320px] mb-10 leading-relaxed">
                   Discover our curated pieces and start building your dream event.
                 </p>
                 <Link
                   to="/collections"
-                  className="group flex items-center gap-2 text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70"
+                  className="group flex items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70"
                 >
                   Explore Collections
                   <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">
@@ -406,7 +406,7 @@ export function WishlistView({ isEmbedded = false }) {
                     <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
                   </Link>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 gap-6">
                   {trendingLoading
                     ? [...Array(4)].map((_, i) => <ProductCard key={i} loading={true} />)
                     : trendingProducts.map((prod) => (
@@ -448,7 +448,7 @@ export function WishlistView({ isEmbedded = false }) {
             /* Grid Layout matching retail platforms with smooth staggered micro-animations */
             <motion.div
               layout
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+              className="grid grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
             >
               <AnimatePresence>
                 {filteredItems.map((item, _index) => (

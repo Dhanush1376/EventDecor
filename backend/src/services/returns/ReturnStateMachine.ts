@@ -226,8 +226,8 @@ export class ReturnStateMachine {
         const isWindowExpired = daysRemaining === 0 && daysSinceDelivered > defaultReturnWindow;
         const isLocked = !!(activeReturn || activeExchange);
 
-        let returnBadge = 'Eligible';
-        let exchangeBadge = 'Eligible';
+        let returnBadge: string;
+        let exchangeBadge: string;
         let isEligibleForReturn = true;
         let isEligibleForExchange = true;
         let reason = null;

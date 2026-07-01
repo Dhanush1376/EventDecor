@@ -33,4 +33,12 @@ export const reviewService = {
     const response = await api.get(`/reviews/can-review/${productId}`);
     return response.data;
   },
+  getShowcaseReviews: async (showcaseId, params) => {
+    const response = await api.get(`/reviews/showcase/${showcaseId}`, { params });
+    return response.data;
+  },
+  canReviewShowcase: async (showcaseId) => {
+    const response = await api.get(`/reviews/can-review-showcase/${showcaseId}`);
+    return response.data;
+  },
 };

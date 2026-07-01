@@ -34,6 +34,8 @@ export default function CheckoutPaymentStep() {
     hasRentalItems,
     rentalStartDate,
     rentalEndDate,
+    needByDate,
+    setNeedByDate,
   } = useCheckout();
 
   const codMinOrder = settings?.payments?.codMinOrder ?? 500;
@@ -134,6 +136,11 @@ export default function CheckoutPaymentStep() {
       return;
     }
 
+    if (!needByDate) {
+      toast.error('Please select a Required Delivery Date before proceeding.');
+      return;
+    }
+
     if (paymentOption === 'razorpay') {
       handleConfirmOrder();
     } else {
@@ -210,6 +217,30 @@ export default function CheckoutPaymentStep() {
           </div>
         </div>
       )}
+
+      {/* Required By Date Input */}
+      <div className="p-4 sm:p-6 mb-2 border-b border-black/5">
+        <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider flex items-center gap-2 mb-4">
+          <span className="material-symbols-outlined text-[18px] text-primary">calendar_clock</span>
+          Required Delivery Date
+        </h2>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-bold text-secondary uppercase tracking-wider">
+            When do you need these items? <span className="text-error">*</span>
+          </label>
+          <input
+            type="date"
+            min={new Date().toISOString().split('T')[0]}
+            value={needByDate || ''}
+            onChange={(e) => setNeedByDate(e.target.value)}
+            className="w-full sm:w-1/2 p-3 rounded-xl border border-outline-variant/60 bg-surface-bright focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-xs font-semibold text-on-surface"
+            required
+          />
+          <p className="text-[10px] text-secondary mt-1">
+            Helps us prioritize your order preparation.
+          </p>
+        </div>
+      </div>
 
       {/* Payment Header */}
       <div className="p-4 sm:p-6 mb-2">

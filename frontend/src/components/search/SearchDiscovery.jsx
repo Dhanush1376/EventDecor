@@ -20,7 +20,7 @@ export function SearchDiscovery({
     <div className="py-2 relative overflow-hidden min-h-[400px]">
       {/* Mandala Background Watermark */}
       <div
-        className="absolute top-0 right-0 translate-x-[15%] -translate-y-[15%] pointer-events-none opacity-[0.12] md:opacity-[0.08] z-0 mix-blend-normal"
+        className="absolute top-0 right-0 translate-x-[15%] -translate-y-[15%] pointer-events-none opacity-[0.12] lg:opacity-[0.08] z-0 mix-blend-normal"
         style={{
           WebkitMaskImage: 'radial-gradient(circle, black 30%, transparent 70%)',
           maskImage: 'radial-gradient(circle, black 30%, transparent 70%)',
@@ -29,7 +29,7 @@ export function SearchDiscovery({
         <img
           src={MANDALA_VARIANT_URLS[1]}
           alt=""
-          className="w-[120vw] h-[120vw] md:w-[650px] md:h-[650px] object-contain dark:invert animate-[spin_120s_linear_infinite]"
+          className="w-[120vw] h-[120vw] lg:w-[650px] lg:h-[650px] object-contain dark:invert animate-[spin_120s_linear_infinite]"
         />
       </div>
 
@@ -39,7 +39,7 @@ export function SearchDiscovery({
           <div className={isMobile ? 'py-1' : 'mb-2'}>
             <div
               className={`flex items-center justify-between ${
-                isMobile ? 'px-5 py-2' : 'px-6 md:px-8.5 py-1'
+                isMobile ? 'px-5 py-2' : 'px-6 lg:px-8.5 py-1'
               }`}
             >
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 flex items-center gap-1.5">
@@ -69,7 +69,7 @@ export function SearchDiscovery({
                 className={`flex items-center ${
                   isMobile
                     ? 'gap-3.5 px-5 py-1.5 active:bg-stone-50'
-                    : 'gap-3 px-6 md:px-8.5 py-1.5 hover:bg-stone-50/60 transition-all border-b border-stone-100/30 last:border-b-0 group cursor-pointer'
+                    : 'gap-3 px-6 lg:px-8.5 py-1.5 hover:bg-stone-50/60 transition-all border-b border-stone-100/30 last:border-b-0 group cursor-pointer'
                 }`}
               >
                 <span className="material-symbols-outlined text-[18px] text-stone-400">
@@ -200,9 +200,9 @@ export function SearchDiscovery({
           <div
             className={`pt-4 pb-2 ${recentSearches.length > 0 ? 'border-t border-stone-200/30 mt-3' : ''}`}
           >
-            <div className="grid grid-cols-12 gap-8 px-6 md:px-8.5">
+            <div className="grid grid-cols-12 gap-8 px-6 lg:px-8.5">
               {/* Left Column: Trending Now Products */}
-              <div className="col-span-12 md:col-span-5 flex flex-col gap-6">
+              <div className="col-span-12 lg:col-span-5 flex flex-col gap-6">
                 {discoveryData?.popularProducts?.length > 0 && (
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-3 block flex items-center gap-1.5">
@@ -250,8 +250,8 @@ export function SearchDiscovery({
               </div>
 
               {/* Right Column: Explore Collections & New Arrivals */}
-              <div className="col-span-12 md:col-span-7 flex flex-col gap-6 relative">
-                <div className="hidden md:block absolute left-[-16px] top-0 bottom-0 w-px bg-stone-200/40"></div>
+              <div className="col-span-12 lg:col-span-7 flex flex-col gap-6 relative">
+                <div className="hidden lg:block absolute left-[-16px] top-0 bottom-0 w-px bg-stone-200/40"></div>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-6">
                   {/* Explore Collections */}
                   {((discoveryData?.eventCollections &&

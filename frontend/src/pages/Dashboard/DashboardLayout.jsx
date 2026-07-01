@@ -28,24 +28,24 @@ export function DashboardLayout() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-surface-container-low min-h-screen pt-20 pb-24 md:pb-12 font-body text-on-surface modern-sans-headings"
+      className="bg-surface-container-low min-h-screen pt-20 pb-24 lg:pb-12 font-body text-on-surface modern-sans-headings"
     >
       <SEO
         title="Your Premium Studio Account"
         description="Manage your Siri Arts & Crafts profile parameters, live orders, dynamic shipping addresses, wishlist collections, and personalized newsletter configurations."
       />
 
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
         {/* HEADER */}
         <DashboardHeader />
 
-        <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-6 lg:grid-cols-12 gap-6">
           {/* LEFT SIDEBAR NAVIGATION PANEL */}
           <Sidebar />
 
           {/* MAIN DYNAMIC CONTENT PORTAL PANELS */}
           <div
-            className={`col-span-1 md:col-span-4 lg:col-span-9 space-y-4 ${mobileShowContent ? 'block' : 'hidden md:block'}`}
+            className={`col-span-1 lg:col-span-4 lg:col-span-9 space-y-4 ${mobileShowContent ? 'block' : 'hidden lg:block'}`}
           >
             <Outlet />
           </div>

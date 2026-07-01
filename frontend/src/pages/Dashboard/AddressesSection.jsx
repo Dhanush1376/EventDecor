@@ -124,7 +124,7 @@ export function AddressesSection() {
                 });
                 setIsAddressModalOpen(true);
               }}
-              className="group flex items-center gap-2 text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70 bg-transparent outline-none"
+              className="group flex items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70 bg-transparent outline-none"
             >
               Add New Site
               <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">

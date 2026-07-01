@@ -61,11 +61,13 @@ describe('RentalAvailabilityService Integration', () => {
   });
 
   it('returns unavailable when all stock is booked', async () => {
-    const product = await Product.create({
+    await Product.create({
       title: 'Mock Rental Product 2',
       slug: 'mock-rental-product-booked',
       description: 'Test product for full booking',
-      category: 'Decor',
+      primaryCategory: 'Rentals',
+      category: 'MockCategory',
+      tags: ['rental'],
       imageSrc: '/mock2.png',
       price: 500,
       rentalEnabled: true,

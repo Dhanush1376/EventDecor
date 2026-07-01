@@ -13,7 +13,9 @@ export default function OrdersTab({ customerId }) {
     const fetchOrders = async () => {
       try {
         const response = await orderService.getAll({ user: customerId });
-        setCustomerOrders(response.data || []);
+        // The paginated response is nested in response.data.data
+        const orders = response?.data?.data || response?.data || [];
+        setCustomerOrders(Array.isArray(orders) ? orders : []);
       } catch (err) {
         console.error(err);
       } finally {

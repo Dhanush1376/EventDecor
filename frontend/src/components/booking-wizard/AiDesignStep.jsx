@@ -16,10 +16,10 @@ export function AiDesignStep({
       className="space-y-8"
     >
       <div className="space-y-2">
-        <h3 className="font-display text-[20px] md:text-[28px] text-black font-semibold">
+        <h3 className="font-display text-[20px] lg:text-[28px] text-black font-semibold">
           Custom Decor Recommendations & Moodboards
         </h3>
-        <p className="font-body text-black/45 text-[12px] md:text-[13px]">
+        <p className="font-body text-black/45 text-[12px] lg:text-[13px]">
           Upload your Pinterest moodboard, stage maps, or custom designs. Our AI model will
           automatically analyze details, map color palettes, and draft preliminary pricing ranges.
         </p>
@@ -110,7 +110,7 @@ export function AiDesignStep({
                       {aiAnalysisResult.mood}
                     </span>
                   </div>
-                  <div className="space-y-0.5 md:col-span-2">
+                  <div className="space-y-0.5 lg:col-span-2">
                     <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">
                       Theme Color Palette
                     </span>
@@ -128,7 +128,7 @@ export function AiDesignStep({
                       ))}
                     </div>
                   </div>
-                  <div className="space-y-0.5 md:col-span-2">
+                  <div className="space-y-0.5 lg:col-span-2">
                     <span className="font-label text-[8px] uppercase tracking-widest text-black/40 block">
                       Estimated Rental Inclusions
                     </span>

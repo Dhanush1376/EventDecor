@@ -20,14 +20,14 @@ export function GalleryDesktopLayout({
   navigate,
 }) {
   return (
-    <div className="hidden md:grid gallery-detail-grid">
+    <div className="hidden md:grid lg:grid gallery-detail-grid">
       {/* ─── LEFT: Hero Image ─── */}
-      <div className="gallery-detail-image z-0">
+      <div className="gallery-detail-image z-0 md:self-start md:sticky md:top-24 lg:top-32">
         <motion.div
           variants={scaleIn}
           initial="hidden"
           animate="visible"
-          className="relative md:rounded-[28px] overflow-hidden bg-[#f5f3ef] group"
+          className="relative lg:rounded-[28px] overflow-hidden bg-[#f5f3ef] group"
           onMouseEnter={() => setImageHovered(true)}
           onMouseLeave={() => setImageHovered(false)}
         >
@@ -83,7 +83,7 @@ export function GalleryDesktopLayout({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute bottom-5 right-5 z-10 hidden md:block"
+            className="absolute bottom-5 right-5 z-10 hidden md:block lg:block"
           >
             <div className="gallery-action-pill">
               {/* Favorite */}
@@ -138,12 +138,12 @@ export function GalleryDesktopLayout({
       </div>
 
       {/* ─── RIGHT: Detail Panel ─── */}
-      <div className="px-5 md:px-0 py-6 md:py-0 space-y-7 md:space-y-8">
+      <div className="px-5 lg:px-0 py-6 lg:py-0 space-y-7 lg:space-y-8">
         {/* Category & Style Tags Removed per request */}
 
         {/* Title */}
         <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}>
-          <h1 className="font-display text-[26px] md:text-[34px] text-black leading-[1.15] font-bold tracking-tight">
+          <h1 className="font-display text-[26px] lg:text-[34px] text-black leading-[1.15] font-bold tracking-tight">
             {item.title}
           </h1>
           {item.teluguTitle && (
@@ -163,7 +163,7 @@ export function GalleryDesktopLayout({
         <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2}>
           {item.description && (
             <div className="relative pl-5 border-l-[3px] border-primary/25">
-              <p className="font-body text-[15px] md:text-[16px] text-black/70 leading-relaxed font-medium">
+              <p className="font-body text-[15px] lg:text-[16px] text-black/70 leading-relaxed font-medium">
                 {item.description}
               </p>
             </div>

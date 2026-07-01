@@ -46,7 +46,7 @@ export function BlogPost() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background pt-32 pb-20 text-center">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <div className="w-16 h-16 border-[1px] border-primary/30 border-t-primary rounded-full animate-spin duration-1000 ease-linear mx-auto mb-4"></div>
         <p className="text-on-surface-variant">Loading article...</p>
       </div>
     );
@@ -101,7 +101,7 @@ export function BlogPost() {
       />
 
       {/* Hero Section */}
-      <div className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh]">
+      <div className="relative w-full h-[50vh] lg:h-[60vh] lg:h-[70vh]">
         <LazyImage
           src={post.heroImage}
           alt={post.heroImageAlt || post.title}
@@ -113,10 +113,10 @@ export function BlogPost() {
             <span className="px-3 py-1 bg-primary text-white text-xs font-bold uppercase tracking-wider rounded-full backdrop-blur-md mb-6 inline-block">
               {post.category}
             </span>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-white font-bold leading-tight mb-6">
+            <h1 className="font-display text-4xl lg:text-5xl lg:text-6xl text-white font-bold leading-tight mb-6">
               {post.title}
             </h1>
-            <div className="flex items-center justify-center gap-6 text-white/90 text-sm md:text-base">
+            <div className="flex items-center justify-center gap-6 text-white/90 text-sm lg:text-base">
               <span className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 {new Date(post.publishDate).toLocaleDateString('en-US', {
@@ -133,7 +133,7 @@ export function BlogPost() {
         </div>
       </div>
 
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mt-8 md:mt-12">
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop mt-8 lg:mt-12">
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Main Content */}
           <article className="flex-1 max-w-3xl mx-auto lg:mx-0 w-full">

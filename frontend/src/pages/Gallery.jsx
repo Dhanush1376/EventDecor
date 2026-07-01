@@ -217,6 +217,17 @@ export function GalleryInner() {
     });
   }, []);
 
+  const setFilterValue = React.useCallback((type, value) => {
+    setFilters((prev) => {
+      if (!value || (Array.isArray(value) && value.length === 0)) {
+        const newFilters = { ...prev };
+        delete newFilters[type];
+        return newFilters;
+      }
+      return { ...prev, [type]: Array.isArray(value) ? value : [value] };
+    });
+  }, []);
+
   const clearAllFilters = React.useCallback(() => {
     setFilters({});
     setActiveCategory('All');
@@ -243,7 +254,7 @@ export function GalleryInner() {
   );
 
   return (
-    <div className="bg-[#fcfbf9] min-h-screen selection:bg-primary/20 relative pt-20 md:pt-28 pb-32 md:pb-20 transition-all duration-300">
+    <div className="bg-[#fcfbf9] min-h-screen selection:bg-primary/20 relative pt-20 lg:pt-28 pb-32 lg:pb-20 transition-all duration-300">
       <SEO
         title="Inspiration Gallery"
         description="Explore our curated collection of artisanal event transformations and heritage decor inspirations."
@@ -257,8 +268,8 @@ export function GalleryInner() {
       />
 
       {/* Editorial Header Hero */}
-      <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pt-4 md:pt-6 relative z-10">
-        <nav className="hidden md:flex items-center gap-2 font-label-sm text-[11px] uppercase tracking-[0.3em] mb-6 text-black/30">
+      <section className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop pt-4 lg:pt-6 relative z-10">
+        <nav className="hidden lg:flex items-center gap-2 font-label-sm text-[11px] uppercase tracking-[0.3em] mb-6 text-black/30">
           <Link to="/" className="hover:text-primary transition-colors">
             Home
           </Link>
@@ -296,16 +307,16 @@ export function GalleryInner() {
       {/* Sticky Navigation Bar */}
       <nav
         ref={navRef}
-        className={`sticky z-[49] -mt-6 md:-mt-8 mb-8 md:mb-12 transition-all duration-300 ${
-          isSticky ? 'px-0' : 'px-3 md:px-margin-desktop max-w-max-width mx-auto'
+        className={`sticky z-[49] -mt-6 lg:-mt-8 mb-8 lg:mb-12 transition-all duration-300 ${
+          isSticky ? 'px-0' : 'px-3 lg:px-margin-desktop max-w-max-width mx-auto'
         }`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
       >
         <div
           className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
             isSticky
-              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 lg:py-2 px-3 md:px-margin-desktop w-full max-w-none'
-              : 'bg-transparent border-none shadow-none rounded-[2rem] px-2 py-3 md:p-4 lg:p-2 w-full max-w-max-width'
+              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 lg:py-4 lg:py-2 px-3 lg:px-margin-desktop w-full max-w-none'
+              : 'bg-transparent border-none shadow-none rounded-[2rem] px-2 py-3 lg:p-4 lg:p-2 w-full max-w-max-width'
           }`}
         >
           {/* Search Bar & Mobile / Tablet Actions */}
@@ -412,10 +423,10 @@ export function GalleryInner() {
 
       <main
         id="gallery-collection"
-        className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-4 md:py-6 relative z-10"
+        className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-4 lg:py-6 relative z-10"
       >
         {/* Mobile/Tablet inline category tabs (hidden on desktop where they appear in sticky nav) */}
-        <div className="mb-6 md:mb-8 overflow-x-auto no-scrollbar lg:hidden">
+        <div className="mb-6 lg:mb-8 overflow-x-auto no-scrollbar lg:hidden">
           <CategoryTabs
             categories={categories}
             activeCategory={activeCategory}
@@ -430,6 +441,7 @@ export function GalleryInner() {
               filterGroups={filterGroups.filter((group) => group.id !== 'category')} // Category is already in tabs!
               currentFilters={filters}
               onToggleFilter={toggleFilter}
+              onSetFilterValue={setFilterValue}
               onClearAll={clearAllFilters}
               isOpen={isFilterOpen}
               onClose={() => setIsFilterOpen(false)}

@@ -27,6 +27,14 @@ const mapDbOrderToFrontend = (o) => {
         type: item.type || 'purchase',
         rentalInfo: item.rentalInfo || null,
         deposit: item.deposit || 0,
+        image:
+          item.imageSrc ||
+          item.image ||
+          item.images?.[0] ||
+          item.thumbnail ||
+          item.product?.images?.[0] ||
+          item.product?.image ||
+          null,
       }))
     : [];
 

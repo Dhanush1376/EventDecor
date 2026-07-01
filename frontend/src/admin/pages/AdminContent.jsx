@@ -14,9 +14,7 @@ import { ShopPageEditor } from '../components/cms/ShopPageEditor';
 import { EventsPageEditor } from '../components/cms/EventsPageEditor';
 import { ContactInfoEditor } from '../components/cms/ContactInfoEditor';
 import { CustomOrdersEditor } from '../components/cms/CustomOrdersEditor';
-import { FAQEditor } from '../components/cms/FAQEditor';
 import { SEOCenterEditor } from '../components/cms/SEOCenterEditor';
-import { AnnouncementBarEditor } from '../components/cms/AnnouncementBarEditor';
 import { NavigationFooterEditor } from '../components/cms/NavigationFooterEditor';
 import { PublisherVersionsEditor } from '../components/cms/PublisherVersionsEditor';
 import { MediaLibraryEditor } from '../components/cms/MediaLibraryEditor';
@@ -60,38 +58,13 @@ const CMS_SIDEBAR = [
         icon: 'design_services',
         desc: 'Digital intake forms',
       },
-      { id: 'faqs', label: 'FAQs', icon: 'help_center', desc: 'Frequently Asked Questions' },
     ],
   },
   {
     title: 'SEO & Branding',
     items: [
       { id: 'seo-center', label: 'SEO Settings', icon: 'search', desc: 'Search result metadata' },
-      {
-        id: 'announcement-bar',
-        label: 'Announcements',
-        icon: 'campaign',
-        desc: 'Header banner banners',
-      },
       { id: 'navigation', label: 'Header & Footer', icon: 'menu', desc: 'Logo tagline & bio' },
-    ],
-  },
-  {
-    title: 'System Tools',
-    items: [
-      {
-        id: 'publish-controls',
-        label: 'History & Rollback',
-        icon: 'history',
-        desc: 'Checkpoints history',
-      },
-      { id: 'media-library', label: 'Media Vault', icon: 'image', desc: 'Uploads asset vault' },
-      {
-        id: 'catalog',
-        label: 'Featured Catalog',
-        icon: 'inventory_2',
-        desc: 'Featured status flags',
-      },
     ],
   },
 ];
@@ -228,7 +201,6 @@ export function AdminContent() {
     'Storefront Layout': true,
     Pages: true,
     'SEO & Branding': true,
-    'System Tools': false,
   });
 
   const toggleCategory = (cat) => {
@@ -428,7 +400,7 @@ export function AdminContent() {
                 >
                   {activeSection === 'home' && (
                     <HomePageControllerEditor
-                      content={activeContent}
+                      content={activeContent.homepage || activeContent}
                       onUpdate={handleUpdateContent}
                     />
                   )}
@@ -469,12 +441,6 @@ export function AdminContent() {
                     <SEOCenterEditor content={activeContent} onUpdate={handleUpdateContent} />
                   )}
 
-                  {activeSection === 'announcement-bar' && (
-                    <AnnouncementBarEditor
-                      banners={activeContent.banners}
-                      onUpdate={handleUpdateContent}
-                    />
-                  )}
                   {activeSection === 'navigation' && (
                     <NavigationFooterEditor
                       nav={activeContent.navigation}
@@ -485,9 +451,6 @@ export function AdminContent() {
                   {activeSection === 'publish-controls' && <PublisherVersionsEditor />}
                   {activeSection === 'media-library' && <MediaLibraryEditor />}
                   {activeSection === 'catalog' && <QuickCatalogControl />}
-                  {activeSection === 'faqs' && (
-                    <FAQEditor content={activeContent} onUpdate={handleUpdateContent} />
-                  )}
                 </motion.div>
               </AnimatePresence>
             </motion.div>

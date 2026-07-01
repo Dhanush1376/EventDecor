@@ -103,7 +103,7 @@ export function SearchInputHeader({
   }
 
   return (
-    <div className="flex items-center gap-4 px-6 py-4.5 md:px-8.5 md:py-5.5 relative min-h-[72px]">
+    <div className="flex items-center gap-4 px-6 py-4.5 lg:px-8.5 lg:py-5.5 relative min-h-[72px]">
       {searchMode === 'visual' ? (
         <>
           <button
@@ -113,7 +113,7 @@ export function SearchInputHeader({
           >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
-          <h2 className="flex-1 text-[18px] md:text-[20px] text-stone-900 font-display font-medium">
+          <h2 className="flex-1 text-[18px] lg:text-[20px] text-stone-900 font-display font-medium">
             Search by Image
           </h2>
         </>
@@ -129,7 +129,7 @@ export function SearchInputHeader({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Search decor, events, styles..."
-            className="flex-1 min-w-0 bg-transparent border-none outline-none appearance-none ring-0 focus:ring-0 focus:outline-none focus:border-transparent text-[18px] md:text-[20px] text-stone-900 placeholder:text-stone-400/70 placeholder:text-[14px] md:placeholder:text-[16px] font-body font-normal search-portal-input"
+            className="flex-1 min-w-0 bg-transparent border-none outline-none appearance-none ring-0 focus:ring-0 focus:outline-none focus:border-transparent text-[18px] lg:text-[20px] text-stone-900 placeholder:text-stone-400/70 placeholder:text-[14px] lg:placeholder:text-[16px] font-body font-normal search-portal-input"
             style={{
               outline: 'none',
               border: 'none',
@@ -222,7 +222,7 @@ export function SearchInputHeader({
           </div>
 
           {/* Keyboard shortcut hint */}
-          <kbd className="hidden md:flex items-center justify-center px-2.5 py-1 bg-stone-100 border border-stone-200 rounded-lg text-[9px] font-bold tracking-widest text-stone-500 shadow-xs select-none font-mono">
+          <kbd className="hidden lg:flex items-center justify-center px-2.5 py-1 bg-stone-100 border border-stone-200 rounded-lg text-[9px] font-bold tracking-widest text-stone-500 shadow-xs select-none font-mono">
             ESC
           </kbd>
         </>

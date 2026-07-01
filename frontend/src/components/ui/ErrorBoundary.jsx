@@ -68,11 +68,11 @@ export class ErrorBoundary extends Component {
               </span>
             </div>
 
-            <h2 className="font-display text-2xl md:text-3xl font-semibold text-on-surface mb-3 tracking-tight">
+            <h2 className="font-display text-2xl lg:text-3xl font-semibold text-on-surface mb-3 tracking-tight">
               {isChunkError ? 'Update Available' : 'Something went wrong'}
             </h2>
 
-            <p className="font-body-md text-on-surface-variant/70 mb-8 text-sm md:text-base leading-relaxed max-w-sm mx-auto">
+            <p className="font-body-md text-on-surface-variant/70 mb-8 text-sm lg:text-base leading-relaxed max-w-sm mx-auto">
               {isChunkError
                 ? 'A new version of the app is available. Please refresh to get the latest experience.'
                 : "Our studio encountered an unexpected error. We've been notified and are working on it."}

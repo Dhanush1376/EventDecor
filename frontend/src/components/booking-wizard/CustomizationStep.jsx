@@ -11,10 +11,10 @@ export function CustomizationStep({ formData, handleNestedInputChange, handleAdd
       className="space-y-8"
     >
       <div className="space-y-2">
-        <h3 className="font-display text-[20px] md:text-[28px] text-black font-semibold">
+        <h3 className="font-display text-[20px] lg:text-[28px] text-black font-semibold">
           Extra Decorations & Setup Options
         </h3>
-        <p className="font-body text-black/45 text-[12px] md:text-[13px]">
+        <p className="font-body text-black/45 text-[12px] lg:text-[13px]">
           Define color swatches and lighting profiles or add standalone prop rentals.
         </p>
       </div>
@@ -77,7 +77,7 @@ export function CustomizationStep({ formData, handleNestedInputChange, handleAdd
         </div>
 
         {/* Add-ons Checklist */}
-        <div className="md:col-span-2 space-y-4 pt-4 border-t border-black/5">
+        <div className="lg:col-span-2 space-y-4 pt-4 border-t border-black/5">
           <label className="font-label text-[10px] uppercase tracking-wider text-black/50 font-bold block">
             Add-on Visual Prop Rentals
           </label>

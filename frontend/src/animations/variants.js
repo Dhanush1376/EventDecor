@@ -4,8 +4,7 @@
  */
 
 const shouldReduceMotion =
-  typeof window !== "undefined" &&
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const cinematicTransition = shouldReduceMotion
   ? { duration: 0.1 }
@@ -34,7 +33,7 @@ export const staggerContainer = {
     transition: {
       staggerChildren: 0.1,
       delayChildren: 0.3,
-      when: "beforeChildren",
+      when: 'beforeChildren',
     },
   },
 };
@@ -79,10 +78,10 @@ export const hoverScale = {
 };
 
 export const drawerTransition = {
-  initial: { x: "100%" },
+  initial: { x: '100%' },
   animate: { x: 0 },
-  exit: { x: "100%" },
-  transition: { type: "spring", damping: 30, stiffness: 300 },
+  exit: { x: '100%' },
+  transition: { type: 'spring', damping: 30, stiffness: 300 },
 };
 
 export const cinematicHero = {

@@ -4,7 +4,7 @@ import { MandalaArtDecor } from '../../../components/ui/MandalaArtDecor';
 
 export function ShowcaseHero({ eventsPageContent }) {
   return (
-    <section className="relative min-h-[320px] md:h-[70vh] flex items-center overflow-hidden bg-on-surface-variant">
+    <section className="relative min-h-[320px] lg:h-[70vh] flex items-center overflow-hidden bg-on-surface-variant">
       <motion.div
         initial={{ scale: 1.1, opacity: 0 }}
         animate={{ scale: 1, opacity: 0.6 }}
@@ -37,7 +37,7 @@ export function ShowcaseHero({ eventsPageContent }) {
         spinDuration={240}
       />
 
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop w-full relative z-10 text-center">
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop w-full relative z-10 text-center">
         <motion.span
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -49,7 +49,7 @@ export function ShowcaseHero({ eventsPageContent }) {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="font-headline-xl text-[32px] sm:text-[42px] md:text-[56px] lg:text-[72px] text-surface mb-4 md:mb-8 text-gold leading-tight"
+          className="font-headline-xl text-[32px] sm:text-[42px] lg:text-[56px] lg:text-[72px] text-surface mb-4 lg:mb-8 text-gold leading-tight"
         >
           {eventsPageContent.hero.title}
         </motion.h1>
@@ -57,7 +57,7 @@ export function ShowcaseHero({ eventsPageContent }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="font-body-lg text-[13px] md:text-[16px] lg:text-[18px] text-surface/80 max-w-xl mx-auto font-light leading-relaxed px-4"
+          className="font-body-lg text-[13px] lg:text-[16px] lg:text-[18px] text-surface/80 max-w-xl mx-auto font-light leading-relaxed px-4"
         >
           {eventsPageContent.hero.description}
         </motion.p>

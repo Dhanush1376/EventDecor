@@ -17,8 +17,6 @@ const cleanSignatureImg = (imgUrl, founderName) => {
   }
   return imgUrl;
 };
-import { AISparkButton } from './AISparkButton';
-
 export function AboutPageDetailsEditor({ content, onUpdate }) {
   const ab = content || {};
 
@@ -67,51 +65,48 @@ export function AboutPageDetailsEditor({ content, onUpdate }) {
             2. Narrative & Mission Statement
           </span>
           <AdminField
-            label="Brand Mission Block"
-            description="Core statement emphasizing the Telugu craftsmanship legacy"
+            label="Story Headline (Accepts HTML)"
+            description="The large main text, e.g., A Legacy of <br /><span className='italic font-light text-primary'>Family Artistry.</span>"
           >
-            <div className="relative flex items-start w-full shadow-[var(--admin-shadow-xs)] rounded-xl">
-              <AdminTextarea
-                value={ab.missionStatement || ''}
-                onChange={(e) => onUpdate('aboutPage', { missionStatement: e.target.value })}
-                rows={3}
-                className="!pr-12 !py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
-              />
-              <div className="absolute right-2.5 top-2.5">
-                <AISparkButton
-                  text={ab.missionStatement}
-                  onApply={(val) => onUpdate('aboutPage', { missionStatement: val })}
-                />
-              </div>
-            </div>
-          </AdminField>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5">
-            <ImageUpload
-              label="Narrative Side Illustration Image"
-              value={ab.storyImage || ''}
-              onChange={(val) => onUpdate('aboutPage', { storyImage: val })}
-              folder="cms"
+            <AdminInput
+              value={
+                ab.storyHeadline ||
+                'A Legacy of <br /><span className="italic font-light text-primary">Family Artistry.</span>'
+              }
+              onChange={(e) => onUpdate('aboutPage', { storyHeadline: e.target.value })}
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] mb-4"
             />
-            <div className="space-y-3.5">
-              <AdminField
-                label="Primary Founder Name"
-                description="Name showing inside leadership frames"
-              >
-                <AdminInput
-                  value={ab.founderName || 'Sirisha Atmakuri'}
-                  onChange={(e) => onUpdate('aboutPage', { founderName: e.target.value })}
-                  className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
-                />
-              </AdminField>
-              <AdminField label="Leadership Role Title">
-                <AdminInput
-                  value={ab.founderRole || 'Founder & Creative Head'}
-                  onChange={(e) => onUpdate('aboutPage', { founderRole: e.target.value })}
-                  className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
-                />
-              </AdminField>
-            </div>
-          </div>
+          </AdminField>
+
+          <AdminField
+            label="Story Paragraph 1"
+            description="First introductory paragraph about the brand's origins"
+          >
+            <AdminTextarea
+              value={ab.storyParagraph1 || ''}
+              onChange={(e) => onUpdate('aboutPage', { storyParagraph1: e.target.value })}
+              rows={3}
+              className="w-full !py-2.5 !text-[12px] rounded-xl shadow-[var(--admin-shadow-xs)] border-[var(--admin-border)] focus:border-[var(--admin-accent)] mb-4"
+            />
+          </AdminField>
+
+          <AdminField
+            label="Story Paragraph 2"
+            description="Second paragraph detailing current impact or mission"
+          >
+            <AdminTextarea
+              value={ab.storyParagraph2 || ''}
+              onChange={(e) => onUpdate('aboutPage', { storyParagraph2: e.target.value })}
+              rows={3}
+              className="w-full !py-2.5 !text-[12px] rounded-xl shadow-[var(--admin-shadow-xs)] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
+            />
+          </AdminField>
+          <ImageUpload
+            label="Narrative Side Illustration Image"
+            value={ab.storyImage || ''}
+            onChange={(val) => onUpdate('aboutPage', { storyImage: val })}
+            folder="cms"
+          />
         </div>
 
         {/* Dual Leadership */}
@@ -348,6 +343,49 @@ export function AboutPageDetailsEditor({ content, onUpdate }) {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Highlight Testimonial */}
+        <div className="admin-card p-5 space-y-4">
+          <div className="flex justify-between items-center border-b border-[var(--admin-border-subtle)] pb-2">
+            <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block font-sans">
+              6. Highlight Testimonial
+            </span>
+          </div>
+
+          <AdminField label="Testimonial Quote">
+            <AdminTextarea
+              value={ab.testimonialQuote || ''}
+              onChange={(e) => onUpdate('aboutPage', { testimonialQuote: e.target.value })}
+              className="!py-2 !text-[11px] sm:text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)]"
+              rows={3}
+            />
+          </AdminField>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5">
+            <AdminField label="Author Name">
+              <AdminInput
+                value={ab.testimonialAuthor || ''}
+                onChange={(e) => onUpdate('aboutPage', { testimonialAuthor: e.target.value })}
+                className="!py-2 !text-[11px] sm:text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)]"
+              />
+            </AdminField>
+
+            <AdminField label="Event / Occasion">
+              <AdminInput
+                value={ab.testimonialEvent || ''}
+                onChange={(e) => onUpdate('aboutPage', { testimonialEvent: e.target.value })}
+                className="!py-2 !text-[11px] sm:text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)]"
+              />
+            </AdminField>
+          </div>
+
+          <ImageUpload
+            label="Background Ambient Image"
+            value={ab.testimonialImage || ''}
+            onChange={(val) => onUpdate('aboutPage', { testimonialImage: val })}
+            folder="cms"
+          />
         </div>
       </div>
     </div>

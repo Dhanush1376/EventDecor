@@ -59,7 +59,7 @@ export function Coupons() {
 
       <div className="max-w-[1200px] mx-auto">
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-serif text-[var(--color-text-primary)] mb-4">
+          <h1 className="text-4xl lg:text-5xl font-serif text-[var(--color-text-primary)] mb-4">
             Exclusive Offers
           </h1>
           <p className="text-[var(--color-text-secondary)] max-w-2xl mx-auto">

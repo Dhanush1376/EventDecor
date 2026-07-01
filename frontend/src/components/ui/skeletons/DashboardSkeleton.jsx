@@ -3,8 +3,8 @@ import { Skeleton } from '../SkeletonBase';
 
 export function DashboardSkeleton() {
   return (
-    <div className="min-h-screen pt-24 md:pt-28 pb-20">
-      <div className="max-w-[1440px] mx-auto px-[18px] md:px-[clamp(22px,4.5vw,72px)]">
+    <div className="min-h-screen pt-24 lg:pt-28 pb-20">
+      <div className="max-w-[1440px] mx-auto px-[18px] lg:px-[clamp(22px,4.5vw,72px)]">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Skeleton variant="circle" className="w-16 h-16" />

@@ -1,24 +1,40 @@
 import React from 'react';
 
-export function DetailsStep({ formData, setFormData, focusedField, categories, handleAiAutofill }) {
+export function DetailsStep({
+  formData,
+  setFormData,
+  focusedField,
+  categories,
+  handleAiAutofill,
+  isAIGenerating,
+}) {
   return (
     <div className="space-y-5">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
+      <div className="flex flex-row justify-between items-start gap-3">
+        <div className="flex-1 pr-2">
           <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">
             Showcase Specifications
           </h2>
-          <p className="text-[11px] text-[var(--admin-text-secondary)]">
+          <p className="text-[10px] sm:text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
             Give your arrangement a title, short subtitle, and catalog category.
           </p>
         </div>
         <button
           type="button"
           onClick={handleAiAutofill}
-          className="bg-[var(--admin-accent)] text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 cursor-pointer"
+          disabled={isAIGenerating}
+          className="bg-[var(--admin-accent)] text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer shrink-0 mt-1 sm:mt-0"
+          title="Auto-Fill with AI"
         >
-          <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-          Auto-Fill with AI
+          {isAIGenerating ? (
+            <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
+          ) : (
+            <span className="material-symbols-outlined text-[15px] sm:text-[14px]">smart_toy</span>
+          )}
+          <span className="hidden sm:inline">
+            {isAIGenerating ? 'Analyzing Image...' : 'Auto-Fill with AI'}
+          </span>
+          <span className="sm:hidden">{isAIGenerating ? 'AI...' : 'AI Fill'}</span>
         </button>
       </div>
 

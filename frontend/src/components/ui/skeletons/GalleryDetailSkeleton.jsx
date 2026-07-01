@@ -3,9 +3,9 @@ import { Skeleton } from '../SkeletonBase';
 
 export function GalleryDetailSkeleton() {
   return (
-    <div className="bg-[#fcfbf9] min-h-screen pt-[56px] md:pt-20 pb-32 md:pb-20 overflow-hidden">
+    <div className="bg-[#fcfbf9] min-h-screen pt-[56px] lg:pt-20 pb-32 lg:pb-20 overflow-hidden">
       {/* Breadcrumbs */}
-      <div className="hidden md:flex items-center gap-2 max-w-[1340px] mx-auto px-6 lg:px-10 mb-8">
+      <div className="hidden lg:flex items-center gap-2 max-w-[1340px] mx-auto px-6 lg:px-10 mb-8">
         <Skeleton className="h-3 w-12" />
         <Skeleton className="h-3 w-4" />
         <Skeleton className="h-3 w-16" />
@@ -13,9 +13,9 @@ export function GalleryDetailSkeleton() {
         <Skeleton className="h-3 w-32" />
       </div>
 
-      <main className="max-w-[1340px] mx-auto md:px-6 lg:px-10">
+      <main className="max-w-[1340px] mx-auto lg:px-6 lg:px-10">
         {/* MOBILE Layout Skeleton */}
-        <div className="md:hidden flex flex-col bg-white overflow-hidden border-b border-black/5 pb-8 mb-8">
+        <div className="md:hidden lg:hidden flex flex-col bg-white overflow-hidden border-b border-black/5 pb-8 mb-8">
           <Skeleton className="w-full h-[60vh] !rounded-none" />
           <div className="w-full p-6 bg-white">
             <div className="flex items-center justify-between gap-4 mb-8">
@@ -37,14 +37,14 @@ export function GalleryDetailSkeleton() {
         </div>
 
         {/* DESKTOP Layout Skeleton */}
-        <div className="hidden md:grid gallery-detail-grid">
+        <div className="hidden md:grid lg:grid gallery-detail-grid">
           {/* Left: Image Card */}
-          <div className="gallery-detail-image z-0">
-            <Skeleton className="w-full h-[75vh] md:rounded-[28px] !rounded-none" />
+          <div className="gallery-detail-image z-0 md:self-start md:sticky md:top-24 lg:top-32">
+            <Skeleton className="w-full h-[75vh] lg:rounded-[28px] !rounded-none" />
           </div>
 
           {/* Right: Info Panel */}
-          <div className="px-5 md:px-0 py-6 md:py-0 space-y-7 md:space-y-8">
+          <div className="px-5 lg:px-0 py-6 lg:py-0 space-y-7 lg:space-y-8">
             {/* Tags */}
             <div className="flex gap-2.5">
               <Skeleton className="h-6 w-20 rounded-full" />
@@ -107,13 +107,13 @@ export function GalleryDetailSkeleton() {
         </div>
 
         {/* Discovery Feed Skeleton */}
-        <section className="mt-16 md:mt-24">
-          <div className="flex items-center justify-between mb-8 md:mb-10">
+        <section className="mt-16 lg:mt-24">
+          <div className="flex items-center justify-between mb-8 lg:mb-10">
             <div className="space-y-2">
               <Skeleton className="h-3 w-24" />
               <Skeleton className="h-8 w-48" />
             </div>
-            <Skeleton className="h-10 w-28 rounded-full hidden md:block" />
+            <Skeleton className="h-10 w-28 rounded-full hidden lg:block" />
           </div>
 
           <div className="discovery-masonry">

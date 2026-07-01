@@ -83,17 +83,17 @@ const CardContent = React.memo(function CardContent({
       />
 
       {/* Heritage Floating Circle Badges - Hidden on Mobile to declutter */}
-      <div className="absolute top-3 left-3 right-3 hidden md:flex justify-between items-start z-10">
+      <div className="absolute top-3 left-3 right-3 hidden lg:flex justify-between items-start z-10">
         <div className="flex flex-col gap-2">
           {/* Shop Circle */}
           {item.linkedProducts?.length > 0 && (
             <div className="relative group/shop flex items-center">
-              <div className="w-7 h-7 md:w-8 md:h-8 bg-primary/95 backdrop-blur-md text-white rounded-full shadow-lg border border-white/10 flex items-center justify-center transform transition-all duration-500 hover:scale-110 cursor-pointer">
-                <span className="material-symbols-outlined text-[14px] md:text-[16px]">
+              <div className="w-7 h-7 lg:w-8 lg:h-8 bg-primary/95 backdrop-blur-md text-white rounded-full shadow-lg border border-white/10 flex items-center justify-center transform transition-all duration-500 hover:scale-110 cursor-pointer">
+                <span className="material-symbols-outlined text-[14px] lg:text-[16px]">
                   shopping_bag
                 </span>
               </div>
-              <span className="ml-2 md:ml-3 md:absolute md:left-full md:top-1/2 md:-translate-y-1/2 px-2 md:px-3 py-1 md:py-1.5 bg-primary/90 md:bg-primary text-white text-[8px] md:text-[9px] uppercase tracking-[0.15em] md:tracking-[0.2em] rounded-full opacity-100 md:opacity-0 md:group-hover/shop:opacity-100 transition-all duration-300 whitespace-nowrap font-bold shadow-xl backdrop-blur-md border border-white/10">
+              <span className="ml-2 lg:ml-3 lg:absolute lg:left-full lg:top-1/2 lg:-translate-y-1/2 px-2 lg:px-3 py-1 lg:py-1.5 bg-primary/90 lg:bg-primary text-white text-[8px] lg:text-[9px] uppercase tracking-[0.15em] lg:tracking-[0.2em] rounded-full opacity-100 lg:opacity-0 lg:group-hover/shop:opacity-100 transition-all duration-300 whitespace-nowrap font-bold shadow-xl backdrop-blur-md border border-white/10">
                 Shop look
               </span>
             </div>
@@ -103,10 +103,10 @@ const CardContent = React.memo(function CardContent({
             <div className="relative group/wishlist flex items-center">
               <div
                 onClick={handleWishlist}
-                className="w-7 h-7 md:w-8 md:h-8 bg-white/95 backdrop-blur-md text-black rounded-full shadow-lg border border-black/10 flex items-center justify-center transform transition-all duration-500 hover:scale-110 cursor-pointer"
+                className="w-7 h-7 lg:w-8 lg:h-8 bg-white/95 backdrop-blur-md text-black rounded-full shadow-lg border border-black/10 flex items-center justify-center transform transition-all duration-500 hover:scale-110 cursor-pointer"
               >
                 <span
-                  className="material-symbols-outlined text-[14px] md:text-[16px] transition-colors"
+                  className="material-symbols-outlined text-[14px] lg:text-[16px] transition-colors"
                   style={{
                     fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0",
                     color: isLiked ? '#ff2d55' : 'inherit',
@@ -115,7 +115,7 @@ const CardContent = React.memo(function CardContent({
                   favorite
                 </span>
               </div>
-              <span className="ml-2 md:ml-3 md:absolute md:left-full md:top-1/2 md:-translate-y-1/2 px-2 md:px-3 py-1 md:py-1.5 bg-white/90 md:bg-white text-black text-[8px] md:text-[9px] uppercase tracking-[0.15em] md:tracking-[0.2em] rounded-full opacity-100 md:opacity-0 md:group-hover/wishlist:opacity-100 transition-all duration-300 whitespace-nowrap font-bold shadow-xl backdrop-blur-md border border-black/10">
+              <span className="ml-2 lg:ml-3 lg:absolute lg:left-full lg:top-1/2 lg:-translate-y-1/2 px-2 lg:px-3 py-1 lg:py-1.5 bg-white/90 lg:bg-white text-black text-[8px] lg:text-[9px] uppercase tracking-[0.15em] lg:tracking-[0.2em] rounded-full opacity-100 lg:opacity-0 lg:group-hover/wishlist:opacity-100 transition-all duration-300 whitespace-nowrap font-bold shadow-xl backdrop-blur-md border border-black/10">
                 {isLiked ? 'Wishlisted' : 'Wishlist'}
               </span>
             </div>
@@ -143,32 +143,32 @@ const CardContent = React.memo(function CardContent({
       </div>
 
       {/* Luxury Immersive Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 flex flex-col justify-end p-2.5 sm:p-5 md:p-6 lg:p-8">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 flex flex-col justify-end p-2.5 sm:p-5 lg:p-6 lg:p-8">
         <div className="transform translate-y-6 group-hover:translate-y-0 transition-transform duration-700 ease-out">
           {/* Bilingual Title Stack */}
-          <div className="mb-0 md:mb-2">
+          <div className="mb-0 lg:mb-2">
             {item.teluguTitle && (
-              <span className="hidden md:block font-label text-[8px] sm:text-[10px] md:text-[11px] text-white/60 mb-0.5 tracking-wider uppercase font-bold animate-fade-in-up">
+              <span className="hidden lg:block font-label text-[8px] sm:text-[10px] lg:text-[11px] text-white/60 mb-0.5 tracking-wider uppercase font-bold animate-fade-in-up">
                 {item.teluguTitle}
               </span>
             )}
-            <h3 className="font-display text-[10px] xs:text-[12px] md:text-[20px] lg:text-[28px] text-white leading-tight font-bold">
+            <h3 className="font-display text-[10px] xs:text-[12px] lg:text-[20px] lg:text-[28px] text-white leading-tight font-bold">
               {item.title}
             </h3>
           </div>
 
-          <div className="hidden md:flex items-center gap-2 mb-2 md:mb-4">
-            <span className="text-white/80 font-label text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-bold">
+          <div className="hidden lg:flex items-center gap-2 mb-2 lg:mb-4">
+            <span className="text-white/80 font-label text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-[0.2em] font-bold">
               {item.style}
             </span>
             <div className="w-0.5 h-0.5 rounded-full bg-primary" />
-            <span className="text-white/40 font-label text-[7px] sm:text-[8px] md:text-[9px] uppercase tracking-widest font-bold">
+            <span className="text-white/40 font-label text-[7px] sm:text-[8px] lg:text-[9px] uppercase tracking-widest font-bold">
               {item.event}
             </span>
           </div>
 
           <div className="flex items-center justify-between gap-2.5">
-            <p className="hidden md:block text-white/70 font-body text-[9px] sm:text-[10px] md:text-[11px] font-light leading-relaxed line-clamp-1 xs:line-clamp-2 max-w-[140px] sm:max-w-[200px] md:max-w-[240px]">
+            <p className="hidden lg:block text-white/70 font-body text-[9px] sm:text-[10px] lg:text-[11px] font-light leading-relaxed line-clamp-1 xs:line-clamp-2 max-w-[140px] sm:max-w-[200px] lg:max-w-[240px]">
               {item.description}
             </p>
             <span
@@ -186,16 +186,16 @@ const CardContent = React.memo(function CardContent({
                   if (itemId && navigate) navigate(linkTo);
                 }
               }}
-              className="hidden md:flex w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full bg-white text-black items-center justify-center shadow-2xl hover:bg-primary hover:text-white focus:outline-none focus:ring-0 transition-all duration-300 flex-shrink-0"
+              className="hidden lg:flex w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full bg-white text-black items-center justify-center shadow-2xl hover:bg-primary hover:text-white focus:outline-none focus:ring-0 transition-all duration-300 flex-shrink-0"
               aria-label={`View ${item.title}`}
             >
-              <span className="material-symbols-outlined text-[12px] sm:text-[14px] md:text-[18px] font-bold">
+              <span className="material-symbols-outlined text-[12px] sm:text-[14px] lg:text-[18px] font-bold">
                 arrow_outward
               </span>
             </span>
           </div>
 
-          <div className="hidden md:block h-[1px] w-0 bg-primary/40 mt-4 md:mt-6 transition-all duration-1000 group-hover:w-full" />
+          <div className="hidden lg:block h-[1px] w-0 bg-primary/40 mt-4 lg:mt-6 transition-all duration-1000 group-hover:w-full" />
         </div>
       </div>
 

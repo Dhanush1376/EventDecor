@@ -56,11 +56,13 @@ export class CustomerIntelligenceService {
         const predictions = await this.getPredictions(uId, engagementScore.score);
 
         const totalOrders = orders.length;
-        const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
         const totalRentals = rentals.length;
-        const rentalRevenue = rentals.reduce((sum, rental) => sum + (rental.totalAmount || 0), 0);
 
-        const ltv = totalRevenue + rentalRevenue;
+        // Use revenueAttribution to ONLY sum paid/completed orders for financial metrics
+        const totalRevenue = revenueAttribution.breakdown?.purchases || 0;
+        const rentalRevenue = revenueAttribution.breakdown?.rentals || 0;
+
+        const ltv = revenueAttribution.total || 0;
         const aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
         const acquisition = {

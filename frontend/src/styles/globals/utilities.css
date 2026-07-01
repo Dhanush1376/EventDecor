@@ -449,8 +449,9 @@ body.filters-open img[src*='mandala'] {
 @media (min-width: 768px) {
   .gallery-detail-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 0;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
   }
 }
 

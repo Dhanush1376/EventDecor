@@ -1,6 +1,6 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
 import {
   PageHeader,
@@ -12,10 +12,13 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  PeriodSelector,
 } from '../components/AdminUIKit';
+import { isWithinPeriod } from '../utils/dateFilters';
 
 export function AdminPayments() {
   const { orders, dataLoading, searchQuery, refreshOrders } = useAdmin();
+  const [dateFilter, setDateFilter] = useState('All Time');
 
   // Auto-refresh orders every 60 seconds to keep payment stats live
   useEffect(() => {
@@ -64,8 +67,14 @@ export function AdminPayments() {
       const orderDate = o.date ? new Date(o.date) : new Date();
       const monthLabel = monthNames[orderDate.getMonth()];
 
-      if (o.payment === 'Paid') {
-        totalCollected += amount;
+      const withinFilter = isWithinPeriod(orderDate, dateFilter);
+
+      const isPaid = ['Paid', 'COD Collected', 'paid', 'partial'].includes(
+        o.payment || o.status || o.rawOrder?.paymentStatus,
+      );
+
+      if (isPaid) {
+        if (withinFilter) totalCollected += amount;
 
         // Add to monthly aggregates
         if (monthlyMap[monthLabel] !== undefined) {
@@ -79,9 +88,9 @@ export function AdminPayments() {
           thisMonth += amount;
         }
       } else if (o.status === 'Cancelled') {
-        refunded += amount;
+        if (withinFilter) refunded += amount;
       } else {
-        pending += amount;
+        if (withinFilter) pending += amount;
       }
     });
 
@@ -141,7 +150,7 @@ export function AdminPayments() {
       chartData,
       transactions,
     };
-  }, [orders, searchQuery]);
+  }, [orders, searchQuery, dateFilter]);
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
@@ -150,6 +159,14 @@ export function AdminPayments() {
           <span className="material-symbols-outlined text-[20px]">download</span>
         </button>
       </PageHeader>
+
+      <div className="flex w-full mt-[-8px]">
+        <PeriodSelector
+          value={dateFilter}
+          onChange={setDateFilter}
+          periods={['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year']}
+        />
+      </div>
 
       {dataLoading ? (
         <SkeletonDashboard />

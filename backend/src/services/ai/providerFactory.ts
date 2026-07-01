@@ -203,7 +203,7 @@ class UniversalVisionProvider implements IVisualAIProvider {
     } catch (err: any) {
       clearTimeout(timeout);
       if (err.name === 'AbortError') {
-        throw new Error(`${this.config.displayName} request timed out after 25s`);
+        throw new Error(`${this.config.displayName} request timed out after 25s`, { cause: err });
       }
       throw err;
     }
@@ -258,7 +258,7 @@ class UniversalVisionProvider implements IVisualAIProvider {
     } catch (err: any) {
       clearTimeout(timeout);
       if (err.name === 'AbortError') {
-        throw new Error('Gemini request timed out after 30s');
+        throw new Error('Gemini request timed out after 30s', { cause: err });
       }
       throw err;
     }
@@ -322,7 +322,7 @@ class UniversalVisionProvider implements IVisualAIProvider {
     } catch (err: any) {
       clearTimeout(timeout);
       if (err.name === 'AbortError') {
-        throw new Error('Anthropic request timed out after 30s');
+        throw new Error('Anthropic request timed out after 30s', { cause: err });
       }
       throw err;
     }
@@ -444,7 +444,7 @@ class CustomEndpointProvider implements IVisualAIProvider {
     } catch (err: any) {
       clearTimeout(timeout);
       if (err.name === 'AbortError') {
-        throw new Error('Custom endpoint timed out after 30s');
+        throw new Error('Custom endpoint timed out after 30s', { cause: err });
       }
       throw err;
     }

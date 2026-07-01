@@ -47,7 +47,7 @@ const Checkbox = ({ label, count, _type, isChecked, onChange }) => {
           </span>
         </div>
         <span
-          className={`font-body text-[14px] md:text-[15px] transition-colors ${isChecked ? 'text-primary font-semibold' : 'text-on-surface/60 group-hover:text-on-surface'}`}
+          className={`font-body text-[14px] lg:text-[15px] transition-colors ${isChecked ? 'text-primary font-semibold' : 'text-on-surface/60 group-hover:text-on-surface'}`}
         >
           {label}
         </span>
@@ -139,7 +139,7 @@ export function EventFilterPanel({
               className={`w-full flex items-center justify-between py-0.5 min-h-0 group ${sortBy === opt.value ? 'text-primary' : 'text-on-surface/60'}`}
             >
               <span
-                className={`font-body text-[14px] md:text-[15px] transition-colors ${sortBy === opt.value ? 'font-semibold' : 'group-hover:text-on-surface'}`}
+                className={`font-body text-[14px] lg:text-[15px] transition-colors ${sortBy === opt.value ? 'font-semibold' : 'group-hover:text-on-surface'}`}
               >
                 {opt.label}
               </span>

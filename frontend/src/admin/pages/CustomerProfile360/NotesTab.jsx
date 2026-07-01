@@ -1,11 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pin, Plus, Clock } from 'lucide-react';
 import { customerIntelligenceService } from '../../../services/domainServices';
 
-export default function NotesTab({ customerId, notes: initialNotes }) {
-  const [notes, setNotes] = useState(initialNotes || []);
+export default function NotesTab({ customerId }) {
+  const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
   const [adding, setAdding] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        const data = await customerIntelligenceService.getCustomerNotes(customerId);
+        setNotes(data || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNotes();
+  }, [customerId]);
 
   const handleAddNote = async () => {
     if (!newNote.trim()) return;

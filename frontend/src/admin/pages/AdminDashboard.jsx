@@ -19,9 +19,6 @@ import { AdminDashboardActivity } from '../components/dashboard/AdminDashboardAc
 import { AdminDashboardCharts } from '../components/dashboard/AdminDashboardCharts';
 import { AdminDashboardStats } from '../components/dashboard/AdminDashboardStats';
 
-const FALLBACK_DATE = new Date('2026-05-20T00:00:00Z');
-const FALLBACK_PRODUCT_DATE = new Date('2026-05-17T00:00:00Z');
-
 const getInitials = (name) => {
   if (!name) return '?';
   const parts = name.trim().split(/\s+/);
@@ -83,35 +80,15 @@ export function AdminDashboard() {
   const lowStockProducts = products.filter((p) => p.stock > 0 && p.stock <= 5).length;
   const outOfStock = products.filter((p) => p.stock === 0).length;
 
-  // Prepare Revenue Overview data
+  // Prepare Revenue Overview data from backend
   const revenueChartData = useMemo(() => {
     if (dashboardStats?.monthlyRevenue && dashboardStats.monthlyRevenue.length > 0) {
       return [...dashboardStats.monthlyRevenue].reverse();
     }
-    const monthlyMap = {};
-    orders.forEach((o) => {
-      if (!o.rawOrder?.createdAt) return;
-      const date = new Date(o.rawOrder.createdAt);
-      const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
-      if (!monthlyMap[key]) {
-        monthlyMap[key] = { month: key, revenue: 0, orders: 0 };
-      }
-      monthlyMap[key].revenue += o.total;
-      monthlyMap[key].orders += 1;
-    });
-
-    const list = Object.values(monthlyMap);
-    if (list.length > 0) {
-      return list.sort((a, b) => {
-        const [yA, mA] = a.month.split('-').map(Number);
-        const [yB, mB] = b.month.split('-').map(Number);
-        return yA !== yB ? yA - yB : mA - mB;
-      });
-    }
     return [];
-  }, [dashboardStats, orders]);
+  }, [dashboardStats]);
 
-  // Calculate top categories dynamically
+  // Use top categories from backend dynamically
   const categoryChartData = useMemo(() => {
     if (dashboardStats?.categoryPerformance && dashboardStats.categoryPerformance.length > 0) {
       const total = dashboardStats.categoryPerformance.reduce(
@@ -124,71 +101,27 @@ export function AdminDashboard() {
         fill: CHART_COLORS[idx % CHART_COLORS.length],
       }));
     }
-
-    const catMap = {};
-    products.forEach((p) => {
-      const cat = p.category || 'Uncategorized';
-      catMap[cat] = (catMap[cat] || 0) + 1;
-    });
-
-    const total = Object.values(catMap).reduce((sum, v) => sum + v, 0);
-    if (total > 0) {
-      return Object.entries(catMap).map(([name, val], idx) => ({
-        name,
-        value: Math.round((val / total) * 100),
-        fill: CHART_COLORS[idx % CHART_COLORS.length],
-      }));
-    }
     return [];
-  }, [dashboardStats, products]);
+  }, [dashboardStats]);
 
-  // Generate real-time activity stream
+  // Use real-time activity stream from backend
   const dynamicRecentActivity = useMemo(() => {
-    const activity = [];
-    orders.forEach((o) => {
-      const ts = o.rawOrder?.createdAt ? new Date(o.rawOrder.createdAt) : null;
-      activity.push({
-        icon: 'shopping_bag',
-        text: `Order ${o.id || 'New'} placed by ${o.customer || 'Guest'}`,
-        timestamp: ts || FALLBACK_DATE,
-      });
-    });
-    products.forEach((p) => {
-      const ts = p.rawProduct?.createdAt ? new Date(p.rawProduct.createdAt) : null;
-      activity.push({
-        icon: 'inventory_2',
-        text: `Product '${p.name}' added to catalog`,
-        timestamp: ts || FALLBACK_PRODUCT_DATE,
-      });
-    });
-    eventBookings.forEach((b) => {
-      const ts = b.rawOrder?.createdAt ? new Date(b.rawOrder.createdAt) : null;
-      activity.push({
-        icon: 'celebration',
-        text: `Consultation request for ${b.eventType || 'Event'}`,
-        timestamp: ts || FALLBACK_DATE,
-      });
-    });
-    auditLogs.forEach((log) => {
-      activity.push({
-        icon:
-          log.action.includes('LOCK') || log.action.includes('MAINTENANCE')
-            ? 'shield'
-            : 'receipt_long',
-        text: `[${log.actor.toUpperCase()}] ${log.action}: ${log.details}`,
-        timestamp: new Date(log.timestamp),
-      });
-    });
+    if (!dashboardStats?.recentActivity) return [];
 
-    if (activity.length === 0) return [];
-    return activity
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-      .slice(0, 7)
-      .map((item) => ({
+    return dashboardStats.recentActivity.map((item) => {
+      let icon = 'notifications';
+      if (item.type === 'order') icon = 'shopping_bag';
+      else if (item.type === 'system') icon = 'shield';
+      else if (item.type === 'user') icon = 'person';
+
+      return {
         ...item,
-        time: getRelativeTime(item.timestamp),
-      }));
-  }, [orders, products, eventBookings, auditLogs]);
+        icon,
+        text: `[${item.user}] ${item.action}`,
+        time: getRelativeTime(new Date(item.timestamp)),
+      };
+    });
+  }, [dashboardStats]);
 
   // Compute weekly metrics
   const weeklyOrderStats = useMemo(() => {

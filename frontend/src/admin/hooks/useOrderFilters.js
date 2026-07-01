@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import { isWithinPeriod } from '../utils/dateFilters';
 
 export const allStatuses = [
   'Payment Pending',
@@ -33,6 +34,7 @@ export function useOrderFilters(orders, searchQuery) {
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'kanban'
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterOrderType, setFilterOrderType] = useState('All');
+  const [dateFilter, setDateFilter] = useState('All Time');
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -44,6 +46,9 @@ export function useOrderFilters(orders, searchQuery) {
     let courierDeductions = 0;
 
     orders.forEach((o) => {
+      const orderDate = o.rawOrder?.createdAt || o.date;
+      if (!isWithinPeriod(orderDate, dateFilter)) return;
+
       if (o.rawOrder?.paymentMethod?.toLowerCase() === 'cod') {
         totalVolume += o.total;
         if (o.status === 'Delivered' && o.rawOrder?.settlementStatus !== 'Settled') {
@@ -57,7 +62,7 @@ export function useOrderFilters(orders, searchQuery) {
     });
 
     return { totalVolume, pendingRemittance, settledPayouts, courierDeductions };
-  }, [orders]);
+  }, [orders, dateFilter]);
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
@@ -122,5 +127,7 @@ export function useOrderFilters(orders, searchQuery) {
     statusCounts,
     handleExportCSV,
     openOrderDrawer,
+    dateFilter,
+    setDateFilter,
   };
 }

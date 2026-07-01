@@ -108,7 +108,7 @@ export function ProductReviewImages() {
         description={`Browse customer submitted gallery images for ${product?.title}`}
       />
 
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop space-y-8">
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop space-y-8">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 font-label text-[11px] uppercase tracking-widest text-[#685c57] font-bold">
           <Link
@@ -128,7 +128,7 @@ export function ProductReviewImages() {
             <span className="font-label text-[10px] uppercase tracking-[0.35em] text-primary font-bold block mb-1">
               Customer Gallery
             </span>
-            <h2 className="font-display text-2xl md:text-3xl text-black font-bold tracking-tight">
+            <h2 className="font-display text-2xl lg:text-3xl text-black font-bold tracking-tight">
               Real Setup Inspiration
             </h2>
             {product && (
@@ -152,7 +152,7 @@ export function ProductReviewImages() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 lg:grid-cols-5 gap-4">
             {photos.map((item, index) => (
               <motion.div
                 key={index}
@@ -183,7 +183,7 @@ export function ProductReviewImages() {
       {/* Lightbox Modal Carousel */}
       <AnimatePresence>
         {activePhoto && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-0 md:p-6">
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-0 lg:p-6">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -198,10 +198,10 @@ export function ProductReviewImages() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-5xl h-full md:h-[80vh] bg-white rounded-t-[32px] md:rounded-[28px] overflow-hidden flex flex-col md:flex-row shadow-2xl z-[100000]"
+              className="relative w-full max-w-5xl h-full lg:h-[80vh] bg-white rounded-t-[32px] lg:rounded-[28px] overflow-hidden flex flex-col lg:flex-row shadow-2xl z-[100000]"
             >
               {/* Image Column */}
-              <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden h-[50vh] md:h-full group">
+              <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden h-[50vh] lg:h-full group">
                 <img
                   src={activePhoto.imgUrl}
                   alt="Customer Upload"
@@ -228,7 +228,7 @@ export function ProductReviewImages() {
               </div>
 
               {/* Review Context Details Column */}
-              <div className="w-full md:w-[380px] bg-white flex flex-col p-6 overflow-y-auto max-h-[50vh] md:max-h-full shrink-0">
+              <div className="w-full lg:w-[380px] bg-white flex flex-col p-6 overflow-y-auto max-h-[50vh] lg:max-h-full shrink-0">
                 {/* Close Button Header */}
                 <div className="flex justify-between items-center pb-4 border-b border-black/5">
                   <h4 className="font-display font-bold text-lg text-black">celebration review</h4>

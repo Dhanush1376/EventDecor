@@ -15,32 +15,34 @@ export function PromoBanner({
 }) {
   return (
     <section
-      className={`max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-6 md:mb-8 relative group ${className}`}
+      className={`max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop mb-6 lg:mb-8 relative group ${className}`}
     >
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="rounded-full overflow-hidden relative min-h-[54px] sm:min-h-[90px] flex flex-row items-center justify-between p-2 sm:p-4 px-3 sm:px-10 gap-2 sm:gap-6 border border-white/10 shadow-luxury bg-[#0a0a0a] group-hover:shadow-luxury-hover transition-all duration-700"
+        className="rounded-full overflow-hidden relative min-h-[54px] sm:min-h-[70px] flex flex-row items-center justify-between p-1.5 sm:p-2.5 px-3 sm:px-8 gap-2 sm:gap-6 border border-white/10 shadow-luxury bg-[#0f0f0f]/90 backdrop-blur-xl group-hover:shadow-luxury-hover transition-all duration-700"
       >
         {/* Cinematic Background Layer */}
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.img
-            initial={{ scale: 1.1 }}
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 10, ease: 'linear' }}
-            onError={handleImageError}
-            src={getOptimizedUrl(backgroundImage)}
-            className="w-full h-full object-cover opacity-45 select-none pointer-events-none"
-            alt="Promo Backdrop"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/90 to-black/80" />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-full">
+          {backgroundImage && (
+            <motion.img
+              initial={{ scale: 1.1 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 10, ease: 'linear' }}
+              onError={handleImageError}
+              src={getOptimizedUrl(backgroundImage)}
+              className="w-full h-full object-cover opacity-20 select-none mix-blend-luminosity"
+              alt="Promo Backdrop"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/60" />
         </div>
 
         {/* Content Side */}
         <div className="relative z-10 flex-1 flex flex-row items-center gap-3 sm:gap-8 min-w-0">
           {/* Hide badge on mobile to save space, show only on tablet/desktop */}
-          <div className="hidden md:block flex-shrink-0">
+          <div className="hidden lg:block flex-shrink-0">
             <span className="px-3.5 py-1.5 rounded-full bg-primary/20 backdrop-blur-xl text-gold font-label-sm text-[10px] uppercase tracking-[0.15em] font-bold border border-primary/20 shadow-lg">
               {badgeText}
             </span>
@@ -50,25 +52,28 @@ export function PromoBanner({
             className="flex-1 overflow-hidden relative flex items-center min-w-0 py-1"
             style={{
               WebkitMaskImage:
-                'linear-gradient(to right, transparent, black 15px, black calc(100% - 15px), transparent)',
+                'linear-gradient(to right, transparent, black 25px, black calc(100% - 25px), transparent)',
             }}
           >
             <motion.div
               animate={{ x: ['0%', '-50%'] }}
-              transition={{ repeat: Infinity, duration: 20, ease: 'linear' }}
+              transition={{ repeat: Infinity, duration: 25, ease: 'linear' }}
               className="flex flex-row items-center whitespace-nowrap w-max"
             >
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex flex-row items-center gap-2 sm:gap-4 px-4 sm:px-8">
-                  <h3 className="font-display text-[11px] sm:text-[16px] md:text-[18px] lg:text-[22px] text-white font-medium leading-none">
-                    {title} <span className="text-gold italic ml-0.5 sm:ml-1">{highlightText}</span>
+                <div key={i} className="flex flex-row items-center gap-8 sm:gap-16 px-8 sm:px-16">
+                  <h3 className="font-label-md text-[10px] sm:text-[13px] lg:text-[15px] uppercase tracking-[0.2em] text-white/90 font-medium leading-none flex items-center gap-3">
+                    {title}{' '}
+                    <span className="text-gold font-bold tracking-[0.25em]">{highlightText}</span>
                   </h3>
                   {statusText && (
-                    <span className="hidden sm:inline-flex text-white/40 font-label-sm text-[10px] uppercase tracking-[0.2em] flex items-center gap-1.5 font-bold whitespace-nowrap">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    <span className="hidden sm:inline-flex text-white/50 font-label-sm text-[9px] uppercase tracking-[0.3em] flex items-center gap-2 font-bold whitespace-nowrap">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
                       {statusText}
                     </span>
                   )}
+                  {/* Elegant separator */}
+                  <span className="w-1 h-1 rounded-full bg-white/20"></span>
                 </div>
               ))}
             </motion.div>
@@ -93,10 +98,10 @@ export function PromoBanner({
           )}
 
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onCtaClick}
-            className="group/btn bg-white text-black font-label-sm text-[8px] sm:text-[11px] uppercase tracking-[0.1em] sm:tracking-[0.2em] font-bold px-3.5 py-2 sm:px-10 sm:py-3.5 rounded-full hover:bg-white/90 transition-all cursor-pointer shadow-luxury relative overflow-hidden whitespace-nowrap text-center"
+            className="group/btn bg-gradient-to-r from-[#d4af37] to-[#f3e5ab] text-black font-label-sm text-[9px] sm:text-[11px] uppercase tracking-[0.15em] sm:tracking-[0.25em] font-extrabold px-6 py-2.5 sm:px-10 sm:py-3.5 rounded-full hover:shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all cursor-pointer relative overflow-hidden whitespace-nowrap text-center"
           >
             <span className="relative z-10">{ctaText}</span>
           </motion.button>

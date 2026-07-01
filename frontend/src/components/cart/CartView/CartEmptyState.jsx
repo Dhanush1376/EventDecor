@@ -14,7 +14,7 @@ export const CartEmptyState = ({ activeCartMode }) => {
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center max-w-2xl mx-auto pt-8 pb-3 md:pt-12 md:pb-4"
+        className="text-center max-w-2xl mx-auto pt-8 pb-3 lg:pt-12 lg:pb-4"
       >
         <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center mb-4 mx-auto relative">
           <div className="absolute inset-0 bg-primary/15 rounded-full blur-xl" />
@@ -22,7 +22,7 @@ export const CartEmptyState = ({ activeCartMode }) => {
             {activeCartMode === 'rental' ? 'sell' : 'shopping_bag'}
           </span>
         </div>
-        <h2 className="font-display text-[20px] md:text-[22px] text-on-surface tracking-tight mb-1">
+        <h2 className="font-display text-[20px] lg:text-[22px] text-on-surface tracking-tight mb-1">
           {activeCartMode === 'rental' ? 'No Rental Items Yet' : 'Your bag is empty.'}
         </h2>
         <p className="font-body text-[12.5px] text-secondary/60 font-light max-w-[220px] mx-auto leading-relaxed mb-5">

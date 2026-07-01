@@ -1,6 +1,7 @@
 import StoreSettings, { IStoreSettings } from '../models/StoreSettings';
 import mongoose from 'mongoose';
 import logger from '../config/logger';
+import { getIO } from '../socket';
 
 class StoreSettingsService {
   private cache: IStoreSettings | null = null;
@@ -178,7 +179,22 @@ class StoreSettingsService {
     await settings.save();
 
     // Invalidate cache
-    this.cache = null;
+    this.cacheTimestamp = 0;
+
+    // Emit live synchronization events for maintenance mode toggle
+    if (section === 'general') {
+      try {
+        const io = getIO();
+        io.of('/visitor').emit('MAINTENANCE_TOGGLED', {
+          maintenanceMode: settings.general.maintenanceMode,
+        });
+        io.of('/user').emit('MAINTENANCE_TOGGLED', {
+          maintenanceMode: settings.general.maintenanceMode,
+        });
+      } catch (e) {
+        logger.error('Failed to emit MAINTENANCE_TOGGLED event via Socket.IO', e);
+      }
+    }
 
     return settings;
   }

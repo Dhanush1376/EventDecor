@@ -4,6 +4,7 @@ import User from '../models/User';
 import Event from '../models/Event';
 import logger from '../config/logger';
 import { analyticsCache, broadcastCacheDelete } from '../utils/cache/MemoryCache';
+import AdminAuditLog from '../models/AdminAuditLog';
 
 class AnalyticsService {
   // Method to programmatically invalidate analytics cache when orders/inventory changes
@@ -56,6 +57,22 @@ class AnalyticsService {
       { $limit: 12 },
     ]);
 
+    // Monthly Customers (Last 12 months)
+    const monthlyCustomers = await User.aggregate([
+      { $match: { role: { $in: ['customer', 'user'] } } },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
+          },
+          customers: { $count: {} },
+        },
+      },
+      { $sort: { '_id.year': -1, '_id.month': -1 } },
+      { $limit: 12 },
+    ]);
+
     // Category Performance
     const categoryPerformance = await Order.aggregate([
       { $match: { paymentStatus: 'paid' } },
@@ -70,6 +87,32 @@ class AnalyticsService {
       { $limit: 20 },
     ]);
 
+    // Recent Activity Feed
+    const [recentOrders, recentLogs] = await Promise.all([
+      Order.find().sort({ createdAt: -1 }).limit(10).select('_id customerName total createdAt'),
+      AdminAuditLog.find()
+        .sort({ timestamp: -1 })
+        .limit(10)
+        .select('actor action details timestamp statusCode'),
+    ]);
+
+    const recentActivity = [
+      ...recentOrders.map((o: any) => ({
+        type: 'order',
+        action: `Order placed for ₹${o.total}`,
+        user: o.customerName || 'Customer',
+        timestamp: o.createdAt,
+      })),
+      ...recentLogs.map((l: any) => ({
+        type: l.statusCode >= 400 ? 'system' : 'user',
+        action: l.action,
+        user: l.actor || 'System',
+        timestamp: l.timestamp,
+      })),
+    ]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 15);
+
     const result = {
       stats: {
         totalSales: totalSalesData[0]?.total || 0,
@@ -83,10 +126,15 @@ class AnalyticsService {
         revenue: item.revenue,
         orders: item.orders,
       })),
+      monthlyCustomers: monthlyCustomers.map((item: any) => ({
+        month: `${item._id.year}-${item._id.month}`,
+        customers: item.customers,
+      })),
       categoryPerformance: categoryPerformance.map((item: any) => ({
         name: item._id || 'Uncategorized',
         value: item.value,
       })),
+      recentActivity,
     };
 
     analyticsCache.set(cacheKey, result);

@@ -15,7 +15,7 @@ export function AuthSkeleton() {
           </div>
         </div>
       </div>
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-surface">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-surface">
         <div className="w-full max-w-[440px] space-y-10">
           <div className="space-y-3">
             <Skeleton className="h-3 w-32" />
@@ -23,7 +23,7 @@ export function AuthSkeleton() {
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-5/6" />
           </div>
-          <div className="bg-white rounded-[32px] p-5 xs:p-8 md:p-10 border border-outline-variant/30 space-y-6">
+          <div className="bg-white rounded-[32px] p-5 xs:p-8 lg:p-10 border border-outline-variant/30 space-y-6">
             <Skeleton className="h-16 w-full rounded-2xl" />
             <Skeleton className="h-14 w-full rounded-full" />
           </div>

@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { cmsService } from '../../services/domainServices';
+import storeSettingsService from '../../services/api/storeSettingsService';
 import toast from 'react-hot-toast';
 import logger from '../../utils/core/logger';
 import { refreshWebsiteContent } from '../../hooks/useWebsiteContent';
@@ -357,9 +358,9 @@ export function useAdminCMS({
         setSafetyLock(safetyLockRes.data.data?.safetyLock === true);
       }
 
-      const maintenanceRes = await cmsService.getSection('admin_maintenance_mode');
-      if (maintenanceRes && maintenanceRes.success && maintenanceRes.data) {
-        setMaintenanceMode(maintenanceRes.data.data?.maintenanceMode === true);
+      const maintenanceRes = await storeSettingsService.getPublicSettings();
+      if (maintenanceRes && maintenanceRes.general) {
+        setMaintenanceMode(maintenanceRes.general.maintenanceMode === true);
       }
 
       const idleRes = await cmsService.getSection('admin_idle_timeout');

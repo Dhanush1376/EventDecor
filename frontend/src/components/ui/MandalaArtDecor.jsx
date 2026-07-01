@@ -48,9 +48,10 @@ export function MandalaArtDecor({
       style={{
         width: size,
         height: size,
-        animationDuration: `${spinDuration}s`,
-        animationPlayState: isInView ? 'running' : 'paused',
+        animation: spin ? `slow-spin ${spinDuration}s linear infinite` : 'none',
         mixBlendMode: blend,
+        WebkitMaskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 75%)',
+        maskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 75%)',
       }}
       loading="lazy"
     />

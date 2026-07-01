@@ -91,10 +91,10 @@ export function CollectionDetail() {
     `Explore live ${collectionTitle} pieces from the Siri Arts catalog.`;
 
   return (
-    <div className="pt-20 md:pt-28">
+    <div className="pt-20 lg:pt-28">
       <SEO title={collectionTitle} description={description} />
       <main>
-        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-4 md:py-6">
+        <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-4 lg:py-6">
           <nav
             className="flex items-center gap-2 font-label text-[10px] uppercase tracking-widest text-secondary/40"
             aria-label="Breadcrumb"
@@ -111,7 +111,7 @@ export function CollectionDetail() {
           </nav>
         </div>
 
-        <header className="relative w-full h-[40vh] md:h-[58vh] flex items-center justify-center overflow-hidden">
+        <header className="relative w-full h-[40vh] lg:h-[58vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
             <motion.img
               onError={handleImageError}
@@ -139,7 +139,7 @@ export function CollectionDetail() {
               initial="initial"
               animate="whileInView"
               transition={{ delay: 0.1 }}
-              className="font-display text-[42px] md:text-[72px] italic leading-tight mb-4"
+              className="font-display text-[42px] lg:text-[72px] italic leading-tight mb-4"
             >
               {collectionTitle}
             </motion.h1>
@@ -148,7 +148,7 @@ export function CollectionDetail() {
               initial="initial"
               animate="whileInView"
               transition={{ delay: 0.2 }}
-              className="font-body text-[15px] md:text-[18px] font-light italic line-clamp-2 mb-6"
+              className="font-body text-[15px] lg:text-[18px] font-light italic line-clamp-2 mb-6"
             >
               {description}
             </motion.p>
@@ -176,7 +176,7 @@ export function CollectionDetail() {
             </aside>
 
             <div className="lg:col-span-9">
-              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-10">
+              <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-10">
                 <p className="font-label text-[11px] uppercase tracking-widest text-secondary/60">
                   {loading ? 'Loading live catalog' : `${products.length} Artisanal Selections`}
                 </p>

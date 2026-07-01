@@ -4,14 +4,14 @@ export function HomeSkeleton() {
   return (
     <div className="h1-page relative bg-surface-bright overflow-hidden">
       {/* Hero Skeleton */}
-      <div className="w-full h-[62.5vh] md:h-[80vh] bg-surface-container-high relative animate-pulse overflow-hidden">
-        <div className="absolute bottom-[10%] left-[5%] md:bottom-[15%] md:left-[8%] flex flex-col w-[90%] max-w-[800px] z-10">
-          <div className="h-3 w-20 md:w-28 bg-surface-container-highest/60 rounded-full mb-2"></div>
-          <div className="h-8 md:h-16 w-[80%] bg-surface-container-highest/60 rounded-2xl md:rounded-3xl mb-3"></div>
-          <div className="h-4 md:h-5 w-[60%] bg-surface-container-highest/60 rounded-full mb-5"></div>
-          <div className="h-5 w-24 md:w-32 bg-surface-container-highest/60 rounded-none mb-2 border-b border-surface-container-highest/80"></div>
+      <div className="w-full h-[62.5vh] lg:h-[80vh] bg-surface-container-high relative animate-pulse overflow-hidden">
+        <div className="absolute bottom-[10%] left-[5%] lg:bottom-[15%] lg:left-[8%] flex flex-col w-[90%] max-w-[800px] z-10">
+          <div className="h-3 w-20 lg:w-28 bg-surface-container-highest/60 rounded-full mb-2"></div>
+          <div className="h-8 lg:h-16 w-[80%] bg-surface-container-highest/60 rounded-2xl lg:rounded-3xl mb-3"></div>
+          <div className="h-4 lg:h-5 w-[60%] bg-surface-container-highest/60 rounded-full mb-5"></div>
+          <div className="h-5 w-24 lg:w-32 bg-surface-container-highest/60 rounded-none mb-2 border-b border-surface-container-highest/80"></div>
         </div>
-        <div className="absolute bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2">
+        <div className="absolute bottom-3 lg:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 lg:gap-2">
           <div className="w-1.5 h-1.5 bg-surface-container-highest/60 rounded-full"></div>
           <div className="w-4 h-1.5 bg-surface-container-highest/80 rounded-[2px]"></div>
           <div className="w-1.5 h-1.5 bg-surface-container-highest/60 rounded-full"></div>
@@ -20,15 +20,15 @@ export function HomeSkeleton() {
       </div>
 
       {/* Promo Banner Skeleton */}
-      <div className="w-full h-10 md:h-12 bg-surface-container animate-pulse flex items-center justify-center border-y border-surface-container-high">
-        <div className="h-3 w-1/2 md:w-1/3 bg-surface-container-highest/50 rounded-full"></div>
+      <div className="w-full h-10 lg:h-12 bg-surface-container animate-pulse flex items-center justify-center border-y border-surface-container-high">
+        <div className="h-3 w-1/2 lg:w-1/3 bg-surface-container-highest/50 rounded-full"></div>
       </div>
 
       {/* Category Grid Skeleton */}
-      <div className="max-w-[1400px] mx-auto px-6 mt-16 md:mt-24 animate-pulse">
-        <div className="flex flex-col items-center mb-8 md:mb-10">
+      <div className="max-w-[1400px] mx-auto px-6 mt-16 lg:mt-24 animate-pulse">
+        <div className="flex flex-col items-center mb-8 lg:mb-10">
           <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2"></div>
-          <div className="h-8 w-48 md:w-64 bg-surface-container-high rounded-full"></div>
+          <div className="h-8 w-48 lg:w-64 bg-surface-container-high rounded-full"></div>
         </div>
 
         {/* Mobile Grid */}
@@ -53,19 +53,19 @@ export function HomeSkeleton() {
       </div>
 
       {/* Trending Products Skeleton */}
-      <div className="max-w-[1400px] mx-auto px-6 mt-20 md:mt-32 animate-pulse">
-        <div className="flex justify-between items-end mb-8 md:mb-10">
+      <div className="max-w-[1400px] mx-auto px-6 mt-20 lg:mt-32 animate-pulse">
+        <div className="flex justify-between items-end mb-8 lg:mb-10">
           <div>
-            <div className="h-3 w-20 md:w-24 bg-surface-container-high rounded-full mb-2"></div>
-            <div className="h-8 md:h-10 w-48 md:w-64 bg-surface-container-high rounded-full"></div>
+            <div className="h-3 w-20 lg:w-24 bg-surface-container-high rounded-full mb-2"></div>
+            <div className="h-8 lg:h-10 w-48 lg:w-64 bg-surface-container-high rounded-full"></div>
           </div>
-          <div className="h-4 w-20 bg-surface-container-high rounded-full hidden md:block"></div>
+          <div className="h-4 w-20 bg-surface-container-high rounded-full hidden lg:block"></div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex flex-col gap-4">
-              <div className="w-full aspect-[3/4] bg-surface-container-high rounded-[24px] md:rounded-[32px]"></div>
-              <div className="px-1 md:px-2">
+              <div className="w-full aspect-[3/4] bg-surface-container-high rounded-[24px] lg:rounded-[32px]"></div>
+              <div className="px-1 lg:px-2">
                 <div className="w-[80%] h-4 bg-surface-container-high rounded-full mb-2"></div>
                 <div className="w-[60%] h-3 bg-surface-container-high rounded-full mb-3"></div>
                 <div className="w-[40%] h-5 bg-surface-container-high rounded-full"></div>
@@ -76,12 +76,12 @@ export function HomeSkeleton() {
       </div>
 
       {/* Gallery Inspiration Skeleton */}
-      <div className="max-w-[1400px] mx-auto px-6 mt-20 md:mt-32 animate-pulse">
-        <div className="flex flex-col items-center mb-8 md:mb-10 text-center">
+      <div className="max-w-[1400px] mx-auto px-6 mt-20 lg:mt-32 animate-pulse">
+        <div className="flex flex-col items-center mb-8 lg:mb-10 text-center">
           <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2 mx-auto"></div>
-          <div className="h-8 md:h-10 w-48 md:w-64 bg-surface-container-high rounded-full mx-auto"></div>
+          <div className="h-8 lg:h-10 w-48 lg:w-64 bg-surface-container-high rounded-full mx-auto"></div>
         </div>
-        <div className="columns-2 md:columns-3 lg:columns-5 gap-3 md:gap-5.5 space-y-3 md:space-y-5.5">
+        <div className="columns-2 lg:columns-3 lg:columns-5 gap-3 lg:gap-5.5 space-y-3 lg:space-y-5.5">
           {['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'].map(
             (aspect, i) => (
               <div
@@ -94,10 +94,10 @@ export function HomeSkeleton() {
       </div>
 
       {/* Shop By Occasion Skeleton */}
-      <div className="max-w-[1400px] mx-auto px-6 mt-20 md:mt-32 mb-24 animate-pulse">
-        <div className="flex flex-col items-center text-center mb-8 md:mb-10">
+      <div className="max-w-[1400px] mx-auto px-6 mt-20 lg:mt-32 mb-24 animate-pulse">
+        <div className="flex flex-col items-center text-center mb-8 lg:mb-10">
           <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2"></div>
-          <div className="h-8 md:h-10 w-56 md:w-72 bg-surface-container-high rounded-full"></div>
+          <div className="h-8 lg:h-10 w-56 lg:w-72 bg-surface-container-high rounded-full"></div>
         </div>
 
         {/* Mobile Swipe Carousel */}

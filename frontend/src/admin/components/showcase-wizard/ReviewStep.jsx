@@ -1,4 +1,5 @@
 import React from 'react';
+import { AdminToggle } from '../../components/AdminUIKit';
 
 export function ReviewStep({ formData, setFormData, colors }) {
   return (
@@ -31,6 +32,38 @@ export function ReviewStep({ formData, setFormData, colors }) {
             <option value="active">Active (Visible)</option>
             <option value="draft">Draft (Private)</option>
           </select>
+        </div>
+
+        {/* Curation Highlight Toggle */}
+        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex items-center justify-between">
+          <div>
+            <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
+              Featured Collection
+            </p>
+            <p className="text-[11px] text-[var(--admin-text-secondary)]">
+              Pin to Homepage Hero Carousel
+            </p>
+          </div>
+          <AdminToggle
+            checked={formData.featured}
+            onChange={() => setFormData({ ...formData, featured: !formData.featured })}
+          />
+        </div>
+
+        {/* Show in Gallery Toggle */}
+        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex items-center justify-between col-span-1 sm:col-span-2">
+          <div>
+            <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
+              Show in Gallery Also
+            </p>
+            <p className="text-[11px] text-[var(--admin-text-secondary)]">
+              Automatically sync and display this showcase in the Inspiration Gallery
+            </p>
+          </div>
+          <AdminToggle
+            checked={formData.showInGallery}
+            onChange={() => setFormData({ ...formData, showInGallery: !formData.showInGallery })}
+          />
         </div>
 
         {/* Summary Data Review list */}
@@ -87,6 +120,22 @@ export function ReviewStep({ formData, setFormData, colors }) {
               </span>
               <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
                 {formData.setupTimeHours} Hours
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
+                Featured
+              </span>
+              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
+                {formData.featured ? 'Yes' : 'No'}
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:justify-between pb-1 gap-1">
+              <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
+                Show in Gallery
+              </span>
+              <span className="font-bold text-[var(--admin-text-primary)] sm:text-right">
+                {formData.showInGallery ? 'Yes' : 'No'}
               </span>
             </div>
           </div>

@@ -23,24 +23,33 @@ export function PromoBanner() {
 
   const promo = cms?.promoBanner;
 
-  // If a dynamic coupon is assigned to the homepage banner, override the CMS
   let promoText = '';
   let promoLink = '/coupons';
   let ctaText = 'CLAIM OFFER';
   let couponCode = '';
 
-  if (bannerCoupon) {
+  // CMS configuration takes priority if active and has text
+  if (promo?.isActive !== false && promo?.text) {
+    promoText = promo.text;
+    promoLink = promo.link || '/collections';
+    ctaText = promo.ctaText || 'CLAIM OFFER';
+    couponCode = promo.couponCode;
+  } else if (bannerCoupon) {
+    // Fallback to active coupon with 'banner' display location
     const discountStr =
       bannerCoupon.discountType === 'percentage'
         ? `${bannerCoupon.discountValue}%`
         : `₹${bannerCoupon.discountValue}`;
     promoText = `LIMITED TIME OFFER: GET ${discountStr} OFF${bannerCoupon.minOrderAmount > 0 ? ` ON ORDERS ABOVE ₹${bannerCoupon.minOrderAmount}` : ''} USING CODE ${bannerCoupon.code}`;
     couponCode = bannerCoupon.code;
-  } else if (promo?.isActive !== false && promo?.text && promo?.link) {
-    promoText = promo.text;
-    promoLink = promo.link;
-    ctaText = promo.ctaText || 'CLAIM OFFER';
-    couponCode = promo.couponCode;
+
+    let targetLink = '/collections';
+    if (bannerCoupon.targetType === 'categories' && bannerCoupon.targetCategories?.length) {
+      targetLink = `/collections?collection=${bannerCoupon.targetCategories.join(',')}`;
+    } else if (bannerCoupon.targetType === 'products' && bannerCoupon.targetProductIds?.length) {
+      targetLink = `/collections?ids=${bannerCoupon.targetProductIds.join(',')}`;
+    }
+    promoLink = targetLink;
   } else {
     return null;
   }
@@ -74,24 +83,6 @@ export function PromoBanner() {
           boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
         },
       });
-
-      if (bannerCoupon) {
-        const params = new URLSearchParams();
-        if (bannerCoupon.targetType === 'categories' && bannerCoupon.targetCategories?.length) {
-          params.append('collection', bannerCoupon.targetCategories.join(','));
-        } else if (
-          bannerCoupon.targetType === 'products' &&
-          bannerCoupon.targetProductIds?.length
-        ) {
-          params.append('ids', bannerCoupon.targetProductIds.join(','));
-        }
-        params.append('coupon', bannerCoupon.code);
-        navigate(`/collections?${params.toString()}`);
-        return;
-      } else {
-        navigate(`/collections?coupon=${couponCode}`);
-        return;
-      }
     }
     if (promoLink) {
       navigate(promoLink);

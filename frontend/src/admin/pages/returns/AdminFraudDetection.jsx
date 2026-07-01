@@ -16,8 +16,10 @@ const AdminFraudDetection = () => {
   const {
     fraudAlerts,
     highRiskCustomers,
+    fraudMetrics,
     fetchFraudAlerts,
     fetchHighRiskCustomers,
+    fetchFraudMetrics,
     loading,
     error,
   } = useReturnManagement();
@@ -28,7 +30,8 @@ const AdminFraudDetection = () => {
   useEffect(() => {
     fetchFraudAlerts();
     fetchHighRiskCustomers();
-  }, [fetchFraudAlerts, fetchHighRiskCustomers]);
+    fetchFraudMetrics();
+  }, [fetchFraudAlerts, fetchHighRiskCustomers, fetchFraudMetrics]);
 
   if (error) {
     return (
@@ -42,6 +45,7 @@ const AdminFraudDetection = () => {
             onClick={() => {
               fetchFraudAlerts();
               fetchHighRiskCustomers();
+              fetchFraudMetrics();
             }}
           >
             Try Again
@@ -53,7 +57,7 @@ const AdminFraudDetection = () => {
 
   const alerts = fraudAlerts || [];
   const suspiciousCustomers = highRiskCustomers || [];
-  const metrics = { totalBlocked: 0, avgRiskScore: 0, savedRevenue: 0 };
+  const metrics = fraudMetrics || { totalBlocked: 0, avgRiskScore: 0, savedRevenue: 0 };
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">

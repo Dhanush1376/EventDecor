@@ -3,6 +3,7 @@ import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDe
 
 export interface IReview extends ISoftDeleted {
   product?: mongoose.Types.ObjectId;
+  showcase?: mongoose.Types.ObjectId;
   customer: mongoose.Types.ObjectId;
   customerName: string;
   rating: number;
@@ -23,6 +24,7 @@ export interface IReview extends ISoftDeleted {
 const ReviewSchema: Schema = new Schema(
   {
     product: { type: Schema.Types.ObjectId, ref: 'Product', required: false },
+    showcase: { type: Schema.Types.ObjectId, ref: 'ShowcaseCollection', required: false },
     customer: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     customerName: { type: String, required: true },
     rating: { type: Number, required: true, min: 1, max: 5 },

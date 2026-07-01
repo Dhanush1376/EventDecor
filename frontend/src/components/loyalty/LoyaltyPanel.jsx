@@ -336,7 +336,7 @@ export function LoyaltyPanel() {
         </div>
 
         {/* Claim Referral Bonus */}
-        <div className="space-y-4 md:border-l border-outline-variant/30 md:pl-8">
+        <div className="space-y-4 lg:border-l border-outline-variant/30 lg:pl-8">
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center text-green-700 border border-green-200 shrink-0">
               <span className="material-symbols-outlined text-sm">redeem</span>

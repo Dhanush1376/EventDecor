@@ -34,7 +34,8 @@ export class RentalAvailabilityService {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    if (product.rentalStock <= 0) {
+    const maxUnits = product.rentalStock > 0 ? product.rentalStock : product.stock;
+    if (maxUnits <= 0) {
       return { available: false, reason: 'No rental stock available' };
     }
 
@@ -63,7 +64,7 @@ export class RentalAvailabilityService {
 
     // Find the first unitNumber (1 to rentalStock) that has NO overlap with requestedDates
     let availableUnitNumber = -1;
-    for (let unit = 1; unit <= product.rentalStock; unit++) {
+    for (let unit = 1; unit <= maxUnits; unit++) {
       let isAvailable = true;
       for (const date of requestedDates) {
         if (unitBookings[unit] && unitBookings[unit].has(date)) {

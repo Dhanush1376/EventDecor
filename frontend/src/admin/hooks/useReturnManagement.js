@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import returnService from '../../services/api/returnService';
 import { useAdmin } from '../context/AdminContext';
 
@@ -20,6 +20,9 @@ export const useReturnManagement = () => {
   const [pickupList, setPickupList] = useState(null);
   const [fraudAlerts, setFraudAlerts] = useState([]);
   const [highRiskCustomers, setHighRiskCustomers] = useState([]);
+  const [fraudMetrics, setFraudMetrics] = useState(null);
+  const [exchangeStats, setExchangeStats] = useState(null);
+  const [pickupStats, setPickupStats] = useState(null);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [returnSettings, setReturnSettings] = useState(null);
 
@@ -343,6 +346,78 @@ export const useReturnManagement = () => {
     }
   };
 
+  const fetchFraudMetrics = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await returnService.getFraudMetrics();
+      setFraudMetrics(response.data.data);
+      setLoading(false);
+      return response.data.data;
+    } catch (err) {
+      handleError(err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSnackbar]);
+
+  const fetchExchangeStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await returnService.getExchangeStats();
+      setExchangeStats(response.data.data);
+      setLoading(false);
+      return response.data.data;
+    } catch (err) {
+      handleError(err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSnackbar]);
+
+  const fetchPickupStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await returnService.getPickupStats();
+      setPickupStats(response.data.data);
+      setLoading(false);
+      return response.data.data;
+    } catch (err) {
+      handleError(err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSnackbar]);
+
+  // Handle real-time socket events for returns
+  useEffect(() => {
+    const handleAdminNotification = (e) => {
+      const data = e.detail;
+      if (data?.type === 'return_status' || data?.type === 'return_created') {
+        // Refresh data based on what is currently loaded in state
+        if (dashboardStats) fetchDashboardStats();
+        if (returnsList.length > 0)
+          fetchReturnsList({ page: pagination.page, limit: pagination.limit });
+        if (currentReturn && data.data?.returnId === currentReturn.request.returnId)
+          fetchReturnDetails(currentReturn.request._id);
+        if (fraudMetrics) fetchFraudMetrics();
+        if (pickupStats) fetchPickupStats();
+      }
+    };
+    window.addEventListener('admin_notification', handleAdminNotification);
+    return () => {
+      window.removeEventListener('admin_notification', handleAdminNotification);
+    };
+  }, [
+    dashboardStats,
+    returnsList,
+    currentReturn,
+    fraudMetrics,
+    pickupStats,
+    fetchDashboardStats,
+    fetchReturnsList,
+    fetchReturnDetails,
+    fetchFraudMetrics,
+    fetchPickupStats,
+    pagination,
+  ]);
+
   return {
     loading,
     error,
@@ -358,6 +433,9 @@ export const useReturnManagement = () => {
     analyticsData,
     enterpriseAnalytics,
     returnSettings,
+    fraudMetrics,
+    exchangeStats,
+    pickupStats,
     fetchDashboardStats,
     fetchReturnsList,
     fetchExchangesList,
@@ -372,6 +450,9 @@ export const useReturnManagement = () => {
     fetchPickupList,
     fetchFraudAlerts,
     fetchHighRiskCustomers,
+    fetchFraudMetrics,
+    fetchExchangeStats,
+    fetchPickupStats,
     fetchAnalytics,
     fetchEnterpriseAnalytics,
     fetchReturnSettings,

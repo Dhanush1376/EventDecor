@@ -22,16 +22,16 @@ export const EventStickyNav = React.forwardRef(
     return (
       <nav
         ref={ref}
-        className={`sticky z-[49] -mt-6 md:-mt-8 mb-8 md:mb-12 transition-all duration-300 ${
-          isSticky ? 'px-0' : 'px-3 md:px-margin-desktop max-w-max-width mx-auto'
+        className={`sticky z-[49] -mt-6 lg:-mt-8 mb-8 lg:mb-12 transition-all duration-300 ${
+          isSticky ? 'px-0' : 'px-3 lg:px-margin-desktop max-w-max-width mx-auto'
         }`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
       >
         <div
           className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
             isSticky
-              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 md:py-4 lg:py-2 px-3 md:px-margin-desktop w-full max-w-none'
-              : 'bg-transparent border-none shadow-none rounded-[2rem] px-2 py-3 md:p-4 lg:p-2 w-full max-w-max-width'
+              ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 lg:py-4 lg:py-2 px-3 lg:px-margin-desktop w-full max-w-none'
+              : 'bg-transparent border-none shadow-none rounded-[2rem] px-2 py-3 lg:p-4 lg:p-2 w-full max-w-max-width'
           }`}
         >
           {/* Search Bar & Mobile Filter Toggle */}

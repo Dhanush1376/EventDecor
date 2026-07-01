@@ -76,16 +76,16 @@ export function ProductCoupons({ product }) {
         >
           sell
         </span>
-        <span className="font-label text-[11px] md:text-[12px] text-black uppercase tracking-[0.1em] font-bold">
+        <span className="font-label text-[11px] lg:text-[12px] text-black uppercase tracking-[0.1em] font-bold">
           Available Coupons & Savings
         </span>
       </div>
 
-      <div className="flex sm:grid sm:grid-cols-3 gap-3 overflow-x-auto sm:overflow-x-visible no-scrollbar pb-3 sm:pb-0 snap-x snap-mandatory -mx-[18px] pl-[18px] pr-[18px] scroll-pl-[18px] sm:mx-0 sm:px-0">
+      <div className="flex xl:grid xl:grid-cols-3 gap-3 overflow-x-auto xl:overflow-x-visible no-scrollbar pb-3 xl:pb-0 snap-x snap-mandatory -mx-[18px] pl-[18px] pr-[18px] scroll-pl-[18px] xl:mx-0 xl:px-0">
         {initialCoupons.map((coupon, idx) => (
           <div
             key={coupon._id || coupon.id || idx}
-            className="w-[280px] sm:w-auto shrink-0 snap-start"
+            className="w-[260px] xl:w-auto shrink-0 snap-start"
           >
             <CouponCard
               coupon={coupon}
@@ -122,11 +122,11 @@ export function ProductCoupons({ product }) {
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="overflow-hidden"
               >
-                <div className="flex sm:grid sm:grid-cols-3 gap-3 pt-3 overflow-x-auto sm:overflow-x-visible no-scrollbar pb-3 sm:pb-0 snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+                <div className="flex xl:grid xl:grid-cols-3 gap-3 pt-3 overflow-x-auto xl:overflow-x-visible no-scrollbar pb-3 xl:pb-0 snap-x snap-mandatory -mx-4 px-4 xl:mx-0 xl:px-0">
                   {extraCoupons.map((coupon, idx) => (
                     <div
                       key={coupon._id || coupon.id || idx + 3}
-                      className="w-[280px] sm:w-auto shrink-0 snap-start"
+                      className="w-[260px] xl:w-auto shrink-0 snap-start"
                     >
                       <CouponCard
                         coupon={coupon}

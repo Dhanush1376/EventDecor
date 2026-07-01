@@ -11,7 +11,7 @@ export function EventBookingCard({
   const navigate = useNavigate();
 
   return (
-    <div className="lg:col-span-5 flex flex-col gap-6">
+    <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-6">
       {/* Custom Design Consultation Card */}
       <div className="p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5">
         <div className="relative z-10 flex flex-col items-center text-center gap-5">
@@ -50,7 +50,7 @@ export function EventBookingCard({
       </div>
 
       {/* 2. Premium Reservation & Saving Card */}
-      <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border border-[#C4A87C]/20 p-6 md:p-8 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)]">
+      <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border border-[#C4A87C]/20 p-6 lg:p-8 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)]">
         <div className="flex items-center gap-2 pb-3 border-b border-black/5">
           <span className="material-symbols-outlined text-primary text-[18px]">calendar_today</span>
           <span className="font-label text-[10px] uppercase tracking-widest text-primary font-bold">
@@ -64,7 +64,7 @@ export function EventBookingCard({
               Starting Package Price
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="font-display text-[28px] md:text-[32px] text-black font-bold font-sans">
+              <span className="font-display text-[28px] lg:text-[32px] text-black font-bold font-sans">
                 ₹{(event.basePrice || event.rentalPrice || 35000).toLocaleString('en-IN')}
               </span>
               <span className="text-stone-400 text-xs font-light">/ Setup</span>

@@ -20,10 +20,10 @@ export function EmptyState({
         </div>
         <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary/5 rounded-full blur-xl animate-pulse" />
       </div>
-      <h3 className="font-headline-sm text-on-surface mb-3 tracking-tight font-normal text-[20px] md:text-[24px]">
+      <h3 className="font-headline-sm text-on-surface mb-3 tracking-tight font-normal text-[20px] lg:text-[24px]">
         {title}
       </h3>
-      <p className="font-body-md text-on-surface-variant/60 mb-10 leading-relaxed text-[13px] md:text-[14px] max-w-sm">
+      <p className="font-body-md text-on-surface-variant/60 mb-10 leading-relaxed text-[13px] lg:text-[14px] max-w-sm">
         {description}
       </p>
       {actionLabel && (
@@ -57,10 +57,10 @@ export function ErrorState({
         </div>
         <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-rose-500/10 rounded-full blur-xl animate-pulse" />
       </div>
-      <h3 className="font-headline-sm text-on-surface mb-3 tracking-tight font-normal text-[20px] md:text-[24px]">
+      <h3 className="font-headline-sm text-on-surface mb-3 tracking-tight font-normal text-[20px] lg:text-[24px]">
         {title}
       </h3>
-      <p className="font-body-md text-on-surface-variant/60 mb-10 leading-relaxed text-[13px] md:text-[14px] max-w-sm">
+      <p className="font-body-md text-on-surface-variant/60 mb-10 leading-relaxed text-[13px] lg:text-[14px] max-w-sm">
         {description}
       </p>
       {onRetry && (

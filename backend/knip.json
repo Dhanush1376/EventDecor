@@ -1,0 +1,12 @@
+{
+  "entry": [
+    "server.ts",
+    "src/scripts/*.ts",
+    "ecosystem.config.js",
+    "src/routes/**/*.ts",
+    "src/controllers/**/*.ts",
+    "src/jobs/**/*.ts",
+    "src/seeds/**/*.ts"
+  ],
+  "project": ["src/**/*.ts"]
+}

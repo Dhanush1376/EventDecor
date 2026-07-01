@@ -43,6 +43,7 @@ export const registerApiRoutes = (
   apiRouter.use('/events', lazyRouter('./events/eventRoutes'));
   apiRouter.use('/orders', noCacheMiddleware, lazyRouter('./commerce/orderRoutes'));
   apiRouter.use('/cms', lazyRouter('./cms/cmsRoutes'));
+  apiRouter.use('/marketing', lazyRouter('./cms/marketingRoutes'));
   apiRouter.use('/analytics', noCacheMiddleware, lazyRouter('./system/analyticsRoutes'));
   apiRouter.use('/gallery', lazyRouter('./cms/galleryRoutes'));
   apiRouter.use('/reviews', lazyRouter('./products/reviewRoutes'));
@@ -78,10 +79,10 @@ export const registerApiRoutes = (
   // Aggregated endpoints
 
   // Dynamic Configuration & Architecture Routes
-  apiRouter.use('/config', lazyRouter('./system/appConfigRoutes'));
+
   apiRouter.use('/settings', lazyRouter('./system/storeSettingsRoutes'));
   apiRouter.use('/categories', lazyRouter('./products/categoryRoutes'));
-  apiRouter.use('/layouts', lazyRouter('./cms/pageLayoutRoutes'));
+
   apiRouter.use('/search', lazyRouter('./discovery/searchRoutes'));
   apiRouter.use('/media', lazyRouter('./media/mediaRoutes'));
 

@@ -1,6 +1,7 @@
 import { AnimatePresence } from 'framer-motion';
 import { SEO } from '../../components/seo/SEO';
 import { MandalaElement } from '../../components/ui/MandalaElement';
+import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
 import {
   ShowcaseCard,
   Pagination,
@@ -113,12 +114,14 @@ export function EventShowcases() {
 
       <main
         id="showcase-collection"
-        className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative pb-8 md:pb-24"
+        className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative pb-8 lg:pb-24"
       >
-        <MandalaElement
-          className="absolute top-[20%] -right-[10%] opacity-[0.03] pointer-events-none"
-          size={600}
+        <MandalaArtDecor
+          className="absolute -top-12 -right-10 lg:-top-16 lg:-right-12 pointer-events-none z-0"
+          size={400}
           variant={2}
+          opacity={0.15}
+          spinDuration={120}
         />
 
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 xl:gap-12">
@@ -136,9 +139,9 @@ export function EventShowcases() {
           </aside>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-6 md:mb-10">
+            <div className="flex items-center justify-between mb-6 lg:mb-10">
               <div className="flex flex-col gap-1">
-                <h2 className="font-headline-md text-on-surface font-normal text-[24px] md:text-[32px]">
+                <h2 className="font-headline-md text-on-surface font-normal text-[24px] lg:text-[32px]">
                   Event Design Packages
                 </h2>
               </div>
@@ -156,33 +159,33 @@ export function EventShowcases() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="flex flex-col z-10">
-                    <div className="relative h-44 sm:h-56 md:h-72 w-full mb-2.5 sm:mb-3 md:mb-4 bg-[#fafafa] rounded-2xl md:rounded-[32px] border border-black/5 shadow-2xs overflow-hidden">
+                    <div className="relative h-44 sm:h-56 lg:h-72 w-full mb-2.5 sm:mb-3 lg:mb-4 bg-[#fafafa] rounded-2xl lg:rounded-[32px] border border-black/5 shadow-2xs overflow-hidden">
                       <Skeleton className="w-full h-full rounded-none" />
-                      <div className="absolute top-2 left-2 md:top-4 md:left-4 flex flex-row items-center -space-x-2 md:-space-x-3 z-10">
-                        <Skeleton className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full border-2 border-white shadow-lg" />
-                        <Skeleton className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full border-2 border-white shadow-md" />
+                      <div className="absolute top-2 left-2 lg:top-4 lg:left-4 flex flex-row items-center -space-x-2 lg:-space-x-3 z-10">
+                        <Skeleton className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full border-2 border-white shadow-lg" />
+                        <Skeleton className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full border-2 border-white shadow-md" />
                       </div>
-                      <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20">
-                        <Skeleton className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full border border-black/5 shadow-sm" />
+                      <div className="absolute top-2 right-2 lg:top-4 lg:right-4 z-20">
+                        <Skeleton className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full border border-black/5 shadow-sm" />
                       </div>
                     </div>
                     <div className="py-1 flex flex-col flex-1">
                       <div className="flex items-center gap-1 mb-1.5 sm:mb-2">
-                        <Skeleton className="h-2 md:h-2.5 w-1/3 rounded-full" />
-                        <Skeleton className="h-2 md:h-2.5 w-8 rounded-full ml-auto" />
+                        <Skeleton className="h-2 lg:h-2.5 w-1/3 rounded-full" />
+                        <Skeleton className="h-2 lg:h-2.5 w-8 rounded-full ml-auto" />
                       </div>
-                      <Skeleton className="h-3 md:h-4 w-4/5 rounded-full mb-1.5 sm:mb-2 md:mb-3" />
-                      <Skeleton className="h-4 md:h-5 w-1/2 rounded-full mt-auto" />
+                      <Skeleton className="h-3 lg:h-4 w-4/5 rounded-full mb-1.5 sm:mb-2 lg:mb-3" />
+                      <Skeleton className="h-4 lg:h-5 w-1/2 rounded-full mt-auto" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : paginatedShowcases.length > 0 ? (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">
                   {paginatedShowcases.map((sc) => (
                     <ShowcaseCard
                       key={sc._id || sc.id}
@@ -196,7 +199,8 @@ export function EventShowcases() {
                       image={sc.image}
                       category={sc.category}
                       inclusions={sc.inclusions}
-                      rating={4.9}
+                      rating={sc.rating || 0}
+                      reviews={sc.reviewCount || 0}
                       onOpenShowcase={() => handleOpenShowcase(sc)}
                     />
                   ))}

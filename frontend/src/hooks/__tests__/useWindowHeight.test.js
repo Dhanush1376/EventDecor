@@ -37,7 +37,7 @@ describe('useWindowHeight Custom Hook', () => {
 
   it('unmounts cleanly by removing the resize event listener from window', () => {
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
-    
+
     const { unmount } = renderHook(() => useWindowHeight());
     expect(removeEventListenerSpy).not.toHaveBeenCalled();
 

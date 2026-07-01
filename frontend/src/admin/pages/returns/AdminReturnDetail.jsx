@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useReturnManagement } from '../../hooks/useReturnManagement';
+import { handleImageError } from '../../../utils/media/imageUtils';
+import { PLACEHOLDER_IMAGES } from '../../../constants/placeholderImages';
 import {
   PageHeader,
   StatusBadge,
@@ -325,8 +327,9 @@ const AdminReturnDetail = () => {
                 <div key={index} className="admin-card">
                   <div className="p-4 border-b border-admin-border flex gap-4">
                     <img
-                      src={item.imageSrc || '/placeholder.png'}
+                      src={item.imageSrc || PLACEHOLDER_IMAGES.product}
                       alt={item.title}
+                      onError={handleImageError}
                       className="w-20 h-20 object-cover rounded-md border border-admin-border"
                     />
                     <div className="flex-1">

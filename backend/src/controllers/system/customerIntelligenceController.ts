@@ -163,22 +163,12 @@ export const getExecutiveSummary = async (req: Request, res: Response) => {
       if (e._id === 'checkout_completed') checkoutCompleted = e.count;
     });
 
-    const monthOrderCount = monthOrders[0]?.count || 0;
-    if (checkoutStarted === 0 && checkoutCompleted === 0) {
-      // Intelligent fallback logic for development
-      checkoutStarted = monthOrderCount > 0 ? monthOrderCount * 3 : 15;
-      checkoutCompleted = monthOrderCount > 0 ? monthOrderCount : 4;
-    }
-
     const cartAbandonmentRate =
       checkoutStarted > 0 ? ((checkoutStarted - checkoutCompleted) / checkoutStarted) * 100 : 0;
     const checkoutCompletionRate =
       checkoutStarted > 0 ? (checkoutCompleted / checkoutStarted) * 100 : 0;
 
-    let activeCustomers = activeCustomerSessions.length;
-    if (activeCustomers === 0) {
-      activeCustomers = (monthOrderCount > 0 ? monthOrderCount : 10) * 4;
-    }
+    const activeCustomers = activeCustomerSessions.length;
 
     // AI Insights Engine
     const aiInsights = [];
@@ -251,30 +241,78 @@ export const getCustomerList = async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search as string;
+    const sortField = (req.query.sortBy as string) || 'createdAt';
+    const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
+
+    // Filters
+    const tier = req.query.tier as string;
+    const status = req.query.status as string;
 
     const query: any = { role: { $in: ['user', 'customer'] } };
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
       ];
     }
 
+    if (tier && tier !== 'All') {
+      query.loyaltyTier = tier;
+    }
+
+    if (status === 'Verified') {
+      query.isVerified = true;
+    } else if (status === 'Unverified') {
+      query.isVerified = false;
+    }
+
+    const sortOptions: any = {};
+    sortOptions[sortField] = sortOrder;
+
     const customers = await User.find(query)
-      .select('name email phone loyaltyTier createdAt lastLogin isVerified')
+      .select(
+        'name email phone loyaltyTier createdAt lastLogin isVerified walletBalance siriCoins addresses',
+      )
+      .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
 
     const total = await User.countDocuments(query);
 
-    // Attach basic scores (simplified for list view)
     const populatedCustomers = await Promise.all(
-      customers.map(async (c) => ({
-        ...c,
-        health: await CustomerIntelligenceService.getHealthScore(c._id as any),
-        engagement: (await CustomerIntelligenceService.getEngagementScore(c._id as any)).score,
-      })),
+      customers.map(async (c: any) => {
+        try {
+          const overview = await CustomerIntelligenceService.getCustomer360(c._id.toString());
+          return {
+            ...c,
+            totalSpent: overview?.overview?.totalSpent || 0,
+            orders: overview?.overview?.totalOrders || 0,
+            segment:
+              overview?.identity?.loyaltyTier === 'Platinum'
+                ? 'VIP'
+                : overview?.overview?.totalOrders > 0
+                  ? 'Regular'
+                  : 'New',
+            lastOrder: overview?.overview?.totalOrders > 0 ? overview.overview.totalSpent : null,
+            health: overview?.scores?.health || 'Unknown',
+            city: c.addresses && c.addresses.length > 0 ? c.addresses[0].city : 'Unknown',
+          };
+        } catch (_err) {
+          // Fallback if 360 fails for a user (e.g. missing data)
+          return {
+            ...c,
+            totalSpent: 0,
+            orders: 0,
+            segment: 'Unknown',
+            lastOrder: null,
+            health: 'Unknown',
+            city: 'Unknown',
+          };
+        }
+      }),
     );
 
     res.status(200).json({
@@ -284,6 +322,65 @@ export const getCustomerList = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Error fetching customer list', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+export const exportCustomers = async (req: Request, res: Response) => {
+  try {
+    const search = req.query.search as string;
+    const tier = req.query.tier as string;
+
+    const query: any = { role: { $in: ['user', 'customer'] } };
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (tier && tier !== 'All') {
+      query.loyaltyTier = tier;
+    }
+
+    const customers = await User.find(query)
+      .select('name email phone loyaltyTier createdAt isVerified walletBalance siriCoins')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const populatedCustomers = await Promise.all(
+      customers.map(async (c: any) => {
+        try {
+          const overview = await CustomerIntelligenceService.getCustomer360(c._id.toString());
+          return {
+            Name: c.name,
+            Email: c.email || '',
+            Phone: c.phone || '',
+            Orders: overview?.overview?.totalOrders || 0,
+            Spent: overview?.overview?.totalSpent || 0,
+            Tier: c.loyaltyTier || 'Bronze',
+            Joined: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
+          };
+        } catch (_err) {
+          return {
+            Name: c.name,
+            Email: c.email || '',
+            Phone: c.phone || '',
+            Orders: 0,
+            Spent: 0,
+            Tier: c.loyaltyTier || 'Bronze',
+            Joined: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
+          };
+        }
+      }),
+    );
+
+    res.status(200).json({
+      success: true,
+      data: populatedCustomers,
+    });
+  } catch (error) {
+    logger.error('Error exporting customers', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
@@ -355,7 +452,7 @@ export const getCustomerNotes = async (req: Request, res: Response) => {
       createdAt: -1,
     });
     res.status(200).json({ success: true, data: notes });
-  // eslint-disable-next-line unused-imports/no-unused-vars
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -374,7 +471,7 @@ export const addCustomerNote = async (req: Request, res: Response) => {
       isPinned: req.body.isPinned || false,
     });
     res.status(201).json({ success: true, data: note });
-  // eslint-disable-next-line unused-imports/no-unused-vars
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -384,7 +481,7 @@ export const updateCustomerNote = async (req: Request, res: Response) => {
   try {
     const note = await CustomerNote.findByIdAndUpdate(req.params.noteId, req.body, { new: true });
     res.status(200).json({ success: true, data: note });
-  // eslint-disable-next-line unused-imports/no-unused-vars
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -394,7 +491,7 @@ export const deleteCustomerNote = async (req: Request, res: Response) => {
   try {
     await CustomerNote.findByIdAndDelete(req.params.noteId);
     res.status(200).json({ success: true, message: 'Note deleted' });
-  // eslint-disable-next-line unused-imports/no-unused-vars
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -406,7 +503,7 @@ export const getSearchDashboard = async (req: Request, res: Response) => {
     const { start, end } = getDateRange(req);
     const data = await SearchIntelligenceService.getSearchDashboard(start, end);
     res.status(200).json({ success: true, data });
-  // eslint-disable-next-line unused-imports/no-unused-vars
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -417,7 +514,7 @@ export const getSearchIntents = async (req: Request, res: Response) => {
     const { start, end } = getDateRange(req);
     const data = await SearchIntelligenceService.getSearchIntentBreakdown(start, end);
     res.status(200).json({ success: true, data });
-  // eslint-disable-next-line unused-imports/no-unused-vars
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -429,7 +526,7 @@ export const getFunnel = async (req: Request, res: Response) => {
     const { start, end } = getDateRange(req);
     const data = await FunnelAnalyticsService.getConversionFunnel(start, end);
     res.status(200).json({ success: true, data });
-  // eslint-disable-next-line unused-imports/no-unused-vars
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -440,7 +537,7 @@ export const getAttribution = async (req: Request, res: Response) => {
     const { start, end } = getDateRange(req);
     const data = await MarketingAttributionService.getAttributionDashboard(start, end);
     res.status(200).json({ success: true, data });
-  // eslint-disable-next-line unused-imports/no-unused-vars
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -451,7 +548,7 @@ export const getRecommendations = async (req: Request, res: Response) => {
     const { start, end } = getDateRange(req);
     const data = await RecommendationEffectivenessService.getEffectivenessDashboard(start, end);
     res.status(200).json({ success: true, data });
-  // eslint-disable-next-line unused-imports/no-unused-vars
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -463,7 +560,7 @@ export const getProductAffinities = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     const data = await ProductIntelligenceService.getProductAffinities(id);
     res.status(200).json({ success: true, data });
-  // eslint-disable-next-line unused-imports/no-unused-vars
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }

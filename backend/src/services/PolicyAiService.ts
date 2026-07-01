@@ -53,7 +53,7 @@ export class PolicyAiService {
 
     const isEdit = existingPolicy && existingPolicy.title;
 
-    let prompt = '';
+    let prompt: string;
     if (isEdit) {
       prompt = `
       You are an expert legal policy editor for an e-commerce platform.

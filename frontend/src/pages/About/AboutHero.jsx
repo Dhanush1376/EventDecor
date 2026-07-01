@@ -32,7 +32,7 @@ export function AboutHero({ heroY, heroOpacity, cmsContent, firstWord, restWords
             className="flex items-center gap-4 mb-8"
           >
             <span className="w-12 h-[1px] bg-primary"></span>
-            <span className="font-label-sm text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-primary font-bold">
+            <span className="font-label-sm text-[10px] lg:text-[11px] uppercase tracking-[0.5em] text-primary font-bold">
               The {firstWord} {restWords} Heritage
             </span>
             <span className="w-12 h-[1px] bg-primary"></span>
@@ -42,7 +42,7 @@ export function AboutHero({ heroY, heroOpacity, cmsContent, firstWord, restWords
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 1 }}
-            className="font-headline text-[48px] md:text-[72px] lg:text-[96px] leading-[1.05] tracking-tight mb-8"
+            className="font-headline text-[48px] lg:text-[72px] lg:text-[96px] leading-[1.05] tracking-tight mb-8"
           >
             {cmsContent?.heroTitle || 'Crafting Traditions'} <br />
             <span className="italic font-light text-white">
@@ -54,7 +54,7 @@ export function AboutHero({ heroY, heroOpacity, cmsContent, firstWord, restWords
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 1 }}
-            className="font-body text-[16px] md:text-[20px] text-white/70 font-light leading-relaxed max-w-2xl mx-auto"
+            className="font-body text-[16px] lg:text-[20px] text-white/70 font-light leading-relaxed max-w-2xl mx-auto"
           >
             {cmsContent?.missionStatement || ''}
           </motion.p>

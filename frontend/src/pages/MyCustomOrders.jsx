@@ -663,10 +663,10 @@ export function MyCustomOrders() {
     <div className="min-h-screen bg-[var(--color-surface-ivory)] pt-24 pb-20">
       <SEO title="My Custom Orders | Siri Arts & Crafts" />
 
-      <div className="max-w-[1440px] mx-auto px-4 md:px-8">
+      <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
         {/* Header */}
         <div className="mb-8 border-b border-black/5 pb-6">
-          <h1 className="text-[28px] md:text-[36px] font-display font-light text-black">
+          <h1 className="text-[28px] lg:text-[36px] font-display font-light text-black">
             My Custom Orders
           </h1>
           <p className="text-[13px] text-black/50 mt-2">

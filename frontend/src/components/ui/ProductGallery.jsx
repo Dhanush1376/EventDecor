@@ -5,6 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
+import { MandalaElement } from './MandalaElement';
 
 const RecommendationSystem = React.lazy(() =>
   import('../sections/RecommendationSystem').then((m) => ({ default: m.RecommendationSystem })),
@@ -100,7 +101,13 @@ export function ProductGallery({ images = [], product }) {
   };
 
   return (
-    <div className="flex flex-col-reverse lg:flex-row gap-4 md:gap-6 items-start w-full select-none">
+    <div className="flex flex-col-reverse lg:flex-row gap-4 lg:gap-6 items-start w-full select-none md:self-start md:sticky md:top-24 lg:top-32 relative">
+      {/* Sticky Mandala Art */}
+      <MandalaElement
+        className="hidden md:block absolute -top-16 -left-[120px] opacity-[0.05] pointer-events-none -z-10"
+        size={550}
+        duration={120}
+      />
       {/* Thumbnail Strip */}
       <div
         className="w-full lg:w-[85px] flex lg:flex-col gap-3 sm:gap-4 overflow-x-auto lg:overflow-y-auto no-scrollbar py-3 px-2 lg:px-3 items-center"
@@ -110,7 +117,7 @@ export function ProductGallery({ images = [], product }) {
           <button
             key={idx}
             onClick={() => handleThumbnailClick(idx)}
-            className={`shrink-0 w-12 sm:w-14 md:w-16 lg:w-[60px] aspect-square rounded-[16px] md:rounded-[20px] overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative group cursor-pointer ${
+            className={`shrink-0 w-12 sm:w-14 lg:w-16 lg:w-[60px] aspect-square rounded-[16px] lg:rounded-[20px] overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative group cursor-pointer ${
               selectedIdx === idx
                 ? 'scale-[1.15] shadow-[0_8px_20px_-6px_rgba(196,168,124,0.4)] z-10 opacity-100'
                 : 'scale-[0.9] opacity-40 hover:opacity-80 hover:scale-100'
@@ -120,7 +127,7 @@ export function ProductGallery({ images = [], product }) {
               src={img}
               alt={`Thumbnail ${idx + 1}`}
               containerClassName="w-full h-full"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none rounded-[16px] md:rounded-[20px]"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none rounded-[16px] lg:rounded-[20px]"
               width={100}
               height={100}
             />
@@ -129,7 +136,7 @@ export function ProductGallery({ images = [], product }) {
       </div>
 
       {/* Main Image Viewport - Native continuous horizontal scroll enabled */}
-      <div className="flex-1 w-full relative aspect-square max-h-[580px] rounded-2xl md:rounded-3xl overflow-hidden bg-[#fafafa] group border border-black/[0.04]">
+      <div className="flex-1 w-full relative aspect-square max-h-[580px] rounded-2xl lg:rounded-3xl overflow-hidden bg-[#fafafa] group border border-black/[0.04]">
         <div
           ref={scrollRef}
           onScroll={handleScroll}
@@ -159,7 +166,7 @@ export function ProductGallery({ images = [], product }) {
         {/* Mobile Back Arrow Overlay */}
         <button
           onClick={handleBack}
-          className="flex md:hidden absolute top-4 left-4 z-20 items-center justify-center w-8 h-8 min-h-0 min-w-0 p-0 aspect-square rounded-full bg-[#fbfbf8]/90 backdrop-blur-xs shadow-lg border border-black/5 active:scale-90 transition-all text-black outline-none focus:outline-none"
+          className="flex lg:hidden absolute top-4 left-4 z-20 items-center justify-center w-8 h-8 min-h-0 min-w-0 p-0 aspect-square rounded-full bg-[#fbfbf8]/90 backdrop-blur-xs shadow-lg border border-black/5 active:scale-90 transition-all text-black outline-none focus:outline-none"
           aria-label="Go back"
         >
           <span className="material-symbols-outlined text-[16px] text-black">arrow_back</span>
@@ -238,7 +245,7 @@ export function ProductGallery({ images = [], product }) {
                   className="flex justify-between items-center px-5 py-4 z-10 shrink-0"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <span className="text-[#8b7e6a]/70 font-label-sm text-[11px] md:text-[13px] uppercase tracking-[0.4em] font-bold select-none">
+                  <span className="text-[#8b7e6a]/70 font-label-sm text-[11px] lg:text-[13px] uppercase tracking-[0.4em] font-bold select-none">
                     {selectedIdx + 1} / {images.length}
                   </span>
                   <button
@@ -274,7 +281,7 @@ export function ProductGallery({ images = [], product }) {
                   {images.map((img, idx) => (
                     <div
                       key={idx}
-                      className="w-full h-full shrink-0 snap-center flex items-center justify-center p-2 sm:p-4 md:p-6"
+                      className="w-full h-full shrink-0 snap-center flex items-center justify-center p-2 sm:p-4 lg:p-6"
                     >
                       <OptimizedImage
                         src={img}
@@ -306,7 +313,7 @@ export function ProductGallery({ images = [], product }) {
                           });
                         }
                       }}
-                      className={`shrink-0 w-12 sm:w-14 md:w-16 lg:w-[60px] aspect-square rounded-[16px] md:rounded-[20px] overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] snap-center outline-none group cursor-pointer ${
+                      className={`shrink-0 w-12 sm:w-14 lg:w-16 lg:w-[60px] aspect-square rounded-[16px] lg:rounded-[20px] overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] snap-center outline-none group cursor-pointer ${
                         selectedIdx === idx
                           ? 'scale-[1.15] shadow-[0_8px_20px_-6px_rgba(196,168,124,0.4)] z-10 opacity-100'
                           : 'scale-[0.9] opacity-40 hover:opacity-80 hover:scale-100'
@@ -316,7 +323,7 @@ export function ProductGallery({ images = [], product }) {
                         src={img}
                         alt={`Thumbnail ${idx + 1}`}
                         containerClassName="w-full h-full"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none rounded-[16px] md:rounded-[20px]"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none rounded-[16px] lg:rounded-[20px]"
                         width={100}
                         height={100}
                       />

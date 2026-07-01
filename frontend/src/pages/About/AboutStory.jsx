@@ -7,13 +7,13 @@ import { CloudinaryImage } from '../../components/ui/CloudinaryImage';
 export function AboutStory({ cmsContent }) {
   return (
     <StackedSectionWrapper index={1} isLast={false} bgClass="bg-surface">
-      <section className="py-24 md:py-40 relative bg-surface z-10 overflow-hidden">
+      <section className="py-24 lg:py-40 relative bg-surface z-10 overflow-hidden">
         <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
         <MandalaArtDecor
           variant={2}
           size={320}
-          className="-top-16 -right-16 md:hidden"
+          className="-top-16 -right-16 lg:hidden"
           opacity={0.16}
           blendMode="darken"
           spinDuration={170}
@@ -21,21 +21,21 @@ export function AboutStory({ cmsContent }) {
         <MandalaArtDecor
           variant={2}
           size={600}
-          className="-top-36 -right-36 hidden md:block"
+          className="-top-36 -right-36 hidden lg:block"
           opacity={0.12}
           blendMode="darken"
           spinDuration={170}
         />
 
-        <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center relative z-10">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center relative z-10">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: '-100px' }}
             transition={{ duration: 1 }}
-            className="relative aspect-[3/4] md:aspect-[4/5] bg-white rounded-[40px] p-4 md:p-6 shadow-[0_40px_80px_rgba(0,0,0,0.08)] border border-black/[0.02]"
+            className="relative aspect-[3/4] lg:aspect-[4/5] bg-white rounded-[40px] p-4 lg:p-6 shadow-[0_40px_80px_rgba(0,0,0,0.08)] border border-black/[0.02]"
           >
-            <div className="w-full h-full rounded-[32px] md:rounded-t-full md:rounded-b-full overflow-hidden relative">
+            <div className="w-full h-full rounded-[32px] lg:rounded-t-full lg:rounded-b-full overflow-hidden relative">
               <CloudinaryImage
                 src={cmsContent?.storyImage || '/assets/legacy_artistry_decor.webp'}
                 alt="Handcrafted Details"
@@ -74,11 +74,13 @@ export function AboutStory({ cmsContent }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="font-headline text-[42px] md:text-[56px] lg:text-[64px] leading-[1.1] tracking-tight text-on-surface"
-            >
-              A Legacy of <br />
-              <span className="italic font-light text-primary">Family Artistry.</span>
-            </motion.h2>
+              className="font-headline text-[42px] lg:text-[56px] lg:text-[64px] leading-[1.1] tracking-tight text-on-surface"
+              dangerouslySetInnerHTML={{
+                __html:
+                  cmsContent?.storyHeadline ||
+                  'A Legacy of <br /><span className="italic font-light text-primary">Family Artistry.</span>',
+              }}
+            />
 
             <div className="space-y-6">
               <motion.p
@@ -86,23 +88,20 @@ export function AboutStory({ cmsContent }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="font-body text-[16px] md:text-[18px] text-on-surface-variant/80 font-light leading-relaxed"
+                className="font-body text-[16px] lg:text-[18px] text-on-surface-variant/80 font-light leading-relaxed"
               >
-                Founded with a profound passion for celebrations, Siri Arts & Crafts began as a
-                small family endeavor designed to weave authentic Telugu traditions into modern
-                wedding landscapes.
+                {cmsContent?.storyParagraph1 ||
+                  'Founded with a profound passion for celebrations, Siri Arts & Crafts began as a small family endeavor designed to weave authentic Telugu traditions into modern wedding landscapes.'}
               </motion.p>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 }}
-                className="font-body text-[16px] md:text-[18px] text-on-surface-variant/80 font-light leading-relaxed"
+                className="font-body text-[16px] lg:text-[18px] text-on-surface-variant/80 font-light leading-relaxed"
               >
-                Today, we stand as a premier digital studio, honoring our ancient roots while
-                elevating event decor to a profound form of high art. Our artisans pour their hearts
-                into every creation, ensuring your cherished moments are framed in unparalleled
-                elegance.
+                {cmsContent?.storyParagraph2 ||
+                  'Today, we stand as a premier digital studio, honoring our ancient roots while elevating event decor to a profound form of high art. Our artisans pour their hearts into every creation, ensuring your cherished moments are framed in unparalleled elegance.'}
               </motion.p>
             </div>
           </div>

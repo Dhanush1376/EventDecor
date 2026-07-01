@@ -55,13 +55,13 @@ export function BlogListing() {
         canonicalUrl="/blog"
       />
 
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
         {/* Header Section */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-on-surface font-bold mb-6">
+          <h1 className="font-display text-4xl lg:text-5xl lg:text-6xl text-on-surface font-bold mb-6">
             Ideas & Inspiration
           </h1>
-          <p className="text-on-surface-variant text-lg md:text-xl">
+          <p className="text-on-surface-variant text-lg lg:text-xl">
             Discover expert guides, styling tips, and the latest trends in luxury event decoration
             and handmade gifting.
           </p>
@@ -75,7 +75,7 @@ export function BlogListing() {
         )}
 
         {/* Filters and Search */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-12">
           {/* Categories */}
           <div className="flex flex-wrap items-center justify-center gap-2">
             {categories.map((cat) => (
@@ -94,7 +94,7 @@ export function BlogListing() {
           </div>
 
           {/* Search */}
-          <div className="relative w-full md:w-72">
+          <div className="relative w-full lg:w-72">
             <input
               type="text"
               placeholder="Search articles..."
@@ -109,7 +109,7 @@ export function BlogListing() {
         {/* Blog Grid */}
         {loading ? (
           <div className="text-center py-20">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-16 h-16 border-[1px] border-primary/30 border-t-primary rounded-full animate-spin duration-1000 ease-linear mx-auto mb-4"></div>
             <p className="text-on-surface-variant">Loading articles...</p>
           </div>
         ) : filteredPosts.length > 0 ? (

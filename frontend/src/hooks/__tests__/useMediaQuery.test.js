@@ -11,20 +11,25 @@ describe('useMediaQuery Custom Hook', () => {
     matchesValue = false;
 
     // Define mock matchMedia globally
-    vi.stubGlobal('matchMedia', vi.fn().mockImplementation((query) => ({
-      get matches() { return matchesValue; },
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn((event, callback) => {
-        listeners.push(callback);
-      }),
-      removeEventListener: vi.fn((event, callback) => {
-        listeners = listeners.filter((l) => l !== callback);
-      }),
-      dispatchEvent: vi.fn(),
-    })));
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query) => ({
+        get matches() {
+          return matchesValue;
+        },
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn((event, callback) => {
+          listeners.push(callback);
+        }),
+        removeEventListener: vi.fn((event, callback) => {
+          listeners = listeners.filter((l) => l !== callback);
+        }),
+        dispatchEvent: vi.fn(),
+      })),
+    );
   });
 
   afterEach(() => {
@@ -50,7 +55,7 @@ describe('useMediaQuery Custom Hook', () => {
 
     // Simulate change: screen resized to wide desktop
     matchesValue = true;
-    
+
     // Trigger listeners
     act(() => {
       listeners.forEach((listener) => listener());
@@ -63,21 +68,24 @@ describe('useMediaQuery Custom Hook', () => {
     const addEventListenerSpy = vi.fn();
     const removeEventListenerSpy = vi.fn();
 
-    vi.stubGlobal('matchMedia', vi.fn().mockImplementation((query) => ({
-      matches: false,
-      media: query,
-      addEventListener: addEventListenerSpy,
-      removeEventListener: removeEventListenerSpy,
-    })));
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query) => ({
+        matches: false,
+        media: query,
+        addEventListener: addEventListenerSpy,
+        removeEventListener: removeEventListenerSpy,
+      })),
+    );
 
     const { unmount } = renderHook(() => useMediaQuery('(max-width: 480px)'));
-    
+
     expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
     expect(removeEventListenerSpy).not.toHaveBeenCalled();
 
     // Unmount hook
     unmount();
-    
+
     expect(removeEventListenerSpy).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FilterPanel, Pagination, CategoryTabs } from '../../components/ui';
 import { ProductCard } from '../../components/shared/ProductCard';
@@ -10,6 +11,7 @@ export const ProductListingGrid = React.memo(
     filterGroups,
     filters,
     toggleFilter,
+    setFilterValue,
     clearAllFilters,
     isFilterOpen,
     setIsFilterOpen,
@@ -34,12 +36,14 @@ export const ProductListingGrid = React.memo(
     return (
       <main
         id="artisan-collection"
-        className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative pb-8 md:pb-24"
+        className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative pb-8 lg:pb-24"
       >
-        <MandalaElement
-          className="absolute top-[20%] -right-[10%] opacity-[0.03]"
-          size={600}
+        <MandalaArtDecor
+          className="absolute -top-12 -right-10 lg:-top-16 lg:-right-12 pointer-events-none z-0"
+          size={400}
           variant={2}
+          opacity={0.15}
+          spinDuration={120}
         />
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 xl:gap-12">
           <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-32 h-fit">
@@ -47,6 +51,7 @@ export const ProductListingGrid = React.memo(
               filterGroups={filterGroups}
               currentFilters={filters}
               onToggleFilter={toggleFilter}
+              onSetFilterValue={setFilterValue}
               onClearAll={clearAllFilters}
               isOpen={isFilterOpen}
               onClose={() => setIsFilterOpen(false)}
@@ -56,9 +61,9 @@ export const ProductListingGrid = React.memo(
           </aside>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-6 md:mb-10">
+            <div className="flex items-center justify-between mb-6 lg:mb-10">
               <div className="flex flex-col gap-1">
-                <h2 className="font-headline-md text-on-surface font-normal text-[24px] md:text-[32px]">
+                <h2 className="font-headline-md text-on-surface font-normal text-[24px] lg:text-[32px]">
                   The Artisan Collection
                 </h2>
                 <p className="font-body-md text-on-surface-variant/60 font-medium">
@@ -133,37 +138,48 @@ export const ProductListingGrid = React.memo(
               </div>
             )}
 
-            {searchParams?.get('coupon') && (
-              <div className="mb-8 px-6 py-4 bg-emerald-50 text-emerald-800 rounded-[20px] border border-emerald-200 text-[14px] font-medium flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
-                <div className="flex items-center gap-2.5">
-                  <span className="material-symbols-outlined text-[20px] text-emerald-600">
-                    local_offer
-                  </span>
-                  <span>
-                    Showing eligible items for coupon:{' '}
-                    <strong className="font-bold">{searchParams.get('coupon')}</strong>
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    setSearchParams((prev) => {
-                      const params = new URLSearchParams(prev);
-                      params.delete('coupon');
-                      params.delete('collection');
-                      params.delete('ids');
-                      return params;
-                    });
-                  }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-[12px] font-bold transition-colors"
+            <AnimatePresence>
+              {searchParams?.get('coupon') && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.98 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="mb-8 px-5 py-3 sm:px-6 sm:py-4 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-200 text-[13px] sm:text-[14px] font-medium flex items-center justify-between gap-4 shadow-sm"
                 >
-                  Clear Filter
-                </button>
-              </div>
-            )}
+                  <div className="flex items-center gap-2.5">
+                    <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-emerald-600">
+                      local_offer
+                    </span>
+                    <span>
+                      Showing eligible items for coupon:{' '}
+                      <strong className="font-bold">{searchParams.get('coupon')}</strong>
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSearchParams((prev) => {
+                        const params = new URLSearchParams(prev);
+                        params.delete('coupon');
+                        params.delete('collection');
+                        params.delete('ids');
+                        return params;
+                      });
+                    }}
+                    className="p-1.5 shrink-0 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-800 rounded-full transition-colors flex items-center justify-center cursor-pointer outline-none"
+                    title="Clear Filter"
+                  >
+                    <span className="material-symbols-outlined text-[18px] sm:text-[20px]">
+                      close
+                    </span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div id="product-results-wrapper">
               {loading ? (
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 lg:gap-x-8 gap-y-8 lg:gap-y-12">
                   {[...Array(6)].map((_, i) => (
                     <ProductCard key={i} loading={true} />
                   ))}
@@ -171,7 +187,7 @@ export const ProductListingGrid = React.memo(
               ) : products.length > 0 ? (
                 <>
                   <div
-                    className={`grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12 transition-opacity duration-300 ${isFetching ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}
+                    className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 lg:gap-x-8 gap-y-8 lg:gap-y-12 transition-opacity duration-300 ${isFetching ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}
                   >
                     {products.map((product, index) => (
                       <ProductCard
@@ -214,7 +230,7 @@ export const ProductListingGrid = React.memo(
                   )}
                 </>
               ) : (
-                <div className="text-center py-32 md:py-48 bg-surface-container-low/30 rounded-[40px] border border-dashed border-outline-variant/30 px-6 animate-fade-in">
+                <div className="text-center py-32 lg:py-48 bg-surface-container-low/30 rounded-[40px] border border-dashed border-outline-variant/30 px-6 animate-fade-in">
                   <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-luxury/5 border border-black/5">
                     <span className="material-symbols-outlined text-[40px] text-on-surface-variant/20">
                       filter_list_off

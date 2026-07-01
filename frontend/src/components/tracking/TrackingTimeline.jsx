@@ -27,7 +27,7 @@ export function TrackingTimeline({ orderStatus }) {
   const activeIndex = trackingSteps.indexOf(orderStatus);
 
   return (
-    <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 md:p-8 shadow-xs">
+    <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 lg:p-8 shadow-xs">
       <h2 className="text-xs font-bold text-secondary uppercase tracking-widest mb-6 flex items-center gap-1.5">
         <span className="material-symbols-outlined text-sm">route</span>
         <span>Transit Progress Tracker</span>

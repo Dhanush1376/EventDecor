@@ -16,8 +16,9 @@ const heavyQuery = requestTimeout(25000);
 router.get('/overview', heavyQuery, ciController.getOverview);
 router.get('/executive-summary', heavyQuery, ciController.getExecutiveSummary);
 
-// Customer List & 360
+// Customer List, Export & 360
 router.get('/customers', heavyQuery, ciController.getCustomerList);
+router.get('/customers/export', heavyQuery, ciController.exportCustomers);
 router.get('/customers/:id', ciController.getCustomer360);
 router.get('/customers/:id/journey', ciController.getCustomerJourney);
 router.get('/customers/:id/journey/:sessionId', ciController.getCustomerJourney);

@@ -1,7 +1,7 @@
 export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
   return (
     <div className="bg-surface-bright rounded-lg border border-outline-variant/40 p-6 space-y-6 shadow-xs relative overflow-hidden text-left">
-      <div className="flex flex-col md:flex-row justify-between items-start border-b border-black/5 pb-5 gap-4 md:gap-0">
+      <div className="flex flex-col lg:flex-row justify-between items-start border-b border-black/5 pb-5 gap-4 lg:gap-0">
         <div className="space-y-1">
           <span className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[12px]">event_available</span>
@@ -11,7 +11,7 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
             {selectedBooking.title}
           </h2>
         </div>
-        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+        <div className="flex flex-wrap items-center gap-2 lg:gap-3">
           <button
             type="button"
             onClick={() => setIsMobileChatOpen(true)}

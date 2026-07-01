@@ -10,12 +10,13 @@ import {
   PageHeader,
   SkeletonTable,
   FilterBar,
-  SkeletonList,
   formatCurrency,
   fadeUp,
   stagger,
+  PeriodSelector,
 } from '../components/AdminUIKit';
 import { useDraft } from '../hooks/useDraft';
+import { SkeletonList } from '../components/ui/Skeletons';
 import { AdminOrdersTable } from '../components/AdminOrdersTable';
 import { AdminOrdersKanban } from '../components/AdminOrdersKanban';
 import { AdminOrderDrawer } from '../components/AdminOrderDrawer';
@@ -47,6 +48,8 @@ export function AdminOrders() {
     statusCounts,
     handleExportCSV,
     openOrderDrawer,
+    dateFilter,
+    setDateFilter,
   } = useOrderFilters(orders, searchQuery);
 
   // Capture physical barcode scanner keyboard inputs
@@ -187,6 +190,14 @@ export function AdminOrders() {
           </button>
         </div>
       </PageHeader>
+
+      <div className="flex w-full mt-[-8px]">
+        <PeriodSelector
+          value={dateFilter}
+          onChange={setDateFilter}
+          periods={['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year']}
+        />
+      </div>
 
       {/* Real-time Logistics & COD Remittance Reconciliation Ledger */}
       <motion.div variants={fadeUp} className="admin-card overflow-hidden text-left relative p-0">

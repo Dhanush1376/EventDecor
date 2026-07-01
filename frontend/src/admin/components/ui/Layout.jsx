@@ -133,10 +133,27 @@ export function PageHeader({
   );
 }
 
-export function SectionHeader({ icon, title, description, page, section, status, children }) {
+export function SectionHeader({
+  icon,
+  title,
+  description,
+  page,
+  section,
+  status,
+  onBack,
+  children,
+}) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-[var(--admin-border-subtle)] pb-4">
       <div className="flex items-center gap-3">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="w-9 h-9 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm flex items-center justify-center shrink-0"
+          >
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+          </button>
+        )}
         {icon && (
           <div className="w-9 h-9 rounded-[var(--admin-radius-lg)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)] block">

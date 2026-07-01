@@ -12,9 +12,9 @@ export function FAQAccordion({ faqs, title = 'Frequently Asked Questions' }) {
   };
 
   return (
-    <section className="w-full max-w-4xl mx-auto py-12 px-margin-mobile md:px-margin-desktop">
+    <section className="w-full max-w-4xl mx-auto py-12 px-margin-mobile lg:px-margin-desktop">
       {title && (
-        <h2 className="font-display text-3xl md:text-4xl text-on-surface font-bold text-center mb-8">
+        <h2 className="font-display text-3xl lg:text-4xl text-on-surface font-bold text-center mb-8">
           {title}
         </h2>
       )}

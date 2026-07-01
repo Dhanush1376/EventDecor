@@ -25,12 +25,28 @@ export function HeroCarousel() {
     productData?.items ||
     (Array.isArray(productData) ? productData : []);
 
+  const [featuredShowcases, setFeaturedShowcases] = useState([]);
+  const [showcasesLoading, setShowcasesLoading] = useState(true);
+
+  useEffect(() => {
+    import('../../../services/domainServices').then(({ showcaseService }) => {
+      showcaseService
+        .getAll()
+        .then((res) => {
+          const list = res?.data || [];
+          setFeaturedShowcases((Array.isArray(list) ? list : []).filter((sc) => sc.featured));
+        })
+        .catch(() => setFeaturedShowcases([]))
+        .finally(() => setShowcasesLoading(false));
+    });
+  }, []);
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const pauseTimeoutRef = useRef(null);
 
   // Map products to hero slides
-  const slides = fetchedProducts.map((p) => ({
+  const productSlides = fetchedProducts.map((p) => ({
     id: p.id || p._id,
     title: p.title || p.name,
     subtitle: p.category,
@@ -39,6 +55,18 @@ export function HeroCarousel() {
     backgroundImage: p.image || p.imageSrc,
     mobileBackgroundImage: p.image || p.imageSrc,
   }));
+
+  const showcaseSlides = featuredShowcases.map((sc) => ({
+    id: sc.id || sc._id,
+    title: sc.title,
+    subtitle: sc.category?.replace('_', ' '),
+    badgeText: 'FEATURED SHOWCASE',
+    ctaPrimary: { text: 'Explore Showcase', link: `/events/${sc.id || sc._id}` },
+    backgroundImage: sc.image,
+    mobileBackgroundImage: sc.image,
+  }));
+
+  const slides = [...productSlides, ...showcaseSlides];
 
   // Swipe tracking
   const [touchStart, setTouchStart] = useState(null);
@@ -108,12 +136,12 @@ export function HeroCarousel() {
     return () => clearInterval(timer);
   }, [slides.length, isPaused]);
 
-  if ((productsLoading && selectedProductIds.length > 0) || cmsLoading) {
+  if ((productsLoading && selectedProductIds.length > 0) || showcasesLoading || cmsLoading) {
     return (
       <div className="w-full h-[70vh] bg-surface-container-high relative animate-pulse">
-        <div className="absolute bottom-16 left-8 md:left-16 flex flex-col gap-6 w-full max-w-2xl z-10">
+        <div className="absolute bottom-16 left-8 lg:left-16 flex flex-col gap-6 w-full max-w-2xl z-10">
           <div className="h-5 w-40 bg-surface-container-highest/80 rounded-full"></div>
-          <div className="h-16 md:h-24 w-3/4 bg-surface-container-highest/80 rounded-2xl"></div>
+          <div className="h-16 lg:h-24 w-3/4 bg-surface-container-highest/80 rounded-2xl"></div>
           <div className="h-6 w-2/3 bg-surface-container-highest/80 rounded-full mt-2"></div>
           <div className="h-14 w-48 bg-surface-container-highest/80 rounded-full mt-6"></div>
         </div>
@@ -184,26 +212,26 @@ export function HeroCarousel() {
                 <CloudinaryImage
                   src={slide.backgroundImage}
                   alt=""
-                  className="hidden md:block w-full h-full object-cover opacity-60 blur-[60px] scale-125"
+                  className="hidden lg:block w-full h-full object-cover opacity-60 blur-[60px] scale-125"
                   loading="lazy"
                   fetchPriority="low"
-                  containerClassName="hidden md:block w-full h-full absolute inset-0 overflow-hidden"
+                  containerClassName="hidden lg:block w-full h-full absolute inset-0 overflow-hidden"
                   width={100}
                   sizes="100px"
                   aria-hidden="true"
                 />
 
                 {/* 2. Dark Gradient Overlay (Desktop Only) */}
-                <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent z-[1]" />
+                <div className="hidden lg:block absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent z-[1]" />
 
                 {/* 3. Sharp Foreground Image (Full on mobile, right-aligned with mask on desktop) */}
                 <CloudinaryImage
                   src={slide.backgroundImage}
                   alt={slide.title}
-                  className="h1-hero__slide-image w-full h-full object-cover md:object-cover"
+                  className="h1-hero__slide-image w-full h-full object-cover lg:object-cover"
                   loading={isActive ? 'eager' : 'lazy'}
                   fetchPriority={isActive ? 'high' : 'auto'}
-                  containerClassName="w-full md:w-[60%] h-full relative z-[2] ml-auto"
+                  containerClassName="w-full lg:w-[60%] h-full relative z-[2] ml-auto"
                   width={1280}
                   sizes="(max-width: 768px) 100vw, 60vw"
                 />

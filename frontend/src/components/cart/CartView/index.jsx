@@ -315,7 +315,7 @@ export function CartView({ isEmbedded = false }) {
         rentalCartCount={rentalCartCount}
       />
 
-      <div className="mb-4 md:mb-5">
+      <div className="mb-4 lg:mb-5">
         <CheckoutSteps
           steps={
             activeCartMode === 'rental'
@@ -527,7 +527,7 @@ export function CartView({ isEmbedded = false }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
-            className="bg-surface-container-low min-h-screen pt-[72px] md:pt-[88px] pb-[160px] md:pb-28 font-body text-on-surface"
+            className="bg-surface-container-low min-h-screen pt-[72px] lg:pt-[88px] pb-[160px] lg:pb-28 font-body text-on-surface"
           >
             {innerContent}
           </motion.div>
@@ -539,7 +539,7 @@ export function CartView({ isEmbedded = false }) {
             <motion.div
               initial={{ y: 100 }}
               animate={{ y: 0 }}
-              className="fixed bottom-0 left-0 w-full h-[calc(72px+env(safe-area-inset-bottom,0px))] md:h-[80px] z-[100] lg:hidden bg-white/95 backdrop-blur-xl border-t border-outline-variant/15 px-6 pb-[env(safe-area-inset-bottom,0px)] flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] select-none"
+              className="fixed bottom-0 left-0 w-full h-[calc(72px+env(safe-area-inset-bottom,0px))] lg:h-[80px] z-[100] lg:hidden bg-white/95 backdrop-blur-xl border-t border-outline-variant/15 px-6 pb-[env(safe-area-inset-bottom,0px)] flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] select-none"
             >
               <div className="flex flex-col justify-center truncate">
                 <span className="font-label text-[8px] uppercase tracking-[0.25em] text-stone-500 font-bold leading-none">

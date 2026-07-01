@@ -25,13 +25,13 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-          className="fixed bottom-0 left-0 right-0 md:left-1/2 md:-translate-x-1/2 md:w-[600px] z-[1000] bg-[#FCFAF6] border-t border-[#C4A87C]/30 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col max-h-[85vh] md:max-h-[90vh]"
+          className="fixed bottom-0 left-0 right-0 lg:left-1/2 lg:-translate-x-1/2 lg:w-[600px] z-[1000] bg-[#FCFAF6] border-t border-[#C4A87C]/30 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col max-h-[85vh] lg:max-h-[90vh]"
         >
           <div className="bg-[#FAF6F0] px-6 py-4 border-b border-black/5 flex items-center justify-between shrink-0 relative rounded-t-[2.5rem]">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-[20px]">tune</span>
               <div>
-                <h3 className="font-display text-sm md:text-base text-black font-semibold">
+                <h3 className="font-display text-sm lg:text-base text-black font-semibold">
                   Customize Your Order
                 </h3>
                 <p className="text-[9px] text-black/50 uppercase tracking-widest font-bold font-label">
@@ -65,7 +65,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
             </div>
           </div>
 
-          <div className="p-6 md:p-8 overflow-y-auto flex-1 space-y-6">
+          <div className="p-6 lg:p-8 overflow-y-auto flex-1 space-y-6">
             {/* STEP 1: Occasion */}
             {state.customizerStep === 1 && (
               <div className="space-y-4 pt-2">
@@ -342,7 +342,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
           </div>
 
           {/* Footer Actions */}
-          <div className="p-4 md:p-6 bg-white border-t border-black/5 shrink-0 flex gap-3 z-10 rounded-b-[2.5rem]">
+          <div className="p-4 lg:p-6 bg-white border-t border-black/5 shrink-0 flex gap-3 z-10 rounded-b-[2.5rem]">
             {state.customizerStep > 1 && (
               <button
                 onClick={() => actions.setCustomizerStep(state.customizerStep - 1)}

@@ -70,7 +70,6 @@ class ContentService {
     if (!section) {
       const defaultData: { [key: string]: any } = {
         admin_safety_lock: { safetyLock: false },
-        admin_maintenance_mode: { maintenanceMode: false },
         admin_idle_timeout: { idleTimeout: 15 },
         admin_theme_mode: { themeMode: 'dark' },
         studio_settings: {

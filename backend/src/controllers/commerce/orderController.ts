@@ -146,7 +146,7 @@ export const handleRazorpayWebhook = asyncHandler(async (req: Request, res: Resp
   }
 
   if (!signature) {
-    logger.warn('âš ï¸ Webhook verification aborted: Missing x-razorpay-signature header.');
+    logger.warn('Webhook verification aborted: Missing x-razorpay-signature header.');
     throw new ApiError(400, 'Webhook signature missing');
   }
 

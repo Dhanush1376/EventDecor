@@ -10,10 +10,10 @@ export function SummaryStep({ formData, activePackage }) {
       className="space-y-8"
     >
       <div className="space-y-2">
-        <h3 className="font-display text-[20px] md:text-[28px] text-black font-semibold">
+        <h3 className="font-display text-[20px] lg:text-[28px] text-black font-semibold">
           Review Your Event Summary
         </h3>
-        <p className="font-body text-black/45 text-[12px] md:text-[13px]">
+        <p className="font-body text-black/45 text-[12px] lg:text-[13px]">
           Review your itemized package selection, logistics dates, and estimated initial milestone
           deposit.
         </p>

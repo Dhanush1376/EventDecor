@@ -7,18 +7,18 @@ export function AboutGallery({ galleryPreview }) {
 
   return (
     <StackedSectionWrapper index={5} isLast={true} bgClass="bg-surface">
-      <section className="py-24 md:py-40 relative">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 mb-12 md:mb-16">
+      <section className="py-24 lg:py-40 relative">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 mb-12 lg:mb-16">
           <div>
             <span className="font-label-sm text-[10px] uppercase tracking-[0.4em] text-primary font-bold mb-4 block">
               Portfolio
             </span>
-            <h2 className="font-headline text-[42px] md:text-[56px] leading-[1.1] tracking-tight">
+            <h2 className="font-headline text-[42px] lg:text-[56px] leading-[1.1] tracking-tight">
               Featured Works
             </h2>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-4 md:px-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="max-w-7xl mx-auto px-4 lg:px-12 grid grid-cols-2 lg:grid-cols-4 gap-4">
           {galleryPreview.slice(0, 4).map((item, i) => (
             <div
               key={item._id || i}
@@ -33,7 +33,7 @@ export function AboutGallery({ galleryPreview }) {
           ))}
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 md:px-12 mt-12 md:mt-16 flex justify-center">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 mt-12 lg:mt-16 flex justify-center">
           <Link
             to="/gallery"
             className="relative overflow-hidden inline-flex items-center justify-center bg-[#1a1a1a] text-white px-8 py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.2)] font-bold group"

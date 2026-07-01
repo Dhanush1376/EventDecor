@@ -56,6 +56,7 @@ describe('RentalCheckoutService Integration', () => {
       title: 'Mock Rental Product',
       slug: 'mock-rental-product',
       description: 'This is a mock description for the rental product test',
+      primaryCategory: 'Rentals',
       category: 'Decor',
       price: 500,
       imageSrc: '/mock.png',

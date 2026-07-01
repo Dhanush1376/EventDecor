@@ -4,7 +4,7 @@ import { Skeleton } from '../SkeletonBase';
 export function ContactSkeleton() {
   return (
     <div className="bg-surface min-h-screen pt-24 pb-20">
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
         <div className="text-center space-y-6 mb-16">
           <Skeleton className="h-12 w-1/2 mx-auto" />
           <Skeleton className="h-4 w-1/3 mx-auto" />

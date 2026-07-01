@@ -188,7 +188,7 @@ export function GallerySlideshow({
             </div>
             {/* Header Controls */}
             <div className="w-full flex justify-between items-center px-4 pt-2 shrink-0 z-10 gap-4">
-              <span className="text-black/40 font-label-sm text-[10px] md:text-[12px] uppercase tracking-[0.4em] font-bold whitespace-nowrap">
+              <span className="text-black/40 font-label-sm text-[10px] lg:text-[12px] uppercase tracking-[0.4em] font-bold whitespace-nowrap">
                 {items.length > 0 ? `${currentIndex + 1} / ${items.length}` : '0 / 0'}
               </span>
 
@@ -272,7 +272,7 @@ export function GallerySlideshow({
 
               {/* Navigation Arrows - Tablet/Desktop only */}
               {items.length > 1 && (
-                <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 hidden md:flex justify-between pointer-events-none z-10">
+                <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 hidden lg:flex justify-between pointer-events-none z-10">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -302,25 +302,25 @@ export function GallerySlideshow({
             {/* Bottom Information & Thumbnails Strip */}
             {items.length > 0 && currentItem && (
               <div
-                className="w-full flex flex-col items-center gap-2 md:gap-3 px-4 pb-1 md:pb-2 shrink-0 z-10"
+                className="w-full flex flex-col items-center gap-2 lg:gap-3 px-4 pb-1 lg:pb-2 shrink-0 z-10"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex flex-col items-center gap-1.5 md:gap-2 w-full">
-                  <div className="flex flex-col items-center text-center gap-1 md:gap-1.5">
+                <div className="flex flex-col items-center gap-1.5 lg:gap-2 w-full">
+                  <div className="flex flex-col items-center text-center gap-1 lg:gap-1.5">
                     {/* Category pill hidden per request */}
-                    <h2 className="text-black font-display text-base md:text-xl font-normal tracking-tight m-0">
+                    <h2 className="text-black font-display text-base lg:text-xl font-normal tracking-tight m-0">
                       {currentItem.title}
                     </h2>
                   </div>
 
-                  <div className="flex items-center justify-center gap-2 md:gap-3">
+                  <div className="flex items-center justify-center gap-2 lg:gap-3">
                     <button
                       onClick={() => toggleItem(currentItem)}
                       aria-label="Toggle wishlist"
-                      className="w-8 h-8 md:w-9 md:h-9 min-h-0 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 transition-all shadow-sm active:scale-95 bg-white"
+                      className="w-8 h-8 lg:w-9 lg:h-9 min-h-0 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 transition-all shadow-sm active:scale-95 bg-white"
                     >
                       <span
-                        className={`material-symbols-outlined text-[16px] md:text-[18px] transition-colors ${isWishlisted(currentId) ? 'text-red-500 font-fill' : 'text-black/60'}`}
+                        className={`material-symbols-outlined text-[16px] lg:text-[18px] transition-colors ${isWishlisted(currentId) ? 'text-red-500 font-fill' : 'text-black/60'}`}
                       >
                         favorite
                       </span>
@@ -329,7 +329,7 @@ export function GallerySlideshow({
                     {currentItem.type === 'product' && (
                       <button
                         onClick={() => addItem(currentItem, 1, currentItem.variants?.[0] || null)}
-                        className="h-8 md:h-9 px-4 md:px-5 rounded-full bg-black text-white text-[9px] md:text-[9.5px] font-bold tracking-widest uppercase hover:bg-black/80 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
+                        className="h-8 lg:h-9 px-4 lg:px-5 rounded-full bg-black text-white text-[9px] lg:text-[9.5px] font-bold tracking-widest uppercase hover:bg-black/80 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
                       >
                         <span className="material-symbols-outlined text-[14px]">local_mall</span>
                         Shop
@@ -339,7 +339,7 @@ export function GallerySlideshow({
                     <Link
                       to={`/gallery/${currentId}`}
                       onClick={onClose}
-                      className="h-8 md:h-9 px-4 md:px-5 rounded-full border border-black/10 bg-white text-black text-[9px] md:text-[9.5px] font-bold tracking-[0.15em] uppercase hover:border-primary transition-all shadow-sm group flex items-center gap-1.5 active:scale-95"
+                      className="h-8 lg:h-9 px-4 lg:px-5 rounded-full border border-black/10 bg-white text-black text-[9px] lg:text-[9.5px] font-bold tracking-[0.15em] uppercase hover:border-primary transition-all shadow-sm group flex items-center gap-1.5 active:scale-95"
                     >
                       Details
                       <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">
@@ -353,7 +353,7 @@ export function GallerySlideshow({
                 <div
                   ref={thumbnailContainerRef}
                   onScroll={handleThumbnailScroll}
-                  className="w-full flex items-center gap-2 md:gap-2.5 overflow-x-auto no-scrollbar py-1.5 md:py-2 snap-x snap-mandatory px-[calc(50vw-20px)] md:px-[calc(50%-20px)] border-t border-black/5 mt-0.5 md:mt-1"
+                  className="w-full flex items-center gap-2 lg:gap-2.5 overflow-x-auto no-scrollbar py-1.5 lg:py-2 snap-x snap-mandatory px-[calc(50vw-20px)] lg:px-[calc(50%-20px)] border-t border-black/5 mt-0.5 lg:mt-1"
                 >
                   {items.map((item, idx) => {
                     const isSelected = idx === currentIndex;
@@ -368,7 +368,7 @@ export function GallerySlideshow({
                           setDirection(idx > currentIndex ? 1 : -1);
                           if (onSelect) onSelect(idx);
                         }}
-                        className={`w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-[16px] md:rounded-[20px] overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] snap-center outline-none ${
+                        className={`w-12 h-12 lg:w-14 lg:h-14 shrink-0 rounded-[16px] lg:rounded-[20px] overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] snap-center outline-none ${
                           isSelected
                             ? 'scale-[1.15] shadow-[0_8px_20px_-6px_rgba(196,168,124,0.4)] z-10 opacity-100'
                             : 'scale-[0.9] opacity-40 hover:opacity-80 hover:scale-100'

@@ -27,6 +27,8 @@ The JSON must have the following keys:
 - "colorPalette": Comma-separated list of hex codes or color names (e.g. "#8B0000, #FFD700").
 - "suggestedProps": Comma-separated list of styling props.
 - "setupTimeHours": Integer representing estimated setup time in hours (e.g. 2).
+- "rentalPrice": Integer representing the estimated fair market rental price in rupees (e.g. 15000).
+- "strikingPrice": Integer representing a higher original MRP or striking price to show a discount (e.g. 20000). Optional.
 - "seoTitle": SEO optimized title (max 60 chars).
 - "seoDescription": SEO optimized description (max 150 chars).
 
@@ -166,7 +168,7 @@ ${JSON.stringify(previousData)}
 The user has given you the following feedback/instructions to refine it:
 "${prompt}"
 
-Output ONLY a valid, raw JSON object (without markdown code blocks) representing the updated setup. Maintain the exact same JSON schema: title, subtitle, category, description, inclusionsText, colorPalette, suggestedProps, setupTimeHours, seoTitle, seoDescription. Do NOT include any extra text before or after the JSON.`;
+Output ONLY a valid, raw JSON object (without markdown code blocks) representing the updated setup. Maintain the exact same JSON schema: title, subtitle, category, description, inclusionsText, colorPalette, suggestedProps, setupTimeHours, rentalPrice, strikingPrice, seoTitle, seoDescription. Do NOT include any extra text before or after the JSON.`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20000);

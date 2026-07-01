@@ -11,14 +11,14 @@ export function BlogCard({ post, featured = false }) {
         className="group block w-full relative rounded-3xl overflow-hidden shadow-xl shadow-black/10 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
       >
         <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-        <div className="w-full h-[400px] md:h-[500px]">
+        <div className="w-full h-[400px] lg:h-[500px]">
           <LazyImage
             src={post.heroImage}
             alt={post.heroImageAlt || post.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         </div>
-        <div className="absolute bottom-0 left-0 w-full p-6 md:p-10 z-20 flex flex-col justify-end">
+        <div className="absolute bottom-0 left-0 w-full p-6 lg:p-10 z-20 flex flex-col justify-end">
           <div className="flex items-center gap-3 mb-4">
             <span className="px-3 py-1 bg-primary text-white text-xs font-bold uppercase tracking-wider rounded-full backdrop-blur-md">
               {post.category}
@@ -32,10 +32,10 @@ export function BlogCard({ post, featured = false }) {
               })}
             </span>
           </div>
-          <h2 className="font-display text-2xl md:text-4xl font-bold text-white mb-3 line-clamp-2">
+          <h2 className="font-display text-2xl lg:text-4xl font-bold text-white mb-3 line-clamp-2">
             {post.title}
           </h2>
-          <p className="text-white/90 text-sm md:text-base line-clamp-2 md:line-clamp-3 mb-6 max-w-3xl">
+          <p className="text-white/90 text-sm lg:text-base line-clamp-2 lg:line-clamp-3 mb-6 max-w-3xl">
             {post.metaDescription}
           </p>
           <div className="flex items-center text-primary font-medium group-hover:text-white transition-colors">

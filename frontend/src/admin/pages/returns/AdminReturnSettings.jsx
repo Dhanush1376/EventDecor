@@ -66,7 +66,7 @@ const AdminReturnSettings = () => {
             disabled={isSaving}
           >
             {isSaving ? (
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span className="w-16 h-16 border-[1px] border-white/30 border-t-white rounded-full animate-spin duration-1000 ease-linear"></span>
             ) : (
               <span className="material-symbols-outlined text-[16px]">save</span>
             )}
@@ -96,11 +96,11 @@ const AdminReturnSettings = () => {
                     <input
                       type="number"
                       className="admin-input w-full"
-                      value={localSettings.returnWindowDays || 7}
+                      value={localSettings.defaultReturnWindow || 7}
                       onChange={(e) =>
                         setLocalSettings({
                           ...localSettings,
-                          returnWindowDays: parseInt(e.target.value),
+                          defaultReturnWindow: parseInt(e.target.value),
                         })
                       }
                     />
@@ -115,11 +115,18 @@ const AdminReturnSettings = () => {
                     </label>
                     <select
                       className="admin-input w-full"
-                      value={localSettings.requireQualityCheck ? 'true' : 'false'}
+                      value={
+                        localSettings.inspectionRules?.inspectionRequiredByDefault
+                          ? 'true'
+                          : 'false'
+                      }
                       onChange={(e) =>
                         setLocalSettings({
                           ...localSettings,
-                          requireQualityCheck: e.target.value === 'true',
+                          inspectionRules: {
+                            ...localSettings.inspectionRules,
+                            inspectionRequiredByDefault: e.target.value === 'true',
+                          },
                         })
                       }
                     >
@@ -147,13 +154,13 @@ const AdminReturnSettings = () => {
                     <input
                       type="checkbox"
                       className="sr-only peer"
-                      checked={localSettings.autoApproveRules?.enabled || false}
+                      checked={(localSettings.inspectionRules?.autoApproveBelowAmount || 0) > 0}
                       onChange={(e) =>
                         setLocalSettings({
                           ...localSettings,
-                          autoApproveRules: {
-                            ...localSettings.autoApproveRules,
-                            enabled: e.target.checked,
+                          inspectionRules: {
+                            ...localSettings.inspectionRules,
+                            autoApproveBelowAmount: e.target.checked ? 1000 : 0,
                           },
                         })
                       }
@@ -162,7 +169,7 @@ const AdminReturnSettings = () => {
                   </label>
                 </div>
 
-                {localSettings.autoApproveRules?.enabled && (
+                {(localSettings.inspectionRules?.autoApproveBelowAmount || 0) > 0 && (
                   <div className="bg-[var(--admin-surface-hover)] p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)]">
                     <label className="block text-[13px] font-bold text-[var(--admin-text-primary)] mb-2">
                       Max Auto-Approve Value (₹)
@@ -170,13 +177,13 @@ const AdminReturnSettings = () => {
                     <input
                       type="number"
                       className="admin-input w-full md:w-1/2"
-                      value={localSettings.autoApproveRules?.maxAmount || 0}
+                      value={localSettings.inspectionRules?.autoApproveBelowAmount || 0}
                       onChange={(e) =>
                         setLocalSettings({
                           ...localSettings,
-                          autoApproveRules: {
-                            ...localSettings.autoApproveRules,
-                            maxAmount: parseInt(e.target.value),
+                          inspectionRules: {
+                            ...localSettings.inspectionRules,
+                            autoApproveBelowAmount: parseInt(e.target.value),
                           },
                         })
                       }
@@ -290,70 +297,67 @@ const AdminReturnSettings = () => {
                 </p>
 
                 <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-4 items-center bg-[var(--admin-surface-hover)] p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)]">
-                    <div className="flex-1 w-full">
-                      <label className="block text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1">
-                        Return Value Under
-                      </label>
-                      <input
-                        type="text"
-                        className="admin-input w-full bg-[var(--admin-surface)]"
-                        defaultValue="₹5,000"
-                        disabled
-                      />
+                  {(localSettings.approvalThresholds || []).map((tier, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-col sm:flex-row gap-4 items-center bg-[var(--admin-surface-hover)] p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)]"
+                    >
+                      <div className="flex-1 w-full">
+                        <label className="block text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1">
+                          Threshold Value (₹)
+                        </label>
+                        <input
+                          type="number"
+                          className="admin-input w-full bg-[var(--admin-surface)]"
+                          value={tier.threshold}
+                          onChange={(e) => {
+                            const newTiers = [...localSettings.approvalThresholds];
+                            newTiers[index].threshold = parseInt(e.target.value);
+                            setLocalSettings({ ...localSettings, approvalThresholds: newTiers });
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 w-full">
+                        <label className="block text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1">
+                          Requires Role
+                        </label>
+                        <select
+                          className="admin-input w-full bg-[var(--admin-surface)]"
+                          value={tier.level}
+                          onChange={(e) => {
+                            const newTiers = [...localSettings.approvalThresholds];
+                            newTiers[index].level = e.target.value;
+                            setLocalSettings({ ...localSettings, approvalThresholds: newTiers });
+                          }}
+                        >
+                          <option value="auto">Auto Approve</option>
+                          <option value="manager">Store Manager</option>
+                          <option value="senior_admin">Senior Admin</option>
+                        </select>
+                      </div>
+                      <button
+                        className="admin-btn admin-btn-danger mt-4 sm:mt-0"
+                        onClick={() => {
+                          const newTiers = [...localSettings.approvalThresholds];
+                          newTiers.splice(index, 1);
+                          setLocalSettings({ ...localSettings, approvalThresholds: newTiers });
+                        }}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
                     </div>
-                    <div className="flex-1 w-full">
-                      <label className="block text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1">
-                        Requires Role
-                      </label>
-                      <select className="admin-input w-full bg-[var(--admin-surface)]">
-                        <option>Customer Support L1</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-4 items-center bg-[var(--admin-surface-hover)] p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)]">
-                    <div className="flex-1 w-full">
-                      <label className="block text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1">
-                        Return Value Under
-                      </label>
-                      <input
-                        type="text"
-                        className="admin-input w-full bg-[var(--admin-surface)]"
-                        defaultValue="₹15,000"
-                      />
-                    </div>
-                    <div className="flex-1 w-full">
-                      <label className="block text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1">
-                        Requires Role
-                      </label>
-                      <select className="admin-input w-full bg-[var(--admin-surface)]">
-                        <option>Store Manager</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-4 items-center bg-[var(--admin-surface-hover)] p-4 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)] border-l-4 border-l-[var(--admin-domain-warning)]">
-                    <div className="flex-1 w-full">
-                      <label className="block text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1">
-                        Return Value Above
-                      </label>
-                      <input
-                        type="text"
-                        className="admin-input w-full bg-[var(--admin-surface)]"
-                        defaultValue="₹15,000"
-                        disabled
-                      />
-                    </div>
-                    <div className="flex-1 w-full">
-                      <label className="block text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1">
-                        Requires Role
-                      </label>
-                      <select className="admin-input w-full bg-[var(--admin-surface)]">
-                        <option>Admin</option>
-                      </select>
-                    </div>
-                  </div>
+                  ))}
+                  <button
+                    className="admin-btn admin-btn-secondary w-full"
+                    onClick={() => {
+                      const newTiers = [...(localSettings.approvalThresholds || [])];
+                      newTiers.push({ threshold: 5000, level: 'manager' });
+                      setLocalSettings({ ...localSettings, approvalThresholds: newTiers });
+                    }}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    Add Approval Tier
+                  </button>
                 </div>
               </div>
             </motion.div>

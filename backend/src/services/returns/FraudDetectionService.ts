@@ -155,4 +155,27 @@ export class FraudDetectionService {
       reason: `Return request exceeded fraud threshold (Score: ${alert.fraudScore})`,
     }));
   }
+
+  /**
+   * Retrieves aggregate fraud metrics.
+   */
+  static async getFraudMetrics() {
+    const [blockedCount, scoreStats, savedStats] = await Promise.all([
+      ReturnRequest.countDocuments({ status: 'rejected', fraudScore: { $gte: 80 } }),
+      ReturnRequest.aggregate([
+        { $match: { fraudScore: { $gt: 0 } } },
+        { $group: { _id: null, avgScore: { $avg: '$fraudScore' } } },
+      ]),
+      ReturnRequest.aggregate([
+        { $match: { status: 'rejected', fraudScore: { $gte: 80 } } },
+        { $group: { _id: null, savedRevenue: { $sum: '$refundBreakdown.grandTotal' } } },
+      ]),
+    ]);
+
+    return {
+      totalBlocked: blockedCount,
+      avgRiskScore: scoreStats[0]?.avgScore ? Math.round(scoreStats[0].avgScore) : 0,
+      savedRevenue: savedStats[0]?.savedRevenue || 0,
+    };
+  }
 }

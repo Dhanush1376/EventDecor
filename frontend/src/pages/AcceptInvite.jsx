@@ -83,7 +83,7 @@ export function AcceptInvite() {
         initial="hidden"
         animate="show"
         variants={{ show: { transition: { staggerChildren: 0.1 } } }}
-        className="max-w-[540px] w-full bg-white rounded-[2.5rem] p-10 md:p-12 border border-surface-container-highest/60 shadow-xl shadow-primary/5 text-center relative overflow-hidden"
+        className="max-w-[540px] w-full bg-white rounded-[2.5rem] p-10 lg:p-12 border border-surface-container-highest/60 shadow-xl shadow-primary/5 text-center relative overflow-hidden"
       >
         {/* Decorative Heritage Frame Overlay */}
         <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-primary-container via-primary to-primary-container" />

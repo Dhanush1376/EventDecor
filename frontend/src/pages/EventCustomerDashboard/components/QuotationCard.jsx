@@ -6,12 +6,12 @@ export function QuotationCard({
 }) {
   return (
     <div className="bg-surface-bright rounded-lg border border-outline-variant/40 p-6 space-y-6 shadow-xs text-[11px] text-left">
-      <div className="flex flex-col md:flex-row justify-between md:items-center border-b border-black/5 pb-4 gap-2">
+      <div className="flex flex-col lg:flex-row justify-between lg:items-center border-b border-black/5 pb-4 gap-2">
         <h3 className="font-bold text-[18px] text-on-surface tracking-tight">
           Quotation Estimate Details
         </h3>
         <span
-          className={`px-3 py-1.5 rounded-[32px] text-[8px] uppercase tracking-widest font-bold self-start md:self-auto border shadow-sm ${
+          className={`px-3 py-1.5 rounded-[32px] text-[8px] uppercase tracking-widest font-bold self-start lg:self-auto border shadow-sm ${
             selectedBooking.clientApproved
               ? 'bg-green-50/50 text-green-700 border-green-200'
               : 'bg-surface-container-lowest text-secondary border-outline-variant/40'

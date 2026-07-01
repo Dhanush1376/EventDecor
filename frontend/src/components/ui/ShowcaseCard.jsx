@@ -3,6 +3,7 @@ import { CloudinaryImage } from './CloudinaryImage';
 import React, { useState } from 'react';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
+import { DynamicRatingBadge } from './DynamicRatingBadge';
 export const ShowcaseCard = React.memo(function ShowcaseCard({
   id,
   _id,
@@ -14,7 +15,8 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
   image,
   category = 'Traditional',
   inclusions = [],
-  rating = 4.9,
+  rating = 0,
+  reviews = 0,
   onOpenShowcase,
 }) {
   const { isWishlisted } = useWishlistState();
@@ -54,10 +56,15 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
       onClick={() => onOpenShowcase?.()}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="group relative flex flex-col transition-all duration-700 cursor-pointer z-10 rounded-2xl md:rounded-[32px]"
+      className="group relative flex flex-col transition-all duration-700 cursor-pointer z-10 rounded-2xl lg:rounded-[32px]"
+      aria-label={
+        reviews > 0
+          ? `Rated ${Number(rating).toFixed(1)} out of 5 stars from ${reviews} reviews`
+          : 'New Event Package, no reviews yet'
+      }
     >
       {/* 1. VISUAL CANVAS */}
-      <div className="relative h-44 sm:h-56 md:h-72 w-full overflow-hidden bg-[#fafafa] rounded-2xl md:rounded-[32px] border border-black/5 shadow-2xs">
+      <div className="relative h-44 sm:h-56 lg:h-72 w-full overflow-hidden bg-[#fafafa] rounded-2xl lg:rounded-[32px] border border-black/5 shadow-2xs">
         <CloudinaryImage
           src={image || ''}
           alt={title}
@@ -70,10 +77,10 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
         />
 
         {/* Floating Utility Actions */}
-        <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20 flex flex-col gap-2">
+        <div className="absolute top-2 right-2 lg:top-4 lg:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 min-h-0 min-w-0 p-0 aspect-square bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]"
+            className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 min-h-0 min-w-0 p-0 aspect-square bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]"
             aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <motion.span
@@ -83,7 +90,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
                 fontVariationSettings: wishlisted ? "'FILL' 1, 'wght' 300" : "'FILL' 0, 'wght' 300",
               }}
               transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-              className="material-symbols-outlined text-[14px] md:text-[18px]"
+              className="material-symbols-outlined text-[14px] lg:text-[18px]"
             >
               favorite
             </motion.span>
@@ -91,20 +98,20 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
         </div>
 
         {/* Overlapping Circle Badges */}
-        <div className="absolute top-2 left-2 md:top-4 md:left-4 flex flex-row items-center -space-x-2 md:-space-x-3 z-10">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label text-[7px] sm:text-[8px] md:text-[10px] uppercase font-bold shadow-lg border-2 border-white z-20 hover:z-30 hover:scale-110 transition-all duration-300 select-none">
+        <div className="absolute top-2 left-2 lg:top-4 lg:left-4 flex flex-row items-center -space-x-2 lg:-space-x-3 z-10">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label text-[7px] sm:text-[8px] lg:text-[10px] uppercase font-bold shadow-lg border-2 border-white z-20 hover:z-30 hover:scale-110 transition-all duration-300 select-none">
             <span className="leading-none">{setupTimeHours}h</span>
-            <span className="text-[5px] sm:text-[6px] md:text-[7px] tracking-tighter opacity-80 uppercase mt-0.5">
+            <span className="text-[5px] sm:text-[6px] lg:text-[7px] tracking-tighter opacity-80 uppercase mt-0.5">
               Setup
             </span>
           </div>
 
           {inclusions && inclusions.length > 0 && (
-            <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-white/95 backdrop-blur-md text-stone-800 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white z-10 hover:z-30 hover:scale-110 transition-all duration-300 select-none">
-              <span className="leading-none text-[7px] sm:text-[8px] md:text-[10px]">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-white/95 backdrop-blur-md text-stone-800 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white z-10 hover:z-30 hover:scale-110 transition-all duration-300 select-none">
+              <span className="leading-none text-[7px] sm:text-[8px] lg:text-[10px]">
                 {inclusions.length}
               </span>
-              <span className="text-[4.5px] sm:text-[5px] md:text-[6px] tracking-tighter opacity-80 uppercase mt-0.5">
+              <span className="text-[4.5px] sm:text-[5px] lg:text-[6px] tracking-tighter opacity-80 uppercase mt-0.5">
                 Props
               </span>
             </div>
@@ -138,42 +145,39 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
       </div>
 
       {/* 2. REFINED INFO SECTION */}
-      <div className="py-2.5 sm:py-3 md:py-4 flex flex-col flex-1">
-        <div className="flex items-center gap-1 mb-1 sm:mb-1.5 md:mb-2">
-          <span className="text-black/60 font-label text-[7.5px] sm:text-[8px] md:text-[9px] uppercase tracking-[0.1em] sm:tracking-[0.15em] md:tracking-[0.2em] font-bold truncate flex-1 min-w-0">
+      <div className="py-2.5 sm:py-3 lg:py-4 flex flex-col flex-1">
+        <div className="flex items-center gap-1 mb-1 sm:mb-1.5 lg:mb-2">
+          <span className="text-black/60 font-label text-[7.5px] sm:text-[8px] lg:text-[9px] uppercase tracking-[0.1em] sm:tracking-[0.15em] lg:tracking-[0.2em] font-bold truncate flex-1 min-w-0">
             {formattedCat}
           </span>
 
           <div className="w-0.5 h-0.5 rounded-full bg-black/10" />
           <div className="flex items-center gap-0.5 shrink-0">
-            <span
-              className="material-symbols-outlined text-[8.5px] sm:text-[9px] md:text-[10px] text-primary"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              star
-            </span>
-            <span className="font-label text-[8.5px] sm:text-[9px] md:text-[10px] text-black/60 font-bold">
-              {rating}
-            </span>
+            <DynamicRatingBadge
+              itemId={showcaseId}
+              itemType="event"
+              initialRating={rating}
+              initialReviews={reviews}
+            />
           </div>
         </div>
 
-        <div className="mb-1.5 sm:mb-2 md:mb-3 group/link">
+        <div className="mb-1.5 sm:mb-2 lg:mb-3 group/link">
           {subtitle && (
-            <span className="block font-label text-[8px] sm:text-[9px] md:text-[11px] text-black/60 mb-0.5 tracking-wide truncate leading-snug">
+            <span className="block font-label text-[8px] sm:text-[9px] lg:text-[11px] text-black/60 mb-0.5 tracking-wide truncate leading-snug">
               {subtitle}
             </span>
           )}
-          <h3 className="font-display text-[13px] sm:text-[15px] md:text-[20px] text-black group-hover:text-primary transition-colors leading-tight font-medium line-clamp-1 sm:line-clamp-2 md:line-clamp-1">
+          <h3 className="font-display text-[13px] sm:text-[15px] lg:text-[20px] text-black group-hover:text-primary transition-colors leading-tight font-medium line-clamp-1 sm:line-clamp-2 lg:line-clamp-1">
             {title}
           </h3>
         </div>
 
         <div className="mt-auto flex items-baseline gap-1 sm:gap-2">
-          <span className="font-display text-[14px] sm:text-[16px] md:text-[22px] text-black font-medium leading-none">
+          <span className="font-display text-[14px] sm:text-[16px] lg:text-[22px] text-black font-medium leading-none">
             ₹{formatPrice(rentalPrice)}
           </span>
-          <span className="font-label text-[8px] sm:text-[9px] md:text-[10px] text-black/40">
+          <span className="font-label text-[8px] sm:text-[9px] lg:text-[10px] text-black/40">
             / day
           </span>
         </div>

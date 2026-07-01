@@ -133,11 +133,11 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
         <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10 pointer-events-none">
           <div className="flex flex-col gap-2">
             {discount > 0 && (
-              <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white text-stone-900 flex flex-col items-center justify-center shadow-md transform -rotate-12 border border-black/10 ring-1 ring-black/5">
-                <span className="text-[11px] md:text-[12px] font-extrabold leading-none">
+              <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-full bg-white text-stone-900 flex flex-col items-center justify-center shadow-md transform -rotate-12 border border-black/10 ring-1 ring-black/5">
+                <span className="text-[11px] lg:text-[12px] font-extrabold leading-none">
                   {discount}%
                 </span>
-                <span className="text-[7px] md:text-[8px] tracking-widest uppercase mt-0.5 font-bold text-stone-500">
+                <span className="text-[7px] lg:text-[8px] tracking-widest uppercase mt-0.5 font-bold text-stone-500">
                   Off
                 </span>
               </div>
@@ -174,7 +174,7 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="absolute bottom-4 left-4 right-4 z-20 flex gap-2 hidden md:flex"
+              className="absolute bottom-4 left-4 right-4 z-20 flex gap-2 hidden lg:flex"
             >
               <button
                 onClick={handleAddToCart}
@@ -211,7 +211,7 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
         </AnimatePresence>
 
         {/* Mobile Quick Add */}
-        <div className="md:hidden absolute bottom-3 right-3 z-20">
+        <div className="lg:hidden absolute bottom-3 right-3 z-20">
           <button
             onClick={handleAddToCart}
             className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all border ${
@@ -234,13 +234,13 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
       {/* Info Section */}
       <div className="pt-5 pb-2 px-1 flex flex-col flex-1">
         {category && (
-          <p className="font-label text-[9px] md:text-[10px] text-on-surface-variant/60 uppercase tracking-[0.25em] font-bold mb-2">
+          <p className="font-label text-[9px] lg:text-[10px] text-on-surface-variant/60 uppercase tracking-[0.25em] font-bold mb-2">
             {category}
           </p>
         )}
 
         <Link to={link} className="group/link block">
-          <h3 className="font-display text-[16px] md:text-[20px] text-on-surface group-hover/link:text-primary transition-colors leading-tight font-medium line-clamp-2">
+          <h3 className="font-display text-[16px] lg:text-[20px] text-on-surface group-hover/link:text-primary transition-colors leading-tight font-medium line-clamp-2">
             {title}
           </h3>
         </Link>
@@ -259,11 +259,11 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
 
         {targetType !== 'gallery' && (
           <div className="mt-auto pt-3 flex items-baseline gap-2.5">
-            <span className="font-display text-[18px] md:text-[24px] text-[#1A1C1A] leading-none">
+            <span className="font-display text-[18px] lg:text-[24px] text-[#1A1C1A] leading-none">
               ₹{formatPrice(price)}
             </span>
             {oldPrice && (
-              <span className="font-body text-[12px] md:text-[13px] text-on-surface-variant/50 line-through">
+              <span className="font-body text-[12px] lg:text-[13px] text-on-surface-variant/50 line-through">
                 ₹{formatPrice(oldPrice)}
               </span>
             )}

@@ -111,7 +111,7 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-10"
+          className="fixed inset-0 z-[200] flex items-end lg:items-center justify-center p-0 lg:p-10"
           role="dialog"
           aria-modal="true"
           aria-labelledby="quickview-title"
@@ -139,18 +139,18 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                 onClose();
               }
             }}
-            className="relative w-full max-w-6xl bg-surface rounded-t-[32px] md:rounded-[48px] overflow-hidden shadow-2xl flex flex-col md:flex-row h-auto max-h-[95vh] md:h-full md:max-h-[800px] border border-outline-variant/10 touch-pan-x"
+            className="relative w-full max-w-6xl bg-surface rounded-t-[32px] lg:rounded-[48px] overflow-hidden shadow-2xl flex flex-col lg:flex-row h-auto max-h-[95vh] lg:h-full lg:max-h-[800px] border border-outline-variant/10 touch-pan-x"
           >
             {/* Close Button - Fixed in Modal Container */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 md:top-8 md:right-8 w-10 h-10 md:w-12 md:h-12 min-h-0 rounded-full border border-outline-variant/30 bg-surface/80 backdrop-blur-md flex items-center justify-center hover:bg-surface-container-low transition-colors cursor-pointer z-[60] shadow-sm icon-button-touch-target"
+              className="absolute top-4 right-4 lg:top-8 lg:right-8 w-10 h-10 lg:w-12 lg:h-12 min-h-0 rounded-full border border-outline-variant/30 bg-surface/80 backdrop-blur-md flex items-center justify-center hover:bg-surface-container-low transition-colors cursor-pointer z-[60] shadow-sm icon-button-touch-target"
               aria-label="Close product quick view"
             >
-              <span className="material-symbols-outlined text-[20px] md:text-[24px]">close</span>
+              <span className="material-symbols-outlined text-[20px] lg:text-[24px]">close</span>
             </button>
 
-            <div className="w-full md:w-1/2 relative bg-surface-container-low overflow-hidden aspect-[4/3] md:aspect-auto h-[300px] md:h-auto shrink-0">
+            <div className="w-full lg:w-1/2 relative bg-surface-container-low overflow-hidden aspect-[4/3] lg:aspect-auto h-[300px] lg:h-auto shrink-0">
               <CloudinaryImage
                 src={product.imageSrc}
                 alt={product.title}
@@ -161,43 +161,43 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                 height={800}
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
-              <div className="absolute top-6 left-6 md:top-8 md:left-8 flex flex-col gap-2">
-                <span className="bg-primary-container text-on-primary-container px-3 py-1 md:px-4 md:py-1.5 rounded-full font-label text-[10px] md:text-[11px] uppercase tracking-widest shadow-lg font-bold">
+              <div className="absolute top-6 left-6 lg:top-8 lg:left-8 flex flex-col gap-2">
+                <span className="bg-primary-container text-on-primary-container px-3 py-1 lg:px-4 lg:py-1.5 rounded-full font-label text-[10px] lg:text-[11px] uppercase tracking-widest shadow-lg font-bold">
                   Masterpiece
                 </span>
               </div>
             </div>
 
-            <div className="w-full md:w-1/2 p-6 md:p-16 flex flex-col overflow-y-auto no-scrollbar relative">
-              <div className="flex items-center gap-2 mb-4 md:mb-6 text-primary-container">
+            <div className="w-full lg:w-1/2 p-6 lg:p-16 flex flex-col overflow-y-auto no-scrollbar relative">
+              <div className="flex items-center gap-2 mb-4 lg:mb-6 text-primary-container">
                 {[...Array(5)].map((_, i) => (
                   <span
                     key={i}
-                    className="material-symbols-outlined text-[14px] md:text-[16px]"
+                    className="material-symbols-outlined text-[14px] lg:text-[16px]"
                     style={{ fontVariationSettings: "'FILL' 1" }}
                   >
                     star
                   </span>
                 ))}
-                <span className="font-label text-[11px] md:text-[12px] text-on-surface-variant/40 ml-2 font-bold">
+                <span className="font-label text-[11px] lg:text-[12px] text-on-surface-variant/40 ml-2 font-bold">
                   ({product.reviews || 0} Reviews)
                 </span>
               </div>
 
               {(product.teluguTitle || product.nameTE || product.teluguName) && (
-                <span className="block font-label text-[11px] md:text-[13px] text-on-surface/40 mb-1 tracking-wider uppercase font-bold leading-[1.8]">
+                <span className="block font-label text-[11px] lg:text-[13px] text-on-surface/40 mb-1 tracking-wider uppercase font-bold leading-[1.8]">
                   {product.teluguTitle || product.nameTE || product.teluguName}
                 </span>
               )}
               <h2
                 id="quickview-title"
-                className="font-headline text-[24px] md:text-headline-lg text-on-surface mb-4 md:mb-6 font-normal leading-tight"
+                className="font-headline text-[24px] lg:text-headline-lg text-on-surface mb-4 lg:mb-6 font-normal leading-tight"
               >
                 {product.title}
               </h2>
 
-              <div className="flex items-baseline gap-4 mb-6 md:mb-10">
-                <span className="font-body font-bold text-[28px] md:text-[36px] text-on-surface">
+              <div className="flex items-baseline gap-4 mb-6 lg:mb-10">
+                <span className="font-body font-bold text-[28px] lg:text-[36px] text-on-surface">
                   ₹
                   {(product.itemType === 'event'
                     ? product.rentalPrice || product.price
@@ -210,23 +210,23 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                   )}
                 </span>
                 {product.itemType !== 'event' && product.oldPrice && (
-                  <span className="font-body text-on-surface-variant/30 line-through text-[18px] md:text-[20px]">
+                  <span className="font-body text-on-surface-variant/30 line-through text-[18px] lg:text-[20px]">
                     ₹{product.oldPrice.toLocaleString('en-IN')}
                   </span>
                 )}
               </div>
 
-              <div className="space-y-2 mb-8 md:mb-10">
-                <h3 className="font-label text-[10px] md:text-[11px] text-on-surface/40 uppercase tracking-[0.2em] font-bold">
+              <div className="space-y-2 mb-8 lg:mb-10">
+                <h3 className="font-label text-[10px] lg:text-[11px] text-on-surface/40 uppercase tracking-[0.2em] font-bold">
                   The Essence
                 </h3>
-                <p className="font-body text-on-surface-variant/70 font-light leading-relaxed text-[15px] md:text-[17px]">
+                <p className="font-body text-on-surface-variant/70 font-light leading-relaxed text-[15px] lg:text-[17px]">
                   {product.description ||
                     'A masterfully handcrafted piece that seamlessly blends traditional Indian artistry with contemporary design.'}
                 </p>
               </div>
 
-              <div className="mt-auto space-y-4 pb-[max(16px,env(safe-area-inset-bottom))] md:pb-0">
+              <div className="mt-auto space-y-4 pb-[max(16px,env(safe-area-inset-bottom))] lg:pb-0">
                 <button
                   onClick={handleAddToCart}
                   className="w-full btn-primary !py-4 md:!py-5 flex items-center justify-center gap-3 font-bold cursor-pointer shadow-lg hover:scale-[1.02] transition-transform"
@@ -240,7 +240,7 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={handleWishlist}
-                    className="flex items-center justify-center gap-2 py-3 md:py-4 rounded-full border border-outline-variant/30 font-label text-[10px] md:text-[11px] uppercase tracking-widest font-bold hover:bg-surface-container-low transition-colors cursor-pointer group"
+                    className="flex items-center justify-center gap-2 py-3 lg:py-4 rounded-full border border-outline-variant/30 font-label text-[10px] lg:text-[11px] uppercase tracking-widest font-bold hover:bg-surface-container-low transition-colors cursor-pointer group"
                   >
                     <motion.span
                       animate={{
@@ -253,7 +253,7 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                         type: 'spring',
                         stiffness: 300,
                       }}
-                      className="material-symbols-outlined text-[18px] md:text-[20px] transition-transform group-hover:scale-110"
+                      className="material-symbols-outlined text-[18px] lg:text-[20px] transition-transform group-hover:scale-110"
                       style={{
                         fontVariationSettings: wishlisted ? "'FILL' 1" : "'FILL' 0",
                       }}
@@ -264,9 +264,9 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
                   </button>
                   <button
                     onClick={handleViewDetails}
-                    className="flex items-center justify-center gap-2 py-3 md:py-4 rounded-full border border-outline-variant/30 font-label text-[10px] md:text-[11px] uppercase tracking-widest font-bold hover:bg-surface-container-low transition-colors cursor-pointer group"
+                    className="flex items-center justify-center gap-2 py-3 lg:py-4 rounded-full border border-outline-variant/30 font-label text-[10px] lg:text-[11px] uppercase tracking-widest font-bold hover:bg-surface-container-low transition-colors cursor-pointer group"
                   >
-                    <span className="material-symbols-outlined text-[18px] md:text-[20px] group-hover:translate-x-1 transition-transform">
+                    <span className="material-symbols-outlined text-[18px] lg:text-[20px] group-hover:translate-x-1 transition-transform">
                       arrow_forward
                     </span>
                     Details

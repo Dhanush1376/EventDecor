@@ -10,10 +10,10 @@ export function LogisticsStep({ formData, handleInputChange, handleNestedInputCh
       className="space-y-8"
     >
       <div className="space-y-2">
-        <h3 className="font-display text-[20px] md:text-[28px] text-black font-semibold">
+        <h3 className="font-display text-[20px] lg:text-[28px] text-black font-semibold">
           Logistics & Schedule Details
         </h3>
-        <p className="font-body text-black/45 text-[12px] md:text-[13px]">
+        <p className="font-body text-black/45 text-[12px] lg:text-[13px]">
           Provide event timestamps and spatial specifications to verify structural clearances.
         </p>
       </div>
@@ -77,7 +77,7 @@ export function LogisticsStep({ formData, handleInputChange, handleNestedInputCh
         </div>
 
         {/* Venue Address */}
-        <div className="space-y-2 md:col-span-2">
+        <div className="space-y-2 lg:col-span-2">
           <label className="font-label text-[10px] uppercase tracking-wider text-black/50 font-bold block">
             Venue Address
           </label>

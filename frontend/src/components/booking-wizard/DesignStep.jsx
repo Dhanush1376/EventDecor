@@ -17,10 +17,10 @@ export function DesignStep({
       className="space-y-8"
     >
       <div className="space-y-2">
-        <h3 className="font-display text-[20px] md:text-[28px] text-black font-semibold">
+        <h3 className="font-display text-[20px] lg:text-[28px] text-black font-semibold">
           Select Event Design
         </h3>
-        <p className="font-body text-black/45 text-[12px] md:text-[13px]">
+        <p className="font-body text-black/45 text-[12px] lg:text-[13px]">
           Select an existing package to load designs, or select "Custom Setup" below.
         </p>
       </div>
@@ -35,7 +35,7 @@ export function DesignStep({
           <div
             onClick={() => handlePackageSelect('')}
             className={`p-6 rounded-[24px] border text-left cursor-pointer transition-all flex flex-col justify-between h-56 ${
-              hasCategoryPackages ? '' : 'md:col-span-2'
+              hasCategoryPackages ? '' : 'lg:col-span-2'
             } ${
               !formData.eventPackageId
                 ? 'bg-primary/5 border-primary/40 shadow-lg'

@@ -10,15 +10,15 @@ export function useShowcaseAI({ formData, setFormData, setCategories, setCurrent
   const [isAILearning, setIsAILearning] = useState(false);
   const [isApplyingFields, setIsApplyingFields] = useState(false);
   const [focusedField, setFocusedField] = useState('');
+  const [isAIGenerating, setIsAIGenerating] = useState(false);
 
   const handleAiAutofill = async () => {
     if (!formData.image) {
       toast.error('Please upload or paste an image URL first for AI Vision analysis!');
       return;
     }
-    const loadId = toast.loading(
-      '✨ AI Vision models analyzing floral accents & prop structures...',
-    );
+    const loadId = toast.loading('AI Vision models analyzing floral accents & prop structures...');
+    setIsAIGenerating(true);
     try {
       const res = await cmsService.analyzeShowcaseImage(formData.image);
       if (res.success) {
@@ -34,11 +34,12 @@ export function useShowcaseAI({ formData, setFormData, setCategories, setCurrent
           categoryId: res.data.category ? res.data.category.id || res.data.category._id : null,
         });
         setShowAIHUD(true);
-        toast.success('✨ AI Vision extracted details successfully');
+        toast.success('AI Vision extracted details successfully');
       }
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to analyze image with AI');
     } finally {
+      setIsAIGenerating(false);
       toast.dismiss(loadId);
     }
   };
@@ -107,6 +108,14 @@ export function useShowcaseAI({ formData, setFormData, setCategories, setCurrent
         key: 'setupTimeHours',
         value: aiAnalysisResult.setupTimeHours ? String(aiAnalysisResult.setupTimeHours) : '',
       },
+      {
+        key: 'rentalPrice',
+        value: aiAnalysisResult.rentalPrice ? String(aiAnalysisResult.rentalPrice) : '',
+      },
+      {
+        key: 'strikingPrice',
+        value: aiAnalysisResult.strikingPrice ? String(aiAnalysisResult.strikingPrice) : '',
+      },
       { key: 'seoTitle', value: aiAnalysisResult.seoTitle },
       { key: 'seoDescription', value: aiAnalysisResult.seoDescription },
     ];
@@ -132,7 +141,7 @@ export function useShowcaseAI({ formData, setFormData, setCategories, setCurrent
 
       // If moving past details step
       if (index === 4) setCurrentStep((prev) => (prev < 2 ? 2 : prev));
-      if (index === 8) setCurrentStep((prev) => (prev < 4 ? 4 : prev));
+      if (index === 10) setCurrentStep((prev) => (prev < 4 ? 4 : prev));
 
       index++;
     }, 400); // Staggered animation
@@ -145,6 +154,7 @@ export function useShowcaseAI({ formData, setFormData, setCategories, setCurrent
     aiChatInput,
     setAiChatInput,
     isAILearning,
+    isAIGenerating,
     isApplyingFields,
     focusedField,
     handleAiAutofill,

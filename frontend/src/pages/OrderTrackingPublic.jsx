@@ -90,7 +90,7 @@ export function OrderTrackingPublic() {
 
       <div className="max-w-[800px] mx-auto space-y-6 relative z-10">
         {/* Top Header Card */}
-        <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 md:p-8 shadow-xs text-center relative overflow-hidden">
+        <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 lg:p-8 shadow-xs text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 text-primary rounded-full text-[10px] font-bold uppercase tracking-wider mb-4">
@@ -152,7 +152,7 @@ export function OrderTrackingPublic() {
         <TrackingTimeline orderStatus={order.orderStatus} />
 
         {/* Detailed Transit History Logs */}
-        <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 md:p-8 shadow-xs">
+        <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 lg:p-8 shadow-xs">
           <h2 className="text-xs font-bold text-secondary uppercase tracking-widest mb-4 flex items-center gap-1.5">
             <span className="material-symbols-outlined text-sm">history</span>
             <span>Detailed Activity Log</span>

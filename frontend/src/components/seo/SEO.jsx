@@ -46,7 +46,7 @@ export function SEO({
   faq,
 }) {
   const location = useLocation();
-  const { footer, contact } = useWebsiteContent();
+  const { footer, contact, seo } = useWebsiteContent();
   const sameAs = buildSameAsLinks(footer?.socialLinks);
   const siteName = SITE_NAME || 'Siri Arts & Crafts';
   const siteUrl = SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
@@ -54,15 +54,20 @@ export function SEO({
     ? `+91-${String(contact.phone).replace(/^\+91-?/, '')}`
     : CONTACT_PHONE;
 
+  const globalSeoTitle = seo?.globalTitle;
+  const globalSeoDesc = seo?.globalDescription;
+  const globalSeoKeywords = seo?.globalKeywords;
+  const globalSeoOgImage = seo?.ogImage;
+
   const fullTitle = title
     ? `${title} | ${siteName}`
-    : siteName
-      ? `${siteName} | ${DEFAULT_TITLE}`
-      : DEFAULT_TITLE;
-  const metaDescription = description || DEFAULT_DESCRIPTION;
+    : globalSeoTitle || (siteName ? `${siteName} | ${DEFAULT_TITLE}` : DEFAULT_TITLE);
+
+  const metaDescription = description || globalSeoDesc || DEFAULT_DESCRIPTION;
+  const metaKeywords = keywords || globalSeoKeywords || '';
   const normalizedPath = normalizeUrl(location.pathname);
   const currentUrl = canonicalUrl || (siteUrl ? `${siteUrl}${normalizedPath}` : normalizedPath);
-  const metaImage = ogImage || OG_IMAGE_URL;
+  const metaImage = ogImage || globalSeoOgImage || OG_IMAGE_URL;
   const metaImageType = metaImage.endsWith('.png')
     ? 'image/png'
     : metaImage.endsWith('.webp')
@@ -217,7 +222,7 @@ export function SEO({
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={metaDescription} />
-      {keywords && <meta name="keywords" content={keywords} />}
+      {metaKeywords && <meta name="keywords" content={metaKeywords} />}
       {currentUrl && <link rel="canonical" href={currentUrl} />}
       <meta name="author" content={siteName} />
 

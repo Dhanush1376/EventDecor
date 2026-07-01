@@ -86,6 +86,20 @@ export function useAdminEventsData() {
     }
   };
 
+  const toggleShowcaseFeatured = async (id, currentFeatured) => {
+    try {
+      const res = await showcaseService.update(id, { featured: !currentFeatured });
+      if (res.success) {
+        toast.success(`Showcase ${currentFeatured ? 'removed from' : 'marked as'} featured`);
+        setShowcases((prev) =>
+          prev.map((sc) => ((sc._id || sc.id) === id ? { ...sc, featured: !currentFeatured } : sc)),
+        );
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to toggle featured status.'));
+    }
+  };
+
   const fetchOperationsData = async () => {
     setOperationsLoading(true);
     try {
@@ -147,5 +161,6 @@ export function useAdminEventsData() {
     teamMembers,
     inventoryItems,
     operationsLoading,
+    toggleShowcaseFeatured,
   };
 }

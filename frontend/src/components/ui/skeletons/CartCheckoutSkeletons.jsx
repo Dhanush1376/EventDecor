@@ -169,7 +169,7 @@ export function CartSkeleton() {
 export function CartItemSkeleton() {
   return (
     <div className="flex gap-4 p-4 rounded-2xl bg-white border border-outline-variant/10">
-      <Skeleton className="w-24 h-24 md:w-32 md:h-32 rounded-xl flex-shrink-0" />
+      <Skeleton className="w-24 h-24 lg:w-32 lg:h-32 rounded-xl flex-shrink-0" />
       <div className="flex-1 space-y-3">
         <Skeleton className="h-5 w-3/4" />
         <Skeleton className="h-3 w-1/3" />
@@ -475,7 +475,7 @@ export function OrderSuccessSkeleton() {
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-7 xl:col-span-8 space-y-4">
-            <div className="bg-surface-bright rounded-lg p-8 md:p-12 text-center border border-outline-variant/40 space-y-6">
+            <div className="bg-surface-bright rounded-lg p-8 lg:p-12 text-center border border-outline-variant/40 space-y-6">
               <Skeleton className="h-20 w-20 rounded-full mx-auto" />
               <Skeleton className="h-8 w-64 mx-auto" />
               <Skeleton className="h-4 w-96 mx-auto" />
@@ -562,7 +562,7 @@ export function OrderTrackingSkeleton() {
   return (
     <div className="min-h-screen bg-surface-bright py-12 px-4 sm:px-6">
       <div className="max-w-[800px] mx-auto space-y-6">
-        <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 md:p-8 space-y-6">
+        <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 lg:p-8 space-y-6">
           <Skeleton className="h-6 w-32 mx-auto rounded-full" />
           <Skeleton className="h-8 w-64 mx-auto" />
           <Skeleton className="h-4 w-48 mx-auto" />
@@ -576,7 +576,7 @@ export function OrderTrackingSkeleton() {
           </div>
         </div>
 
-        <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 md:p-8 space-y-8">
+        <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 lg:p-8 space-y-8">
           <Skeleton className="h-5 w-48" />
           <div className="hidden sm:flex items-center justify-between gap-2 overflow-hidden">
             {[...Array(6)].map((_, i) => (
@@ -588,7 +588,7 @@ export function OrderTrackingSkeleton() {
           </div>
         </div>
 
-        <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 md:p-8 space-y-6">
+        <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 lg:p-8 space-y-6">
           <Skeleton className="h-5 w-40" />
           <div className="space-y-6">
             {[...Array(3)].map((_, i) => (

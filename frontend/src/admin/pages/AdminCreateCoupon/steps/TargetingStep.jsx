@@ -1,6 +1,6 @@
-import { AVAILABLE_CATEGORIES, AVAILABLE_TIERS } from '../constants';
+import { AVAILABLE_TIERS } from '../constants';
 
-export function TargetingStep({ formData, setFormData, products }) {
+export function TargetingStep({ formData, setFormData, products, availableCategories = [] }) {
   const toggleProductSelect = (productId) => {
     setFormData((prev) => {
       const current = [...prev.targetProductIds];
@@ -115,23 +115,27 @@ export function TargetingStep({ formData, setFormData, products }) {
             Select Eligible Storefront Categories ({formData.targetCategories.length} Selected)
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {AVAILABLE_CATEGORIES.map((cat) => {
-              const isChecked = formData.targetCategories.includes(cat);
-              return (
-                <label
-                  key={cat}
-                  className="flex items-center gap-3 p-2.5 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[13px]"
-                >
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => toggleCategorySelect(cat)}
-                    className="w-4 h-4 rounded accent-[var(--admin-accent)]"
-                  />
-                  <span className="font-semibold text-[var(--admin-text-primary)]">{cat}</span>
-                </label>
-              );
-            })}
+            {availableCategories.length === 0 ? (
+              <span className="text-[13px] text-slate-500">Loading categories...</span>
+            ) : (
+              availableCategories.map((cat) => {
+                const isChecked = formData.targetCategories.includes(cat);
+                return (
+                  <label
+                    key={cat}
+                    className="flex items-center gap-3 p-2.5 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[13px]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleCategorySelect(cat)}
+                      className="w-4 h-4 rounded accent-[var(--admin-accent)]"
+                    />
+                    <span className="font-semibold text-[var(--admin-text-primary)]">{cat}</span>
+                  </label>
+                );
+              })
+            )}
           </div>
         </div>
       )}

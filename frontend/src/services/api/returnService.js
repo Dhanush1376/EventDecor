@@ -47,6 +47,12 @@ export const returnService = {
 
   updateReturnSettings: (data) => api.put('/returns/admin/settings', data),
 
+  getFraudMetrics: () => api.get('/returns/admin/fraud/metrics'),
+
+  getExchangeStats: () => api.get('/returns/admin/exchange-stats'),
+
+  getPickupStats: () => api.get('/returns/admin/pickup-stats'),
+
   // Warehouse Endpoints
   getInspectionQueue: () => api.get('/returns/warehouse/queue'),
 

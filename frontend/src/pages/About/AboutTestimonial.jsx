@@ -7,7 +7,7 @@ export function AboutTestimonial({ cmsContent }) {
 
   return (
     <StackedSectionWrapper index={4} isLast={false} bgClass="bg-black">
-      <section className="py-32 md:py-48 bg-black relative text-white overflow-hidden">
+      <section className="py-32 lg:py-48 bg-black relative text-white overflow-hidden">
         <div className="absolute inset-0 opacity-50">
           <CloudinaryImage
             src={cmsContent?.testimonialImage || ''}
@@ -36,7 +36,7 @@ export function AboutTestimonial({ cmsContent }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2, duration: 1 }}
-            className="font-headline text-[32px] md:text-[48px] lg:text-[56px] leading-[1.2] tracking-tight text-white mb-12 italic font-light max-w-4xl mx-auto"
+            className="font-headline text-[32px] lg:text-[48px] lg:text-[56px] leading-[1.2] tracking-tight text-white mb-12 italic font-light max-w-4xl mx-auto"
           >
             "{cmsContent.testimonialQuote}"
           </motion.p>

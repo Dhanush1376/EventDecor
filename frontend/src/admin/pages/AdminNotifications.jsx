@@ -20,6 +20,7 @@ const typeIcons = {
   stock: 'warning',
   review: 'star',
   payment: 'payments',
+  system: 'report',
 };
 
 const typeColors = {
@@ -36,6 +37,7 @@ const typeColors = {
     'bg-[var(--admin-surface-muted)] text-[var(--admin-accent)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]',
   inquiry:
     'bg-[var(--admin-surface-muted)] text-[var(--admin-accent)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]',
+  system: 'bg-[var(--admin-error-light)] text-[var(--admin-error)] border-none hover:opacity-90',
 };
 
 export function AdminNotifications() {
@@ -241,7 +243,9 @@ export function AdminNotifications() {
                     ? 'booking'
                     : n.type === 'user'
                       ? 'review'
-                      : n.type;
+                      : typeIcons[n.type]
+                        ? n.type
+                        : 'system';
 
               return (
                 <motion.div
@@ -271,7 +275,7 @@ export function AdminNotifications() {
                         <span
                           className={`text-[13px] font-bold ${!n.read ? 'text-[var(--admin-text-primary)]' : 'text-[var(--admin-text-tertiary)]'}`}
                         >
-                          {n.title}
+                          {(n.title || '').replace('âš ï¸', '⚠️').replace('âš', '⚠️')}
                         </span>
                         {!n.read && (
                           <span className="flex h-2 w-2 relative shrink-0">

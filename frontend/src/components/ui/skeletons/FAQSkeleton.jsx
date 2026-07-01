@@ -3,9 +3,9 @@ import { Skeleton } from '../SkeletonBase';
 
 export function FAQSkeleton() {
   return (
-    <div className="w-full max-w-4xl mx-auto py-12 px-margin-mobile md:px-margin-desktop space-y-4">
+    <div className="w-full max-w-4xl mx-auto py-12 px-margin-mobile lg:px-margin-desktop space-y-4">
       <div className="flex justify-center mb-8">
-        <Skeleton className="h-10 w-64 md:w-96 rounded-full" />
+        <Skeleton className="h-10 w-64 lg:w-96 rounded-full" />
       </div>
       {[...Array(3)].map((_, i) => (
         <div

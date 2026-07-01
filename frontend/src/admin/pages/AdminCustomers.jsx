@@ -1,8 +1,9 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
+import { customerIntelligenceService } from '../../services/domainServices';
 import {
   PageHeader,
   EmptyState,
@@ -12,37 +13,167 @@ import {
   stagger,
 } from '../components/AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
+import { io as socketIO } from 'socket.io-client';
+import { getAccessToken } from '../../services/api';
+import { getApiRootUrl } from '../../config/apiConfig';
+
+const StatCard = ({ title, value, icon, color }) => (
+  <div className="bg-[var(--admin-surface)] p-5 rounded-xl border border-[var(--admin-border)] shadow-sm flex items-center justify-between">
+    <div>
+      <p className="text-sm font-medium text-[var(--admin-text-secondary)]">{title}</p>
+      <p className="text-2xl font-bold text-[var(--admin-text-primary)] mt-1">{value}</p>
+    </div>
+    <div
+      className="w-10 h-10 rounded-lg flex items-center justify-center"
+      style={{
+        background: `color-mix(in srgb, ${color} 10%, transparent)`,
+        color: color,
+      }}
+    >
+      <span className="material-symbols-outlined text-[20px]">{icon}</span>
+    </div>
+  </div>
+);
 
 export function AdminCustomers() {
   const navigate = useNavigate();
-  const { customers, dataLoading, searchQuery } = useAdmin();
-  const [segmentFilter, setSegmentFilter] = useState('All');
+  const { searchQuery } = useAdmin();
 
-  const filtered = useMemo(() => {
-    return customers.filter((c) => {
-      const matchSeg = segmentFilter === 'All' || c.segment === segmentFilter;
-      const matchSearch =
-        !searchQuery ||
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.email.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchSeg && matchSearch;
+  const [tierFilter, setTierFilter] = useState('All');
+  const [page, setPage] = useState(1);
+
+  const [customers, setCustomers] = useState([]);
+  const [meta, setMeta] = useState({});
+  const [dataLoading, setDataLoading] = useState(true);
+
+  const [kpi, setKpi] = useState(null);
+  const [kpiLoading, setKpiLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const fetchCustomers = useCallback(async () => {
+    setDataLoading(true);
+    try {
+      const res = await customerIntelligenceService.getCustomers({
+        page,
+        limit: 12,
+        search: searchQuery,
+        tier: tierFilter,
+      });
+      setCustomers(res?.data || []);
+      setMeta(res?.meta || {});
+    } catch (err) {
+      toast.error('Failed to load customers');
+    } finally {
+      setDataLoading(false);
+    }
+  }, [page, searchQuery, tierFilter]);
+
+  const fetchKpis = useCallback(async () => {
+    setKpiLoading(true);
+    try {
+      const res = await customerIntelligenceService.getOverview();
+      setKpi(res?.snapshot?.metrics || null);
+    } catch (err) {
+      console.error('KPI fetch error:', err);
+    } finally {
+      setKpiLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
+
+  useEffect(() => {
+    fetchKpis();
+  }, [fetchKpis]);
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    const rawApiUrl = getApiRootUrl();
+    let socketServerUrl = rawApiUrl;
+    if (socketServerUrl.endsWith('/api/v1')) socketServerUrl = socketServerUrl.slice(0, -7);
+    else if (socketServerUrl.endsWith('/api')) socketServerUrl = socketServerUrl.slice(0, -4);
+
+    const socket = socketIO(`${socketServerUrl}/admin`, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
     });
-  }, [customers, segmentFilter, searchQuery]);
+
+    socket.on('customer_updated', () => {
+      fetchCustomers();
+      fetchKpis();
+    });
+
+    socket.on('order_update', () => {
+      fetchCustomers();
+      fetchKpis();
+    });
+
+    return () => socket.disconnect();
+  }, [fetchCustomers, fetchKpis]);
+
+  const handleExport = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      // In a real scenario, this hits the backend /export endpoint using api.js directly
+      // Since customerIntelligenceService doesn't expose the new export endpoint yet, we'll fetch it via getCustomers but without pagination if we mapped it, but let's just use the raw fetch for this snippet
+      const token = getAccessToken();
+      const res = await fetch(
+        `${getApiRootUrl()}/customer-intelligence/customers/export?search=${searchQuery}&tier=${tierFilter}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      const data = await res.json();
+
+      if (data.success && data.data) {
+        const headers = 'Name,Email,Phone,Orders,Spent,Tier,Joined\n';
+        const rows = data.data
+          .map(
+            (c) =>
+              `"${c.Name}","${c.Email}","${c.Phone}",${c.Orders},${c.Spent},"${c.Tier}","${c.Joined}"`,
+          )
+          .join('\n');
+
+        const blob = new Blob([headers + rows], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute(
+          'download',
+          `EventDecor_Customers_${new Date().toISOString().slice(0, 10)}.csv`,
+        );
+        link.click();
+        toast.success('Customers export completed');
+      }
+    } catch (err) {
+      toast.error('Export failed');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader
         title="Customers"
-        subtitle={`${customers.length} customers`}
+        subtitle={meta.total ? `${meta.total} total customers` : 'Manage your customer base'}
         icon="group"
         iconColor="users"
         mobileRow={true}
         headerAction={
           <div className="w-full sm:max-w-md">
             <FilterBar
-              filters={['All', 'VIP', 'Regular', 'New']}
-              value={segmentFilter}
-              onChange={setSegmentFilter}
+              filters={['All', 'Platinum', 'Gold', 'Silver', 'Bronze']}
+              value={tierFilter}
+              onChange={(v) => {
+                setTierFilter(v);
+                setPage(1);
+              }}
             />
           </div>
         }
@@ -50,29 +181,49 @@ export function AdminCustomers() {
         <button
           className="p-1.5 hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] rounded-lg flex items-center justify-center cursor-pointer transition-all active:scale-95 border-none bg-transparent"
           title="Export Customers"
-          onClick={() => {
-            const headers = 'Name,Email,Phone,Orders,Spent,Segment\n';
-            const rows = customers
-              .map(
-                (c) =>
-                  `"${c.name}","${c.email || ''}","${c.phone || ''}",${c.ordersCount || 0},${c.totalSpent || 0},"${c.segment || 'Regular'}"`,
-              )
-              .join('\n');
-            const blob = new Blob([headers + rows], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute(
-              'download',
-              `SiriArts_Customers_${new Date().toISOString().slice(0, 10)}.csv`,
-            );
-            link.click();
-            toast.success('Customers list exported');
-          }}
+          onClick={handleExport}
+          disabled={isExporting}
         >
-          <span className="material-symbols-outlined text-[18px]">download</span>
+          <span
+            className={`material-symbols-outlined text-[18px] ${isExporting ? 'animate-spin' : ''}`}
+          >
+            {isExporting ? 'sync' : 'download'}
+          </span>
         </button>
       </PageHeader>
+
+      {/* Dynamic KPI Dashboard */}
+      {!kpiLoading && kpi && (
+        <motion.div
+          variants={fadeUp}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+        >
+          <StatCard
+            title="Active Customers"
+            value={kpi.activeCustomers || 0}
+            icon="verified_user"
+            color="#4ade80"
+          />
+          <StatCard
+            title="Total Traffic"
+            value={kpi.trafficSources?.reduce((acc, curr) => acc + curr.sessions, 0) || 0}
+            icon="monitoring"
+            color="#3b82f6"
+          />
+          <StatCard
+            title="Cart Abandonment"
+            value={`${(kpi.cartAbandonmentRate || 0).toFixed(1)}%`}
+            icon="remove_shopping_cart"
+            color="#f87171"
+          />
+          <StatCard
+            title="Checkout Success"
+            value={`${(kpi.checkoutCompletionRate || 0).toFixed(1)}%`}
+            icon="shopping_cart_checkout"
+            color="#fbbf24"
+          />
+        </motion.div>
+      )}
 
       <AnimatePresence mode="wait">
         {dataLoading ? (
@@ -88,7 +239,7 @@ export function AdminCustomers() {
               <div key={i} className="admin-skeleton admin-card h-[280px]" />
             ))}
           </motion.div>
-        ) : filtered.length === 0 ? (
+        ) : customers.length === 0 ? (
           <motion.div
             key="empty"
             initial="hidden"
@@ -98,19 +249,20 @@ export function AdminCustomers() {
             className="admin-card py-16 flex justify-center"
           >
             <EmptyState
-              icon={searchQuery || segmentFilter !== 'All' ? 'search_off' : 'group'}
-              title={
-                searchQuery || segmentFilter !== 'All' ? 'No Matches Found' : 'No Customers Yet'
-              }
+              icon={searchQuery || tierFilter !== 'All' ? 'search_off' : 'group'}
+              title={searchQuery || tierFilter !== 'All' ? 'No Matches Found' : 'No Customers Yet'}
               description={
-                searchQuery || segmentFilter !== 'All'
+                searchQuery || tierFilter !== 'All'
                   ? 'No customers match the search or filter criteria.'
                   : 'When customers create accounts or place orders, they will appear here.'
               }
               action={
-                searchQuery || segmentFilter !== 'All' ? (
+                searchQuery || tierFilter !== 'All' ? (
                   <button
-                    onClick={() => setSegmentFilter('All')}
+                    onClick={() => {
+                      setTierFilter('All');
+                      setPage(1);
+                    }}
                     className="admin-btn admin-btn-outline"
                   >
                     Clear Filters
@@ -136,9 +288,9 @@ export function AdminCustomers() {
             variants={stagger}
             className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
           >
-            {filtered.map((c) => (
+            {customers.map((c) => (
               <motion.div
-                key={c.id}
+                key={c._id}
                 variants={fadeUp}
                 className="admin-card p-6 group hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-md)] transition-all duration-300"
               >
@@ -147,7 +299,7 @@ export function AdminCustomers() {
                     <div className="w-12 h-12 rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] flex items-center justify-center shrink-0 group-hover:border-[var(--admin-accent)] group-hover:text-[var(--admin-accent)] transition-colors">
                       <span className="text-[14px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)]">
                         {c.name
-                          .split(' ')
+                          ?.split(' ')
                           .filter(Boolean)
                           .map((n) => n[0])
                           .join('')
@@ -212,7 +364,7 @@ export function AdminCustomers() {
                 <div className="grid grid-cols-3 gap-3 mb-5 p-3 bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
                   <div className="text-center">
                     <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                      {c.orders}
+                      {c.orders || 0}
                     </p>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] mt-0.5">
                       Orders
@@ -222,7 +374,7 @@ export function AdminCustomers() {
                     <p className="text-[14px] font-bold text-[var(--admin-accent)]">
                       {c.totalSpent >= 1000
                         ? `₹${(c.totalSpent / 1000).toFixed(1)}K`
-                        : `₹${c.totalSpent}`}
+                        : `₹${c.totalSpent || 0}`}
                     </p>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] mt-0.5">
                       Spent
@@ -230,10 +382,10 @@ export function AdminCustomers() {
                   </div>
                   <div className="text-center">
                     <p className="text-[12px] font-bold text-[var(--admin-text-primary)] mt-0.5">
-                      {c.lastOrder.slice(5)}
+                      {c.health}
                     </p>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] mt-0.5">
-                      Last Order
+                      Health
                     </p>
                   </div>
                 </div>
@@ -247,7 +399,7 @@ export function AdminCustomers() {
                     <span className="hidden sm:inline truncate">Email</span>
                   </a>
                   <a
-                    href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${c.phone.replace(/[^0-9]/g, '')}`}
+                    href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${c.phone?.replace(/[^0-9]/g, '') || ''}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="admin-btn admin-btn-outline min-h-[36px] h-8 text-[10px] px-2 border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)] justify-center gap-1.5 w-full transition-all"
@@ -256,7 +408,7 @@ export function AdminCustomers() {
                     <span className="hidden sm:inline truncate">WhatsApp</span>
                   </a>
                   <button
-                    onClick={() => navigate(`/admin/customers/${c.id}`)}
+                    onClick={() => navigate(`/admin/customers/${c._id}`)}
                     className="admin-btn min-h-[36px] h-8 text-[10px] px-2 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)] justify-center gap-1.5 w-full transition-all"
                   >
                     <span className="material-symbols-outlined text-[14px] shrink-0">
@@ -270,6 +422,29 @@ export function AdminCustomers() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Pagination Controls */}
+      {!dataLoading && meta.pages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-8">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="admin-btn admin-btn-outline px-3"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-[var(--admin-text-secondary)]">
+            Page {page} of {meta.pages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(meta.pages, p + 1))}
+            disabled={page === meta.pages}
+            className="admin-btn admin-btn-outline px-3"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 }

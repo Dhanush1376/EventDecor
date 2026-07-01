@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useCallback, useEffect } from 'rea
 import {
   analyticsService,
   reviewService,
-  userService,
   eventService,
   notificationService,
 } from '../../services/domainServices';
@@ -39,60 +38,27 @@ const mapDbNotificationToFrontend = (n) => ({
   rawNotification: n,
 });
 
-const mapDbCustomerToFrontend = (c) => {
-  if (!c) return null;
-  if (c.id && c.orders !== undefined) return c;
-
-  const totalSpent = Array.isArray(c.orders)
-    ? c.orders.reduce((sum, order) => sum + (order.total || 0), 0)
-    : 0;
-  const orderCount = Array.isArray(c.orders) ? c.orders.length : 0;
-
-  let segment = 'New';
-  if (orderCount > 5 || totalSpent > 50000) {
-    segment = 'VIP';
-  } else if (orderCount > 0) {
-    segment = 'Regular';
-  }
-
-  const lastOrderDate = c.updatedAt
-    ? new Date(c.updatedAt).toISOString().split('T')[0]
-    : '2026-05-15';
-  const city = c.addresses && c.addresses[0] ? c.addresses[0].city : 'Unknown';
-
-  return {
-    id: c._id || c.id || 'CUS-UNKNOWN',
-    name: c.name || 'Customer',
-    email: c.email || '',
-    phone: c.phone || '',
-    orders: orderCount,
-    totalSpent: totalSpent || 0,
-    lastOrder: lastOrderDate,
-    segment: segment,
-    city: city,
-    walletBalance: c.walletBalance || 0,
-    siriCoins: c.siriCoins || 0,
-    loyaltyTier: c.loyaltyTier || 'Bronze',
-    rawUser: c,
-  };
-};
+// Customer mock function removed - Customers are now fetched dynamically on demand
 
 const mapDbEventToFrontend = (e) => {
   if (!e) return null;
-  if (e.id && e.eventType && e.customer) return e;
 
-  const dateStr = e.createdAt ? new Date(e.createdAt).toISOString().split('T')[0] : '2026-05-20';
+  const dateStr = e.date
+    ? new Date(e.date).toISOString().split('T')[0]
+    : e.createdAt
+      ? new Date(e.createdAt).toISOString().split('T')[0]
+      : 'Unknown Date';
 
   return {
-    id: e._id || e.id || 'EVT-UNKNOWN',
-    eventType: e.title || 'Custom Consultation',
-    customer: e.category || 'Consultation Request',
-    status: e.isActive ? 'Confirmed' : 'Pending',
+    id: e.bookingId || e._id || e.id || 'UNKNOWN',
+    eventType: e.eventType || e.title || 'Unknown Event',
+    customer: e.user?.name || e.user?.email || 'Customer',
+    status: e.status || (e.isActive ? 'Confirmed' : 'Pending'),
     date: dateStr,
-    venue: e.venueType || 'Ongole',
-    amount: e.pricing ? parseInt(e.pricing.replace(/[^0-9]/g, '')) || 45000 : 45000,
-    payment: 'Paid',
-    staff: ['Siri', 'Anji'],
+    venue: e.venue?.city || e.venue?.address || 'Location TBD',
+    amount: e.pricing?.totalPrice || 0,
+    payment: e.pricing?.paymentStatus || 'unpaid',
+    staff: e.assignedTeam ? e.assignedTeam.map((t) => t.name) : [],
     rawEvent: e,
   };
 };
@@ -129,7 +95,7 @@ export function AdminProvider({ children }) {
 
   const themeMode = 'light';
   const [dashboardStats, setDashboardStats] = useState(null);
-  const [customers, setCustomers] = useState([]);
+  // customers removed for dynamic fetching
   const [reviews, setReviews] = useState([]);
   const [eventBookings, setEventBookings] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -142,24 +108,19 @@ export function AdminProvider({ children }) {
     const fetchAdminData = async () => {
       setDataLoading(true);
       try {
-        const [customersRes, reviewsRes, statsRes, eventsRes, auditLogsRes, alertsRes] =
-          await Promise.allSettled([
-            userService.getAll({ role: 'customer' }),
+        const [reviewsRes, statsRes, eventsRes, auditLogsRes, alertsRes] = await Promise.allSettled(
+          [
             reviewService.getAll({ limit: 50 }),
             analyticsService.getDashboardStats(),
             eventService.getAll({ limit: 50 }),
             analyticsService.getAuditLogs({ limit: 100 }),
             notificationService.getAdminAlerts(),
-          ]);
+          ],
+        );
 
         // Trigger fetches in hooks
         await Promise.all([productsHook.refreshProducts(), ordersHook.refreshOrders()]);
 
-        if (customersRes.status === 'fulfilled' && customersRes.value?.success) {
-          const payload = customersRes.value.data;
-          const list = payload?.users || payload?.data || payload || [];
-          setCustomers((Array.isArray(list) ? list : []).map(mapDbCustomerToFrontend));
-        }
         if (reviewsRes.status === 'fulfilled' && reviewsRes.value?.success) {
           const payload = reviewsRes.value.data;
           const list = payload?.reviews || payload?.data || payload || [];
@@ -270,6 +231,39 @@ export function AdminProvider({ children }) {
     }
   }, []);
 
+  const refreshDashboard = useCallback(async () => {
+    try {
+      const res = await analyticsService.getDashboardStats();
+      if (res.success) setDashboardStats(res.data);
+    } catch (_err) {
+      /* silent */
+    }
+  }, []);
+
+  const refreshEvents = useCallback(async () => {
+    try {
+      const res = await eventService.getAll({ limit: 100 });
+      if (res.success) {
+        const evData = res.data;
+        const list = evData?.data || evData?.items || (Array.isArray(evData) ? evData : []);
+        setEventBookings(list.map(mapDbEventToFrontend));
+      }
+    } catch (_err) {
+      /* silent */
+    }
+  }, []);
+
+  const refreshReviews = useCallback(async () => {
+    try {
+      const res = await reviewService.getAll({ limit: 50 });
+      if (res.success) {
+        setReviews(res.data?.data || []);
+      }
+    } catch (_err) {
+      /* silent */
+    }
+  }, []);
+
   // Real-time WebSocket alerts
   useEffect(() => {
     const token = getAccessToken();
@@ -322,10 +316,12 @@ export function AdminProvider({ children }) {
         { duration: 8000, position: 'top-right' },
       );
       setNotifications((prev) => [mapped, ...prev]);
+      window.dispatchEvent(new CustomEvent('admin_notification', { detail: data }));
     });
 
     socket.on('order_update', () => {
       ordersHook.refreshOrders();
+      refreshDashboard();
     });
 
     socket.on('stock_update', () => {
@@ -334,58 +330,14 @@ export function AdminProvider({ children }) {
 
     socket.on('booking_update', () => {
       refreshEvents();
+      refreshDashboard();
     });
 
     return () => {
       socket.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const refreshDashboard = useCallback(async () => {
-    try {
-      const res = await analyticsService.getDashboardStats();
-      if (res.success) setDashboardStats(res.data);
-    } catch (_err) {
-      /* silent */
-    }
-  }, []);
-
-  const refreshEvents = useCallback(async () => {
-    try {
-      const res = await eventService.getAll({ limit: 100 });
-      if (res.success) {
-        const evData = res.data;
-        const list = evData?.data || evData?.items || (Array.isArray(evData) ? evData : []);
-        setEventBookings(list.map(mapDbEventToFrontend));
-      }
-    } catch (_err) {
-      /* silent */
-    }
-  }, []);
-
-  const refreshCustomers = useCallback(async () => {
-    try {
-      const res = await userService.getAll({ limit: 50, role: 'user' });
-      if (res.success) {
-        const list = res.data?.data || [];
-        setCustomers(list.map(mapDbCustomerToFrontend));
-      }
-    } catch (_err) {
-      /* silent */
-    }
-  }, []);
-
-  const refreshReviews = useCallback(async () => {
-    try {
-      const res = await reviewService.getAll({ limit: 50 });
-      if (res.success) {
-        setReviews(res.data?.data || []);
-      }
-    } catch (_err) {
-      /* silent */
-    }
-  }, []);
+  }, [refreshDashboard]);
 
   const [lastDataRefresh, setLastDataRefresh] = useState(new Date());
 
@@ -421,8 +373,7 @@ export function AdminProvider({ children }) {
         sidebarMobileOpen,
         setSidebarMobileOpen,
         toggleMobileSidebar,
-        customers,
-        refreshCustomers,
+        // customers removed
         eventBookings,
         refreshEvents,
         reviews,

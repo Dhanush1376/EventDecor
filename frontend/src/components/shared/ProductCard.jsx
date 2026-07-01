@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { prefetchManager } from '../../utils/performance/prefetchManager';
 import { parseNumericPrice, formatPrice } from '../../utils/ecommerce/priceUtils';
 import { getProductRoute } from '../../utils/ecommerce/productRouteUtils';
+import { DynamicRatingBadge } from '../ui/DynamicRatingBadge';
 
 export const ProductCard = React.memo(function ProductCard({
   id,
@@ -19,8 +20,11 @@ export const ProductCard = React.memo(function ProductCard({
   price,
   oldPrice,
   rating = 4.8,
+  reviews = 42,
   imageSrc,
   hoverImage,
+  gallery,
+  images, // Backend returns 'images', fallback to gallery
   category,
   primaryCategory,
   secondaryCategories,
@@ -37,6 +41,7 @@ export const ProductCard = React.memo(function ProductCard({
   isNonRefundable = false,
   itemType = 'product', // 'product' or 'event'
   rentalPrice,
+  strikingPrice,
   setupTimeHours,
   inclusions,
   securityDeposit,
@@ -54,6 +59,23 @@ export const ProductCard = React.memo(function ProductCard({
   const { runProtectedAction } = useAuth();
   const [added, setAdded] = useState(false);
   const [isRippling, setIsRippling] = useState(false);
+  const scrollContainerRef = React.useRef(null);
+
+  const handleScrollLeft = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -320, behavior: 'smooth' });
+    }
+  };
+
+  const handleScrollRight = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+    }
+  };
 
   if (loading) {
     return (
@@ -77,14 +99,22 @@ export const ProductCard = React.memo(function ProductCard({
   const productId = id || _id;
   const wishlisted = isWishlisted(productId);
 
-  const numericPrice = parseNumericPrice(price);
-  const parsedOldPrice = oldPrice ? parseNumericPrice(oldPrice) : 0;
+  const numericPrice = parseNumericPrice(itemType === 'event' ? rentalPrice || price : price);
+  const parsedOldPrice = oldPrice
+    ? parseNumericPrice(oldPrice)
+    : strikingPrice
+      ? parseNumericPrice(strikingPrice)
+      : 0;
   const numericOldPrice =
-    parsedOldPrice > numericPrice
-      ? parsedOldPrice
-      : numericPrice
-        ? Math.round(numericPrice * 1.25)
-        : 0;
+    itemType === 'event'
+      ? parsedOldPrice > numericPrice
+        ? parsedOldPrice
+        : 0
+      : parsedOldPrice > numericPrice
+        ? parsedOldPrice
+        : numericPrice
+          ? Math.round(numericPrice * 1.25)
+          : 0;
 
   const discount =
     numericOldPrice > numericPrice
@@ -151,6 +181,19 @@ export const ProductCard = React.memo(function ProductCard({
     }
   };
 
+  const availableImages = React.useMemo(() => {
+    const imgs = [imageSrc];
+    const imageList = images || gallery || [];
+    if (imageList.length > 0) {
+      imageList.forEach((img) => {
+        if (!imgs.includes(img)) imgs.push(img);
+      });
+    } else if (hoverImage && hoverImage !== imageSrc) {
+      imgs.push(hoverImage);
+    }
+    return imgs;
+  }, [imageSrc, hoverImage, gallery, images]);
+
   return (
     <motion.div
       onMouseEnter={() => {
@@ -165,25 +208,49 @@ export const ProductCard = React.memo(function ProductCard({
       className="group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl z-10"
     >
       {/* 1. VISUAL CANVAS */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl border border-black/5">
-        <Link to={getProductRoute(itemType, productId)} className="block h-full">
-          <CloudinaryImage
-            src={imageSrc}
-            alt={title}
-            className="transition-all duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover:scale-110"
-            loading={eager ? 'eager' : 'lazy'}
-            fetchPriority={eager ? 'high' : 'auto'}
-            width={320}
-            height={400}
-            sizes={sizes}
-          />
-        </Link>
+      <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl border border-black/5 group/canvas">
+        <div
+          ref={scrollContainerRef}
+          className="flex w-full h-full overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth"
+        >
+          {availableImages.map((img, idx) => (
+            <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+              <Link
+                to={getProductRoute(itemType, productId)}
+                className="block h-full w-full"
+                draggable="false"
+              >
+                <CloudinaryImage
+                  src={img}
+                  alt={`${title} - view ${idx + 1}`}
+                  className="transition-all duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover/canvas:scale-110 object-cover w-full h-full"
+                  loading={eager && idx === 0 ? 'eager' : 'lazy'}
+                  fetchPriority={eager && idx === 0 ? 'high' : 'auto'}
+                  width={320}
+                  height={400}
+                  sizes={sizes}
+                />
+              </Link>
+            </div>
+          ))}
+        </div>
+
+        {availableImages.length > 1 && (
+          <div className="absolute bottom-6 left-3 lg:left-4 flex gap-1.5 z-10 pointer-events-none">
+            {availableImages.map((_, i) => (
+              <div
+                key={i}
+                className="w-1.5 h-1.5 rounded-full bg-white/90 shadow-sm border border-black/10"
+              />
+            ))}
+          </div>
+        )}
         {/* Floating Utility Actions */}
         {!selectionMode && (
-          <div className="absolute top-2 right-3 md:top-3 md:right-4 z-20 flex flex-col gap-2">
+          <div className="absolute top-2 right-3 lg:top-3 lg:right-4 z-20 flex flex-col gap-2">
             <button
               onClick={handleWishlist}
-              className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} relative min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96] overflow-hidden`}
+              className={`${compact ? 'w-7 h-7 lg:w-7 lg:h-7' : 'w-8 h-8 lg:w-8 lg:h-8'} relative min-h-0 shrink-0 aspect-square p-0 bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96] overflow-hidden`}
               aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
             >
               <AnimatePresence>
@@ -206,7 +273,7 @@ export const ProductCard = React.memo(function ProductCard({
                 }}
                 whileTap={{ scale: 0.8 }}
                 transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-                className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
+                className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] lg:text-[14px]'}`}
               >
                 favorite
               </motion.span>
@@ -214,101 +281,98 @@ export const ProductCard = React.memo(function ProductCard({
           </div>
         )}
         {/* Badges */}
-        <div className="absolute top-2 left-3 md:top-3 md:left-4 flex flex-row items-center -space-x-2 md:-space-x-3 z-10">
-          {itemType === 'event' ? (
-            <>
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label text-[8px] md:text-[10px] uppercase font-bold shadow-lg border-2 border-white z-[6] hover:z-30 hover:scale-110 transition-all duration-300 select-none">
-                <span className="leading-none">{setupTimeHours || 2}h</span>
-                <span className="text-[5px] md:text-[7px] tracking-tight opacity-90 uppercase mt-0.5">
-                  Setup
-                </span>
-              </div>
-              {inclusions && inclusions.length > 0 && (
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-white/95 backdrop-blur-md text-[#1a1817] rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white z-[5] hover:z-30 hover:scale-110 transition-all duration-300 select-none">
-                  <span className="leading-none text-[8px] md:text-[10px]">
-                    {inclusions.length}
-                  </span>
-                  <span className="text-[5px] md:text-[6px] tracking-tight opacity-80 uppercase mt-0.5">
-                    Props
+        <div className="absolute top-2 left-2 lg:top-3 lg:left-3 z-20 pointer-events-none group/badges">
+          <div className="flex flex-row -space-x-3 lg:-space-x-4 py-1 px-1 pointer-events-auto hover:space-x-1 transition-all duration-300">
+            {itemType === 'event' ? (
+              <>
+                <div className="relative z-[30] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label text-[8px] lg:text-[10px] uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
+                  <span className="leading-none">{setupTimeHours || 2}h</span>
+                  <span className="text-[5px] lg:text-[7px] tracking-tight opacity-90 uppercase mt-0.5">
+                    Setup
                   </span>
                 </div>
-              )}
-            </>
-          ) : (
-            <>
-              {canRent && resolvedCartType === 'rental' && (
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-[#8c7335] text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white z-[6] hover:z-30 hover:scale-110 transition-all duration-300 select-none">
-                  <span className="material-symbols-outlined text-[10px] md:text-[12px] leading-none mb-[1px]">
-                    event_available
-                  </span>
-                  <span className="leading-none text-[6px] md:text-[8px] tracking-tight">RENT</span>
-                </div>
-              )}
-              {discount && canPurchase && (
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white z-[5] hover:z-30 hover:scale-110 transition-all duration-300 select-none">
-                  <span className="leading-none text-[8px] md:text-[10px]">{discount}%</span>
-                  <span className="text-[5px] md:text-[6px] tracking-tight opacity-90 uppercase mt-0.5">
-                    OFF
-                  </span>
-                </div>
-              )}
-              {badges.slice(0, 2).map((badge, idx) => {
-                const badgeText = typeof badge === 'object' && badge !== null ? badge.text : badge;
-                const badgeIcon = typeof badge === 'object' && badge !== null ? badge.icon : null;
-
-                if (!badgeText && !badgeIcon) return null;
-
-                const words = String(badgeText || '')
-                  .trim()
-                  .split(/\s+/);
-                const displayContent =
-                  words.length > 1 ? (
-                    <>
-                      {badgeIcon && (
-                        <span className="material-symbols-outlined text-[8px] md:text-[10px] mb-[1px]">
-                          {badgeIcon}
-                        </span>
-                      )}
-                      <span className="leading-none text-[6px] md:text-[8px]">{words[0]}</span>
-                      <span className="text-[5px] md:text-[6px] tracking-tight opacity-80 uppercase mt-0.5">
-                        {words.slice(1).join(' ')}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      {badgeIcon && (
-                        <span className="material-symbols-outlined text-[8px] md:text-[10px] mb-[1px]">
-                          {badgeIcon}
-                        </span>
-                      )}
-                      {badgeText && (
-                        <span className="leading-none text-[6px] md:text-[8px] truncate max-w-full px-1">
-                          {badgeText}
-                        </span>
-                      )}
-                    </>
-                  );
-
-                return (
-                  <div
-                    key={`badge-${idx}`}
-                    style={{ zIndex: 4 - idx }}
-                    className="w-8 h-8 md:w-10 md:h-10 bg-white/95 backdrop-blur-md text-black/80 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white hover:z-30 hover:scale-110 transition-all duration-300 select-none"
-                  >
-                    {displayContent}
+                {inclusions && inclusions.length > 0 && (
+                  <div className="relative z-[20] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-white/95 backdrop-blur-md text-[#1a1817] rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
+                    <span className="leading-none text-[8px] lg:text-[10px]">
+                      {inclusions.length}
+                    </span>
+                    <span className="text-[5px] lg:text-[6px] tracking-tight opacity-80 uppercase mt-0.5">
+                      Props
+                    </span>
                   </div>
-                );
-              })}
-              {badges.length > 2 && (
-                <div
-                  className="w-8 h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur-md text-black/60 rounded-full flex items-center justify-center font-label text-[9px] md:text-[11px] font-bold shadow-md border-2 border-white select-none"
-                  style={{ zIndex: 1 }}
-                >
-                  +{badges.length - 2}
-                </div>
-              )}
-            </>
-          )}
+                )}
+              </>
+            ) : (
+              <>
+                {canRent && resolvedCartType === 'rental' && (
+                  <div className="relative z-[40] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-[#8c7335] text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
+                    <span className="material-symbols-outlined text-[10px] lg:text-[12px] leading-none mb-[1px]">
+                      event_available
+                    </span>
+                    <span className="leading-none text-[6px] lg:text-[8px] tracking-tight">
+                      RENT
+                    </span>
+                  </div>
+                )}
+                {discount && (canPurchase || itemType === 'event') && (
+                  <div className="relative z-[30] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-[#7a5e00] text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
+                    <span className="leading-none text-[8px] lg:text-[10px]">{discount}%</span>
+                    <span className="text-[5px] lg:text-[6px] tracking-tight opacity-90 uppercase mt-0.5">
+                      OFF
+                    </span>
+                  </div>
+                )}
+                {badges.map((badge, idx) => {
+                  const badgeText =
+                    typeof badge === 'object' && badge !== null ? badge.text : badge;
+                  const badgeIcon = typeof badge === 'object' && badge !== null ? badge.icon : null;
+
+                  if (!badgeText && !badgeIcon) return null;
+
+                  const words = String(badgeText || '')
+                    .trim()
+                    .split(/\s+/);
+                  const displayContent =
+                    words.length > 1 ? (
+                      <>
+                        {badgeIcon && (
+                          <span className="material-symbols-outlined text-[8px] lg:text-[10px] mb-[1px]">
+                            {badgeIcon}
+                          </span>
+                        )}
+                        <span className="leading-none text-[6px] lg:text-[8px]">{words[0]}</span>
+                        <span className="text-[5px] lg:text-[6px] tracking-tight opacity-80 uppercase mt-0.5">
+                          {words.slice(1).join(' ')}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {badgeIcon && (
+                          <span className="material-symbols-outlined text-[8px] lg:text-[10px] mb-[1px]">
+                            {badgeIcon}
+                          </span>
+                        )}
+                        {badgeText && (
+                          <span className="leading-none text-[6px] lg:text-[8px] truncate max-w-full px-1">
+                            {badgeText}
+                          </span>
+                        )}
+                      </>
+                    );
+
+                  return (
+                    <div
+                      key={`badge-${idx}`}
+                      className="relative w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-white/95 backdrop-blur-md text-black/80 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white hover:scale-110 transition-transform duration-300 select-none"
+                      style={{ zIndex: 20 - idx }}
+                    >
+                      {displayContent}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </div>
         </div>
         {/* Immersive Hover Actions (Desktop Only) */}
         {!selectionMode && (
@@ -453,11 +517,11 @@ export const ProductCard = React.memo(function ProductCard({
                   e.stopPropagation();
                   navigate(getProductRoute('event', productId));
                 }}
-                className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
+                className={`${compact ? 'w-7 h-7 lg:w-7 lg:h-7' : 'w-8 h-8 lg:w-8 lg:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
                 aria-label="Book setup"
               >
                 <span
-                  className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
+                  className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] lg:text-[14px]'}`}
                 >
                   event
                 </span>
@@ -466,7 +530,7 @@ export const ProductCard = React.memo(function ProductCard({
               <button
                 onClick={isOutOfStock || added ? undefined : handleAddToCart}
                 disabled={isOutOfStock || added}
-                className={`${compact ? 'w-7 h-7 md:w-7 md:h-7' : 'w-8 h-8 md:w-8 md:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
+                className={`${compact ? 'w-7 h-7 lg:w-7 lg:h-7' : 'w-8 h-8 lg:w-8 lg:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 ${
                   isOutOfStock
                     ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
                     : added
@@ -483,7 +547,7 @@ export const ProductCard = React.memo(function ProductCard({
                       animate={{ opacity: 1, scale: 1, rotate: 0 }}
                       exit={{ opacity: 0, scale: 0.5, rotate: 30 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                      className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
+                      className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] lg:text-[14px]'}`}
                     >
                       check
                     </motion.span>
@@ -494,7 +558,7 @@ export const ProductCard = React.memo(function ProductCard({
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.5 }}
                       transition={{ duration: 0.2 }}
-                      className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] md:text-[14px]'}`}
+                      className={`material-symbols-outlined ${compact ? 'text-[11px]' : 'text-[13px] lg:text-[14px]'}`}
                     >
                       {isOutOfStock ? 'remove_shopping_cart' : 'add'}
                     </motion.span>
@@ -516,40 +580,36 @@ export const ProductCard = React.memo(function ProductCard({
       </div>
 
       <div
-        className={`${compact ? 'pt-1.5 pb-1 px-1.5' : 'pt-2.5 pb-2 px-3.5 md:px-4'} flex flex-col flex-1 transition-opacity duration-500 ${hideDetails ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        className={`${compact ? 'pt-1.5 pb-1 px-1.5' : 'pt-2.5 pb-2 px-3.5 lg:px-4'} flex flex-col flex-1 transition-opacity duration-500 ${hideDetails ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
-        <div className={`flex items-center gap-1.5 ${compact ? 'mb-0.5' : 'mb-1.5 md:mb-2'}`}>
+        <div className={`flex items-center gap-1.5 ${compact ? 'mb-0.5' : 'mb-1.5 lg:mb-2'}`}>
           <span
-            className={`text-black/60 font-label uppercase ${compact ? 'text-[7px] tracking-[0.1em]' : 'text-[8px] md:text-[9px] tracking-[0.15em] md:tracking-[0.2em]'} font-bold truncate flex-1 min-w-0`}
+            className={`text-black/60 font-label uppercase ${compact ? 'text-[7px] tracking-[0.1em]' : 'text-[8px] lg:text-[9px] tracking-[0.15em] lg:tracking-[0.2em]'} font-bold truncate flex-1 min-w-0`}
           >
             {primaryCategory?.name || category || 'Uncategorized'}
           </span>
 
           <div className="w-0.5 h-0.5 rounded-full bg-black/10" />
           <div className="flex items-center gap-0.5">
-            <span
-              className={`material-symbols-outlined ${compact ? 'text-[8px] md:text-[9px]' : 'text-[9px] md:text-[10px]'} text-primary`}
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              star
-            </span>
-            <span
-              className={`font-label ${compact ? 'text-[8px] md:text-[9px]' : 'text-[9px] md:text-[10px]'} text-black/60 font-bold`}
-            >
-              {rating}
-            </span>
+            <DynamicRatingBadge
+              itemId={productId}
+              itemType={itemType}
+              initialRating={rating}
+              initialReviews={reviews}
+              compact={compact}
+            />
           </div>
         </div>
 
         <Link
           to={getProductRoute(itemType, productId)}
-          className={`group/link block ${compact ? 'mb-0.5' : 'mb-1 md:mb-1.5'}`}
+          className={`group/link block ${compact ? 'mb-0.5' : 'mb-1 lg:mb-1.5'}`}
         >
           <h3
             className={`text-black group-hover/link:text-primary transition-colors leading-tight font-medium line-clamp-1 ${
               compact
-                ? 'font-body text-[12px] md:text-[13px]'
-                : 'font-display text-[13px] md:text-[15px]'
+                ? 'font-body text-[12px] lg:text-[13px]'
+                : 'font-display text-[13px] lg:text-[15px]'
             }`}
             style={compact ? { fontFamily: 'var(--font-body)' } : undefined}
           >
@@ -560,7 +620,7 @@ export const ProductCard = React.memo(function ProductCard({
         <div className="mt-auto flex flex-col justify-end">
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span
-              className={`font-display lining-nums font-bold text-black leading-none ${compact ? 'text-[13px] md:text-[14px]' : 'text-[14px] md:text-[17px]'}`}
+              className={`font-display lining-nums font-bold text-black leading-none ${compact ? 'text-[13px] lg:text-[14px]' : 'text-[14px] lg:text-[17px]'}`}
             >
               {'Rs. '}
               {formatPrice(
@@ -580,30 +640,31 @@ export const ProductCard = React.memo(function ProductCard({
               )}
               {(isRental || itemType === 'event') && (
                 <span
-                  className={`font-label text-black/40 ml-0.5 normal-case font-bold ${compact ? 'text-[8px] md:text-[9px]' : 'text-[9px] md:text-[10px]'}`}
+                  className={`font-label text-black/40 ml-0.5 normal-case font-bold ${compact ? 'text-[8px] lg:text-[9px]' : 'text-[9px] lg:text-[10px]'}`}
                 >
                   / day
                 </span>
               )}
             </span>
-            {itemType !== 'event' && !isRental && numericOldPrice > numericPrice && canPurchase && (
-              <span
-                className={`font-display lining-nums text-black/40 line-through ${compact ? 'text-[9px] md:text-[10px]' : 'text-[10px] md:text-[11px]'}`}
-              >
-                Rs. {formatPrice(numericOldPrice)}
-              </span>
-            )}
+            {((itemType !== 'event' && !isRental && canPurchase) || itemType === 'event') &&
+              numericOldPrice > numericPrice && (
+                <span
+                  className={`font-display lining-nums text-black/40 line-through ${compact ? 'text-[9px] lg:text-[10px]' : 'text-[10px] lg:text-[11px]'}`}
+                >
+                  Rs. {formatPrice(numericOldPrice)}
+                </span>
+              )}
           </div>
           {itemType !== 'event' && isRental && (
             <span
-              className={`text-black/50 font-bold uppercase tracking-widest mt-0.5 ${compact ? 'text-[8px]' : 'text-[9px] md:text-[10px]'}`}
+              className={`text-black/50 font-bold uppercase tracking-widest mt-0.5 ${compact ? 'text-[8px]' : 'text-[9px] lg:text-[10px]'}`}
             >
               Rental Price (Deposit: Rs. {formatPrice(resolvedDeposit)})
             </span>
           )}
           {itemType !== 'event' && !isRental && canRent && !canPurchase && (
             <span
-              className={`text-black/50 font-bold uppercase tracking-widest mt-0.5 ${compact ? 'text-[8px]' : 'text-[9px] md:text-[10px]'}`}
+              className={`text-black/50 font-bold uppercase tracking-widest mt-0.5 ${compact ? 'text-[8px]' : 'text-[9px] lg:text-[10px]'}`}
             >
               Rental Price
             </span>

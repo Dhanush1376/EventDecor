@@ -253,6 +253,7 @@ export function AdminAnalytics() {
     ordersChangeStr,
     ordersChangeType,
     sparklineOrders,
+    sparklineCustomers,
   } = useMemo(() => {
     const defaultRes = {
       revenueChangeStr: '0%',
@@ -261,11 +262,16 @@ export function AdminAnalytics() {
       ordersChangeStr: '0%',
       ordersChangeType: 'neutral',
       sparklineOrders: 'M0,15 L100,15',
+      sparklineCustomers: 'M0,15 L100,15',
     };
     if (!stats.monthlyRevenue || stats.monthlyRevenue.length === 0) return defaultRes;
 
     // Backend returns descending by date, so [0] is newest, [1] is previous
     const monthlyAscending = [...stats.monthlyRevenue].reverse(); // oldest to newest for sparkline
+    const customersAscending =
+      stats.monthlyCustomers && stats.monthlyCustomers.length > 0
+        ? [...stats.monthlyCustomers].reverse()
+        : [];
 
     const newest = stats.monthlyRevenue[0] || { revenue: 0, orders: 0 };
     const previous = stats.monthlyRevenue[1] || { revenue: 0, orders: 0 };
@@ -290,6 +296,10 @@ export function AdminAnalytics() {
       ordersChangeStr: ordChange.str,
       ordersChangeType: ordChange.type,
       sparklineOrders: generateSparklinePath(monthlyAscending.map((m) => m.orders)),
+      sparklineCustomers:
+        customersAscending.length > 0
+          ? generateSparklinePath(customersAscending.map((m) => m.customers))
+          : 'M0,15 L100,15',
     };
   }, [stats]);
 
@@ -301,8 +311,7 @@ export function AdminAnalytics() {
     );
   }
 
-  // Use flat sparkline proxy for customers / pending orders since we lack historical data
-  const sparklineCustomers = 'M0,15 L100,15';
+  // Use flat sparkline proxy for pending orders since we lack historical pending data
   const sparklinePending = 'M0,15 L100,15';
 
   return (
@@ -368,7 +377,7 @@ export function AdminAnalytics() {
           icon="group"
           label="Active Customers"
           value={stats.stats?.totalCustomers || stats.totalCustomers || 0}
-          change={null} // Historical data for customers not available
+          change={null}
           changeType="neutral"
           color="#10b981"
           sparklineData={sparklineCustomers}

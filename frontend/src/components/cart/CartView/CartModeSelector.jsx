@@ -8,7 +8,7 @@ export const CartModeSelector = ({
   rentalCartCount,
 }) => {
   return (
-    <div className="w-full bg-surface-bright border-b border-outline-variant/30 py-2 md:py-2.5 flex justify-center px-4">
+    <div className="w-full bg-surface-bright border-b border-outline-variant/30 py-2 lg:py-2.5 flex justify-center px-4">
       <div className="w-full bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 p-1.5 rounded-full flex gap-1 items-center relative z-0 shadow-inner">
         {/* Purchase Cart Tab */}
         <button

@@ -69,18 +69,18 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
     >
       <MandalaElement
         variant={1}
-        className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 text-primary opacity-5 md:opacity-10 pointer-events-none"
+        className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 text-primary opacity-5 lg:opacity-10 pointer-events-none"
       />
       <MandalaElement
         variant={2}
-        className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 text-primary opacity-5 md:opacity-10 pointer-events-none"
+        className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 text-primary opacity-5 lg:opacity-10 pointer-events-none"
       />
       <SEO title={policy.title} description={`Read our ${policy.title} at Siri Arts & Crafts.`} />
 
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 relative z-10">
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 lg:px-12 relative z-10">
         {/* Help Center Header */}
-        <div className="mb-12 md:mb-20 text-center md:text-left">
-          <nav className="text-[10px] uppercase font-bold text-on-surface-variant tracking-[0.2em] mb-6 flex items-center justify-center md:justify-start gap-3">
+        <div className="mb-12 lg:mb-20 text-center lg:text-left">
+          <nav className="text-[10px] uppercase font-bold text-on-surface-variant tracking-[0.2em] mb-6 flex items-center justify-center lg:justify-start gap-3">
             <Link to="/" className="hover:text-primary transition-colors">
               Home
             </Link>
@@ -89,7 +89,7 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
             <span className="w-1 h-1 rounded-full bg-outline-variant/50"></span>
             <span className="text-on-surface">{defaultTitle || policy?.title || 'Policy'}</span>
           </nav>
-          <h2 className="text-2xl md:text-3xl font-body font-semibold text-on-surface mb-4">
+          <h2 className="text-2xl lg:text-3xl font-body font-semibold text-on-surface mb-4">
             {isLoading ? <Skeleton className="h-10 w-64" /> : policy.title}
           </h2>
           <div className="text-[12px] text-on-surface-variant uppercase tracking-widest font-medium">

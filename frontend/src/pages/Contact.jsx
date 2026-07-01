@@ -83,29 +83,37 @@ export function Contact() {
   const contactMethods = [
     {
       title: 'Studio Address',
-      value:
-        settings?.contact?.address || contact?.address || '#28-1-92, South Street, ONGOLE-523001',
+      value: contact?.address || '#28-1-92, South Street, ONGOLE-523001',
       icon: 'location_on',
-      link: 'https://www.google.com/maps/place/Siri+Arts+%26+Crafts/@15.5024512,80.0450481,17z/data=!3m1!4b1!4m6!3m5!1s0x3a4b01495510d675:0xe98014cae349dbea!8m2!3d15.502446!4d80.047623!16s%2Fg%2F11scb6jg5_?entry=ttu&g_ep=EgoyMDI2MDYyNC4wIKXMDSoASAFQAw%3D%3D',
+      link:
+        contact?.mapEmbed ||
+        'https://www.google.com/maps/place/Siri+Arts+%26+Crafts/@15.5024512,80.0450481,17z/data=!3m1!4b1!4m6!3m5!1s0x3a4b01495510d675:0xe98014cae349dbea!8m2!3d15.502446!4d80.047623!16s%2Fg%2F11scb6jg5_',
+      target: '_blank',
+    },
+    {
+      title: 'WhatsApp Us',
+      value: contact?.phone || '+91 98660 06648',
+      icon: 'forum',
+      link: contact?.whatsapp || 'https://wa.me/919866006648',
       target: '_blank',
     },
     {
       title: 'Email Us',
-      value: settings?.contact?.email || contact?.email || 'support@siriartsandcrafts.com',
+      value: contact?.email || 'Sirisha.atmakuri@gmail.com',
       icon: 'mail',
-      link: `mailto:${settings?.contact?.email || contact?.email || 'support@siriartsandcrafts.com'}`,
+      link: `mailto:${contact?.email || 'Sirisha.atmakuri@gmail.com'}`,
       target: '_self',
     },
     {
       title: 'Call Us',
-      value: settings?.contact?.phone || contact?.phone || '+91 9999999999',
+      value: contact?.phone || '+91 98660 06648',
       icon: 'phone',
-      link: `tel:${settings?.contact?.phone || contact?.phone || '+91 9999999999'}`,
+      link: `tel:${contact?.phone || '+91 98660 06648'}`,
       target: '_self',
     },
     {
       title: 'Support Hours',
-      value: settings?.contact?.supportHours || 'Mon - Sat, 10 AM to 6 PM',
+      value: contact?.businessHours || 'Mon - Sat: 10 AM - 7 PM',
       icon: 'schedule',
       link: '#',
       target: '_self',
@@ -115,7 +123,7 @@ export function Contact() {
   if (loading || settingsLoading) return <ContactSkeleton />;
 
   return (
-    <div className="bg-[var(--color-surface-ivory)] min-h-screen pt-24 md:pt-32 pb-20 relative overflow-hidden selection:bg-primary/20">
+    <div className="bg-[var(--color-surface-ivory)] min-h-screen pt-24 lg:pt-32 pb-20 relative overflow-hidden selection:bg-primary/20">
       <SEO
         title="Contact Us | Siri Arts"
         description="Connect with our design studio for bespoke heritage decor consultations and curated event masteries."
@@ -134,7 +142,7 @@ export function Contact() {
         duration={200}
       />
 
-      <main className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
+      <main className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start pt-4">
           {/* Left Side: Modern Editorial Content & Leaflet Map */}
           <div className="flex flex-col justify-center lg:sticky lg:top-32 lg:pb-32">
@@ -190,13 +198,16 @@ export function Contact() {
             </div>
 
             <motion.a
-              href="https://www.google.com/maps/place/Siri+Arts+%26+Crafts/@15.5024512,80.0450481,17z/data=!3m1!4b1!4m6!3m5!1s0x3a4b01495510d675:0xe98014cae349dbea!8m2!3d15.502446!4d80.047623!16s%2Fg%2F11scb6jg5_?entry=ttu&g_ep=EgoyMDI2MDYyNC4wIKXMDSoASAFQAw%3D%3D"
+              href={
+                contact?.mapEmbed ||
+                'https://www.google.com/maps/place/Siri+Arts+%26+Crafts/@15.5024512,80.0450481,17z/data=!3m1!4b1!4m6!3m5!1s0x3a4b01495510d675:0xe98014cae349dbea!8m2!3d15.502446!4d80.047623!16s%2Fg%2F11scb6jg5_'
+              }
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: DURATION.slow, ease: EASE.smooth }}
-              className="h-48 md:h-72 w-full max-w-md rounded-[24px] overflow-hidden shadow-sm border border-outline-variant/20 bg-white block relative group cursor-pointer"
+              className="h-48 lg:h-72 w-full max-w-md rounded-[24px] overflow-hidden shadow-sm border border-outline-variant/20 bg-white block relative group cursor-pointer"
             >
               {/* Invisible overlay to block map interactions and capture clicks */}
               <div className="absolute inset-0 z-[1000] bg-transparent" />
@@ -397,7 +408,7 @@ export function Contact() {
                 <button
                   type="submit"
                   disabled={formState === 'sending'}
-                  className="btn-primary w-full md:w-auto px-8 py-3 rounded-full font-bold uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 group cursor-pointer"
+                  className="btn-primary w-full lg:w-auto px-8 py-3 rounded-full font-bold uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 group cursor-pointer"
                 >
                   {formState === 'sending' ? (
                     <>

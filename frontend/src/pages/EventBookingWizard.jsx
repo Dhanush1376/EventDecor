@@ -363,7 +363,7 @@ export function EventBookingWizard() {
   );
 
   return (
-    <div className="bg-[#fcfbf9] min-h-screen text-on-surface pt-20 md:pt-32 pb-24 relative overflow-hidden font-body">
+    <div className="bg-[#fcfbf9] min-h-screen text-on-surface pt-20 lg:pt-32 pb-24 relative overflow-hidden font-body">
       <SEO
         title="Luxury Event Decor Booking | Guided Studio Wizard"
         description="Configure and blueprint your milestone ceremonies with our guided luxury booking wizard."
@@ -384,20 +384,20 @@ export function EventBookingWizard() {
 
       <div className="max-w-[1000px] mx-auto px-4 relative z-10">
         {/* Editorial Heading */}
-        <div className="text-center mb-10 md:mb-16">
-          <span className="font-label text-[10px] md:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block mb-3">
+        <div className="text-center mb-10 lg:mb-16">
+          <span className="font-label text-[10px] lg:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block mb-3">
             SIRI CREATIVE STUDIO
           </span>
-          <h2 className="font-display text-[28px] md:text-[54px] text-black font-light tracking-tight leading-tight">
+          <h2 className="font-display text-[28px] lg:text-[54px] text-black font-light tracking-tight leading-tight">
             Design Your Celebration.
           </h2>
-          <p className="font-body text-black/50 text-[13px] md:text-[15px] max-w-xl mx-auto mt-3 font-light">
+          <p className="font-body text-black/50 text-[13px] lg:text-[15px] max-w-xl mx-auto mt-3 font-light">
             A premium guided easy step-by-step event planner to map venue dimensions, customized
             color palettes, and rental inventories.
           </p>
 
           {/* Stepper Progress Bar */}
-          <div className="flex items-center justify-center gap-2 mt-8 md:mt-12 max-w-md mx-auto">
+          <div className="flex items-center justify-center gap-2 mt-8 lg:mt-12 max-w-md mx-auto">
             {[1, 2, 3, 4, 5, 6].map((step) => (
               <React.Fragment key={step}>
                 <div
@@ -425,7 +425,7 @@ export function EventBookingWizard() {
         </div>
 
         {/* Wizard Main Panel */}
-        <div className="bg-white rounded-[24px] md:rounded-[40px] border border-black/5 shadow-2xl p-6 md:p-12 min-h-[480px] flex flex-col justify-between">
+        <div className="bg-white rounded-[24px] lg:rounded-[40px] border border-black/5 shadow-2xl p-6 lg:p-12 min-h-[480px] flex flex-col justify-between">
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
               <OccasionStep

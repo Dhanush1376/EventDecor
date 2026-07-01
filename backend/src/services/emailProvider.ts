@@ -21,6 +21,12 @@
  */
 
 import logger from '../config/logger';
+import dns from 'dns';
+
+// Force Node.js >= 17 to prefer IPv4 first (fixes ENETUNREACH on IPv6 to Gmail SMTP)
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 export interface EmailPayload {
   to: string;
@@ -101,6 +107,9 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
       port: smtpPort,
       secure: smtpPort === 465,
       auth: { user: smtpUser, pass: smtpPass },
+      tls: { rejectUnauthorized: false }, // Helps with some local firewall setups
+      // Force IPv4 to prevent ENETUNREACH issues when IPv6 is broken locally
+      family: 4,
     });
   }
 

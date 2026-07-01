@@ -1,48 +1,65 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { couponService } from '../services/domainServices';
 import logger from '../utils/core/logger';
 import { useActiveCoupons } from './useActiveCoupons';
 
 export function useAutoApplyCoupon({ claimedCoupon, subtotal, setAppliedCoupon, isAuthenticated }) {
-  const { data: activeCoupons = [] } = useActiveCoupons();
+  const { data: activeCoupons } = useActiveCoupons();
+  const lastAttempt = useRef({ coupon: null, subtotal: 0, status: 'idle' });
 
   useEffect(() => {
     if (!isAuthenticated || subtotal === 0) {
       setAppliedCoupon(null);
+      lastAttempt.current = { coupon: null, subtotal: 0, status: 'idle' };
       return;
     }
 
-    const applyCouponLogic = async () => {
-      try {
-        // Priority 1: User explicitly claimed a coupon
-        if (claimedCoupon) {
-          const res = await couponService.apply(claimedCoupon, subtotal);
-          if (res.success) {
-            setAppliedCoupon(res.data);
-            return;
-          }
-        }
+    const safeActiveCoupons = activeCoupons || [];
 
+    const applyCouponLogic = async () => {
+      let targetCoupon = null;
+
+      // Priority 1: User explicitly claimed a coupon
+      if (claimedCoupon) {
+        targetCoupon = claimedCoupon;
+      } else {
         // Priority 2: System Auto-Apply Coupons
-        const autoCoupons = activeCoupons.filter(
+        const autoCoupons = safeActiveCoupons.filter(
           (c) => c.isAutoApply && c.minOrderAmount <= subtotal,
         );
         if (autoCoupons.length > 0) {
-          // Sort by max discount value logic (approximation: largest minOrderAmount first)
           autoCoupons.sort((a, b) => (b.minOrderAmount || 0) - (a.minOrderAmount || 0));
-          const bestCoupon = autoCoupons[0];
-
-          const res = await couponService.apply(bestCoupon.code, subtotal);
-          if (res.success) {
-            setAppliedCoupon(res.data);
-            return;
-          }
+          targetCoupon = autoCoupons[0].code;
         }
+      }
 
-        // If no coupon could be applied
+      if (!targetCoupon) {
         setAppliedCoupon(null);
+        return;
+      }
+
+      // Prevent infinite loop if we just tried this exact coupon and subtotal and it failed
+      if (
+        lastAttempt.current.coupon === targetCoupon &&
+        lastAttempt.current.subtotal === subtotal &&
+        lastAttempt.current.status === 'failed'
+      ) {
+        return;
+      }
+
+      try {
+        lastAttempt.current = { coupon: targetCoupon, subtotal, status: 'pending' };
+        const res = await couponService.apply(targetCoupon, subtotal);
+        if (res.success) {
+          lastAttempt.current.status = 'success';
+          setAppliedCoupon(res.data);
+        } else {
+          lastAttempt.current.status = 'failed';
+          setAppliedCoupon(null);
+        }
       } catch (err) {
         logger.error('[CartProvider] Failed to auto-apply coupon:', err);
+        lastAttempt.current.status = 'failed';
         setAppliedCoupon(null);
       }
     };

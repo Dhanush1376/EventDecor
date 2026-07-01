@@ -43,7 +43,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
       className={
         isEmbedded
           ? 'text-on-surface font-body'
-          : 'bg-[#fbf9f6] min-h-screen text-on-surface pt-20 md:pt-32 pb-24 relative overflow-hidden font-body'
+          : 'bg-[#fbf9f6] min-h-screen text-on-surface pt-20 lg:pt-32 pb-24 relative overflow-hidden font-body'
       }
     >
       {!isEmbedded && (
@@ -63,18 +63,18 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
 
       <div className={isEmbedded ? '' : 'max-w-[1300px] mx-auto px-4 relative z-10'}>
         {!isEmbedded && (
-          <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-black/5 pb-6">
+          <div className="mb-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-black/5 pb-6">
             <div className="space-y-1">
               <span className="text-[10px] uppercase tracking-[0.3em] text-secondary font-bold block">
                 Portfolio Studio
               </span>
-              <h2 className="font-bold text-[32px] md:text-[40px] text-on-surface tracking-tight leading-none">
+              <h2 className="font-bold text-[32px] lg:text-[40px] text-on-surface tracking-tight leading-none">
                 My Event Design Center.
               </h2>
             </div>
             <Link
               to="/events"
-              className="bg-[#2A2927] hover:bg-black text-white px-6 py-3 rounded-[32px] font-bold text-[9px] uppercase tracking-widest transition-all self-start md:self-auto flex items-center gap-2 shadow-lg"
+              className="bg-[#2A2927] hover:bg-black text-white px-6 py-3 rounded-[32px] font-bold text-[9px] uppercase tracking-widest transition-all self-start lg:self-auto flex items-center gap-2 shadow-lg"
             >
               BROWSE EVENTS & SETUPS
               <span className="material-symbols-outlined text-[14px]">add</span>
@@ -117,7 +117,7 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
             <div className="flex justify-center mt-6">
               <Link
                 to="/events"
-                className="group flex items-center gap-2 text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70"
+                className="group flex items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70"
               >
                 Browse Events & Setups
                 <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">

@@ -78,7 +78,7 @@ export function MobilePolicyNav() {
 
   return (
     <div className="lg:hidden mb-12 overflow-x-auto no-scrollbar border-b border-outline-variant/30">
-      <div className="flex px-4 md:px-0 min-w-max">
+      <div className="flex px-4 lg:px-0 min-w-max">
         {isLoading ? (
           <div className="flex gap-4 px-4">
             <Skeleton className="h-8 w-24" />

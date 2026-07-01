@@ -11,7 +11,9 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  PeriodSelector,
 } from '../components/AdminUIKit';
+import { isWithinPeriod } from '../utils/dateFilters';
 
 const slideDrawer = {
   hidden: { x: '100%', opacity: 0 },
@@ -34,6 +36,7 @@ export function AdminRentalOrders() {
   const [dataLoading, setDataLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [dateFilter, setDateFilter] = useState('All Time');
 
   const [selectedRental, setSelectedRental] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -90,6 +93,29 @@ export function AdminRentalOrders() {
     return counts;
   }, [rentals]);
 
+  const rentalStats = useMemo(() => {
+    let totalVolume = 0;
+    let depositsHeld = 0;
+    let depositsRefunded = 0;
+    let activeRentals = 0;
+
+    rentals.forEach((r) => {
+      if (!isWithinPeriod(r.createdAt || r.rentalStartDate, dateFilter)) return;
+
+      totalVolume += r.totalAmount || 0;
+      if (r.depositStatus === 'refunded') {
+        depositsRefunded += r.securityDeposit || 0;
+      } else if (r.status !== 'cancelled') {
+        depositsHeld += r.securityDeposit || 0;
+      }
+      if (r.status === 'active_rental' || r.status === 'late_return') {
+        activeRentals++;
+      }
+    });
+
+    return { totalVolume, depositsHeld, depositsRefunded, activeRentals };
+  }, [rentals, dateFilter]);
+
   const openRentalDrawer = (rental) => {
     setSelectedRental(rental);
     setIsDrawerOpen(true);
@@ -145,6 +171,66 @@ export function AdminRentalOrders() {
           <span className="material-symbols-outlined text-[24px]">download</span>
         </button>
       </PageHeader>
+
+      <div className="flex w-full mt-[-8px]">
+        <PeriodSelector
+          value={dateFilter}
+          onChange={setDateFilter}
+          periods={['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year']}
+        />
+      </div>
+
+      {/* Real-time Rental Financial & Operations Ledger */}
+      <motion.div variants={fadeUp} className="admin-card overflow-hidden text-left relative p-0">
+        <div className="absolute top-0 left-0 w-full h-[3px] bg-[var(--admin-border-strong)] z-10" />
+        <div className="grid grid-cols-2 md:grid-cols-4 bg-[var(--admin-surface)]">
+          <div className="p-5 space-y-1 border-r border-b md:border-b-0 border-[var(--admin-border-subtle)]">
+            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
+              Total Rental Volume
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+              {formatCurrency(rentalStats.totalVolume)}
+            </p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
+              Gross rental value
+            </span>
+          </div>
+          <div className="p-5 space-y-1 border-b md:border-b-0 md:border-r border-[var(--admin-border-subtle)]">
+            <span className="text-[10px] text-[var(--admin-warning)] font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[var(--admin-warning)] animate-pulse" />
+              Deposits Held
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+              {formatCurrency(rentalStats.depositsHeld)}
+            </p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
+              Awaiting return/inspection
+            </span>
+          </div>
+          <div className="p-5 space-y-1 border-r border-[var(--admin-border-subtle)]">
+            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
+              Active Rentals
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-info)]">
+              {rentalStats.activeRentals}
+            </p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
+              Currently with customers
+            </span>
+          </div>
+          <div className="p-5 space-y-1 bg-[var(--admin-success-light)] border-l-0">
+            <span className="text-[10px] text-[var(--admin-success)] font-bold uppercase tracking-wider">
+              Deposits Refunded
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-success)]">
+              {formatCurrency(rentalStats.depositsRefunded)}
+            </p>
+            <span className="text-[10px] text-[var(--admin-success)] opacity-80 mt-1 block">
+              Successfully returned
+            </span>
+          </div>
+        </div>
+      </motion.div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="w-full sm:max-w-md">

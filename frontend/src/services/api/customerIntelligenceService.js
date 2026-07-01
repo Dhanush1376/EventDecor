@@ -65,39 +65,4 @@ export const customerIntelligenceService = {
     );
     return response.data;
   },
-
-  getSearchDashboard: async (params = {}) => {
-    const response = await api.get('/customer-intelligence/search', { params });
-    return response.data.data;
-  },
-
-  getSearchIntents: async (params = {}) => {
-    const response = await api.get('/customer-intelligence/search/intents', { params });
-    return response.data.data;
-  },
-
-  getProductAffinities: async (productId) => {
-    const response = await api.get(`/customer-intelligence/products/${productId}/affinity`);
-    return response.data.data;
-  },
-
-  getFunnel: async (params = {}) => {
-    const response = await api.get('/customer-intelligence/funnel', { params });
-    return response.data.data;
-  },
-
-  getAttribution: async (params = {}) => {
-    const response = await api.get('/customer-intelligence/attribution', { params });
-    return response.data.data;
-  },
-
-  getRecommendations: async (params = {}) => {
-    const response = await api.get('/customer-intelligence/recommendations', { params });
-    return response.data.data;
-  },
-
-  getCohorts: async (params = {}) => {
-    const response = await api.get('/customer-intelligence/cohorts', { params });
-    return response.data.data;
-  },
 };

@@ -2,7 +2,12 @@ import { m as motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { SkeletonDashboard, fadeUp, formatCurrency } from '../../../components/AdminUIKit';
 
-export function ShowcasesTab({ showcases, loadingShowcases, handleDeleteShowcase }) {
+export function ShowcasesTab({
+  showcases,
+  loadingShowcases,
+  handleDeleteShowcase,
+  toggleShowcaseFeatured,
+}) {
   const navigate = useNavigate();
 
   return (
@@ -55,6 +60,22 @@ export function ShowcasesTab({ showcases, loadingShowcases, handleDeleteShowcase
                     className="admin-btn admin-btn-outline flex-1 min-h-[32px] h-8 text-[11px] px-0"
                   >
                     <span className="material-symbols-outlined text-[14px]">edit</span> Edit
+                  </button>
+                  <button
+                    onClick={() => toggleShowcaseFeatured(sc._id || sc.id, sc.featured)}
+                    title={sc.featured ? 'Remove from Featured' : 'Mark as Featured'}
+                    className={`admin-btn-icon w-8 h-8 min-h-0 border-none ${
+                      sc.featured
+                        ? 'bg-[var(--admin-warning-light)] text-[var(--admin-warning)] hover:bg-[var(--admin-warning)] hover:text-white'
+                        : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-warning)]'
+                    }`}
+                  >
+                    <span
+                      className="material-symbols-outlined text-[14px]"
+                      style={{ fontVariationSettings: sc.featured ? "'FILL' 1" : "'FILL' 0" }}
+                    >
+                      star
+                    </span>
                   </button>
                   <button
                     onClick={() => handleDeleteShowcase(sc._id || sc.id)}

@@ -418,3 +418,33 @@ export const getEnterpriseAnalytics = asyncHandler(async (req: Request, res: Res
     },
   });
 });
+
+/**
+ * @desc    Get fraud metrics
+ * @route   GET /api/v1/returns/admin/fraud/metrics
+ * @access  Admin
+ */
+export const getFraudMetrics = asyncHandler(async (req: Request, res: Response) => {
+  const data = await FraudDetectionService.getFraudMetrics();
+  res.status(200).json({ success: true, data });
+});
+
+/**
+ * @desc    Get exchange stats
+ * @route   GET /api/v1/returns/admin/exchange-stats
+ * @access  Admin
+ */
+export const getExchangeStats = asyncHandler(async (req: Request, res: Response) => {
+  const data = await ReturnAnalyticsService.getExchangeStats();
+  res.status(200).json({ success: true, data });
+});
+
+/**
+ * @desc    Get pickup stats
+ * @route   GET /api/v1/returns/admin/pickup-stats
+ * @access  Admin
+ */
+export const getPickupStats = asyncHandler(async (req: Request, res: Response) => {
+  const data = await ReturnAnalyticsService.getPickupStats();
+  res.status(200).json({ success: true, data });
+});

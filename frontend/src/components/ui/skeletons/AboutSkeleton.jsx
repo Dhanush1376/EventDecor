@@ -5,8 +5,8 @@ export function AboutSkeleton() {
   return (
     <div className="bg-surface min-h-screen">
       {/* Hero */}
-      <Skeleton className="w-full h-[60vh] md:h-[80vh] !rounded-none" />
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-20">
+      <Skeleton className="w-full h-[60vh] lg:h-[80vh] !rounded-none" />
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div className="space-y-6">
             <Skeleton className="h-6 w-32" />

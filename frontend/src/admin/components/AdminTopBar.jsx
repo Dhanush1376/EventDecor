@@ -131,65 +131,35 @@ export function AdminTopBar() {
           </div>
 
           {/* Search Trigger — Desktop */}
-          <button
-            onClick={() => setSearchPaletteOpen(true)}
-            className="hidden md:flex items-center gap-2.5 flex-1 min-w-0 max-w-[240px] xl:max-w-[380px] px-3 py-2 rounded-[var(--admin-radius-lg)] cursor-pointer transition-all duration-150 text-left min-h-0 group"
-            style={{
-              background: 'var(--admin-bg-subtle)',
-              border: '1px solid var(--admin-border-subtle)',
-            }}
-          >
-            <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-tertiary)] shrink-0">
-              search
-            </span>
-            <span className="text-[12px] text-[var(--admin-text-placeholder)] font-normal flex-1 min-w-0 truncate group-hover:text-[var(--admin-text-tertiary)] transition-colors">
-              Search products, orders, customers...
-            </span>
-            <div className="hidden lg:flex items-center gap-1 ml-auto shrink-0 select-none">
-              <kbd
-                className="px-1.5 py-0.5 rounded-[var(--admin-radius-sm)] text-[9px] font-semibold text-[var(--admin-text-tertiary)]"
-                style={{
-                  background: 'var(--admin-surface)',
-                  border: '1px solid var(--admin-border)',
-                }}
-              >
-                ⌘
-              </kbd>
-              <kbd
-                className="px-1.5 py-0.5 rounded-[var(--admin-radius-sm)] text-[9px] font-semibold text-[var(--admin-text-tertiary)]"
-                style={{
-                  background: 'var(--admin-surface)',
-                  border: '1px solid var(--admin-border)',
-                }}
-              >
-                K
-              </kbd>
-            </div>
-          </button>
-
-          {/* Search Trigger — Mobile */}
-          <button
-            onClick={() => setSearchPaletteOpen(true)}
-            className="md:hidden admin-btn-icon min-h-0 p-2"
-            title="Search"
-          >
-            <span className="material-symbols-outlined text-[18px]">search</span>
-          </button>
-        </div>
-
-        {/* Right: Actions */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Auto-Publish Toggle — Desktop */}
           <div
-            className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-[var(--admin-radius-full)] select-none"
+            onClick={() => setSearchPaletteOpen(true)}
+            className="hidden md:flex items-center gap-3 h-[38px] px-3.5 rounded-[var(--admin-radius-full)] cursor-pointer transition-colors hover:border-[var(--admin-border)] select-none ml-2 w-full max-w-[360px]"
             style={{
               background: 'var(--admin-surface-muted)',
               border: '1px solid var(--admin-border-subtle)',
             }}
           >
-            <span className="material-symbols-outlined text-[13px] text-[var(--admin-text-tertiary)]">
-              {autoPublish ? 'bolt' : 'sync_disabled'}
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)] font-light">
+              search
             </span>
+            <span className="text-[13px] text-[var(--admin-text-secondary)] flex-1 truncate font-medium">
+              Search products, orders, customers...
+            </span>
+            <div className="flex items-center gap-1.5">
+              <kbd className="w-[22px] h-[22px] flex items-center justify-center bg-white rounded shadow-sm text-[12px] font-sans text-[var(--admin-text-primary)] border border-black/5 font-semibold">
+                ⌘
+              </kbd>
+              <kbd className="w-[22px] h-[22px] flex items-center justify-center bg-white rounded shadow-sm text-[11px] font-sans text-[var(--admin-text-primary)] border border-black/5 font-semibold">
+                K
+              </kbd>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Auto-Publish Toggle — Desktop */}
+          <div className="hidden xl:flex items-center gap-2 px-1 py-1.5 select-none">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-text-secondary)]">
               Auto-Publish
             </span>
@@ -199,29 +169,6 @@ export function AdminTopBar() {
               size="sm"
               aria-label="Toggle Auto-Publish"
             />
-          </div>
-
-          {/* Role Badge — Desktop */}
-          <div
-            className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--admin-radius-full)] select-none"
-            title="Simulating Portal Access Level"
-            style={{
-              background: 'var(--admin-accent-light)',
-              border: '1px solid rgba(99,102,241,0.15)',
-            }}
-          >
-            <span className="material-symbols-outlined text-[13px] text-[var(--admin-accent)]">
-              {activeRole === 'owner'
-                ? 'workspace_premium'
-                : activeRole === 'manager'
-                  ? 'shield_person'
-                  : activeRole === 'editor'
-                    ? 'edit_square'
-                    : 'visibility'}
-            </span>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-accent-text)] capitalize">
-              {activeRole}
-            </span>
           </div>
 
           {/* Notifications */}

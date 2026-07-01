@@ -22,6 +22,7 @@ export function AdminCreateCoupon() {
     currentStep,
     setCurrentStep,
     products,
+    availableCategories,
     formData,
     setFormData,
     draftStatus,
@@ -75,7 +76,12 @@ export function AdminCreateCoupon() {
             <MetadataStep formData={formData} setFormData={setFormData} isEdit={isEdit} />
           )}
           {currentStep === 1 && (
-            <TargetingStep formData={formData} setFormData={setFormData} products={products} />
+            <TargetingStep
+              formData={formData}
+              setFormData={setFormData}
+              products={products}
+              availableCategories={availableCategories}
+            />
           )}
           {currentStep === 2 && <ControlsStep formData={formData} setFormData={setFormData} />}
           {currentStep === 3 && <PublishStep formData={formData} setFormData={setFormData} />}

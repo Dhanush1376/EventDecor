@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { analyticsService, cmsService } from '../../services/domainServices';
+import { cmsService } from '../../services/domainServices';
+import storeSettingsService from '../../services/api/storeSettingsService';
+import { analyticsService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import logger from '../../utils/core/logger';
@@ -84,7 +86,7 @@ export function useAdminSecurity() {
     const next = !maintenanceMode;
     setMaintenanceMode(next);
     try {
-      await cmsService.updateSection('admin_maintenance_mode', { maintenanceMode: next });
+      await storeSettingsService.updateSection('general', { maintenanceMode: next });
       logAdminAction('TOGGLE_MAINTENANCE', `Global storefront maintenance mode set to ${next}`);
       toast.success(`Maintenance mode is now ${next ? 'ENABLED' : 'DISABLED'}`);
     } catch (err) {

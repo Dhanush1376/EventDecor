@@ -48,7 +48,7 @@ const Checkbox = ({ label, count, type, currentFilters, onToggleFilter }) => {
           </span>
         </div>
         <span
-          className={`font-body text-[14px] md:text-[15px] transition-colors ${isChecked ? 'text-primary font-semibold' : 'text-on-surface/60 group-hover:text-on-surface'}`}
+          className={`font-body text-[14px] lg:text-[15px] transition-colors ${isChecked ? 'text-primary font-semibold' : 'text-on-surface/60 group-hover:text-on-surface'}`}
         >
           {label}
         </span>
@@ -62,6 +62,7 @@ export function FilterPanel({
   filterGroups = [],
   currentFilters,
   onToggleFilter,
+  onSetFilterValue,
   onClearAll,
   className = '',
   isOpen,
@@ -197,7 +198,7 @@ export function FilterPanel({
               className={`w-full flex items-center justify-between py-0.5 min-h-0 group ${sortBy === opt.value ? 'text-primary' : 'text-on-surface/60'}`}
             >
               <span
-                className={`font-body text-[14px] md:text-[15px] transition-colors ${sortBy === opt.value ? 'font-semibold' : 'group-hover:text-on-surface'}`}
+                className={`font-body text-[14px] lg:text-[15px] transition-colors ${sortBy === opt.value ? 'font-semibold' : 'group-hover:text-on-surface'}`}
               >
                 {opt.label}
               </span>
@@ -227,6 +228,62 @@ export function FilterPanel({
               });
 
               const finalOptions = Array.from(finalOptionsMap.values());
+
+              if (group.id === 'priceRange') {
+                let maxPossible = 0;
+                finalOptions.forEach((opt) => {
+                  const parts = opt.value.split('-');
+                  const maxVal = parts[1] ? parseInt(parts[1], 10) : 0;
+                  if (maxVal > maxPossible) maxPossible = maxVal;
+                });
+                if (maxPossible === 0) maxPossible = 100000;
+
+                const selectedValues = currentFilters[group.id] || [];
+                let currentMax = maxPossible;
+                if (selectedValues.length > 0) {
+                  const parts = selectedValues[0].split('-');
+                  if (parts[1]) currentMax = parseInt(parts[1], 10);
+                }
+
+                return (
+                  <FilterSection
+                    key={group.id}
+                    title={group.label}
+                    id={group.id}
+                    activeSections={activeSections}
+                    onToggle={toggleSection}
+                  >
+                    <div className="px-2 pt-4 pb-2">
+                      <input
+                        type="range"
+                        min="0"
+                        max={maxPossible}
+                        step="500"
+                        value={currentMax}
+                        onChange={(e) => {
+                          if (onSetFilterValue) {
+                            const val = parseInt(e.target.value, 10);
+                            if (val === maxPossible) {
+                              onSetFilterValue(group.id, []);
+                            } else {
+                              onSetFilterValue(group.id, [`0-${val}`]);
+                            }
+                          }
+                        }}
+                        className="w-full h-2 bg-outline-variant/30 rounded-lg appearance-none cursor-pointer accent-primary"
+                      />
+                      <div className="flex justify-between mt-2 text-xs text-on-surface-variant font-medium">
+                        <span>₹0</span>
+                        <span>
+                          {currentMax === maxPossible
+                            ? 'No Limit'
+                            : `₹${currentMax.toLocaleString()}`}
+                        </span>
+                      </div>
+                    </div>
+                  </FilterSection>
+                );
+              }
 
               return (
                 <FilterSection

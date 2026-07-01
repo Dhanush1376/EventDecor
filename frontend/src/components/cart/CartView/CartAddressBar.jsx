@@ -20,7 +20,7 @@ export function CartAddressBar({
         >
           <div className="flex items-center gap-2 min-w-0">
             <span className="material-symbols-outlined text-[18px] text-primary">location_on</span>
-            <span className="text-[11px] md:text-xs text-[#1a1817] font-semibold truncate leading-none">
+            <span className="text-[11px] lg:text-xs text-[#1a1817] font-semibold truncate leading-none">
               {activeAddress
                 ? `${activeAddress.name} - ${activeAddress.addressString || activeAddress.address}, ${activeAddress.locality || ''}, ${activeAddress.city}`
                 : 'Add a delivery address'}

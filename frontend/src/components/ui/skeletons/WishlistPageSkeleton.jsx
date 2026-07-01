@@ -30,8 +30,8 @@ export function WishlistPageSkeleton() {
         <div className="mb-8 border-b border-black/5 pb-6">
           <div className="flex items-center gap-4 overflow-x-auto scrollbar-none py-2 px-1 select-none scroll-smooth">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex flex-col items-center shrink-0 w-[72px] md:w-[88px]">
-                <Skeleton className="w-14 h-14 md:w-16 md:h-16 rounded-full" />
+              <div key={i} className="flex flex-col items-center shrink-0 w-[72px] lg:w-[88px]">
+                <Skeleton className="w-14 h-14 lg:w-16 lg:h-16 rounded-full" />
                 <Skeleton className="h-3 w-10 rounded mt-2" />
               </div>
             ))}
@@ -39,7 +39,7 @@ export function WishlistPageSkeleton() {
         </div>
 
         {/* Products Grid Skeleton */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {[...Array(8)].map((_, i) => (
             <ProductCardSkeleton key={i} />
           ))}

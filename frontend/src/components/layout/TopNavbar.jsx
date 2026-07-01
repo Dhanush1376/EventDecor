@@ -207,19 +207,19 @@ export function TopNavbar() {
         </div>
 
         <h1 className="sr-only">Siri Arts & Crafts</h1>
-        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
+        <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
           <div className="flex items-center justify-between w-full gap-4">
             {/* Exquisite Boutique Brand Logo */}
             <div className="flex-shrink-0 flex justify-start min-w-0">
               <Link to="/" className="group flex items-center shrink-0">
                 <div className="flex flex-col justify-center">
                   {/* Desktop Layout: Side-by-side */}
-                  <div className="hidden md:flex items-center">
+                  <div className="hidden lg:flex items-center">
                     <SiriLogo size="36px" variant={isTransparent ? 'white' : 'default'} />
                   </div>
 
                   {/* Mobile Layout: Stacked */}
-                  <div className="flex md:hidden flex-col leading-none">
+                  <div className="flex lg:hidden flex-col leading-none">
                     <SiriLogo
                       size="36px"
                       showSubtitle={false}
@@ -266,13 +266,13 @@ export function TopNavbar() {
             </div>
 
             {/* Right side actions group */}
-            <div className="flex-shrink-0 flex items-center justify-end gap-1 md:gap-2">
+            <div className="flex-shrink-0 flex items-center justify-end gap-1 lg:gap-2">
               {/* Trailing Luxury Icons */}
-              <div className="flex items-center gap-1 md:gap-1.5">
+              <div className="flex items-center gap-1 lg:gap-1.5">
                 {/* Unified Search Bar (Tablet/Desktop) */}
                 <div
                   onClick={search.handleOpen}
-                  className={`hidden md:flex items-center gap-2.5 px-4 h-10 rounded-full cursor-pointer transition-all duration-300 border backdrop-blur-md w-[200px] lg:w-[260px] group ${
+                  className={`hidden lg:flex items-center gap-2.5 px-4 h-10 rounded-full cursor-pointer transition-all duration-300 border backdrop-blur-md w-[200px] lg:w-[260px] group ${
                     isTransparent
                       ? 'bg-white/10 border-white/20 hover:bg-white/20 text-white'
                       : 'bg-surface-container-low border-outline-variant/30 hover:border-primary/30 text-on-surface hover:shadow-sm'
@@ -316,7 +316,7 @@ export function TopNavbar() {
                 {/* Mobile Unified Search Icon */}
                 <button
                   onClick={search.handleOpen}
-                  className={`md:hidden ${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
+                  className={`lg:hidden ${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
                   aria-label="Search Catalog"
                 >
                   <span
@@ -329,7 +329,7 @@ export function TopNavbar() {
 
                 <Link
                   to="/wishlist"
-                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-10 h-10 rounded-full relative group icon-button-touch-target`}
+                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden lg:flex items-center justify-center w-10 h-10 rounded-full relative group icon-button-touch-target`}
                   aria-label="View Wishlist"
                 >
                   <span
@@ -371,7 +371,7 @@ export function TopNavbar() {
                 {!isAuthenticated ? (
                   <button
                     onClick={openAuthModal}
-                    className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden md:flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
+                    className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden lg:flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
                     aria-label="User Account"
                   >
                     <span
@@ -382,7 +382,7 @@ export function TopNavbar() {
                     </span>
                   </button>
                 ) : (
-                  <div className="relative hidden md:block">
+                  <div className="relative hidden lg:block">
                     <button
                       onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                       aria-expanded={isProfileDropdownOpen}
@@ -573,7 +573,7 @@ export function TopNavbar() {
                     >
                       <Link
                         onClick={() => setIsOpen(false)}
-                        className={`group flex items-center text-right font-label font-bold uppercase tracking-[0.2em] text-[16px] md:text-[20px] transition-all duration-500 ${
+                        className={`group flex items-center text-right font-label font-bold uppercase tracking-[0.2em] text-[16px] lg:text-[20px] transition-all duration-500 ${
                           active
                             ? 'text-primary'
                             : 'text-on-surface hover:text-primary hover:-translate-x-2'

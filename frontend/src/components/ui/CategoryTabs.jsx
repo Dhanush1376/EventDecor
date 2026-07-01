@@ -29,10 +29,14 @@ export function CategoryTabs({ categories = [], activeCategory, onCategoryChange
       // Scroll the container so that the active tab is at the left edge
       const scrollPos = tab.offsetLeft - 8; // 8px for slight breathing room
 
-      container.scrollTo({
-        left: scrollPos,
-        behavior: 'smooth',
-      });
+      if (typeof container.scrollTo === 'function') {
+        container.scrollTo({
+          left: scrollPos,
+          behavior: 'smooth',
+        });
+      } else {
+        container.scrollLeft = scrollPos;
+      }
     }
   }, [activeCategory]);
 
@@ -52,7 +56,7 @@ export function CategoryTabs({ categories = [], activeCategory, onCategoryChange
       <div
         ref={scrollRef}
         onScroll={checkScroll}
-        className="overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 flex justify-start transition-[mask-image] duration-300"
+        className="overflow-x-auto no-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0 flex justify-start transition-[mask-image] duration-300"
         role="tablist"
         aria-label="Product categories"
         style={

@@ -31,11 +31,11 @@ export function CustomOrderTracker({
 
       {/* Right Box: Master Curation Workspace & chat portal */}
       <div
-        className={`lg:col-span-8 bg-white rounded-3xl lg:rounded-[2.5rem] border border-black/5 p-5 md:p-8 min-h-[560px] shadow-sm flex flex-col ${selectedOrder ? 'block' : 'hidden lg:flex'}`}
+        className={`lg:col-span-8 bg-white rounded-3xl lg:rounded-[2.5rem] border border-black/5 p-5 lg:p-8 min-h-[560px] shadow-sm flex flex-col ${selectedOrder ? 'block' : 'hidden lg:flex'}`}
       >
         {!selectedOrder ? (
-          <div className="flex flex-col items-center justify-center flex-1 py-12 md:py-20 text-center text-[#685C57]">
-            <span className="material-symbols-outlined text-[40px] md:text-[48px] text-black/10 mb-2">
+          <div className="flex flex-col items-center justify-center flex-1 py-12 lg:py-20 text-center text-[#685C57]">
+            <span className="material-symbols-outlined text-[40px] lg:text-[48px] text-black/10 mb-2">
               forum
             </span>
             <p className="text-[14px] font-bold text-[var(--color-on-surface)]">
@@ -47,7 +47,7 @@ export function CustomOrderTracker({
             </p>
           </div>
         ) : (
-          <div className="flex flex-col flex-1 gap-5 md:gap-6">
+          <div className="flex flex-col flex-1 gap-5 lg:gap-6">
             {/* Back button on mobile */}
             <button
               type="button"
@@ -64,7 +64,7 @@ export function CustomOrderTracker({
                 <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-gold)]">
                   Custom Order Tracking
                 </span>
-                <h3 className="text-[16px] md:text-[18px] font-bold text-[var(--color-on-surface)] mt-0.5">
+                <h3 className="text-[16px] lg:text-[18px] font-bold text-[var(--color-on-surface)] mt-0.5">
                   {selectedOrder.occasion} Custom Order Details
                 </h3>
                 <p className="text-[11px] text-[#685C57] mt-0.5">

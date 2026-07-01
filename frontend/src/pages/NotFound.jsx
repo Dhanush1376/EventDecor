@@ -3,7 +3,7 @@ import { MandalaElement } from '../components/ui/MandalaElement';
 import { SEO } from '../components/seo/SEO';
 export function NotFound() {
   return (
-    <div className="min-h-[80vh] relative flex flex-col items-center justify-center px-4 overflow-hidden pt-24 md:pt-32 pb-24 md:pb-32">
+    <div className="min-h-[80vh] relative flex flex-col items-center justify-center px-4 overflow-hidden pt-24 lg:pt-32 pb-24 lg:pb-32">
       <SEO
         title="Page Not Found | Siri Arts & Crafts"
         description="The heritage masterpiece or custom ceremony styling selection you are looking for has either found a new home or is currently unavailable."
@@ -15,11 +15,11 @@ export function NotFound() {
       </div>
 
       <div className="relative z-10 text-center">
-        <h2 className="font-display text-[120px] md:text-[180px] leading-none text-primary/10 select-none">
+        <h2 className="font-display text-[120px] lg:text-[180px] leading-none text-primary/10 select-none">
           404
         </h2>
-        <div className="mt-[-40px] md:mt-[-60px]">
-          <h2 className="font-display text-3xl md:text-5xl mb-4 text-on-surface">Page Not Found</h2>
+        <div className="mt-[-40px] lg:mt-[-60px]">
+          <h2 className="font-display text-3xl lg:text-5xl mb-4 text-on-surface">Page Not Found</h2>
           <p className="text-on-surface-variant max-w-md mx-auto mb-10 font-body-md">
             The masterpiece you are looking for doesn't exist or has been moved to a different
             collection.
@@ -37,7 +37,7 @@ export function NotFound() {
       </div>
 
       {/* Quick links for better UX */}
-      <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 border-t border-outline-variant/20 pt-10">
+      <div className="mt-20 grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 border-t border-outline-variant/20 pt-10">
         <div className="text-center">
           <h3 className="font-label-sm mb-3">Shop</h3>
           <Link

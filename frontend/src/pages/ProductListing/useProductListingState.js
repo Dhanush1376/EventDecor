@@ -181,6 +181,17 @@ export function useProductListingState() {
     });
   }, []);
 
+  const setFilterValue = useCallback((type, value) => {
+    setFilters((prev) => {
+      if (!value || (Array.isArray(value) && value.length === 0)) {
+        const newFilters = { ...prev };
+        delete newFilters[type];
+        return newFilters;
+      }
+      return { ...prev, [type]: Array.isArray(value) ? value : [value] };
+    });
+  }, []);
+
   const clearAllFilters = useCallback(() => {
     setFilters({});
     setSearchParams({});
@@ -204,6 +215,7 @@ export function useProductListingState() {
       setSortBy,
       filters,
       toggleFilter,
+      setFilterValue,
       clearAllFilters,
       productsData,
       loading,
@@ -231,6 +243,7 @@ export function useProductListingState() {
       setSortBy,
       filters,
       toggleFilter,
+      setFilterValue,
       clearAllFilters,
       productsData,
       loading,

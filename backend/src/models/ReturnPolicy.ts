@@ -41,6 +41,12 @@ export interface IReturnPolicy extends Document {
     level: 'auto' | 'manager' | 'senior_admin';
   }[];
 
+  fraudThresholds: {
+    highRiskScore: number;
+    maxReturnsPerMonth: number;
+    autoBlockHighRisk: boolean;
+  };
+
   slaConfig: {
     [stage: string]: number; // max hours allowed in stage before overdue
   };
@@ -92,6 +98,12 @@ const ReturnPolicySchema = new Schema<IReturnPolicy>(
         level: { type: String, enum: ['auto', 'manager', 'senior_admin'] },
       },
     ],
+
+    fraudThresholds: {
+      highRiskScore: { type: Number, default: 80 },
+      maxReturnsPerMonth: { type: Number, default: 3 },
+      autoBlockHighRisk: { type: Boolean, default: false },
+    },
 
     slaConfig: {
       type: Map,

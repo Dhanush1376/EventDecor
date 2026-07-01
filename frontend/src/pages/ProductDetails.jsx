@@ -137,11 +137,6 @@ export function ProductDetails() {
       {/* Decorative Mandalas */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
         <MandalaElement
-          className="absolute top-20 -left-20 opacity-[0.05]"
-          size={500}
-          duration={120}
-        />
-        <MandalaElement
           className="absolute top-[40%] -right-20 opacity-[0.03]"
           size={600}
           duration={180}
@@ -150,7 +145,7 @@ export function ProductDetails() {
       </div>
 
       {/* Desktop Breadcrumbs */}
-      <div className="hidden md:block pt-32 pb-10 max-w-max-width mx-auto px-margin-desktop relative z-10">
+      <div className="hidden lg:block pt-32 pb-10 max-w-max-width mx-auto px-margin-desktop relative z-10">
         <nav className="flex items-center gap-3 font-label text-[12px] uppercase tracking-[0.3em] text-on-surface-variant/40 font-bold overflow-x-auto no-scrollbar whitespace-nowrap pb-2">
           <Link to="/" className="hover:text-primary transition-colors">
             Studio
@@ -164,8 +159,8 @@ export function ProductDetails() {
         </nav>
       </div>
 
-      <section className="pt-[68px] md:pt-0 pb-12 md:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
+      <section className="pt-[68px] lg:pt-0 pb-12 lg:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
           <ProductGallery images={galleryImages} product={product} />
           <ProductInfo product={product} atcRef={atcRef} />
         </div>
@@ -176,7 +171,7 @@ export function ProductDetails() {
 
       <React.Suspense
         fallback={
-          <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8">
+          <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-8">
             <Skeleton className="h-44 w-full rounded-2xl" />
           </div>
         }

@@ -56,6 +56,15 @@ export function ProductListing() {
       const res = await couponService.getAll();
       if (res.success && res.data) {
         const list = res.data.data || res.data.items || (Array.isArray(res.data) ? res.data : []);
+        const linkedId = shopContent?.promo?.linkedCouponId;
+
+        if (linkedId) {
+          const matched = list.find((c) => c._id === linkedId || c.code === linkedId);
+          if (matched && matched.isActive) {
+            return matched;
+          }
+        }
+
         const activeList = list.filter(
           (c) =>
             c.isActive &&

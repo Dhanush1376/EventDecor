@@ -479,12 +479,14 @@ export function EventCollections() {
       {/* Main Grid Section */}
       <main
         id="event-collection"
-        className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative pb-12 md:pb-16"
+        className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative pb-12 lg:pb-16"
       >
-        <MandalaElement
-          className="absolute top-[20%] -right-[10%] opacity-[0.03]"
-          size={600}
+        <MandalaArtDecor
+          className="absolute -top-12 -right-10 lg:-top-16 lg:-right-12 pointer-events-none z-0"
+          size={400}
           variant={2}
+          opacity={0.15}
+          spinDuration={120}
         />
         <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
           {/* Sidebar Filter */}
@@ -505,7 +507,7 @@ export function EventCollections() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-10">
               <div className="flex flex-col gap-1">
-                <h2 className="font-headline-md text-on-surface font-normal text-[24px] md:text-[32px]">
+                <h2 className="font-headline-md text-on-surface font-normal text-[24px] lg:text-[32px]">
                   Luxury Scapes
                 </h2>
                 <p className="font-body-md text-on-surface-variant/60 font-medium">

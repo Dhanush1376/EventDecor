@@ -103,7 +103,7 @@ export function VirtualizedMasonry({
   const columnClass = useMemo(() => {
     const parts = [];
     if (columns.sm) parts.push(`columns-${columns.sm}`);
-    if (columns.md) parts.push(`md:columns-${columns.md}`);
+    if (columns.md) parts.push(`lg:columns-${columns.md}`);
     if (columns.lg) parts.push(`lg:columns-${columns.lg}`);
     if (columns.xl) parts.push(`xl:columns-${columns.xl}`);
     return parts.join(' ');

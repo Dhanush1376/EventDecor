@@ -22,13 +22,6 @@ export const navSections = [
     label: 'Website Management',
     items: [
       {
-        label: 'Dynamic Layouts',
-        icon: 'view_carousel',
-        path: '/admin/layouts',
-        keywords: 'layouts, sections, homepage',
-        domain: 'settings',
-      },
-      {
         label: 'Edit Web Pages',
         icon: 'edit_note',
         path: '/admin/homepage',
@@ -54,13 +47,6 @@ export const navSections = [
         icon: 'gavel',
         path: '/admin/policies',
         keywords: 'policy, terms, legal, privacy',
-        domain: 'settings',
-      },
-      {
-        label: 'View Storefront',
-        icon: 'open_in_new',
-        path: '/',
-        keywords: 'storefront, live, view, public',
         domain: 'settings',
       },
     ],
@@ -221,13 +207,6 @@ export const navSections = [
         keywords: 'users, crm, segments, vip',
         domain: 'users',
       },
-      {
-        label: 'Customer Intelligence',
-        icon: 'insights',
-        path: '/admin/customers/intelligence',
-        keywords: '360, insights, analytics, segments',
-        domain: 'users',
-      },
     ],
   },
   {
@@ -288,13 +267,6 @@ export const navSections = [
         icon: 'settings',
         path: '/admin/settings',
         keywords: 'profile, backups, config',
-        domain: 'settings',
-      },
-      {
-        label: 'Global Config',
-        icon: 'settings_suggest',
-        path: '/admin/config',
-        keywords: 'flags, variables, toggles',
         domain: 'settings',
       },
     ],

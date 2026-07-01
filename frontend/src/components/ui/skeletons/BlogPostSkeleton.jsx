@@ -4,8 +4,8 @@ import { Skeleton } from '../SkeletonBase';
 export function BlogPostSkeleton() {
   return (
     <div className="min-h-screen bg-background pt-20 pb-20">
-      <Skeleton className="w-full h-[50vh] md:h-[60vh] lg:h-[70vh] !rounded-none" />
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mt-8 md:mt-12">
+      <Skeleton className="w-full h-[50vh] lg:h-[60vh] lg:h-[70vh] !rounded-none" />
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop mt-8 lg:mt-12">
         <div className="flex flex-col lg:flex-row gap-12">
           <div className="flex-1 max-w-3xl w-full space-y-6">
             <Skeleton className="h-4 w-32 mb-8" />

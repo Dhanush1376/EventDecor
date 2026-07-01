@@ -205,7 +205,7 @@ const GPSMap = ({ address }) => {
       {(!inView || isLoading || !leafletLoaded) && (
         <div className="absolute inset-0 bg-slate-50 flex items-center justify-center">
           <div className="flex flex-col items-center gap-2">
-            <div className="w-6 h-6 border-2 border-[#8c7335] border-t-transparent rounded-full animate-spin" />
+            <div className="w-16 h-16 border-[1px] border-primary/30 border-t-primary rounded-full animate-spin duration-1000 ease-linear" />
             <span className="text-[9px] text-[#8c7335] font-bold uppercase tracking-wider">
               {inView && !leafletLoaded ? 'Loading Map Engine...' : 'Syncing GPS...'}
             </span>

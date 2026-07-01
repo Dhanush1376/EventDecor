@@ -77,7 +77,7 @@ export function LoyaltySkeleton() {
           </div>
         </div>
 
-        <div className="space-y-4 md:border-l border-outline-variant/30 md:pl-8">
+        <div className="space-y-4 lg:border-l border-outline-variant/30 lg:pl-8">
           <div className="flex items-start gap-3">
             <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
             <div className="space-y-2 flex-1">

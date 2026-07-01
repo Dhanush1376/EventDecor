@@ -25,7 +25,7 @@ export function PaymentModal({
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-surface-bright rounded-lg border border-outline-variant/30 shadow-2xl p-6 md:p-8 max-w-md w-full relative z-10 space-y-6"
+            className="bg-surface-bright rounded-lg border border-outline-variant/30 shadow-2xl p-6 lg:p-8 max-w-md w-full relative z-10 space-y-6"
           >
             <div className="flex justify-between items-start border-b border-outline-variant/20 pb-3">
               <div className="space-y-0.5">

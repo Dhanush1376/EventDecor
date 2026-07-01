@@ -237,7 +237,7 @@ export function VisualSearchOverlay({
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-              className="bg-surface-bright rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col w-full md:w-[calc(100%-40px)] max-w-[420px] mx-auto z-10 border-t md:border border-outline-variant/20 mt-auto md:mb-8"
+              className="bg-surface-bright rounded-t-3xl lg:rounded-3xl shadow-2xl overflow-hidden flex flex-col w-full lg:w-[calc(100%-40px)] max-w-[420px] mx-auto z-10 border-t lg:border border-outline-variant/20 mt-auto lg:mb-8"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline-variant/10 bg-surface-container-lowest">
@@ -465,13 +465,13 @@ export function VisualSearchOverlay({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="fixed inset-0 z-[10000] flex flex-col md:pt-[80px] overflow-hidden bg-surface md:bg-transparent"
+              className="fixed inset-0 z-[10000] flex flex-col lg:pt-[80px] overflow-hidden bg-surface lg:bg-transparent"
             >
               {/* --- DESKTOP BACKDROP --- */}
-              <div className="hidden md:block absolute inset-0 bg-[#faf9f6]/95 backdrop-blur-xl -z-10" />
+              <div className="hidden lg:block absolute inset-0 bg-[#faf9f6]/95 backdrop-blur-xl -z-10" />
 
               {/* --- MOBILE BACKGROUND IMAGE (FIXED) --- */}
-              <div className="absolute inset-0 md:hidden z-0 bg-black overflow-hidden">
+              <div className="absolute inset-0 lg:hidden z-0 bg-black overflow-hidden">
                 {previewUrl && (
                   <motion.img
                     src={previewUrl}
@@ -490,7 +490,7 @@ export function VisualSearchOverlay({
               </div>
 
               {/* --- MOBILE HEADER BUTTONS (FIXED ON TOP) --- */}
-              <div className="fixed top-5 left-5 right-5 flex justify-between items-center z-40 md:hidden pointer-events-none">
+              <div className="fixed top-5 left-5 right-5 flex justify-between items-center z-40 lg:hidden pointer-events-none">
                 <button
                   onClick={onClose}
                   className="w-10 h-10 min-h-0 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-md active:scale-95 transition-transform pointer-events-auto cursor-pointer"
@@ -511,7 +511,7 @@ export function VisualSearchOverlay({
               {/* --- RESULTS CONTAINER (NATIVELY SCROLLABLE) --- */}
               <div
                 ref={scrollContainerRef}
-                className={`absolute bottom-0 left-0 right-0 top-[76px] md:inset-0 z-20 w-full vs-results-scroll rounded-t-[40px] md:rounded-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isSheetHidden ? 'overflow-hidden pointer-events-auto cursor-pointer' : 'overflow-y-auto'}`}
+                className={`absolute bottom-0 left-0 right-0 top-[76px] lg:inset-0 z-20 w-full vs-results-scroll rounded-t-[40px] lg:rounded-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isSheetHidden ? 'overflow-hidden pointer-events-auto cursor-pointer' : 'overflow-y-auto'}`}
                 onClick={(e) => {
                   // Only trigger if clicking exactly on the transparent background area
                   if (e.target === e.currentTarget) {
@@ -523,20 +523,20 @@ export function VisualSearchOverlay({
                   initial={{ y: 200, opacity: 0 }}
                   animate={{ y: isSheetHidden ? 'calc(50dvh - 196px)' : 0, opacity: 1 }}
                   transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-                  className={`relative bg-white md:bg-transparent rounded-t-[40px] md:rounded-none z-20 flex flex-col md:shadow-none min-h-[80vh] md:min-h-full w-full border-t border-outline-variant/10 mt-[50vh] md:mt-0 transition-shadow duration-300 ${isSheetHidden ? 'pointer-events-none shadow-none' : 'shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'}`}
+                  className={`relative bg-white lg:bg-transparent rounded-t-[40px] lg:rounded-none z-20 flex flex-col lg:shadow-none min-h-[80vh] lg:min-h-full w-full border-t border-outline-variant/10 mt-[50vh] lg:mt-0 transition-shadow duration-300 ${isSheetHidden ? 'pointer-events-none shadow-none' : 'shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'}`}
                 >
                   {/* Mobile Handlebar */}
-                  <div className="w-full flex items-center justify-center pt-5 pb-1 md:hidden shrink-0 bg-white rounded-t-[40px]">
+                  <div className="w-full flex items-center justify-center pt-5 pb-1 lg:hidden shrink-0 bg-white rounded-t-[40px]">
                     <div className="w-12 h-1.5 bg-black/10 rounded-full shrink-0"></div>
                   </div>
 
                   {/* AI Analysis Summary Header */}
-                  <div className="px-6 md:px-10 py-3 md:py-5 flex-shrink-0 border-b border-outline-variant/10 md:border-outline-variant/20 bg-white md:bg-white/60 md:backdrop-blur-md sticky top-0 z-30 rounded-t-[40px] md:rounded-none">
+                  <div className="px-6 lg:px-10 py-3 lg:py-5 flex-shrink-0 border-b border-outline-variant/10 lg:border-outline-variant/20 bg-white lg:bg-white/60 lg:backdrop-blur-md sticky top-0 z-30 rounded-t-[40px] lg:rounded-none">
                     <div className="flex items-center justify-between gap-4 w-full">
-                      <div className="flex items-center gap-4 md:gap-5 flex-1 min-w-0">
+                      <div className="flex items-center gap-4 lg:gap-5 flex-1 min-w-0">
                         {/* Desktop Thumbnail */}
                         {previewUrl && (
-                          <div className="hidden md:block relative shrink-0">
+                          <div className="hidden lg:block relative shrink-0">
                             <img
                               src={previewUrl}
                               alt="Search image"
@@ -551,10 +551,10 @@ export function VisualSearchOverlay({
                         )}
 
                         <div className="flex-1 min-w-0 py-1">
-                          <h3 className="text-on-surface-variant text-[22px] md:text-[28px] font-bold leading-tight truncate">
+                          <h3 className="text-on-surface-variant text-[22px] lg:text-[28px] font-bold leading-tight truncate">
                             {results.aiAnalysis?.category || 'Product Category'}
                           </h3>
-                          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1.5 md:mt-2">
+                          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1.5 lg:mt-2">
                             <span className="text-primary font-label-sm text-[10px] uppercase tracking-[0.15em] font-bold bg-primary/10 px-2 py-0.5 rounded-md">
                               {unifiedResults.length} Matches
                             </span>
@@ -573,7 +573,7 @@ export function VisualSearchOverlay({
                       {/* Desktop New Search Button */}
                       <button
                         onClick={onReset}
-                        className="hidden md:flex shrink-0 px-6 py-3 rounded-full border border-outline-variant/30 bg-white hover:bg-surface-container-low shadow-xs transition-all items-center justify-center gap-2 cursor-pointer text-on-surface-variant group"
+                        className="hidden lg:flex shrink-0 px-6 py-3 rounded-full border border-outline-variant/30 bg-white hover:bg-surface-container-low shadow-xs transition-all items-center justify-center gap-2 cursor-pointer text-on-surface-variant group"
                         title="New Search"
                       >
                         <span className="material-symbols-outlined text-[18px] group-hover:-rotate-90 transition-transform duration-300">
@@ -587,7 +587,7 @@ export function VisualSearchOverlay({
                   </div>
 
                   {/* Results Area */}
-                  <div className="flex-1 px-5 md:px-10 py-6 md:py-8 bg-surface-container-lowest md:bg-transparent relative overflow-hidden">
+                  <div className="flex-1 px-5 lg:px-10 py-6 lg:py-8 bg-surface-container-lowest lg:bg-transparent relative overflow-hidden">
                     {/* Ambient Mandala Background Aesthetics using existing brand components */}
                     <MandalaArtDecor
                       variant={1}
@@ -640,7 +640,7 @@ export function VisualSearchOverlay({
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.1 }}
                         >
-                          <h3 className="text-on-surface-variant text-base font-normal mb-5 md:mb-6 pl-1 flex items-center gap-2">
+                          <h3 className="text-on-surface-variant text-base font-normal mb-5 lg:mb-6 pl-1 flex items-center gap-2">
                             <span className="material-symbols-outlined text-[16px] text-primary">
                               auto_awesome
                             </span>
@@ -648,7 +648,7 @@ export function VisualSearchOverlay({
                           </h3>
 
                           <div
-                            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 lg:gap-8 pb-10"
+                            className="grid grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-6 lg:gap-8 pb-10"
                             onClickCapture={(e) => {
                               // Close modal if a link or role=link is clicked inside the product card
                               if (e.target.closest('a') || e.target.closest('[role="link"]')) {

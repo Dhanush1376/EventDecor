@@ -17,7 +17,9 @@ export function AdminRentalCalendar() {
     try {
       const res = await rentalService.adminGetCalendar(productId, currentMonth, currentYear);
       if (res.success) {
-        setCalendarData(res.data);
+        // Backend returns { success: true, data: { bookings: [...] } }
+        const bookings = res.data?.bookings || (res.data?.data && res.data.data.bookings) || [];
+        setCalendarData(Array.isArray(bookings) ? bookings : []);
       }
     } catch (_err) {
       toast.error('Failed to load rental calendar');
@@ -95,11 +97,18 @@ export function AdminRentalCalendar() {
             if (!day)
               return <div key={idx} className="bg-[var(--admin-bg-subtle)] rounded opacity-50" />;
 
-            // Check if this day has any bookings in calendarData
-            // Note: calendarData structure from API should be processed here, assuming it's an array of dates or events.
-            // For now, we'll just render the day cell.
-            const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const dayEvents = calendarData.filter((d) => d.date === dateStr);
+            const currentDate = new Date(currentYear, currentMonth - 1, day);
+            currentDate.setHours(0, 0, 0, 0);
+
+            const safeCalendarData = Array.isArray(calendarData) ? calendarData : [];
+            const dayEvents = safeCalendarData.filter((b) => {
+              if (!b.startDate || !b.endDate) return false;
+              const start = new Date(b.startDate);
+              start.setHours(0, 0, 0, 0);
+              const end = new Date(b.endDate);
+              end.setHours(0, 0, 0, 0);
+              return currentDate >= start && currentDate <= end;
+            });
 
             return (
               <div
@@ -113,10 +122,11 @@ export function AdminRentalCalendar() {
                   {dayEvents.map((evt, eIdx) => (
                     <div
                       key={eIdx}
-                      className="text-[9px] bg-[var(--admin-info-light)] text-[var(--admin-info)] px-1 rounded truncate"
-                      title={evt.title}
+                      className="text-[9px] bg-[var(--admin-info-light)] text-[var(--admin-info)] px-1 rounded truncate mb-1"
+                      title={evt.rentalOrder?.productTitle || 'Booking'}
                     >
-                      {evt.title || `Booking #${evt.rentalId?.substring(evt.rentalId.length - 4)}`}
+                      {evt.rentalOrder?.productTitle ||
+                        `Booking #${evt.rentalOrder?.rentalOrderId || evt._id?.substring(0, 4)}`}
                     </div>
                   ))}
                 </div>

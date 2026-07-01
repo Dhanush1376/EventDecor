@@ -1,6 +1,5 @@
 import Product from '../models/Product';
 import ProductService from './productService';
-import AppConfig from '../models/AppConfig';
 
 export class FilterService {
   static async getDynamicFilters(queryParams: any) {
@@ -8,16 +7,7 @@ export class FilterService {
     // This allows facet counts to be relative to what's currently being viewed.
     const { filter } = await ProductService.buildProductFilterQuery(queryParams, false);
 
-    // 2. Load Admin configurations for filters
-    let config: { hidden: string[]; priority: string[] } = { hidden: [], priority: [] };
-    try {
-      const appConfig = await AppConfig.findOne({ key: 'dynamic_filters_config' }).lean();
-      if (appConfig && appConfig.value) {
-        config = appConfig.value;
-      }
-    } catch {
-      /* ignore */
-    }
+    const config: { hidden: string[]; priority: string[] } = { hidden: [], priority: [] };
 
     // 3. Construct MongoDB $facet pipeline to compute all dynamic attributes simultaneously
     const facetPipeline: any = {

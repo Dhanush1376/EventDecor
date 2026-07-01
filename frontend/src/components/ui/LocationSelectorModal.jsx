@@ -34,6 +34,8 @@ export function LocationSelectorModal({
   const mapInstanceRef = useRef(null);
   const markerInstanceRef = useRef(null);
   const resizeObserverRef = useRef(null);
+  const mapContainerRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   // Default coordinate center (Ongole, Andhra Pradesh, India)
   const DEFAULT_LAT = 15.506;
@@ -54,6 +56,11 @@ export function LocationSelectorModal({
     }
 
     return () => {
+      // Clean up timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
       // Clean up Leaflet map instance on close
       if (mapInstanceRef.current) {
         try {
@@ -87,7 +94,8 @@ export function LocationSelectorModal({
 
     // Delay initialization slightly to let the modal spring slide/fade-in animation complete
     // so Leaflet can accurately calculate the parent container size on mount.
-    setTimeout(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
       initLeafletMap();
     }, 300);
   };
@@ -98,10 +106,11 @@ export function LocationSelectorModal({
       return;
     }
 
-    // Check if the DOM element exists
-    let container = document.getElementById('leaflet-map-canvas');
+    // Use React ref for the DOM element
+    let container = mapContainerRef.current;
     if (!container) {
-      setTimeout(initLeafletMap, 50);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(initLeafletMap, 50);
       return;
     }
 
@@ -117,19 +126,9 @@ export function LocationSelectorModal({
     }
 
     // Bulletproof: if the container is already initialized by Leaflet (has _leaflet_id)
-    // but the mapInstanceRef was lost or cleared, we clone and replace the container
-    // to completely reset Leaflet's internal DOM cache and avoid "Map container already initialized" error.
+    // we must manually nullify it to avoid the "already initialized" crash on rapid remounts
     if (container._leaflet_id) {
-      try {
-        const parent = container.parentNode;
-        if (parent) {
-          const clone = container.cloneNode(false);
-          parent.replaceChild(clone, container);
-          container = clone;
-        }
-      } catch (e) {
-        logger.warn('Leaflet container clone reset warning', e);
-      }
+      container._leaflet_id = null;
     }
 
     // Bulletproof coordinate parsing to prevent Leaflet view crashes from invalid numeric values
@@ -153,7 +152,7 @@ export function LocationSelectorModal({
     try {
       const L = await import('leaflet');
       // Initialize map instance
-      const map = L.map('leaflet-map-canvas', {
+      const map = L.map(container, {
         zoomControl: false,
       }).setView([lat, lng], 13);
 
@@ -547,7 +546,7 @@ export function LocationSelectorModal({
                 )}
 
                 {/* Fallback Leaflet Element */}
-                <div id="leaflet-map-canvas" className="absolute inset-0 w-full h-full z-10" />
+                <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-10" />
               </div>
 
               {/* Location Card Metadata Visualizer */}

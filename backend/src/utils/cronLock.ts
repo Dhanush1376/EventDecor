@@ -15,7 +15,6 @@ export const withCronLock = async (
   let executed = false;
 
   if (!redisClient || !redisClient.isReady) {
-    executed = true;
     await job();
     logger.info(`[CRON EXECUTED] "${lockName}" took ${Date.now() - startTime}ms (No Redis)`);
     return;

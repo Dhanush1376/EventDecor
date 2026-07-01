@@ -119,7 +119,7 @@ export const ProductListingVisualSearch = ({ visualSearch }) => {
   if (!visualSearch.isOpen || visualSearch.phase === 'results') return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-end bg-black/60 backdrop-blur-md overflow-hidden p-0 md:p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-end bg-black/60 backdrop-blur-md overflow-hidden p-0 lg:p-4 animate-fade-in">
       {/* Backdrop Click close */}
       <div className="absolute inset-0 z-0" onClick={visualSearch.close} />
 
@@ -128,7 +128,7 @@ export const ProductListingVisualSearch = ({ visualSearch }) => {
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-        className="relative z-10 bg-surface-bright rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col w-full md:w-[calc(100%-40px)] max-w-[420px] mx-auto border-t md:border border-outline-variant/20 p-6 mt-auto md:mb-8"
+        className="relative z-10 bg-surface-bright rounded-t-3xl lg:rounded-3xl shadow-2xl overflow-hidden flex flex-col w-full lg:w-[calc(100%-40px)] max-w-[420px] mx-auto border-t lg:border border-outline-variant/20 p-6 mt-auto lg:mb-8"
       >
         <div className="flex items-center justify-between pb-4 border-b border-outline-variant/10 mb-6">
           <div className="flex items-center gap-3">

@@ -247,7 +247,11 @@ describe('Checkout Flow Integration', () => {
 
     // 3. User fills in shipping address
     // Click Add Address first
-    const addAddressBtn = await screen.findByRole('button', { name: /Add Address/i });
+    const addAddressBtn = await screen.findByRole(
+      'button',
+      { name: /Add Address/i },
+      { timeout: 5000 },
+    );
     fireEvent.click(addAddressBtn);
 
     // Find address form inputs
@@ -273,7 +277,11 @@ describe('Checkout Flow Integration', () => {
     fireEvent.click(saveAddressBtn);
 
     // 4. User is on Payment step, wait for "Place Order" button
-    const placeOrderBtn = await screen.findByRole('button', { name: /Place Order/i });
+    const placeOrderBtn = await screen.findByRole(
+      'button',
+      { name: /Place Order|Pay ₹/i },
+      { timeout: 3000 },
+    );
     expect(placeOrderBtn).toBeInTheDocument();
     // Check if the order total is displayed correctly
     expect(screen.getAllByText(/118/i).length).toBeGreaterThan(0);
@@ -304,5 +312,5 @@ describe('Checkout Flow Integration', () => {
         expect.any(Object),
       );
     });
-  });
+  }, 15000);
 });

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { m as motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useReturnManagement } from '../../hooks/useReturnManagement';
+import { handleImageError } from '../../../utils/media/imageUtils';
+import { PLACEHOLDER_IMAGES } from '../../../constants/placeholderImages';
 import {
   PageHeader,
   StatusBadge,
@@ -14,7 +16,15 @@ import {
 } from '../../components/AdminUIKit';
 
 const AdminExchangeRequests = () => {
-  const { exchangesList, pagination, fetchExchangesList, loading, error } = useReturnManagement();
+  const {
+    exchangesList,
+    pagination,
+    fetchExchangesList,
+    exchangeStats,
+    fetchExchangeStats,
+    loading,
+    error,
+  } = useReturnManagement();
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -24,6 +34,10 @@ const AdminExchangeRequests = () => {
     }, 300);
     return () => clearTimeout(timer);
   }, [fetchExchangesList, searchTerm]);
+
+  useEffect(() => {
+    fetchExchangeStats();
+  }, [fetchExchangeStats]);
 
   if (error && !exchangesList?.length) {
     return (
@@ -52,27 +66,25 @@ const AdminExchangeRequests = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           label="Total Exchanges"
-          value={exchangesList?.length || 0}
+          value={exchangeStats?.total || 0}
           icon="swap_horiz"
           domainColor="info"
         />
         <StatCard
           label="Pending Processing"
-          value={
-            exchangesList?.filter((e) => e.replacementStatus === 'pending_processing').length || 0
-          }
+          value={(exchangeStats?.pendingStock || 0) + (exchangeStats?.reserved || 0)}
           icon="pending_actions"
           domainColor="warning"
         />
         <StatCard
           label="Shipped"
-          value={exchangesList?.filter((e) => e.replacementStatus === 'shipped').length || 0}
+          value={exchangeStats?.shipped || 0}
           icon="local_shipping"
           domainColor="success"
         />
         <StatCard
           label="Completed"
-          value={exchangesList?.filter((e) => e.replacementStatus === 'completed').length || 0}
+          value={exchangeStats?.delivered || 0}
           icon="check_circle"
           domainColor="success"
         />
@@ -117,7 +129,7 @@ const AdminExchangeRequests = () => {
                     <th>Customer</th>
                     <th>Original Item</th>
                     <th>Replacement Item</th>
-                    <th>Price Diff (Req #21)</th>
+                    <th>Price Diff</th>
                     <th>Status</th>
                     <th className="text-right pr-5">Actions</th>
                   </tr>
@@ -148,9 +160,10 @@ const AdminExchangeRequests = () => {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-[var(--admin-radius-md)] border border-[var(--admin-border)] overflow-hidden shrink-0">
                             <img
-                              src={exc.originalItem.imageSrc || '/placeholder.png'}
+                              src={exc.originalItem.imageSrc || PLACEHOLDER_IMAGES.product}
                               className="w-full h-full object-cover"
-                              alt=""
+                              alt={exc.originalItem.title || 'Item'}
+                              onError={handleImageError}
                             />
                           </div>
                           <div>
@@ -167,9 +180,10 @@ const AdminExchangeRequests = () => {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-[var(--admin-radius-md)] border border-[var(--admin-border)] overflow-hidden shrink-0">
                             <img
-                              src={exc.replacementItem.imageSrc || '/placeholder.png'}
+                              src={exc.replacementItem.imageSrc || PLACEHOLDER_IMAGES.product}
                               className="w-full h-full object-cover"
-                              alt=""
+                              alt={exc.replacementItem.title || 'Item'}
+                              onError={handleImageError}
                             />
                           </div>
                           <div>
@@ -239,9 +253,10 @@ const AdminExchangeRequests = () => {
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] overflow-hidden shrink-0">
                         <img
-                          src={exc.originalItem.imageSrc || '/placeholder.png'}
+                          src={exc.originalItem.imageSrc || PLACEHOLDER_IMAGES.product}
                           className="w-full h-full object-cover"
-                          alt=""
+                          alt={exc.originalItem.title || 'Item'}
+                          onError={handleImageError}
                         />
                       </div>
                       <div>
@@ -256,9 +271,10 @@ const AdminExchangeRequests = () => {
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] overflow-hidden shrink-0">
                         <img
-                          src={exc.replacementItem.imageSrc || '/placeholder.png'}
+                          src={exc.replacementItem.imageSrc || PLACEHOLDER_IMAGES.product}
                           className="w-full h-full object-cover"
-                          alt=""
+                          alt={exc.replacementItem.title || 'Item'}
+                          onError={handleImageError}
                         />
                       </div>
                       <div>

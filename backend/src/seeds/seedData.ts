@@ -776,7 +776,7 @@ const seed = async () => {
     }
 
     if (adminsToSeed.length === 0) {
-      logger.warn('âš ï¸ Skipping admin seed: set ADMIN_EMAIL and/or SUPER_ADMIN_EMAIL in .env');
+      logger.warn('Skipping admin seed: set ADMIN_EMAIL and/or SUPER_ADMIN_EMAIL in .env');
     }
 
     for (const admin of adminsToSeed) {

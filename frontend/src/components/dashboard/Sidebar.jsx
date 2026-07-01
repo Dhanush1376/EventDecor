@@ -42,7 +42,7 @@ export function Sidebar() {
 
   return (
     <div
-      className={`col-span-1 md:col-span-2 lg:col-span-3 space-y-4 ${mobileShowContent ? 'hidden md:block' : 'block'}`}
+      className={`col-span-1 lg:col-span-2 lg:col-span-3 space-y-4 ${mobileShowContent ? 'hidden lg:block' : 'block'}`}
     >
       {/* Dynamic Avatar & Basic Info Card */}
       <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 flex flex-col items-center text-center shadow-xs relative group overflow-hidden">

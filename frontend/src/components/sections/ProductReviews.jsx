@@ -112,7 +112,7 @@ function ReviewCard({ review, productId }) {
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-[24px] border border-black/5 p-5 md:p-6 shadow-sm hover:shadow-luxury hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-h-[220px]"
+      className="bg-white rounded-[24px] border border-black/5 p-5 lg:p-6 shadow-sm hover:shadow-luxury hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-h-[220px]"
     >
       <div>
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -411,7 +411,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
                 className="w-full px-6 py-3 bg-black hover:bg-gray-900 text-white font-bold uppercase tracking-widest text-[9px] rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed border-0"
               >
                 {submitting ? (
-                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-16 h-16 border-[1px] border-white/30 border-t-white rounded-full animate-spin duration-1000 ease-linear" />
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-[14px]">send</span>
@@ -580,15 +580,15 @@ export function ProductReviews({ productId, productTitle }) {
   return (
     <section
       id="reviews-section"
-      className="relative z-10 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-16 overflow-hidden"
+      className="relative z-10 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-12 lg:py-16 overflow-hidden"
     >
       {/* Section Header */}
-      <div className="flex flex-row items-center justify-between gap-4 mb-8 md:mb-10">
+      <div className="flex flex-row items-center justify-between gap-4 mb-8 lg:mb-10">
         <div>
           <span className="font-label text-[10px] uppercase tracking-[0.35em] text-primary font-bold block mb-1">
             Customer Reviews
           </span>
-          <h2 className="font-display text-2xl md:text-3xl text-black font-bold tracking-tight">
+          <h2 className="font-display text-2xl lg:text-3xl text-black font-bold tracking-tight">
             What Buyers Say
           </h2>
         </div>
@@ -684,7 +684,7 @@ export function ProductReviews({ productId, productTitle }) {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="skeleton-box bg-white rounded-[24px] border border-black/5 p-5 space-y-3 shrink-0 w-[290px] xs:w-[320px] sm:w-[360px] md:w-[400px] h-[220px]"
+              className="skeleton-box bg-white rounded-[24px] border border-black/5 p-5 space-y-3 shrink-0 w-[290px] xs:w-[320px] sm:w-[360px] lg:w-[400px] h-[220px]"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-neutral-100/50 animate-pulse" />
@@ -717,7 +717,7 @@ export function ProductReviews({ productId, productTitle }) {
           {reviews.map((review) => (
             <div
               key={review._id || review.id}
-              className="snap-start shrink-0 w-[290px] xs:w-[320px] sm:w-[360px] md:w-[400px] h-auto self-stretch"
+              className="snap-start shrink-0 w-[290px] xs:w-[320px] sm:w-[360px] lg:w-[400px] h-auto self-stretch"
             >
               <ReviewCard review={review} productId={productId} />
             </div>

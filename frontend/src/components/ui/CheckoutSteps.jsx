@@ -7,10 +7,10 @@ export function CheckoutSteps({
   orderType = 'purchase',
 }) {
   return (
-    <div className="bg-surface-bright border-b border-outline-variant/40 sticky top-[60px] md:top-[72px] z-40 shadow-[0_2px_15px_rgba(0,0,0,0.03)] backdrop-blur-md bg-surface-bright/95 py-2.5 sm:py-3.5 px-3 sm:px-8">
-      <div className="max-w-[1240px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
+    <div className="bg-surface-bright border-b border-outline-variant/40 sticky top-[60px] lg:top-[72px] z-40 shadow-[0_2px_15px_rgba(0,0,0,0.03)] backdrop-blur-md bg-surface-bright/95 py-2.5 sm:py-3.5 px-3 sm:px-8">
+      <div className="max-w-[1240px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-4">
         {/* Left: Brand/Title - Mobile Top Bar */}
-        <div className="w-full md:w-auto flex items-center justify-between md:justify-start">
+        <div className="w-full lg:w-auto flex items-center justify-between lg:justify-start">
           <div className="flex items-center gap-2">
             {currentStep > 0 && onStepClick && (
               <button
@@ -29,15 +29,15 @@ export function CheckoutSteps({
           </div>
 
           {/* Secure badge shows on mobile right side */}
-          <div className="md:hidden flex items-center gap-1 text-green-700">
+          <div className="lg:hidden flex items-center gap-1 text-green-700">
             <span className="material-symbols-outlined text-[14px]">verified_user</span>
             <span className="text-[9px] font-bold uppercase tracking-widest">100% Secure</span>
           </div>
         </div>
 
         {/* Center: Steps */}
-        <div className="w-full md:flex-1 flex justify-center overflow-x-auto no-scrollbar pb-1 md:pb-0 px-1">
-          <div className="flex items-center justify-between md:justify-center w-full max-w-[600px] text-[9px] sm:text-[11px] font-bold tracking-widest text-secondary uppercase relative">
+        <div className="w-full lg:flex-1 flex justify-center overflow-x-auto no-scrollbar pb-1 lg:pb-0 px-1">
+          <div className="flex items-center justify-between lg:justify-center w-full max-w-[600px] text-[9px] sm:text-[11px] font-bold tracking-widest text-secondary uppercase relative">
             {steps.map((step, index) => {
               const isActive = currentStep === index;
               const isCompleted = currentStep > index;
@@ -96,7 +96,7 @@ export function CheckoutSteps({
         </div>
 
         {/* Right: Secure Badge (Desktop) */}
-        <div className="hidden md:flex items-center gap-1.5 text-green-700">
+        <div className="hidden lg:flex items-center gap-1.5 text-green-700">
           <span className="material-symbols-outlined text-[18px]">verified_user</span>
           <span className="text-[10px] font-bold uppercase tracking-widest">100% Secure</span>
         </div>

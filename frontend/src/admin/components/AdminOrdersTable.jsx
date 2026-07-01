@@ -108,8 +108,40 @@ export function AdminOrdersTable({
                         </span>
                       </div>
                     </td>
-                    <td className="hidden md:table-cell max-w-[200px] truncate text-[var(--admin-text-secondary)]">
-                      {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(', ')}
+                    <td className="hidden md:table-cell max-w-[250px]">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex -space-x-2.5 overflow-hidden shrink-0 group-hover:-space-x-1 transition-all duration-300">
+                          {o.items.slice(0, 3).map((item, idx) => {
+                            const imgSrc =
+                              item.image ||
+                              item.images?.[0] ||
+                              item.thumbnail ||
+                              'https://placehold.co/100x100/f3f4f6/a1a1aa?text=Image';
+                            return (
+                              <img
+                                key={idx}
+                                src={imgSrc}
+                                alt={item.name}
+                                className="inline-block h-9 w-9 rounded-[var(--admin-radius-md)] border-[1.5px] border-[var(--admin-surface)] object-cover shadow-sm bg-[var(--admin-surface-muted)] relative z-10 transition-transform"
+                                style={{ zIndex: 10 - idx }}
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span
+                            className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate"
+                            title={o.items[0]?.name}
+                          >
+                            {o.items[0]?.name || 'Unknown Item'}
+                          </span>
+                          <span className="text-[10px] font-semibold text-[var(--admin-text-tertiary)] truncate mt-0.5">
+                            {o.items.length > 1
+                              ? `+ ${o.items.length - 1} other item${o.items.length > 2 ? 's' : ''}`
+                              : `x${o.items[0]?.quantity || o.items[0]?.qty || 1}`}
+                          </span>
+                        </div>
+                      </div>
                     </td>
                     <td className="font-bold text-[var(--admin-text-primary)]">
                       <div className="flex flex-col items-start">

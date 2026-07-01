@@ -56,7 +56,7 @@ export function CustomizerDrawer({
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
         className="relative w-full max-w-[620px] h-full bg-white shadow-2xl flex flex-col z-10 overflow-y-auto"
       >
-        <div className="relative h-64 md:h-72 w-full overflow-hidden shrink-0">
+        <div className="relative h-64 lg:h-72 w-full overflow-hidden shrink-0">
           <OptimizedImage
             src={selectedShowcase.image}
             className="w-full h-full object-cover"
@@ -82,7 +82,7 @@ export function CustomizerDrawer({
           </div>
         </div>
 
-        <div className="p-6 md:p-8 space-y-8 flex-1">
+        <div className="p-6 lg:p-8 space-y-8 flex-1">
           <div className="space-y-2">
             <h4 className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold">
               Artisan Composition & Story
@@ -300,7 +300,7 @@ export function CustomizerDrawer({
             </div>
           </div>
 
-          <div className="pt-8 border-t border-black/5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shrink-0">
+          <div className="pt-8 border-t border-black/5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 shrink-0">
             <div className="space-y-0.5">
               <span className="font-label text-[9px] uppercase tracking-widest text-black/40 block font-bold">
                 Live Rental Valuation
@@ -316,7 +316,7 @@ export function CustomizerDrawer({
             <button
               type="button"
               onClick={handleBookRental}
-              className="flex-1 md:flex-none bg-gradient-to-r from-[var(--color-gold)] to-[var(--color-gold-dark)] hover:opacity-95 text-white px-8 py-4 rounded-full font-label uppercase text-xs tracking-widest font-bold shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 lg:flex-none bg-gradient-to-r from-[var(--color-gold)] to-[var(--color-gold-dark)] hover:opacity-95 text-white px-8 py-4 rounded-full font-label uppercase text-xs tracking-widest font-bold shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               Rent & Dispatch Showcase
               <span className="material-symbols-outlined text-[18px]">featured_play_list</span>

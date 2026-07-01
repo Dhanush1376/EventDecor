@@ -21,12 +21,12 @@ export function AddressBarSkeleton() {
 // ─── Verified Reviews Skeleton ───
 export function ReviewsSkeleton() {
   return (
-    <section className="relative py-16 md:py-20 bg-[#FCFBF9] overflow-hidden border-t border-[#E8E2D5]/30">
-      <div className="max-w-[1440px] mx-auto px-[18px] md:px-[clamp(22px,4.5vw,72px)] space-y-12">
+    <section className="relative py-16 lg:py-20 bg-[#FCFBF9] overflow-hidden border-t border-[#E8E2D5]/30">
+      <div className="max-w-[1440px] mx-auto px-[18px] lg:px-[clamp(22px,4.5vw,72px)] space-y-12">
         {/* Header */}
         <div className="text-center max-w-xl mx-auto mb-6">
           <Skeleton className="h-3 w-20 mx-auto mb-2" />
-          <Skeleton className="h-8 md:h-10 w-56 mx-auto" />
+          <Skeleton className="h-8 lg:h-10 w-56 mx-auto" />
           <Skeleton className="h-[1px] w-8 mx-auto mt-3 !bg-[var(--color-gold)]/40 !border-transparent" />
         </div>
         {/* Review cards marquee */}
@@ -35,7 +35,7 @@ export function ReviewsSkeleton() {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="flex-shrink-0 w-[290px] xs:w-[320px] sm:w-[400px] md:w-[450px] bg-white p-8 md:p-10 rounded-[32px] border border-[#EBE6DD] flex flex-col justify-between"
+                className="flex-shrink-0 w-[290px] xs:w-[320px] sm:w-[400px] lg:w-[450px] bg-white p-8 lg:p-10 rounded-[32px] border border-[#EBE6DD] flex flex-col justify-between"
               >
                 <div className="space-y-6">
                   {/* Stars */}
@@ -75,9 +75,9 @@ export function SearchSuggestionsSkeleton() {
       {Array.from({ length: 4 }).map((_, idx) => (
         <div
           key={idx}
-          className="w-full flex items-center gap-4.5 px-6 md:px-8.5 py-4 border-b border-stone-100/30"
+          className="w-full flex items-center gap-4.5 px-6 lg:px-8.5 py-4 border-b border-stone-100/30"
         >
-          <Skeleton className="w-12 h-12 md:w-14 md:h-14 rounded-2xl" delay={idx * 70} />
+          <Skeleton className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl" delay={idx * 70} />
           <div className="flex-1 min-w-0 space-y-2">
             <Skeleton className="h-4 w-3/4" delay={idx * 70 + 80} />
             <Skeleton className="h-3 w-1/3" delay={idx * 70 + 130} />
@@ -94,7 +94,7 @@ export function NavbarSkeleton() {
     <header className="sticky top-0 z-50 w-full bg-surface/80 backdrop-blur-md border-b border-outline-variant/20 h-[var(--navbar-height)] flex items-center">
       <div className="w-full max-w-[1440px] mx-auto px-4 flex justify-between items-center">
         <Skeleton className="h-6 w-32" />
-        <div className="hidden md:flex gap-6">
+        <div className="hidden lg:flex gap-6">
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-4 w-16" />
@@ -153,7 +153,7 @@ export function ChatSkeleton() {
 export function GridSkeleton({ columns = 3, rows = 2, gap = 'gap-6' }) {
   return (
     <div
-      className={`grid grid-cols-1 md:grid-cols-${Math.min(2, columns)} lg:grid-cols-${columns} ${gap}`}
+      className={`grid grid-cols-1 lg:grid-cols-${Math.min(2, columns)} lg:grid-cols-${columns} ${gap}`}
     >
       {[...Array(columns * rows)].map((_, i) => (
         <Skeleton key={i} className="aspect-[4/3] w-full rounded-2xl" />
@@ -183,7 +183,7 @@ export function TableSkeleton({ rows = 5, columns = 4 }) {
 
 export function ModalSkeleton() {
   return (
-    <div className="p-6 md:p-8 space-y-6">
+    <div className="p-6 lg:p-8 space-y-6">
       <div className="space-y-2">
         <Skeleton className="h-6 w-1/2" />
         <Skeleton className="h-4 w-3/4" />

@@ -31,7 +31,7 @@ export function SearchSuggestionsList({
           className={`${
             isMobile
               ? 'px-5 py-3.5 bg-primary/5 text-[13px] border-b border-stone-100'
-              : 'px-6 md:px-8.5 py-3.5 bg-primary/5 text-[13px] border-b border-[#d0c5af]/15'
+              : 'px-6 lg:px-8.5 py-3.5 bg-primary/5 text-[13px] border-b border-[#d0c5af]/15'
           } text-primary font-medium flex items-center gap-2`}
         >
           <span className="material-symbols-outlined text-[16px] text-primary animate-bounce">
@@ -69,7 +69,7 @@ export function SearchSuggestionsList({
               className={`${
                 isMobile
                   ? 'w-full flex items-center gap-3.5 px-5 py-3.5 text-left active:bg-stone-50 transition-colors'
-                  : `w-full flex items-center gap-4.5 px-6 md:px-8.5 py-2.5 text-left transition-all duration-200 group border-b border-stone-100/30 last:border-b-0 ${
+                  : `w-full flex items-center gap-4.5 px-6 lg:px-8.5 py-2.5 text-left transition-all duration-200 group border-b border-stone-100/30 last:border-b-0 ${
                       activeIndex === idx
                         ? 'bg-primary/8 translate-x-1'
                         : 'hover:bg-stone-50/50 hover:translate-x-0.5'
@@ -80,7 +80,7 @@ export function SearchSuggestionsList({
               {item.image ? (
                 <div
                   className={`${
-                    isMobile ? 'w-11 h-11 rounded-xl' : 'w-12 h-12 md:w-14 md:h-14 rounded-2xl'
+                    isMobile ? 'w-11 h-11 rounded-xl' : 'w-12 h-12 lg:w-14 lg:h-14 rounded-2xl'
                   } overflow-hidden bg-stone-100 flex-shrink-0 border border-stone-200/60 shadow-xs ${
                     !isMobile && 'group-hover:scale-105 transition-transform duration-300'
                   }`}
@@ -98,7 +98,7 @@ export function SearchSuggestionsList({
               ) : (
                 <div
                   className={`${
-                    isMobile ? 'w-10 h-10 rounded-xl' : 'w-12 h-12 md:w-14 md:h-14 rounded-2xl'
+                    isMobile ? 'w-10 h-10 rounded-xl' : 'w-12 h-12 lg:w-14 lg:h-14 rounded-2xl'
                   } bg-primary/8 flex items-center justify-center flex-shrink-0 border border-primary/10 text-primary`}
                 >
                   <span
@@ -115,7 +115,7 @@ export function SearchSuggestionsList({
                   className={`${
                     isMobile
                       ? 'text-[14.5px] text-stone-800 font-medium truncate leading-tight'
-                      : 'text-[15px] md:text-[16px] text-stone-800 font-display font-medium truncate leading-snug group-hover:text-primary transition-colors duration-200'
+                      : 'text-[15px] lg:text-[16px] text-stone-800 font-display font-medium truncate leading-snug group-hover:text-primary transition-colors duration-200'
                   }`}
                 >
                   {highlightMatch(item.title, query)}
@@ -146,7 +146,7 @@ export function SearchSuggestionsList({
 
               {/* Type Badge (Desktop Only) */}
               {!isMobile && (
-                <span className="hidden md:inline-flex px-2.5 py-1 bg-stone-100 rounded-lg text-[9px] font-bold uppercase tracking-widest text-stone-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-300">
+                <span className="hidden lg:inline-flex px-2.5 py-1 bg-stone-100 rounded-lg text-[9px] font-bold uppercase tracking-widest text-stone-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors duration-300">
                   {getTypeLabel(item.type)}
                 </span>
               )}
@@ -173,7 +173,7 @@ export function SearchSuggestionsList({
             className={`w-full ${
               isMobile
                 ? 'py-4 px-5 border-t border-stone-100'
-                : 'flex items-center justify-center py-4 px-6 md:px-8 border-t border-stone-200/50'
+                : 'flex items-center justify-center py-4 px-6 lg:px-8 border-t border-stone-200/50'
             }`}
           >
             <Skeleton
@@ -191,7 +191,7 @@ export function SearchSuggestionsList({
             className={`${
               isMobile
                 ? 'w-full py-4 text-center text-primary font-bold text-[12px] uppercase tracking-wider border-t border-stone-100 active:bg-stone-50'
-                : 'w-full flex items-center justify-center gap-2 px-6 md:px-8 py-4 text-primary font-bold text-[12px] uppercase tracking-widest hover:bg-primary/5 transition-colors border-t border-stone-200/50 cursor-pointer'
+                : 'w-full flex items-center justify-center gap-2 px-6 lg:px-8 py-4 text-primary font-bold text-[12px] uppercase tracking-widest hover:bg-primary/5 transition-colors border-t border-stone-200/50 cursor-pointer'
             }`}
           >
             {!isMobile && <span className="material-symbols-outlined text-[18px]">search</span>}

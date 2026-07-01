@@ -382,7 +382,7 @@ export const ReturnRequestPage = () => {
                   <label className="form-label mb-2 text-[9px] uppercase tracking-widest font-bold">
                     PRIMARY REASON
                   </label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                     {RETURN_REASONS.map((r) => (
                       <div
                         key={r.value}

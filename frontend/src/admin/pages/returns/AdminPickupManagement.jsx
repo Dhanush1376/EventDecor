@@ -14,7 +14,8 @@ import {
 } from '../../components/AdminUIKit';
 
 const AdminPickupManagement = () => {
-  const { pickupList, fetchPickupList, loading, error } = useReturnManagement();
+  const { pickupList, fetchPickupList, pickupStats, fetchPickupStats, loading, error } =
+    useReturnManagement();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -29,6 +30,10 @@ const AdminPickupManagement = () => {
     }, 300);
     return () => clearTimeout(timer);
   }, [fetchPickupList, searchTerm, statusFilter]);
+
+  useEffect(() => {
+    fetchPickupStats();
+  }, [fetchPickupStats]);
 
   if (error) {
     return (
@@ -59,25 +64,25 @@ const AdminPickupManagement = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           label="Total Scheduled"
-          value={pickups?.filter((p) => p.pickup?.status === 'scheduled').length || 0}
+          value={(pickupStats?.pending || 0) + (pickupStats?.assigned || 0)}
           icon="calendar_today"
           domainColor="info"
         />
         <StatCard
           label="In Transit"
-          value={pickups?.filter((p) => p.pickup?.status === 'in_transit').length || 0}
+          value={pickupStats?.inTransit || 0}
           icon="local_shipping"
           domainColor="warning"
         />
         <StatCard
           label="Completed"
-          value={pickups?.filter((p) => p.pickup?.status === 'completed').length || 0}
+          value={pickupStats?.completed || 0}
           icon="check_circle"
           domainColor="success"
         />
         <StatCard
           label="Failed"
-          value={pickups?.filter((p) => p.pickup?.status === 'failed').length || 0}
+          value={pickupStats?.failed || 0}
           icon="error"
           domainColor="danger"
         />
@@ -87,7 +92,7 @@ const AdminPickupManagement = () => {
         <div className="md:col-span-3 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <FilterBar
-              filters={['All', 'scheduled', 'in_transit', 'failed', 'completed']}
+              filters={['All', 'pending', 'assigned', 'in_transit', 'picked_up', 'failed']}
               value={statusFilter}
               onChange={setStatusFilter}
             />

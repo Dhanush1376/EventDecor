@@ -100,7 +100,7 @@ export function EventBookingSuccess() {
   }
 
   return (
-    <div className="bg-[#fcfbf9] min-h-screen pt-24 md:pt-32 pb-24 text-on-surface font-body relative overflow-hidden">
+    <div className="bg-[#fcfbf9] min-h-screen pt-24 lg:pt-32 pb-24 text-on-surface font-body relative overflow-hidden">
       <SEO
         title={`Booking Confirmed | Siri Arts`}
         description="Your luxury event setup has been reserved."
@@ -123,7 +123,7 @@ export function EventBookingSuccess() {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="bg-white rounded-[24px] md:rounded-[40px] shadow-2xl border border-black/5 p-8 md:p-12"
+          className="bg-white rounded-[24px] lg:rounded-[40px] shadow-2xl border border-black/5 p-8 lg:p-12"
         >
           {/* Header */}
           <div className="text-center space-y-4 mb-10 pb-10 border-b border-black/5">
@@ -132,10 +132,10 @@ export function EventBookingSuccess() {
                 check_circle
               </span>
             </div>
-            <span className="font-label text-[10px] md:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block">
+            <span className="font-label text-[10px] lg:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block">
               Reservation Confirmed
             </span>
-            <h2 className="font-display text-3xl md:text-5xl text-black font-light tracking-tight">
+            <h2 className="font-display text-3xl lg:text-5xl text-black font-light tracking-tight">
               Thank You!
             </h2>
             <p className="font-body text-black/50 text-sm max-w-md mx-auto">

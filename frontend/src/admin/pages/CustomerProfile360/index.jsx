@@ -3,7 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { customerIntelligenceService } from '../../../services/domainServices';
 import { useAuth } from '../../../context/AuthContext';
-import { Mail, Phone, MapPin, Award, ShoppingBag } from 'lucide-react';
+import { Mail, Phone, MapPin, Award, ArrowLeft } from 'lucide-react';
+import { io as socketIO } from 'socket.io-client';
+import { getAccessToken } from '../../../services/api';
+import { getApiRootUrl } from '../../../config/apiConfig';
 
 import OverviewTab from './OverviewTab';
 import JourneyTab from './JourneyTab';
@@ -21,7 +24,6 @@ const TABS = [
   { id: 'journey', label: 'Shopping Journey' },
   { id: 'timeline', label: 'Timeline' },
   { id: 'behaviour', label: 'Activity & Searches' },
-  { id: 'wishlist', label: 'Wishlist' },
   { id: 'notes', label: 'Notes' },
   { id: 'communications', label: 'Messages' },
   { id: 'predictions', label: 'Predictions' },
@@ -49,6 +51,29 @@ export default function CustomerProfile360() {
       }
     };
     fetchProfile();
+
+    const token = getAccessToken();
+    if (!token) return;
+    const rawApiUrl = getApiRootUrl();
+    let socketServerUrl = rawApiUrl;
+    if (socketServerUrl.endsWith('/api/v1')) socketServerUrl = socketServerUrl.slice(0, -7);
+    else if (socketServerUrl.endsWith('/api')) socketServerUrl = socketServerUrl.slice(0, -4);
+
+    const socket = socketIO(`${socketServerUrl}/admin`, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+    });
+
+    socket.on('customer_updated', (data) => {
+      if (data?.customerId === customerId) fetchProfile();
+      else fetchProfile(); // Fallback update
+    });
+
+    socket.on('order_update', () => {
+      fetchProfile();
+    });
+
+    return () => socket.disconnect();
   }, [customerId]);
 
   if (loading) {
@@ -111,7 +136,7 @@ export default function CustomerProfile360() {
           onClick={() => navigate('/admin/customers')}
           className="admin-btn admin-btn-outline p-2 h-10 w-10 shrink-0 flex items-center justify-center"
         >
-          <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+          <ArrowLeft size={24} strokeWidth={2.5} className="text-[var(--admin-text-primary)]" />
         </button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 leading-tight">Customer Profile</h1>
@@ -225,22 +250,13 @@ export default function CustomerProfile360() {
               {activeTab === 'behaviour' && (
                 <BehaviourTab customerId={customerId} profile={profile} />
               )}
-              {activeTab === 'wishlist' && (
-                <div className="text-center py-16 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                  <ShoppingBag className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-lg font-medium text-gray-900">Wishlist is empty</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    This customer hasn't saved any items yet.
-                  </p>
-                </div>
-              )}
               {activeTab === 'communications' && <CommunicationsTab customerId={customerId} />}
-              {activeTab === 'notes' && <NotesTab customerId={customerId} notes={profile.notes} />}
+              {activeTab === 'notes' && <NotesTab customerId={customerId} />}
               {activeTab === 'predictions' && (
                 <PredictionsTab predictions={profile.predictions} overview={profile.overview} />
               )}
               {activeTab === 'risk' && ['super_admin', 'manager'].includes(user?.role) && (
-                <RiskTab fraudSignals={profile.fraudSignals} />
+                <RiskTab fraudSignals={profile.scores?.fraudRisk} />
               )}
             </motion.div>
           </AnimatePresence>

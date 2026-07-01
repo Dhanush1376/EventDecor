@@ -39,6 +39,7 @@ export function useCreateCoupon() {
   const [mobileTab, setMobileTab] = useState('form');
   const [currentStep, setCurrentStep] = useState(0);
   const [products, setProducts] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
 
   const {
     formData,
@@ -76,6 +77,21 @@ export function useCreateCoupon() {
       })
       .catch((err) => {
         logger.warn('Failed to load catalog products for targeting selection:', err);
+      });
+
+    productService
+      .getCategories()
+      .then((res) => {
+        if (res.success && res.data) {
+          // Assuming data is array of objects with name, or array of strings
+          const list = Array.isArray(res.data) ? res.data : res.data.data || [];
+          setAvailableCategories(
+            list.map((c) => (typeof c === 'string' ? c : c.name)).filter(Boolean),
+          );
+        }
+      })
+      .catch((err) => {
+        logger.warn('Failed to load categories for targeting selection:', err);
       });
   }, []);
 
@@ -189,6 +205,7 @@ export function useCreateCoupon() {
     currentStep,
     setCurrentStep,
     products,
+    availableCategories,
     formData,
     setFormData,
     draftStatus,

@@ -48,7 +48,7 @@ export function GalleryDetail() {
   }
 
   return (
-    <div className="bg-[#fcfbf9] min-h-screen selection:bg-primary/20 relative pt-[56px] md:pt-20 pb-32 md:pb-20 overflow-hidden">
+    <div className="bg-[#fcfbf9] min-h-screen selection:bg-primary/20 relative pt-[56px] lg:pt-20 pb-32 lg:pb-20 overflow-hidden">
       <SEO title={item.title} description={item.description} />
 
       {/* Background Mandala Art */}
@@ -62,7 +62,7 @@ export function GalleryDetail() {
 
       {/* Breadcrumbs — Desktop */}
       <nav
-        className="hidden md:flex items-center gap-2 font-label text-[11px] uppercase tracking-[0.25em] mb-8 text-black/30 max-w-[1340px] mx-auto px-6 lg:px-10"
+        className="hidden lg:flex items-center gap-2 font-label text-[11px] uppercase tracking-[0.25em] mb-8 text-black/30 max-w-[1340px] mx-auto px-6 lg:px-10"
         aria-label="Breadcrumb"
       >
         <Link to="/" className="hover:text-primary transition-colors">
@@ -77,7 +77,7 @@ export function GalleryDetail() {
       </nav>
 
       {/* ═══════ Main Content ═══════ */}
-      <main className="max-w-[1340px] mx-auto md:px-6 lg:px-10">
+      <main className="max-w-[1340px] mx-auto lg:px-6 lg:px-10">
         <GalleryMobileLayout
           item={item}
           pageUrl={pageUrl}

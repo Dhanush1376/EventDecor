@@ -14,10 +14,11 @@ export function RecommendedGrid() {
   const config = cms?.recommendedProducts || {};
 
   const productIds = config.productIds || [];
+  const isManualMode = config.useAutoFeed === false && productIds.length > 0;
 
   const { data, isPending, isError, refetch } = useProducts(
     {
-      ...(productIds.length > 0 ? { ids: productIds.join(',') } : { featured: true }),
+      ...(isManualMode ? { ids: productIds.join(',') } : { featured: true }),
       limit: config.maxDisplay || 10,
     },
     { enabled: config.isVisible !== false },
@@ -48,18 +49,18 @@ export function RecommendedGrid() {
           variant={4}
         />
         <div className="h1-container relative z-10 animate-pulse">
-          <div className="flex justify-between items-end mb-8 md:mb-10">
+          <div className="flex justify-between items-end mb-8 lg:mb-10">
             <div>
-              <div className="h-3 w-20 md:w-24 bg-surface-container-high rounded-full mb-2"></div>
-              <div className="h-8 md:h-10 w-48 md:w-64 bg-surface-container-high rounded-full"></div>
+              <div className="h-3 w-20 lg:w-24 bg-surface-container-high rounded-full mb-2"></div>
+              <div className="h-8 lg:h-10 w-48 lg:w-64 bg-surface-container-high rounded-full"></div>
             </div>
-            <div className="h-4 w-20 bg-surface-container-high rounded-full hidden md:block"></div>
+            <div className="h-4 w-20 bg-surface-container-high rounded-full hidden lg:block"></div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 lg:gap-8">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="flex flex-col gap-4">
-                <div className="w-full aspect-[3/4] bg-surface-container-high rounded-[24px] md:rounded-[32px]"></div>
-                <div className="px-1 md:px-2">
+                <div className="w-full aspect-[3/4] bg-surface-container-high rounded-[24px] lg:rounded-[32px]"></div>
+                <div className="px-1 lg:px-2">
                   <div className="w-[80%] h-4 bg-surface-container-high rounded-full mb-2"></div>
                   <div className="w-[60%] h-3 bg-surface-container-high rounded-full mb-3"></div>
                   <div className="w-[40%] h-5 bg-surface-container-high rounded-full"></div>
@@ -109,13 +110,13 @@ export function RecommendedGrid() {
       />
       <div className="h1-container relative z-10">
         <SectionHeader
-          kicker={config.kicker}
-          title={config.sectionTitle}
-          seeAllLink={config.seeAllLink}
+          kicker={config.sectionSubtitle !== undefined ? config.sectionSubtitle : config.kicker}
+          title={config.sectionTitle || 'Recommended For You'}
+          seeAllLink={config.seeAllLink || '/collections'}
         />
       </div>
       <div className="h1-container relative z-10 mt-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 lg:gap-8">
           {products.slice(0, config.maxDisplay || 8).map((product) => (
             <ProductCard
               key={product.id || product._id}

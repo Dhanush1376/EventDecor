@@ -81,13 +81,13 @@ export function DashboardHeader() {
       ref={headerRef}
       className={`sticky z-40 transition-all duration-300 flex justify-between items-center gap-4 h-[52px] mb-4 border-b ${
         isStuck
-          ? 'bg-white/95 backdrop-blur-md border-black/5 -mx-margin-mobile md:-mx-margin-desktop px-margin-mobile md:px-margin-desktop'
+          ? 'bg-white/95 backdrop-blur-md border-black/5 -mx-margin-mobile lg:-mx-margin-desktop px-margin-mobile lg:px-margin-desktop'
           : 'border-outline-variant/20 bg-transparent'
       }`}
       style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
     >
       {/* Mobile Back Button Navigation */}
-      <div className="md:hidden flex-1 min-w-0">
+      <div className="lg:hidden flex-1 min-w-0">
         {mobileShowContent ? (
           selectedOrderId ? (
             <button
@@ -118,7 +118,7 @@ export function DashboardHeader() {
       </div>
 
       {/* Desktop Breadcrumbs Navigation */}
-      <nav className="hidden md:flex text-[11px] text-black flex-wrap items-center gap-2 tracking-wider uppercase font-bold flex-1 min-w-0">
+      <nav className="hidden lg:flex text-[11px] text-black flex-wrap items-center gap-2 tracking-wider uppercase font-bold flex-1 min-w-0">
         <Link to="/" className="hover:text-black/70 transition-colors">
           Home
         </Link>

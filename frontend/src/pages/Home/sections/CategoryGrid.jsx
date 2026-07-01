@@ -17,9 +17,9 @@ export const CategoryGrid = React.memo(function CategoryGrid() {
     return (
       <section className="h1-categories relative overflow-hidden isolate">
         <div className="h1-container relative z-10 animate-pulse">
-          <div className="flex flex-col items-center mb-8 md:mb-10 text-center">
+          <div className="flex flex-col items-center mb-8 lg:mb-10 text-center">
             <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2 mx-auto"></div>
-            <div className="h-8 w-48 md:w-64 bg-surface-container-high rounded-full mx-auto"></div>
+            <div className="h-8 w-48 lg:w-64 bg-surface-container-high rounded-full mx-auto"></div>
           </div>
 
           {/* Mobile Grid */}
@@ -120,7 +120,12 @@ export const CategoryGrid = React.memo(function CategoryGrid() {
                       />
                     )}
                     <div className="h1-categories__overlay"></div>
-                    <span className="h1-categories__label">{displayName}</span>
+                    <div className="h1-categories__label">
+                      <span>{displayName}</span>
+                      <span className="h1-categories__label-icon">
+                        <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                      </span>
+                    </div>
                   </div>
                 </Link>
               );

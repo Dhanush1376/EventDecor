@@ -106,17 +106,17 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
   };
 
   return (
-    <div className="flex flex-col gap-6 md:gap-7 lg:sticky lg:top-32">
+    <div className="flex flex-col gap-6 lg:gap-7 lg:sticky lg:top-32">
       {/* Category & Badge Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-2 lg:gap-3">
           <span className="font-label text-[11px] uppercase tracking-[0.2em] font-bold text-on-surface-variant/80">
             {product.primaryCategory?.name || product.category || 'Artisanal Collection'}
           </span>
           {(product.collection || product.subcategory) && (
             <>
               <span className="w-1 h-1 rounded-full bg-primary/40"></span>
-              <span className="font-label text-[11px] md:text-[12px] text-on-surface/50 uppercase tracking-widest font-normal">
+              <span className="font-label text-[11px] lg:text-[12px] text-on-surface/50 uppercase tracking-widest font-normal">
                 {product.collection || product.subcategory}
               </span>
             </>
@@ -172,12 +172,12 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
 
       {/* Product Title & Metadata - Luxury Editorial */}
       <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2 md:space-y-3 flex-1">
-          <h2 className="flex flex-col gap-1.5 font-display text-[26px] sm:text-[30px] md:text-[38px] text-on-surface leading-[1.1] tracking-[-0.01em] font-light">
+        <div className="space-y-2 lg:space-y-3 flex-1">
+          <h2 className="flex flex-col gap-1.5 font-display text-[26px] sm:text-[30px] lg:text-[38px] text-on-surface leading-[1.1] tracking-[-0.01em] font-light">
             <span>{product.title}</span>
             {(product.teluguTitle || product.nameTE || product.teluguName) && (
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-on-surface/70 font-display text-[18px] sm:text-[22px] md:text-[26px] font-extralight">
+                <span className="text-on-surface/70 font-display text-[18px] sm:text-[22px] lg:text-[26px] font-extralight">
                   {product.teluguTitle || product.nameTE || product.teluguName}
                 </span>
                 <span className="w-8 sm:w-12 h-px bg-primary/40 shrink-0"></span>
@@ -474,24 +474,28 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
             </span>
           </button>
 
-          {canRent && (
-            <button
-              onClick={product.rentalStock <= 0 ? undefined : handleRentNow}
-              disabled={product.rentalStock <= 0}
-              className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-xl transition-all font-bold px-4 ${
-                product.rentalStock <= 0
-                  ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                  : 'bg-[#8c7335] text-white hover:bg-[#725c29] cursor-pointer'
-              } ${canPurchase && canRent ? 'col-span-2' : ''}`}
-            >
-              <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform shrink-0">
-                {product.rentalStock <= 0 ? 'event_busy' : 'event_available'}
-              </span>
-              <span className="text-[11px] uppercase tracking-widest">
-                {product.rentalStock <= 0 ? 'No Rental Stock' : 'Rent'}
-              </span>
-            </button>
-          )}
+          {canRent &&
+            (() => {
+              const maxRentalStock = product.rentalStock > 0 ? product.rentalStock : product.stock;
+              return (
+                <button
+                  onClick={maxRentalStock <= 0 ? undefined : handleRentNow}
+                  disabled={maxRentalStock <= 0}
+                  className={`!py-3 rounded-full flex items-center justify-center gap-2 group shadow-xl transition-all font-bold px-4 ${
+                    maxRentalStock <= 0
+                      ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                      : 'bg-[#8c7335] text-white hover:bg-[#725c29] cursor-pointer'
+                  } ${canPurchase && canRent ? 'col-span-2' : ''}`}
+                >
+                  <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform shrink-0">
+                    {maxRentalStock <= 0 ? 'event_busy' : 'event_available'}
+                  </span>
+                  <span className="text-[11px] uppercase tracking-widest">
+                    {maxRentalStock <= 0 ? 'No Rental Stock' : 'Rent'}
+                  </span>
+                </button>
+              );
+            })()}
         </div>
 
         {/* Custom Design Consultation Card */}
@@ -529,7 +533,7 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
       </div>
 
       {/* Trust Signifiers Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-outline-variant/10">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-outline-variant/10">
         <FeatureItem icon="draw" label="Handmade Work" />
         <FeatureItem icon="workspace_premium" label="100% Original" />
         <FeatureItem icon="all_inclusive" label="Lifetime Warranty" />

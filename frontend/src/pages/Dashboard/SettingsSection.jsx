@@ -79,7 +79,7 @@ export function SettingsSection() {
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="flex items-start gap-3.5 py-4 border-b md:border-b-0 md:border-r border-outline-variant/20 last:border-0 cursor-pointer group pr-4">
+              <label className="flex items-start gap-3.5 py-4 border-b lg:border-b-0 lg:border-r border-outline-variant/20 last:border-0 cursor-pointer group pr-4">
                 <div className="relative flex items-center justify-center mt-0.5 shrink-0">
                   <input
                     type="checkbox"
@@ -103,7 +103,7 @@ export function SettingsSection() {
                 </div>
               </label>
 
-              <label className="flex items-start gap-3.5 py-4 cursor-pointer group pl-0 md:pl-4">
+              <label className="flex items-start gap-3.5 py-4 cursor-pointer group pl-0 lg:pl-4">
                 <div className="relative flex items-center justify-center mt-0.5 shrink-0">
                   <input
                     type="checkbox"

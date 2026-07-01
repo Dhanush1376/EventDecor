@@ -16,7 +16,7 @@ export function GalleryMobileLayout({
 }) {
   return (
     <>
-      <div className="md:hidden flex flex-col bg-white overflow-hidden border-b border-black/5 pb-8 mb-8">
+      <div className="md:hidden lg:hidden flex flex-col bg-white overflow-hidden border-b border-black/5 pb-8 mb-8">
         {/* Image/Video Section */}
         <div className="w-full relative bg-[#f9f8f6]">
           {item.video ? (
@@ -113,7 +113,7 @@ export function GalleryMobileLayout({
             </div>
 
             {/* Connecting Line */}
-            <div className="flex-1 h-px bg-primary/20 mx-1 md:mx-2 min-w-[20px]" />
+            <div className="flex-1 h-px bg-primary/20 mx-1 lg:mx-2 min-w-[20px]" />
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 shrink-0">
@@ -188,7 +188,7 @@ export function GalleryMobileLayout({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 150, opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-            className="md:hidden fixed bottom-0 left-0 w-full h-[calc(72px+env(safe-area-inset-bottom,0px))] md:h-[80px] z-[100] bg-white/95 backdrop-blur-xl border-t border-outline-variant/15 px-6 pb-[env(safe-area-inset-bottom,0px)] flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] select-none"
+            className="md:hidden lg:hidden fixed bottom-0 left-0 w-full h-[calc(72px+env(safe-area-inset-bottom,0px))] lg:h-[80px] z-[100] bg-white/95 backdrop-blur-xl border-t border-outline-variant/15 px-6 pb-[env(safe-area-inset-bottom,0px)] flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] select-none"
           >
             <div className="flex flex-col truncate max-w-[50%]">
               <span className="font-label text-[8px] uppercase tracking-[0.25em] text-stone-500 font-bold leading-none">

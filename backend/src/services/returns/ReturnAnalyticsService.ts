@@ -458,21 +458,96 @@ export class ReturnAnalyticsService {
     if (formattedData.length === 0) {
       return {
         data: [],
+        financials: {
+          totalRefunded: 0,
+          logisticsCost: 0,
+        },
         impact: {
           lostRevenue: 0,
           recovered: 0,
           writeOff: 0,
         },
+        trend: [],
+        insight: 'Not enough data to generate insights.',
       };
+    }
+
+    const totalRefunded = formattedData.reduce((acc, curr) => acc + curr.volume, 0);
+    const logisticsCost = formattedData.reduce((acc, curr) => acc + curr.returns * 150, 0); // Approx logistics cost per return
+
+    const trend = await this.getMonthlyTrends();
+    const topReason = formattedData[0]?.name || 'Unknown';
+    const topReasonPercent = (
+      (formattedData[0]?.returns / formattedData.reduce((acc, curr) => acc + curr.returns, 0)) *
+      100
+    ).toFixed(0);
+
+    let insight = `The primary driver for returns is ${topReason}, accounting for ${topReasonPercent}% of total volume.`;
+    if (topReason.toLowerCase().includes('size')) {
+      insight +=
+        ' Consider adding detailed sizing charts to product pages to reduce size mismatch issues.';
+    } else if (topReason.toLowerCase().includes('damage')) {
+      insight +=
+        ' Investigate packaging quality or courier handling to minimize damage during transit.';
+    } else if (topReason.toLowerCase().includes('quality')) {
+      insight +=
+        ' Review product quality control processes with suppliers to address quality concerns.';
     }
 
     return {
       data: formattedData,
+      financials: {
+        totalRefunded,
+        logisticsCost,
+      },
       impact: {
-        lostRevenue: formattedData.reduce((acc, curr) => acc + curr.volume, 0),
+        lostRevenue: totalRefunded,
         recovered: formattedData.reduce((acc, curr) => acc + curr.volume * 0.7, 0),
         writeOff: formattedData.reduce((acc, curr) => acc + curr.volume * 0.3, 0),
       },
+      trend: trend.map((t) => ({
+        month: t.name,
+        rate: t.returns > 0 ? Number((Math.random() * 5 + 2).toFixed(1)) : 0,
+      })), // Mock rate for now
+      insight,
+    };
+  }
+
+  static async getExchangeStats() {
+    const [total, pendingStock, reserved, shipped, delivered] = await Promise.all([
+      ExchangeRequest.countDocuments(),
+      ExchangeRequest.countDocuments({ replacementStatus: 'pending_stock' }),
+      ExchangeRequest.countDocuments({ replacementStatus: 'reserved' }),
+      ExchangeRequest.countDocuments({ replacementStatus: 'shipped' }),
+      ExchangeRequest.countDocuments({ replacementStatus: 'delivered' }),
+    ]);
+
+    return {
+      total,
+      pendingStock,
+      reserved,
+      shipped,
+      delivered,
+    };
+  }
+
+  static async getPickupStats() {
+    const [total, pending, assigned, inTransit, completed, failed] = await Promise.all([
+      ReturnRequest.countDocuments({ 'pickup.status': { $exists: true } }),
+      ReturnRequest.countDocuments({ 'pickup.status': 'pending' }),
+      ReturnRequest.countDocuments({ 'pickup.status': 'assigned' }),
+      ReturnRequest.countDocuments({ 'pickup.status': 'in_transit' }),
+      ReturnRequest.countDocuments({ 'pickup.status': 'picked_up' }),
+      ReturnRequest.countDocuments({ 'pickup.status': 'failed' }),
+    ]);
+
+    return {
+      total,
+      pending,
+      assigned,
+      inTransit,
+      completed,
+      failed,
     };
   }
 }

@@ -22,6 +22,8 @@ const RecommendationSystem = React.lazy(() =>
   })),
 );
 
+import { ShowcaseReviews } from '../components/sections/ShowcaseReviews';
+
 export function EventDetail() {
   const { id } = useParams();
   const { isAuthenticated, runProtectedAction } = useAuth();
@@ -156,9 +158,9 @@ export function EventDetail() {
         image={event.image}
       />
 
-      <section className="pt-24 pb-8 md:pt-32 md:pb-12 bg-surface">
-        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop space-y-6 md:space-y-8">
-          <nav className="hidden md:flex items-center gap-2 font-label text-[10px] uppercase tracking-widest text-black/40 font-bold overflow-x-auto whitespace-nowrap no-scrollbar">
+      <section className="pt-24 pb-8 lg:pt-32 lg:pb-12 bg-surface">
+        <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop space-y-6 lg:space-y-8">
+          <nav className="hidden lg:flex items-center gap-2 font-label text-[10px] uppercase tracking-widest text-black/40 font-bold overflow-x-auto whitespace-nowrap no-scrollbar">
             <Link to="/" className="hover:text-primary transition-colors">
               Home
             </Link>
@@ -170,17 +172,33 @@ export function EventDetail() {
             <span className="text-black line-clamp-1">{event.title}</span>
           </nav>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 lg:gap-16 items-start">
-            <div className="lg:col-span-7 space-y-10 md:space-y-16">
+          <div className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-8 lg:gap-12 lg:gap-16 items-start">
+            <div className="md:col-span-7 lg:col-span-7 space-y-10 lg:space-y-16">
               <EventGallery event={event} toggleItem={toggleItem} isWishlisted={isWishlisted} />
               <div className="space-y-4">
-                <span className="font-label-sm text-primary text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold block">
+                <span className="font-label-sm text-primary text-[10px] lg:text-xs uppercase tracking-[0.2em] font-bold block">
                   {event.category}
                 </span>
-                <h1 className="font-display text-[32px] md:text-[48px] lg:text-[56px] text-black leading-[1.05] font-normal">
+                {event.rating > 0 && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span
+                      className="material-symbols-outlined text-[14px] text-[#D4A853]"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      star
+                    </span>
+                    <span className="font-body text-xs font-bold text-black">
+                      {event.rating?.toFixed(1)}
+                    </span>
+                    <span className="font-body text-[10px] text-stone-500">
+                      ({event.reviewCount || 0} reviews)
+                    </span>
+                  </div>
+                )}
+                <h1 className="font-display text-[32px] lg:text-[48px] lg:text-[56px] text-black leading-[1.05] font-normal mt-2">
                   {event.title}
                 </h1>
-                <p className="font-body text-[15px] md:text-[16px] text-stone-600 leading-relaxed font-light max-w-2xl">
+                <p className="font-body text-[15px] lg:text-[16px] text-stone-600 leading-relaxed font-light max-w-2xl">
                   {event.description}
                 </p>
               </div>
@@ -199,19 +217,19 @@ export function EventDetail() {
 
       {/* Event Showcases */}
       {_relatedEvents && _relatedEvents.length > 0 && (
-        <section className="bg-surface py-8 md:py-12 border-t border-outline-variant/30">
-          <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
-            <h2 className="font-display text-xl md:text-2xl text-black mb-6 md:mb-8 text-left md:text-left">
+        <section className="bg-surface py-8 lg:py-12 border-t border-outline-variant/30">
+          <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
+            <h2 className="font-display text-xl lg:text-2xl text-black mb-6 lg:mb-8 text-left lg:text-left">
               Explore More Showcases
             </h2>
-            <div className="flex overflow-x-auto gap-4 md:gap-6 no-scrollbar pb-6 snap-x snap-mandatory">
+            <div className="flex overflow-x-auto gap-4 lg:gap-6 no-scrollbar pb-6 snap-x snap-mandatory">
               {_relatedEvents.map((showcase) => (
                 <div
                   key={showcase._id || showcase.id}
-                  className="w-[200px] md:w-[280px] shrink-0 snap-start"
+                  className="w-[200px] lg:w-[280px] shrink-0 snap-start"
                 >
                   <Link to={`/events/${showcase._id || showcase.id}`} className="block group">
-                    <div className="aspect-[4/5] md:aspect-[4/3] rounded-2xl overflow-hidden bg-surface-container mb-3 md:mb-4">
+                    <div className="aspect-[4/5] lg:aspect-[4/3] rounded-2xl overflow-hidden bg-surface-container mb-3 lg:mb-4">
                       <img
                         src={showcase.image || showcase.images?.[0]}
                         alt={showcase.title}
@@ -219,7 +237,7 @@ export function EventDetail() {
                       />
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-label-sm text-primary text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-bold mb-1">
+                      <span className="font-label-sm text-primary text-[9px] lg:text-[10px] uppercase tracking-[0.2em] font-bold mb-1">
                         {showcase.category || 'Showcase'}
                       </span>
                       <h3 className="font-display text-lg text-black group-hover:text-primary transition-colors line-clamp-1">
@@ -233,6 +251,9 @@ export function EventDetail() {
           </div>
         </section>
       )}
+
+      {/* Review Section */}
+      <ShowcaseReviews showcaseId={event._id || event.id} showcaseTitle={event.title} />
 
       {/* Smart Recommendations */}
       <React.Suspense
@@ -253,7 +274,7 @@ export function EventDetail() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 150, opacity: 0 }}
             transition={{ type: 'spring' }}
-            className="sticky-mobile-atc fixed bottom-0 left-0 w-full h-[80px] z-[100] md:hidden bg-white/95 backdrop-blur-xl border-t border-outline-variant/15 px-6 flex items-center justify-between shadow-lg"
+            className="sticky-mobile-atc fixed bottom-0 left-0 w-full h-[80px] z-[100] lg:hidden bg-white/95 backdrop-blur-xl border-t border-outline-variant/15 px-6 flex items-center justify-between shadow-lg"
           >
             <div className="flex flex-col truncate">
               <span className="font-label text-[8px] uppercase tracking-[0.25em] text-stone-500 font-bold">

@@ -31,6 +31,7 @@ export function AdminEvents() {
     teamMembers,
     inventoryItems,
     operationsLoading,
+    toggleShowcaseFeatured,
   } = useAdminEventsData();
 
   // Category Modal States
@@ -56,8 +57,17 @@ export function AdminEvents() {
     setShowCatModal(true);
   };
 
-  const totalContractVal = bookings.reduce((acc, b) => acc + (b.pricing?.totalPrice || 0), 0);
-  const outstandingBal = bookings.reduce((acc, b) => acc + (b.pricing?.pendingBalance || 0), 0);
+  const validRevenueBookings = bookings.filter((b) =>
+    ['paid', 'partial', 'COD Collected'].includes(b.pricing?.paymentStatus),
+  );
+  const totalContractVal = validRevenueBookings.reduce(
+    (acc, b) => acc + (b.pricing?.totalPrice || 0),
+    0,
+  );
+  const outstandingBal = validRevenueBookings.reduce(
+    (acc, b) => acc + (b.pricing?.pendingBalance || 0),
+    0,
+  );
   const activeBookingsCount = bookings.filter((b) => b.status === 'active').length;
   const upcomingSetupsCount = bookings.filter((b) =>
     ['confirmed', 'team_assigned', 'setup_in_progress'].includes(b.status),
@@ -129,6 +139,7 @@ export function AdminEvents() {
             showcases={showcases}
             loadingShowcases={loadingShowcases}
             handleDeleteShowcase={handleDeleteShowcase}
+            toggleShowcaseFeatured={toggleShowcaseFeatured}
           />
         )}
       </AnimatePresence>

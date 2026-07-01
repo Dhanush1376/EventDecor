@@ -39,6 +39,8 @@ export function useShowcaseForm({ id, isEditMode, navigate }) {
       setupTimeHours: '',
       seoTitle: '',
       seoDescription: '',
+      featured: false,
+      showInGallery: false,
       isActive: true,
     },
     initialPageState: { activeStep: 0, mobileTab: 'form' },
@@ -81,6 +83,8 @@ export function useShowcaseForm({ id, isEditMode, navigate }) {
               setupTimeHours: sc.setupTimeHours || 2,
               seoTitle: sc.seoTitle || '',
               seoDescription: sc.seoDescription || '',
+              featured: sc.featured || false,
+              showInGallery: sc.showInGallery || false,
               isActive: sc.isActive !== undefined ? sc.isActive : true,
             });
           } else {

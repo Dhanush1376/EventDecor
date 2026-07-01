@@ -307,7 +307,7 @@ export function OrderSuccess() {
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="bg-surface-bright border border-outline-variant/40 rounded-lg p-8 md:p-12 text-center shadow-xs overflow-hidden relative"
+              className="bg-surface-bright border border-outline-variant/40 rounded-lg p-8 lg:p-12 text-center shadow-xs overflow-hidden relative"
             >
               <MandalaArtDecor
                 variant={1}
@@ -319,7 +319,7 @@ export function OrderSuccess() {
                 <span className="material-symbols-outlined text-[32px]">check_circle</span>
               </div>
 
-              <h2 className="font-display text-2xl md:text-3xl text-on-surface font-bold mb-3">
+              <h2 className="font-display text-2xl lg:text-3xl text-on-surface font-bold mb-3">
                 {order.orderType === 'rental' || order.items.some((i) => i.type === 'rental')
                   ? '🏷 Rental Booking Confirmed!'
                   : 'Order Confirmed!'}

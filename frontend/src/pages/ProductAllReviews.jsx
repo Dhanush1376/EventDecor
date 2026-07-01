@@ -233,13 +233,13 @@ export function ProductAllReviews() {
   if (productLoading || (loading && reviews.length === 0)) {
     return (
       <div className="min-h-screen pt-32 pb-16 bg-[#FAF9F6] flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-[#8C7000] border-t-transparent rounded-full animate-spin" />
+        <div className="w-16 h-16 border-[1px] border-primary/30 border-t-primary rounded-full animate-spin duration-1000 ease-linear" />
       </div>
     );
   }
 
   return (
-    <div className="bg-[#FAF9F6] min-h-screen pt-24 md:pt-28 pb-20 relative overflow-hidden">
+    <div className="bg-[#FAF9F6] min-h-screen pt-24 lg:pt-28 pb-20 relative overflow-hidden">
       <SEO
         title={`Reviews - ${product?.title || 'Artisanal Masterpiece'}`}
         description={`Read verified customer feedback and ratings for ${product?.title}`}
@@ -259,7 +259,7 @@ export function ProductAllReviews() {
         className="bottom-20 -right-20 pointer-events-none"
       />
 
-      <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop space-y-10 relative z-10">
+      <div className="max-w-[1280px] mx-auto px-margin-mobile lg:px-margin-desktop space-y-10 relative z-10">
         {/* Navigation Breadcrumb Header */}
         <div className="flex flex-col gap-3">
           <Link
@@ -271,14 +271,14 @@ export function ProductAllReviews() {
             </span>
             Back to Masterpiece
           </Link>
-          <h1 className="font-display text-3xl md:text-4xl text-[#2D2B29] font-light tracking-tight mt-1">
+          <h1 className="font-display text-3xl lg:text-4xl text-[#2D2B29] font-light tracking-tight mt-1">
             Customer Testimonials
           </h1>
           <div className="w-12 h-[1px] bg-[#D4AF37]/40" />
         </div>
 
         {/* Unified Top Dashboard */}
-        <div className="bg-white rounded-[32px] border border-[#EBE6DD] p-6 md:p-10 shadow-sm flex flex-col lg:flex-row gap-8 lg:gap-12 items-stretch">
+        <div className="bg-white rounded-[32px] border border-[#EBE6DD] p-6 lg:p-10 shadow-sm flex flex-col lg:flex-row gap-8 lg:gap-12 items-stretch">
           {/* Column 1: Masterpiece Reference */}
           {product && (
             <div className="flex-1 flex flex-row gap-5 items-start border-b lg:border-b-0 lg:border-r border-[#F3EFE7] pb-8 lg:pb-0 lg:pr-10 shrink-0 lg:max-w-[360px] w-full">
@@ -294,7 +294,7 @@ export function ProductAllReviews() {
                 <span className="font-label text-[9px] uppercase tracking-widest text-[#8C7000] font-bold block">
                   {product.category || 'Heritage Piece'}
                 </span>
-                <h2 className="font-display text-base md:text-lg text-[#2D2B29] font-medium leading-tight line-clamp-2">
+                <h2 className="font-display text-base lg:text-lg text-[#2D2B29] font-medium leading-tight line-clamp-2">
                   {product.title}
                 </h2>
                 <div className="flex items-center gap-2 pt-0.5">
@@ -309,7 +309,7 @@ export function ProductAllReviews() {
           )}
 
           {/* Column 2: Score Card */}
-          <div className="flex-1 flex flex-col sm:flex-row items-center sm:items-stretch gap-6 md:gap-8 justify-center">
+          <div className="flex-1 flex flex-col sm:flex-row items-center sm:items-stretch gap-6 lg:gap-8 justify-center">
             {/* Big Score */}
             <div className="flex flex-col items-center justify-center p-6 bg-[#FAF9F6] border border-[#EBE6DD]/60 rounded-2xl text-center w-full sm:w-44 shrink-0 shadow-inner">
               <span className="font-display text-6xl font-light text-[#2D2B29] leading-none mb-2">
@@ -349,7 +349,7 @@ export function ProductAllReviews() {
 
         {/* Toolbar: Filters and Search */}
         {reviews.length > 0 && (
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 border-b border-[#EBE6DD] pb-6">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6 border-b border-[#EBE6DD] pb-6">
             {/* Filter Pills */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <span className="font-label text-[9px] font-bold text-[#685c57] uppercase tracking-widest">
@@ -382,7 +382,7 @@ export function ProductAllReviews() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search text in reviews..."
-                className="w-full md:w-72 pl-10 pr-4 py-3 rounded-full border border-[#E2DACB] bg-white text-xs font-body text-black placeholder:text-[#685c57]/35 outline-none focus:border-[#8C7000] transition-all shadow-3xs"
+                className="w-full lg:w-72 pl-10 pr-4 py-3 rounded-full border border-[#E2DACB] bg-white text-xs font-body text-black placeholder:text-[#685c57]/35 outline-none focus:border-[#8C7000] transition-all shadow-3xs"
               />
             </div>
           </div>

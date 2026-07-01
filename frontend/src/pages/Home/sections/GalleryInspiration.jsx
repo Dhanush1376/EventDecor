@@ -51,12 +51,12 @@ export function GalleryInspiration() {
   if (cmsLoading || galleryLoading) {
     return (
       <section className="h1-section relative overflow-hidden isolate" id="h1-inspiration">
-        <div className="h1-container max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10 animate-pulse">
-          <div className="flex flex-col items-center mb-8 md:mb-10 text-center">
+        <div className="h1-container max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative z-10 animate-pulse">
+          <div className="flex flex-col items-center mb-8 lg:mb-10 text-center">
             <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2 mx-auto"></div>
-            <div className="h-8 md:h-10 w-48 md:w-64 bg-surface-container-high rounded-full mx-auto"></div>
+            <div className="h-8 lg:h-10 w-48 lg:w-64 bg-surface-container-high rounded-full mx-auto"></div>
           </div>
-          <div className="columns-2 md:columns-3 lg:columns-5 gap-3 md:gap-5.5 space-y-3 md:space-y-5.5">
+          <div className="columns-2 lg:columns-3 lg:columns-5 gap-3 lg:gap-5.5 space-y-3 lg:space-y-5.5">
             {['aspect-[4/5]', 'aspect-square', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-square'].map(
               (aspect, i) => (
                 <div
@@ -85,10 +85,10 @@ export function GalleryInspiration() {
         opacity={0.07}
         spinDuration={160}
       />
-      <div className="h1-container max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
+      <div className="h1-container max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative z-10">
         <SectionHeader
-          title={galleryPreview?.sectionTitle}
-          seeAllLink={galleryPreview?.seeAllLink}
+          title={galleryPreview?.sectionTitle || 'Inspiration Gallery'}
+          seeAllLink={galleryPreview?.seeAllLink || '/gallery'}
           className="mb-10"
         />
 
@@ -101,7 +101,7 @@ export function GalleryInspiration() {
           />
         )}
         {!isError && galleryItems.length > 0 && (
-          <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-5.5 space-y-3 md:space-y-5.5 relative z-10">
+          <div className="columns-2 lg:columns-3 lg:columns-4 gap-3 lg:gap-5.5 space-y-3 lg:space-y-5.5 relative z-10">
             {galleryItems.map((item, idx) => (
               <motion.div
                 key={item._id}
@@ -114,7 +114,7 @@ export function GalleryInspiration() {
                   damping: 16,
                   delay: idx * 0.08,
                 }}
-                className={`break-inside-avoid relative rounded-[22px] md:rounded-[28px] overflow-hidden shadow-ambient border border-black/5 group cursor-pointer hover-lift-glow ${
+                className={`break-inside-avoid relative rounded-[22px] lg:rounded-[28px] overflow-hidden shadow-ambient border border-black/5 group cursor-pointer hover-lift-glow ${
                   !item.height || item.height === 'aspect-square'
                     ? idx % 4 === 0
                       ? 'aspect-[2/3]'
@@ -139,14 +139,14 @@ export function GalleryInspiration() {
                   />
 
                   {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-700 ease-out" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-700 ease-out" />
 
-                  <div className="absolute inset-0 p-3 md:p-5 flex flex-col justify-end opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-700 delay-100">
+                  <div className="absolute inset-0 p-3 lg:p-5 flex flex-col justify-end opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-700 delay-100">
                     <div className="flex items-end justify-between w-full gap-2">
-                      <span className="font-body text-white text-[10px] md:text-sm transform translate-y-0 md:translate-y-3.5 md:group-hover:translate-y-0 transition-transform duration-700 font-semibold tracking-wide text-left">
+                      <span className="font-body text-white text-[10px] lg:text-sm transform translate-y-0 lg:translate-y-3.5 lg:group-hover:translate-y-0 transition-transform duration-700 font-semibold tracking-wide text-left">
                         {item.title}
                       </span>
-                      <span className="material-symbols-outlined text-white/90 text-[12px] md:text-[16px] shrink-0 transform translate-y-0 md:translate-y-3.5 md:group-hover:translate-y-0 transition-transform duration-700 delay-75">
+                      <span className="material-symbols-outlined text-white/90 text-[12px] lg:text-[16px] shrink-0 transform translate-y-0 lg:translate-y-3.5 lg:group-hover:translate-y-0 transition-transform duration-700 delay-75">
                         open_in_new
                       </span>
                     </div>
@@ -165,7 +165,7 @@ export function GalleryInspiration() {
                 damping: 16,
                 delay: galleryItems.length * 0.08,
               }}
-              className="break-inside-avoid rounded-[22px] md:rounded-[28px] overflow-hidden shadow-ambient border border-primary/20 bg-primary/5 flex flex-col items-center justify-center p-5 aspect-[4/5] w-full group cursor-pointer hover-lift-glow hover:bg-on-surface-variant hover:border-on-surface-variant transition-all duration-700"
+              className="break-inside-avoid rounded-[22px] lg:rounded-[28px] overflow-hidden shadow-ambient border border-primary/20 bg-primary/5 flex flex-col items-center justify-center p-5 aspect-[4/5] w-full group cursor-pointer hover-lift-glow hover:bg-on-surface-variant hover:border-on-surface-variant transition-all duration-700"
             >
               <Link
                 className="flex flex-col items-center w-full h-full justify-center text-primary group-hover:text-white transition-colors duration-700"
@@ -179,7 +179,7 @@ export function GalleryInspiration() {
                     grid_view
                   </span>
                 </div>
-                <h3 className="font-display text-[16px] md:text-[18px] mb-2 text-center leading-tight">
+                <h3 className="font-display text-[16px] lg:text-[18px] mb-2 text-center leading-tight">
                   {galleryPreview?.ctaTitle || 'View All Inspiration'}
                 </h3>
                 <span className="font-label-sm text-[9px] uppercase tracking-[0.2em] font-bold flex items-center justify-center gap-1.5 whitespace-nowrap mt-1">

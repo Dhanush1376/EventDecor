@@ -111,6 +111,24 @@ router.get(
   authorize('super_admin', 'main_admin', 'admin', 'analyst'),
   returnAdminController.getEnterpriseAnalytics,
 );
+router.get(
+  '/admin/fraud/metrics',
+  requireAuth,
+  authorize('super_admin', 'main_admin', 'admin', 'analyst'),
+  returnAdminController.getFraudMetrics,
+);
+router.get(
+  '/admin/exchange-stats',
+  requireAuth,
+  authorize('super_admin', 'main_admin', 'admin', 'analyst'),
+  returnAdminController.getExchangeStats,
+);
+router.get(
+  '/admin/pickup-stats',
+  requireAuth,
+  authorize('super_admin', 'main_admin', 'admin', 'analyst'),
+  returnAdminController.getPickupStats,
+);
 
 // Parameterized routes MUST be at the bottom
 router.get(

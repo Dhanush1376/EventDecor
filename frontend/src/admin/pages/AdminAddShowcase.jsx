@@ -89,6 +89,7 @@ export function AdminAddShowcase() {
     aiChatInput,
     setAiChatInput,
     isAILearning,
+    isAIGenerating,
     focusedField,
     handleAiAutofill,
     handleAiChatSubmit,
@@ -406,6 +407,7 @@ export function AdminAddShowcase() {
                     focusedField={focusedField}
                     categories={categories}
                     handleAiAutofill={handleAiAutofill}
+                    isAIGenerating={isAIGenerating}
                   />
                 )}
                 {currentStep === 2 && (
@@ -526,6 +528,7 @@ export function AdminAddShowcase() {
             <ProductCard
               title={formData.title || 'Showcase Title'}
               rentalPrice={Number(formData.rentalPrice || 0)}
+              oldPrice={Number(formData.strikingPrice || 0)}
               imageSrc={formData.image}
               category={formData.category?.replace('_', ' ') || 'Category'}
               setupTimeHours={Number(formData.setupTimeHours || 0)}

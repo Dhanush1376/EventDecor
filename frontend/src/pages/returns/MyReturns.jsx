@@ -121,7 +121,7 @@ export const MyReturns = () => {
           <div className="flex justify-center mt-6">
             <Link
               to="/collections"
-              className="group flex items-center gap-2 text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70"
+              className="group flex items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70"
             >
               Explore Collection
               <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">
@@ -151,7 +151,7 @@ export const MyReturns = () => {
                   </span>
                 </div>
               </div>
-              <div className="p-5 flex flex-col md:flex-row gap-5 justify-between">
+              <div className="p-5 flex flex-col lg:flex-row gap-5 justify-between">
                 <div className="flex-1 space-y-4">
                   {ret.items.map((item, i) => (
                     <div key={i} className="flex gap-4">
@@ -174,7 +174,7 @@ export const MyReturns = () => {
                     </div>
                   ))}
                 </div>
-                <div className="shrink-0 md:w-48 space-y-3 border-t md:border-t-0 md:border-l border-outline-variant/20 pt-4 md:pt-0 md:pl-5 flex flex-col justify-center">
+                <div className="shrink-0 lg:w-48 space-y-3 border-t lg:border-t-0 lg:border-l border-outline-variant/20 pt-4 lg:pt-0 lg:pl-5 flex flex-col justify-center">
                   <div>
                     <div className="text-[8px] uppercase tracking-widest text-secondary font-bold mb-1">
                       Refund Amount

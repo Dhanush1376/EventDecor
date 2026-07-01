@@ -39,7 +39,7 @@ export default function CloudflareVerification({
           <div className="w-12 h-12 bg-white flex items-center justify-center p-1 shrink-0 rounded-sm">
             <SiriLogo size="32px" />
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight truncate">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight truncate">
             {domain}
           </h1>
         </div>

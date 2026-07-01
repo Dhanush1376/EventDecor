@@ -40,7 +40,7 @@ export function SearchBar({
   const hasCamera = !!onCameraClick;
   const hasClear = !!localValue;
   const paddingRightClass =
-    hasCamera && hasClear ? 'pr-18 md:pr-20' : hasCamera || hasClear ? 'pr-11 md:pr-12' : 'pr-4';
+    hasCamera && hasClear ? 'pr-18 lg:pr-20' : hasCamera || hasClear ? 'pr-11 lg:pr-12' : 'pr-4';
 
   return (
     <div
@@ -51,9 +51,9 @@ export function SearchBar({
           onClick();
         }
       }}
-      className={`relative group w-full md:flex-1 bg-surface-bright/90 backdrop-blur-md border-none rounded-full transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      className={`relative group w-full lg:flex-1 bg-surface-bright/90 backdrop-blur-md border-none rounded-full transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
     >
-      <span className="material-symbols-outlined absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant/60 transition-colors select-none pointer-events-none font-bold">
+      <span className="material-symbols-outlined absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant/60 transition-colors select-none pointer-events-none font-bold">
         search
       </span>
       <input
@@ -68,7 +68,7 @@ export function SearchBar({
             onClick();
           }
         }}
-        className={`w-full h-full pl-9 md:pl-12 ${paddingRightClass} py-0 bg-transparent border-none outline-none appearance-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none focus:!shadow-none font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50 search-portal-input ${onClick ? 'cursor-pointer' : ''}`}
+        className={`w-full h-full pl-9 lg:pl-12 ${paddingRightClass} py-0 bg-transparent border-none outline-none appearance-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none focus:!shadow-none font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50 search-portal-input ${onClick ? 'cursor-pointer' : ''}`}
         style={{
           outline: 'none',
           border: 'none',
@@ -78,7 +78,7 @@ export function SearchBar({
         }}
         aria-label="Search"
       />
-      <div className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 z-10">
+      <div className="absolute right-3 lg:right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 z-10">
         {onCameraClick && (
           <button
             onClick={(e) => {

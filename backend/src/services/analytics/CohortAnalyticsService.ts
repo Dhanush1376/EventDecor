@@ -47,7 +47,7 @@ export class CohortAnalyticsService {
         const daysSinceLastOrder = Math.floor(
           (now.getTime() - new Date(user.lastOrderDate).getTime()) / (1000 * 3600 * 24),
         );
-        let r = 1;
+        let r: number;
         if (daysSinceLastOrder <= 30) r = 5;
         else if (daysSinceLastOrder <= 90) r = 4;
         else if (daysSinceLastOrder <= 180) r = 3;
@@ -55,7 +55,7 @@ export class CohortAnalyticsService {
         else r = 1;
 
         // Calculate Frequency
-        let f = 1;
+        let f: number;
         if (user.totalOrders >= 10) f = 5;
         else if (user.totalOrders >= 5) f = 4;
         else if (user.totalOrders >= 3) f = 3;
@@ -63,7 +63,7 @@ export class CohortAnalyticsService {
         else f = 1;
 
         // Calculate Monetary
-        let m = 1;
+        let m: number;
         if (user.totalSpent >= 50000) m = 5;
         else if (user.totalSpent >= 25000) m = 4;
         else if (user.totalSpent >= 10000) m = 3;

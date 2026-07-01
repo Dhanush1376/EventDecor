@@ -98,7 +98,7 @@ export function ProductSelectionBottomSheet({ isOpen, onClose, onSelect, selecte
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
               {loading ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 gap-4">
                   {[...Array(8)].map((_, i) => (
                     <div key={i} className="animate-pulse">
                       <div className="aspect-[4/5] bg-surface-container-low rounded-2xl mb-3" />
@@ -108,7 +108,7 @@ export function ProductSelectionBottomSheet({ isOpen, onClose, onSelect, selecte
                   ))}
                 </div>
               ) : filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
                   {filteredProducts.map((product) => {
                     const isSelected = selectedProductId === product._id;
                     return (

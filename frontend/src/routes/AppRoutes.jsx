@@ -8,6 +8,7 @@ import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { NavigationOrchestrator } from '../components/ui/NavigationOrchestrator';
 import { ScrollManager } from '../components/ui/ScrollManager';
+import { MaintenanceGate } from '../components/ui/MaintenanceGate';
 
 const GlobalTracker = lazy(() =>
   import('../components/ui/GlobalTracker').then((m) => ({ default: m.GlobalTracker })),
@@ -144,9 +145,9 @@ const AdminInquiries = lazy(() =>
 const AdminCustomers = lazy(() =>
   import('../admin/pages/AdminCustomers').then((m) => ({ default: m.AdminCustomers })),
 );
-const AdminCustomerIntelligence = lazy(() => import('../admin/pages/AdminCustomerIntelligence'));
+
 const AdminExecutiveDashboard = lazy(() => import('../admin/pages/ExecutiveDashboard'));
-const AdminCustomerProfile = lazy(() => import('../admin/pages/CustomerProfile360'));
+const CustomerProfile360 = lazy(() => import('../admin/pages/CustomerProfile360'));
 const AdminGallery = lazy(() =>
   import('../admin/pages/AdminGallery').then((m) => ({ default: m.AdminGallery })),
 );
@@ -213,18 +214,14 @@ const AdminCategories = lazy(() =>
 const AdminAddCategory = lazy(() =>
   import('../admin/pages/AdminAddCategory').then((m) => ({ default: m.AdminAddCategory })),
 );
+
 const AdminCampaignCreate = lazy(() =>
   import('../admin/pages/AdminCampaignCreate').then((m) => ({ default: m.AdminCampaignCreate })),
 );
 const AdminTemplateCreate = lazy(() =>
   import('../admin/pages/AdminTemplateCreate').then((m) => ({ default: m.AdminTemplateCreate })),
 );
-const AdminConfig = lazy(() =>
-  import('../admin/pages/AdminConfig').then((m) => ({ default: m.AdminConfig })),
-);
-const AdminLayouts = lazy(() =>
-  import('../admin/pages/AdminLayouts').then((m) => ({ default: m.AdminLayouts })),
-);
+
 const AdminReviews = lazy(() =>
   import('../admin/pages/AdminReviews').then((m) => ({ default: m.AdminReviews })),
 );
@@ -257,80 +254,88 @@ export function AppRoutes() {
       <ErrorBoundary>
         <Suspense fallback={<AppRouteFallback />}>
           <Routes>
-            <Route element={<MainLayout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/blog" element={<BlogListing />} />
-              <Route path="/blog/:slug" element={<BlogPost />} />
-              <Route
-                path="/:city(wedding-decorations-hyderabad|event-decorators-telangana|event-decorators-secunderabad|event-decorators-ongole|wedding-decorations-ongole|handmade-gifts-ongole|event-decorators-vijayawada|event-decorators-guntur|wedding-decorations-bangalore|event-decorators-chennai)"
-                element={<LocationLanding />}
-              />
-              <Route path="/collections" element={<ProductListing />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
-              <Route path="/product/:id/reviews" element={<ProductAllReviews />} />
-              <Route path="/product/:id/reviews/images" element={<ProductReviewImages />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/order-success" element={<OrderSuccess />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/custom-orders" element={<CustomOrders />} />
-              <Route path="/customize/:productId" element={<RedirectToCustomOrder />} />
-              <Route
-                path="/my-custom-orders"
-                element={
-                  <ProtectedRoute>
-                    <MyCustomOrders />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/gallery" element={<Gallery />} />
-              <Route path="/gallery/:id" element={<GalleryDetail />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/wishlist" element={<Wishlist />} />
-              <Route path="/collection/:id" element={<CollectionDetail />} />
-              <Route
-                path="/dashboard/*"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/track/:orderId" element={<OrderTrackingPublic />} />
-              <Route path="/events" element={<EventShowcases />} />
-              <Route path="/events/collections" element={<EventCollections />} />
-              <Route path="/events/:id" element={<EventDetail />} />
-              <Route path="/events/book" element={<EventBookingWizard />} />
-              <Route path="/booking-success/:id" element={<EventBookingSuccess />} />
-              <Route
-                path="/events/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <EventCustomerDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/showcases" element={<EventShowcases />} />
-              <Route path="/policy/:slug" element={<GenericPolicyPage />} />
-              {/* Legacy routes redirect to dynamic paths */}
-              <Route path="/shipping" element={<Navigate to="/policy/shipping-policy" replace />} />
-              <Route path="/returns" element={<Navigate to="/policy/return-policy" replace />} />
-              <Route path="/exchange" element={<Navigate to="/policy/exchange-policy" replace />} />
-              <Route path="/refund" element={<Navigate to="/policy/refund-policy" replace />} />
-              <Route
-                path="/cancellation"
-                element={<Navigate to="/policy/cancellation-policy" replace />}
-              />
-              <Route path="/privacy" element={<Navigate to="/policy/privacy-policy" replace />} />
-              <Route
-                path="/terms"
-                element={<Navigate to="/policy/terms-and-conditions" replace />}
-              />
-              <Route path="/accept-invite" element={<AcceptInvite />} />
-              <Route path="/coupons" element={<Coupons />} />
-              <Route path="*" element={<NotFound />} />
-            </Route>
-            <Route element={<MinimalLayout />}>
-              <Route path="/checkout" element={<Checkout />} />
+            <Route element={<MaintenanceGate />}>
+              <Route element={<MainLayout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/blog" element={<BlogListing />} />
+                <Route path="/blog/:slug" element={<BlogPost />} />
+                <Route
+                  path="/:city(wedding-decorations-hyderabad|event-decorators-telangana|event-decorators-secunderabad|event-decorators-ongole|wedding-decorations-ongole|handmade-gifts-ongole|event-decorators-vijayawada|event-decorators-guntur|wedding-decorations-bangalore|event-decorators-chennai)"
+                  element={<LocationLanding />}
+                />
+                <Route path="/collections" element={<ProductListing />} />
+                <Route path="/product/:id" element={<ProductDetails />} />
+                <Route path="/product/:id/reviews" element={<ProductAllReviews />} />
+                <Route path="/product/:id/reviews/images" element={<ProductReviewImages />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/custom-orders" element={<CustomOrders />} />
+                <Route path="/customize/:productId" element={<RedirectToCustomOrder />} />
+                <Route
+                  path="/my-custom-orders"
+                  element={
+                    <ProtectedRoute>
+                      <MyCustomOrders />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/gallery" element={<Gallery />} />
+                <Route path="/gallery/:id" element={<GalleryDetail />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/collection/:id" element={<CollectionDetail />} />
+                <Route
+                  path="/dashboard/*"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/track/:orderId" element={<OrderTrackingPublic />} />
+                <Route path="/events" element={<EventShowcases />} />
+                <Route path="/events/collections" element={<EventCollections />} />
+                <Route path="/events/:id" element={<EventDetail />} />
+                <Route path="/events/book" element={<EventBookingWizard />} />
+                <Route path="/booking-success/:id" element={<EventBookingSuccess />} />
+                <Route
+                  path="/events/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <EventCustomerDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/showcases" element={<EventShowcases />} />
+                <Route path="/policy/:slug" element={<GenericPolicyPage />} />
+                {/* Legacy routes redirect to dynamic paths */}
+                <Route
+                  path="/shipping"
+                  element={<Navigate to="/policy/shipping-policy" replace />}
+                />
+                <Route path="/returns" element={<Navigate to="/policy/return-policy" replace />} />
+                <Route
+                  path="/exchange"
+                  element={<Navigate to="/policy/exchange-policy" replace />}
+                />
+                <Route path="/refund" element={<Navigate to="/policy/refund-policy" replace />} />
+                <Route
+                  path="/cancellation"
+                  element={<Navigate to="/policy/cancellation-policy" replace />}
+                />
+                <Route path="/privacy" element={<Navigate to="/policy/privacy-policy" replace />} />
+                <Route
+                  path="/terms"
+                  element={<Navigate to="/policy/terms-and-conditions" replace />}
+                />
+                <Route path="/accept-invite" element={<AcceptInvite />} />
+                <Route path="/coupons" element={<Coupons />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+              <Route element={<MinimalLayout />}>
+                <Route path="/checkout" element={<Checkout />} />
+              </Route>
             </Route>
             <Route
               path="/admin"
@@ -346,8 +351,6 @@ export function AppRoutes() {
               <Route path="products" element={<AdminProducts />} />
               <Route path="settings" element={<AdminSettings />} />
 
-              <Route path="config" element={<AdminConfig />} />
-              <Route path="layouts" element={<AdminLayouts />} />
               <Route path="policies" element={<AdminPolicies />} />
               <Route path="policies/add" element={<AdminPolicyEditor />} />
               <Route path="policies/edit/:id" element={<AdminPolicyEditor />} />
@@ -363,8 +366,8 @@ export function AppRoutes() {
               <Route path="custom-orders" element={<AdminInquiries />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="executive" element={<AdminExecutiveDashboard />} />
-              <Route path="customers/intelligence" element={<AdminCustomerIntelligence />} />
-              <Route path="customers/:customerId" element={<AdminCustomerProfile />} />
+
+              <Route path="customers/:customerId" element={<CustomerProfile360 />} />
               <Route path="gallery" element={<AdminGallery />} />
               <Route path="gallery/add" element={<AdminAddGalleryItem />} />
               <Route path="gallery/edit/:id" element={<AdminAddGalleryItem />} />

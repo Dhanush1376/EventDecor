@@ -58,7 +58,7 @@ export function RecommendationCarousel({
     <div className={`relative ${className}`}>
       {/* Luxury Header */}
       {(title || subtitle || badge) && (
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 md:mb-16">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10 lg:mb-16">
           <div className="flex flex-col items-start max-w-2xl">
             {badge && (
               <motion.div
@@ -68,7 +68,7 @@ export function RecommendationCarousel({
                 className="inline-flex items-center gap-2 mb-5"
               >
                 <div className="w-8 h-[1px] bg-primary/40" />
-                <span className="font-label text-[9px] md:text-[10px] text-primary uppercase tracking-[0.3em] font-bold">
+                <span className="font-label text-[9px] lg:text-[10px] text-primary uppercase tracking-[0.3em] font-bold">
                   {badge}
                 </span>
                 <div className="w-8 h-[1px] bg-primary/40" />
@@ -80,7 +80,7 @@ export function RecommendationCarousel({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.1 }}
-                className="font-display text-[32px] sm:text-[40px] md:text-[54px] text-on-surface leading-[1.1] tracking-tight font-light"
+                className="font-display text-[32px] sm:text-[40px] lg:text-[54px] text-on-surface leading-[1.1] tracking-tight font-light"
               >
                 {title}
               </motion.h2>
@@ -91,7 +91,7 @@ export function RecommendationCarousel({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="font-body text-base md:text-lg text-on-surface-variant/70 mt-4 font-light"
+                className="font-body text-base lg:text-lg text-on-surface-variant/70 mt-4 font-light"
               >
                 {subtitle}
               </motion.p>
@@ -103,13 +103,13 @@ export function RecommendationCarousel({
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
-            className="flex items-center gap-4 mt-2 md:mt-0"
+            className="flex items-center gap-4 mt-2 lg:mt-0"
           >
             {/* Elegant View All */}
             {viewAllLink && (
               <Link
                 to={viewAllLink}
-                className="hidden md:inline-flex items-center gap-3 pb-1 border-b border-black/20 text-on-surface font-label text-[10px] uppercase tracking-[0.2em] font-bold hover:border-black transition-colors group mr-4"
+                className="hidden lg:inline-flex items-center gap-3 pb-1 border-b border-black/20 text-on-surface font-label text-[10px] uppercase tracking-[0.2em] font-bold hover:border-black transition-colors group mr-4"
               >
                 {viewAllLabel}
                 <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
@@ -119,7 +119,7 @@ export function RecommendationCarousel({
             )}
 
             {/* Cinematic Navigation Controls */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-3">
               <button
                 onClick={() => scroll('left')}
                 disabled={!canScrollLeft}
@@ -164,7 +164,7 @@ export function RecommendationCarousel({
           role="region"
           aria-label={title || 'Recommendations carousel'}
           aria-roledescription="carousel"
-          className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory pb-12 pt-4 -mx-4 px-4 md:-mx-12 md:px-12 scroll-smooth focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+          className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory pb-12 pt-4 -mx-4 px-4 lg:-mx-12 lg:px-12 scroll-smooth focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
           style={{ gap }}
         >
           {items.map((item, idx) => (
@@ -189,13 +189,13 @@ export function RecommendationCarousel({
             </div>
           ))}
           {/* Trailing space for smooth overscroll */}
-          <div className="flex-shrink-0 w-4 md:w-12 snap-end" aria-hidden="true" />
+          <div className="flex-shrink-0 w-4 lg:w-12 snap-end" aria-hidden="true" />
         </div>
       </div>
 
       {/* Mobile View All CTA */}
       {viewAllLink && (
-        <div className="md:hidden mt-2 flex justify-center px-4">
+        <div className="lg:hidden mt-2 flex justify-center px-4">
           <Link
             to={viewAllLink}
             className="w-full py-4 bg-transparent border border-black/15 text-on-surface rounded-full font-label text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/5 flex items-center justify-center gap-3 transition-colors"

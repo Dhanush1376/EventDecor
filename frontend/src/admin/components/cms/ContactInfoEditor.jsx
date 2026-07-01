@@ -17,21 +17,21 @@ export function ContactInfoEditor({ content, onUpdate }) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4.5">
           <AdminField label="Primary Consultation Helpline" description="Direct voice call link">
             <AdminInput
-              value={c.phone || ''}
+              value={c.phone || '+91 98660 06648'}
               onChange={(e) => onUpdate('contact', { phone: e.target.value })}
               className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
             />
           </AdminField>
           <AdminField label="WhatsApp Instant Link" description="Direct messaging URL">
             <AdminInput
-              value={c.whatsapp || ''}
+              value={c.whatsapp || 'https://wa.me/919866006648'}
               onChange={(e) => onUpdate('contact', { whatsapp: e.target.value })}
               className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
             />
           </AdminField>
           <AdminField label="Official Support Email" description="Digital studio inbox">
             <AdminInput
-              value={c.email || ''}
+              value={c.email || 'Sirisha.atmakuri@gmail.com'}
               onChange={(e) => onUpdate('contact', { email: e.target.value })}
               className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
             />
@@ -45,7 +45,7 @@ export function ContactInfoEditor({ content, onUpdate }) {
             description="Location rendered on footer & contact pages"
           >
             <AdminInput
-              value={c.address || ''}
+              value={c.address || '#28-1-92, South Street, ONGOLE-523001'}
               onChange={(e) => onUpdate('contact', { address: e.target.value })}
               className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
             />
@@ -55,7 +55,10 @@ export function ContactInfoEditor({ content, onUpdate }) {
             description="Anchor link routing users to navigate"
           >
             <AdminInput
-              value={c.mapEmbed || ''}
+              value={
+                c.mapEmbed ||
+                'https://www.google.com/maps/place/Siri+Arts+%26+Crafts/@15.5024512,80.0450481,17z/data=!3m1!4b1!4m6!3m5!1s0x3a4b01495510d675:0xe98014cae349dbea!8m2!3d15.502446!4d80.047623!16s%2Fg%2F11scb6jg5_'
+              }
               onChange={(e) => onUpdate('contact', { mapEmbed: e.target.value })}
               placeholder="e.g. https://maps.google.com/?q=..."
               className="!py-2.5 !text-[11px] sm:text-[11px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"

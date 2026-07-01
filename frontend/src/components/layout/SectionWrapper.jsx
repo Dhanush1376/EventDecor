@@ -21,7 +21,7 @@ export function SectionWrapper({
     <section
       ref={ref}
       id={id}
-      className={`relative w-full py-12 md:py-20 lg:py-24 overflow-hidden ${bgClasses[variant]} ${className}`}
+      className={`relative w-full py-12 lg:py-20 lg:py-24 overflow-hidden ${bgClasses[variant]} ${className}`}
     >
       <motion.div
         variants={noAnimation ? {} : fadeUp}
@@ -29,7 +29,7 @@ export function SectionWrapper({
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
         className={`relative z-10 mx-auto ${
-          container ? 'px-margin-mobile md:px-margin-desktop max-w-[1440px]' : ''
+          container ? 'px-margin-mobile lg:px-margin-desktop max-w-[1440px]' : ''
         } ${narrow ? 'max-w-4xl' : ''}`}
       >
         {children}

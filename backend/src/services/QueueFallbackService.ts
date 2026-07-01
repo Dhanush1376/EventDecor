@@ -117,7 +117,7 @@ class FallbackQueue {
           try {
             const { createAdminNotification } = require('./notificationService');
             await createAdminNotification({
-              title: 'âš ï¸ Fallback Queue Dead Letter',
+              title: 'Fallback Queue Dead Letter',
               message: `Job "${job.jobName}" in queue "${this.name}" failed after ${MAX_RETRIES} attempts: ${err.message}`,
               type: 'system',
             });

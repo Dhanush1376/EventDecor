@@ -53,7 +53,7 @@ export function VisualSearchPanel({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="w-full px-6 md:px-8.5 py-6 flex flex-col gap-5"
+      className="w-full px-6 lg:px-8.5 py-6 flex flex-col gap-5"
     >
       {/* Drag and Drop Zone */}
       <div

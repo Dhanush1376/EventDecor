@@ -364,7 +364,7 @@ export function IntelligentSearchOverlay({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -16, scale: 0.98 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-10 w-full max-w-2xl mx-auto mt-[8vh] md:mt-[12vh] px-4"
+              className="relative z-10 w-full max-w-2xl mx-auto mt-[8vh] lg:mt-[12vh] px-4"
             >
               <input
                 ref={fileInputRef}
@@ -409,7 +409,7 @@ export function IntelligentSearchOverlay({
                 {searchMode === 'text' &&
                   predictedCategories.length > 0 &&
                   query.trim().length >= 2 && (
-                    <div className="px-6 md:px-8.5 pb-4 flex items-center gap-2 flex-wrap">
+                    <div className="px-6 lg:px-8.5 pb-4 flex items-center gap-2 flex-wrap">
                       <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mr-1">
                         Matching Category:
                       </span>
@@ -429,7 +429,7 @@ export function IntelligentSearchOverlay({
 
                 {/* Divider */}
                 {searchMode === 'text' && (showSuggestions || showEmptyState || showNoResults) && (
-                  <div className="mx-6 md:mx-8.5 h-[1px] bg-stone-200/50" />
+                  <div className="mx-6 lg:mx-8.5 h-[1px] bg-stone-200/50" />
                 )}
 
                 <div
@@ -480,7 +480,7 @@ export function IntelligentSearchOverlay({
                 </div>
               </div>
 
-              <div className="hidden md:flex items-center justify-center gap-6 mt-6 text-white/50 text-[11px] font-bold uppercase tracking-widest select-none">
+              <div className="hidden lg:flex items-center justify-center gap-6 mt-6 text-white/50 text-[11px] font-bold uppercase tracking-widest select-none">
                 <span className="flex items-center gap-2">
                   <kbd className="px-2 py-0.5 bg-white/10 border border-white/10 rounded-md text-[10px] font-mono shadow-xs">
                     ↑↓
