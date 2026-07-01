@@ -51,7 +51,7 @@ describe('Inventory Integration', () => {
       stock: 1, // Only 1 available
       reservedStock: 0,
       isActive: true,
-      category: 'Wedding',
+      primaryCategory: new mongoose.Types.ObjectId(),
       imageSrc: 'test.jpg',
     });
     testProductId = product._id.toString();

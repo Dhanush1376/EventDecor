@@ -38,7 +38,7 @@ describe('RentalAvailabilityService Integration', () => {
       title: 'Mock Rental Product',
       slug: 'mock-rental-product-avail',
       description: 'Test product for availability',
-      category: 'Decor',
+      primaryCategory: new mongoose.Types.ObjectId(),
       imageSrc: '/mock.png',
       price: 500,
       rentalEnabled: true,
@@ -61,12 +61,11 @@ describe('RentalAvailabilityService Integration', () => {
   });
 
   it('returns unavailable when all stock is booked', async () => {
-    await Product.create({
+    const product = await Product.create({
       title: 'Mock Rental Product 2',
       slug: 'mock-rental-product-booked',
       description: 'Test product for full booking',
-      primaryCategory: 'Rentals',
-      category: 'MockCategory',
+      primaryCategory: new mongoose.Types.ObjectId(),
       tags: ['rental'],
       imageSrc: '/mock2.png',
       price: 500,
