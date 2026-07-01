@@ -25,6 +25,7 @@ export function MandalaArtDecor({
   blendMode = 'darken',
   blendModeDark = 'screen',
   dark = false,
+  style = {},
 }) {
   const ref = React.useRef(null);
   const isInView = useInView(ref, { amount: 0.1 });
@@ -50,8 +51,9 @@ export function MandalaArtDecor({
         height: size,
         animation: spin ? `slow-spin ${spinDuration}s linear infinite` : 'none',
         mixBlendMode: blend,
-        WebkitMaskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 75%)',
-        maskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 75%)',
+        WebkitMaskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 65%)',
+        maskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 65%)',
+        ...style,
       }}
       loading="lazy"
     />

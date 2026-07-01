@@ -34,26 +34,30 @@ const FilterSection = ({ title, id, children, activeSections, onToggle }) => (
 const Checkbox = ({ label, count, type, currentFilters, onToggleFilter }) => {
   const isChecked = currentFilters[type]?.includes(label);
   return (
-    <label className="flex items-center justify-between cursor-pointer group">
+    <label className="flex items-center justify-between cursor-pointer group py-1.5 px-2 hover:bg-surface-container-low rounded-lg transition-all duration-300">
       <div className="flex items-center gap-3">
         <div className="relative flex items-center justify-center">
           <input
             type="checkbox"
             checked={isChecked}
             onChange={() => onToggleFilter(type, label)}
-            className="peer appearance-none h-4.5 w-4.5 border border-outline-variant/50 rounded-sm bg-transparent checked:bg-primary checked:border-primary transition-all cursor-pointer focus:ring-2 focus:ring-primary/20"
+            className="peer appearance-none h-4.5 w-4.5 border border-outline-variant/50 rounded bg-transparent checked:bg-primary checked:border-primary transition-all cursor-pointer focus:ring-2 focus:ring-primary/20"
           />
-          <span className="absolute material-symbols-outlined text-white text-[14px] opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">
+          <span className="absolute material-symbols-outlined text-white text-[13px] opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity font-bold">
             check
           </span>
         </div>
         <span
-          className={`font-body text-[14px] lg:text-[15px] transition-colors ${isChecked ? 'text-primary font-semibold' : 'text-on-surface/60 group-hover:text-on-surface'}`}
+          className={`font-body text-[14px] lg:text-[15px] transition-colors ${isChecked ? 'text-primary font-semibold' : 'text-on-surface/70 group-hover:text-on-surface'}`}
         >
           {label}
         </span>
       </div>
-      {count && <span className="font-label text-[10px] text-secondary/40 font-bold">{count}</span>}
+      {count && (
+        <span className="font-label text-[10px] text-secondary/50 font-bold bg-surface-container border border-outline-variant/10 px-1.5 py-0.5 rounded-full">
+          {count}
+        </span>
+      )}
     </label>
   );
 };
@@ -95,7 +99,13 @@ export function FilterPanel({
       setCumulativeGroups((prev) => {
         const next = [...prev];
         filterGroups.forEach((fg) => {
-          if (!next.find((g) => g.id === fg.id)) {
+          if (
+            !next.find(
+              (g) =>
+                g.id.toLowerCase() === fg.id.toLowerCase() ||
+                g.label.toLowerCase() === fg.label.toLowerCase(),
+            )
+          ) {
             next.push({ id: fg.id, label: fg.label });
           }
         });
@@ -195,7 +205,7 @@ export function FilterPanel({
             <button
               key={opt.value}
               onClick={() => onSortChange(opt.value)}
-              className={`w-full flex items-center justify-between py-0.5 min-h-0 group ${sortBy === opt.value ? 'text-primary' : 'text-on-surface/60'}`}
+              className={`w-full flex items-center justify-between py-1.5 px-2 rounded-lg group transition-all duration-300 ${sortBy === opt.value ? 'bg-primary/5 text-primary' : 'text-on-surface/60 hover:bg-surface-container-low'}`}
             >
               <span
                 className={`font-body text-[14px] lg:text-[15px] transition-colors ${sortBy === opt.value ? 'font-semibold' : 'group-hover:text-on-surface'}`}
@@ -203,7 +213,9 @@ export function FilterPanel({
                 {opt.label}
               </span>
               {sortBy === opt.value && (
-                <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                <span className="material-symbols-outlined text-[18px] text-primary animate-scale-in">
+                  check_circle
+                </span>
               )}
             </button>
           ))}
@@ -253,7 +265,7 @@ export function FilterPanel({
                     activeSections={activeSections}
                     onToggle={toggleSection}
                   >
-                    <div className="px-2 pt-4 pb-2">
+                    <div className="px-1 pt-4 pb-2">
                       <input
                         type="range"
                         min="0"
@@ -270,15 +282,28 @@ export function FilterPanel({
                             }
                           }
                         }}
-                        className="w-full h-2 bg-outline-variant/30 rounded-lg appearance-none cursor-pointer accent-primary"
+                        style={{
+                          background: `linear-gradient(to right, var(--color-primary, #C4A87C) 0%, var(--color-primary, #C4A87C) ${(currentMax / maxPossible) * 100}%, rgba(0, 0, 0, 0.08) ${(currentMax / maxPossible) * 100}%, rgba(0, 0, 0, 0.08) 100%)`,
+                        }}
+                        className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none transition-all duration-300"
                       />
-                      <div className="flex justify-between mt-2 text-xs text-on-surface-variant font-medium">
-                        <span>₹0</span>
-                        <span>
-                          {currentMax === maxPossible
-                            ? 'No Limit'
-                            : `₹${currentMax.toLocaleString()}`}
-                        </span>
+                      <div className="flex items-center justify-between gap-3 mt-4">
+                        <div className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-xl px-3 py-1.5 flex flex-col transition-all duration-300">
+                          <span className="text-[9px] uppercase tracking-wider text-on-surface-variant/50 font-bold">
+                            Min Price
+                          </span>
+                          <span className="text-xs font-semibold text-on-surface mt-0.5">₹0</span>
+                        </div>
+                        <div className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-xl px-3 py-1.5 flex flex-col text-right transition-all duration-300">
+                          <span className="text-[9px] uppercase tracking-wider text-on-surface-variant/50 font-bold">
+                            Max Price
+                          </span>
+                          <span className="text-xs font-semibold text-primary mt-0.5">
+                            {currentMax === maxPossible
+                              ? 'No Limit'
+                              : `₹${currentMax.toLocaleString()}`}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </FilterSection>

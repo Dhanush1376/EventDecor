@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { persistentStorage } from '../../utils/storage/persistentStorage';
 import rentalService from '../../services/api/rentalService';
@@ -30,7 +30,7 @@ export function useCheckoutRentals() {
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
 
-  const handleRentalCostCalculation = async (productId, startDate, endDate) => {
+  const handleRentalCostCalculation = useCallback(async (productId, startDate, endDate) => {
     if (!productId || !startDate || !endDate) return null;
     try {
       setIsCheckingAvailability(true);
@@ -48,7 +48,7 @@ export function useCheckoutRentals() {
     } finally {
       setIsCheckingAvailability(false);
     }
-  };
+  }, []);
 
   return {
     rentalStartDate,

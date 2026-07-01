@@ -14,6 +14,8 @@ import { useEventBookingForm } from './eventDetail/useEventBookingForm';
 import { EventGallery } from './eventDetail/EventGallery';
 import { EventBookingCard } from './eventDetail/EventBookingCard';
 import { EventCustomizerDrawer } from './eventDetail/EventCustomizerDrawer';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+import { CloudinaryImage } from '../components/ui/CloudinaryImage';
 
 // Lazy loading Recommendations
 const RecommendationSystem = React.lazy(() =>
@@ -109,9 +111,12 @@ export function EventDetail() {
 
         if (res?.success) setEvent(res.data);
 
-        const relatedRes = await showcaseService.getAll();
+        const relatedRes = await showcaseService.getAll({ limit: 5 });
         if (relatedRes.success) {
-          setRelatedEvents(relatedRes.data.filter((e) => e._id !== id && e.id !== id).slice(0, 4));
+          const list = Array.isArray(relatedRes.data)
+            ? relatedRes.data
+            : relatedRes.data?.docs || relatedRes.data?.items || [];
+          setRelatedEvents(list.filter((e) => e._id !== id && e.id !== id).slice(0, 4));
         }
       } catch (err) {
         logger.error('Failed to fetch event details', err);
@@ -175,9 +180,20 @@ export function EventDetail() {
           <div className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-8 lg:gap-12 lg:gap-16 items-start">
             <div className="md:col-span-7 lg:col-span-7 space-y-10 lg:space-y-16">
               <EventGallery event={event} toggleItem={toggleItem} isWishlisted={isWishlisted} />
-              <div className="space-y-4">
+              <div className="space-y-4 relative z-0">
+                <MandalaArtDecor
+                  variant={3}
+                  size={350}
+                  opacity={0.15}
+                  className="-top-10 -right-10 z-[-1]"
+                  spinDuration={200}
+                />
                 <span className="font-label-sm text-primary text-[10px] lg:text-xs uppercase tracking-[0.2em] font-bold block">
-                  {event.category}
+                  {event.category?.name ||
+                    (typeof event.category === 'string' && event.category.length === 24
+                      ? event.eventType
+                      : event.category) ||
+                    'Event Showcase'}
                 </span>
                 {event.rating > 0 && (
                   <div className="flex items-center gap-1.5 mt-2">
@@ -230,10 +246,12 @@ export function EventDetail() {
                 >
                   <Link to={`/events/${showcase._id || showcase.id}`} className="block group">
                     <div className="aspect-[4/5] lg:aspect-[4/3] rounded-2xl overflow-hidden bg-surface-container mb-3 lg:mb-4">
-                      <img
+                      <CloudinaryImage
                         src={showcase.image || showcase.images?.[0]}
                         alt={showcase.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        width={280}
+                        height={280}
                       />
                     </div>
                     <div className="flex flex-col">
@@ -261,8 +279,8 @@ export function EventDetail() {
       >
         <RecommendationSystem
           category={event.category}
-          currentProductId={event._id || event.id}
-          targetType="event"
+          currentProductId={null}
+          targetType="product"
         />
       </React.Suspense>
 
@@ -280,7 +298,7 @@ export function EventDetail() {
               <span className="font-label text-[8px] uppercase tracking-[0.25em] text-stone-500 font-bold">
                 Estimated Rental
               </span>
-              <p className="font-sans text-[15px] text-black font-bold">
+              <p className="font-display text-[18px] text-black font-medium">
                 ₹{livePrice.toLocaleString('en-IN')}
               </p>
             </div>

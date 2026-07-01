@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react';
+import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 

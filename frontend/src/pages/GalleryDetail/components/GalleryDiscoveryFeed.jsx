@@ -42,7 +42,7 @@ export function GalleryDiscoveryFeed({ moreLikeThis }) {
       </div>
 
       {/* Masonry Grid — reuse the polished GalleryCard component */}
-      <div className="columns-2 lg:columns-3 xl:columns-4 gap-3 lg:gap-4 [column-fill:_balance]">
+      <div className="columns-2 md:columns-3 xl:columns-4 gap-3 lg:gap-4 [column-fill:_balance]">
         {moreLikeThis.map((sim) => (
           <GalleryCard key={sim._id || sim.id} item={sim} />
         ))}

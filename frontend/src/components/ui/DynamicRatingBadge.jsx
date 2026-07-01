@@ -43,6 +43,10 @@ export function DynamicRatingBadge({
   const [isLoading, setIsLoading] = useState(false);
   const hideTimeoutRef = useRef(null);
 
+  if (!initialReviews || initialReviews === 0) {
+    return null;
+  }
+
   // Fetch reviews exactly like the PDP does
   const fetchReviews = async () => {
     if (hasFetched || isLoading) return;

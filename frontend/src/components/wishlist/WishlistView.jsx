@@ -9,7 +9,9 @@ import { SEO } from '../seo/SEO';
 import { ProductCard } from '../shared/ProductCard';
 import { QuickViewModal } from '../ui/QuickViewModal';
 import { WishlistPageSkeleton } from '../ui/Skeleton';
+import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { useUserProfile, useUserAddresses, useAddressMutations } from '../../hooks/useUserQueries';
+import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 
 export function WishlistView({ isEmbedded = false }) {
   const { items, _removeItem, _toggleItem, loading: wishlistLoading } = useWishlist();
@@ -33,10 +35,10 @@ export function WishlistView({ isEmbedded = false }) {
     source: 'wishlist',
   });
 
-  const { data: trendingData = {}, isPending: trendingLoading } = useProducts({
-    limit: 4,
-    sort: 'Popularity',
-  });
+  const { data: trendingData = {}, isPending: trendingLoading } = useProducts(
+    { limit: 4, sort: 'Popularity' },
+    { enabled: items.length === 0 },
+  );
   const trendingProducts =
     trendingData?.data ||
     trendingData?.products ||
@@ -53,7 +55,7 @@ export function WishlistView({ isEmbedded = false }) {
     return items.map((item) => ({
       ...item,
       id: item.id || item._id,
-      category: item.category || 'Event Decor',
+      category: item.category?.name || item.category || item.eventType || 'Event Decor',
       itemType:
         item.itemType ||
         (item.setupTimeHours !== undefined || item.inclusions ? 'event' : 'product'),
@@ -233,21 +235,17 @@ export function WishlistView({ isEmbedded = false }) {
       )}
 
       <div className={containerClasses}>
-        <div>
+        <div className="relative z-0">
+          <MandalaArtDecor
+            variant={4}
+            size={350}
+            opacity={0.08}
+            className="-top-10 right-0 z-[-1]"
+            spinDuration={250}
+          />
           {/* Header - Hidden when empty */}
           {enhancedItems.length > 0 && (
             <>
-              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30 mb-4">
-                <div className="flex items-baseline gap-1.5">
-                  <h2 className="font-display text-2xl lg:text-3xl font-bold tracking-tight text-[#1a1c1a]">
-                    My Wishlist
-                  </h2>
-                  <span className="font-body text-[11px] lg:text-xs font-medium text-[#685c57]/60">
-                    ({enhancedItems.length} {enhancedItems.length === 1 ? 'item' : 'items'})
-                  </span>
-                </div>
-              </div>
-
               {/* Filters Bar */}
               <div className="flex justify-center w-full mb-6 relative">
                 {/* Collections Segmented Switch */}
@@ -344,10 +342,12 @@ export function WishlistView({ isEmbedded = false }) {
                                 : 'border border-outline-variant/10 shadow-xs hover:border-black/25 group-hover:scale-105'
                             }`}
                           >
-                            <img
+                            <CloudinaryImage
                               src={cat.image}
                               alt={cat.name}
                               className="object-cover w-full h-full"
+                              width={64}
+                              height={64}
                             />
                           </div>
                           <span
@@ -395,7 +395,7 @@ export function WishlistView({ isEmbedded = false }) {
               {/* Recommendations */}
               <div className="pt-8 border-t border-outline-variant/20">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-bold text-[12px] uppercase tracking-widest text-on-surface">
+                  <h3 className="text-xl lg:text-2xl font-light tracking-tight text-on-surface font-display leading-tight">
                     Trending Masterpieces
                   </h3>
                   <Link
@@ -406,7 +406,7 @@ export function WishlistView({ isEmbedded = false }) {
                     <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
                   </Link>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {trendingLoading
                     ? [...Array(4)].map((_, i) => <ProductCard key={i} loading={true} />)
                     : trendingProducts.map((prod) => (
@@ -448,7 +448,7 @@ export function WishlistView({ isEmbedded = false }) {
             /* Grid Layout matching retail platforms with smooth staggered micro-animations */
             <motion.div
               layout
-              className="grid grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
             >
               <AnimatePresence>
                 {filteredItems.map((item, _index) => (

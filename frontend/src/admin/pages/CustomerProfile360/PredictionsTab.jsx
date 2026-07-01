@@ -1,5 +1,7 @@
 import React from 'react';
-import { BrainCircuit, TrendingDown, ArrowUpCircle } from 'lucide-react';
+import BrainCircuit from 'lucide-react/dist/esm/icons/brain-circuit';
+import TrendingDown from 'lucide-react/dist/esm/icons/trending-down';
+import ArrowUpCircle from 'lucide-react/dist/esm/icons/arrow-up-circle';
 
 export default function PredictionsTab({ predictions, overview }) {
   if (!predictions) {

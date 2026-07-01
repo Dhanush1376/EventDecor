@@ -1,5 +1,8 @@
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { ArrowRight, MapPin, Star, CheckCircle } from 'lucide-react';
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
+import MapPin from 'lucide-react/dist/esm/icons/map-pin';
+import Star from 'lucide-react/dist/esm/icons/star';
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 import { SEO } from '../components/seo/SEO';
 import { LazyImage } from '../components/ui/LazyImage';
 import { FAQAccordion } from '../components/seo/FAQAccordion';

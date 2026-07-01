@@ -42,6 +42,7 @@ export function LogisticsStep({ formData, handleInputChange, handleNestedInputCh
           <input
             type="date"
             value={formData.date}
+            min={new Date().toISOString().split('T')[0]}
             onChange={(e) => handleInputChange('date', e.target.value)}
             className="w-full min-w-0 overflow-hidden px-5 py-3 rounded-full border border-black/5 bg-[#fbf9f6] text-[13px] outline-none focus:border-primary/45 transition-colors"
             required

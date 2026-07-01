@@ -23,6 +23,7 @@ export default function CheckoutAddressStep() {
     handleSaveNewAddress,
     PINCODE_MAP,
     checkoutSteps,
+    user,
   } = useCheckout();
 
   const {
@@ -34,7 +35,7 @@ export default function CheckoutAddressStep() {
     handleEdit,
     handleAddNew,
     deliveryEstimates,
-  } = useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddress });
+  } = useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddress, user });
 
   if (isSelectingList) {
     return (

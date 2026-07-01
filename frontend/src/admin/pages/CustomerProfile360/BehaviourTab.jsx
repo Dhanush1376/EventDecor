@@ -1,5 +1,7 @@
 import React from 'react';
-import { Target, Search, MousePointerClick } from 'lucide-react';
+import Target from 'lucide-react/dist/esm/icons/target';
+import Search from 'lucide-react/dist/esm/icons/search';
+import MousePointerClick from 'lucide-react/dist/esm/icons/mouse-pointer-click';
 
 export default function BehaviourTab({ profile }) {
   const { intents, funnelMetrics } = profile;

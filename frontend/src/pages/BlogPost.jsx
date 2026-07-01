@@ -1,5 +1,8 @@
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { Calendar, User, ArrowLeft, Share2 } from 'lucide-react';
+import Calendar from 'lucide-react/dist/esm/icons/calendar';
+import User from 'lucide-react/dist/esm/icons/user';
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
+import Share2 from 'lucide-react/dist/esm/icons/share-2';
 import { SEO } from '../components/seo/SEO';
 import { LazyImage } from '../components/ui/LazyImage';
 import { FAQAccordion } from '../components/seo/FAQAccordion';

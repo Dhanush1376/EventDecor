@@ -117,6 +117,20 @@ const initializeServicesProgressively = async (httpServer: Server) => {
     await connectDB();
     logger.info('[STARTUP] MongoDB connected successfully');
 
+    // Quick reset of fake reviews
+    try {
+      const db = mongoose.connection.db;
+      if (db) {
+        await db
+          .collection('showcasecollections')
+          .updateMany({}, { $set: { rating: 0, reviewCount: 0 } });
+        await db.collection('products').updateMany({}, { $set: { rating: 0, reviews: 0 } });
+        logger.info('Cleaned up fake static reviews in DB');
+      }
+    } catch (err) {
+      logger.error('Failed to cleanup fake reviews:', err);
+    }
+
     // 1.a Start Forensic Database Auditor
     startDbAuditor();
 

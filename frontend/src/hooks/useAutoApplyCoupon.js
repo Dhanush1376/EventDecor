@@ -22,15 +22,6 @@ export function useAutoApplyCoupon({ claimedCoupon, subtotal, setAppliedCoupon, 
       // Priority 1: User explicitly claimed a coupon
       if (claimedCoupon) {
         targetCoupon = claimedCoupon;
-      } else {
-        // Priority 2: System Auto-Apply Coupons
-        const autoCoupons = safeActiveCoupons.filter(
-          (c) => c.isAutoApply && c.minOrderAmount <= subtotal,
-        );
-        if (autoCoupons.length > 0) {
-          autoCoupons.sort((a, b) => (b.minOrderAmount || 0) - (a.minOrderAmount || 0));
-          targetCoupon = autoCoupons[0].code;
-        }
       }
 
       if (!targetCoupon) {
@@ -38,11 +29,11 @@ export function useAutoApplyCoupon({ claimedCoupon, subtotal, setAppliedCoupon, 
         return;
       }
 
-      // Prevent infinite loop if we just tried this exact coupon and subtotal and it failed
+      // Prevent infinite loop or concurrent requests for the exact same coupon and subtotal
       if (
         lastAttempt.current.coupon === targetCoupon &&
         lastAttempt.current.subtotal === subtotal &&
-        lastAttempt.current.status === 'failed'
+        (lastAttempt.current.status === 'failed' || lastAttempt.current.status === 'pending')
       ) {
         return;
       }

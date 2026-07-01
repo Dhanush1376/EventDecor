@@ -1,5 +1,9 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { Share2, Copy, Check, MessageCircle, X } from 'lucide-react';
+import Share2 from 'lucide-react/dist/esm/icons/share-2';
+import Copy from 'lucide-react/dist/esm/icons/copy';
+import Check from 'lucide-react/dist/esm/icons/check';
+import MessageCircle from 'lucide-react/dist/esm/icons/message-circle';
+import X from 'lucide-react/dist/esm/icons/x';
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import logger from '../../utils/core/logger';

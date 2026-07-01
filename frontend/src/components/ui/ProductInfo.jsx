@@ -8,6 +8,7 @@ import { ProductCoupons } from './ProductCoupons';
 import { ProductNoteCard } from './ProductNoteCard';
 import { useQuery } from '@tanstack/react-query';
 import { couponService } from '../../services/domainServices';
+import { MandalaArtDecor } from './MandalaArtDecor';
 
 export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
   const navigate = useNavigate();
@@ -37,15 +38,6 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
       discountedPrice = Math.max(0, product.price - activeCoupon.discountValue);
     }
   }
-
-  const handleWhatsAppChat = () => {
-    if (!product) return;
-    const num = '919866006648';
-    const productLink = `${window.location.origin}/product/${product._id || product.id}`;
-    const baseMsg = `Hello, I'm interested in this product and would like to chat about it.\n\nProduct Link: ${productLink}`;
-    const msg = encodeURIComponent(baseMsg);
-    window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
-  };
 
   const canPurchase = !product?.availabilityMode || product.availabilityMode !== 'rent_only';
   const canRent =
@@ -106,7 +98,14 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
   };
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-7 lg:sticky lg:top-32">
+    <div className="flex flex-col gap-6 lg:gap-7 lg:sticky lg:top-32 relative">
+      <MandalaArtDecor
+        variant={1}
+        size={400}
+        className="absolute -top-16 -left-16 lg:-left-32 z-0 pointer-events-none"
+        opacity={0.15}
+        spinDuration={180}
+      />
       {/* Category & Badge Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 lg:gap-3">
@@ -393,7 +392,7 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
       )}
 
       {/* Description Section */}
-      <div className="space-y-2 mt-2">
+      <div className="space-y-2 mt-2 md:hidden">
         <h3 className="font-label-sm text-[10px] text-on-surface/35 uppercase tracking-[0.25em] font-medium">
           About this Item
         </h3>
@@ -499,41 +498,13 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
         </div>
 
         {/* Custom Design Consultation Card */}
-        <div className="p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5">
-          <div className="relative z-10 flex flex-col items-center text-center gap-5">
-            <div>
-              <h4 className="font-headline-sm mb-1 text-[#C4A87C] font-normal tracking-wide">
-                Need a Custom Theme?
-              </h4>
-              <p className="font-body-sm text-white/90 font-medium">
-                Personalize this setup to perfectly match your vision.
-              </p>
-            </div>
-            <div className="flex flex-row gap-2 w-full">
-              <button
-                onClick={() =>
-                  runProtectedAction(() =>
-                    navigate(`/custom-orders?product=${product._id || product.id}`),
-                  )
-                }
-                className="bg-white text-black flex-1 px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-stone-200 transition-all whitespace-nowrap font-bold shadow-sm flex items-center justify-center"
-              >
-                Customize
-              </button>
-              <button
-                onClick={() => runProtectedAction(handleWhatsAppChat)}
-                className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[14px]">chat</span>
-                WhatsApp
-              </button>
-            </div>
-          </div>
+        <div className="md:hidden">
+          <CustomThemeCard product={product} />
         </div>
       </div>
 
       {/* Trust Signifiers Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-outline-variant/10">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-6 border-t border-outline-variant/10 md:hidden">
         <FeatureItem icon="draw" label="Handmade Work" />
         <FeatureItem icon="workspace_premium" label="100% Original" />
         <FeatureItem icon="all_inclusive" label="Lifetime Warranty" />
@@ -543,7 +514,7 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
   );
 }
 
-function FeatureItem({ icon, label }) {
+export function FeatureItem({ icon, label }) {
   return (
     <div className="flex flex-col items-center text-center gap-2 group cursor-default">
       <div className="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center group-hover:bg-primary-container/20 transition-colors shadow-2xs">
@@ -552,6 +523,54 @@ function FeatureItem({ icon, label }) {
       <span className="font-label-sm text-[11px] text-on-surface/60 uppercase tracking-widest font-normal">
         {label}
       </span>
+    </div>
+  );
+}
+
+export function CustomThemeCard({ product }) {
+  const navigate = useNavigate();
+  const { runProtectedAction } = useAuth();
+
+  const handleWhatsAppChat = () => {
+    if (!product) return;
+    const num = '919866006648';
+    const productLink = `${window.location.origin}/product/${product._id || product.id}`;
+    const baseMsg = `Hello, I'm interested in this product and would like to chat about it.\n\nProduct Link: ${productLink}`;
+    const msg = encodeURIComponent(baseMsg);
+    window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+  };
+
+  return (
+    <div className="p-6 md:p-8 lg:p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5 w-full">
+      <div className="relative z-10 flex flex-col md:flex-row lg:flex-col items-center justify-between lg:justify-center text-center md:text-left lg:text-center gap-5 md:gap-8 lg:gap-5 w-full">
+        <div className="flex-1 lg:flex-none">
+          <h4 className="font-headline-sm mb-1 text-[#C4A87C] font-normal tracking-wide">
+            Need a Custom Theme?
+          </h4>
+          <p className="font-body-sm text-white/90 font-medium">
+            Personalize this setup to perfectly match your vision.
+          </p>
+        </div>
+        <div className="flex flex-row gap-3 md:gap-3 lg:gap-2 w-full md:w-auto lg:w-full shrink-0">
+          <button
+            onClick={() =>
+              runProtectedAction(() =>
+                navigate(`/custom-orders?product=${product._id || product.id}`),
+              )
+            }
+            className="bg-white text-black flex-1 md:flex-none lg:flex-1 px-6 py-3 lg:px-2 lg:py-2.5 rounded-full font-label-sm text-[11px] lg:text-[10px] uppercase tracking-[0.15em] hover:bg-stone-200 transition-all whitespace-nowrap font-bold shadow-sm flex items-center justify-center"
+          >
+            Customize
+          </button>
+          <button
+            onClick={() => runProtectedAction(handleWhatsAppChat)}
+            className="bg-transparent border border-white/30 flex-1 md:flex-none lg:flex-1 text-white px-6 py-3 lg:px-2 lg:py-2.5 rounded-full font-label-sm text-[11px] lg:text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-[14px]">chat</span>
+            WhatsApp
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

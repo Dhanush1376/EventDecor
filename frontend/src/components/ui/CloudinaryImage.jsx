@@ -93,33 +93,34 @@ function BaseOptimizedImage({
     return () => clearTimeout(timer);
   }, [src, eager, loading]);
 
-  const isDataUrl = src && (src.startsWith('data:') || src.startsWith('blob:'));
-  let optimizedUrl = isDataUrl ? src : src ? getOptimizedUrl(src, width, height) : '';
+  const { optimizedUrl, autoSrcSet } = useMemo(() => {
+    const isData = src && (src.startsWith('data:') || src.startsWith('blob:'));
+    let url = isData ? src : src ? getOptimizedUrl(src, width, height) : '';
+    if (retryCount > 0 && url && !isData) {
+      url += (url.includes('?') ? '&' : '?') + `retry=${retryCount}`;
+    }
+    const srcSet = isData || !src ? null : getSrcSet(src, width);
+    return { optimizedUrl: url, autoSrcSet: srcSet };
+  }, [src, width, height, retryCount]);
 
-  // Append retry cache-buster to bypass browser's failed request cache on transient errors
-  if (retryCount > 0 && optimizedUrl && !isDataUrl) {
-    optimizedUrl += (optimizedUrl.includes('?') ? '&' : '?') + `retry=${retryCount}`;
-  }
-
-  // Cap srcset width at container width if provided
-  const autoSrcSet = isDataUrl || !src ? null : getSrcSet(src, width);
-
-  const hasPositioning =
-    containerClassName.includes('absolute') ||
-    containerClassName.includes('fixed') ||
-    containerClassName.includes('relative') ||
-    containerClassName.includes('sticky');
-
-  const isImageAutoHeight =
-    className && (className.includes('h-auto') || className.includes('h-fit'));
-
-  const hasObjectFit =
-    className &&
-    (className.includes('object-contain') ||
-      className.includes('object-cover') ||
-      className.includes('object-fill') ||
-      className.includes('object-none') ||
-      className.includes('object-scale-down'));
+  const { hasPositioning, isImageAutoHeight, hasObjectFit } = useMemo(
+    () => ({
+      hasPositioning:
+        containerClassName.includes('absolute') ||
+        containerClassName.includes('fixed') ||
+        containerClassName.includes('relative') ||
+        containerClassName.includes('sticky'),
+      isImageAutoHeight: className && (className.includes('h-auto') || className.includes('h-fit')),
+      hasObjectFit:
+        className &&
+        (className.includes('object-contain') ||
+          className.includes('object-cover') ||
+          className.includes('object-fill') ||
+          className.includes('object-none') ||
+          className.includes('object-scale-down')),
+    }),
+    [containerClassName, className],
+  );
 
   const aspectStyle = aspectRatio
     ? { aspectRatio }

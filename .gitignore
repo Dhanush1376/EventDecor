@@ -107,3 +107,76 @@ backups/
 backup/
 temp/
 reports/
+
+# Vite
+.vite/
+
+# Turborepo
+.turbo/
+
+# Parcel
+.parcel-cache/
+
+# Rollup
+.rollup.cache/
+
+# ESBuild
+.esbuild/
+
+# TypeScript
+*.tsbuildinfo
+
+# npm cache
+.npm/
+
+# pnpm
+.pnpm-store/
+
+# Bun
+bun.lockb
+
+# IDE
+.history/
+.cursor/
+.agents/
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Windows
+desktop.ini
+
+# Linux
+.directory
+
+# Environment overrides
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Runtime
+*.pid
+*.seed
+
+# Temporary
+*.tmp
+*.temp
+
+# Profiling
+*.cpuprofile
+.heapprofile
+
+# Storybook
+storybook-static/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+
+# Vite bundle analyzer
+stats.html

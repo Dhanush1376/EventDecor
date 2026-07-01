@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import { Search } from 'lucide-react';
+import Search from 'lucide-react/dist/esm/icons/search';
 import { SEO } from '../components/seo/SEO';
 import { BlogCard } from '../components/blog/BlogCard';
 import { useState, useMemo, useEffect } from 'react';

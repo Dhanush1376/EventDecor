@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 import { ShareButton } from '../../../components/ui/ShareButton';
 import { LinkedProductCard } from './LinkedProductCard';
@@ -19,10 +19,12 @@ export function GalleryDesktopLayout({
   handleWishlistLook,
   navigate,
 }) {
+  const [activeTab, setActiveTab] = useState('details');
+
   return (
     <div className="hidden md:grid lg:grid gallery-detail-grid">
       {/* ─── LEFT: Hero Image ─── */}
-      <div className="gallery-detail-image z-0 md:self-start md:sticky md:top-24 lg:top-32">
+      <div className="gallery-detail-image z-0 md:self-start md:sticky md:top-[52px] lg:top-[60px]">
         <motion.div
           variants={scaleIn}
           initial="hidden"
@@ -138,9 +140,7 @@ export function GalleryDesktopLayout({
       </div>
 
       {/* ─── RIGHT: Detail Panel ─── */}
-      <div className="px-5 lg:px-0 py-6 lg:py-0 space-y-7 lg:space-y-8">
-        {/* Category & Style Tags Removed per request */}
-
+      <div className="px-5 lg:px-0 py-6 lg:py-0 flex flex-col h-full">
         {/* Title */}
         <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}>
           <h1 className="font-display text-[26px] lg:text-[34px] text-black leading-[1.15] font-bold tracking-tight">
@@ -159,175 +159,217 @@ export function GalleryDesktopLayout({
           </div>
         </motion.div>
 
-        {/* Description */}
-        <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2}>
-          {item.description && (
-            <div className="relative pl-5 border-l-[3px] border-primary/25">
-              <p className="font-body text-[15px] lg:text-[16px] text-black/70 leading-relaxed font-medium">
-                {item.description}
-              </p>
-            </div>
-          )}
-          {item.story && (
-            <p className="font-body text-[13px] text-black/40 leading-relaxed mt-4 font-medium">
-              {item.story}
-            </p>
-          )}
-        </motion.div>
-
-        {/* Color Palette */}
-        {item.colorPalette && item.colorPalette.length > 0 && (
-          <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3}>
-            <span className="font-label text-[9px] uppercase tracking-[0.3em] text-black/30 font-bold block mb-3">
-              Color Palette
-            </span>
-            <div className="flex items-center gap-2">
-              {item.colorPalette.map((color, i) => (
-                <div
-                  key={i}
-                  className="color-swatch"
-                  style={{ backgroundColor: color }}
-                  title={color}
-                />
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Tags */}
-        {item.tags && item.tags.length > 0 && (
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={3.5}
-            className="flex flex-wrap gap-1.5"
-          >
-            {item.tags.map((tag, i) => (
-              <span
-                key={i}
-                className="px-2.5 py-1 rounded-lg bg-[#f5f3ef] text-black/40 text-[10px] font-semibold tracking-wide"
-              >
-                #{tag}
-              </span>
-            ))}
-          </motion.div>
-        )}
-
-        {/* Divider */}
-        <div className="h-px bg-black/6" />
-
-        {/* Shop This Look — Linked Products */}
-        <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={4}>
-          {linkedProducts.length > 0 ? (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="font-label text-[10px] uppercase tracking-[0.3em] text-black font-bold flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-[16px]">
-                    shopping_bag
-                  </span>
-                  Shop This Look
-                </span>
-                <span className="text-[10px] text-black/30 font-medium">
-                  {linkedProducts.length} {linkedProducts.length === 1 ? 'item' : 'items'}
-                </span>
-              </div>
-              <div className="linked-products-scroll">
-                {linkedProducts.map((prod) => (
-                  <LinkedProductCard key={prod._id || prod.id} product={prod} />
-                ))}
-              </div>
-            </div>
-          ) : (
-            <Link
-              to="/collections"
-              className="flex items-center gap-3 p-4 rounded-2xl bg-[#f5f3ef] border border-black/5 hover:border-primary/20 transition-all group"
+        {/* Tab Headers */}
+        <div className="flex border-b border-black/10 mt-8 mb-6">
+          {[
+            { id: 'details', label: 'Details', icon: 'info' },
+            { id: 'shop', label: 'Shop Look', icon: 'shopping_bag', count: linkedProducts?.length },
+            { id: 'customize', label: 'Customize', icon: 'design_services' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 pb-3 px-4 font-label text-[10px] uppercase tracking-wider font-bold transition-all relative border-none bg-transparent cursor-pointer ${
+                activeTab === tab.id ? 'text-primary' : 'text-black/40 hover:text-black/70'
+              }`}
             >
-              <span className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <span className="material-symbols-outlined text-[18px]">explore</span>
-              </span>
-              <div>
-                <span className="font-body text-[13px] text-black font-semibold block">
-                  Explore Our Collection
+              <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+              <span>{tab.label}</span>
+              {tab.count !== undefined && tab.count > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-[8px] bg-primary/10 text-primary rounded-full">
+                  {tab.count}
                 </span>
-                <span className="font-body text-[11px] text-black/40">
-                  Discover similar handcrafted items
-                </span>
-              </div>
-              <span className="material-symbols-outlined text-black/20 ml-auto group-hover:text-primary transition-colors text-[18px]">
-                arrow_forward
-              </span>
-            </Link>
-          )}
-        </motion.div>
+              )}
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="activeTabUnderline"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
 
-        {/* Custom Studio CTA */}
-        <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={5}>
-          <div className="p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5">
-            <div className="relative z-10 flex flex-col items-center text-center gap-5">
-              <div>
-                <h4 className="font-headline-sm mb-1 text-[#C4A87C] font-normal tracking-wide">
-                  Need a Custom Theme?
-                </h4>
-                <p className="font-body-sm text-white/90 font-medium">
-                  Personalize this setup to perfectly match your vision.
-                </p>
-              </div>
-              <div className="flex flex-row gap-2 w-full">
-                <button
-                  onClick={() => navigate(`/custom-orders?gallery=${item._id || item.id}`)}
-                  className="bg-white text-black flex-1 px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-stone-200 transition-all whitespace-nowrap font-bold shadow-sm flex items-center justify-center"
-                >
-                  Customize
-                </button>
-                <button
-                  onClick={() => {
-                    if (!item) return;
-                    const num = '919866006648';
-                    const link = `${window.location.origin}/gallery/${item._id || item.id}`;
-                    const msg = encodeURIComponent(
-                      `Hello, I'm interested in this gallery setup and would like to chat about it.\n\nLink: ${link}`,
-                    );
-                    window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
-                  }}
-                  className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-[14px]">chat</span>
-                  WhatsApp
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        {/* Tab Contents */}
+        <div className="flex-grow">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-6"
+            >
+              {activeTab === 'details' && (
+                <>
+                  {/* Description */}
+                  {item.description && (
+                    <div className="relative pl-5 border-l-[3px] border-primary/25">
+                      <p className="font-body text-[15px] lg:text-[16px] text-black/70 leading-relaxed font-medium">
+                        {item.description}
+                      </p>
+                    </div>
+                  )}
+                  {item.story && (
+                    <p className="font-body text-[13px] text-black/40 leading-relaxed font-medium">
+                      {item.story}
+                    </p>
+                  )}
 
-        {/* Metadata Row */}
-        <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={6}>
-          <div className="flex items-center gap-5 text-black/25">
-            {typeof item.views === 'number' && (
-              <span className="flex items-center gap-1.5 text-[11px] font-medium">
-                <span className="material-symbols-outlined text-[14px]">visibility</span>
-                {item.views.toLocaleString()} views
-              </span>
-            )}
-            {typeof item.likes === 'number' && item.likes > 0 && (
-              <span className="flex items-center gap-1.5 text-[11px] font-medium">
-                <span
-                  className="material-symbols-outlined text-[14px]"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  favorite
-                </span>
-                {item.likes.toLocaleString()} likes
-              </span>
-            )}
-            {formattedDate && (
-              <span className="flex items-center gap-1.5 text-[11px] font-medium">
-                <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                {formattedDate}
-              </span>
-            )}
-          </div>
-        </motion.div>
+                  {/* Color Palette */}
+                  {item.colorPalette && item.colorPalette.length > 0 && (
+                    <div>
+                      <span className="font-label text-[9px] uppercase tracking-[0.3em] text-black/30 font-bold block mb-3">
+                        Color Palette
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {item.colorPalette.map((color, i) => (
+                          <div
+                            key={i}
+                            className="color-swatch"
+                            style={{ backgroundColor: color }}
+                            title={color}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tags */}
+                  {item.tags && item.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {item.tags.map((tag, i) => (
+                        <span
+                          key={i}
+                          className="px-2.5 py-1 rounded-lg bg-[#f5f3ef] text-black/40 text-[10px] font-semibold tracking-wide"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Divider */}
+                  <div className="h-px bg-black/6" />
+
+                  {/* Metadata Row */}
+                  <div className="flex items-center gap-5 text-black/25">
+                    {typeof item.views === 'number' && (
+                      <span className="flex items-center gap-1.5 text-[11px] font-medium">
+                        <span className="material-symbols-outlined text-[14px]">visibility</span>
+                        {item.views.toLocaleString()} views
+                      </span>
+                    )}
+                    {typeof item.likes === 'number' && item.likes > 0 && (
+                      <span className="flex items-center gap-1.5 text-[11px] font-medium">
+                        <span
+                          className="material-symbols-outlined text-[14px]"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          favorite
+                        </span>
+                        {item.likes.toLocaleString()} likes
+                      </span>
+                    )}
+                    {formattedDate && (
+                      <span className="flex items-center gap-1.5 text-[11px] font-medium">
+                        <span className="material-symbols-outlined text-[14px]">
+                          calendar_today
+                        </span>
+                        {formattedDate}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'shop' && (
+                <div className="space-y-4">
+                  {linkedProducts.length > 0 ? (
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="font-label text-[10px] uppercase tracking-[0.3em] text-black font-bold flex items-center gap-2">
+                          <span className="material-symbols-outlined text-primary text-[16px]">
+                            shopping_bag
+                          </span>
+                          Shop This Look
+                        </span>
+                        <span className="text-[10px] text-black/30 font-medium">
+                          {linkedProducts.length} {linkedProducts.length === 1 ? 'item' : 'items'}
+                        </span>
+                      </div>
+                      <div className="linked-products-scroll">
+                        {linkedProducts.map((prod) => (
+                          <LinkedProductCard key={prod._id || prod.id} product={prod} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <Link
+                      to="/collections"
+                      className="flex items-center gap-3 p-4 rounded-2xl bg-[#f5f3ef] border border-black/5 hover:border-primary/20 transition-all group"
+                    >
+                      <span className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                        <span className="material-symbols-outlined text-[18px]">explore</span>
+                      </span>
+                      <div>
+                        <span className="font-body text-[13px] text-black font-semibold block">
+                          Explore Our Collection
+                        </span>
+                        <span className="font-body text-[11px] text-black/40">
+                          Discover similar handcrafted items
+                        </span>
+                      </div>
+                      <span className="material-symbols-outlined text-black/20 ml-auto group-hover:text-primary transition-colors text-[18px]">
+                        arrow_forward
+                      </span>
+                    </Link>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'customize' && (
+                <div className="p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5">
+                  <div className="relative z-10 flex flex-col items-center text-center gap-5">
+                    <div>
+                      <h4 className="font-headline-sm mb-1 text-[#C4A87C] font-normal tracking-wide">
+                        Need a Custom Theme?
+                      </h4>
+                      <p className="font-body-sm text-white/90 font-medium">
+                        Personalize this setup to perfectly match your vision.
+                      </p>
+                    </div>
+                    <div className="flex flex-row gap-2 w-full">
+                      <button
+                        onClick={() => navigate(`/custom-orders?gallery=${item._id || item.id}`)}
+                        className="bg-white text-black flex-1 px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-stone-200 transition-all whitespace-nowrap font-bold shadow-sm flex items-center justify-center border-none cursor-pointer"
+                      >
+                        Customize
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!item) return;
+                          const num = '919866006648';
+                          const link = `${window.location.origin}/gallery/${item._id || item.id}`;
+                          const msg = encodeURIComponent(
+                            `Hello, I'm interested in this gallery setup and would like to chat about it.\n\nLink: ${link}`,
+                          );
+                          window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+                        }}
+                        className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">chat</span>
+                        WhatsApp
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

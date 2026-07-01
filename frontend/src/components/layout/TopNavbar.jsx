@@ -48,6 +48,7 @@ export function TopNavbar() {
   const isShopPage = location.pathname === '/collections';
   const isEventsPage = location.pathname === '/events';
   const isAboutPage = location.pathname === '/about';
+  const isWishlistPage = location.pathname === '/wishlist';
 
   // Disable transparency on shop page if on mobile with an active search (since hero is hidden)
   const isTransparent =
@@ -209,25 +210,42 @@ export function TopNavbar() {
         <h1 className="sr-only">Siri Arts & Crafts</h1>
         <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
           <div className="flex items-center justify-between w-full gap-4">
-            {/* Exquisite Boutique Brand Logo */}
+            {/* Exquisite Boutique Brand Logo or Page Context Header */}
             <div className="flex-shrink-0 flex justify-start min-w-0">
-              <Link to="/" className="group flex items-center shrink-0">
-                <div className="flex flex-col justify-center">
-                  {/* Desktop Layout: Side-by-side */}
-                  <div className="hidden lg:flex items-center">
-                    <SiriLogo size="36px" variant={isTransparent ? 'white' : 'default'} />
-                  </div>
+              {isWishlistPage ? (
+                <button
+                  onClick={() => navigate(-1)}
+                  className="group flex items-center gap-2 shrink-0 cursor-pointer"
+                >
+                  <span
+                    className="material-symbols-outlined text-[24px] text-on-surface group-hover:-translate-x-1 transition-transform"
+                    style={{ fontVariationSettings: "'wght' 200" }}
+                  >
+                    west
+                  </span>
+                  <span className="font-display text-[20px] lg:text-[24px] font-normal text-on-surface tracking-tight leading-none pt-0.5">
+                    Wishlist
+                  </span>
+                </button>
+              ) : (
+                <Link to="/" className="group flex items-center shrink-0">
+                  <div className="flex flex-col justify-center">
+                    {/* Desktop Layout: Side-by-side */}
+                    <div className="hidden lg:flex items-center">
+                      <SiriLogo size="36px" variant={isTransparent ? 'white' : 'default'} />
+                    </div>
 
-                  {/* Mobile Layout: Stacked */}
-                  <div className="flex lg:hidden flex-col leading-none">
-                    <SiriLogo
-                      size="36px"
-                      showSubtitle={false}
-                      variant={isTransparent ? 'white' : 'default'}
-                    />
+                    {/* Mobile Layout: Stacked */}
+                    <div className="flex lg:hidden flex-col leading-none">
+                      <SiriLogo
+                        size="36px"
+                        showSubtitle={false}
+                        variant={isTransparent ? 'white' : 'default'}
+                      />
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              )}
             </div>
 
             {/* Navigation Links (Tablet/Desktop) - Enhanced with elegant active state indicator */}
@@ -516,180 +534,218 @@ export function TopNavbar() {
       {/* Premium Full-Screen Immersive Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            ref={mobileMenuRef}
-            id="mobile-menu-drawer"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Mobile Navigation Menu"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20, transition: { duration: 0.3 } }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 w-full h-full bg-surface-bright z-[120] lg:hidden px-6 py-6 flex flex-col overflow-y-auto overflow-x-hidden"
-          >
-            {/* Decorative Mandala Background - Positioned to bleed off the left edge */}
-            <MandalaArtDecor
-              variant={2}
-              size={700}
-              opacity={0.06}
-              className="absolute -top-[10%] -left-[40%] pointer-events-none"
-              spinDuration={200}
-              blendMode="multiply"
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 bg-black/35 backdrop-blur-xs z-[115] lg:hidden"
             />
 
-            {/* Minimal Header */}
-            <div className="flex justify-between items-center mb-12 px-2">
-              <SiriLogo size="32px" />
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-10 h-10 flex items-center justify-center text-on-surface hover:text-primary transition-colors cursor-pointer"
-                aria-label="Close menu"
-              >
-                <span
-                  className="material-symbols-outlined text-[32px] font-light"
-                  style={{ fontVariationSettings: "'wght' 200" }}
-                >
-                  close
-                </span>
-              </button>
-            </div>
+            {/* Slide-out Drawer Panel */}
+            <motion.div
+              ref={mobileMenuRef}
+              id="mobile-menu-drawer"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Mobile Navigation Menu"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 250, mass: 0.8 }}
+              className="fixed right-0 top-0 bottom-0 w-3/4 max-w-[380px] h-full bg-surface-bright z-[120] lg:hidden px-6 py-6 flex flex-col overflow-y-auto overflow-x-hidden shadow-[-20px_0_60px_rgba(0,0,0,0.15)] border-l border-outline-variant/10"
+            >
+              {/* Decorative Mandala Background - Positioned to bleed off the left edge */}
+              <MandalaArtDecor
+                variant={1}
+                size={700}
+                opacity={0.2}
+                className="absolute -top-[10%] -left-[40%] pointer-events-none"
+                spinDuration={80}
+                blendMode="normal"
+              />
 
-            {/* Massive Luxury Typography Navigation */}
-            <div className="flex-grow flex flex-col justify-center items-end px-4 mb-12">
-              <ul className="space-y-5 relative z-10 flex flex-col items-end">
-                {navLinks.map((link, idx) => {
-                  const active = isActive(link.href);
-                  return (
+              {/* Minimal Header */}
+              <div className="flex justify-between items-center mb-12 px-2">
+                <SiriLogo size="32px" />
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="w-10 h-10 flex items-center justify-center text-on-surface hover:text-primary transition-colors cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <span
+                    className="material-symbols-outlined text-[32px] font-light"
+                    style={{ fontVariationSettings: "'wght' 200" }}
+                  >
+                    close
+                  </span>
+                </button>
+              </div>
+
+              {/* Massive Luxury Typography Navigation */}
+              <div className="flex-grow flex flex-col justify-center items-end px-4 mb-12">
+                <ul className="space-y-5 relative z-10 flex flex-col items-end">
+                  {navLinks.map((link, idx) => {
+                    const active = isActive(link.href);
+                    return (
+                      <motion.li
+                        key={idx}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{
+                          delay: 0.1 + idx * 0.05,
+                          duration: 0.5,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                      >
+                        <Link
+                          onClick={() => setIsOpen(false)}
+                          className={`group flex items-center text-right font-label font-bold uppercase tracking-[0.2em] text-[16px] lg:text-[20px] transition-all duration-500 ${
+                            active
+                              ? 'text-primary'
+                              : 'text-on-surface hover:text-primary hover:-translate-x-2'
+                          }`}
+                          to={link.href}
+                        >
+                          {link.label}
+                        </Link>
+                      </motion.li>
+                    );
+                  })}
+                  {isAuthenticated && adminRoles.includes(user?.role) && (
                     <motion.li
-                      key={idx}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{
-                        delay: 0.1 + idx * 0.05,
+                        delay: 0.1 + navLinks.length * 0.05,
                         duration: 0.5,
                         ease: [0.22, 1, 0.36, 1],
                       }}
                     >
                       <Link
                         onClick={() => setIsOpen(false)}
-                        className={`group flex items-center text-right font-label font-bold uppercase tracking-[0.2em] text-[16px] lg:text-[20px] transition-all duration-500 ${
-                          active
-                            ? 'text-primary'
-                            : 'text-on-surface hover:text-primary hover:-translate-x-2'
-                        }`}
-                        to={link.href}
+                        className="group flex items-center text-right font-label font-bold uppercase tracking-[0.2em] text-[16px] lg:text-[20px] transition-all duration-500 text-[#C4A87C] hover:text-primary hover:-translate-x-2"
+                        to="/admin"
                       >
-                        {link.label}
+                        Admin Portal
                       </Link>
                     </motion.li>
-                  );
-                })}
-              </ul>
-            </div>
+                  )}
+                </ul>
+              </div>
 
-            {/* Ultra-Minimal Footer */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-auto px-4 pb-8"
-            >
-              <div className="w-full h-[1px] bg-outline-variant/30 mb-8" />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-6">
-                  <Link
-                    to="/wishlist"
-                    onClick={() => setIsOpen(false)}
-                    className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
-                  >
-                    <span
-                      className="material-symbols-outlined text-[24px] font-light"
-                      style={{ fontVariationSettings: "'wght' 200" }}
-                    >
-                      favorite
-                    </span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider">Wishlist</span>
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      setIsCartOpen(true);
-                    }}
-                    className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors relative cursor-pointer"
-                  >
-                    <div className="relative">
-                      <span
-                        className="material-symbols-outlined text-[24px] font-light"
-                        style={{ fontVariationSettings: "'wght' 200" }}
+              {/* Ultra-Minimal Footer */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="mt-auto w-full px-2 pb-8"
+              >
+                <div className="w-full h-[1px] bg-outline-variant/30 mb-8" />
+                <div className="w-full flex flex-col gap-6">
+                  <div className="flex items-center justify-between w-full px-2">
+                    <div className="flex items-center gap-4">
+                      <Link
+                        to="/wishlist"
+                        onClick={() => setIsOpen(false)}
+                        className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
                       >
-                        shopping_bag
-                      </span>
-                      {cartCount > 0 && (
-                        <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-primary-container text-on-primary-container text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">
-                          {cartCount}
+                        <span
+                          className="material-symbols-outlined text-[24px] font-light"
+                          style={{ fontVariationSettings: "'wght' 200" }}
+                        >
+                          favorite
                         </span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider">
+                          Wishlist
+                        </span>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setIsOpen(false);
+                          setIsCartOpen(true);
+                        }}
+                        className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors relative cursor-pointer"
+                      >
+                        <div className="relative">
+                          <span
+                            className="material-symbols-outlined text-[24px] font-light"
+                            style={{ fontVariationSettings: "'wght' 200" }}
+                          >
+                            shopping_bag
+                          </span>
+                          {cartCount > 0 && (
+                            <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-primary-container text-on-primary-container text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">
+                              {cartCount}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[9px] font-bold uppercase tracking-wider">Bag</span>
+                      </button>
+                      {isAuthenticated && (
+                        <Link
+                          to="/dashboard"
+                          onClick={() => setIsOpen(false)}
+                          className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
+                        >
+                          <span
+                            className="material-symbols-outlined text-[24px] font-light"
+                            style={{ fontVariationSettings: "'wght' 200" }}
+                          >
+                            person
+                          </span>
+                          <span className="text-[9px] font-bold uppercase tracking-wider">
+                            Profile
+                          </span>
+                        </Link>
                       )}
                     </div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider">Bag</span>
-                  </button>
-                  {isAuthenticated && (
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setIsOpen(false)}
-                      className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
-                    >
-                      <span
-                        className="material-symbols-outlined text-[24px] font-light"
-                        style={{ fontVariationSettings: "'wght' 200" }}
-                      >
-                        person
-                      </span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider">Profile</span>
-                    </Link>
-                  )}
-                  {isAuthenticated && adminRoles.includes(user?.role) && (
-                    <Link
-                      to="/admin"
-                      onClick={() => setIsOpen(false)}
-                      className="flex flex-col items-center gap-1 text-primary hover:text-primary/70 transition-colors"
-                      aria-label="Admin Portal"
-                    >
-                      <span
-                        className="material-symbols-outlined text-[24px] font-light"
-                        style={{ fontVariationSettings: "'wght' 200" }}
-                      >
-                        settings
-                      </span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider">Admin</span>
-                    </Link>
-                  )}
-                </div>
 
-                {!isAuthenticated ? (
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      openAuthModal();
-                    }}
-                    className="font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b border-on-surface pb-1 text-on-surface hover:text-primary hover:border-primary transition-colors cursor-pointer"
-                  >
-                    Sign In
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      logout();
-                    }}
-                    className="font-label text-[11px] uppercase tracking-[0.2em] font-bold border-b border-on-surface pb-1 text-on-surface hover:text-error hover:border-error transition-colors cursor-pointer"
-                  >
-                    Sign Out
-                  </button>
-                )}
-              </div>
+                    {!isAuthenticated ? (
+                      <button
+                        onClick={() => {
+                          setIsOpen(false);
+                          openAuthModal();
+                        }}
+                        className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors cursor-pointer"
+                      >
+                        <span
+                          className="material-symbols-outlined text-[24px] font-light"
+                          style={{ fontVariationSettings: "'wght' 200" }}
+                        >
+                          login
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider">
+                          Sign In
+                        </span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setIsOpen(false);
+                          logout();
+                        }}
+                        className="flex flex-col items-center gap-1 text-on-surface hover:text-error transition-colors cursor-pointer"
+                      >
+                        <span
+                          className="material-symbols-outlined text-[24px] font-light"
+                          style={{ fontVariationSettings: "'wght' 200" }}
+                        >
+                          logout
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider">
+                          Sign Out
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
+          </>
         )}
       </AnimatePresence>
 

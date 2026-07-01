@@ -1,0 +1,3 @@
+# Deployment Guide
+
+This document contains instructions for deploying EventDecor to staging and production environments...

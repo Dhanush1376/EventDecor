@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
-export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddress }) {
+export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddress, user }) {
   const [isSelectingList, setIsSelectingList] = useState(false);
   const [mapPosition, setMapPosition] = useState({ lat: 20.5937, lng: 78.9629 }); // Default India
 
@@ -101,10 +101,10 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
 
   const handleAddNew = () => {
     setNewAddress({
-      name: '',
-      phone: '',
+      name: user?.name && user.name !== 'Customer' ? user.name : '',
+      phone: user?.phone || '',
       alternatePhone: '',
-      email: '',
+      email: user?.email || '',
       pincode: '',
       locality: '',
       address: '',

@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useRecommendationTracker } from '../../hooks/useRecommendationTracker';
 import { trackEvent } from '../../utils/core/analyticsCollector';
-import { io } from 'socket.io-client';
+// socket.io is imported dynamically inside the useEffect
 import { getApiRootUrl } from '../../config/apiConfig';
 
 let socket = null;
@@ -43,14 +43,22 @@ export function GlobalTracker() {
 
   // 2. Visitor Heartbeat (Phase 4: Live Operations)
   useEffect(() => {
+    let interval;
     if (!socket) {
-      socket = io(`${getApiRootUrl()}/visitor`, {
-        withCredentials: true,
-        transports: ['websocket', 'polling'],
-      });
+      import('socket.io-client')
+        .then(({ io }) => {
+          socket = io(`${getApiRootUrl()}/visitor`, {
+            withCredentials: true,
+            transports: ['websocket', 'polling'],
+          });
+          interval = setInterval(beat, 30000);
+        })
+        .catch(() => {});
+    } else {
+      interval = setInterval(beat, 30000);
     }
 
-    const interval = setInterval(() => {
+    function beat() {
       // Determine what product is being viewed if on a product page
       const isProductPage = location.pathname.startsWith('/product/');
       const productViewed = isProductPage ? location.pathname.split('/product/')[1] : null;
@@ -61,15 +69,19 @@ export function GlobalTracker() {
 
       const sessionId = sessionStorage.getItem('ci_session_id');
 
-      socket.emit('visitor:heartbeat', {
-        sessionId,
-        currentPage: location.pathname,
-        productViewed,
-        searchQuery,
-      });
-    }, 30000); // 30 seconds
+      if (socket) {
+        socket.emit('visitor:heartbeat', {
+          sessionId,
+          currentPage: location.pathname,
+          productViewed,
+          searchQuery,
+        });
+      }
+    }
 
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [location.pathname]);
 
   return null;

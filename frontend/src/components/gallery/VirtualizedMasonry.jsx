@@ -99,11 +99,15 @@ export function VirtualizedMasonry({
     }
   };
 
-  // Build column class string
+  // Tailwind safelist for dynamic columns (prevents purging)
+  // columns-1 columns-2 columns-3 columns-4 columns-5 columns-6
+  // md:columns-1 md:columns-2 md:columns-3 md:columns-4 md:columns-5 md:columns-6
+  // lg:columns-1 lg:columns-2 lg:columns-3 lg:columns-4 lg:columns-5 lg:columns-6
+  // xl:columns-1 xl:columns-2 xl:columns-3 xl:columns-4 xl:columns-5 xl:columns-6
   const columnClass = useMemo(() => {
     const parts = [];
     if (columns.sm) parts.push(`columns-${columns.sm}`);
-    if (columns.md) parts.push(`lg:columns-${columns.md}`);
+    if (columns.md) parts.push(`md:columns-${columns.md}`);
     if (columns.lg) parts.push(`lg:columns-${columns.lg}`);
     if (columns.xl) parts.push(`xl:columns-${columns.xl}`);
     return parts.join(' ');

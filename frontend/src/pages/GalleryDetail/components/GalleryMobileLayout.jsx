@@ -194,7 +194,7 @@ export function GalleryMobileLayout({
               <span className="font-label text-[8px] uppercase tracking-[0.25em] text-stone-500 font-bold leading-none">
                 Gallery Showcase
               </span>
-              <p className="font-sans text-[14px] text-black font-bold leading-none mt-1.5 truncate">
+              <p className="font-display text-[18px] text-black font-medium leading-none mt-1.5 truncate">
                 {item.title}
               </p>
             </div>

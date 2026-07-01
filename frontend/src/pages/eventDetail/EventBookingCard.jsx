@@ -50,10 +50,10 @@ export function EventBookingCard({
       </div>
 
       {/* 2. Premium Reservation & Saving Card */}
-      <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border border-[#C4A87C]/20 p-6 lg:p-8 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)]">
+      <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border border-black/10 p-6 lg:p-8 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)]">
         <div className="flex items-center gap-2 pb-3 border-b border-black/5">
-          <span className="material-symbols-outlined text-primary text-[18px]">calendar_today</span>
-          <span className="font-label text-[10px] uppercase tracking-widest text-primary font-bold">
+          <span className="material-symbols-outlined text-black text-[18px]">calendar_today</span>
+          <span className="font-label text-[10px] uppercase tracking-widest text-black font-bold">
             Reservation Crate
           </span>
         </div>
@@ -64,7 +64,7 @@ export function EventBookingCard({
               Starting Package Price
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="font-display text-[28px] lg:text-[32px] text-black font-bold font-sans">
+              <span className="font-display text-[28px] lg:text-[32px] text-black font-medium">
                 ₹{(event.basePrice || event.rentalPrice || 35000).toLocaleString('en-IN')}
               </span>
               <span className="text-stone-400 text-xs font-light">/ Setup</span>
@@ -76,15 +76,15 @@ export function EventBookingCard({
             date & environment using our guided customization tool.
           </p>
 
-          <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-[#C4A87C]/15 space-y-2.5">
+          <div className="bg-stone-50 p-4 rounded-2xl border border-black/10 space-y-2.5">
             <div className="flex items-center gap-2 text-[11px] font-semibold text-stone-700">
-              <span className="material-symbols-outlined text-primary text-[16px]">
+              <span className="material-symbols-outlined text-black text-[16px]">
                 local_shipping
               </span>
               <span>Free Setup, Logistics & Teardown</span>
             </div>
             <div className="flex items-center gap-2 text-[11px] font-semibold text-stone-700">
-              <span className="material-symbols-outlined text-primary text-[16px]">verified</span>
+              <span className="material-symbols-outlined text-black text-[16px]">verified</span>
               <span>100% Refundable Deposit up to 14 days prior</span>
             </div>
           </div>
@@ -93,7 +93,7 @@ export function EventBookingCard({
             <button
               ref={reserveButtonRef}
               onClick={() => setIsDrawerOpen(true)}
-              className="flex-1 bg-black text-white hover:bg-[#C4A87C] hover:text-white py-3 px-6 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 bg-black text-white hover:bg-stone-900 hover:text-white py-3 px-6 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>Book</span>
               <span className="material-symbols-outlined text-[14px]">chevron_right</span>

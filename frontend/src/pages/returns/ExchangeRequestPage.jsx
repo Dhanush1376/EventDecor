@@ -256,10 +256,11 @@ export const ExchangeRequestPage = () => {
                     <div className="mt-4">
                       {replacementProduct ? (
                         <div className="flex items-center gap-4 p-3 border border-outline-variant/20 bg-surface-container">
-                          <img
+                          <OptimizedImage
                             src={replacementProduct.imageSrc}
                             alt=""
                             className="w-10 h-10 object-cover rounded-[8px] bg-surface-bright"
+                            width={80}
                           />
                           <div className="flex-1 min-w-0">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-[#2A2927] truncate">

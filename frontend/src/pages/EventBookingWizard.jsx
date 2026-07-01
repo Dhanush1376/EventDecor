@@ -510,6 +510,13 @@ export function EventBookingWizard() {
                       toast.error('Please select an event date.');
                       return;
                     }
+                    const selectedDate = new Date(formData.date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (selectedDate < today) {
+                      toast.error('Event date cannot be in the past.');
+                      return;
+                    }
                     if (!formData.venue?.address?.trim()) {
                       toast.error('Please specify a venue address.');
                       return;

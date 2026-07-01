@@ -36,3 +36,25 @@ backend/
 1. **Controllers are Thin**: Controllers belong in `src/controllers/[domain]/`. They are strictly responsible for orchestrating the HTTP request: extracting params, passing them to a Service, and returning the structured API Response. They must NOT contain complex algorithms or direct DB manipulation.
 2. **Services are Fat**: Heavy business logic, transactions, and external API calls (e.g., Razorpay, Redis) live in `src/services/`. Services should be reusable across different controllers or background jobs.
 3. **Lazy Routing**: To optimize startup time and memory footprint, `src/routes/registerApiRoutes.ts` uses a custom `lazyRouter` to defer loading modules until their specific route is hit for the first time.
+
+## Frontend Structure
+
+```text
+frontend/
+├── src/
+│   ├── admin/               # Admin panel (components, pages, services, styles)
+│   ├── animations/          # Framer-motion configurations and presets
+│   ├── assets/              # Static media, icons, placeholders
+│   ├── checkout/            # Checkout flow logic and components
+│   ├── components/          # Reusable UI elements, modals, layouts
+│   ├── config/              # Environment and global configuration
+│   ├── constants/           # Enums and global constants
+│   ├── context/             # React Context Providers (Auth, Cart, Wishlist)
+│   ├── hooks/               # Custom React hooks (queries, mutations)
+│   ├── pages/               # Top-level Page components (Storefront)
+│   ├── providers/           # App-wide providers (QueryClient, Network)
+│   ├── routes/              # React Router definitions
+│   ├── services/            # API interceptors and frontend services
+│   ├── styles/              # Global CSS, admin overrides
+│   └── utils/               # Formatting, security, storage utilities
+```

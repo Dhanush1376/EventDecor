@@ -31,7 +31,6 @@ function RedirectToCustomOrder() {
 const RouteDiagnostics = React.memo(function RouteDiagnostics() {
   const location = useLocation();
   React.useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     logRouteDiagnostic(location.pathname);
   }, [location.pathname]);
   return null;

@@ -368,7 +368,12 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
                     key={idx}
                     className="relative w-14 h-14 rounded-lg overflow-hidden border border-outline-variant/30 bg-surface-container shadow-sm group flex-shrink-0"
                   >
-                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                    <OptimizedImage
+                      src={preview}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                      width={80}
+                    />
                     <button
                       type="button"
                       onClick={() => {
@@ -569,11 +574,7 @@ export function ProductReviews({ productId, productTitle }) {
     );
   };
 
-  if (loading && reviews.length === 0) {
-    return null;
-  }
-
-  if (reviews.length === 0 && !eligibility?.canReview) {
+  if (reviews.length === 0) {
     return null;
   }
 

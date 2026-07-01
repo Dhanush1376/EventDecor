@@ -1,9 +1,8 @@
-import Barcode from 'react-barcode';
-import { QRCodeCanvas } from 'qrcode.react';
+const QRCodeCanvas = lazy(() => import('qrcode.react').then((m) => ({ default: m.QRCodeCanvas })));
 import { useQuery } from '@tanstack/react-query';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-import { useState, useRef } from 'react';
+import { useState, useRef, Suspense, lazy } from 'react';
+
+const Barcode = lazy(() => import('react-barcode'));
 import storeSettingsService from '../../services/api/storeSettingsService';
 
 export function InvoiceTemplate({ order, user = {}, onClose }) {
@@ -100,6 +99,11 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
       // Temporarily hide the close/download buttons before taking screenshot
       const controls = element.querySelector('.no-print');
       if (controls) controls.style.display = 'none';
+
+      // Dynamically load heavy libraries only when downloading!
+      const html2canvasModule = await import('html2canvas');
+      const html2canvas = html2canvasModule.default || html2canvasModule;
+      const { jsPDF } = await import('jspdf');
 
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -446,13 +450,19 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                 AWB: <strong className="text-black font-mono font-bold">{trackingNumber}</strong>
               </p>
               <div className="pt-1 lg:pt-3">
-                <QRCodeCanvas
-                  value={trackingQR}
-                  size={60}
-                  level="H"
-                  includeMargin={true}
-                  className="rounded"
-                />
+                <Suspense
+                  fallback={
+                    <div className="w-[60px] h-[60px] bg-gray-100 animate-pulse rounded"></div>
+                  }
+                >
+                  <QRCodeCanvas
+                    value={trackingQR}
+                    size={60}
+                    level="H"
+                    includeMargin={true}
+                    className="rounded"
+                  />
+                </Suspense>
               </div>
             </div>
 
@@ -461,14 +471,18 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                 Scan
               </h3>
               <div className="w-12 h-12 lg:w-20 lg:h-20">
-                <Barcode
-                  value={trackingNumber}
-                  height={20}
-                  width={1}
-                  displayValue={false}
-                  margin={0}
-                  renderer="canvas"
-                />
+                <Suspense
+                  fallback={<div className="w-full h-full bg-gray-100 animate-pulse"></div>}
+                >
+                  <Barcode
+                    value={trackingNumber}
+                    height={20}
+                    width={1}
+                    displayValue={false}
+                    margin={0}
+                    renderer="canvas"
+                  />
+                </Suspense>
               </div>
             </div>
           </div>

@@ -107,7 +107,7 @@ export function StickyMobileATC({ product, triggerRef }) {
             <span className="font-label text-[8px] uppercase tracking-[0.25em] text-stone-500 font-bold leading-none">
               Price
             </span>
-            <p className="font-sans text-[15px] text-black font-bold leading-none mt-1.5">
+            <p className="font-display text-[18px] text-black font-medium leading-none mt-1.5">
               {activeCoupon ? (
                 <span className="flex items-baseline gap-1.5">
                   <span className="line-through text-stone-400 text-[11px] font-normal">

@@ -150,6 +150,17 @@ export function useAdminEventsData() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    const handleNotification = (e) => {
+      const detail = e.detail;
+      if ((detail && detail.type === 'booking') || detail?.type === 'payment') {
+        fetchBookings();
+      }
+    };
+    window.addEventListener('admin_notification', handleNotification);
+    return () => window.removeEventListener('admin_notification', handleNotification);
+  }, []);
+
   return {
     events,
     loadingPortfolio,

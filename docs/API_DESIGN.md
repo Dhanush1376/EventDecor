@@ -1,0 +1,3 @@
+# API Design
+
+This document describes the REST API structure, versioning, and contracts for EventDecor...

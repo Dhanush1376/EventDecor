@@ -477,7 +477,7 @@ body.filters-open img[src*='mandala'] {
 @media (min-width: 1024px) {
   .gallery-detail-image {
     position: sticky;
-    top: calc(var(--navbar-height, 60px) + 1.5rem);
+    top: var(--navbar-height, 60px);
   }
 }
 

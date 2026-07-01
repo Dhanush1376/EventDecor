@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag } from 'lucide-react';
+import ShoppingBag from 'lucide-react/dist/esm/icons/shopping-bag';
 import { orderService } from '../../../services/domainServices';
 import { StatusBadge, formatCurrency } from '../../components/AdminUIKit';
 

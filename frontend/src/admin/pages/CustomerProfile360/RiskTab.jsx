@@ -1,5 +1,7 @@
 import React from 'react';
-import { ShieldAlert, AlertTriangle, CheckCircle } from 'lucide-react';
+import ShieldAlert from 'lucide-react/dist/esm/icons/shield-alert';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 
 export default function RiskTab({ fraudSignals }) {
   const hasSignals = fraudSignals && fraudSignals.length > 0;

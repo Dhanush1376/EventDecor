@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Pin, Plus, Clock } from 'lucide-react';
+import Pin from 'lucide-react/dist/esm/icons/pin';
+import Plus from 'lucide-react/dist/esm/icons/plus';
+import Clock from 'lucide-react/dist/esm/icons/clock';
 import { customerIntelligenceService } from '../../../services/domainServices';
 
 export default function NotesTab({ customerId }) {

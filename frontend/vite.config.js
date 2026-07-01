@@ -78,10 +78,14 @@ export default defineConfig({
           if (
             id.includes('node_modules/@tanstack/') ||
             id.includes('node_modules/axios/') ||
-            id.includes('node_modules/socket.io-client/') ||
             id.includes('node_modules/idb/')
           ) {
             return 'state-networking';
+          }
+
+          // WebSocket (lazy-loaded separately)
+          if (id.includes('node_modules/socket.io-client/')) {
+            return 'websocket';
           }
 
           // Group 3: Observability (Sentry)
@@ -201,7 +205,7 @@ export default defineConfig({
   },
 
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
+    include: ['react', 'react-dom', 'react-router-dom'],
   },
 
   test: {

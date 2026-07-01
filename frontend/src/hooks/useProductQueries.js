@@ -10,7 +10,6 @@ export function useProducts(params, options = {}) {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
-    placeholderData: keepPreviousData,
     ...options,
   });
 }
@@ -24,7 +23,6 @@ export function useDynamicFilters(params, options = {}) {
     },
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    placeholderData: keepPreviousData,
     ...options,
   });
 }

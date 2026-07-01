@@ -19,8 +19,8 @@ export const ProductCard = React.memo(function ProductCard({
   teluguName,
   price,
   oldPrice,
-  rating = 4.8,
-  reviews = 42,
+  rating = 0,
+  reviews = 0,
   imageSrc,
   hoverImage,
   gallery,
@@ -59,7 +59,20 @@ export const ProductCard = React.memo(function ProductCard({
   const { runProtectedAction } = useAuth();
   const [added, setAdded] = useState(false);
   const [isRippling, setIsRippling] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const scrollContainerRef = React.useRef(null);
+
+  const handleScroll = (e) => {
+    if (!e.target) return;
+    const scrollLeft = e.target.scrollLeft;
+    const width = e.target.offsetWidth;
+    if (width > 0) {
+      const newIndex = Math.round(scrollLeft / width);
+      if (newIndex !== activeIndex) {
+        setActiveIndex(newIndex);
+      }
+    }
+  };
 
   const handleScrollLeft = (e) => {
     e.preventDefault();
@@ -211,6 +224,7 @@ export const ProductCard = React.memo(function ProductCard({
       <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl border border-black/5 group/canvas">
         <div
           ref={scrollContainerRef}
+          onScroll={handleScroll}
           className="flex w-full h-full overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth"
         >
           {availableImages.map((img, idx) => (
@@ -236,11 +250,15 @@ export const ProductCard = React.memo(function ProductCard({
         </div>
 
         {availableImages.length > 1 && (
-          <div className="absolute bottom-6 left-3 lg:left-4 flex gap-1.5 z-10 pointer-events-none">
+          <div className="absolute bottom-4 left-3 lg:bottom-5 lg:left-4 flex items-center gap-1.5 z-10 pointer-events-none">
             {availableImages.map((_, i) => (
               <div
                 key={i}
-                className="w-1.5 h-1.5 rounded-full bg-white/90 shadow-sm border border-black/10"
+                className={`transition-all duration-300 rounded-full shadow-md border border-black/10 ${
+                  i === activeIndex
+                    ? 'w-2 h-2 lg:w-2.5 lg:h-2.5 bg-white'
+                    : 'w-1.5 h-1.5 lg:w-2 lg:h-2 bg-white/60'
+                }`}
               />
             ))}
           </div>

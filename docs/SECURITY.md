@@ -1,0 +1,3 @@
+# Security Policy
+
+This document covers security practices, threat models, and vulnerability reporting for EventDecor...

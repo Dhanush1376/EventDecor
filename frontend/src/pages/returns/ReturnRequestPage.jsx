@@ -297,10 +297,11 @@ export const ReturnRequestPage = () => {
             {Object.entries(selectedItems).map(([itemId, data]) => (
               <div key={itemId} className="p-4 border rounded-[16px] border-outline-variant/30">
                 <div className="flex items-center gap-4 mb-4 pb-4 border-b border-outline-variant/20">
-                  <img
+                  <OptimizedImage
                     src={data.image}
                     alt={data.title}
                     className="w-10 h-10 rounded-[12px] object-cover"
+                    width={80}
                   />
                   <span className="font-bold uppercase tracking-wider text-[#2A2927] text-[10px]">
                     {data.title}
@@ -347,10 +348,11 @@ export const ReturnRequestPage = () => {
                 className="p-4 border rounded-[16px] border-outline-variant/30 space-y-5"
               >
                 <div className="flex items-center gap-4 border-b border-outline-variant/20 pb-4">
-                  <img
+                  <OptimizedImage
                     src={data.image}
                     alt={data.title}
                     className="w-10 h-10 rounded-[12px] object-cover"
+                    width={80}
                   />
                   <div className="flex-1">
                     <span className="font-bold uppercase tracking-wider text-[#2A2927] text-[10px] block">
@@ -445,10 +447,11 @@ export const ReturnRequestPage = () => {
             {Object.entries(selectedItems).map(([itemId, data]) => (
               <div key={itemId} className="p-4 border rounded-[16px] border-outline-variant/30">
                 <div className="flex items-center gap-4 mb-4 pb-4 border-b border-outline-variant/20">
-                  <img
+                  <OptimizedImage
                     src={data.image}
                     alt={data.title}
                     className="w-10 h-10 rounded-[12px] object-cover"
+                    width={80}
                   />
                   <span className="font-bold uppercase tracking-wider text-[#2A2927] text-[10px]">
                     {data.title}
@@ -667,10 +670,11 @@ export const ReturnRequestPage = () => {
               <div className="divide-y divide-outline-variant/20">
                 {Object.values(selectedItems).map((data, idx) => (
                   <div key={idx} className="p-4 flex gap-4">
-                    <img
+                    <OptimizedImage
                       src={data.image}
                       alt={data.title}
                       className="w-12 h-12 rounded-[12px] object-cover"
+                      width={80}
                     />
                     <div>
                       <h4 className="font-bold uppercase tracking-wider text-[10px] text-[#2A2927]">

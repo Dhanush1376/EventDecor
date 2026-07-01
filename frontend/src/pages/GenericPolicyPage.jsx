@@ -7,7 +7,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { policyService } from '../services/domainServices';
 import { createSafeHtml } from '../utils/security/sanitize';
 import { useEffect } from 'react';
-import { io } from 'socket.io-client';
 import { getApiRootUrl } from '../config/apiConfig';
 import logger from '../utils/core/logger';
 import { MandalaElement } from '../components/ui/MandalaElement';
@@ -38,19 +37,27 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
       socketServerUrl = socketServerUrl.slice(0, -4);
     }
 
-    const socket = io(`${socketServerUrl}/visitor`, {
-      transports: ['websocket', 'polling'],
-    });
+    let socket;
 
-    socket.on('policy-updated', (data) => {
-      if (data?.slug === slug) {
-        logger.info(`[PolicySync] Real-time update received for ${slug}, invalidating cache.`);
-        queryClient.invalidateQueries({ queryKey: ['policy', slug] });
-      }
-    });
+    import('socket.io-client')
+      .then(({ io }) => {
+        socket = io(`${socketServerUrl}/visitor`, {
+          transports: ['websocket', 'polling'],
+        });
+
+        socket.on('policy-updated', (data) => {
+          if (data?.slug === slug) {
+            logger.info(`[PolicySync] Real-time update received for ${slug}, invalidating cache.`);
+            queryClient.invalidateQueries({ queryKey: ['policy', slug] });
+          }
+        });
+      })
+      .catch((err) => {
+        logger.warn('[PolicySync] Failed to load socket.io-client', err);
+      });
 
     return () => {
-      socket.disconnect();
+      if (socket) socket.disconnect();
     };
   }, [slug, queryClient]);
 

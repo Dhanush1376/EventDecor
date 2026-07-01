@@ -484,7 +484,7 @@ export function EventCollections() {
         <MandalaArtDecor
           className="absolute -top-12 -right-10 lg:-top-16 lg:-right-12 pointer-events-none z-0"
           size={400}
-          variant={2}
+          variant={1}
           opacity={0.15}
           spinDuration={120}
         />
@@ -542,14 +542,14 @@ export function EventCollections() {
 
         {/* Subtle background art anchor at the bottom */}
         <MandalaArtDecor
-          variant={1}
+          variant={2}
           size={700}
           className="-bottom-40 -left-40 hidden lg:block z-0"
           opacity={0.2}
           spinDuration={180}
         />
         <MandalaArtDecor
-          variant={1}
+          variant={2}
           size={350}
           className="-bottom-20 -left-20 lg:hidden z-0"
           opacity={0.25}

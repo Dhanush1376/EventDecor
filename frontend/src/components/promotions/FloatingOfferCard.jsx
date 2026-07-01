@@ -39,7 +39,7 @@ export function FloatingOfferCard() {
     if (setAppliedCoupon) setAppliedCoupon(offer.code);
     setIsVisible(false);
     toast.success(`Coupon ${offer.code} claimed!`, {
-      icon: '✨',
+      icon: '',
       style: {
         border: '1px solid #BFA15F',
         padding: '12px 16px',

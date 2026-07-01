@@ -278,7 +278,7 @@ export function NetworkProvider({ children }) {
       toast.success(`Successfully synchronized ${successCount} offline action(s)!`, {
         id: 'sync-toast',
         duration: 5000,
-        icon: '✨',
+        icon: '',
       });
     } else if (failedCount > 0) {
       toast.error(`Sync completed with ${failedCount} failure(s).`, {

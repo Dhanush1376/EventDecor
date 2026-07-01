@@ -12,6 +12,18 @@ export const resolveStaticAssetUrl = (localPath) => {
   return cloudImageMappings[key] || localPath;
 };
 
+/**
+ * Returns the closest responsive width from standard breakpoints
+ */
+export const getResponsiveWidth = (targetWidth) => {
+  const breakpoints = [240, 400, 640, 800, 1024, 1280, 1536];
+  if (!targetWidth) return null;
+
+  // Find the smallest breakpoint that is >= targetWidth
+  const width = breakpoints.find((bp) => bp >= targetWidth);
+  return width || breakpoints[breakpoints.length - 1]; // Fallback to max if larger
+};
+
 const urlCache = new Map();
 
 /**
@@ -36,17 +48,28 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
 
   if (isCloudinary) {
     let transform = [];
-    if (width) transform.push(`w_${width},c_limit`);
-    if (height) transform.push(`h_${height},c_limit`);
+
+    // Normalize to nearest breakpoint to maximize cache hits
+    const normalizedWidth = width ? getResponsiveWidth(width) : null;
+    const normalizedHeight = height ? getResponsiveWidth(height) : null;
+
+    if (normalizedWidth) transform.push(`w_${normalizedWidth},c_limit`);
+    if (normalizedHeight) transform.push(`h_${normalizedHeight},c_limit`);
+
+    // Size-aware quality tiers
+    const effectiveQuality =
+      normalizedWidth && normalizedWidth <= 400 ? 'q_auto:eco' : 'q_auto:good';
 
     if (quality && quality !== 'auto') transform.push(`q_${quality}`);
-    else transform.push('q_auto:good');
+    else transform.push(effectiveQuality);
 
     if (format && format !== 'auto') transform.push(`f_${format}`);
     else transform.push('f_auto');
 
     transform.push('dpr_auto');
     transform.push('fl_strip_profile');
+    transform.push('fl_immutable_cache');
+    transform.push('fl_progressive');
 
     const transformStr = transform.join(',');
 
@@ -140,18 +163,6 @@ export const getBlurDataUri = (width = 400, height = 300) => {
   }
 
   return uri;
-};
-
-/**
- * Returns the closest responsive width from standard breakpoints
- */
-export const getResponsiveWidth = (targetWidth) => {
-  const breakpoints = [240, 400, 640, 800, 1024, 1280, 1536];
-  if (!targetWidth) return null;
-
-  // Find the smallest breakpoint that is >= targetWidth
-  const width = breakpoints.find((bp) => bp >= targetWidth);
-  return width || breakpoints[breakpoints.length - 1]; // Fallback to max if larger
 };
 
 /**

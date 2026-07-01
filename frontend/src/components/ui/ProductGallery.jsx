@@ -101,7 +101,7 @@ export function ProductGallery({ images = [], product }) {
   };
 
   return (
-    <div className="flex flex-col-reverse lg:flex-row gap-4 lg:gap-6 items-start w-full select-none md:self-start md:sticky md:top-24 lg:top-32 relative">
+    <div className="flex flex-col-reverse lg:flex-row gap-4 lg:gap-6 items-start w-full select-none relative">
       {/* Sticky Mandala Art */}
       <MandalaElement
         className="hidden md:block absolute -top-16 -left-[120px] opacity-[0.05] pointer-events-none -z-10"

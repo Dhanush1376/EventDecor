@@ -68,7 +68,7 @@ export function RecommendationSystem({
         oldPrice: item.product.oldPrice,
         imageSrc: item.product.imageSrc,
         category: item.product.category,
-        rating: item.product.rating || 4.8,
+        rating: item.product.rating || 0,
         slug: item.product.slug,
         isRentalAvailable: item.product.isRentalAvailable,
         rentalEnabled: item.product.rentalEnabled,

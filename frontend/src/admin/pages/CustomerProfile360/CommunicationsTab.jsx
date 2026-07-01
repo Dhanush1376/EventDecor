@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, MessageSquare, Phone } from 'lucide-react';
+import Mail from 'lucide-react/dist/esm/icons/mail';
+import MessageSquare from 'lucide-react/dist/esm/icons/message-square';
+import Phone from 'lucide-react/dist/esm/icons/phone';
 import { customerIntelligenceService } from '../../../services/domainServices';
 
 export default function CommunicationsTab({ customerId }) {

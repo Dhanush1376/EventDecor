@@ -128,6 +128,43 @@ export class EventBookingCheckoutService {
         }
       }
 
+      const bookings = await EventBooking.create(
+        [
+          {
+            _id: new mongoose.Types.ObjectId(),
+            bookingId: await generateUniqueBookingId(),
+            user: userId,
+            eventPackage: eventPackageId || null,
+            title: title || `${eventType || 'Special'} Celebration`,
+            eventType: eventType || 'Wedding',
+            date: bDate,
+            rentalDurationDays: durationDays,
+            timing: timing || { start: '10:00 AM', end: '10:00 PM' },
+            guestCount: parseInt(guestCount) || 100,
+            venue: venue || { address: 'TBD', isOutdoor: false },
+            customization: customization || {},
+            selectedAddons: selectedAddons || [],
+            inspirationImages: inspirationImages || [],
+            pricing: {
+              rentalFee: basePrice,
+              setupCharges: 0,
+              transportationCost: 0,
+              addOnCharges,
+              depositAmount,
+              totalPrice,
+              pendingBalance: totalPrice,
+              paymentStatus: 'unpaid',
+            },
+            payments: [],
+            status: 'pending_payment',
+            idempotencyKey,
+          },
+        ],
+        { session },
+      );
+
+      booking = bookings[0];
+
       await session.commitTransaction();
     } catch (err: any) {
       await session.abortTransaction();
@@ -141,7 +178,7 @@ export class EventBookingCheckoutService {
       session.endSession();
     }
 
-    const pendingOrderId = new mongoose.Types.ObjectId();
+    const pendingOrderId = booking._id;
 
     const options = {
       amount: depositAmount * 100,

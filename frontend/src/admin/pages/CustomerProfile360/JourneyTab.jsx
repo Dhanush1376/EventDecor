@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, ShoppingCart, MousePointerClick, Eye, Search, AlertCircle } from 'lucide-react';
+import Activity from 'lucide-react/dist/esm/icons/activity';
+import ShoppingCart from 'lucide-react/dist/esm/icons/shopping-cart';
+import MousePointerClick from 'lucide-react/dist/esm/icons/mouse-pointer-click';
+import Eye from 'lucide-react/dist/esm/icons/eye';
+import Search from 'lucide-react/dist/esm/icons/search';
+import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
 import { customerIntelligenceService } from '../../../services/domainServices';
 
 export default function JourneyTab({ customerId }) {

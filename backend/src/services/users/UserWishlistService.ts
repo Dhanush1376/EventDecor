@@ -23,8 +23,9 @@ export class UserWishlistService {
     const [products, showcases] = await Promise.all([
       Product.find({ _id: { $in: wishlistArray } })
         .select(
-          'name title price rentalPrice imageSrc images category isAvailable quantity availableQuantity slug',
+          'name title price rentalPrice imageSrc images primaryCategory isAvailable quantity availableQuantity slug',
         )
+        .populate('primaryCategory', 'name')
         .lean(),
       require('../../models/ShowcaseCollection')
         .default.find({ _id: { $in: wishlistArray } })
@@ -35,7 +36,11 @@ export class UserWishlistService {
     ]);
 
     const combinedWishlist = [
-      ...products.map((p: any) => ({ ...p, itemType: 'product' })),
+      ...products.map((p: any) => ({
+        ...p,
+        itemType: 'product',
+        category: p.primaryCategory?.name || 'Event Decor',
+      })),
       ...showcases.map((s: any) => ({ ...s, itemType: 'event' })),
     ];
 

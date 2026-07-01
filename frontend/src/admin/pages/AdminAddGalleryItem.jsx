@@ -116,7 +116,7 @@ export function AdminAddGalleryItem() {
       toast.error('Please upload a photo first for AI Vision analysis!');
       return;
     }
-    const loadId = toast.loading('✨ AI Vision analyzing design accents...');
+    const loadId = toast.loading('AI Vision analyzing design accents...');
     setTimeout(() => {
       toast.dismiss(loadId);
       setNewItem((prev) => ({
@@ -135,7 +135,7 @@ export function AdminAddGalleryItem() {
           prev.story ||
           'Inspired by traditional South Indian temple architecture, handcrafted using locally sourced fresh flowers and premium drapes.',
       }));
-      toast.success('✨ AI populated details');
+      toast.success(' AI populated details');
     }, 1200);
   };
 

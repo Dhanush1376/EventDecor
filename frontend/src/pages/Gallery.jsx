@@ -459,7 +459,7 @@ export function GalleryInner() {
                   hasMore={hasNextPage}
                   isLoading={isFetchingNextPage}
                   renderItem={renderGalleryItem}
-                  columns={{ sm: 2, md: 2, lg: 4, xl: 4 }}
+                  columns={{ sm: 2, md: 3, lg: 4, xl: 4 }}
                   gap="gap-2 sm:gap-3"
                   batchSize={20}
                 />

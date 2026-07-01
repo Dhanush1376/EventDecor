@@ -160,6 +160,7 @@ function ReviewCard({ review, showcaseId }) {
                 alt={`Review photo ${idx + 1}`}
                 containerClassName="w-full h-full"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                width={64}
               />
             </Link>
           ))}
@@ -570,7 +571,7 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
     );
   };
 
-  if (loading && reviews.length === 0) {
+  if (reviews.length === 0) {
     return null;
   }
 
@@ -740,6 +741,7 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
                     alt=""
                     containerClassName="w-full h-full"
                     className="w-full h-full object-cover"
+                    width={64}
                   />
                 </div>
               ))}

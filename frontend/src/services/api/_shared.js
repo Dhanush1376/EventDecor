@@ -1,9 +1,17 @@
 import api from '../api';
 import axios from 'axios';
 import logger from '../../utils/core/logger';
-import imageCompression from 'browser-image-compression';
 import { getApiRootUrl } from '../../config/apiConfig';
 import { EXTERNAL_URLS } from '../../config/constants';
+
+let imageCompression = null;
+const getImageCompression = async () => {
+  if (!imageCompression) {
+    const mod = await import('browser-image-compression');
+    imageCompression = mod.default;
+  }
+  return imageCompression;
+};
 
 const DEFAULT_COMPRESSION_OPTIONS = {
   maxSizeMB: 1, // maximum size in MB
@@ -55,7 +63,8 @@ export const uploadDirectToCloudinary = async (
         !value.type.includes('gif')
       ) {
         try {
-          const compressedFile = await imageCompression(value, DEFAULT_COMPRESSION_OPTIONS);
+          const compressor = await getImageCompression();
+          const compressedFile = await compressor(value, DEFAULT_COMPRESSION_OPTIONS);
           logger.debug(
             `[UPLOAD] Compressed ${value.name}: ${(value.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
           );
@@ -95,7 +104,8 @@ export const uploadDirectToCloudinary = async (
             !fileObj.type.includes('svg') &&
             !fileObj.type.includes('gif')
           ) {
-            const compressedFile = await imageCompression(fileObj, DEFAULT_COMPRESSION_OPTIONS);
+            const compressor = await getImageCompression();
+            const compressedFile = await compressor(fileObj, DEFAULT_COMPRESSION_OPTIONS);
             logger.debug(
               `[UPLOAD] Compressed Remote URL ${u}: ${(fileObj.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
             );

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  TrendingUp,
-  Users,
-  Activity,
-  ShoppingCart,
-  Search,
-  AlertCircle,
-  AlertTriangle,
-} from 'lucide-react';
+import TrendingUp from 'lucide-react/dist/esm/icons/trending-up';
+import Users from 'lucide-react/dist/esm/icons/users';
+import Activity from 'lucide-react/dist/esm/icons/activity';
+import ShoppingCart from 'lucide-react/dist/esm/icons/shopping-cart';
+import Search from 'lucide-react/dist/esm/icons/search';
+import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import api from '../../services/api';
 import { formatCurrency } from '../components/AdminUIKit';
 

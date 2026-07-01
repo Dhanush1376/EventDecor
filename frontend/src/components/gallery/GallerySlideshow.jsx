@@ -306,7 +306,7 @@ export function GallerySlideshow({
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex flex-col items-center gap-1.5 lg:gap-2 w-full">
-                  <div className="flex flex-col items-center text-center gap-1 lg:gap-1.5">
+                  <div className="flex flex-col items-center text-center gap-1 lg:gap-1.5 pt-3 lg:pt-4">
                     {/* Category pill hidden per request */}
                     <h2 className="text-black font-display text-base lg:text-xl font-normal tracking-tight m-0">
                       {currentItem.title}

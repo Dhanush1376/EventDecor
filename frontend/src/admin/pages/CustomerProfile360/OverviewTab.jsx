@@ -1,5 +1,7 @@
 import React from 'react';
-import { ShoppingBag, Clock, TrendingUp } from 'lucide-react';
+import ShoppingBag from 'lucide-react/dist/esm/icons/shopping-bag';
+import Clock from 'lucide-react/dist/esm/icons/clock';
+import TrendingUp from 'lucide-react/dist/esm/icons/trending-up';
 import { formatCurrency } from '../../components/AdminUIKit';
 
 export default function OverviewTab({ profile }) {

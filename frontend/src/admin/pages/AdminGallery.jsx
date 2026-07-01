@@ -108,7 +108,7 @@ export function AdminGallery() {
       toast.error('Please upload a photo first for AI Vision analysis!');
       return;
     }
-    const loadId = toast.loading('✨ AI Vision analyzing design accents...');
+    const loadId = toast.loading('AI Vision analyzing design accents...');
     setTimeout(() => {
       toast.dismiss(loadId);
       setNewItem((prev) => ({
@@ -126,7 +126,7 @@ export function AdminGallery() {
           prev.story ||
           'Inspired by traditional South Indian temple architecture, handcrafted using locally sourced fresh flowers and premium drapes.',
       }));
-      toast.success('✨ AI populated details');
+      toast.success('AI populated details');
     }, 1200);
   };
 
@@ -258,7 +258,7 @@ export function AdminGallery() {
       {/* ─── Gallery Grid ─── */}
       <motion.div
         variants={fadeUp}
-        className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5"
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5"
       >
         {isLoading
           ? Array.from({ length: 8 }).map((_, i) => (
@@ -436,7 +436,7 @@ export function AdminGallery() {
               {/* Add/Edit Form */}
               <form onSubmit={handleSaveCat} className="admin-card-inset p-4 mb-6 space-y-4">
                 <h4 className="text-[11px] font-semibold text-[var(--admin-text-primary)] uppercase tracking-wider">
-                  {editingCatId ? '✏️ Edit Theme' : '✨ Create New Theme'}
+                  {editingCatId ? ' Edit Theme' : 'Create New Theme'}
                 </h4>
                 <div className="space-y-1.5">
                   <label className="admin-label">Theme Name *</label>

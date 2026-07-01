@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, ShoppingBag, StickyNote, Filter } from 'lucide-react';
+import Activity from 'lucide-react/dist/esm/icons/activity';
+import ShoppingBag from 'lucide-react/dist/esm/icons/shopping-bag';
+import StickyNote from 'lucide-react/dist/esm/icons/sticky-note';
+import Filter from 'lucide-react/dist/esm/icons/filter';
 import { customerIntelligenceService } from '../../../services/domainServices';
 
 export default function TimelineTab({ customerId }) {

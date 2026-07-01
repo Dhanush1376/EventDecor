@@ -94,7 +94,14 @@ export const optimizeImageController = async (
     // 2. Parse query parameters
     const w = req.query.w ? parseInt(req.query.w as string, 10) : undefined;
     const h = req.query.h ? parseInt(req.query.h as string, 10) : undefined;
-    const q = req.query.q ? parseInt(req.query.q as string, 10) : 80;
+    const qRaw = req.query.q as string;
+    let q = 80;
+    if (qRaw) {
+      if (qRaw === 'auto:eco') q = 60;
+      else if (qRaw === 'auto:good') q = 80;
+      else if (qRaw === 'auto:best') q = 100;
+      else q = parseInt(qRaw, 10);
+    }
 
     // Auto-detect format based on Accept header if not explicitly provided
     let fmt = req.query.fmt as string;

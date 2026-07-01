@@ -22,10 +22,29 @@ export function cleanRentalInfo(rentalInfo) {
 }
 
 export function calculateCartSummary(items, cartType, shippingFee = 0) {
-  const subtotal = items.reduce(
-    (sum, item) => sum + (item.product?.price || item.price || 0) * item.quantity,
-    0,
-  );
+  const subtotal = items.reduce((sum, item) => {
+    let itemPrice = item.product?.price || item.price || 0;
+
+    if (cartType === 'rental' && item.rentalInfo?.startDate && item.rentalInfo?.endDate) {
+      const start = new Date(item.rentalInfo.startDate);
+      const end = new Date(item.rentalInfo.endDate);
+      const diffDays =
+        Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) || 1;
+
+      const rentalPricing = item.product?.rentalPricing || item.rentalPricing;
+      if (rentalPricing) {
+        if (diffDays >= 30 && rentalPricing.monthly > 0) {
+          itemPrice = (rentalPricing.monthly / 30) * diffDays;
+        } else if (diffDays >= 7 && rentalPricing.weekly > 0) {
+          itemPrice = (rentalPricing.weekly / 7) * diffDays;
+        } else if (rentalPricing.daily > 0) {
+          itemPrice = rentalPricing.daily * diffDays;
+        }
+      }
+    }
+
+    return sum + itemPrice * item.quantity;
+  }, 0);
 
   let depositTotal = 0;
   if (cartType === 'rental') {

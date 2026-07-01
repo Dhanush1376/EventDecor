@@ -164,7 +164,18 @@ const EventBookingSchema: Schema = new Schema(
     eventPackage: { type: Schema.Types.ObjectId, ref: 'Event' },
     title: { type: String, required: true },
     eventType: { type: String, required: true },
-    date: { type: Date, required: true },
+    date: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: function (v: Date) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          return v >= today;
+        },
+        message: 'Event date cannot be in the past.',
+      },
+    },
     bookingDateStr: { type: String },
     rentalDurationDays: { type: Number, default: 1 },
     timing: {

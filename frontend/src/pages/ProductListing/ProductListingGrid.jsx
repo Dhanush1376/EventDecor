@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FilterPanel, Pagination, CategoryTabs } from '../../components/ui';
+import { FilterPanel, Pagination, CategoryTabs, CloudinaryImage } from '../../components/ui';
 import { ProductCard } from '../../components/shared/ProductCard';
 import { MandalaElement } from '../../components/ui/MandalaElement';
 import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
@@ -41,7 +41,7 @@ export const ProductListingGrid = React.memo(
         <MandalaArtDecor
           className="absolute -top-12 -right-10 lg:-top-16 lg:-right-12 pointer-events-none z-0"
           size={400}
-          variant={2}
+          variant={1}
           opacity={0.15}
           spinDuration={120}
         />
@@ -109,10 +109,12 @@ export const ProductListingGrid = React.memo(
                 <div className="flex items-center gap-4">
                   {visualSearch.previewUrl && (
                     <div className="relative w-16 h-16 rounded-2xl overflow-hidden border border-outline-variant/30 shadow-inner shrink-0">
-                      <img
+                      <CloudinaryImage
                         src={visualSearch.previewUrl}
                         alt="Scanned visual query"
                         className="w-full h-full object-cover"
+                        width={200}
+                        sizes="160px"
                       />
                     </div>
                   )}
@@ -252,14 +254,14 @@ export const ProductListingGrid = React.memo(
         </div>
 
         <MandalaArtDecor
-          variant={1}
+          variant={2}
           size={700}
           className="-bottom-40 -left-40 hidden lg:block z-0"
           opacity={0.2}
           spinDuration={180}
         />
         <MandalaArtDecor
-          variant={1}
+          variant={2}
           size={350}
           className="-bottom-20 -left-20 lg:hidden z-0"
           opacity={0.25}

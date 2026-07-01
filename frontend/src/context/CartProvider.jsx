@@ -6,7 +6,6 @@ import { useOptimisticCartMutation } from '../hooks/useOptimisticCartMutation';
 import { transformDbCart } from '../utils/ecommerce/cartCalculations';
 import { persistentStorage } from '../utils/storage/persistentStorage';
 import { useCartMerge } from '../hooks/useCartMerge';
-import { useAutoApplyCoupon } from '../hooks/useAutoApplyCoupon';
 export function CartProvider({ children }) {
   const { isAuthenticated, runProtectedAction } = useAuth();
   const { syncCart } = useCartMutations();
@@ -200,8 +199,6 @@ export function CartProvider({ children }) {
       setAppliedCoupon,
     ],
   );
-
-  useAutoApplyCoupon({ claimedCoupon, subtotal, setAppliedCoupon, isAuthenticated });
 
   return (
     <CartStateContext.Provider value={stateValue}>

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 import storeSettingsService from '../services/api/storeSettingsService';
-import { io as socketIO } from 'socket.io-client';
+// socket.io is imported dynamically inside the useEffect to keep it out of the initial bundle
 import { getApiRootUrl } from '../config/apiConfig';
 import logger from '../utils/core/logger';
 
@@ -46,26 +46,37 @@ export const ConfigProvider = ({ children }) => {
     } else if (socketServerUrl.endsWith('/api')) {
       socketServerUrl = socketServerUrl.slice(0, -4);
     }
-    const socket = socketIO(`${socketServerUrl}/visitor`, {
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 5,
-    });
+    let socketRef = null;
 
-    socket.on('MAINTENANCE_TOGGLED', (data) => {
-      setStoreSettings((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          general: {
-            ...prev.general,
-            maintenanceMode: data.maintenanceMode,
-          },
-        };
+    import('socket.io-client')
+      .then(({ io }) => {
+        const socket = io(`${socketServerUrl}/visitor`, {
+          transports: ['websocket', 'polling'],
+          reconnectionAttempts: 5,
+        });
+        socketRef = socket;
+
+        socket.on('MAINTENANCE_TOGGLED', (data) => {
+          setStoreSettings((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              general: {
+                ...prev.general,
+                maintenanceMode: data.maintenanceMode,
+              },
+            };
+          });
+        });
+      })
+      .catch((err) => {
+        logger.warn('[ConfigContext] Failed to load socket.io-client module:', err);
       });
-    });
 
     return () => {
-      socket.disconnect();
+      if (socketRef) {
+        socketRef.disconnect();
+      }
     };
   }, []);
 

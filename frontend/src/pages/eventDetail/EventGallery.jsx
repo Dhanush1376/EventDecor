@@ -36,7 +36,7 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
   };
 
   return (
-    <div className="space-y-8 md:self-start md:sticky md:top-24 lg:top-32">
+    <div className="space-y-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -190,10 +190,11 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
                   key={i}
                   className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-4"
                 >
-                  <img
+                  <OptimizedImage
                     src={img}
                     alt={`Gallery ${i}`}
                     className="max-w-full max-h-full object-contain"
+                    width={1280}
                   />
                 </div>
               ),
