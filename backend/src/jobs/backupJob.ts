@@ -1,4 +1,4 @@
-import * as cron from 'node-cron';
+const cron = require('node-cron');
 import logger from '../config/logger';
 import { withCronLock } from '../utils/cronLock';
 import { BackupOrchestrator } from '../services/backup/BackupOrchestrator';
