@@ -100,7 +100,7 @@ export const executeRestore = async (req: Request, res: Response) => {
     const { backupId } = req.body;
     // Async execution
     // eslint-disable-next-line no-console
-    RestoreManager.executeRestore(backupId, req.body).catch((e) => console.error(e));
+    RestoreManager.executeRestore(backupId, req.body).catch((e: any) => console.error(e));
     res.status(202).json({ message: 'Restore pipeline started' });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
@@ -136,7 +136,7 @@ export const runChaosTest = async (req: Request, res: Response) => {
   try {
     const { scenario } = req.body;
     // eslint-disable-next-line no-console
-    VerificationService.runChaosTest(scenario).catch((e) => console.error(e));
+    VerificationService.runChaosTest(scenario).catch((e: any) => console.error(e));
     res.status(202).json({ message: 'Chaos test initiated' });
   } catch (err: any) {
     res.status(500).json({ message: err.message });

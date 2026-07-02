@@ -26,8 +26,8 @@ class CMSService {
 
     if (websiteContent) {
       try {
-        const oldUrls = extractAllCloudinaryUrls(websiteContent.content);
-        const newUrls = new Set(extractAllCloudinaryUrls(newContent));
+        const _oldUrls = extractAllCloudinaryUrls(websiteContent.content);
+        const _newUrls = new Set(extractAllCloudinaryUrls(newContent));
       } catch (err) {
         logger.error('Error parsing old CMS content for image cleanup:', err);
       }

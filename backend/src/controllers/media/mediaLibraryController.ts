@@ -199,7 +199,7 @@ export const replaceMedia = async (req: Request, res: Response) => {
         oldUrl: oldSecureUrl,
         newUrl: media.secureUrl,
       });
-    } catch (queueErr) {
+    } catch (_queueErr) {
       logger.warn(
         '[MediaService] Queue unavailable, falling back to sync execution for replace jobs',
       );
@@ -280,7 +280,7 @@ export const getMediaHealth = async (req: Request, res: Response) => {
       const cloudinary = require('cloudinary').v2;
       const pingRes = await cloudinary.api.ping();
       cloudinaryStatus = pingRes.status === 'ok' ? 'operational' : 'error';
-    } catch (err) {
+    } catch (_err) {
       cloudinaryStatus = 'unreachable';
     }
 

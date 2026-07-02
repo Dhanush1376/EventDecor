@@ -104,7 +104,7 @@ frontend/errors.txt
  
 # Backups & Temp
 backups/
-backup/
+/backup/
 temp/
 reports/
 

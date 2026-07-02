@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+import * as cron from 'node-cron';
 import logger from '../config/logger';
 import { withCronLock } from '../utils/cronLock';
 import { BackupOrchestrator } from '../services/backup/BackupOrchestrator';
@@ -38,7 +38,7 @@ export const initBackupJobs = () => {
     await withCronLock('db-backup-weekly', 7200, async () => {
       logger.info('[BACKUP CRON] Triggering weekly full backup & verification...');
       try {
-        const record = await BackupOrchestrator.runBackup('full', 'weekly', 'cron');
+        await BackupOrchestrator.runBackup('full', 'weekly', 'cron');
         // Additional weekly tasks
         logger.info(`[BACKUP CRON] Running weekly chaos test...`);
         await VerificationService.runChaosTest('corrupted_backup');

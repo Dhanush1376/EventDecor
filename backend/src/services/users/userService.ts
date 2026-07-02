@@ -289,7 +289,6 @@ export class UserService {
 
   static async uploadAvatar(userId: string, file: any) {
     const { MediaService } = require('../media/MediaService');
-    const logger = require('../../config/logger').default;
 
     const user = await User.findById(userId);
     if (!user) throw new ApiError(404, 'User not found');

@@ -130,7 +130,7 @@ export class MediaService {
           try {
             await mediaQueue.add('process-thumbnails', { mediaId: mediaDoc._id });
             await mediaQueue.add('extract-metadata', { mediaId: mediaDoc._id });
-          } catch (queueErr) {
+          } catch (_queueErr) {
             logger.warn(
               `[MediaService] Queue unavailable, falling back to sync execution for ${mediaDoc._id}`,
             );

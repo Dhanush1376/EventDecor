@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+import * as cron from 'node-cron';
 import logger from '../config/logger';
 import { withCronLock } from '../utils/cronLock';
 import { RestoreManager } from '../services/backup/RestoreManager';

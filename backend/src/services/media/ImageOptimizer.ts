@@ -168,8 +168,8 @@ export class ImageOptimizer {
           originalBytes,
           optimizationSavings: 0,
         };
-      } catch (e) {
-        throw new Error(`Failed to process image buffer: ${error.message}`);
+      } catch (e: any) {
+        throw new Error(`Failed to process image buffer: ${e.message}`, { cause: e });
       }
     }
   }
