@@ -135,7 +135,7 @@ export class VerificationService {
     logger.info(`[CHAOS] Initiating chaos test scenario: ${scenario}`);
 
     let result = 'Success';
-    let details = {};
+    let details: any;
 
     try {
       switch (scenario) {

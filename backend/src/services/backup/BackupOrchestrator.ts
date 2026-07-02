@@ -76,8 +76,8 @@ export class BackupOrchestrator {
       record = await this.transitionState(record, 'dumping', 'Planning collections');
       const collectionsToBackup = await BackupPlanner.planBackupCollections(record.type);
 
-      let totalSize = 0;
-      let totalRecords = 0;
+      let _totalSize = 0;
+      let _totalRecords = 0;
 
       // Ensure work dir exists
       await fs.promises.mkdir(workDir, { recursive: true });
@@ -89,8 +89,8 @@ export class BackupOrchestrator {
         const outPath = path.join(workDir, `${col}.enc`);
         // The executor handles Dump -> Compress -> Encrypt in a single pass-through stream
         const stats = await BackupExecutor.streamCollection(col, outPath);
-        totalSize += stats.sizeBytes;
-        totalRecords += stats.recordCount;
+        _totalSize += stats.sizeBytes;
+        _totalRecords += stats.recordCount;
       }
 
       // Update record with actual collections backed up
@@ -102,7 +102,7 @@ export class BackupOrchestrator {
 
       // 4. ENCRYPTING -> SIGNING
       record = await this.transitionState(record, 'signing', 'Generating manifest and signatures');
-      const manifest = await BackupExecutor.generateManifest(record, workDir);
+      await BackupExecutor.generateManifest(record, workDir);
 
       // 5. SIGNING -> UPLOADING
       record = await this.transitionState(record, 'uploading', 'Uploading to multi-providers');
@@ -115,7 +115,7 @@ export class BackupOrchestrator {
         try {
           const remoteDir = `${record.backupId}`;
           // Upload Manifest
-          const manifestUpload = await provider.upload(
+          await provider.upload(
             path.join(workDir, '_manifest.json'),
             `${remoteDir}/_manifest.json`,
           );
@@ -162,7 +162,7 @@ export class BackupOrchestrator {
       // Cleanup temp directory
       try {
         await fs.promises.rm(workDir, { recursive: true, force: true });
-      } catch (e) {}
+      } catch (_e) {}
     }
   }
 

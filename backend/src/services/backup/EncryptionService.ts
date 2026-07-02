@@ -6,7 +6,6 @@ import BackupAuditLog from '../../models/BackupAuditLog';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
-const KEY_LENGTH = 32;
 
 export interface EncryptStreamResult {
   stream: Transform;
@@ -200,7 +199,7 @@ export class EncryptionService {
   public static verifySignature(
     checksumHex: string,
     signatureHex: string,
-    publicKeyId: string,
+    _publicKeyId: string,
   ): { valid: boolean; reason?: string } {
     const expected = this.signBackup(checksumHex);
 

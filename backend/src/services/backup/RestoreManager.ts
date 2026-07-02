@@ -81,7 +81,7 @@ export class RestoreManager {
   /**
    * Estimates the timeline for recovery phases
    */
-  public static estimateRecoveryTimeline(backupId: string): RecoveryTimeline {
+  public static estimateRecoveryTimeline(_backupId: string): RecoveryTimeline {
     // In reality, this queries historical Restore metrics. Returning mock data.
     return {
       downloadEstimate: '~2 minutes',
@@ -175,23 +175,19 @@ export class RestoreManager {
             // Drop existing staging if any leftovers exist
             try {
               await db.collection(`old_${col.name}`).drop();
-            } catch (e) {}
+            } catch (_e) {}
 
             // Rename current -> old (backup of current)
-            await db
-              .admin()
-              .command({
-                renameCollection: `${db.databaseName}.${col.name}`,
-                to: `${db.databaseName}.old_${col.name}`,
-              });
+            await db.admin().command({
+              renameCollection: `${db.databaseName}.${col.name}`,
+              to: `${db.databaseName}.old_${col.name}`,
+            });
 
             // Rename staging -> current (atomic cutover)
-            await db
-              .admin()
-              .command({
-                renameCollection: `${db.databaseName}.${stagingPrefix}${col.name}`,
-                to: `${db.databaseName}.${col.name}`,
-              });
+            await db.admin().command({
+              renameCollection: `${db.databaseName}.${stagingPrefix}${col.name}`,
+              to: `${db.databaseName}.${col.name}`,
+            });
 
             logger.info(`[RESTORE] Swapped ${col.name} successfully.`);
           } catch (e: any) {
@@ -206,7 +202,7 @@ export class RestoreManager {
         for (const col of record.collections) {
           try {
             await db.collection(`${stagingPrefix}${col.name}`).drop();
-          } catch (e) {}
+          } catch (_e) {}
         }
       }
 

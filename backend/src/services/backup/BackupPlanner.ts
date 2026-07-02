@@ -135,7 +135,7 @@ export class BackupPlanner {
           }
         }
       }
-    } catch (e) {
+    } catch (_e) {
       report.warnings.push('Failed to check collection counts');
     }
 

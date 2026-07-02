@@ -1,12 +1,9 @@
 import path from 'path';
 import fs from 'fs';
-import { promisify } from 'util';
-import { pipeline } from 'stream';
+
 import { StorageProviderType } from '../../models/BackupRecord';
 import logger from '../../config/logger';
 import crypto from 'crypto';
-
-const streamPipeline = promisify(pipeline);
 
 export interface UploadOptions {
   contentType?: string;
@@ -124,7 +121,7 @@ export class LocalStorageProvider implements StorageProvider {
       // Need to chmod back to writeable if it was immutable
       try {
         await fs.promises.chmod(target, 0o666);
-      } catch (e) {}
+      } catch (_e) {}
       await fs.promises.unlink(target);
     }
   }
@@ -151,7 +148,7 @@ export class LocalStorageProvider implements StorageProvider {
     return result;
   }
 
-  async setImmutable(remotePath: string, retainUntil: Date): Promise<void> {
+  async setImmutable(remotePath: string, _retainUntil: Date): Promise<void> {
     const dest = path.join(this.basePath, remotePath);
     if (fs.existsSync(dest)) {
       await fs.promises.chmod(dest, 0o444);
@@ -179,7 +176,7 @@ export class S3StorageProvider implements StorageProvider {
   async upload(
     filePath: string,
     remotePath: string,
-    options?: UploadOptions,
+    _options?: UploadOptions,
   ): Promise<UploadResult> {
     logger.info(`[S3] Uploading ${filePath} to s3://${this.bucket}/${remotePath} (${this.region})`);
     // Implement standard S3 PutObject or parallel upload here
@@ -195,7 +192,7 @@ export class S3StorageProvider implements StorageProvider {
     logger.info(`[S3] Downloading s3://${this.bucket}/${remotePath} to ${localPath}`);
   }
 
-  async verify(remotePath: string, expectedChecksum: string): Promise<boolean> {
+  async verify(_remotePath: string, _expectedChecksum: string): Promise<boolean> {
     return true; // Use HeadObject to get checksum
   }
 
@@ -203,7 +200,7 @@ export class S3StorageProvider implements StorageProvider {
     logger.info(`[S3] Deleting s3://${this.bucket}/${remotePath}`);
   }
 
-  async list(prefix: string): Promise<RemoteFile[]> {
+  async list(_prefix: string): Promise<RemoteFile[]> {
     return [];
   }
 

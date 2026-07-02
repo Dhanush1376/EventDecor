@@ -125,7 +125,7 @@ export class BackupExecutor {
         const buildInfo = await db.admin().buildInfo();
         mongoVersion = buildInfo.version;
       }
-    } catch (e) {}
+    } catch (_e) {}
 
     const manifest: BackupManifest = {
       backupId: record.backupId,

@@ -101,7 +101,7 @@ export class HealthAnalyzer {
     // Mock logic for the plan
     const score = 85;
 
-    let grade: 'A+' | 'A' | 'B+' | 'B' | 'C' | 'D' | 'F' = 'B+';
+    let grade: 'A+' | 'A' | 'B+' | 'B' | 'C' | 'D' | 'F';
     if (score >= 95) grade = 'A+';
     else if (score >= 90) grade = 'A';
     else if (score >= 80) grade = 'B';
