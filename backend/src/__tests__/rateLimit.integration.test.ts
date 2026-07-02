@@ -8,11 +8,19 @@ describe('Rate limiting (TEST_RATE_LIMIT)', () => {
     process.env.TEST_RATE_LIMIT = 'true';
     jest.resetModules();
 
+    // Prevent mongoose connection buffering timeout
+    const MaintenanceService = require('../services/MaintenanceService').default;
+    jest.spyOn(MaintenanceService, 'getMaintenanceState').mockResolvedValue({
+      active: false,
+      mode: 'off',
+    });
+
     app = require('../app').default;
   });
 
   afterAll(() => {
     delete process.env.TEST_RATE_LIMIT;
+    jest.restoreAllMocks();
     jest.resetModules();
   });
 
