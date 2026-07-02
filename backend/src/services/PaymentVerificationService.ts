@@ -260,6 +260,19 @@ export class PaymentVerificationService {
           }
         }
 
+        if (orderData.isCustomOrder && orderData.customOrderId) {
+          const CustomOrder = require('../models/CustomOrder').default;
+          await CustomOrder.findByIdAndUpdate(
+            orderData.customOrderId,
+            {
+              convertedToOrder: true,
+              convertedOrderId: orderData.pendingOrderId,
+              status: 'Payment Received',
+            },
+            { session },
+          );
+        }
+
         finalOrder = await Order.create(
           [
             {
@@ -295,6 +308,8 @@ export class PaymentVerificationService {
               razorpayOrderId: razorpay_order_id,
               razorpayPaymentId: razorpay_payment_id,
               razorpaySignature: razorpay_signature,
+              isCustomOrder: orderData.isCustomOrder,
+              customOrderId: orderData.customOrderId,
             },
           ],
           { session },

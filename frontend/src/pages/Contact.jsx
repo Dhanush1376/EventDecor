@@ -135,17 +135,11 @@ export function Contact() {
         size={800}
         duration={150}
       />
-      <MandalaElement
-        className="absolute bottom-20 -left-40 opacity-[0.03] pointer-events-none"
-        size={1000}
-        variant={2}
-        duration={200}
-      />
 
       <main className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24 items-start pt-4">
           {/* Left Side: Modern Editorial Content & Leaflet Map */}
-          <div className="flex flex-col justify-center lg:sticky lg:top-32 lg:pb-32">
+          <div className="flex flex-col justify-center md:sticky md:top-24 lg:top-32 lg:pb-32">
             <div className="space-y-4">
               <motion.h1
                 {...MOTION_PRESETS.fadeInUp}
@@ -207,7 +201,7 @@ export function Contact() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: DURATION.slow, ease: EASE.smooth }}
-              className="h-48 lg:h-72 w-full max-w-md rounded-[24px] overflow-hidden shadow-sm border border-outline-variant/20 bg-white block relative group cursor-pointer"
+              className="h-48 md:h-60 lg:h-72 w-full max-w-md rounded-[24px] overflow-hidden shadow-sm border border-outline-variant/20 bg-white block relative group cursor-pointer"
             >
               {/* Invisible overlay to block map interactions and capture clicks */}
               <div className="absolute inset-0 z-[1000] bg-transparent" />

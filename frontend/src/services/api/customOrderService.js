@@ -56,14 +56,14 @@ export const customOrderService = {
   },
 
   // ─── Customer: Chat ───
-  postMessage: async (id, text, attachments = []) => {
-    const response = await api.post(`/custom-orders/${id}/messages`, { text, attachments });
+  postMessage: async (id, text, attachments = [], source = 'customer_portal') => {
+    const response = await api.post(`/custom-orders/${id}/messages`, { text, attachments, source });
     return response.data;
   },
 
   // ─── Customer: Quotation Response ───
-  respondQuotation: async (id, status) => {
-    const response = await api.post(`/custom-orders/${id}/quotation/respond`, { status });
+  respondQuotation: async (id, status, reason = '') => {
+    const response = await api.post(`/custom-orders/${id}/quotation/respond`, { status, reason });
     return response.data;
   },
 

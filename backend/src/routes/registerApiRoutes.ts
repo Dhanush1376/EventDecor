@@ -101,5 +101,11 @@ export const registerApiRoutes = (
   apiRouter.use('/blogs', lazyRouter('./cms/blogRoutes'));
   apiRouter.use('/locations', lazyRouter('./customer/locationRoutes'));
 
+  // Maintenance System Routes
+  apiRouter.use('/maintenance', noCacheMiddleware, lazyRouter('./system/maintenanceRoutes'));
+
+  // Enterprise Backup & DR Routes
+  apiRouter.use('/admin/backup', noCacheMiddleware, lazyRouter('./system/backupRoutes'));
+
   app.use(prefix, apiRouter);
 };

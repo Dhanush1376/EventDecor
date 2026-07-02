@@ -17,6 +17,7 @@ export function useCheckoutFlow({
   activeItems,
   orderType,
   checkoutMode,
+  customOrder,
   removeItem,
   clearCart,
   navigate,
@@ -423,6 +424,11 @@ export function useCheckoutFlow({
       useWallet: totals.useWallet,
       needByDate: needByDate || undefined,
       idempotencyKey: createIdempotencyKey(),
+      isCustomOrder: checkoutMode === 'custom',
+      customOrderId:
+        checkoutMode === 'custom'
+          ? customOrder?._id || activeItems[0]?.id || activeItems[0]?._id
+          : undefined,
     };
 
     if (paymentOption === 'razorpay') {

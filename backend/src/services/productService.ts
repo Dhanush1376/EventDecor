@@ -6,7 +6,7 @@ import logger from '../config/logger';
 import { bumpPublicCacheVersion } from '../utils/cache/cacheVersion';
 import { categoryCache, MemoryCache } from '../utils/cache/MemoryCache';
 import redisClient from '../utils/cache/redis';
-import { deleteFromCloudinary, extractPublicId } from '../utils/cloudinary';
+import { MediaService } from './media/MediaService';
 import { analyzeQueryWithAI, escapeRegex, getMatchingProductCategory } from './searchService';
 import { CategoryService } from './CategoryService';
 import Category from '../models/Category';
@@ -497,6 +497,12 @@ class ProductService {
     const product = new Product(data);
     const saved = await product.save();
 
+    const allImages = saved.images || [];
+    await MediaService.syncReferences('Product', saved._id, allImages, 'images');
+    if (saved.imageSrc) {
+      await MediaService.syncReferences('Product', saved._id, [saved.imageSrc], 'imageSrc');
+    }
+
     await ChangeTracker.trackChange('Product', saved._id, null, saved.toObject(), actor, 'create');
 
     if (saved.showInGallery) {
@@ -532,28 +538,13 @@ class ProductService {
         'update',
       );
 
-      // Clean up primary product image if replaced
-      if (data.imageSrc && oldProduct.imageSrc && oldProduct.imageSrc !== data.imageSrc) {
-        const publicId = extractPublicId(oldProduct.imageSrc);
-        if (publicId) {
-          deleteFromCloudinary(publicId).catch((err) =>
-            logger.error(`Failed to clean up old product image: ${err}`),
-          );
-        }
-      }
-
-      // Clean up removed auxiliary product images if replaced
-      if (data.images && oldProduct.images && Array.isArray(oldProduct.images)) {
-        const newImagesSet = new Set(data.images);
-        const removedImages = oldProduct.images.filter((img: string) => !newImagesSet.has(img));
-        for (const img of removedImages) {
-          const publicId = extractPublicId(img);
-          if (publicId) {
-            deleteFromCloudinary(publicId).catch((err) =>
-              logger.error(`Failed to clean up old product sub-image: ${err}`),
-            );
-          }
-        }
+      // Automatically sync references for primary and auxiliary images
+      const allImages = product.images || [];
+      await MediaService.syncReferences('Product', product._id, allImages, 'images');
+      if (product.imageSrc) {
+        await MediaService.syncReferences('Product', product._id, [product.imageSrc], 'imageSrc');
+      } else {
+        await MediaService.syncReferences('Product', product._id, [], 'imageSrc');
       }
     }
 

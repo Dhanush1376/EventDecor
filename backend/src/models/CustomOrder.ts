@@ -15,20 +15,33 @@ const QuotationSchema = new Schema({
   items: { type: [QuotationItemSchema], default: [] },
   tax: { type: Number, default: 0 },
   shipping: { type: Number, default: 0 },
+  subtotal: { type: Number, default: 0 },
+  discount: { type: Number, default: 0 },
   total: { type: Number, default: 0 },
+  depositRequired: { type: Boolean, default: false },
+  depositPercentage: { type: Number, default: 0 },
   notes: { type: String },
   status: {
     type: String,
     enum: ['draft', 'sent', 'approved', 'rejected'],
     default: 'draft',
   },
+  expiresAt: { type: Date },
+  revisionNumber: { type: Number, default: 1 },
+  approvedAt: { type: Date },
+  approvedBy: { type: String },
 });
 
 const MessageSchema = new Schema({
-  sender: { type: String, enum: ['admin', 'customer'], required: true },
+  sender: { type: String, enum: ['admin', 'customer', 'system'], required: true },
   senderName: { type: String, required: true },
   text: { type: String, required: true },
   attachments: { type: [String], default: [] },
+  messageType: {
+    type: String,
+    enum: ['human', 'system', 'quotation', 'status_change', 'file_upload'],
+    default: 'human',
+  },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -118,6 +131,98 @@ const CustomizationFieldSchema = new Schema({
   value: { type: Schema.Types.Mixed, required: true },
 });
 
+const CustomProductSchema = new Schema({
+  title: { type: String },
+  previewImage: { type: String },
+  finalPrice: { type: Number },
+  badge: { type: String, default: 'CUSTOMIZED' },
+  designerInfo: {
+    name: { type: String },
+    assignedAt: { type: Date },
+  },
+  conversationSummary: { type: String },
+  summaryGeneratedAt: { type: Date },
+});
+
+const ProductionSchema = new Schema({
+  designerAssigned: { type: Schema.Types.ObjectId, ref: 'User' },
+  designerName: { type: String },
+  productionTeam: [
+    {
+      userId: { type: Schema.Types.ObjectId, ref: 'User' },
+      name: { type: String },
+      role: { type: String },
+    },
+  ],
+  eventSchedule: {
+    setupDate: { type: Date },
+    eventDate: { type: Date },
+    teardownDate: { type: Date },
+    setupTime: { type: String },
+    venue: { type: String },
+    venueContact: { type: String },
+  },
+  materialsList: [
+    {
+      item: { type: String },
+      quantity: { type: Number },
+      unit: { type: String },
+      unitCost: { type: Number },
+      totalCost: { type: Number },
+      status: {
+        type: String,
+        enum: ['pending', 'ordered', 'received', 'used'],
+        default: 'pending',
+      },
+    },
+  ],
+  costBreakdown: {
+    materialCost: { type: Number, default: 0 },
+    laborCost: { type: Number, default: 0 },
+    overheadCost: { type: Number, default: 0 },
+    totalCost: { type: Number, default: 0 },
+    quotedPrice: { type: Number, default: 0 },
+    profitMargin: { type: Number, default: 0 },
+  },
+  qaChecklist: [
+    {
+      item: { type: String },
+      checked: { type: Boolean, default: false },
+      checkedBy: { type: String },
+      checkedAt: { type: Date },
+      notes: { type: String },
+    },
+  ],
+  internalChecklist: [
+    {
+      task: { type: String },
+      completed: { type: Boolean, default: false },
+      completedBy: { type: String },
+      completedAt: { type: Date },
+      dueDate: { type: Date },
+    },
+  ],
+});
+
+const PaymentScheduleSchema = new Schema({
+  type: { type: String, enum: ['full', 'advance', 'milestone'], default: 'full' },
+  advancePercentage: { type: Number, default: 100 },
+  milestones: [
+    {
+      label: { type: String },
+      percentage: { type: Number },
+      amount: { type: Number },
+      status: { type: String, enum: ['pending', 'paid', 'overdue'], default: 'pending' },
+      dueDate: { type: Date },
+      paidAt: { type: Date },
+      paymentId: { type: String },
+      invoiceNumber: { type: String },
+    },
+  ],
+  totalPaid: { type: Number, default: 0 },
+  remainingBalance: { type: Number, default: 0 },
+});
+
 // ─── Main Schema ───
 
 const CustomOrderSchema: Schema = new Schema(
@@ -176,11 +281,15 @@ const CustomOrderSchema: Schema = new Schema(
         'Reviewing',
         'Quote Sent',
         'Approved',
+        'Checkout Ready',
+        'Payment Received',
         'In Progress',
         'In Production',
-        'Completed',
+        'Quality Check',
         'Ready',
+        'Dispatched',
         'Delivered',
+        'Completed',
         'Cancelled',
       ],
       default: 'Pending',
@@ -198,6 +307,11 @@ const CustomOrderSchema: Schema = new Schema(
     quotation: { type: QuotationSchema, default: () => ({}) },
     messages: { type: [MessageSchema], default: [] },
 
+    // Enterprise Extensions
+    customProduct: { type: CustomProductSchema },
+    production: { type: ProductionSchema },
+    paymentSchedule: { type: PaymentScheduleSchema },
+
     // Staff & notes
     assignedStaff: [
       {
@@ -211,6 +325,12 @@ const CustomOrderSchema: Schema = new Schema(
 
     // Version history
     versions: { type: [VersionSnapshotSchema], default: [] },
+
+    // Conversion to Standard Order
+    convertedToOrder: { type: Boolean, default: false, index: true },
+    convertedOrderId: { type: Schema.Types.ObjectId, ref: 'Order', index: true },
+    orderSummary: { type: String },
+    orderNotes: { type: String },
 
     // Draft support
     isDraft: { type: Boolean, default: false, index: true },

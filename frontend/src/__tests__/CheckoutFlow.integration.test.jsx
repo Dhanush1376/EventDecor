@@ -277,11 +277,12 @@ describe('Checkout Flow Integration', () => {
     fireEvent.click(saveAddressBtn);
 
     // 4. User is on Payment step, wait for "Place Order" button
-    const placeOrderBtn = await screen.findByRole(
+    const placeOrderBtns = await screen.findAllByRole(
       'button',
       { name: /Place Order|Pay ₹/i },
       { timeout: 3000 },
     );
+    const placeOrderBtn = placeOrderBtns[placeOrderBtns.length - 1]; // Use the main one
     expect(placeOrderBtn).toBeInTheDocument();
     // Check if the order total is displayed correctly
     expect(screen.getAllByText(/118/i).length).toBeGreaterThan(0);

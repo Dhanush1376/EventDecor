@@ -194,6 +194,47 @@ export function AdminOrderDrawer({
             </div>
           </div>
 
+          {/* 2.5 Custom Order Chat */}
+          {selectedOrder.isCustomOrder && selectedOrder.customOrderId?.messages?.length > 0 && (
+            <div className="admin-card p-5 space-y-4">
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)]">
+                Custom Order Chat Log
+              </h4>
+              <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                {selectedOrder.customOrderId.messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex flex-col ${msg.sender === 'customer' ? 'items-start' : 'items-end'}`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold uppercase text-[var(--admin-text-tertiary)]">
+                        {msg.senderName || msg.sender}
+                      </span>
+                      <span className="text-[9px] text-[var(--admin-text-tertiary)] opacity-70">
+                        {new Date(msg.createdAt).toLocaleString('en-IN', {
+                          hour: 'numeric',
+                          minute: 'numeric',
+                          hour12: true,
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                    <div
+                      className={`p-3 rounded-[var(--admin-radius-lg)] text-[12px] ${
+                        msg.sender === 'customer'
+                          ? 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]'
+                          : 'bg-[var(--admin-accent)] text-white'
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 3. Transaction Timeline */}
           <div className="admin-card p-5">
             <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] mb-5">

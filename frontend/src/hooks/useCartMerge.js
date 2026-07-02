@@ -11,6 +11,7 @@ export function useCartMerge({
   emptySummary,
   setGuestPurchaseCart,
   setGuestRentalCart,
+  setGuestCustomCart,
 }) {
   const lastAuthRef = useRef(isAuthenticated);
 
@@ -79,6 +80,7 @@ export function useCartMerge({
 
           setGuestPurchaseCart({ items: [], summary: emptySummary });
           setGuestRentalCart({ items: [], summary: { ...emptySummary, depositTotal: 0 } });
+          if (setGuestCustomCart) setGuestCustomCart({ items: [], summary: emptySummary });
           persistentStorage.removeItem('siri_cart_cache');
         } catch (err) {
           logger.error('[Cart] Guest-to-auth cart merge failed:', err);
@@ -88,5 +90,12 @@ export function useCartMerge({
       mergeGuestCart();
     }
     lastAuthRef.current = isAuthenticated;
-  }, [isAuthenticated, syncCart, emptySummary, setGuestPurchaseCart, setGuestRentalCart]);
+  }, [
+    isAuthenticated,
+    syncCart,
+    emptySummary,
+    setGuestPurchaseCart,
+    setGuestRentalCart,
+    setGuestCustomCart,
+  ]);
 }

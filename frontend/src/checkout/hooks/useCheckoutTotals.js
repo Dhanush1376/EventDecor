@@ -100,21 +100,22 @@ export function useCheckoutTotals({
     }
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    if (isAuthenticated && !autoApplyAttemptedRef.current) {
-      const couponCodeToApply = location?.state?.couponCode || claimedCoupon;
-      if (couponCodeToApply && couponCodeToApply !== appliedCoupon) {
-        logger.info(`Auto-applying coupon: ${couponCodeToApply}`);
-        setCouponInput(couponCodeToApply);
-        setAppliedCoupon(couponCodeToApply);
-        autoApplyAttemptedRef.current = true;
-        if (claimedCoupon) {
-          setClaimedCoupon('');
-        }
-        toast.success(`Auto-applied coupon "${couponCodeToApply}"!`);
-      }
-    }
-  }, [isAuthenticated, claimedCoupon, location, appliedCoupon, setClaimedCoupon]);
+  // Auto-apply feature disabled per user request
+  // useEffect(() => {
+  //   if (isAuthenticated && !autoApplyAttemptedRef.current) {
+  //     const couponCodeToApply = location?.state?.couponCode || claimedCoupon;
+  //     if (couponCodeToApply && couponCodeToApply !== appliedCoupon) {
+  //       logger.info(`Auto-applying coupon: ${couponCodeToApply}`);
+  //       setCouponInput(couponCodeToApply);
+  //       setAppliedCoupon(couponCodeToApply);
+  //       autoApplyAttemptedRef.current = true;
+  //       if (claimedCoupon) {
+  //         setClaimedCoupon('');
+  //       }
+  //       toast.success(`Auto-applied coupon "${couponCodeToApply}"!`);
+  //     }
+  //   }
+  // }, [isAuthenticated, claimedCoupon, location, appliedCoupon, setClaimedCoupon]);
 
   const fetchBackendTotals = useCallback(
     async (couponToApply = '') => {
@@ -126,8 +127,9 @@ export function useCheckoutTotals({
       setTotalsError(null);
       try {
         const itemsPayload = activeItems.map((item) => ({
-          productId: item.id || item._id,
+          productId: item.id || item._id || item.productId,
           quantity: item.quantity,
+          type: item.type,
         }));
 
         const res = await orderService.validateTotals({

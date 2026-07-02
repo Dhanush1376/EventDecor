@@ -5,9 +5,9 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@siriartsandcrafts.com';
 import { getFrontendUrl } from '../utils/getFrontendUrl';
 
 // HTML escape utility to prevent XSS in email templates
-const escapeHtml = (unsafe: string) => {
+const escapeHtml = (unsafe: any) => {
   if (!unsafe) return '';
-  return unsafe
+  return String(unsafe)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -32,7 +32,7 @@ export class CustomOrderMailService {
           <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">Your Design Request is Received</h2>
           
           <p style="margin: 0 0 24px 0;">
-            Dear ${order.customerName || 'Valued Guest'},<br/><br/>
+            Dear ${escapeHtml(order.customerName || 'Valued Guest')},<br/><br/>
             Thank you for trusting Siri Arts & Crafts with your landmark occasion. We have received your creative blueprint and details. Our designers are currently curating custom recommendations tailored to your request.
           </p>
 
@@ -41,28 +41,28 @@ export class CustomOrderMailService {
             <table style="width: 100%; font-size: 13px; color: #334155; border-collapse: collapse;">
               <tr>
                 <td style="padding: 6px 0; color: #64748b; width: 120px;">Occasion:</td>
-                <td style="padding: 6px 0; font-weight: bold;">${order.occasion}</td>
+                <td style="padding: 6px 0; font-weight: bold;">${escapeHtml(order.occasion)}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #64748b;">Category:</td>
-                <td style="padding: 6px 0; font-weight: bold;">${order.productType}</td>
+                <td style="padding: 6px 0; font-weight: bold;">${escapeHtml(order.productType)}</td>
               </tr>
               ${
                 order.eventDate
                   ? `
               <tr>
                 <td style="padding: 6px 0; color: #64748b;">Event Date:</td>
-                <td style="padding: 6px 0; font-weight: bold;">${new Date(order.eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
+                <td style="padding: 6px 0; font-weight: bold;">${escapeHtml(new Date(order.eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }))}</td>
               </tr>`
                   : ''
               }
               <tr>
                 <td style="padding: 6px 0; color: #64748b;">Venue City:</td>
-                <td style="padding: 6px 0; font-weight: bold;">${order.city}</td>
+                <td style="padding: 6px 0; font-weight: bold;">${escapeHtml(order.city)}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #64748b;">Target Budget:</td>
-                <td style="padding: 6px 0; font-weight: bold; color: #0f172a;">₹${Number(order.budget).toLocaleString('en-IN')}</td>
+                <td style="padding: 6px 0; font-weight: bold; color: #0f172a;">₹${Number(order.budget || 0).toLocaleString('en-IN')}</td>
               </tr>
             </table>
           </div>
@@ -92,15 +92,15 @@ export class CustomOrderMailService {
           </div>
 
           <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px; font-size: 13.5px; color: #334155;">
-            <p style="margin: 0 0 8px 0;"><strong>Client Name:</strong> ${order.customerName}</p>
-            <p style="margin: 0 0 8px 0;"><strong>Email Address:</strong> ${order.customerEmail}</p>
-            <p style="margin: 0 0 8px 0;"><strong>WhatsApp/Phone:</strong> ${order.customerPhone || 'Not Specified'}</p>
-            <p style="margin: 0 0 8px 0;"><strong>Event Occasion:</strong> ${order.occasion}</p>
-            <p style="margin: 0 0 8px 0;"><strong>Product/Decor:</strong> ${order.productType}</p>
-            <p style="margin: 0 0 8px 0;"><strong>Event Date:</strong> ${order.eventDate ? new Date(order.eventDate).toLocaleDateString('en-IN') : 'Flexible'}</p>
-            <p style="margin: 0 0 8px 0;"><strong>Location City:</strong> ${order.city}</p>
-            <p style="margin: 0 0 8px 0;"><strong>Estimated Budget:</strong> ₹${Number(order.budget).toLocaleString('en-IN')}</p>
-            <p style="margin: 0;"><strong>Consultation Mode:</strong> ${order.bookingType}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Client Name:</strong> ${escapeHtml(order.customerName)}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Email Address:</strong> ${escapeHtml(order.customerEmail)}</p>
+            <p style="margin: 0 0 8px 0;"><strong>WhatsApp/Phone:</strong> ${escapeHtml(order.customerPhone || 'Not Specified')}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Event Occasion:</strong> ${escapeHtml(order.occasion)}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Product/Decor:</strong> ${escapeHtml(order.productType)}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Event Date:</strong> ${order.eventDate ? escapeHtml(new Date(order.eventDate).toLocaleDateString('en-IN')) : 'Flexible'}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Location City:</strong> ${escapeHtml(order.city)}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Estimated Budget:</strong> ₹${Number(order.budget || 0).toLocaleString('en-IN')}</p>
+            <p style="margin: 0;"><strong>Consultation Mode:</strong> ${escapeHtml(order.bookingType)}</p>
           </div>
 
           ${
@@ -144,7 +144,7 @@ export class CustomOrderMailService {
         <tr style="border-bottom: 1px solid #f1f5f9;">
           <td style="padding: 10px 0; font-size: 13px; color: #334155;">
             <span style="font-family: monospace; color: #64748b; margin-right: 5px;">${String(idx + 1).padStart(2, '0')}</span>
-            ${item.description}
+            ${escapeHtml(item.description)}
           </td>
           <td style="padding: 10px 0; font-size: 13px; text-align: right; font-family: monospace; font-weight: bold; color: #0f172a;">
             ₹${Number(item.amount).toLocaleString('en-IN')}
@@ -161,7 +161,7 @@ export class CustomOrderMailService {
           <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">Studio Curation Estimate</h2>
           
           <p style="margin: 0 0 24px 0;">
-            Dear ${order.customerName},<br/><br/>
+            Dear ${escapeHtml(order.customerName)},<br/><br/>
             Our design curators have carefully scoped and estimated your setup request. Please find your itemized invoice statement details below for approval.
           </p>
 
@@ -245,9 +245,9 @@ export class CustomOrderMailService {
           </div>
 
           <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px; font-size: 13.5px; color: #334155;">
-            <p style="margin: 0 0 8px 0;"><strong>Client Name:</strong> ${order.customerName}</p>
-            <p style="margin: 0 0 8px 0;"><strong>Email Address:</strong> ${order.customerEmail}</p>
-            <p style="margin: 0 0 8px 0;"><strong>Occasion:</strong> ${order.occasion}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Client Name:</strong> ${escapeHtml(order.customerName)}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Email Address:</strong> ${escapeHtml(order.customerEmail)}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Occasion:</strong> ${escapeHtml(order.occasion)}</p>
             <p style="margin: 0 0 8px 0;"><strong>Invoice Value:</strong> ₹${Number(order.quotation?.total).toLocaleString('en-IN')}</p>
             <p style="margin: 0;"><strong>Status Response:</strong> <span style="color: ${response === 'approved' ? '#10b981' : '#ef4444'}; font-weight: bold; text-transform: uppercase;">${response}</span></p>
           </div>
@@ -310,7 +310,7 @@ export class CustomOrderMailService {
           <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 24px; color: #334155;">
             <span style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 6px;">Workspace Context</span>
             <p style="color: #334155; font-size: 12px; margin: 0;">
-              <strong>Order ID:</strong> ${order.orderId || order._id}<br/>
+              <strong>Order ID:</strong> ${escapeHtml(order.orderId || order._id)}<br/>
               <strong>Related Product:</strong> ${escapeHtml(order.productSnapshot?.title || order.productType || 'Custom Request')}
             </p>
           </div>

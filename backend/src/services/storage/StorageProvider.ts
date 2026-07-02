@@ -10,18 +10,37 @@ export interface UploadResult {
   thumbnail_url: string | null;
   format: string;
   size: number;
+  publicId: string;
+  width: number;
+  height: number;
+  resourceType: string;
+  duration?: number;
+  codec?: string;
 }
 
 export interface StorageProvider {
   /**
-   * Uploads a file buffer directly to the storage provider.
-   * Ensures the image is converted to WebP, resized to max-width 1920px,
-   * metadata stripped, and aggressively compressed.
+   * Upload a file buffer to storage.
    */
   uploadBuffer(buffer: Buffer, options: UploadOptions): Promise<UploadResult>;
 
   /**
-   * Deletes a file from the storage provider by its identifier/URL.
+   * Permanently delete a file from storage.
    */
-  deleteFile(url: string): Promise<boolean>;
+  deleteFile(identifier: string): Promise<boolean>;
+
+  /**
+   * Permanently delete multiple files from storage in a batch.
+   */
+  deleteMultiple(identifiers: string[]): Promise<{ succeeded: string[]; failed: string[] }>;
+
+  /**
+   * Get metadata info for an asset in storage.
+   */
+  getAssetInfo(identifier: string): Promise<any>;
+
+  /**
+   * Invalidate asset in CDN cache.
+   */
+  invalidateCache(identifier: string): Promise<void>;
 }

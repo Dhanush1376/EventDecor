@@ -1,6 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export function QuotationEstimateCard({ selectedOrder, handleQuotationDecision }) {
+  const navigate = useNavigate();
+  const [isDeclining, setIsDeclining] = useState(false);
+  const [declineReason, setDeclineReason] = useState('');
+
+  const submitDecline = () => {
+    handleQuotationDecision('rejected', declineReason);
+    setIsDeclining(false);
+    setDeclineReason('');
+  };
+
   return (
     <>
       {selectedOrder.quotation?.items?.length > 0 ? (
@@ -59,21 +70,67 @@ export function QuotationEstimateCard({ selectedOrder, handleQuotationDecision }
 
           {/* Client quote approval/rejection panel */}
           {selectedOrder.quotation.status === 'sent' && (
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={() => handleQuotationDecision('approved')}
-                className="flex-1 bg-[var(--color-on-surface)] hover:bg-[var(--color-gold)] text-white py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer text-center animate-pulse"
-              >
-                Approve Quote
-              </button>
-              <button
-                onClick={() => handleQuotationDecision('rejected')}
-                className="flex-1 bg-white border border-red-200 hover:bg-red-50 text-red-500 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer text-center"
-              >
-                Decline Quote
-              </button>
+            <div className="pt-2">
+              {isDeclining ? (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <textarea
+                    value={declineReason}
+                    onChange={(e) => setDeclineReason(e.target.value)}
+                    placeholder="Please tell us why you are declining or what changes you need..."
+                    className="w-full bg-[#F7F5F2] border border-black/10 rounded-xl p-3 text-[11px] outline-none focus:border-red-300 resize-none h-[70px] transition-colors"
+                  ></textarea>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={submitDecline}
+                      disabled={!declineReason.trim()}
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      Submit Reason
+                    </button>
+                    <button
+                      onClick={() => setIsDeclining(false)}
+                      className="flex-1 bg-white border border-black/10 hover:bg-black/5 text-black/60 py-2.5 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleQuotationDecision('approved')}
+                    className="flex-1 bg-[var(--color-on-surface)] hover:bg-[var(--color-gold)] text-white py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer text-center animate-pulse"
+                  >
+                    Approve Quote
+                  </button>
+                  <button
+                    onClick={() => setIsDeclining(true)}
+                    className="flex-1 bg-white border border-red-200 hover:bg-red-50 text-red-500 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer text-center"
+                  >
+                    Decline Quote
+                  </button>
+                </div>
+              )}
             </div>
           )}
+
+          {/* Checkout Ready State */}
+          {selectedOrder.quotation.status === 'approved' &&
+            selectedOrder.status === 'Checkout Ready' && (
+              <div className="pt-2">
+                <button
+                  onClick={() =>
+                    navigate(`/checkout`, {
+                      state: { checkoutMode: 'custom', customOrder: selectedOrder },
+                    })
+                  }
+                  className="w-full bg-[var(--color-gold)] hover:bg-black text-white py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer text-center shadow-md animate-pulse flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[14px]">lock</span>
+                  Proceed to Secure Checkout
+                </button>
+              </div>
+            )}
         </div>
       ) : (
         <div className="bg-[var(--color-surface-ivory)] p-4 rounded-2xl border border-black/5 text-center py-6">

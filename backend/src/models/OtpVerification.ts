@@ -8,7 +8,7 @@ export interface IOtpVerification extends Document {
   attempts: number;
   maxAttempts: number;
   exhausted: boolean;
-  type: 'auth' | 'cod';
+  type: 'auth' | 'cod' | 'maintenance';
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -21,10 +21,10 @@ const OtpVerificationSchema: Schema = new Schema(
     attempts: { type: Number, default: 0, required: true },
     maxAttempts: { type: Number, default: OTP_MAX_ATTEMPTS, required: true },
     exhausted: { type: Boolean, default: false, required: true },
-    type: { type: String, enum: ['auth', 'cod'], default: 'auth', required: true },
+    type: { type: String, enum: ['auth', 'cod', 'maintenance'], default: 'auth', required: true },
     expiresAt: { type: Date, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // TTL Index for automatic auto-expiration

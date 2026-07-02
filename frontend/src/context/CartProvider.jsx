@@ -28,6 +28,7 @@ export function CartProvider({ children }) {
       fallback: {
         purchaseCart: { items: [], summary: { ...emptySummary } },
         rentalCart: { items: [], summary: { ...emptySummary, depositTotal: 0 } },
+        customCart: { items: [], summary: { ...emptySummary } },
       },
     });
   };
@@ -38,6 +39,9 @@ export function CartProvider({ children }) {
   );
   const [guestRentalCart, setGuestRentalCart] = useState(
     () => initialCache.rentalCart || { items: [], summary: { ...emptySummary, depositTotal: 0 } },
+  );
+  const [guestCustomCart, setGuestCustomCart] = useState(
+    () => initialCache.customCart || { items: [], summary: emptySummary },
   );
 
   const [claimedCoupon, setClaimedCouponState] = useState(() => {
@@ -74,17 +78,29 @@ export function CartProvider({ children }) {
     return guestRentalCart;
   }, [isAuthenticated, cartData, guestRentalCart]);
 
-  const items = activeCartMode === 'purchase' ? purchaseCart.items : rentalCart.items;
-  const summary = activeCartMode === 'purchase' ? purchaseCart.summary : rentalCart.summary;
+  const customCart = guestCustomCart;
+
+  const items =
+    activeCartMode === 'purchase'
+      ? purchaseCart.items
+      : activeCartMode === 'rental'
+        ? rentalCart.items
+        : customCart.items;
+  const summary =
+    activeCartMode === 'purchase'
+      ? purchaseCart.summary
+      : activeCartMode === 'rental'
+        ? rentalCart.summary
+        : customCart.summary;
 
   useEffect(() => {
     if (!isAuthenticated) {
-      persistentStorage.setItem('siri_cart_cache', { purchaseCart, rentalCart });
+      persistentStorage.setItem('siri_cart_cache', { purchaseCart, rentalCart, customCart });
     } else {
-      // Clear cache when authenticated to prevent merging the auth cart with itself on reload
-      persistentStorage.removeItem('siri_cart_cache');
+      // Clear purchase/rental cache when authenticated to prevent merging, but KEEP customCart
+      persistentStorage.setItem('siri_cart_cache', { customCart });
     }
-  }, [purchaseCart, rentalCart, isAuthenticated]);
+  }, [purchaseCart, rentalCart, customCart, isAuthenticated]);
 
   const { addItem, attemptAddToCart, removeItem, updateQuantity, clearCart } =
     useOptimisticCartMutation({
@@ -96,6 +112,7 @@ export function CartProvider({ children }) {
       emptySummary,
       setGuestPurchaseCart,
       setGuestRentalCart,
+      setGuestCustomCart,
     });
 
   useCartMerge({
@@ -104,6 +121,7 @@ export function CartProvider({ children }) {
     emptySummary,
     setGuestPurchaseCart,
     setGuestRentalCart,
+    setGuestCustomCart,
   });
 
   const cartCount = useMemo(() => items.reduce((acc, item) => acc + item.quantity, 0), [items]);
@@ -115,6 +133,10 @@ export function CartProvider({ children }) {
   const rentalCartCount = useMemo(
     () => rentalCart.items.reduce((acc, item) => acc + item.quantity, 0),
     [rentalCart.items],
+  );
+  const customCartCount = useMemo(
+    () => customCart.items.reduce((acc, item) => acc + item.quantity, 0),
+    [customCart.items],
   );
 
   const subtotal = summary.subtotal;
@@ -143,8 +165,10 @@ export function CartProvider({ children }) {
       cartCount,
       purchaseCartCount,
       rentalCartCount,
+      customCartCount,
       purchaseCart,
       rentalCart,
+      customCart,
       activeCartMode,
       subtotal,
       totalMRP,
@@ -160,8 +184,10 @@ export function CartProvider({ children }) {
       cartCount,
       purchaseCartCount,
       rentalCartCount,
+      customCartCount,
       purchaseCart,
       rentalCart,
+      customCart,
       activeCartMode,
       subtotal,
       totalMRP,

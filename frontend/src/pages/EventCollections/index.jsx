@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SEO } from '../../components/seo/SEO';
-import { MandalaElement } from '../../components/ui/MandalaElement';
 import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
 import { PromoBanner, EventFilterPanel, CategoryTabs, QuickViewModal } from '../../components/ui';
 import { eventService, productService, couponService } from '../../services/domainServices';

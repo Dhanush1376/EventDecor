@@ -442,3 +442,31 @@ export const requireRole = (allowedRoles: string[]) => {
 export const authorize = (...allowedRoles: string[]) => {
   return requireRole(allowedRoles);
 };
+
+export const requireMaintenanceSession = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    // If global maintenanceMiddleware already validated it
+    if ((req as any).isMaintenanceSession) {
+      return next();
+    }
+
+    const maintenanceToken =
+      (req.headers['x-maintenance-token'] as string) || req.cookies?.maintenance_session;
+    const ip = req.ip || req.socket.remoteAddress || '0.0.0.0';
+
+    if (!maintenanceToken) {
+      throw new ApiError(401, 'Maintenance session required');
+    }
+
+    // Dynamic import to avoid circular dependencies if any
+    const MaintenanceService = require('../services/MaintenanceService').default;
+    const isValid = await MaintenanceService.validateMaintenanceSession(maintenanceToken, ip);
+
+    if (!isValid) {
+      throw new ApiError(401, 'Invalid or expired maintenance session');
+    }
+
+    (req as any).isMaintenanceSession = true;
+    next();
+  },
+);

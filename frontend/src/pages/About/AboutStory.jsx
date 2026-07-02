@@ -18,11 +18,12 @@ export function AboutStory({ cmsContent }) {
           blendMode="darken"
           spinDuration={170}
         />
+        {/* Large mandala on the top right edge, as seen in the screenshot */}
         <MandalaArtDecor
           variant={2}
-          size={600}
-          className="-top-36 -right-36 hidden lg:block"
-          opacity={0.12}
+          size={800}
+          className="-top-48 -right-48 hidden lg:block"
+          opacity={0.08}
           blendMode="darken"
           spinDuration={170}
         />
@@ -33,27 +34,28 @@ export function AboutStory({ cmsContent }) {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: '-100px' }}
             transition={{ duration: 1 }}
-            className="relative aspect-[3/4] lg:aspect-[4/5] bg-white rounded-[40px] p-4 lg:p-6 shadow-[0_40px_80px_rgba(0,0,0,0.08)] border border-black/[0.02]"
+            className="relative aspect-[3/4] lg:aspect-[4/5] bg-white rounded-[40px] p-4 lg:p-6 shadow-2xl border border-black/[0.02]"
           >
-            <div className="w-full h-full rounded-[32px] lg:rounded-t-full lg:rounded-b-full overflow-hidden relative">
+            <div className="w-full h-full rounded-[32px] overflow-hidden relative">
               <CloudinaryImage
                 src={cmsContent?.storyImage || '/assets/legacy_artistry_decor.webp'}
                 alt="Handcrafted Details"
                 className="scale-[1.02] hover:scale-110 transition-transform duration-[3s] ease-out"
-                containerClassName="w-full h-full"
+                containerClassName="w-full h-full object-cover"
                 loading="lazy"
-                width={600}
-                height={800}
+                width={800}
+                height={1000}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
             </div>
           </motion.div>
 
           <div className="space-y-8 relative">
+            {/* Small mandala behind the text, as seen in the screenshot */}
             <MandalaElement
-              size={300}
+              size={400}
               duration={160}
-              className="absolute -top-16 -left-16 opacity-[0.04] pointer-events-none"
+              className="absolute -top-24 -left-20 opacity-[0.06] pointer-events-none hidden lg:block"
               skipFade
             />
 
@@ -61,10 +63,10 @@ export function AboutStory({ cmsContent }) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-primary/10 bg-primary/5"
+              className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-[#8B7355]/20 bg-[#8B7355]/5"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-              <span className="font-label-sm text-[9px] text-primary uppercase tracking-[0.4em] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8B7355]" />
+              <span className="font-label-sm text-[10px] text-[#8B7355] uppercase tracking-[0.4em] font-bold">
                 The Journey
               </span>
             </motion.div>
@@ -74,11 +76,9 @@ export function AboutStory({ cmsContent }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="font-headline text-[42px] lg:text-[56px] lg:text-[64px] leading-[1.1] tracking-tight text-on-surface"
+              className="font-headline text-[42px] lg:text-[56px] lg:text-[64px] leading-[1.15] tracking-tight text-[#1A1A1A]"
               dangerouslySetInnerHTML={{
-                __html:
-                  cmsContent?.storyHeadline ||
-                  'A Legacy of <br /><span className="italic font-light text-primary">Family Artistry.</span>',
+                __html: cmsContent?.storyHeadline || 'A Legacy of <br />Family Artistry.',
               }}
             />
 
@@ -88,7 +88,7 @@ export function AboutStory({ cmsContent }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="font-body text-[16px] lg:text-[18px] text-on-surface-variant/80 font-light leading-relaxed"
+                className="font-body text-[16px] lg:text-[18px] text-[#4A4A4A] font-light leading-relaxed"
               >
                 {cmsContent?.storyParagraph1 ||
                   'Founded with a profound passion for celebrations, Siri Arts & Crafts began as a small family endeavor designed to weave authentic Telugu traditions into modern wedding landscapes.'}
@@ -98,7 +98,7 @@ export function AboutStory({ cmsContent }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 }}
-                className="font-body text-[16px] lg:text-[18px] text-on-surface-variant/80 font-light leading-relaxed"
+                className="font-body text-[16px] lg:text-[18px] text-[#4A4A4A] font-light leading-relaxed"
               >
                 {cmsContent?.storyParagraph2 ||
                   'Today, we stand as a premier digital studio, honoring our ancient roots while elevating event decor to a profound form of high art. Our artisans pour their hearts into every creation, ensuring your cherished moments are framed in unparalleled elegance.'}

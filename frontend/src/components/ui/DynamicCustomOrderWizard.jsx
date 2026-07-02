@@ -1,6 +1,7 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { customOrderService } from '../../services/domainServices';
+import { uploadService } from '../../services/api/uploadService';
 import toast from 'react-hot-toast';
 import { Skeleton } from './Skeleton';
 
@@ -166,6 +167,21 @@ export function DynamicCustomOrderWizard({
   };
 
   const handleNext = () => {
+    // HIGH-03: Step-level validation
+    if (currentStepConfig && currentStepConfig.fields) {
+      const missingFields = currentStepConfig.fields.filter(
+        (f) =>
+          f.required &&
+          (!formData.dynamicData[f.id] ||
+            (Array.isArray(formData.dynamicData[f.id]) && formData.dynamicData[f.id].length === 0)),
+      );
+      if (missingFields.length > 0) {
+        toast.error(
+          `Please fill out required fields: ${missingFields.map((f) => f.label).join(', ')}`,
+        );
+        return;
+      }
+    }
     if (currentStep <= totalSteps) setCurrentStep((prev) => prev + 1);
   };
 
@@ -181,15 +197,14 @@ export function DynamicCustomOrderWizard({
         configVersion: config.version,
         dynamicData: formData.dynamicData,
 
-        // Provide safe constants for legacy root fields to satisfy strict backend type validation.
-        // The actual user selections are safely preserved inside the dynamicData object.
-        budget: '0',
-        eventDate: new Date().toISOString(),
-        city: 'Online',
-        bookingType: 'Video Meet',
-        occasion: 'General',
-        productType: 'Custom',
-        quantity: 1,
+        // HIGH-01: Map dynamic fields instead of hardcoding constants
+        budget: formData.dynamicData.budget || '0',
+        eventDate: formData.dynamicData.eventDate || new Date().toISOString(),
+        city: formData.dynamicData.city || 'Online',
+        bookingType: formData.dynamicData.bookingType || 'Video Meet',
+        occasion: formData.dynamicData.occasion || 'General',
+        productType: formData.dynamicData.productType || 'Custom',
+        quantity: formData.dynamicData.quantity || 1,
 
         ...initialProductPayload,
       };
@@ -662,13 +677,34 @@ export function DynamicCustomOrderWizard({
                               onChange={async (e) => {
                                 const files = Array.from(e.target.files);
                                 if (files.length === 0) return;
-                                // Simulated upload UI update. Real implementation should post to S3/Cloudinary via uploadService
-                                toast.success(`Attached ${files.length} file(s)`);
-                                const fileNames = files.map((f) => f.name);
-                                handleUpdateDynamicField(field.id, [
-                                  ...(formData.dynamicData[field.id] || []),
-                                  ...fileNames,
-                                ]);
+
+                                const toastId = toast.loading(
+                                  `Uploading ${files.length} file(s)...`,
+                                );
+                                try {
+                                  const uploadedUrls = [];
+                                  for (const file of files) {
+                                    const fd = new FormData();
+                                    fd.append('file', file);
+                                    const res = await uploadService.uploadImages(
+                                      fd,
+                                      'custom-orders',
+                                    );
+                                    const url = res?.data?.url || res?.url;
+                                    if (url) {
+                                      uploadedUrls.push(url);
+                                    }
+                                  }
+                                  toast.success(`Attached ${uploadedUrls.length} file(s)`, {
+                                    id: toastId,
+                                  });
+                                  handleUpdateDynamicField(field.id, [
+                                    ...(formData.dynamicData[field.id] || []),
+                                    ...uploadedUrls,
+                                  ]);
+                                } catch (error) {
+                                  toast.error('Upload failed. Please try again.', { id: toastId });
+                                }
                               }}
                               className="hidden"
                               id={`file-${field.id}`}
@@ -693,22 +729,20 @@ export function DynamicCustomOrderWizard({
                                   <p className="font-bold text-[10px] uppercase tracking-wider text-black/40">
                                     Attached Files
                                   </p>
-                                  {formData.dynamicData[field.id].map((name) => (
+                                  {formData.dynamicData[field.id].map((url) => (
                                     <div
-                                      key={name}
+                                      key={url}
                                       className="flex justify-between items-center bg-white px-4 py-2.5 rounded-xl border border-black/5 shadow-sm"
                                     >
                                       <span className="font-medium text-[13px] truncate pr-4">
-                                        {name}
+                                        {url.split('/').pop()}
                                       </span>
                                       <button
                                         type="button"
                                         onClick={() => {
                                           handleUpdateDynamicField(
                                             field.id,
-                                            formData.dynamicData[field.id].filter(
-                                              (n) => n !== name,
-                                            ),
+                                            formData.dynamicData[field.id].filter((u) => u !== url),
                                           );
                                         }}
                                         className="text-red-500 hover:text-red-700 flex items-center justify-center p-1"
@@ -733,23 +767,23 @@ export function DynamicCustomOrderWizard({
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-between items-center mt-10 pt-6 border-t border-black/5">
+        <div className="flex flex-wrap justify-between items-center mt-10 pt-6 border-t border-black/5 gap-3">
           <button
             type="button"
             onClick={handleBack}
-            className={`px-6 py-3 border border-black/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface)] hover:bg-black/5 transition-all cursor-pointer ${currentStep === 1 ? 'opacity-0 pointer-events-none' : ''}`}
+            className={`flex-1 sm:flex-none px-4 sm:px-6 py-3 border border-black/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-[var(--color-on-surface)] hover:bg-black/5 transition-all cursor-pointer whitespace-nowrap text-center ${currentStep === 1 ? 'opacity-0 pointer-events-none hidden sm:block' : ''}`}
           >
             Back
           </button>
 
-          <div className="flex gap-3">
+          <div className="flex flex-1 sm:flex-none justify-end gap-2 sm:gap-3">
             {isReviewScreen && (
               <button
                 type="button"
                 onClick={() => {
                   toast.success('Draft manually saved.');
                 }}
-                className="px-6 py-3 border border-black/10 bg-[var(--color-surface-ivory)] rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-black/5 transition-all shadow-sm cursor-pointer"
+                className="flex-1 sm:flex-none px-4 sm:px-6 py-3 border border-black/10 bg-[var(--color-surface-ivory)] rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-black/5 transition-all shadow-sm cursor-pointer whitespace-nowrap text-center"
               >
                 Save Draft
               </button>
@@ -759,7 +793,7 @@ export function DynamicCustomOrderWizard({
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-8 py-3 bg-[var(--color-on-surface)] text-white rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-[var(--color-gold)] transition-all shadow-md cursor-pointer"
+                className="flex-1 sm:flex-none px-4 sm:px-8 py-3 bg-[var(--color-on-surface)] text-white rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-[var(--color-gold)] transition-all shadow-md cursor-pointer whitespace-nowrap text-center"
               >
                 Next Step
               </button>
@@ -768,7 +802,7 @@ export function DynamicCustomOrderWizard({
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="px-8 py-3 bg-[var(--color-gold)] text-white rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-black transition-all shadow-md cursor-pointer disabled:opacity-50"
+                className="flex-1 sm:flex-none px-4 sm:px-8 py-3 bg-[var(--color-gold)] text-white rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-black transition-all shadow-md cursor-pointer disabled:opacity-50 whitespace-nowrap text-center"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Request'}
               </button>

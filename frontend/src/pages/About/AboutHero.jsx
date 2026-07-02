@@ -25,19 +25,6 @@ export function AboutHero({ heroY, heroOpacity, cmsContent, firstWord, restWords
         </motion.div>
 
         <div className="relative z-10 text-center text-white px-6 mt-16 max-w-5xl mx-auto flex flex-col items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex items-center gap-4 mb-8"
-          >
-            <span className="w-12 h-[1px] bg-primary"></span>
-            <span className="font-label-sm text-[10px] lg:text-[11px] uppercase tracking-[0.5em] text-primary font-bold">
-              The {firstWord} {restWords} Heritage
-            </span>
-            <span className="w-12 h-[1px] bg-primary"></span>
-          </motion.div>
-
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -58,24 +45,6 @@ export function AboutHero({ heroY, heroOpacity, cmsContent, firstWord, restWords
           >
             {cmsContent?.missionStatement || ''}
           </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.5, duration: 1 }}
-            className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
-          >
-            <span className="font-label-sm text-[9px] uppercase tracking-[0.3em] text-white/50 font-bold">
-              Scroll to Explore
-            </span>
-            <div className="w-[1px] h-16 bg-white/20 relative overflow-hidden">
-              <motion.div
-                animate={{ y: ['-100%', '100%'] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                className="absolute inset-0 w-full h-1/2 bg-white"
-              />
-            </div>
-          </motion.div>
         </div>
       </section>
     </StackedSectionWrapper>

@@ -1,7 +1,7 @@
 import multer from 'multer';
 import { Request, Response, NextFunction } from 'express';
 import ApiError from '../utils/ApiError';
-import { storageService } from '../services/storage';
+import { MediaService } from '../services/media/MediaService';
 
 const allowedMimeTypes = new Set([
   'image/jpeg',
@@ -107,20 +107,20 @@ const handleStorageUpload = (folder: string, isArray: boolean, allowVideo: boole
           if (!allowVideo && isVideo)
             throw new ApiError(400, `Video not allowed for ${file.originalname}`);
 
-          const result = await storageService.uploadBuffer(file.buffer, {
-            folder,
-            originalname: file.originalname,
-            isVideo,
-            mimeType: detectedMime,
+          const result = await MediaService.uploadSingle(file.buffer, detectedMime, {
+            module: folder,
+            filename: file.originalname,
+            uploadedBy: userId !== 'anonymous' ? userId : undefined,
           });
 
           uploadedFiles.push({
-            path: result.url,
-            secure_url: result.url,
-            thumbnail_url: result.thumbnail_url,
+            path: result.secureUrl,
+            secure_url: result.secureUrl,
+            thumbnail_url: result.thumbnails?.[0]?.url || null,
             originalname: file.originalname,
             mimetype: file.mimetype,
-            size: result.size,
+            size: result.bytes,
+            mediaId: result._id,
           });
         }
         req.files = uploadedFiles as any;
@@ -136,20 +136,20 @@ const handleStorageUpload = (folder: string, isArray: boolean, allowVideo: boole
         if (!allowVideo && isVideo)
           throw new ApiError(400, `Video not allowed for ${file.originalname}`);
 
-        const result = await storageService.uploadBuffer(file.buffer, {
-          folder,
-          originalname: file.originalname,
-          isVideo,
-          mimeType: detectedMime,
+        const result = await MediaService.uploadSingle(file.buffer, detectedMime, {
+          module: folder,
+          filename: file.originalname,
+          uploadedBy: userId !== 'anonymous' ? userId : undefined,
         });
 
         (req as any).file = {
-          path: result.url,
-          secure_url: result.url,
-          thumbnail_url: result.thumbnail_url,
+          path: result.secureUrl,
+          secure_url: result.secureUrl,
+          thumbnail_url: result.thumbnails?.[0]?.url || null,
           originalname: file.originalname,
           mimetype: file.mimetype,
-          size: result.size,
+          size: result.bytes,
+          mediaId: result._id,
         };
       }
 

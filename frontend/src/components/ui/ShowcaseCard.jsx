@@ -1,6 +1,6 @@
 import { m as motion } from 'framer-motion';
 import { CloudinaryImage } from './CloudinaryImage';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
 import { DynamicRatingBadge } from './DynamicRatingBadge';
@@ -13,6 +13,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
   rentalPrice = 15000,
   setupTimeHours = 2,
   image,
+  images = [],
   category = 'Traditional',
   inclusions = [],
   rating = 0,
@@ -24,9 +25,13 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
   const { runProtectedAction } = useAuth();
 
   const [_hovered, setHovered] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const scrollContainerRef = useRef(null);
 
   const showcaseId = id || _id;
   const wishlisted = isWishlisted(showcaseId);
+
+  const availableImages = images && images.length > 0 ? images : [image].filter(Boolean);
 
   const formatPrice = (val) => {
     if (!val) return '15,000';
@@ -44,6 +49,18 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
         imageSrc: image,
       });
     });
+  };
+
+  const handleScroll = (e) => {
+    if (!e.target) return;
+    const scrollLeft = e.target.scrollLeft;
+    const width = e.target.offsetWidth;
+    if (width > 0) {
+      const newIndex = Math.round(scrollLeft / width);
+      if (newIndex !== activeIndex) {
+        setActiveIndex(newIndex);
+      }
+    }
   };
 
   const formattedCat = String(category).replace(/_/g, ' ');
@@ -64,17 +81,42 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
       }
     >
       {/* 1. VISUAL CANVAS */}
-      <div className="relative h-44 sm:h-56 lg:h-72 w-full overflow-hidden bg-[#fafafa] rounded-2xl lg:rounded-[32px] border border-black/5 shadow-2xs">
-        <CloudinaryImage
-          src={image || ''}
-          alt={title}
-          className="w-full h-full object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover:scale-110"
-          containerClassName="w-full h-full"
-          loading="lazy"
-          width={400}
-          height={300}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        />
+      <div className="relative h-44 sm:h-56 lg:h-72 w-full overflow-hidden bg-[#fafafa] rounded-2xl lg:rounded-[32px] border border-black/5 shadow-2xs group/canvas">
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex w-full h-full overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth"
+        >
+          {availableImages.map((img, idx) => (
+            <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+              <CloudinaryImage
+                src={img || ''}
+                alt={`${title} - view ${idx + 1}`}
+                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover/canvas:scale-110"
+                containerClassName="w-full h-full"
+                loading={idx === 0 ? 'eager' : 'lazy'}
+                width={400}
+                height={300}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              />
+            </div>
+          ))}
+        </div>
+
+        {availableImages.length > 1 && (
+          <div className="absolute bottom-3 left-3 lg:bottom-4 lg:left-4 flex items-center gap-1.5 z-10 pointer-events-none">
+            {availableImages.map((_, i) => (
+              <div
+                key={i}
+                className={`transition-all duration-300 rounded-full shadow-md border border-black/10 ${
+                  i === activeIndex
+                    ? 'w-2 h-2 lg:w-2.5 lg:h-2.5 bg-white'
+                    : 'w-1.5 h-1.5 lg:w-2 lg:h-2 bg-white/60'
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Floating Utility Actions */}
         <div className="absolute top-2 right-2 lg:top-4 lg:right-4 z-20 flex flex-col gap-2">
@@ -116,6 +158,23 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
               </span>
             </div>
           )}
+        </div>
+
+        {/* Quick Book Button (Floating bottom-right) */}
+        <div className="absolute bottom-3 right-3 z-20">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenShowcase?.();
+            }}
+            className="w-8 h-8 lg:w-9 lg:h-9 min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer"
+            aria-label="Reserve setup"
+            title="Reserve this setup"
+          >
+            <span className="material-symbols-outlined text-[13px] lg:text-[15px]">
+              event_available
+            </span>
+          </button>
         </div>
 
         {/* Immersive Hover Actions overlay (Desktop Only) */}

@@ -97,24 +97,29 @@ export function CartDrawer({ isOpen, onClose }) {
           >
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-black/[0.04] bg-white/50 sticky top-0 z-10 backdrop-blur-md">
-              <div className="flex items-center gap-3">
-                <h2 className="font-display text-[24px] text-[#1a1a1a]">Shopping Bag</h2>
+              <button
+                onClick={onClose}
+                className="group flex items-center gap-3 shrink-0 cursor-pointer"
+                aria-label="Close cart"
+              >
+                <span
+                  className="material-symbols-outlined text-[24px] text-[#1a1a1a] group-hover:-translate-x-1 transition-transform"
+                  style={{ fontVariationSettings: "'wght' 200" }}
+                >
+                  west
+                </span>
+                <h2 className="font-label text-[13px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] leading-none pt-0.5">
+                  Cart
+                </h2>
                 {cartCount > 0 && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="bg-primary/10 text-primary text-[13px] font-bold px-3 py-1 rounded-full shadow-sm"
+                    className="bg-primary/10 text-primary text-[13px] font-bold px-3 py-1 rounded-full shadow-sm ml-1"
                   >
                     {cartCount}
                   </motion.span>
                 )}
-              </div>
-              <button
-                onClick={onClose}
-                className="w-10 h-10 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-black/60 hover:text-black transition-all active:scale-95"
-                aria-label="Close shopping bag"
-              >
-                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
@@ -168,7 +173,7 @@ export function CartDrawer({ isOpen, onClose }) {
                 </motion.div>
               ) : (
                 <div className="flex flex-col gap-8">
-                  {items.filter((item) => item.type !== 'rental').length > 0 && (
+                  {items.filter((item) => item.type === 'purchase').length > 0 && (
                     <div className="space-y-5">
                       <h4 className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-black/40 flex items-center gap-2 ml-1">
                         <span className="material-symbols-outlined text-[14px]">shopping_bag</span>
@@ -177,7 +182,7 @@ export function CartDrawer({ isOpen, onClose }) {
                       <div className="space-y-5">
                         <AnimatePresence mode="popLayout">
                           {items
-                            .filter((item) => item.type !== 'rental')
+                            .filter((item) => item.type === 'purchase')
                             .map((item) => (
                               <motion.div
                                 layout
@@ -275,6 +280,115 @@ export function CartDrawer({ isOpen, onClose }) {
                                           add
                                         </span>
                                       </button>
+                                    </div>
+                                  </div>
+                                </div>
+                                {confirmingRemove?.id === item.id &&
+                                  confirmingRemove?.variant === item.variant && (
+                                    <motion.button
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      onClick={() => {
+                                        removeItem(item.id, item.variant);
+                                        setConfirmingRemove(null);
+                                      }}
+                                      className="absolute inset-0 z-20 bg-[#ff3b30]/95 backdrop-blur-sm text-white flex flex-col items-center justify-center gap-1.5 rounded-3xl font-label text-[10px] uppercase tracking-widest font-bold shadow-inner transition-colors hover:bg-[#ff3b30]"
+                                    >
+                                      <span className="material-symbols-outlined text-[24px] mb-1">
+                                        delete_forever
+                                      </span>
+                                      Tap to remove
+                                    </motion.button>
+                                  )}
+                              </motion.div>
+                            ))}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  )}
+
+                  {items.filter((item) => item.type === 'custom').length > 0 && (
+                    <div className="space-y-5">
+                      <h4 className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-[#b38235]/70 flex items-center gap-2 ml-1">
+                        <span className="material-symbols-outlined text-[14px]">palette</span>
+                        Custom Orders
+                      </h4>
+                      <div className="space-y-5">
+                        <AnimatePresence mode="popLayout">
+                          {items
+                            .filter((item) => item.type === 'custom')
+                            .map((item) => (
+                              <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{
+                                  opacity: 0,
+                                  scale: 0.95,
+                                  x: -30,
+                                  transition: { duration: 0.2 },
+                                }}
+                                key={`${item.id}-${item.variant || ''}`}
+                                className="relative flex gap-5 p-4 rounded-3xl bg-gradient-to-br from-[#faf8f2] to-[#f5f1e6] border border-[#b38235]/10 shadow-[0_4px_20px_rgba(179,130,53,0.06)] hover:shadow-[0_12px_30px_rgba(179,130,53,0.12)] hover:-translate-y-0.5 transition-all duration-300 group"
+                              >
+                                <div className="w-[85px] h-[105px] rounded-[16px] overflow-hidden flex-shrink-0 bg-[#eeeade] relative shadow-inner border border-black/[0.02]">
+                                  {item.imageSrc || item.image ? (
+                                    <CloudinaryImage
+                                      src={item.imageSrc || item.image}
+                                      alt={item.title}
+                                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                      containerClassName="w-full h-full"
+                                      loading="lazy"
+                                      width={170}
+                                      height={210}
+                                      sizes="85px"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center opacity-20">
+                                      <span className="material-symbols-outlined text-[32px]">
+                                        image
+                                      </span>
+                                    </div>
+                                  )}
+                                  <div className="absolute top-1.5 left-1.5 bg-[#b38235] text-white text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest shadow-md">
+                                    Custom
+                                  </div>
+                                </div>
+                                <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                                  <div>
+                                    <h3 className="font-display text-[15px] leading-snug text-[#1a1a1a] truncate group-hover:text-[#b38235] transition-colors">
+                                      {item.title || 'Custom Order'}
+                                    </h3>
+                                    {item.variant && (
+                                      <p className="font-body text-[10px] text-black/40 mt-1 uppercase tracking-wider font-bold">
+                                        {item.variant}
+                                      </p>
+                                    )}
+                                    <p className="font-display text-[15px] text-[#1a1a1a] mt-1.5 font-medium">
+                                      ₹{item.price?.toLocaleString()}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center justify-between mt-3">
+                                    <div className="flex items-center gap-1.5 bg-white shadow-sm border border-[#b38235]/10 px-1.5 py-1 rounded-full h-9">
+                                      <div className="relative">
+                                        <button
+                                          onClick={() =>
+                                            setConfirmingRemove({
+                                              id: item.id,
+                                              variant: item.variant,
+                                            })
+                                          }
+                                          className={`w-7 h-7 min-h-0 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${confirmingRemove?.id === item.id && confirmingRemove?.variant === item.variant ? 'bg-[#ff3b30] text-white shadow-md' : 'text-black/30 hover:bg-[#ff3b30]/10 hover:text-[#ff3b30]'}`}
+                                          aria-label="Confirm remove"
+                                        >
+                                          <span className="material-symbols-outlined text-[15px]">
+                                            {confirmingRemove?.id === item.id &&
+                                            confirmingRemove?.variant === item.variant
+                                              ? 'check'
+                                              : 'delete'}
+                                          </span>
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>

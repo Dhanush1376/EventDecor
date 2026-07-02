@@ -29,8 +29,15 @@ export function useCheckout() {
 }
 
 export function CheckoutProvider({ children }) {
-  const { purchaseCart, rentalCart, clearCart, removeItem, claimedCoupon, setClaimedCoupon } =
-    useCart();
+  const {
+    purchaseCart,
+    rentalCart,
+    customCart,
+    clearCart,
+    removeItem,
+    claimedCoupon,
+    setClaimedCoupon,
+  } = useCart();
   const { user, isAuthenticated, openAuthModal } = useAuth();
   const { processPayment } = useRazorpay();
   const navigate = useNavigate();
@@ -57,8 +64,29 @@ export function CheckoutProvider({ children }) {
   });
   const settings = settingsData || {};
 
+  const customOrder = location.state?.customOrder || null;
+
   const activeItems = React.useMemo(() => {
     try {
+      if (checkoutMode === 'custom' && customOrder) {
+        return [
+          {
+            productId: customOrder._id,
+            title: `Custom Design: ${customOrder.occasion || customOrder.productType || 'Decor'}`,
+            price: customOrder.quotation?.total || 0,
+            quantity: 1,
+            variant: 'Custom',
+            imageSrc:
+              customOrder.inspirationImages?.[0] ||
+              'https://res.cloudinary.com/dwy422pzt/image/upload/v1727787498/Siri_Logo_c5a17k.jpg',
+            type: 'custom',
+            category: 'CustomOrder',
+          },
+        ];
+      } else if (checkoutMode === 'custom') {
+        return customCart?.items || [];
+      }
+
       const rawItems =
         checkoutMode === 'rental' ? rentalCart?.items || [] : purchaseCart?.items || [];
       return rawItems.filter((item) =>
@@ -68,12 +96,25 @@ export function CheckoutProvider({ children }) {
       logger.warn('Failed to parse activeItems in checkout', e);
       return [];
     }
-  }, [checkoutMode, rentalCart?.items, purchaseCart?.items]);
+  }, [checkoutMode, rentalCart?.items, purchaseCart?.items, customCart?.items, customOrder]);
   const items = activeItems;
-  const subtotal =
-    checkoutMode === 'rental'
+
+  const subtotal = React.useMemo(() => {
+    if (checkoutMode === 'custom' && customOrder) {
+      return customOrder.quotation?.total || 0;
+    } else if (checkoutMode === 'custom') {
+      return customCart?.summary?.subtotal || 0;
+    }
+    return checkoutMode === 'rental'
       ? rentalCart?.summary?.subtotal || 0
       : purchaseCart?.summary?.subtotal || 0;
+  }, [
+    checkoutMode,
+    customOrder,
+    rentalCart?.summary?.subtotal,
+    purchaseCart?.summary?.subtotal,
+    customCart?.summary?.subtotal,
+  ]);
 
   // Empty line since we moved useEffect down
 
@@ -140,6 +181,7 @@ export function CheckoutProvider({ children }) {
     activeItems,
     orderType: checkoutMode,
     checkoutMode,
+    customOrder,
     removeItem,
     clearCart,
     navigate,

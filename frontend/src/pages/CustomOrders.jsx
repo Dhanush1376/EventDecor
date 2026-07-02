@@ -1,4 +1,3 @@
-const setWizardDraft = () => {};
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { SEO } from '../components/seo/SEO';
 
@@ -11,15 +10,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useProduct } from '../hooks/useProductQueries';
 
 import { useAuth } from '../context/AuthContext';
-import { useUserSocket } from '../context/UserSocketProvider';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
-
-// Framer motion presets
-const fadeUp = {
-  hidden: { opacity: 0, y: 15 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
-};
-const slideIn = { hidden: { opacity: 0, x: 20 }, show: { opacity: 1, x: 0 } };
 
 // Direct Image URL Check
 const isDirectImageUrl = (url) => {
@@ -28,7 +19,7 @@ const isDirectImageUrl = (url) => {
 };
 
 export function CustomOrders() {
-  const { user, login, isAuthenticated, runProtectedAction } = useAuth();
+  const { user, isAuthenticated, runProtectedAction } = useAuth();
   const [searchParams] = useSearchParams();
   const productIdQuery = searchParams.get('product');
   const eventIdQuery = searchParams.get('event');
@@ -47,7 +38,6 @@ export function CustomOrders() {
 
   // ─── PRODUCT LINK STATE ───
   const [linkedProduct, setLinkedProduct] = useState(null);
-  const [customizationFields, setCustomizationFields] = useState({});
 
   const { data: productData } = useProduct(productIdQuery, {
     enabled: !!productIdQuery,
@@ -56,10 +46,6 @@ export function CustomOrders() {
   useEffect(() => {
     if (productData) {
       setLinkedProduct(productData);
-      setWizardDraft((prev) => ({
-        ...prev,
-        productType: productData.category || prev.productType,
-      }));
     }
   }, [productData]);
 
@@ -76,7 +62,6 @@ export function CustomOrders() {
   const chatEndRef = useRef(null);
 
   const isSendingMessageRef = useRef(false);
-  const socket = useUserSocket();
 
   const handleWhatsAppConsult = () => {
     const phone = '919866006648';
@@ -98,7 +83,7 @@ export function CustomOrders() {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  const { loading, loadWorkspaceData, handleSendChatMessage, handleQuotationDecision } =
+  const { loadWorkspaceData, handleSendChatMessage, handleQuotationDecision } =
     useCustomOrderWorkspace({
       user,
       setConfig,
@@ -119,12 +104,8 @@ export function CustomOrders() {
       />
       {/* Decorative Mandalas */}
       <MandalaElement
-        className="absolute top-20 -right-20 opacity-[0.03] pointer-events-none"
+        className="absolute top-20 -left-20 opacity-[0.03] pointer-events-none"
         size={600}
-      />
-      <MandalaElement
-        className="absolute bottom-20 -left-20 opacity-[0.02] pointer-events-none"
-        size={700}
       />
 
       <main className="max-w-[1440px] mx-auto px-4 lg:px-8 pb-20 relative z-10 space-y-6 lg:space-y-8">
@@ -140,10 +121,7 @@ export function CustomOrders() {
             </p>
           </div>
 
-          <div
-            className="flex bg-[#f2efe9] p-1 rounded-full border border-black/5 self-start lg:self-auto shadow-inner w-full sm:w-auto overflow-x-auto shrink-0"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
+          <div className="flex bg-[#f2efe9] p-1 rounded-full border border-black/5 self-start lg:self-auto shadow-inner w-full sm:w-auto shrink-0">
             <button
               onClick={() => setActiveTab('wizard')}
               className={`flex-1 sm:flex-initial text-center px-4 lg:px-5 py-2.5 rounded-full text-[10px] lg:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer whitespace-nowrap ${
@@ -170,7 +148,7 @@ export function CustomOrders() {
               <span className="hidden sm:inline">Track My Custom Orders</span>
               <span className="inline sm:hidden">Track Orders</span>
               {myOrders.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[var(--color-gold)] text-white text-[8px] flex items-center justify-center font-bold font-mono">
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--color-gold)] text-white text-[8px] flex items-center justify-center font-bold font-mono shadow-sm">
                   {myOrders.length}
                 </span>
               )}

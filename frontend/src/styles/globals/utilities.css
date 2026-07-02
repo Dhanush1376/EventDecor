@@ -389,7 +389,7 @@ body.slideshow-active .top-navbar {
 }
 
 body.slideshow-active .bottom-nav {
-  transform: translate(-50%, 150%) !important;
+  transform: translateY(150%) !important;
   opacity: 0 !important;
   pointer-events: none !important;
 }
@@ -406,7 +406,7 @@ body.slideshow-active footer {
 
 /* ─── Hide BottomNav when StickyMobileATC is active on PDP/EDP ─── */
 body.sticky-atc-active .bottom-nav {
-  transform: translate(-50%, 150%) !important;
+  transform: translateY(150%) !important;
   opacity: 0 !important;
   pointer-events: none !important;
 }
@@ -420,7 +420,7 @@ body.sticky-atc-active .whatsapp-widget {
 
 /* ─── Hide mobile navigation, whatsapp widget and footer when filter panel is open ─── */
 body.filters-open .bottom-nav {
-  transform: translate(-50%, 150%) !important;
+  transform: translateY(150%) !important;
   opacity: 0 !important;
   pointer-events: none !important;
 }

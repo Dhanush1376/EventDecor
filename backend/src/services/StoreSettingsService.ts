@@ -191,8 +191,27 @@ class StoreSettingsService {
         io.of('/user').emit('MAINTENANCE_TOGGLED', {
           maintenanceMode: settings.general.maintenanceMode,
         });
+
+        // Ensure new Enterprise Maintenance system is synced
+        const MaintenanceService = require('./MaintenanceService').default;
+        const state = await MaintenanceService.getMaintenanceState();
+        if (settings.general.maintenanceMode && !state.active) {
+          // If enabled via legacy settings but not active in new system, enable it in basic mode
+          await MaintenanceService.enableMaintenance(
+            'public_maintenance',
+            'Enabled via legacy StoreSettings interface',
+            settings.lastModifiedBy,
+            { ip: '127.0.0.1', userAgent: 'System' },
+          );
+        } else if (!settings.general.maintenanceMode && state.active) {
+          // If disabled via legacy settings but active in new system, disable it
+          await MaintenanceService.disableMaintenance(settings.lastModifiedBy, {
+            ip: '127.0.0.1',
+            userAgent: 'System',
+          });
+        }
       } catch (e) {
-        logger.error('Failed to emit MAINTENANCE_TOGGLED event via Socket.IO', e);
+        logger.error('Failed to emit MAINTENANCE_TOGGLED event or sync MaintenanceService', e);
       }
     }
 

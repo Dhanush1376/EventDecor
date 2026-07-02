@@ -15,7 +15,7 @@ import { EventGallery } from './eventDetail/EventGallery';
 import { EventBookingCard } from './eventDetail/EventBookingCard';
 import { EventCustomizerDrawer } from './eventDetail/EventCustomizerDrawer';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
-import { CloudinaryImage } from '../components/ui/CloudinaryImage';
+// Removed CloudinaryImage
 
 // Lazy loading Recommendations
 const RecommendationSystem = React.lazy(() =>
@@ -25,6 +25,7 @@ const RecommendationSystem = React.lazy(() =>
 );
 
 import { ShowcaseReviews } from '../components/sections/ShowcaseReviews';
+import { ProductCard } from '../components/shared/ProductCard';
 
 export function EventDetail() {
   const { id } = useParams();
@@ -244,25 +245,23 @@ export function EventDetail() {
                   key={showcase._id || showcase.id}
                   className="w-[200px] lg:w-[280px] shrink-0 snap-start"
                 >
-                  <Link to={`/events/${showcase._id || showcase.id}`} className="block group">
-                    <div className="aspect-[4/5] lg:aspect-[4/3] rounded-2xl overflow-hidden bg-surface-container mb-3 lg:mb-4">
-                      <CloudinaryImage
-                        src={showcase.image || showcase.images?.[0]}
-                        alt={showcase.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                        width={280}
-                        height={280}
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-label-sm text-primary text-[9px] lg:text-[10px] uppercase tracking-[0.2em] font-bold mb-1">
-                        {showcase.category || 'Showcase'}
-                      </span>
-                      <h3 className="font-display text-lg text-black group-hover:text-primary transition-colors line-clamp-1">
-                        {showcase.title}
-                      </h3>
-                    </div>
-                  </Link>
+                  <ProductCard
+                    id={showcase._id || showcase.id}
+                    _id={showcase._id || showcase.id}
+                    itemType="event"
+                    title={showcase.title}
+                    imageSrc={showcase.image || showcase.images?.[0]}
+                    images={showcase.images}
+                    category={
+                      showcase.category?.name ||
+                      (typeof showcase.category === 'string' && showcase.category.length === 24
+                        ? showcase.eventType
+                        : showcase.category) ||
+                      'Showcase'
+                    }
+                    hideDetails={false}
+                    compact={true}
+                  />
                 </div>
               ))}
             </div>

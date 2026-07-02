@@ -233,3 +233,11 @@ export const visualSearchLimiter = createRateLimiter('visualSearchLimiter', {
   limit: 10,
   message: 'Too many visual search requests. Please try again after 5 minutes.',
 });
+
+// Maintenance Gateway Limiter: 3 requests per 15 minutes per IP
+export const maintenanceGatewayLimiter = createRateLimiter('maintenanceGatewayLimiter', {
+  windowMs: 15 * 60 * 1000,
+  limit: 3,
+  message:
+    'Too many maintenance gateway authentication attempts. Please try again after 15 minutes.',
+});

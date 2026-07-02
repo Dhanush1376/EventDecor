@@ -1,5 +1,6 @@
 import logger from '../config/logger';
 import Product from '../models/Product';
+import Media from '../models/Media';
 import { AlertingService } from '../services/AlertingService';
 
 /**
@@ -81,6 +82,25 @@ export const detectOrphanedAssets = async (): Promise<{
       }
     } catch (err: any) {
       logger.warn(`[ORPHAN CLEANUP] Gallery check skipped: ${err.message}`);
+    }
+
+    // 4. Check new Media collection for assets with 0 references that are still active
+    try {
+      const orphanedMedia = await Media.find({
+        status: 'active',
+        referenceCount: 0,
+      })
+        .select('_id publicId secureUrl')
+        .lean();
+
+      for (const media of orphanedMedia) {
+        orphanedUrls.push(media.secureUrl);
+        brokenReferences.push(
+          `Media ${media._id} (${media.publicId}) — active but has 0 references`,
+        );
+      }
+    } catch (err: any) {
+      logger.warn(`[ORPHAN CLEANUP] Media collection check skipped: ${err.message}`);
     }
 
     const totalChecked = brokenProducts.length + inactiveWithImages.length;

@@ -6,11 +6,15 @@ const CUSTOM_ORDER_STATUSES = [
   'Reviewing',
   'Quote Sent',
   'Approved',
+  'Checkout Ready',
+  'Payment Received',
   'In Progress',
   'In Production',
-  'Completed',
+  'Quality Check',
   'Ready',
+  'Dispatched',
   'Delivered',
+  'Completed',
   'Cancelled',
 ] as const;
 
@@ -163,6 +167,7 @@ export const adminCustomOrderQuotationValidator = [
 export const customerQuotationRespondValidator = [
   ...customOrderIdParam,
   body('status').trim().notEmpty().isIn(['approved', 'rejected']),
+  body('reason').optional({ values: 'falsy' }).trim().escape().isLength({ max: 1000 }),
 ];
 
 export const customOrderMessageValidator = [

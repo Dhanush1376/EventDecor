@@ -50,6 +50,7 @@ export const switchToFallbackQueues = () => {
   refundQueue = QueueFallbackService.getQueue('refundQueue');
   systemQueue = QueueFallbackService.getQueue('systemQueue');
   deadLetterQueue = QueueFallbackService.getQueue('deadLetterQueue');
+  mediaQueue = QueueFallbackService.getQueue('mediaQueue');
 
   usingFallback = true;
 };
@@ -120,6 +121,7 @@ export let webhookQueue: Queue;
 export let refundQueue: Queue;
 export let systemQueue: Queue;
 export let deadLetterQueue: Queue;
+export let mediaQueue: Queue;
 
 let queuesInitialized = false;
 export let usingFallback = false;
@@ -142,6 +144,15 @@ export const initQueues = async () => {
     refundQueue = new Queue('refundQueue', defaultQueueOptions);
     systemQueue = new Queue('systemQueue', defaultQueueOptions);
     deadLetterQueue = new Queue('deadLetterQueue', defaultQueueOptions);
+    mediaQueue = new Queue('mediaQueue', {
+      ...defaultQueueOptions,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 3000 },
+        removeOnComplete: { count: 1000 },
+        removeOnFail: { count: 5000 },
+      },
+    });
 
     queuesInitialized = true;
     logger.info('[BULLMQ] Queues initialized successfully');
@@ -164,6 +175,7 @@ export const initQueues = async () => {
       refundQueue = QueueFallbackService.getQueue('refundQueue');
       systemQueue = QueueFallbackService.getQueue('systemQueue');
       deadLetterQueue = QueueFallbackService.getQueue('deadLetterQueue');
+      mediaQueue = QueueFallbackService.getQueue('mediaQueue');
 
       usingFallback = true;
       queuesInitialized = true;
@@ -185,6 +197,7 @@ export const closeQueues = async () => {
     if (refundQueue) await refundQueue.close();
     if (systemQueue) await systemQueue.close();
     if (deadLetterQueue) await deadLetterQueue.close();
+    if (mediaQueue) await mediaQueue.close();
   }
   connection.disconnect();
 };

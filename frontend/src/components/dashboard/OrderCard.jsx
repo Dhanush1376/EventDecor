@@ -12,11 +12,14 @@ export function OrderCard({ order, item, itemIdx, idx }) {
   const prodPrice =
     item.price || (typeof item.productId === 'object' ? item.productId?.price : 0) || 0;
   const prodImage =
+    (order.isCustomOrder && order.customOrderId?.productSnapshot?.imageSrc) ||
+    (order.isCustomOrder && order.customOrderId?.inspirationImages?.[0]) ||
+    (order.isCustomOrder && order.customOrderId?.referenceImages?.[0]) ||
     item.imageSrc ||
     (typeof item.productId === 'object'
       ? item.productId?.imageSrc || item.productId?.images?.[0]
       : null) ||
-    '';
+    'https://res.cloudinary.com/dwy422pzt/image/upload/v1727787498/Siri_Logo_c5a17k.jpg';
   const prodVariant = item.variant || 'Default';
   const deliveryEntry = order.statusHistory?.find((h) => h.status?.toLowerCase() === 'delivered');
   const deliveryDate = deliveryEntry

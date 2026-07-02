@@ -9,6 +9,7 @@ import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 import { NavigationOrchestrator } from '../components/ui/NavigationOrchestrator';
 import { ScrollManager } from '../components/ui/ScrollManager';
 import { MaintenanceGate } from '../components/ui/MaintenanceGate';
+import { MaintenanceBanner } from '../components/MaintenanceBanner';
 
 const GlobalTracker = lazy(() =>
   import('../components/ui/GlobalTracker').then((m) => ({ default: m.GlobalTracker })),
@@ -240,12 +241,22 @@ const AdminReturnAnalytics = lazy(() => import('../admin/pages/returns/AdminRetu
 const AdminFraudDetection = lazy(() => import('../admin/pages/returns/AdminFraudDetection'));
 const AdminReturnSettings = lazy(() => import('../admin/pages/returns/AdminReturnSettings'));
 
+const BackupCenter = lazy(() => import('../admin/pages/BackupCenter/BackupCenter'));
+
+const MaintenanceGateway = lazy(() =>
+  import('../admin/pages/MaintenanceGateway').then((m) => ({ default: m.MaintenanceGateway })),
+);
+const MaintenanceConsole = lazy(() =>
+  import('../admin/pages/MaintenanceConsole').then((m) => ({ default: m.MaintenanceConsole })),
+);
+
 export function AppRoutes() {
   return (
     <>
       <RouteDiagnostics />
       <NavigationOrchestrator />
       <ScrollManager />
+      <MaintenanceBanner />
       <Suspense fallback={null}>
         <GlobalTracker />
         <PwaUpdatePrompt />
@@ -336,6 +347,11 @@ export function AppRoutes() {
                 <Route path="/checkout" element={<Checkout />} />
               </Route>
             </Route>
+
+            {/* Maintenance Gateway / Console (Unprotected by normal JWT, protected by its own session logic) */}
+            <Route path="/admin/maintenance-gateway" element={<MaintenanceGateway />} />
+            <Route path="/admin/maintenance-console" element={<MaintenanceConsole />} />
+
             <Route
               path="/admin"
               element={
@@ -404,6 +420,8 @@ export function AppRoutes() {
               <Route path="returns/analytics" element={<AdminReturnAnalytics />} />
               <Route path="returns/fraud" element={<AdminFraudDetection />} />
               <Route path="returns/settings" element={<AdminReturnSettings />} />
+
+              <Route path="backup-center/*" element={<BackupCenter />} />
             </Route>
           </Routes>
         </Suspense>

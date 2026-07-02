@@ -12,6 +12,7 @@ export const createOrderSchema = z.object({
             .object({
               productId: objectIdSchema,
               quantity: z.number().int().min(1, 'Quantity must be at least 1'),
+              type: z.string().optional(),
               variant: z.string().trim().max(100).optional().or(z.literal('')),
               customizationNote: z.string().trim().max(2000).optional().or(z.literal('')),
             })
@@ -46,6 +47,8 @@ export const createOrderSchema = z.object({
       useWallet: z.boolean().optional(),
       idempotencyKey: z.string().trim().max(120).optional(),
       orderType: z.string().optional(),
+      isCustomOrder: z.boolean().optional(),
+      customOrderId: z.string().optional(),
     })
     .strict(),
 });
@@ -81,6 +84,7 @@ export const validateTotalsSchema = z.object({
             .object({
               productId: objectIdSchema,
               quantity: z.number().int().min(1).max(99, 'Quantity must be between 1 and 99'),
+              type: z.string().optional(),
             })
             .strict(),
         )

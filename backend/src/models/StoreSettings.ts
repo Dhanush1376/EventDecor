@@ -5,7 +5,8 @@ export interface IStoreSettings extends Document {
     storeName: string;
     announcementText: string;
     announcementLink: string;
-    maintenanceMode: boolean;
+    maintenanceMode: boolean; // Retained for backward compatibility
+    maintenanceConfigRef?: mongoose.Types.ObjectId;
     storeEnabled: boolean;
   };
   shipping: {
@@ -129,6 +130,7 @@ const StoreSettingsSchema: Schema = new Schema(
       announcementText: { type: String, default: '' },
       announcementLink: { type: String, default: '' },
       maintenanceMode: { type: Boolean, default: false },
+      maintenanceConfigRef: { type: Schema.Types.ObjectId, ref: 'MaintenanceConfig' },
       storeEnabled: { type: Boolean, default: true },
     },
     shipping: {

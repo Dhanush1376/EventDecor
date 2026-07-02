@@ -13,6 +13,7 @@ import {
   getPrimarySeasonalLabel,
 } from '../services/recommendation/seasonalEngine';
 import { requestContextStorage } from '../middleware/requestTracker';
+import { createMediaWorker } from './mediaWorker';
 
 // Declare workers as let (live bindings)
 export let emailWorker: Worker | null = null;
@@ -22,6 +23,7 @@ export let recommendationWorker: Worker | null = null;
 export let webhookWorker: Worker | null = null;
 export let refundWorker: Worker | null = null;
 export let systemWorker: Worker | null = null;
+export let mediaWorker: Worker | null = null;
 
 let workersInitialized = false;
 
@@ -499,6 +501,8 @@ export const initWorkers = async () => {
       logger.error(`[WORKER system] Error:`, err);
     });
 
+    mediaWorker = createMediaWorker(connection);
+
     workersInitialized = true;
     logger.info('[WORKER] Background workers initialized successfully');
   } catch (err: any) {
@@ -512,7 +516,7 @@ export const initWorkers = async () => {
 
 export const closeWorkers = async () => {
   if (workersInitialized) {
-    logger.info('� [WORKER] Shutting down workers gracefully...');
+    logger.info(' [WORKER] Shutting down workers gracefully...');
     const closePromises = [
       emailWorker?.close(),
       notificationWorker?.close(),
@@ -521,6 +525,7 @@ export const closeWorkers = async () => {
       webhookWorker?.close(),
       refundWorker?.close(),
       systemWorker?.close(),
+      mediaWorker?.close(),
     ].filter(Boolean);
 
     await Promise.allSettled(closePromises);

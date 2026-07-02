@@ -328,7 +328,7 @@
   color: #ffffff;
   font-weight: 500;
   font-family: var(--font-display, inherit);
-  font-size: 1rem;
+  font-size: 0.85rem;
   line-height: 1.25;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
   z-index: 2;

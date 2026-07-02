@@ -165,15 +165,7 @@ export function GalleryInspiration() {
                 damping: 16,
                 delay: galleryItems.length * 0.08,
               }}
-              className={`break-inside-avoid rounded-[22px] lg:rounded-[28px] overflow-hidden shadow-ambient border border-primary/20 bg-primary/5 flex flex-col items-center justify-center p-5 w-full group cursor-pointer hover-lift-glow hover:bg-on-surface-variant hover:border-on-surface-variant transition-all duration-700 ${
-                galleryItems.length % 4 === 0
-                  ? 'aspect-[2/3]'
-                  : galleryItems.length % 4 === 1
-                    ? 'aspect-square'
-                    : galleryItems.length % 4 === 2
-                      ? 'aspect-[4/5]'
-                      : 'aspect-[3/4]'
-              }`}
+              className="break-inside-avoid rounded-[22px] lg:rounded-[28px] overflow-hidden shadow-ambient border border-primary/20 bg-primary/5 flex flex-col items-center justify-center p-5 w-full aspect-[4/5] group cursor-pointer hover-lift-glow hover:bg-on-surface-variant hover:border-on-surface-variant transition-all duration-700"
             >
               <Link
                 className="flex flex-col items-center w-full h-full justify-center text-primary group-hover:text-white transition-colors duration-700"

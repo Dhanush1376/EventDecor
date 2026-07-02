@@ -2,11 +2,8 @@ import WebsiteContent from '../models/WebsiteContent';
 import { cmsCache } from '../utils/cache/MemoryCache';
 import logger from '../config/logger';
 import { bumpPublicCacheVersion } from '../utils/cache/cacheVersion';
-import {
-  deleteFromCloudinary,
-  extractPublicId,
-  extractAllCloudinaryUrls,
-} from '../utils/cloudinary';
+import { extractAllCloudinaryUrls } from '../utils/cloudinary';
+import { MediaService } from './media/MediaService';
 
 class CMSService {
   static async getContent(key: string) {
@@ -31,15 +28,6 @@ class CMSService {
       try {
         const oldUrls = extractAllCloudinaryUrls(websiteContent.content);
         const newUrls = new Set(extractAllCloudinaryUrls(newContent));
-        const removedUrls = oldUrls.filter((url) => !newUrls.has(url));
-        for (const url of removedUrls) {
-          const publicId = extractPublicId(url);
-          if (publicId) {
-            deleteFromCloudinary(publicId).catch((err) =>
-              logger.error(`Failed to clean up old CMS image: ${err}`),
-            );
-          }
-        }
       } catch (err) {
         logger.error('Error parsing old CMS content for image cleanup:', err);
       }
@@ -54,6 +42,14 @@ class CMSService {
         lastUpdatedBy: userId,
       });
       await websiteContent.save();
+    }
+
+    // Sync media references safely
+    try {
+      const allUrls = extractAllCloudinaryUrls(newContent);
+      await MediaService.syncReferences('WebsiteContent', websiteContent._id, allUrls, 'content');
+    } catch (err) {
+      logger.error('Failed to sync CMS media references:', err);
     }
 
     // Invalidate CMS caches to maintain content consistency

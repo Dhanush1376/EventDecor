@@ -28,13 +28,16 @@ const mapDbOrderToFrontend = (o) => {
         rentalInfo: item.rentalInfo || null,
         deposit: item.deposit || 0,
         image:
+          (o.isCustomOrder && o.customOrderId?.productSnapshot?.imageSrc) ||
+          (o.isCustomOrder && o.customOrderId?.inspirationImages?.[0]) ||
+          (o.isCustomOrder && o.customOrderId?.referenceImages?.[0]) ||
           item.imageSrc ||
           item.image ||
           item.images?.[0] ||
           item.thumbnail ||
           item.product?.images?.[0] ||
           item.product?.image ||
-          null,
+          'https://res.cloudinary.com/dwy422pzt/image/upload/v1727787498/Siri_Logo_c5a17k.jpg',
       }))
     : [];
 
@@ -72,6 +75,8 @@ const mapDbOrderToFrontend = (o) => {
     orderType: o.orderType || 'purchase',
     rentalInfo: o.rentalInfo || null,
     depositTotal: o.depositTotal || 0,
+    isCustomOrder: o.isCustomOrder || false,
+    customOrderId: o.customOrderId || null,
   };
 };
 

@@ -70,11 +70,11 @@ export function useCustomOrderWorkspace({
     }
   };
 
-  const handleQuotationDecision = async (decision) => {
+  const handleQuotationDecision = async (decision, reason = '') => {
     if (!selectedOrder) return;
     setLoading(true);
     try {
-      const res = await customOrderService.respondQuotation(selectedOrder._id, decision);
+      const res = await customOrderService.respondQuotation(selectedOrder._id, decision, reason);
       if (res.success) {
         setSelectedOrder(res.data);
         toast.success(`Quotation successfully marked as ${decision.toUpperCase()}!`);

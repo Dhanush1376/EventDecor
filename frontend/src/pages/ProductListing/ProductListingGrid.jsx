@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FilterPanel, Pagination, CategoryTabs, CloudinaryImage } from '../../components/ui';
 import { ProductCard } from '../../components/shared/ProductCard';
-import { MandalaElement } from '../../components/ui/MandalaElement';
 import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
 
 export const ProductListingGrid = React.memo(

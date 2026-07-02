@@ -28,6 +28,8 @@ export class OrderCheckoutService {
       paymentMethod,
       useWallet,
       idempotencyKey,
+      isCustomOrder,
+      customOrderId,
     } = orderData;
     const isCod = paymentMethod === 'cod';
 
@@ -73,62 +75,90 @@ export class OrderCheckoutService {
     const pendingOrderId = new mongoose.Types.ObjectId();
 
     try {
-      const productIds = [
-        ...new Set(items.map((item: any) => String(item.productId)).filter(Boolean)),
-      ] as any[];
-      const products = await Product.find({ _id: { $in: productIds } })
-        .select('title price stock reservedStock isActive imageSrc category isNonRefundable')
-        .session(session);
-      const productsById = new Map<string, any>(products.map((p: any) => [p._id.toString(), p]));
-
-      for (const item of items) {
-        if (item.type === 'rental') {
-          throw new ApiError(
-            400,
-            `Rental items cannot be purchased through the standard checkout. Please use the dedicated Rental Wizard for ${item.title || 'this item'}.`,
-          );
+      if (isCustomOrder && customOrderId) {
+        // --- CUSTOM ORDER PATH ---
+        const CustomOrder = require('../../models/CustomOrder').default;
+        const customOrderObj = await CustomOrder.findById(customOrderId).session(session);
+        if (!customOrderObj || customOrderObj.status !== 'Approved') {
+          throw new ApiError(400, 'Invalid or unapproved custom order');
         }
-        const product = productsById.get(String(item.productId));
-        if (!product) throw new ApiError(404, `Product ${item.productId} not found`);
-        if (!product.isActive)
-          throw new ApiError(400, `Product is no longer active: ${product.title}`);
-        const availableStock = product.stock - (product.reservedStock || 0);
-        if (availableStock < item.quantity) {
-          throw new ApiError(400, `Insufficient stock for product: ${product.title}`);
-        }
-      }
 
-      for (const item of items) {
-        const product = productsById.get(String(item.productId))!;
+        subtotal = customOrderObj.quotation.total || 0;
 
-        // Use InventoryService for TTL-based reservations (ATOMIC $inc)
-        const reservation = await InventoryService.reserveInventory(
-          item.productId,
-          item.quantity,
-          userId,
-          15,
-          session,
-        );
-        reservationIds.push(reservation._id);
-
-        const itemPrice = product.price;
-        const itemType = item.type || 'purchase';
-        const itemTotal = itemPrice * item.quantity;
-        subtotal += itemTotal;
-
+        // Push a single mock item into orderItems using a dummy product ID to satisfy schema
         orderItems.push({
-          productId: product._id,
-          title: product.title,
-          price: itemPrice,
-          quantity: item.quantity,
-          variant: item.variant || 'Default',
-          imageSrc: product.imageSrc,
-          category: product.category,
-          isNonRefundable: product.isNonRefundable || false,
-          type: itemType,
+          productId: new mongoose.Types.ObjectId(), // Dummy ID just to satisfy schema ref
+          title: `Custom Design: ${customOrderObj.occasion || customOrderObj.productType || 'Decor'}`,
+          price: subtotal,
+          quantity: 1,
+          variant: 'Custom',
+          imageSrc:
+            customOrderObj.inspirationImages?.[0] ||
+            'https://res.cloudinary.com/dwy422pzt/image/upload/v1727787498/Siri_Logo_c5a17k.jpg',
+          category: 'CustomOrder',
+          isNonRefundable: true,
+          type: 'purchase',
           deposit: 0,
-          customizationNote: item.customizationNote,
         });
+      } else {
+        // --- STANDARD E-COMMERCE PATH ---
+        const productIds = [
+          ...new Set(items.map((item: any) => String(item.productId)).filter(Boolean)),
+        ] as any[];
+        const products = await Product.find({ _id: { $in: productIds } })
+          .select('title price stock reservedStock isActive imageSrc category isNonRefundable')
+          .session(session);
+        const productsById = new Map<string, any>(products.map((p: any) => [p._id.toString(), p]));
+
+        for (const item of items) {
+          if (item.type === 'rental') {
+            throw new ApiError(
+              400,
+              `Rental items cannot be purchased through the standard checkout. Please use the dedicated Rental Wizard for ${item.title || 'this item'}.`,
+            );
+          }
+          const product = productsById.get(String(item.productId));
+          if (!product) throw new ApiError(404, `Product ${item.productId} not found`);
+          if (!product.isActive)
+            throw new ApiError(400, `Product is no longer active: ${product.title}`);
+          const availableStock = product.stock - (product.reservedStock || 0);
+          if (availableStock < item.quantity) {
+            throw new ApiError(400, `Insufficient stock for product: ${product.title}`);
+          }
+        }
+
+        for (const item of items) {
+          const product = productsById.get(String(item.productId))!;
+
+          // Use InventoryService for TTL-based reservations (ATOMIC $inc)
+          const reservation = await InventoryService.reserveInventory(
+            item.productId,
+            item.quantity,
+            userId,
+            15,
+            session,
+          );
+          reservationIds.push(reservation._id);
+
+          const itemPrice = product.price;
+          const itemType = item.type || 'purchase';
+          const itemTotal = itemPrice * item.quantity;
+          subtotal += itemTotal;
+
+          orderItems.push({
+            productId: product._id,
+            title: product.title,
+            price: itemPrice,
+            quantity: item.quantity,
+            variant: item.variant || 'Default',
+            imageSrc: product.imageSrc,
+            category: product.category,
+            isNonRefundable: product.isNonRefundable || false,
+            type: itemType,
+            deposit: 0,
+            customizationNote: item.customizationNote,
+          });
+        }
       }
 
       let walletDeducted = false;
@@ -263,31 +293,46 @@ export class OrderCheckoutService {
           needByDate,
           idempotencyKey,
           codCollected: false,
-          settlementStatus: 'Pending',
           settledAmount: 0,
           courierCharges: Math.round((shippingFee || settings.shipping.deliveryCharge) + codFee),
           earnings: 0,
+          isCustomOrder,
+          customOrderId,
         });
 
         await order.save({ session });
 
-        // Increment sold count
-        for (const item of orderItems) {
-          if (item.productId) {
-            await Product.findByIdAndUpdate(
-              item.productId,
-              { $inc: { sold: item.quantity || 1 } },
-              { session },
-            );
+        // Increment sold count (ONLY for standard items)
+        if (!isCustomOrder) {
+          for (const item of orderItems) {
+            if (item.productId) {
+              await Product.findByIdAndUpdate(
+                item.productId,
+                { $inc: { sold: item.quantity || 1 } },
+                { session },
+              );
+            }
           }
-        }
 
-        const orderedProductIds = order.items.map((item: any) => item.productId);
-        await User.findByIdAndUpdate(
-          userId,
-          { $pull: { cart: { product: { $in: orderedProductIds } } } },
-          { session },
-        );
+          const orderedProductIds = order.items.map((item: any) => item.productId);
+          await User.findByIdAndUpdate(
+            userId,
+            { $pull: { cart: { product: { $in: orderedProductIds } } } },
+            { session },
+          );
+        } else {
+          // Convert CustomOrder
+          const CustomOrder = require('../../models/CustomOrder').default;
+          await CustomOrder.findByIdAndUpdate(
+            customOrderId,
+            {
+              convertedToOrder: true,
+              convertedOrderId: order._id,
+              status: isCod ? 'In Progress' : 'Payment Received',
+            },
+            { session },
+          );
+        }
 
         // Confirm inventory reservations via InventoryService (unified path for COD + online)
         for (const resId of reservationIds) {
@@ -369,6 +414,8 @@ export class OrderCheckoutService {
           notes,
           needByDate,
           idempotencyKey,
+          isCustomOrder,
+          customOrderId,
         };
 
         await PaymentAttempt.create({

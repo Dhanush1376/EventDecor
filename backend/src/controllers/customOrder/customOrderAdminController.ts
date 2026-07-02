@@ -6,6 +6,7 @@ import { CustomOrderMailService } from '../../services/customOrderMailService';
 import logger from '../../config/logger';
 import User from '../../models/User';
 import { createStatusHistoryEntry, createVersionSnapshot } from './customOrderHelpers';
+import { AdminAuditService } from '../../services/AdminAuditService';
 
 // 8. Admin Search & Pipeline (Admin Only)
 export const adminGetCustomOrders = asyncHandler(async (req: Request, res: Response) => {
@@ -51,7 +52,12 @@ export const adminGetCustomOrders = asyncHandler(async (req: Request, res: Respo
   }
 
   const [orders, total] = await Promise.all([
-    CustomOrder.find(filterQuery).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    CustomOrder.find(filterQuery)
+      .sort({ createdAt: -1 })
+      .select('-messages -versions -statusHistory')
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     CustomOrder.countDocuments(filterQuery),
   ]);
 
@@ -77,12 +83,27 @@ export const adminUpdateStatus = asyncHandler(async (req: Request, res: Response
 
   const prevStatus = order.status;
 
-  // BUG-10: Status transition validation
-  const terminalStatuses = ['Completed', 'Delivered', 'Cancelled'];
-  if (terminalStatuses.includes(prevStatus) && status !== prevStatus) {
+  // HIGH-04: Status transition validation matrix
+  const VALID_TRANSITIONS: Record<string, string[]> = {
+    Pending: ['Reviewing', 'Cancelled'],
+    Reviewing: ['Quote Sent', 'Cancelled'],
+    'Quote Sent': ['Approved', 'Reviewing'],
+    Approved: ['Checkout Ready', 'Cancelled'],
+    'Checkout Ready': ['Payment Received', 'Cancelled'],
+    'Payment Received': ['In Progress'],
+    'In Progress': ['In Production', 'Cancelled'],
+    'In Production': ['Quality Check', 'Cancelled'],
+    'Quality Check': ['Ready', 'In Production'],
+    Ready: ['Dispatched'],
+    Dispatched: ['Delivered'],
+    Delivered: ['Completed'],
+  };
+
+  const allowedTransitions = VALID_TRANSITIONS[prevStatus] || [];
+  if (prevStatus !== status && !allowedTransitions.includes(status)) {
     res
       .status(400)
-      .json(new ApiResponse(false, `Cannot change status from terminal state: ${prevStatus}`));
+      .json(new ApiResponse(false, `Invalid status transition from ${prevStatus} to ${status}`));
     return;
   }
 
@@ -132,6 +153,20 @@ export const adminUpdateStatus = asyncHandler(async (req: Request, res: Response
 
   // Use updatedOrder for subsequent operations
   const finalOrder = updatedOrder;
+
+  // Enterprise Feature: Audit Logging
+  try {
+    await AdminAuditService.logCustomOrderStatusChange(
+      (req as any).user?.id || 'system',
+      (req as any).user?.email || 'admin',
+      finalOrder._id.toString(),
+      prevStatus,
+      status,
+      'Status changed by admin',
+    );
+  } catch (auditErr) {
+    logger.error('Failed to log admin audit event:', auditErr);
+  }
 
   // WF-06: Send status change email
   try {
@@ -258,6 +293,7 @@ export const adminAssignStaff = asyncHandler(async (req: Request, res: Response)
     sender: 'admin',
     senderName: 'System Logger',
     text: `Staff assigned: ${staffNames}`,
+    messageType: 'system',
     createdAt: new Date(),
   });
 
@@ -272,6 +308,14 @@ export const adminUpdateQuotation = asyncHandler(async (req: Request, res: Respo
 
   if (!order) {
     res.status(404).json(new ApiResponse(false, 'Custom order not found'));
+    return;
+  }
+
+  // HIGH-06: Quotation editable after approval
+  if (order.quotation?.status === 'approved') {
+    res
+      .status(400)
+      .json(new ApiResponse(false, 'Cannot modify a quotation that has already been approved.'));
     return;
   }
 
@@ -293,6 +337,11 @@ export const adminUpdateQuotation = asyncHandler(async (req: Request, res: Respo
     items: calculatedItems,
     tax: taxVal,
     shipping: shippingVal,
+    subtotal: itemsSum,
+    discount: 0,
+    depositRequired: false,
+    depositPercentage: 50,
+    revisionNumber: (order.quotation?.revisionNumber || 0) + 1,
     total: grandTotal,
     notes,
     status: quoteStatus || 'draft',
@@ -316,6 +365,7 @@ export const adminUpdateQuotation = asyncHandler(async (req: Request, res: Respo
       sender: 'admin',
       senderName: 'System Logger',
       text: `An itemized studio estimate totaling ₹${grandTotal.toLocaleString('en-IN')} has been compiled and dispatched for review.`,
+      messageType: 'quotation',
       createdAt: new Date(),
     });
 
@@ -358,4 +408,67 @@ export const adminArchiveOrder = asyncHandler(async (req: Request, res: Response
   res
     .status(200)
     .json(new ApiResponse(true, archived ? 'Order archived' : 'Order restored', order));
+});
+
+// 19. Admin Update Enterprise Details (Custom Product, Production, Payments)
+export const adminUpdateEnterpriseDetails = asyncHandler(async (req: Request, res: Response) => {
+  const { customProduct, production, paymentSchedule, __v } = req.body;
+  const order = await CustomOrder.findById(req.params.id);
+
+  if (!order) {
+    res.status(404).json(new ApiResponse(false, 'Custom order not found'));
+    return;
+  }
+
+  if (__v !== undefined && order.__v !== __v) {
+    res.status(409).json(new ApiResponse(false, 'Order has been modified by another user.'));
+    return;
+  }
+
+  // Preserve previous state for audit log (shallow clone for comparison)
+  const previousState = {
+    customProduct: { ...order.customProduct },
+    production: { ...order.production },
+    paymentSchedule: { ...order.paymentSchedule },
+  };
+
+  if (customProduct) order.customProduct = { ...order.customProduct, ...customProduct };
+  if (production) order.production = { ...order.production, ...production };
+  if (paymentSchedule) order.paymentSchedule = { ...order.paymentSchedule, ...paymentSchedule };
+
+  // Add system message if production designer changed
+  if (
+    production?.designerName &&
+    production.designerName !== previousState.production?.designerName
+  ) {
+    order.messages.push({
+      sender: 'admin',
+      senderName: 'System Logger',
+      text: `Production designer assigned: ${production.designerName}`,
+      messageType: 'system',
+      createdAt: new Date(),
+    });
+  }
+
+  await order.save();
+
+  try {
+    await AdminAuditService.logAction({
+      actorId: (req as any).user?.id || 'system',
+      actorEmail: (req as any).user?.email || 'admin',
+      entityType: 'CustomOrder',
+      entityId: order._id.toString(),
+      action: 'enterprise_details_update',
+      previousValue: previousState,
+      newValue: {
+        customProduct: order.customProduct,
+        production: order.production,
+        paymentSchedule: order.paymentSchedule,
+      },
+    });
+  } catch (err) {
+    logger.error('Failed to log enterprise details update:', err);
+  }
+
+  res.status(200).json(new ApiResponse(true, 'Enterprise details successfully updated', order));
 });

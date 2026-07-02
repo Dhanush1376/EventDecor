@@ -24,6 +24,7 @@ import {
   adminAssignStaff,
   adminUpdateQuotation,
   adminArchiveOrder,
+  adminUpdateEnterpriseDetails,
 } from '../../controllers/customOrder/customOrderAdminController';
 
 import {
@@ -190,6 +191,15 @@ router.patch(
   ...adminArchiveOrderValidator,
   validate,
   adminArchiveOrder,
+);
+
+router.patch(
+  '/:id/enterprise',
+  requireAuth,
+  requireRole(['super_admin', 'main_admin', 'admin', 'order_manager']),
+  ...customOrderIdParam,
+  validate,
+  adminUpdateEnterpriseDetails,
 );
 
 export default router;

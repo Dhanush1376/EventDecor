@@ -3,6 +3,7 @@ import User from '../models/User';
 import Coupon from '../models/Coupon';
 import ApiError from '../utils/ApiError';
 import storeSettingsService from '../services/StoreSettingsService';
+import CustomOrder from '../models/CustomOrder';
 
 export class OrderValidationService {
   static async validateTotals(userId: string, data: any) {
@@ -32,20 +33,65 @@ export class OrderValidationService {
     }
 
     let subtotal = 0;
+
+    // Separate product IDs and custom order IDs
     const productIds = [
-      ...new Set(items.map((item: any) => String(item.productId)).filter(Boolean)),
+      ...new Set(
+        items
+          .filter((i: any) => i.type !== 'custom')
+          .map((item: any) => String(item.productId))
+          .filter(Boolean),
+      ),
     ] as any[];
+
+    const customOrderIds = [
+      ...new Set(
+        items
+          .filter((i: any) => i.type === 'custom')
+          .map((item: any) => String(item.productId))
+          .filter(Boolean),
+      ),
+    ] as any[];
+
     const products = await Product.find({ _id: { $in: productIds } }).select(
       'title price stock category isActive rentalEnabled rentalPricing securityDeposit isDepositRefundable',
     );
+
+    const customOrders = await CustomOrder.find({ _id: { $in: customOrderIds } }).select(
+      'quotation costEstimation budget convertedToOrder status',
+    );
+
     const productsById = new Map<string, any>(
       products.map((product: any) => [product._id.toString(), product]),
+    );
+
+    const customOrdersById = new Map<string, any>(
+      customOrders.map((co: any) => [co._id.toString(), co]),
     );
 
     let depositTotal = 0;
 
     // 1. Validate stock availability and calculate actual subtotal from DB
     for (const item of items) {
+      if (item.type === 'custom') {
+        const customOrder = customOrdersById.get(String(item.productId));
+        if (!customOrder) throw new ApiError(404, `Custom Order not found: ${item.productId}`);
+        if (customOrder.convertedToOrder) {
+          throw new ApiError(400, `This custom order has already been purchased.`);
+        }
+        if (customOrder.status !== 'Approved' || customOrder.quotation?.status !== 'approved') {
+          throw new ApiError(400, 'Custom order quotation must be approved before checkout.');
+        }
+
+        const itemPrice =
+          customOrder.quotation?.total ||
+          customOrder.costEstimation?.total ||
+          customOrder.budget ||
+          0;
+        subtotal += itemPrice * item.quantity;
+        continue;
+      }
+
       const product = productsById.get(String(item.productId));
       if (!product) throw new ApiError(404, `Product not found: ${item.productId}`);
       if (!product.isActive)

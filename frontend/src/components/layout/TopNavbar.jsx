@@ -15,6 +15,7 @@ import { useSearchOverlay } from '../../hooks/useSearchOverlay';
 import { prefetchManager } from '../../utils/performance/prefetchManager';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useVisualSearch } from '../../hooks/useVisualSearch';
+import { customOrderService } from '../../services/api/customOrderService';
 
 // Search caching is now handled by useSearchOverlay hook
 
@@ -49,6 +50,7 @@ export function TopNavbar() {
   const isEventsPage = location.pathname === '/events';
   const isAboutPage = location.pathname === '/about';
   const isWishlistPage = location.pathname === '/wishlist';
+  const isCartPage = location.pathname === '/cart';
 
   // Disable transparency on shop page if on mobile with an active search (since hero is hidden)
   const isTransparent =
@@ -89,6 +91,30 @@ export function TopNavbar() {
       active = false;
     };
   }, [isAuthenticated, user]);
+
+  const [activeCustomOrdersCount, setActiveCustomOrdersCount] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    if (isAuthenticated && user) {
+      customOrderService
+        .getMyOrders()
+        .then((res) => {
+          if (active && res?.success && res?.data) {
+            const activeOrders = res.data.filter(
+              (o) => !['Completed', 'Cancelled'].includes(o.status),
+            );
+            setActiveCustomOrdersCount(activeOrders.length);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setActiveCustomOrdersCount(0);
+    }
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated, user, location.pathname]);
 
   // ─── INTELLIGENT SEARCH OVERLAYS ───
   const search = useSearchOverlay();
@@ -212,7 +238,7 @@ export function TopNavbar() {
           <div className="flex items-center justify-between w-full gap-4">
             {/* Exquisite Boutique Brand Logo or Page Context Header */}
             <div className="flex-shrink-0 flex justify-start min-w-0">
-              {isWishlistPage ? (
+              {isWishlistPage || isCartPage ? (
                 <button
                   onClick={() => navigate(-1)}
                   className="group flex items-center gap-2 shrink-0 cursor-pointer"
@@ -223,8 +249,8 @@ export function TopNavbar() {
                   >
                     west
                   </span>
-                  <span className="font-display text-[20px] lg:text-[24px] font-normal text-on-surface tracking-tight leading-none pt-0.5">
-                    Wishlist
+                  <span className="font-label text-[12px] lg:text-[13px] font-bold uppercase tracking-[0.2em] text-on-surface leading-none pt-0.5">
+                    {isWishlistPage ? 'Wishlist' : 'Cart'}
                   </span>
                 </button>
               ) : (
@@ -271,6 +297,11 @@ export function TopNavbar() {
                           to={link.href}
                         >
                           {link.label}
+                          {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
+                            <span
+                              className={`ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]`}
+                            />
+                          )}
                           {active && (
                             <span
                               className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${isTransparent ? 'bg-white' : 'bg-primary'}`}
@@ -603,14 +634,19 @@ export function TopNavbar() {
                       >
                         <Link
                           onClick={() => setIsOpen(false)}
-                          className={`group flex items-center text-right font-label font-bold uppercase tracking-[0.2em] text-[16px] lg:text-[20px] transition-all duration-500 ${
+                          className={`group flex items-center justify-end gap-3 font-label font-bold uppercase tracking-[0.2em] text-[16px] lg:text-[20px] transition-all duration-500 ${
                             active
                               ? 'text-primary'
                               : 'text-on-surface hover:text-primary hover:-translate-x-2'
                           }`}
                           to={link.href}
                         >
-                          {link.label}
+                          {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
+                            <span className="w-[18px] h-[18px] rounded-full bg-[#d4af37] text-white text-[10px] font-mono flex items-center justify-center -mr-1 shadow-sm leading-none pt-0.5">
+                              {activeCustomOrdersCount}
+                            </span>
+                          )}
+                          <span className="text-right">{link.label}</span>
                         </Link>
                       </motion.li>
                     );
@@ -627,10 +663,13 @@ export function TopNavbar() {
                     >
                       <Link
                         onClick={() => setIsOpen(false)}
-                        className="group flex items-center text-right font-label font-bold uppercase tracking-[0.2em] text-[16px] lg:text-[20px] transition-all duration-500 text-[#C4A87C] hover:text-primary hover:-translate-x-2"
+                        className="group flex items-center justify-end gap-3 font-label font-bold uppercase tracking-[0.2em] text-[16px] lg:text-[20px] transition-all duration-500 text-[#C4A87C] hover:text-primary hover:-translate-x-2"
                         to="/admin"
                       >
-                        Admin Portal
+                        {hasPendingInvite && (
+                          <span className="w-2 h-2 rounded-full bg-error shadow-sm" />
+                        )}
+                        <span className="text-right">Admin Portal</span>
                       </Link>
                     </motion.li>
                   )}

@@ -66,7 +66,6 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
     if (format && format !== 'auto') transform.push(`f_${format}`);
     else transform.push('f_auto');
 
-    transform.push('dpr_auto');
     transform.push('fl_strip_profile');
     transform.push('fl_immutable_cache');
     transform.push('fl_progressive');
@@ -91,6 +90,11 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
       resultUrl = `${urlParts[0]}/upload/${transformStrFinal}/${pathPart}`;
     } else {
       resultUrl = url;
+    }
+
+    // Bypass local certificate errors by routing through the backend proxy in dev
+    if (import.meta.env.DEV) {
+      resultUrl = `${window.location.origin}/api/v1/media/optimize?url=${encodeURIComponent(resultUrl)}`;
     }
   } else {
     // Local/static images route through backend dynamic media optimization pipeline
@@ -254,5 +258,7 @@ export const handleImageError = (e) => {
   e.target.dataset.errorHandled = 'true';
   e.target.onerror = null;
   e.target.src = SVG_FALLBACK;
+  e.target.removeAttribute('srcset');
+  e.target.removeAttribute('sizes');
   e.target.classList.add('image-fallback-active');
 };

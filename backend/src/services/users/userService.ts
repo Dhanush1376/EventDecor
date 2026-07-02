@@ -288,23 +288,20 @@ export class UserService {
   }
 
   static async uploadAvatar(userId: string, file: any) {
-    const { deleteFromCloudinary, extractPublicId } = require('../../utils/cloudinary');
+    const { MediaService } = require('../media/MediaService');
     const logger = require('../../config/logger').default;
 
     const user = await User.findById(userId);
     if (!user) throw new ApiError(404, 'User not found');
 
-    if (user.avatar) {
-      const publicId = extractPublicId(user.avatar);
-      if (publicId) {
-        deleteFromCloudinary(publicId).catch((err: any) =>
-          logger.error(`Failed to clean up old avatar: ${err}`),
-        );
-      }
-    }
-
     user.avatar = file.path || file.secure_url;
     await user.save();
+
+    if (user.avatar) {
+      await MediaService.syncReferences('User', user._id, [user.avatar], 'avatar');
+    } else {
+      await MediaService.syncReferences('User', user._id, [], 'avatar');
+    }
 
     return user.avatar;
   }

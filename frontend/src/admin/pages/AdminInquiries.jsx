@@ -2,35 +2,35 @@ import { m as motion } from 'framer-motion';
 import { SkeletonDashboard } from '../components/AdminUIKit';
 import { AdminCustomOrderConfig } from '../components/AdminCustomOrderConfig';
 import { useEffect, useState, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { customOrderService } from '../../services/domainServices';
 import { useAdmin } from '../context/AdminContext';
 import toast from 'react-hot-toast';
-import logger from '../../utils/core/logger';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
 
 import { InquiriesMetrics } from '../components/inquiries/InquiriesMetrics';
 import { InquiriesTable } from '../components/inquiries/InquiriesTable';
 import { InquiryDetailDrawer } from '../components/inquiries/InquiryDetailDrawer';
-import { useAdminTableFilters } from '../hooks/useAdminTableFilters';
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 export function AdminInquiries() {
   const { searchQuery } = useAdmin();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // Workspace tabs: 'active' (Orders List), 'config' (Edit Form Options)
   const [currentWorkspace, setCurrentWorkspace] = useState('active');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // ─── TABLE FILTERS ───
-  const searchFields = ['customerName', 'customerEmail', 'occasion', 'productType', 'city', '_id'];
-  const {
-    statusFilter,
-    setStatusFilter,
-    filteredData: filteredOrders,
-  } = useAdminTableFilters(orders, searchQuery, searchFields);
+  // ─── PAGINATION & FILTERS ───
+  const [page, setPage] = useState(1);
+  const limit = 15;
+  const [statusFilter, setStatusFilter] = useState('All');
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, statusFilter]);
 
   // ─── DYNAMIC FORM OPTIONS ───
   const [cmsConfig, setCmsConfig] = useState(null);
@@ -43,44 +43,40 @@ export function AdminInquiries() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Sync active lists and form options
-  const fetchAdminWorkspaceData = async () => {
-    setLoading(true);
-    try {
-      const res = await customOrderService.adminGetAll({ archived: 'false' });
-      if (res.success) {
-        setOrders(res.data?.items || res.data || []);
-      } else {
-        setOrders(res.items || res || []);
-      }
+  // ─── DATA FETCHING VIA REACT QUERY ───
+  const {
+    data: ordersData,
+    isLoading: loading,
+    refetch,
+  } = useQuery({
+    queryKey: ['adminCustomOrders', page, limit, statusFilter, searchQuery],
+    queryFn: () =>
+      customOrderService.adminGetAll({
+        page,
+        limit,
+        status: statusFilter === 'All' ? undefined : statusFilter,
+        search: searchQuery,
+        archived: 'false',
+      }),
+    keepPreviousData: true,
+  });
 
-      const configRes = await customOrderService.getConfig();
-      if (configRes?.success) {
-        setCmsConfig(configRes.data);
-      } else {
-        setCmsConfig(configRes);
-      }
-    } catch (err) {
-      logger.error('AdminInquiries fetch error:', err);
-      toast.error('Failed to load custom orders list: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const orders = useMemo(() => ordersData?.data?.items || ordersData?.items || [], [ordersData]);
+  const totalPages = ordersData?.data?.totalPages || ordersData?.totalPages || 1;
+  const totalItems = ordersData?.data?.total || ordersData?.total || 0;
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      fetchAdminWorkspaceData();
-    }, 0);
-    return () => clearTimeout(t);
-  }, []);
+  const { data: configRes } = useQuery({
+    queryKey: ['adminCustomOrderConfig'],
+    queryFn: () => customOrderService.getConfig(),
+    onSuccess: (res) => setCmsConfig(res?.success ? res.data : res),
+  });
 
   const handleUpdatePriority = async (id, newPriority) => {
     try {
       const res = await customOrderService.adminUpdatePriority(id, newPriority);
       if (res.success) {
         toast.success(`Priority set to ${newPriority.toUpperCase()}`);
-        setOrders((prev) => prev.map((o) => (o._id === id ? res.data : o)));
+        refetch(); // Invalidate or refetch current page
         if (selectedOrder?._id === id) setSelectedOrder(res.data);
       }
     } catch (err) {
@@ -154,18 +150,21 @@ export function AdminInquiries() {
               <InquiriesMetrics stats={stats} />
 
               <InquiriesTable
-                filteredOrders={filteredOrders}
                 orders={orders}
                 statusFilter={statusFilter}
                 setStatusFilter={setStatusFilter}
                 setSelectedOrder={setSelectedOrder}
                 handleUpdatePriority={handleUpdatePriority}
+                page={page}
+                setPage={setPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
               />
 
               <InquiryDetailDrawer
                 selectedOrder={selectedOrder}
                 setSelectedOrder={setSelectedOrder}
-                setOrders={setOrders}
+                refetchOrders={refetch}
                 isMobile={isMobile}
               />
             </div>

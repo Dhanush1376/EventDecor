@@ -206,6 +206,15 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
 
   await review.save();
 
+  if (Array.isArray(images) && images.length > 0) {
+    const { MediaService } = require('../../services/media/MediaService');
+    const logger = require('../../config/logger').default || require('../../config/logger');
+    try {
+      await MediaService.syncReferences('Review', review._id, images, 'images');
+    } catch (err: any) {
+      logger.error(`Failed to sync references for new review images: ${err}`);
+    }
+  }
   if (productId) {
     // Atomically recalculate using MongoDB pipeline
     await updateProductRating(productId);
@@ -276,15 +285,12 @@ export const deleteReview = asyncHandler(async (req: Request, res: Response) => 
 
   // Clean up any uploaded review images from Cloudinary to prevent orphan costs
   if (Array.isArray(review.images) && review.images.length > 0) {
-    const { deleteFromCloudinary, extractPublicId } = require('../../utils/cloudinary');
+    const { MediaService } = require('../../services/media/MediaService');
     const logger = require('../../config/logger').default || require('../../config/logger');
-    for (const imgUrl of review.images) {
-      const publicId = extractPublicId(imgUrl);
-      if (publicId) {
-        deleteFromCloudinary(publicId).catch((err: any) =>
-          logger.error(`Failed to clean up review image from Cloudinary: ${err}`),
-        );
-      }
+    try {
+      await MediaService.syncReferences('Review', review._id, [], 'images');
+    } catch (err: any) {
+      logger.error(`Failed to remove references for review images: ${err}`);
     }
   }
 

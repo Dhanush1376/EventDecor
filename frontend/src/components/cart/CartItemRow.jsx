@@ -1,7 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { handleImageError } from '../../utils/media/imageUtils';
+import { useQuery } from '@tanstack/react-query';
+import { handleImageError, getOptimizedUrl, getBlurDataUri } from '../../utils/media/imageUtils';
+import { useProduct } from '../../hooks/useProductQueries';
+import { customOrderService } from '../../services/domainServices';
 
 export const CartItemRow = React.memo(function CartItemRow({
   item,
@@ -16,6 +19,67 @@ export const CartItemRow = React.memo(function CartItemRow({
   const itemOldPrice = item.oldPrice || item.price;
   const savingsPct =
     itemOldPrice > item.price ? Math.round(((itemOldPrice - item.price) / itemOldPrice) * 100) : 0;
+
+  // Fetch the live Custom Order from the API to bypass stale localStorage cache
+  const { data: apiCustomOrder } = useQuery({
+    queryKey: ['cartCustomOrder', item.id || item._id],
+    queryFn: async () => {
+      const res = await customOrderService.getById(item.id || item._id);
+      return res.success ? res.data : res;
+    },
+    enabled: item.type === 'custom',
+    staleTime: 1000 * 60 * 5, // 5 mins
+  });
+
+  const customOrderData = apiCustomOrder || item.product;
+
+  const actualProductId = customOrderData?.productId?._id || customOrderData?.productId;
+  const { data: realProduct } = useProduct(item.type === 'custom' ? actualProductId : null, {
+    enabled: Boolean(item.type === 'custom' && actualProductId),
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+
+  // For custom orders, dynamically pull title and image from the full product object
+  // or fetch from API if missing.
+  let displayTitle = item.title;
+  if (item.type === 'custom') {
+    const betterTitle =
+      realProduct?.title ||
+      realProduct?.name ||
+      customOrderData?.customProduct?.name ||
+      customOrderData?.productSnapshot?.title ||
+      customOrderData?.quotation?.items?.[0]?.name ||
+      customOrderData?.productSnapshot?.name ||
+      customOrderData?.occasion;
+
+    if (betterTitle) {
+      displayTitle = betterTitle;
+    } else if (item.title === 'Custom Order - Event' && customOrderData?.orderId) {
+      displayTitle = `Custom Order ${customOrderData.orderId}`;
+    }
+  }
+
+  let displayImage = item.imageSrc;
+  if (item.type === 'custom') {
+    if (customOrderData || realProduct) {
+      displayImage =
+        realProduct?.images?.[0] ||
+        realProduct?.imageSrc ||
+        customOrderData?.customProduct?.images?.[0]?.url ||
+        customOrderData?.customProduct?.images?.[0] ||
+        customOrderData?.productSnapshot?.image ||
+        customOrderData?.quotation?.items?.[0]?.image ||
+        customOrderData?.referenceImages?.[0] ||
+        customOrderData?.inspirationImages?.[0] ||
+        customOrderData?.files?.[0]?.url ||
+        item.imageSrc;
+    }
+    if (!displayImage) {
+      // Fallback elegant image for Custom Orders without uploaded references
+      displayImage =
+        'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=300&auto=format&fit=crop';
+    }
+  }
 
   return (
     <motion.div
@@ -51,9 +115,12 @@ export const CartItemRow = React.memo(function CartItemRow({
             <motion.img
               onError={handleImageError}
               whileHover={{ scale: 1.05 }}
-              src={item.imageSrc}
-              alt={item.title}
-              className={`w-full h-full object-cover transition-transform ${item.stock === 0 ? 'grayscale' : ''}`}
+              src={
+                (displayImage ? getOptimizedUrl(displayImage, 100, 130) : '') ||
+                getBlurDataUri(100, 130)
+              }
+              alt={displayTitle}
+              className={`w-full h-full object-cover transition-transform ${item.stock === 0 ? 'grayscale' : ''} text-[10px] text-secondary/50 text-center flex items-center justify-center break-words`}
             />
           </Link>
         </div>
@@ -67,9 +134,19 @@ export const CartItemRow = React.memo(function CartItemRow({
           )}
           <Link to={`/product/${item.id || item._id}`}>
             <h3 className="font-display font-medium text-[13px] sm:text-[14px] text-on-surface line-clamp-2 leading-tight">
-              {item.title}
+              {displayTitle}
             </h3>
           </Link>
+          {activeCartMode === 'custom' && (
+            <div className="mt-2 space-y-1">
+              <span className="inline-block bg-primary/10 text-primary text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-[3px] border border-primary/20">
+                Custom Order
+              </span>
+              <p className="text-[10px] text-secondary/80 leading-snug font-medium line-clamp-2 pr-2">
+                Bespoke customized order based on approved quotation.
+              </p>
+            </div>
+          )}
 
           {/* Size & Qty controls */}
           <div className="flex items-center gap-3 mt-4">
@@ -160,6 +237,35 @@ export const CartItemRow = React.memo(function CartItemRow({
                         {deliveryDateStr}
                       </span>
                     </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Pricing & Policy below Quantity (for custom orders) */}
+          {activeCartMode === 'custom' && (
+            <div className="mt-3 flex flex-col gap-2 w-full">
+              {/* Pricing Row */}
+              <div className="flex items-baseline gap-1.5 flex-wrap">
+                <span className="font-display text-[15px] font-semibold text-on-surface">
+                  ₹{(item.price * item.quantity).toLocaleString()}
+                </span>
+                <span className="text-[9px] font-bold text-secondary uppercase tracking-widest">
+                  Total Quoted Price
+                </span>
+              </div>
+
+              {/* Return policy & delivery forecast strip */}
+              <div className="text-[11px] text-secondary w-full">
+                <div className="flex flex-col gap-1.5 mt-1">
+                  <div className="flex items-center gap-1.5 text-[#d97706] font-bold whitespace-nowrap text-[10px]">
+                    <span className="material-symbols-outlined text-[13px]">block</span>
+                    Custom Orders are Non-Refundable
+                  </div>
+                  <div className="flex items-center gap-1.5 whitespace-nowrap text-[10px]">
+                    <span className="material-symbols-outlined text-[13px]">info</span>
+                    <span>Final delivery schedule to be coordinated</span>
                   </div>
                 </div>
               </div>

@@ -10,16 +10,25 @@ export interface IQuotation {
   items: IQuotationItem[];
   tax: number;
   shipping: number;
+  subtotal: number;
+  discount: number;
   total: number;
+  depositRequired: boolean;
+  depositPercentage: number;
   notes?: string;
   status: 'draft' | 'sent' | 'approved' | 'rejected';
+  expiresAt?: Date;
+  revisionNumber: number;
+  approvedAt?: Date;
+  approvedBy?: string;
 }
 
 export interface IMessage {
-  sender: 'admin' | 'customer';
+  sender: 'admin' | 'customer' | 'system';
   senderName: string;
   text: string;
   attachments?: string[];
+  messageType: 'human' | 'system' | 'quotation' | 'status_change' | 'file_upload';
   createdAt: Date;
 }
 
@@ -91,6 +100,80 @@ export interface ICustomizationField {
   value: string | string[] | number;
 }
 
+export interface ICustomProduct {
+  title?: string;
+  previewImage?: string;
+  finalPrice?: number;
+  badge: string;
+  designerInfo?: {
+    name: string;
+    assignedAt: Date;
+  };
+  conversationSummary?: string;
+  summaryGeneratedAt?: Date;
+}
+
+export interface IProduction {
+  designerAssigned?: mongoose.Types.ObjectId;
+  designerName?: string;
+  productionTeam: { userId: mongoose.Types.ObjectId; name: string; role: string }[];
+  eventSchedule?: {
+    setupDate?: Date;
+    eventDate?: Date;
+    teardownDate?: Date;
+    setupTime?: string;
+    venue?: string;
+    venueContact?: string;
+  };
+  materialsList: {
+    item: string;
+    quantity: number;
+    unit: string;
+    unitCost: number;
+    totalCost: number;
+    status: 'pending' | 'ordered' | 'received' | 'used';
+  }[];
+  costBreakdown: {
+    materialCost: number;
+    laborCost: number;
+    overheadCost: number;
+    totalCost: number;
+    quotedPrice: number;
+    profitMargin: number;
+  };
+  qaChecklist: {
+    item: string;
+    checked: boolean;
+    checkedBy?: string;
+    checkedAt?: Date;
+    notes?: string;
+  }[];
+  internalChecklist: {
+    task: string;
+    completed: boolean;
+    completedBy?: string;
+    completedAt?: Date;
+    dueDate?: Date;
+  }[];
+}
+
+export interface IPaymentSchedule {
+  type: 'full' | 'advance' | 'milestone';
+  advancePercentage: number;
+  milestones: {
+    label: string;
+    percentage: number;
+    amount: number;
+    status: 'pending' | 'paid' | 'overdue';
+    dueDate?: Date;
+    paidAt?: Date;
+    paymentId?: string;
+    invoiceNumber?: string;
+  }[];
+  totalPaid: number;
+  remainingBalance: number;
+}
+
 export interface ICustomOrder extends ISoftDeleted {
   orderId: string;
   customerEmail: string;
@@ -143,11 +226,15 @@ export interface ICustomOrder extends ISoftDeleted {
     | 'Reviewing'
     | 'Quote Sent'
     | 'Approved'
+    | 'Checkout Ready'
+    | 'Payment Received'
     | 'In Progress'
     | 'In Production'
-    | 'Completed'
+    | 'Quality Check'
     | 'Ready'
+    | 'Dispatched'
     | 'Delivered'
+    | 'Completed'
     | 'Cancelled';
   priority: 'low' | 'medium' | 'high';
   statusHistory: IStatusHistoryEntry[];
@@ -156,6 +243,11 @@ export interface ICustomOrder extends ISoftDeleted {
   quotation: IQuotation;
   messages: IMessage[];
 
+  // Enterprise Extensions
+  customProduct?: ICustomProduct;
+  production?: IProduction;
+  paymentSchedule?: IPaymentSchedule;
+
   // Staff & notes
   assignedStaff: { userId: mongoose.Types.ObjectId; role: string; assignedAt: Date }[];
   adminNotes?: string;
@@ -163,6 +255,12 @@ export interface ICustomOrder extends ISoftDeleted {
 
   // Version history
   versions: IVersionSnapshot[];
+
+  // Conversion to Standard Order
+  convertedToOrder?: boolean;
+  convertedOrderId?: mongoose.Types.ObjectId;
+  orderSummary?: string;
+  orderNotes?: string;
 
   // Draft support
   isDraft: boolean;

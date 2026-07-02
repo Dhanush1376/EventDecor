@@ -48,6 +48,7 @@ export function CartView({ isEmbedded = false }) {
     setActiveCartMode,
     purchaseCartCount,
     rentalCartCount,
+    customCartCount,
   } = useCart();
   const { addItem: addToWishlist } = useWishlist();
   const { runProtectedAction, isAuthenticated, user } = useAuth();
@@ -313,6 +314,7 @@ export function CartView({ isEmbedded = false }) {
         setActiveCartMode={setActiveCartMode}
         purchaseCartCount={purchaseCartCount}
         rentalCartCount={rentalCartCount}
+        customCartCount={customCartCount}
       />
 
       <div className="mb-4 lg:mb-5">

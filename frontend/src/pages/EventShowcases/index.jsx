@@ -1,6 +1,5 @@
 import { AnimatePresence } from 'framer-motion';
 import { SEO } from '../../components/seo/SEO';
-import { MandalaElement } from '../../components/ui/MandalaElement';
 import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
 import {
   ShowcaseCard,

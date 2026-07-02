@@ -4,7 +4,7 @@ import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../../utils/pagination';
-import { deleteFromCloudinary, extractPublicId } from '../../utils/cloudinary';
+import { MediaService } from '../../services/media/MediaService';
 import logger from '../../config/logger';
 import { bumpPublicCacheVersion } from '../../utils/cache/cacheVersion';
 import { ChangeTracker } from '../../utils/ChangeTracker';
@@ -205,6 +205,18 @@ export const createGalleryItem = asyncHandler(async (req: Request | any, res: Re
 
   const item = new Gallery(req.body);
   await item.save();
+
+  try {
+    if (item.image) {
+      await MediaService.syncReferences('Gallery', item._id, [item.image], 'image');
+    }
+    if (item.video) {
+      await MediaService.syncReferences('Gallery', item._id, [item.video], 'video');
+    }
+  } catch (err) {
+    logger.error(`Failed to sync references for new gallery item: ${err}`);
+  }
+
   await ChangeTracker.trackChange('Gallery', item._id, null, item.toObject(), req.user, 'create');
   await bumpPublicCacheVersion();
   res.status(201).json(new ApiResponse(true, 'Gallery item created', item));
@@ -244,22 +256,20 @@ export const updateGalleryItem = asyncHandler(async (req: Request | any, res: Re
     );
   }
 
-  if (oldItem && req.body.image && oldItem.image !== req.body.image) {
-    const publicId = extractPublicId(oldItem.image);
-    if (publicId) {
-      deleteFromCloudinary(publicId).catch((err) =>
-        logger.error(`Failed to clean up old gallery image: ${err}`),
-      );
+  try {
+    if (item.image) {
+      await MediaService.syncReferences('Gallery', item._id, [item.image], 'image');
+    } else {
+      await MediaService.syncReferences('Gallery', item._id, [], 'image');
     }
-  }
 
-  if (oldItem && oldItem.video && oldItem.video !== req.body.video) {
-    const publicId = extractPublicId(oldItem.video);
-    if (publicId) {
-      deleteFromCloudinary(publicId).catch((err) =>
-        logger.error(`Failed to clean up old gallery video: ${err}`),
-      );
+    if (item.video) {
+      await MediaService.syncReferences('Gallery', item._id, [item.video], 'video');
+    } else {
+      await MediaService.syncReferences('Gallery', item._id, [], 'video');
     }
+  } catch (err) {
+    logger.error(`Failed to sync references for updated gallery item: ${err}`);
   }
 
   await bumpPublicCacheVersion();

@@ -10,7 +10,7 @@ import { createStatusHistoryEntry } from './customOrderHelpers';
 
 // 15. Customer Respond to Quotation (Accept/Reject)
 export const customerRespondQuotation = asyncHandler(async (req: Request, res: Response) => {
-  const { status } = req.body; // 'approved' or 'rejected'
+  const { status, reason } = req.body; // 'approved' or 'rejected'
   const order = await CustomOrder.findById(req.params.id);
 
   if (!order) {
@@ -40,21 +40,54 @@ export const customerRespondQuotation = asyncHandler(async (req: Request, res: R
   order.quotation.status = status;
 
   if (status === 'approved') {
-    order.status = 'Approved';
+    order.status = 'Checkout Ready';
+    order.quotation.approvedAt = new Date();
+    order.quotation.approvedBy = (req as any).user.email;
     order.statusHistory.push(
       createStatusHistoryEntry(
         prevStatus,
-        'Approved',
+        'Checkout Ready',
         (req as any).user.email,
         'Customer approved quotation',
       ) as any,
     );
+
+    // Enterprise Feature: Generate conversation summary and custom product snapshot
+    const conversationSummary = `Customer approved quotation. Total messages exchanged: ${order.messages.length}. Key requirements: ${order.customRequirements || 'Standard customization.'}`;
+
+    order.customProduct = {
+      title: `Custom ${order.occasion || order.productType || 'Event'} Package`,
+      finalPrice: order.quotation.total || 0,
+      badge: 'APPROVED_DESIGN',
+      conversationSummary,
+      summaryGeneratedAt: new Date(),
+    };
+
     order.messages.push({
       sender: 'customer',
       senderName: order.customerName,
       text: `I have APPROVED the provided estimate. Ready to proceed with scheduling and deposit transactions!`,
+      messageType: 'quotation',
       createdAt: new Date(),
     });
+
+    order.messages.push({
+      sender: 'system',
+      senderName: 'System Logger',
+      text: `Custom Product profile generated. Please proceed to checkout to secure your booking.`,
+      messageType: 'system',
+      createdAt: new Date(),
+    });
+
+    const itemsList = order.quotation.items
+      .map((item: any) => `- ${item.description}: ₹${item.amount}`)
+      .join('\n');
+    order.orderSummary = `Quotation Approved for ${order.occasion || order.productType || 'Custom Order'}\n\nFinal Pricing:\n${itemsList}\nTax: ₹${order.quotation.tax || 0}\nShipping: ₹${order.quotation.shipping || 0}\nGrand Total: ₹${order.quotation.total || 0}`;
+
+    const eventDateStr = order.eventDate
+      ? new Date(order.eventDate).toLocaleDateString()
+      : 'Not specified';
+    order.orderNotes = `Event Date: ${eventDateStr}\nCity: ${order.city || 'Not specified'}\n\nRequirements:\n${order.customRequirements || 'Standard customization as discussed.'}`;
   } else {
     order.status = 'Reviewing';
     order.statusHistory.push(
@@ -68,7 +101,10 @@ export const customerRespondQuotation = asyncHandler(async (req: Request, res: R
     order.messages.push({
       sender: 'customer',
       senderName: order.customerName,
-      text: `I have requested modifications on the quotation. Let's adjust the scope items.`,
+      text: reason
+        ? `I have requested modifications on the quotation. Reason: ${reason}`
+        : `I have requested modifications on the quotation. Let's adjust the scope items.`,
+      messageType: 'quotation',
       createdAt: new Date(),
     });
   }
@@ -85,7 +121,7 @@ export const customerRespondQuotation = asyncHandler(async (req: Request, res: R
 
 // 16. Post Message Thread Note / Reference
 export const postMessage = asyncHandler(async (req: Request, res: Response) => {
-  const { text, attachments } = req.body;
+  const { text, attachments, source } = req.body;
   const order = await CustomOrder.findById(req.params.id);
 
   if (!order) {
@@ -93,7 +129,16 @@ export const postMessage = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
-  const isSenderAdmin = ADMIN_ROLES.includes((req as any).user.role as any);
+  const isAdminRole = ADMIN_ROLES.includes((req as any).user.role as any);
+  let isSenderAdmin = false;
+
+  if (isAdminRole) {
+    if (source === 'admin_portal') {
+      isSenderAdmin = true;
+    } else {
+      isSenderAdmin = false;
+    }
+  }
 
   if (!isSenderAdmin && order.customerEmail !== (req as any).user.email) {
     res.status(403).json(new ApiResponse(false, 'Unauthorized message dispatch restricted'));
@@ -108,20 +153,22 @@ export const postMessage = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
-  // SEC-06: Validate attachment URLs
+  // SEC-06: Validate attachment URLs (whitelist only Cloudinary)
   const validAttachments = (attachments || []).filter((url: string) => {
-    return (
-      url &&
-      typeof url === 'string' &&
-      (url.includes('res.cloudinary.com') || url.startsWith('http'))
-    );
+    return url && typeof url === 'string' && url.includes('res.cloudinary.com');
   });
+
+  let messageType: 'system' | 'human' | 'quotation' | 'status_change' | 'file_upload' = 'human';
+  if (validAttachments.length > 0) {
+    messageType = 'file_upload';
+  }
 
   order.messages.push({
     sender: isSenderAdmin ? 'admin' : 'customer',
     senderName: isSenderAdmin ? 'Siri Design Team' : order.customerName,
     text,
     attachments: validAttachments,
+    messageType,
     createdAt: new Date(),
   });
 
@@ -161,7 +208,7 @@ export const postMessage = asyncHandler(async (req: Request, res: Response) => {
 // 17. Get Status/Version History
 export const getOrderHistory = asyncHandler(async (req: Request, res: Response) => {
   const order = await CustomOrder.findById(req.params.id)
-    .select('statusHistory versions orderId')
+    .select('statusHistory versions orderId customerEmail')
     .lean();
 
   if (!order) {

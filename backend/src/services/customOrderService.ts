@@ -19,55 +19,6 @@ export class CustomOrderService {
     return `CO-${year}-${String(counter.seq).padStart(6, '0')}`;
   }
 
-  // ─── HELPER: Create Status History Entry ───
-  static createStatusHistoryEntry(from: string, to: string, changedBy: string, note?: string) {
-    return {
-      from,
-      to,
-      changedBy,
-      changedAt: new Date(),
-      note,
-    };
-  }
-
-  // ─── HELPER: Create Version Snapshot ───
-  static createVersionSnapshot(
-    order: any,
-    snapshotType: 'quotation' | 'requirements' | 'files' | 'status' | 'full',
-    createdBy: string,
-  ) {
-    const version = (order.versions?.length || 0) + 1;
-    let data: Record<string, unknown> = {};
-
-    switch (snapshotType) {
-      case 'quotation':
-        data = { quotation: order.quotation?.toObject?.() || order.quotation };
-        break;
-      case 'requirements':
-        data = {
-          customRequirements: order.customRequirements,
-          customizationData: order.customizationData,
-        };
-        break;
-      case 'files':
-        data = {
-          files: order.files,
-          referenceImages: order.referenceImages,
-          voiceNotes: order.voiceNotes,
-          videoReferences: order.videoReferences,
-        };
-        break;
-      case 'status':
-        data = { status: order.status, priority: order.priority };
-        break;
-      case 'full':
-        data = order.toObject ? order.toObject() : order;
-        break;
-    }
-
-    return { version, snapshotType, data, createdBy, createdAt: new Date() };
-  }
-
   static async submitCustomOrder(payload: any, user: any) {
     let configSnapshot = null;
     if (payload.configVersion) {
@@ -211,13 +162,11 @@ export class CustomOrderService {
       throw new Error('Product not found');
     }
 
-    const orderId = await CustomOrderService.generateOrderId();
-
     const productSnapshot = {
       productId: product._id.toString(),
       title: product.title,
       imageSrc: product.imageSrc,
-      category: product.primaryCategory?.toString()?.toString()?.toString(),
+      category: product.primaryCategory?.toString(),
       price: product.price,
       description: product.description,
       variants: product.variants?.map((v: any) => ({
@@ -230,7 +179,6 @@ export class CustomOrderService {
     };
 
     const orderData = {
-      orderId,
       customerEmail: user.email,
       customerName: user.name,
       customerPhone: payload.customerPhone || user.phone,

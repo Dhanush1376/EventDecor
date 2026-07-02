@@ -98,6 +98,8 @@ const OrderSchema: Schema = new Schema(
     razorpayPaymentId: { type: String, unique: true, sparse: true },
     razorpaySignature: { type: String },
     invoiceNumber: { type: String, unique: true, sparse: true },
+    isCustomOrder: { type: Boolean, default: false, index: true },
+    customOrderId: { type: Schema.Types.ObjectId, ref: 'CustomOrder', index: true },
     trackingNumber: { type: String },
     courierPartner: { type: String },
     weight: { type: Number, default: 0 },

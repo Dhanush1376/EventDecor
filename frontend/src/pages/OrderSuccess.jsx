@@ -572,7 +572,7 @@ export function OrderSuccess() {
             {/* Primary Actions */}
             <div className="space-y-3 pt-2">
               <button
-                onClick={() => navigate(order.trackingPath || `/track/${order._id}`)}
+                onClick={() => navigate('/profile?tab=orders')}
                 className="w-full bg-primary hover:bg-primary-dark text-white py-3.5 rounded text-[11px] font-bold uppercase tracking-widest transition-all shadow-md block text-center cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-[15px]">track_changes</span>

@@ -55,7 +55,7 @@ export const saveDraft = asyncHandler(async (req: Request, res: Response) => {
         productId: product._id.toString(),
         title: product.title,
         imageSrc: product.imageSrc,
-        category: product.primaryCategory?.toString()?.toString()?.toString(),
+        category: product.primaryCategory?.toString(),
         price: product.price,
         description: product.description,
         variants: product.variants?.map((v: any) => ({

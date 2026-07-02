@@ -47,11 +47,19 @@ export class CloudinaryStorageProvider implements StorageProvider {
             return reject(new Error('Cloudinary upload returned empty result'));
           }
 
+          const thumbnailUrl = result.eager?.[0]?.secure_url || null;
+
           resolve({
             url: result.secure_url,
-            thumbnail_url: result.eager?.[0]?.secure_url || null,
-            format: result.format || 'unknown',
+            thumbnail_url: thumbnailUrl,
+            format: result.format,
             size: result.bytes,
+            publicId: result.public_id,
+            width: result.width,
+            height: result.height,
+            resourceType: result.resource_type,
+            duration: result.duration,
+            codec: result.video?.codec,
           });
         },
       );
@@ -78,6 +86,74 @@ export class CloudinaryStorageProvider implements StorageProvider {
     } catch (error) {
       logger.error(`[CLOUDINARY] Delete failed for URL ${url}: ${error}`);
       return false;
+    }
+  }
+
+  /**
+   * Permanently delete multiple files from storage in a batch.
+   */
+  async deleteMultiple(identifiers: string[]): Promise<{ succeeded: string[]; failed: string[] }> {
+    const cloudinary = getCloudinary();
+    try {
+      const publicIds = identifiers.map((url) => {
+        try {
+          const parts = url.split('/');
+          const filename = parts[parts.length - 1];
+          const folder = parts[parts.length - 2];
+          return `siri-arts-crafts/${folder}/${filename.split('.')[0]}`;
+        } catch {
+          return url;
+        }
+      });
+      const result = await cloudinary.api.delete_resources(publicIds, { invalidate: true });
+      const succeeded: string[] = [];
+      const failed: string[] = [];
+      if (result.deleted) {
+        for (const [id, status] of Object.entries(result.deleted)) {
+          if (status === 'deleted' || status === 'not_found') {
+            succeeded.push(id);
+          } else {
+            failed.push(id);
+          }
+        }
+      }
+      return { succeeded, failed };
+    } catch (error) {
+      logger.error(`[CloudinaryStorage] Failed to delete multiple: ${error}`);
+      return { succeeded: [], failed: identifiers };
+    }
+  }
+
+  /**
+   * Get metadata info for an asset in storage.
+   */
+  async getAssetInfo(identifier: string): Promise<any> {
+    const cloudinary = getCloudinary();
+    try {
+      const parts = identifier.split('/');
+      const filename = parts[parts.length - 1];
+      const folder = parts[parts.length - 2];
+      const publicId = `siri-arts-crafts/${folder}/${filename.split('.')[0]}`;
+      return await cloudinary.api.resource(publicId);
+    } catch (error) {
+      logger.error(`[CloudinaryStorage] Failed to get asset info: ${error}`);
+      return null;
+    }
+  }
+
+  /**
+   * Invalidate asset in CDN cache.
+   */
+  async invalidateCache(identifier: string): Promise<void> {
+    const cloudinary = getCloudinary();
+    try {
+      const parts = identifier.split('/');
+      const filename = parts[parts.length - 1];
+      const folder = parts[parts.length - 2];
+      const publicId = `siri-arts-crafts/${folder}/${filename.split('.')[0]}`;
+      await cloudinary.uploader.explicit(publicId, { type: 'upload', invalidate: true });
+    } catch (error) {
+      logger.error(`[CloudinaryStorage] Failed to invalidate cache: ${error}`);
     }
   }
 }

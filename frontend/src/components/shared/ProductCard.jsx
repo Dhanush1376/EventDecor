@@ -90,6 +90,19 @@ export const ProductCard = React.memo(function ProductCard({
     }
   };
 
+  const availableImages = React.useMemo(() => {
+    const imgs = [imageSrc];
+    const imageList = images || gallery || [];
+    if (imageList.length > 0) {
+      imageList.forEach((img) => {
+        if (!imgs.includes(img)) imgs.push(img);
+      });
+    } else if (hoverImage && hoverImage !== imageSrc) {
+      imgs.push(hoverImage);
+    }
+    return imgs;
+  }, [imageSrc, hoverImage, gallery, images]);
+
   if (loading) {
     return (
       <div className="flex flex-col gap-4 animate-pulse">
@@ -194,19 +207,6 @@ export const ProductCard = React.memo(function ProductCard({
     }
   };
 
-  const availableImages = React.useMemo(() => {
-    const imgs = [imageSrc];
-    const imageList = images || gallery || [];
-    if (imageList.length > 0) {
-      imageList.forEach((img) => {
-        if (!imgs.includes(img)) imgs.push(img);
-      });
-    } else if (hoverImage && hoverImage !== imageSrc) {
-      imgs.push(hoverImage);
-    }
-    return imgs;
-  }, [imageSrc, hoverImage, gallery, images]);
-
   return (
     <motion.div
       onMouseEnter={() => {
@@ -250,18 +250,23 @@ export const ProductCard = React.memo(function ProductCard({
         </div>
 
         {availableImages.length > 1 && (
-          <div className="absolute bottom-4 left-3 lg:bottom-5 lg:left-4 flex items-center gap-1.5 z-10 pointer-events-none">
-            {availableImages.map((_, i) => (
-              <div
-                key={i}
-                className={`transition-all duration-300 rounded-full shadow-md border border-black/10 ${
-                  i === activeIndex
-                    ? 'w-2 h-2 lg:w-2.5 lg:h-2.5 bg-white'
-                    : 'w-1.5 h-1.5 lg:w-2 lg:h-2 bg-white/60'
-                }`}
-              />
-            ))}
-          </div>
+          <>
+            {/* Dots Indicator */}
+            <div className="absolute bottom-3 left-3 lg:bottom-4 lg:left-4 flex items-center gap-1.5 z-10 pointer-events-none bg-black/20 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/10 shadow-sm">
+              {availableImages.map((_, i) => (
+                <div
+                  key={i}
+                  className={`transition-all duration-300 rounded-full shadow-md border border-black/10 ${
+                    i === activeIndex
+                      ? 'w-2 h-2 lg:w-2.5 lg:h-2.5 bg-white'
+                      : 'w-1.5 h-1.5 lg:w-2 lg:h-2 bg-white/60'
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Navigation Arrows (Hover) - Removed by request */}
+          </>
         )}
         {/* Floating Utility Actions */}
         {!selectionMode && (

@@ -9,7 +9,7 @@ import { DraftRestoreModal } from '../DraftRestoreModal';
 import { UnsavedChangesGuard } from '../UnsavedChangesGuard';
 import { EXTERNAL_URLS } from '../../../config/constants';
 
-export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders, isMobile }) {
+export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOrders, isMobile }) {
   const chatEndRef = useRef(null);
   const [adminMessageText, setAdminMessageText] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
@@ -85,7 +85,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
       const res = await customOrderService.adminUpdateStatus(id, newStatus);
       if (res.success) {
         toast.success(`Order status updated to: ${newStatus}`);
-        setOrders((prev) => prev.map((o) => (o._id === id ? res.data : o)));
+        refetchOrders?.();
         if (selectedOrder?._id === id) setSelectedOrder(res.data);
       }
     } catch (err) {
@@ -108,7 +108,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
       if (res.success) {
         toast.success('Internal note added');
         setInternalNoteText('');
-        setOrders((prev) => prev.map((o) => (o._id === selectedOrder._id ? res.data : o)));
+        refetchOrders?.();
         setSelectedOrder(res.data);
       }
     } catch (err) {
@@ -134,7 +134,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
       if (res.success) {
         toast.success('Quote sent');
         await deleteDraft();
-        setOrders((prev) => prev.map((o) => (o._id === selectedOrder._id ? res.data : o)));
+        refetchOrders?.();
         setSelectedOrder(res.data);
       }
     } catch (err) {
@@ -150,11 +150,16 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
 
     setIsSendingMessage(true);
     try {
-      const res = await customOrderService.postMessage(selectedOrder._id, adminMessageText.trim());
+      const res = await customOrderService.postMessage(
+        selectedOrder._id,
+        adminMessageText.trim(),
+        [],
+        'admin_portal',
+      );
       if (res.success) {
         setSelectedOrder(res.data);
         setAdminMessageText('');
-        setOrders((prev) => prev.map((o) => (o._id === selectedOrder._id ? res.data : o)));
+        refetchOrders?.();
       }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to send message'));
@@ -168,7 +173,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
       const res = await customOrderService.adminArchive(id, true);
       if (res.success) {
         toast.success('Order archived');
-        setOrders((prev) => prev.filter((o) => o._id !== id));
+        refetchOrders?.();
         setSelectedOrder(null);
       }
     } catch (err) {
@@ -575,8 +580,16 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
                 </span>
                 <div className="h-[200px] overflow-y-auto space-y-3 bg-[var(--admin-bg-subtle)] p-3 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] shadow-inner">
                   {selectedOrder.messages?.map((msg, i) => {
-                    const isMe = msg.sender === 'admin';
+                    const isSystemLogger = msg.senderName === 'System Logger';
+                    const isMe = msg.sender === 'admin' && !isSystemLogger;
                     const isLog = msg.senderName === 'System';
+
+                    let displaySenderName = msg.senderName;
+                    if (isMe) {
+                      displaySenderName = 'You';
+                    } else if (isSystemLogger) {
+                      displaySenderName = 'Siri Arts and Crafts';
+                    }
 
                     if (isLog) {
                       return (
@@ -594,7 +607,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
                         className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                       >
                         <span className="text-[10px] sm:text-[11px] font-bold text-[var(--admin-text-secondary)] mb-0.5 px-1">
-                          {msg.senderName}
+                          {displaySenderName}
                         </span>
                         <div
                           className={`p-3 rounded-[var(--admin-radius-lg)] text-[11px] leading-relaxed max-w-[85%] shadow-sm ${
@@ -603,6 +616,18 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
                               : 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] rounded-tl-none border border-[var(--admin-border-subtle)]'
                           }`}
                         >
+                          {msg.attachments?.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {msg.attachments.map((url, aidx) => (
+                                <img
+                                  key={aidx}
+                                  src={url}
+                                  alt="Attachment"
+                                  className="w-16 h-16 object-cover rounded-lg border border-black/10 shadow-sm bg-white"
+                                />
+                              ))}
+                            </div>
+                          )}
                           {msg.text}
                         </div>
                       </div>
@@ -656,9 +681,11 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
                             type="text"
                             value={item.description}
                             onChange={(e) => {
-                              const next = [...quoteData.items];
-                              next[idx].description = e.target.value;
-                              setQuoteData((prev) => ({ ...prev, items: next }));
+                              setQuoteData((prev) => {
+                                const next = [...prev.items];
+                                next[idx] = { ...next[idx], description: e.target.value };
+                                return { ...prev, items: next };
+                              });
                             }}
                             placeholder="Item Description (e.g. Stage Flower Decor)"
                             className="flex-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input text-[12px] py-1.5 min-w-0"
@@ -671,11 +698,16 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
                             </span>
                             <input
                               type="number"
-                              value={item.amount}
+                              value={item.amount === 0 && item.amount !== '0' ? '' : item.amount}
                               onChange={(e) => {
-                                const next = [...quoteData.items];
-                                next[idx].amount = Number(e.target.value) || 0;
-                                setQuoteData((prev) => ({ ...prev, items: next }));
+                                setQuoteData((prev) => {
+                                  const next = [...prev.items];
+                                  next[idx] = {
+                                    ...next[idx],
+                                    amount: e.target.value === '' ? '' : Number(e.target.value),
+                                  };
+                                  return { ...prev, items: next };
+                                });
                               }}
                               placeholder="Price"
                               className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input font-mono text-right text-[12px] py-1.5"
@@ -724,11 +756,11 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
                         </span>
                         <input
                           type="number"
-                          value={quoteData.tax}
+                          value={quoteData.tax === 0 && quoteData.tax !== '0' ? '' : quoteData.tax}
                           onChange={(e) =>
                             setQuoteData((prev) => ({
                               ...prev,
-                              tax: Number(e.target.value) || 0,
+                              tax: e.target.value === '' ? '' : Number(e.target.value),
                             }))
                           }
                           className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input font-mono text-right text-[12px]"
@@ -745,11 +777,15 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, setOrders
                         </span>
                         <input
                           type="number"
-                          value={quoteData.shipping}
+                          value={
+                            quoteData.shipping === 0 && quoteData.shipping !== '0'
+                              ? ''
+                              : quoteData.shipping
+                          }
                           onChange={(e) =>
                             setQuoteData((prev) => ({
                               ...prev,
-                              shipping: Number(e.target.value) || 0,
+                              shipping: e.target.value === '' ? '' : Number(e.target.value),
                             }))
                           }
                           className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input font-mono text-right text-[12px]"

@@ -15,6 +15,7 @@ export function useOptimisticCartMutation({
   emptySummary,
   setGuestPurchaseCart,
   setGuestRentalCart,
+  setGuestCustomCart,
 }) {
   const queryClient = useQueryClient();
   const { addToCart, removeFromCart, syncCart } = useCartMutations();
@@ -26,14 +27,19 @@ export function useOptimisticCartMutation({
       const itemKey = product._id || product.id;
       const itemType = product.type || 'purchase';
 
-      if (isAuthenticated) {
+      if (isAuthenticated && itemType !== 'custom') {
         const action = async () => {
           setIsCartOpen(true);
           const previousCart = queryClient.getQueryData(['cart']);
           let rollbackCart = previousCart;
 
           if (previousCart) {
-            let targetCartKey = itemType === 'purchase' ? 'purchaseCart' : 'rentalCart';
+            let targetCartKey =
+              itemType === 'purchase'
+                ? 'purchaseCart'
+                : itemType === 'rental'
+                  ? 'rentalCart'
+                  : 'customCart';
             const prevItems = previousCart[targetCartKey]?.items || [];
 
             const existingIndex = prevItems.findIndex(
@@ -99,7 +105,12 @@ export function useOptimisticCartMutation({
         };
         runProtectedAction(action);
       } else {
-        const setTargetCart = itemType === 'purchase' ? setGuestPurchaseCart : setGuestRentalCart;
+        const setTargetCart =
+          itemType === 'purchase'
+            ? setGuestPurchaseCart
+            : itemType === 'rental'
+              ? setGuestRentalCart
+              : setGuestCustomCart;
 
         setTargetCart((prev) => {
           const prevItems = prev.items || [];
@@ -164,6 +175,7 @@ export function useOptimisticCartMutation({
       emptySummary,
       setGuestPurchaseCart,
       setGuestRentalCart,
+      setGuestCustomCart,
       setIsCartOpen,
     ],
   );
@@ -174,7 +186,7 @@ export function useOptimisticCartMutation({
 
       if (itemType !== activeCartMode) {
         toast(
-          `Switched to ${itemType === 'rental' ? 'Rental' : 'Purchase'} Cart to add this item`,
+          `Switched to ${itemType === 'rental' ? 'Rental' : itemType === 'custom' ? 'Custom' : 'Purchase'} Cart to add this item`,
           { icon: '🔄' },
         );
         setActiveCartMode(itemType);
@@ -186,14 +198,20 @@ export function useOptimisticCartMutation({
   );
 
   const removeItem = useCallback(
-    async (id) => {
-      if (isAuthenticated) {
+    async (id, variant = null) => {
+      // For removals we don't have itemType easily, but we know activeCartMode
+      if (isAuthenticated && activeCartMode !== 'custom') {
         const action = async () => {
           const previousCart = queryClient.getQueryData(['cart']);
           let rollbackCart = previousCart;
 
           if (previousCart) {
-            let targetCartKey = activeCartMode === 'purchase' ? 'purchaseCart' : 'rentalCart';
+            let targetCartKey =
+              activeCartMode === 'purchase'
+                ? 'purchaseCart'
+                : activeCartMode === 'rental'
+                  ? 'rentalCart'
+                  : 'customCart';
             const prevItems = previousCart[targetCartKey]?.items || [];
             const updatedItems = prevItems.filter(
               (item) => (item.product?._id || item.product?.id || item._id || item.id) !== id,
@@ -231,7 +249,11 @@ export function useOptimisticCartMutation({
         runProtectedAction(action);
       } else {
         const setTargetCart =
-          activeCartMode === 'purchase' ? setGuestPurchaseCart : setGuestRentalCart;
+          activeCartMode === 'purchase'
+            ? setGuestPurchaseCart
+            : activeCartMode === 'rental'
+              ? setGuestRentalCart
+              : setGuestCustomCart;
 
         setTargetCart((prev) => {
           const newItems = prev.items.filter((item) => item.id !== id);
@@ -262,6 +284,7 @@ export function useOptimisticCartMutation({
       emptySummary,
       setGuestPurchaseCart,
       setGuestRentalCart,
+      setGuestCustomCart,
     ],
   );
 
@@ -275,11 +298,16 @@ export function useOptimisticCartMutation({
         return;
       }
 
-      if (isAuthenticated) {
+      if (isAuthenticated && activeCartMode !== 'custom') {
         const action = () => {
           const previousCart = queryClient.getQueryData(['cart']);
           if (previousCart) {
-            let targetCartKey = activeCartMode === 'purchase' ? 'purchaseCart' : 'rentalCart';
+            let targetCartKey =
+              activeCartMode === 'purchase'
+                ? 'purchaseCart'
+                : activeCartMode === 'rental'
+                  ? 'rentalCart'
+                  : 'customCart';
             const updatedItems = previousCart[targetCartKey].items.map((item) => {
               const itemId = item.product?._id || item.product?.id;
               if (itemId === id) {
@@ -341,7 +369,11 @@ export function useOptimisticCartMutation({
         runProtectedAction(action);
       } else {
         const setTargetCart =
-          activeCartMode === 'purchase' ? setGuestPurchaseCart : setGuestRentalCart;
+          activeCartMode === 'purchase'
+            ? setGuestPurchaseCart
+            : activeCartMode === 'rental'
+              ? setGuestRentalCart
+              : setGuestCustomCart;
 
         setTargetCart((prev) => {
           const newItems = prev.items.map((item) =>
@@ -374,15 +406,16 @@ export function useOptimisticCartMutation({
       activeCartMode,
       setGuestPurchaseCart,
       setGuestRentalCart,
+      setGuestCustomCart,
     ],
   );
 
   const clearCart = useCallback(async () => {
     const action = async () => {
-      if (isAuthenticated) {
+      if (isAuthenticated && activeCartMode !== 'custom') {
         try {
           const currentCart = queryClient.getQueryData(['cart']);
-          const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart';
+          const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart'; // Note: skipping custom for this quick merge since custom uses its own mode
           const otherItems = currentCart?.[otherCartKey]?.items || [];
           const payload = otherItems.map((item) => {
             return {
@@ -400,7 +433,11 @@ export function useOptimisticCartMutation({
         }
       } else {
         const setTargetCart =
-          activeCartMode === 'purchase' ? setGuestPurchaseCart : setGuestRentalCart;
+          activeCartMode === 'purchase'
+            ? setGuestPurchaseCart
+            : activeCartMode === 'rental'
+              ? setGuestRentalCart
+              : setGuestCustomCart;
         setTargetCart({ items: [], summary: { ...emptySummary, depositTotal: 0 } });
       }
     };
@@ -414,6 +451,7 @@ export function useOptimisticCartMutation({
     emptySummary,
     setGuestPurchaseCart,
     setGuestRentalCart,
+    setGuestCustomCart,
   ]);
 
   return { addItem, attemptAddToCart, removeItem, updateQuantity, clearCart };

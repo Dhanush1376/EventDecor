@@ -14,6 +14,7 @@ describe('Order History Filtering', () => {
   describe('OrderQueryService.getMyOrders', () => {
     it('applies the correct filter to exclude pending/processing/failed online orders', async () => {
       const mockFind = jest.fn().mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),

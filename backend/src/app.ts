@@ -25,6 +25,7 @@ import { requestTrackerMiddleware } from './middleware/requestTracker';
 import { requestLogger } from './middleware/requestLogger';
 import { issueCsrfToken, validateCsrf } from './middleware/csrfMiddleware';
 import { dbReadinessGuard } from './middleware/dbReadinessGuard';
+import { maintenanceMiddleware } from './middleware/maintenanceMiddleware';
 import { requireAuth, requireAdmin } from './middleware/authMiddleware';
 import { getMetricsReport, metricsTrackerMiddleware } from './utils/metricsTracker';
 import { getIO } from './socket';
@@ -142,6 +143,9 @@ app.get('/api/csrf-token', issueCsrfToken);
 app.get('/api/v1/csrf-token', issueCsrfToken); // Fallback for frontend base URLs pointing to /api/v1
 app.use('/api', validateCsrf);
 app.use(dbReadinessGuard);
+
+// Enforce maintenance mode globally before logging and other middlewares
+app.use(maintenanceMiddleware);
 
 // Enable production-safe structured request logging and execution telemetry
 if (process.env.DISABLE_LOGGING !== 'true') {

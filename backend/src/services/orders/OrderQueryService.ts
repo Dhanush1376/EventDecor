@@ -22,6 +22,7 @@ export class OrderQueryService {
     const [orders, total] = await Promise.all([
       Order.find(filter)
         .populate('user', 'name email phone')
+        .populate('customOrderId')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -36,7 +37,10 @@ export class OrderQueryService {
    * Fetch a specific order by ID (Customer/Admin).
    */
   static async getOrderById(id: string, userId: string, role: string) {
-    const order: any = await Order.findById(id).populate('user', 'name email phone').lean();
+    const order: any = await Order.findById(id)
+      .populate('user', 'name email phone')
+      .populate('customOrderId')
+      .lean();
     if (!order) {
       throw new ApiError(404, 'Order not found');
     }
@@ -61,7 +65,12 @@ export class OrderQueryService {
     };
 
     const [orders, total] = await Promise.all([
-      Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Order.find(filter)
+        .populate('customOrderId', 'productSnapshot inspirationImages referenceImages files')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
       Order.countDocuments(filter),
     ]);
 

@@ -4,12 +4,15 @@ import { m as motion } from 'framer-motion';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 export function InquiriesTable({
-  filteredOrders,
   orders,
   statusFilter,
   setStatusFilter,
   setSelectedOrder,
   handleUpdatePriority,
+  page,
+  setPage,
+  totalPages,
+  totalItems,
 }) {
   return (
     <>
@@ -40,15 +43,9 @@ export function InquiriesTable({
             }`}
           >
             {tab}
-            {orders.filter((o) => (tab === 'All' ? true : o.status === tab)).length > 0 && (
-              <span
-                className={`ml-2 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold ${
-                  statusFilter === tab
-                    ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)]'
-                    : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]'
-                }`}
-              >
-                {orders.filter((o) => (tab === 'All' ? true : o.status === tab)).length}
+            {statusFilter === tab && (
+              <span className="ml-2 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">
+                {totalItems}
               </span>
             )}
           </button>
@@ -71,7 +68,7 @@ export function InquiriesTable({
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.length === 0 ? (
+              {orders.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
@@ -89,7 +86,7 @@ export function InquiriesTable({
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((order) => {
+                orders.map((order) => {
                   const dateStr = order.eventDate
                     ? new Date(order.eventDate).toLocaleDateString('en-IN', {
                         day: 'numeric',
@@ -197,7 +194,7 @@ export function InquiriesTable({
 
       {/* Mobile Card Deck View */}
       <div className="block md:hidden space-y-3">
-        {filteredOrders.length === 0 ? (
+        {orders.length === 0 ? (
           <div className="admin-card p-12 text-center text-[var(--admin-text-secondary)]">
             <span className="material-symbols-outlined text-[40px] text-[var(--admin-text-tertiary)] mb-2 block">
               search_off
@@ -208,7 +205,7 @@ export function InquiriesTable({
             </p>
           </div>
         ) : (
-          filteredOrders.map((order) => {
+          orders.map((order) => {
             const dateStr = order.eventDate
               ? new Date(order.eventDate).toLocaleDateString('en-IN', {
                   day: 'numeric',
@@ -320,6 +317,55 @@ export function InquiriesTable({
           })
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-[var(--admin-border)] pt-4 mt-4 px-2">
+          <div className="text-[12px] text-[var(--admin-text-secondary)]">
+            Showing{' '}
+            <span className="font-bold text-[var(--admin-text-primary)]">
+              {(page - 1) * 15 + 1}
+            </span>{' '}
+            to{' '}
+            <span className="font-bold text-[var(--admin-text-primary)]">
+              {Math.min(page * 15, totalItems)}
+            </span>{' '}
+            of <span className="font-bold text-[var(--admin-text-primary)]">{totalItems}</span>{' '}
+            orders
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-[var(--admin-surface)] cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+            </button>
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => setPage(i + 1)}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg text-[12px] font-bold font-mono transition-colors cursor-pointer ${
+                    page === i + 1
+                      ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] border border-transparent'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-[var(--admin-surface)] cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -38,6 +38,7 @@ const ALLOWED_UPLOAD_FOLDERS = new Set([
 /**
  * C-03: Signed params for direct browser → Cloudinary uploads (reduces backend memory load).
  * Query: folder, resource_type (image|video|raw), optional public_id prefix
+ * @deprecated - Use /api/v1/media/upload instead. Retained for backward compatibility for large videos.
  */
 router.get(
   '/signed-url',

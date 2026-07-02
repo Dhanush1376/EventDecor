@@ -2,7 +2,6 @@ import { useParams, Link } from 'react-router-dom';
 import { ProductGallery } from '../components/ui/ProductGallery';
 import { ProductInfo, FeatureItem, CustomThemeCard } from '../components/ui/ProductInfo';
 import { Skeleton, ProductDetailSkeleton } from '../components/ui/Skeleton';
-import { ProductReviews } from '../components/sections/ProductReviews';
 import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { StickyMobileATC } from '../components/ui/StickyMobileATC';

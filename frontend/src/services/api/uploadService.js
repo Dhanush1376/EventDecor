@@ -1,5 +1,6 @@
 import api from '../api';
-import { uploadWithRetry, uploadDirectToCloudinary } from './_shared';
+import { uploadWithRetry } from './_shared';
+import { mediaLibraryService } from '../mediaLibraryService';
 
 export const uploadService = {
   uploadImages: async (formData, folder = 'siri-arts-crafts/direct-uploads', onProgress = null) => {
@@ -10,13 +11,32 @@ export const uploadService = {
     ) {
       targetFolder = `siri-arts-crafts/${folder}`;
     }
+
     return uploadWithRetry(async (fd) => {
-      return await uploadDirectToCloudinary(fd, false, targetFolder, onProgress);
+      // Convert standard FormData back to array of files (since frontend components pass FormData)
+      const files = fd.getAll('images').length > 0 ? fd.getAll('images') : fd.getAll('file');
+      if (!files.length) return { success: false, error: 'No files to upload' };
+
+      const results = [];
+      for (const file of files) {
+        if (file instanceof File || file instanceof Blob) {
+          const res = await mediaLibraryService.uploadMedia(file, targetFolder, [], 'v1');
+          if (res.images && res.images.length > 0) {
+            results.push(res.images[0]);
+          }
+        }
+      }
+
+      // Map back to legacy expected response format
+      return { success: true, images: results };
     }, formData);
   },
   uploadCMS: async (formData) => {
     return uploadWithRetry(async (fd) => {
-      return await uploadDirectToCloudinary(fd, true);
+      const file = fd.get('images') || fd.get('file');
+      if (!file) return { success: false, error: 'No files to upload' };
+      const res = await mediaLibraryService.uploadMedia(file, 'cms', []);
+      return { success: true, data: res.data };
     }, formData);
   },
   uploadInspirations: async (formData) => {

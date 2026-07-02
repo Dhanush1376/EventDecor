@@ -65,13 +65,14 @@ export function ShopByOccasion() {
 
   const occasions = showcases
     .filter((sc) => selectedShowcaseIds.includes(sc._id || sc.id))
-    .map((sc) => ({
-      id: sc._id || sc.id,
-      label: sc.title,
-      desc: sc.category?.replace('_', ' '),
-      link: `/events/${sc._id || sc.id}`,
-      image: sc.image,
-    }));
+    .map((sc) => {
+      return {
+        id: sc._id || sc.id,
+        label: sc.title,
+        link: `/events/${sc._id || sc.id}`,
+        image: sc.image,
+      };
+    });
 
   if (!occasions || occasions.length === 0) {
     return null;
@@ -184,15 +185,10 @@ export function ShopByOccasion() {
                   </div>
 
                   <div className="absolute bottom-0 left-0 w-full p-8 flex items-end justify-between z-10 pb-8 gap-4">
-                    <div className="flex flex-col items-start text-left min-w-0">
-                      <span className="font-serif text-[18px] sm:text-[22px] lg:text-[26px] text-white font-normal tracking-[0.05em] uppercase drop-shadow-md leading-tight break-words hyphens-auto">
+                    <div className="flex flex-col items-start text-left min-w-0 pr-4">
+                      <h3 className="font-serif text-[20px] sm:text-[24px] lg:text-[28px] text-white font-medium tracking-wide leading-tight drop-shadow-lg break-words hyphens-auto">
                         {occasion.label}
-                      </span>
-                      {occasion.desc && (
-                        <span className="text-[13px] text-white/85 leading-normal mt-1.5 italic font-light font-body drop-shadow line-clamp-1 truncate max-w-[200px]">
-                          {occasion.desc}
-                        </span>
-                      )}
+                      </h3>
                     </div>
                     <div className="flex-shrink-0 w-10 h-10 rounded-full border border-white/40 text-white flex items-center justify-center backdrop-blur-sm group-hover:bg-white group-hover:text-black group-hover:border-white transition-all duration-350 shadow-md">
                       <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
@@ -267,12 +263,9 @@ export function ShopByOccasion() {
 
               {/* Expanded Content (Visible on hover) */}
               <div className="opacity-0 translate-y-12 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-700 delay-100 flex flex-col items-start w-[320px] max-w-full">
-                <span className="font-serif text-[36px] text-white leading-none mb-3 drop-shadow-lg uppercase tracking-wider">
+                <h3 className="font-serif text-[32px] text-white leading-tight mb-8 drop-shadow-xl font-medium">
                   {occasion.label}
-                </span>
-                <p className="text-white/80 font-body text-[15px] italic font-light mb-8 line-clamp-1 truncate leading-relaxed">
-                  {occasion.desc}
-                </p>
+                </h3>
                 <div className="w-14 h-14 rounded-full border border-white text-white flex items-center justify-center backdrop-blur-md hover:bg-white hover:text-black transition-all duration-300">
                   <span className="material-symbols-outlined text-[24px]">arrow_forward</span>
                 </div>

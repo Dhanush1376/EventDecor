@@ -67,7 +67,7 @@ export class EventBookingCheckoutService {
 
     const session = await mongoose.startSession();
     session.startTransaction();
-    // eslint-disable-next-line unused-imports/no-unused-vars
+
     let booking;
 
     try {

@@ -41,6 +41,8 @@ export interface IOrder extends ISoftDeleted {
   items: IOrderItem[];
   shippingAddress: IShippingAddress;
   paymentMethod: string;
+  isCustomOrder?: boolean;
+  customOrderId?: mongoose.Types.ObjectId;
   paymentStatus:
     | 'pending'
     | 'processing'

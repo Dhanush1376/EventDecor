@@ -13,7 +13,9 @@ import { InventoryService } from '../services/InventoryService';
 import { WebhookDeadLetterService } from '../services/WebhookDeadLetterService';
 import { initHealthMonitorJob } from './healthMonitorJob';
 import { initBackupJobs } from './backupJob';
+import { initRestoreDrills } from './RestoreDrillJob';
 import { initDataMonitorJob } from './DataMonitorJob';
+import { runMediaIntegrityCheck } from './mediaIntegrityJob';
 
 export const initJobs = () => {
   if (process.env.ENABLE_CRON === 'false') {
@@ -31,6 +33,13 @@ export const initJobs = () => {
         { $pull: { revisionHistory: { modifiedAt: { $lt: thirtyDaysAgo } } } },
       );
       logger.info('CMS revision cleanup completed.');
+    });
+  });
+
+  // 1b. Media Integrity Check every night at 2 AM
+  cron.schedule('0 2 * * *', async () => {
+    await withCronLock('media-integrity-check', 7200, async () => {
+      await runMediaIntegrityCheck();
     });
   });
 
@@ -352,6 +361,9 @@ export const initJobs = () => {
 
   // 14. Database Backup (daily, weekly, monthly managed via backupJob)
   initBackupJobs();
+
+  // 14b. Automated Restore Drills
+  initRestoreDrills();
 
   // 15. Business Metrics Reporting (Hourly)
   cron.schedule('0 * * * *', async () => {

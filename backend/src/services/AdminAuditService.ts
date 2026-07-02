@@ -146,4 +146,26 @@ export class AdminAuditService {
       newValue: { status: newStatus, note },
     });
   }
+
+  /**
+   * Convenience method for logging custom order status changes.
+   */
+  static async logCustomOrderStatusChange(
+    actorId: string,
+    actorEmail: string,
+    customOrderId: string,
+    previousStatus: string,
+    newStatus: string,
+    note?: string,
+  ): Promise<void> {
+    await this.logAction({
+      actorId,
+      actorEmail,
+      entityType: 'CustomOrder',
+      entityId: customOrderId,
+      action: 'status_update',
+      previousValue: { status: previousStatus },
+      newValue: { status: newStatus, note },
+    });
+  }
 }
