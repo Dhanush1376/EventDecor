@@ -104,6 +104,7 @@ codebase_report.txt
 codebase_tree_report.txt
 temp.json
 audit_report_raw.json
+.audit-history/
 
 # Temp Dev Artifacts
 frontend/eslint-results.json

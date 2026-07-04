@@ -9,6 +9,7 @@
     "start:pm2": "pm2-runtime start ecosystem.config.js",
     "build": "tsc",
     "check-env": "ts-node --transpile-only scripts/validate_env.ts",
+    "create-indexes": "ts-node --transpile-only scripts/create_indexes.ts",
     "lint": "eslint src",
     "test": "cross-env NODE_ENV=test npm run build && cross-env NODE_ENV=test jest --coverage --runInBand --forceExit",
     "test:integration": "cross-env NODE_ENV=test jest --coverage --runInBand --forceExit"
