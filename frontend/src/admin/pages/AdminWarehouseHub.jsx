@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader, fadeUp, stagger } from '../components/AdminUIKit';
@@ -431,7 +431,7 @@ function GenericTaskView({
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get(endpoint);
@@ -443,11 +443,11 @@ function GenericTaskView({
     } finally {
       setLoading(false);
     }
-  };
+  }, [endpoint]);
 
   useEffect(() => {
     fetchTasks();
-  }, [endpoint]);
+  }, [endpoint, fetchTasks]);
 
   const handleAction = async (task) => {
     try {

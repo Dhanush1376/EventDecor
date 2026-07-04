@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { m as motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { PageHeader, fadeUp, stagger } from '../components/AdminUIKit';
+import { PageHeader, stagger } from '../components/AdminUIKit';
 
 import { AdminTeam } from './AdminTeam';
 import { AdminNotifications } from './AdminNotifications';

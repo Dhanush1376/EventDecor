@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader, fadeUp, stagger } from '../components/AdminUIKit';
@@ -337,7 +337,7 @@ function StageView({ stageId, title, icon, desc, color, bg }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchStageOrders = async () => {
+  const fetchStageOrders = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get('/api/v1/production/orders/active');
@@ -371,7 +371,7 @@ function StageView({ stageId, title, icon, desc, color, bg }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [stageId]);
 
   const handleAction = async (taskId, sku) => {
     try {
@@ -400,7 +400,7 @@ function StageView({ stageId, title, icon, desc, color, bg }) {
 
   useEffect(() => {
     fetchStageOrders();
-  }, [stageId]);
+  }, [stageId, fetchStageOrders]);
 
   return (
     <div className="flex-1 flex flex-col p-6 overflow-y-auto">

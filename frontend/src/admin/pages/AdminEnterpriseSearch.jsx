@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { PageHeader, fadeUp, stagger } from '../components/AdminUIKit';
 import api from '../../services/api';
@@ -49,9 +49,9 @@ export default function AdminEnterpriseSearch() {
     if (activeTab === 'analytics' && !stats) {
       fetchStats();
     }
-  }, [activeTab]);
+  }, [activeTab, stats, fetchStats]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       setStatsLoading(true);
       const res = await api.get('/api/v1/search/analytics/dashboard?days=30');
@@ -63,7 +63,7 @@ export default function AdminEnterpriseSearch() {
     } finally {
       setStatsLoading(false);
     }
-  };
+  }, []);
 
   const handleReindex = async () => {
     try {

@@ -1,5 +1,5 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { useCategories } from '../../hooks/useProductQueries';
@@ -50,7 +50,7 @@ export function AdminProducts() {
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
   // ─── Categories Logic ───
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setCategoriesLoading(true);
     try {
       const res = await api.get('/categories');
@@ -60,13 +60,13 @@ export function AdminProducts() {
     } finally {
       setCategoriesLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'categories' && categories.length === 0) {
       fetchCategories();
     }
-  }, [activeTab]);
+  }, [activeTab, categories.length, fetchCategories]);
 
   const handleToggleCategoryActive = async (id, currentStatus) => {
     try {

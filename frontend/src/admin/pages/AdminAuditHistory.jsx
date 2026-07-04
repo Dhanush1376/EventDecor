@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
-import { PageHeader, fadeUp, stagger, StatCard } from '../components/AdminUIKit';
+import { PageHeader, stagger, StatCard } from '../components/AdminUIKit';
 
 export function AdminAuditHistory({ hideHeader }) {
   const { auditLogs, clearAuditLogs, handleBackupDownload } = useAdmin();

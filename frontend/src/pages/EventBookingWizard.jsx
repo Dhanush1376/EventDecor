@@ -449,8 +449,8 @@ export function EventBookingWizard() {
                 key="step5"
                 handleFileUploadSim={handleFileUploadSim}
                 uploadedFileName={uploadedFileName}
-                simulateAiAnalysis={simulateAiAnalysis}
-                isAiAnalyzing={isAiAnalyzing}
+                simulateAiAnalysis={generateDesignInspiration}
+                isAiAnalyzing={isGeneratingDesign}
                 aiAnalysisResult={aiAnalysisResult}
               />
             )}
