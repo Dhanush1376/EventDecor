@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import asyncHandler from '../../utils/asyncHandler';
-import ApiError from '../../utils/ApiError';
 import ApiResponse from '../../utils/ApiResponse';
 import Fulfilment from '../../models/Fulfilment';
 import { Transaction } from '../../models/Transaction';
@@ -9,7 +8,7 @@ export const getMyTrackingTimeline = asyncHandler(async (req: Request, res: Resp
   const customerId = req.user!.id;
   const { transactionId } = req.query;
 
-  let query: any = { customer: customerId };
+  const query: any = { customer: customerId };
   if (transactionId) {
     query.transactionId = transactionId;
   }

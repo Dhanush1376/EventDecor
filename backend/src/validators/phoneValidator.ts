@@ -17,7 +17,7 @@ export class PhoneValidator {
     // 919876543210
     // 09876543210
     // 9876543210
-    const regex = /^(?:(?:\+|0{0,2})91(\s*[\-]\s*)?|[0]?)?[6-9]\d{9}$/;
+    const regex = /^(?:(?:\+|0{0,2})91(\s*-\s*)?|[0]?)?[6-9]\d{9}$/;
     return regex.test(cleaned);
   }
 
@@ -31,10 +31,10 @@ export class PhoneValidator {
     }
 
     // Strip everything except numbers and plus
-    let cleaned = raw.replace(/[^\d+]/g, '');
+    const cleaned = raw.replace(/[^\d+]/g, '');
 
-    let countryCode = '+91';
-    let national = '';
+    const countryCode = '+91';
+    let national: string;
 
     if (cleaned.startsWith('+91')) {
       national = cleaned.substring(3);

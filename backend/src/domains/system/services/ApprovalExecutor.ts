@@ -1,7 +1,6 @@
 import logger from '../../../config/logger';
 import ApprovalRequest, { IApprovalRequest } from '../models/ApprovalRequest';
 import mongoose from 'mongoose';
-import Order from '../../../models/Order';
 import Product from '../../../models/Product';
 
 type ApprovalHandler = (

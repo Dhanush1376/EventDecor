@@ -11,9 +11,10 @@ import { getSingularForm } from './queryParser';
  */
 export function buildNgrams(text: string): string[] {
   if (!text) return [];
-  // eslint-disable-next-line no-misleading-character-class
+
   const words = text
     .toLowerCase()
+    // eslint-disable-next-line no-misleading-character-class
     .replace(/[^\w\s\u0c00-\u0c7f\u0900-\u097f]/g, '')
     .split(/\s+/);
   const ngrams = new Set<string>();

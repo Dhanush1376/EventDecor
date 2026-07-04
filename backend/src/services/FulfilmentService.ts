@@ -1,4 +1,4 @@
-import mongoose, { Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { Fulfilment, ITrackingEvent } from '../models/Fulfilment';
 import { Transaction } from '../models/Transaction';
 import { SequenceGeneratorService } from './SequenceGeneratorService';

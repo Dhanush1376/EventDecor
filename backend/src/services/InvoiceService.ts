@@ -1,4 +1,4 @@
-import mongoose, { Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { Invoice, IInvoiceLineItem } from '../models/Invoice';
 import { Transaction } from '../models/Transaction';
 import { SequenceGeneratorService } from './SequenceGeneratorService';
