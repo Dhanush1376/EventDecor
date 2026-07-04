@@ -50,6 +50,7 @@ export const CartEmptyState = ({ activeCartMode }) => {
             horizontalScroll={true}
             compact={true}
             rentalOnly={false}
+            hideMandala={true}
           />
         </React.Suspense>
       </div>

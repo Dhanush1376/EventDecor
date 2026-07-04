@@ -420,6 +420,7 @@ export function CartView({ isEmbedded = false }) {
                     horizontalScroll={true}
                     compact={true}
                     rentalOnly={false}
+                    hideMandala={true}
                   />
                 </React.Suspense>
               </div>

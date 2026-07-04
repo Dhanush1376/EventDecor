@@ -20,6 +20,7 @@ export function RecommendationSystem({
   compact = false,
   horizontalScroll = false,
   rentalOnly = false,
+  hideMandala = false,
 }) {
   const { isAuthenticated } = useAuth();
   const [shouldFetch, setShouldFetch] = useState(false);
@@ -153,13 +154,15 @@ export function RecommendationSystem({
       {/* Subtle Glow Accent */}
       <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none z-0" />
 
-      <MandalaArtDecor
-        variant={3}
-        size={compact ? 350 : 600}
-        opacity={0.06}
-        className="absolute -bottom-[100px] -left-[100px] lg:-bottom-[150px] lg:-left-[150px] pointer-events-none z-0"
-        spinDuration={180}
-      />
+      {!hideMandala && (
+        <MandalaArtDecor
+          variant={3}
+          size={compact ? 350 : 600}
+          opacity={0.06}
+          className="absolute -bottom-[100px] -left-[100px] lg:-bottom-[150px] lg:-left-[150px] pointer-events-none z-0"
+          spinDuration={180}
+        />
+      )}
 
       <div className="max-w-max-width mx-auto px-4 lg:px-6 lg:px-8 relative z-10">
         {!compact && !hideHeader && (
