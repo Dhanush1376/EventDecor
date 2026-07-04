@@ -323,13 +323,6 @@ const ReturnRequestSchema = new Schema<IReturnRequest>(
 );
 
 ReturnRequestSchema.index({ status: 1, priority: 1, createdAt: 1 });
-ReturnRequestSchema.index(
-  { orderId: 1, 'items.productId': 1 },
-  {
-    unique: true,
-    partialFilterExpression: { status: { $nin: ['cancelled', 'rejected', 'completed'] } },
-  },
-);
 
 ReturnRequestSchema.plugin(SoftDeletePlugin);
 ReturnRequestSchema.plugin(ForensicAuditPlugin);

@@ -21,7 +21,6 @@ const SearchPinSchema = new Schema<ISearchPin>(
   },
 );
 
-SearchPinSchema.index({ keyword: 1 });
 SearchPinSchema.index({ isActive: 1 });
 
 export default mongoose.model<ISearchPin>('SearchPin', SearchPinSchema);
