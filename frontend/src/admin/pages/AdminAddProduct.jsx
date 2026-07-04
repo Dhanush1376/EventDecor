@@ -209,7 +209,7 @@ export function AdminAddProduct({ editId }) {
       <div className="admin-card p-4 border border-[var(--admin-border)]/80 shadow-[var(--admin-shadow-sm)] lg:block hidden overflow-x-auto">
         <div className="flex items-center justify-between min-w-[700px] px-2">
           {WIZARD_STEPS.map((step, index) => {
-            const isCompleted = isEditMode || index < currentStep;
+            const isCompleted = index < currentStep;
             const isActive = index === currentStep;
 
             return (
@@ -217,7 +217,7 @@ export function AdminAddProduct({ editId }) {
                 <button
                   type="button"
                   onClick={() => {
-                    if (isEditMode || index <= currentStep || isStepValid()) {
+                    if (index <= currentStep || isStepValid()) {
                       setCurrentStep(index);
                     } else {
                       toast.error('Please complete previous steps first');

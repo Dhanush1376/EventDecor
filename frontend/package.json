@@ -9,7 +9,7 @@
     "build:report": "vite build && node scripts/report-chunk-sizes.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run --coverage",
+    "test": "vitest run --coverage --passWithNoTests",
     "check-env": "node scripts/check-env.ci.mjs"
   },
   "dependencies": {

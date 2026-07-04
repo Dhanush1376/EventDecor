@@ -240,7 +240,7 @@ export function TopNavbar() {
             <div className="flex-shrink-0 flex justify-start min-w-0">
               {isWishlistPage || isCartPage ? (
                 <button
-                  onClick={() => navigate(-1)}
+                  onClick={() => navigate('/collections')}
                   className="group flex items-center gap-2 shrink-0 cursor-pointer"
                 >
                   <span

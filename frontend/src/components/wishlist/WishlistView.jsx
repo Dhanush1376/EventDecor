@@ -11,7 +11,6 @@ import { QuickViewModal } from '../ui/QuickViewModal';
 import { WishlistPageSkeleton } from '../ui/Skeleton';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { useUserProfile, useUserAddresses, useAddressMutations } from '../../hooks/useUserQueries';
-import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 
 export function WishlistView({ isEmbedded = false }) {
   const { items, _removeItem, _toggleItem, loading: wishlistLoading } = useWishlist();
@@ -236,13 +235,6 @@ export function WishlistView({ isEmbedded = false }) {
 
       <div className={containerClasses}>
         <div className="relative z-0">
-          <MandalaArtDecor
-            variant={4}
-            size={350}
-            opacity={0.08}
-            className="-top-10 right-0 z-[-1]"
-            spinDuration={250}
-          />
           {/* Header - Hidden when empty */}
           {enhancedItems.length > 0 && (
             <>

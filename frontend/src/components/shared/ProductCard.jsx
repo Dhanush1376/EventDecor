@@ -131,16 +131,7 @@ export const ProductCard = React.memo(function ProductCard({
     : strikingPrice
       ? parseNumericPrice(strikingPrice)
       : 0;
-  const numericOldPrice =
-    itemType === 'event'
-      ? parsedOldPrice > numericPrice
-        ? parsedOldPrice
-        : 0
-      : parsedOldPrice > numericPrice
-        ? parsedOldPrice
-        : numericPrice
-          ? Math.round(numericPrice * 1.25)
-          : 0;
+  const numericOldPrice = parsedOldPrice > numericPrice ? parsedOldPrice : 0;
 
   const discount =
     numericOldPrice > numericPrice
