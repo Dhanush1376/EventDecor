@@ -3,7 +3,15 @@ import path from 'path';
 import dotenv from 'dotenv';
 
 // Load the local .env files that will be synced to Railway
-const envConfig = dotenv.parse(fs.readFileSync(path.resolve(__dirname, '../.env.local')));
+let envConfig: Record<string, string> = {};
+try {
+  const envPath = path.resolve(__dirname, '../.env.local');
+  if (fs.existsSync(envPath)) {
+    envConfig = dotenv.parse(fs.readFileSync(envPath));
+  }
+} catch (err) {
+  // Ignore error if file doesn't exist or can't be read
+}
 
 const requiredVars = [
   'MONGO_URI',
