@@ -205,14 +205,13 @@ class DatabaseManager {
       autoIndex: process.env.NODE_ENV !== 'production',
       maxPoolSize: this.maxPoolSize,
       minPoolSize: this.minPoolSize,
-      serverSelectionTimeoutMS: 30000, // Increased for slower networks / sleeping clusters
-      socketTimeoutMS: 30000, // Clean up hung sockets after 30s
-      heartbeatFrequencyMS: 10000, // Perform keep-alive check every 10s
-      maxIdleTimeMS: 30000, // Release idle sockets after 30s to conserve database resources
-      waitQueueTimeoutMS: 10000, // How long to wait for connection pool slot before failing
-      // family: 4, // Commented out to prevent DNS resolution issues on Windows/IPv6 setups
-      bufferCommands: false, // Disable buffering to fail-fast during transient database issues
-      compressors: ['zstd', 'snappy'], // Enable wire protocol network compression
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      heartbeatFrequencyMS: 10000,
+      maxIdleTimeMS: 270000, // 4.5 minutes (safely below 5m NAT drop)
+      waitQueueTimeoutMS: 10000,
+      bufferCommands: true, // Enable buffering to ride over transient connection drops
+      compressors: ['zstd', 'snappy'],
       retryReads: true,
       retryWrites: true,
       serverApi: { version: '1' as const, strict: false, deprecationErrors: true },
