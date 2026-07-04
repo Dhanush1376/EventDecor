@@ -4,8 +4,8 @@ import { m as motion } from 'framer-motion';
 export function AiDesignStep({
   handleFileUploadSim,
   uploadedFileName,
-  simulateAiAnalysis,
-  isAiAnalyzing,
+  generateDesignInspiration,
+  isGeneratingDesign,
   aiAnalysisResult,
 }) {
   return (
@@ -20,8 +20,9 @@ export function AiDesignStep({
           Custom Decor Recommendations & Moodboards
         </h3>
         <p className="font-body text-black/45 text-[12px] lg:text-[13px]">
-          Upload your Pinterest moodboard, stage maps, or custom designs. Our AI model will
-          automatically analyze details, map color palettes, and draft preliminary pricing ranges.
+          Upload your Pinterest moodboard, stage maps, or custom designs. Our blueprint generator
+          will process the details, map color palettes, and draft preliminary pricing ranges based
+          on your selections.
         </p>
       </div>
 
@@ -54,18 +55,18 @@ export function AiDesignStep({
 
           <button
             type="button"
-            onClick={simulateAiAnalysis}
-            disabled={isAiAnalyzing}
+            onClick={generateDesignInspiration}
+            disabled={isGeneratingDesign}
             className="w-full bg-stone-900 text-white py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors"
           >
-            {isAiAnalyzing ? 'Analyzing Blueprints...' : 'Simulate AI Analysis'}
+            {isGeneratingDesign ? 'Generating Blueprints...' : 'Generate Design Inspiration'}
           </button>
         </div>
 
         {/* AI Analysis Result Output */}
         <div className="lg:col-span-7">
           <div className="bg-[#FAF9F6] rounded-[24px] border border-black/5 p-6 min-h-[220px] flex flex-col justify-center relative overflow-hidden">
-            {isAiAnalyzing ? (
+            {isGeneratingDesign ? (
               <div className="space-y-4 text-center py-6">
                 <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
                   <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
@@ -75,10 +76,11 @@ export function AiDesignStep({
                 </div>
                 <div className="space-y-1.5">
                   <span className="font-label text-[9px] uppercase tracking-[0.25em] text-primary font-bold block animate-pulse">
-                    SIRI ARTS AI DESIGN ASSISTANT
+                    SIRI ARTS DESIGN GENERATOR
                   </span>
                   <p className="font-body text-black/50 text-xs">
-                    Analyzing spatial layers, garland structures, and color swatches...
+                    Generating spatial layers, garland structures, and color swatches based on
+                    parameters...
                   </p>
                 </div>
               </div>
@@ -168,7 +170,7 @@ export function AiDesignStep({
                   upload_file
                 </span>
                 <p className="font-body text-xs text-black/40 max-w-xs mx-auto">
-                  Upload an inspiration visual above to launch the AI catalog comparator and
+                  Upload an inspiration visual above to launch the catalog comparator and
                   auto-populate customizations.
                 </p>
               </div>

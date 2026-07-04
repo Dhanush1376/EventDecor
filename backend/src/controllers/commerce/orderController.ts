@@ -13,6 +13,7 @@ import ApiResponse from '../../utils/ApiResponse';
 import Order from '../../models/Order';
 import { STAFF_ROLES } from '../../config/adminConfig';
 import { AdminAuditService } from '../../services/AdminAuditService';
+import { OrderTimelineService } from '../../domains/search/services/OrderTimelineService';
 
 export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   const idempotencyKey = req.headers['idempotency-key'] as string;
@@ -69,7 +70,7 @@ export const updateOrderStatus = asyncHandler(async (req: Request, res: Response
 
   // We need the previous status for the audit log
   const Order = require('../../models/Order').default;
-  const existingOrder = await Order.findById(req.params.id);
+  const existingOrder = await Order.findById(req.params.id).lean();
   const previousStatus = existingOrder ? existingOrder.orderStatus : 'unknown';
 
   const order = await OrderFulfillmentService.updateOrderStatus(
@@ -204,7 +205,7 @@ export const updateOrderNotes = asyncHandler(async (req: Request, res: Response)
   const { notes } = req.body;
 
   // Authorization: only the order owner or admin staff may update notes
-  const existingOrder = await Order.findById(req.params.id);
+  const existingOrder = await Order.findById(req.params.id).lean();
   if (!existingOrder) throw new ApiError(404, 'Order not found');
   if (
     existingOrder.user.toString() !== req.user!.id &&
@@ -236,4 +237,10 @@ export const updateOrderNotes = asyncHandler(async (req: Request, res: Response)
   }
 
   res.status(200).json(new ApiResponse(true, 'Order notes updated', order));
+});
+
+export const getOrderTimeline = asyncHandler(async (req: Request, res: Response) => {
+  const orderId = req.params.id as string;
+  const timeline = await OrderTimelineService.getOrderTimeline(orderId);
+  res.status(200).json(new ApiResponse(true, 'Order timeline fetched successfully', timeline));
 });

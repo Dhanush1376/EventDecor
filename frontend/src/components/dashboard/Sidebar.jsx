@@ -24,7 +24,7 @@ export function Sidebar() {
   } = useDashboard();
 
   const path = location.pathname;
-  let activeTab = 'profile';
+  let activeTab = null;
   if (path.includes('/orders')) activeTab = 'orders';
   else if (path.includes('/rentals')) activeTab = 'rentals';
   else if (path.includes('/events')) activeTab = 'bookings';
@@ -34,6 +34,7 @@ export function Sidebar() {
   else if (path.includes('/shopping-bag')) activeTab = 'shopping-bag';
   else if (path.includes('/wallet')) activeTab = 'loyalty';
   else if (path.includes('/returns')) activeTab = 'returns';
+  else if (path.includes('/profile')) activeTab = 'profile';
 
   const handleTabClick = (tabName, route) => {
     navigate(route);

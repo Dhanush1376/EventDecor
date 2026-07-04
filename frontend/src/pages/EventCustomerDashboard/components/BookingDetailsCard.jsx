@@ -1,34 +1,29 @@
 export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
   return (
-    <div className="bg-surface-bright rounded-lg border border-outline-variant/40 p-6 space-y-6 shadow-xs relative overflow-hidden text-left">
-      <div className="flex flex-col lg:flex-row justify-between items-start border-b border-black/5 pb-5 gap-4 lg:gap-0">
-        <div className="space-y-1">
-          <span className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[12px]">event_available</span>
-            Booking Details
-          </span>
-          <h2 className="font-bold text-[18px] text-on-surface tracking-tight">
-            {selectedBooking.title}
-          </h2>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs text-left font-body">
+      <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center">
+        <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-[14px]">event_available</span>
+          Booking Details
+        </h2>
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setIsMobileChatOpen(true)}
-            className="lg:hidden flex items-center justify-center gap-1.5 bg-[#2A2927] hover:bg-black text-white px-4 py-2 rounded-[32px] font-bold text-[9px] uppercase tracking-widest shadow-sm cursor-pointer transition-colors border-0"
+            className="lg:hidden flex items-center justify-center gap-1.5 text-primary hover:text-on-surface transition-colors border-0 bg-transparent"
           >
             <span className="material-symbols-outlined text-[14px]">forum</span>
-            Chat
+            <span className="text-[9px] uppercase tracking-widest font-bold">Chat</span>
           </button>
-          <span className="bg-surface-bright border border-outline-variant/40 text-secondary px-4 py-2 rounded-[32px] font-bold text-[9px] uppercase tracking-widest shadow-sm flex items-center justify-center">
+          <span className="text-[9px] text-secondary font-mono tracking-wider">
             ID: {selectedBooking._id?.substring(18).toUpperCase()}
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-4">
         <div className="space-y-1">
-          <span className="text-[8px] font-bold uppercase tracking-widest text-secondary block">
+          <span className="text-[9px] uppercase tracking-widest text-secondary block font-medium">
             Event Style
           </span>
           <span className="text-on-surface font-semibold text-[11px] capitalize block">
@@ -36,7 +31,7 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
           </span>
         </div>
         <div className="space-y-1">
-          <span className="text-[8px] font-bold uppercase tracking-widest text-secondary block">
+          <span className="text-[9px] uppercase tracking-widest text-secondary block font-medium">
             Event Date
           </span>
           <span className="text-on-surface font-semibold text-[11px] block">
@@ -49,7 +44,7 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
           </span>
         </div>
         <div className="space-y-1">
-          <span className="text-[8px] font-bold uppercase tracking-widest text-secondary block">
+          <span className="text-[9px] uppercase tracking-widest text-secondary block font-medium">
             Timing Window
           </span>
           <span className="text-on-surface font-semibold text-[11px] block">
@@ -57,8 +52,8 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
           </span>
         </div>
 
-        <div className="space-y-2 col-span-2 sm:col-span-3 lg:col-span-2 bg-surface-container-lowest p-4 rounded-lg border border-outline-variant/30">
-          <span className="text-[8px] font-bold uppercase tracking-widest text-secondary block">
+        <div className="space-y-2 col-span-2 sm:col-span-3 lg:col-span-2 bg-surface-container-lowest p-4 rounded-lg border border-outline-variant/20">
+          <span className="text-[9px] uppercase tracking-widest text-secondary block font-medium">
             Setup Destination Address
           </span>
           {selectedBooking.venue?.name && (
@@ -96,7 +91,7 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
         </div>
 
         <div className="space-y-1">
-          <span className="text-[8px] font-bold uppercase tracking-widest text-secondary block">
+          <span className="text-[9px] uppercase tracking-widest text-secondary block font-medium">
             Setup Type
           </span>
           <span className="text-on-surface font-semibold text-[11px] block">

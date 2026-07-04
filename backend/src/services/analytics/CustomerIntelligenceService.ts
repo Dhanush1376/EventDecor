@@ -556,7 +556,7 @@ export class CustomerIntelligenceService {
         name: p.title,
         price: p.price,
         image: img,
-        confidence: Math.floor(Math.random() * (90 - 70 + 1) + 70), // 70-90 heuristic
+        confidence: 85 - (p.price % 15), // Deterministic heuristic based on price
       };
     });
 

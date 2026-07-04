@@ -6,6 +6,7 @@ import { MANDALA_VARIANT_URLS } from '../../constants/mandalaAssets';
 
 export function SearchDiscovery({
   discoveryData,
+  trendingSearches,
   recentSearches,
   setQuery,
   onExecuteSearch,
@@ -102,6 +103,33 @@ export function SearchDiscovery({
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Trending Searches Pills */}
+        {trendingSearches && trendingSearches.length > 0 && (
+          <div className={`mb-3 ${isMobile ? 'px-5' : 'px-6 lg:px-8.5'}`}>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 flex items-center gap-1.5 mb-2.5">
+              <span className="material-symbols-outlined text-[14px] text-orange-500">
+                trending_up
+              </span>
+              Popular Searches
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {trendingSearches.slice(0, 6).map((term, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setQuery(term.query);
+                    onExecuteSearch(term.query);
+                  }}
+                  className="px-3.5 py-1.5 rounded-full bg-stone-100 hover:bg-primary/10 text-stone-700 hover:text-primary text-[12px] font-medium transition-colors border border-stone-200/50 hover:border-primary/20 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[14px] opacity-50">search</span>
+                  {term.query}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

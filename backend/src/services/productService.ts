@@ -8,10 +8,14 @@ import { categoryCache, MemoryCache } from '../utils/cache/MemoryCache';
 import redisClient from '../utils/cache/redis';
 import { MediaService } from './media/MediaService';
 import { analyzeQueryWithAI, escapeRegex, getMatchingProductCategory } from './searchService';
-import { CategoryService } from './CategoryService';
 import Category from '../models/Category';
+import Coupon from '../models/Coupon';
+import { CategoryService } from './CategoryService';
 import ApiError from '../utils/ApiError';
 import { ChangeTracker } from '../utils/ChangeTracker';
+import { generateProductUuid } from '../shared/utils/uuidGenerator';
+import { QRCodeService } from '../shared/services/barcode/QRCodeService';
+import { emitAdminEvent, emitGlobalUserEvent } from '../socket';
 
 const productCountCache = new MemoryCache({
   defaultTtlMs: 60 * 1000,
@@ -231,7 +235,7 @@ class ProductService {
       if (collections.length > 0) {
         const matchedCats = await Category.find({
           $or: [{ slug: { $in: collections } }, { name: { $in: collections } }],
-        });
+        }).lean();
         if (matchedCats.length > 0) {
           const catIds = matchedCats.map((c) => c._id);
           filter.$or = filter.$or || [];
@@ -246,8 +250,8 @@ class ProductService {
     // Dynamic Filters (e.g. ?Color=Red,Blue or ?Size=M)
     const dynamicFilterOrs: any[] = [];
     Object.keys(dynamicFilters).forEach((key) => {
-      // Ignore pagination and known sorts
-      if (['page', 'limit', 'skip', 'sort'].includes(key)) return;
+      // Ignore pagination and known sorts and special params
+      if (['page', 'limit', 'skip', 'sort', 'coupon'].includes(key)) return;
 
       const values = String(dynamicFilters[key])
         .split(',')
@@ -279,6 +283,41 @@ class ProductService {
     if (dynamicFilterOrs.length > 0) {
       filter.$and = filter.$and || [];
       filter.$and.push(...dynamicFilterOrs);
+    }
+
+    if (dynamicFilters.coupon) {
+      const foundCoupon = await Coupon.findOne({
+        code: String(dynamicFilters.coupon).toUpperCase(),
+        isActive: true,
+      }).lean();
+      if (foundCoupon) {
+        if (foundCoupon.targetType === 'categories' && foundCoupon.targetCategories?.length > 0) {
+          const matchedCats = await Category.find({
+            $or: [
+              { slug: { $in: foundCoupon.targetCategories } },
+              { name: { $in: foundCoupon.targetCategories } },
+            ],
+          }).lean();
+          if (matchedCats.length > 0) {
+            const catIds = matchedCats.map((c) => c._id);
+            filter.$or = filter.$or || [];
+            filter.$or.push(
+              { primaryCategory: { $in: catIds } },
+              { secondaryCategories: { $in: catIds } },
+            );
+          }
+        } else if (
+          foundCoupon.targetType === 'products' &&
+          foundCoupon.targetProductIds?.length > 0
+        ) {
+          filter._id = { $in: foundCoupon.targetProductIds };
+        }
+
+        if (foundCoupon.minOrderAmount > 0) {
+          filter.price = filter.price || {};
+          filter.price.$gte = Math.max(filter.price.$gte || 0, foundCoupon.minOrderAmount);
+        }
+      }
     }
 
     let correctedQuery: string | undefined;
@@ -333,7 +372,7 @@ class ProductService {
       ];
 
       // Add category text search matching
-      const matchingCats = await Category.find({ name: { $in: regexPatterns } });
+      const matchingCats = await Category.find({ name: { $in: regexPatterns } }).lean();
       if (matchingCats.length > 0) {
         const catIds = matchingCats.map((c) => c._id);
         searchOr.push({ primaryCategory: { $in: catIds } } as any);
@@ -345,6 +384,12 @@ class ProductService {
         searchOr.push({
           tags: { $in: aiAnalysis.colors.map((c) => new RegExp(escapeRegex(c), 'i')) },
         });
+      }
+
+      if (filter.$or) {
+        filter.$and = filter.$and || [];
+        filter.$and.push({ $or: filter.$or });
+        delete filter.$or;
       }
 
       if (filter.$and) {
@@ -491,44 +536,150 @@ class ProductService {
   }
 
   static async createProduct(data: Partial<IProduct>, actor?: any) {
-    normalizeProductImages(data);
-    await resolveCategories(data);
-    enforceSmartPricing(data);
-    const product = new Product(data);
-    const saved = await product.save();
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
 
-    const allImages = saved.images || [];
-    await MediaService.syncReferences('Product', saved._id, allImages, 'images');
-    if (saved.imageSrc) {
-      await MediaService.syncReferences('Product', saved._id, [saved.imageSrc], 'imageSrc');
+      normalizeProductImages(data);
+      await resolveCategories(data);
+      enforceSmartPricing(data);
+
+      if (!data.productUuid) {
+        data.productUuid = generateProductUuid();
+      }
+
+      if (!data.sku) {
+        const categoryPrefix =
+          data.primaryCategory && typeof data.primaryCategory === 'string'
+            ? (data.primaryCategory as string).substring(0, 3).toUpperCase()
+            : 'PRD';
+        data.sku = `${categoryPrefix}-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+      }
+
+      if (!data.barcode) {
+        data.barcode = data.sku;
+      }
+
+      if (!data.qrCode) {
+        data.qrCode = QRCodeService.generateProductQrPayload(data.productUuid, data.sku);
+      }
+
+      // Initialize inventory object
+      if (!data.inventory) {
+        data.inventory = {
+          available: Number(data.stock) || 0,
+          reserved: Number(data.reservedStock) || 0,
+          production: 0,
+          packing: 0,
+          transit: 0,
+          rental: Number(data.rentalStock) || 0,
+          maintenance: 0,
+          returned: 0,
+          damaged: 0,
+          lost: 0,
+          qualityHold: 0,
+        };
+      }
+
+      const product = new Product(data);
+      const saved = await product.save({ session });
+
+      // Verify the write succeeded
+      const verified = await Product.findById(saved._id).session(session).lean();
+      if (!verified) {
+        throw new Error(
+          `Product create verification failed: document ${saved._id} not found after save`,
+        );
+      }
+
+      const allImages = saved.images || [];
+      await MediaService.syncReferences('Product', saved._id, allImages, 'images');
+      if (saved.imageSrc) {
+        await MediaService.syncReferences('Product', saved._id, [saved.imageSrc], 'imageSrc');
+      }
+
+      await ChangeTracker.trackChange(
+        'Product',
+        saved._id,
+        null,
+        saved.toObject(),
+        actor,
+        'create',
+      );
+
+      if (saved.showInGallery) {
+        await this.syncToGallery(saved, actor);
+      }
+
+      await session.commitTransaction();
+
+      try {
+        emitAdminEvent('product_update', { productId: saved._id });
+        emitGlobalUserEvent('product_update', { productId: saved._id });
+      } catch (e) {
+        logger.warn('Failed to emit product update event', e);
+      }
+
+      logger.info('[CATEGORY CACHE] Purging distinct categories cache due to new product creation');
+      categoryCache.delete('product:distinct_categories');
+      productCountCache.clear();
+      await bumpPublicCacheVersion();
+
+      return saved;
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
     }
-
-    await ChangeTracker.trackChange('Product', saved._id, null, saved.toObject(), actor, 'create');
-
-    if (saved.showInGallery) {
-      await this.syncToGallery(saved, actor);
-    }
-    logger.info('[CATEGORY CACHE] Purging distinct categories cache due to new product creation');
-    categoryCache.delete('product:distinct_categories');
-    productCountCache.clear();
-    await bumpPublicCacheVersion();
-    return saved;
   }
 
-  static async updateProduct(id: string, data: Partial<IProduct>, actor?: any) {
-    const oldProduct = await Product.findById(id).populate('primaryCategory');
-    if (oldProduct) {
+  static async updateProduct(id: string, data: Partial<IProduct> & { __v?: number }, actor?: any) {
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+
+      const oldProduct = await Product.findById(id).populate('primaryCategory').session(session);
+      if (!oldProduct) {
+        await session.abortTransaction();
+        return null;
+      }
+
+      // Optimistic concurrency: check version matches what the client sent
+      if (data.__v !== undefined && data.__v !== oldProduct.__v) {
+        await session.abortTransaction();
+        throw new ApiError(
+          409,
+          'This product was modified by another user. Please refresh and try again.',
+        );
+      }
+
       normalizeProductImages(data, oldProduct as IProduct);
       await resolveCategories(data);
       enforceSmartPricing(data, oldProduct as IProduct);
-    }
 
-    const product = await Product.findByIdAndUpdate(id, data, {
-      returnDocument: 'after',
-      runValidators: true,
-    });
+      const product = await Product.findOneAndUpdate(
+        { _id: id, __v: oldProduct.__v },
+        { ...data, $inc: { __v: 1 } },
+        { returnDocument: 'after', runValidators: true, session },
+      );
 
-    if (oldProduct && product) {
+      if (!product) {
+        await session.abortTransaction();
+        throw new ApiError(
+          409,
+          'This product was modified by another user. Please refresh and try again.',
+        );
+      }
+
+      // Verify the write succeeded
+      const verified = await Product.findById(product._id).session(session).lean();
+      if (!verified) {
+        throw new Error(
+          `Product update verification failed: document ${product._id} not found after save`,
+        );
+      }
+
       await ChangeTracker.trackChange(
         'Product',
         product._id,
@@ -546,65 +697,129 @@ class ProductService {
       } else {
         await MediaService.syncReferences('Product', product._id, [], 'imageSrc');
       }
-    }
 
-    if (product) {
       if (product.showInGallery) {
         await this.syncToGallery(product, actor);
       } else {
         await this.removeFromGallery(product._id, actor);
       }
+
+      await session.commitTransaction();
+
+      try {
+        emitAdminEvent('product_update', { productId: product._id });
+        emitGlobalUserEvent('product_update', { productId: product._id });
+        if (oldProduct.stock !== product.stock) {
+          emitAdminEvent('stock_update', { productId: product._id, stock: product.stock });
+          emitGlobalUserEvent('stock_update', { productId: product._id, stock: product.stock });
+        }
+      } catch (e) {
+        logger.warn('Failed to emit product update event', e);
+      }
+
+      logger.info('[CATEGORY CACHE] Purging distinct categories cache due to product update');
+      categoryCache.delete('product:distinct_categories');
+      productCountCache.clear();
+      await bumpPublicCacheVersion();
+      return product;
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
     }
-    logger.info('[CATEGORY CACHE] Purging distinct categories cache due to product update');
-    categoryCache.delete('product:distinct_categories');
-    productCountCache.clear();
-    await bumpPublicCacheVersion();
-    return product;
   }
 
   static async deleteProduct(id: string, actor?: any) {
-    const product = await Product.findById(id);
-    if (!product) return null;
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
 
-    // Soft delete
-    await product.softDelete(actor, 'Deleted via productService');
+      const product = await Product.findById(id).session(session);
+      if (!product) {
+        await session.abortTransaction();
+        return null;
+      }
 
-    // Clean up gallery
-    await this.removeFromGallery(product._id, actor);
+      // Soft delete
+      product.isDeleted = true;
+      product.deletedAt = new Date();
+      product.deletedBy = actor
+        ? {
+            userId: actor.id || actor._id?.toString(),
+            email: actor.email,
+            role: actor.role,
+          }
+        : undefined;
+      product.deletionReason = 'Deleted via productService';
+      await product.save({ session });
 
-    // Clean up User wishlist, cart, and recentlyViewed references to prevent orphan/dead links
-    const User = require('../models/User').default || require('../models/User');
-    User.updateMany(
-      {
-        $or: [
-          { wishlist: product._id },
-          { 'cart.product': product._id },
-          { 'recentlyViewed.product': product._id },
-        ],
-      },
-      {
-        $pull: {
-          wishlist: product._id,
-          cart: { product: product._id },
-          recentlyViewed: { product: product._id },
+      // Verify the write succeeded
+      const verifiedDelete = await Product.findOne({ _id: id, isDeleted: true }).session(session);
+      if (!verifiedDelete) {
+        throw new Error(`Delete verification failed: Product ${id} was not marked as deleted`);
+      }
+
+      // Clean up gallery
+      await this.removeFromGallery(product._id, actor);
+
+      // Clean up User wishlist, cart, and recentlyViewed references to prevent orphan/dead links
+      const User = require('../models/User').default || require('../models/User');
+      await User.updateMany(
+        {
+          $or: [
+            { wishlist: product._id },
+            { 'cart.product': product._id },
+            { 'recentlyViewed.product': product._id },
+          ],
         },
-      },
-    ).catch((err: any) =>
-      logger.error(`Failed to clean up user references for deleted product ${id}: ${err}`),
-    );
+        {
+          $pull: {
+            wishlist: product._id,
+            cart: { product: product._id },
+            recentlyViewed: { product: product._id },
+          },
+        },
+        { session },
+      );
 
-    // Soft delete product reviews
-    const Review = require('../models/Review').default || require('../models/Review');
-    const reviews = await Review.find({ product: product._id });
-    for (const review of reviews) {
-      await review.softDelete(actor, 'Cascading soft delete from product');
+      // Soft delete product reviews
+      const Review = require('../models/Review').default || require('../models/Review');
+      const reviews = await Review.find({ product: product._id }).session(session);
+      for (const review of reviews) {
+        review.isDeleted = true;
+        review.deletedAt = new Date();
+        review.deletedBy = actor
+          ? {
+              userId: actor.id || actor._id?.toString(),
+              email: actor.email,
+              role: actor.role,
+            }
+          : undefined;
+        review.deletionReason = 'Cascading soft delete from product';
+        await review.save({ session });
+      }
+
+      await session.commitTransaction();
+
+      try {
+        emitAdminEvent('product_update', { productId: product._id });
+        emitGlobalUserEvent('product_update', { productId: product._id });
+      } catch (e) {
+        logger.warn('Failed to emit product update event', e);
+      }
+
+      logger.info('[CATEGORY CACHE] Purging distinct categories cache due to product deletion');
+      categoryCache.delete('product:distinct_categories');
+      productCountCache.clear();
+      await bumpPublicCacheVersion();
+      return product;
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
     }
-
-    logger.info('[CATEGORY CACHE] Purging distinct categories cache due to product deletion');
-    categoryCache.delete('product:distinct_categories');
-    productCountCache.clear();
-    await bumpPublicCacheVersion();
-    return product;
   }
 
   static async syncToGallery(product: any, _actor?: any) {

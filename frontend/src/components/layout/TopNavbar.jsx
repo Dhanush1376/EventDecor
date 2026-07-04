@@ -214,7 +214,7 @@ export function TopNavbar() {
       <nav
         className={`top-navbar fixed top-0 w-full transition-all duration-500 ${
           isTransparent
-            ? 'bg-gradient-to-b from-black/50 to-transparent border-transparent py-2'
+            ? 'bg-gradient-to-b from-black/90 via-black/40 to-transparent border-transparent py-2'
             : !isAtTop
               ? 'bg-surface/95 backdrop-blur-2xl border-b border-primary-container/20 py-1.5'
               : 'bg-surface/90 backdrop-blur-md py-2 border-b border-outline-variant/10'
@@ -298,9 +298,7 @@ export function TopNavbar() {
                         >
                           {link.label}
                           {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
-                            <span
-                              className={`ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]`}
-                            />
+                            <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]" />
                           )}
                           {active && (
                             <span
@@ -587,7 +585,7 @@ export function TopNavbar() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 250, mass: 0.8 }}
-              className="fixed right-0 top-0 bottom-0 w-3/4 max-w-[380px] h-full bg-surface-bright z-[120] lg:hidden px-6 py-6 flex flex-col overflow-y-auto overflow-x-hidden shadow-[-20px_0_60px_rgba(0,0,0,0.15)] border-l border-outline-variant/10"
+              className="fixed right-0 top-0 bottom-0 w-[85%] max-w-[450px] h-full bg-surface-bright z-[120] lg:hidden px-6 py-6 flex flex-col overflow-y-auto overflow-x-hidden shadow-[-20px_0_60px_rgba(0,0,0,0.15)] border-l border-outline-variant/10"
             >
               {/* Decorative Mandala Background - Positioned to bleed off the left edge */}
               <MandalaArtDecor
@@ -641,12 +639,12 @@ export function TopNavbar() {
                           }`}
                           to={link.href}
                         >
-                          {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
-                            <span className="w-[18px] h-[18px] rounded-full bg-[#d4af37] text-white text-[10px] font-mono flex items-center justify-center -mr-1 shadow-sm leading-none pt-0.5">
-                              {activeCustomOrdersCount}
-                            </span>
-                          )}
-                          <span className="text-right">{link.label}</span>
+                          <span className="text-right relative inline-block">
+                            {link.label}
+                            {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
+                              <span className="absolute top-1 -right-3.5 w-1.5 h-1.5 rounded-full bg-[#d4af37]" />
+                            )}
+                          </span>
                         </Link>
                       </motion.li>
                     );

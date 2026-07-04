@@ -13,8 +13,16 @@ export function AdminDashboardStats({ dashboardStats, pendingOrders, eventBookin
         value={formatCurrency(
           dashboardStats?.stats?.totalSales !== undefined ? dashboardStats.stats.totalSales : 0,
         )}
-        change="+15.4%"
-        changeType="up"
+        change={
+          dashboardStats?.stats?.revenueChange ? `${dashboardStats.stats.revenueChange}%` : ''
+        }
+        changeType={
+          dashboardStats?.stats?.revenueChange > 0
+            ? 'up'
+            : dashboardStats?.stats?.revenueChange < 0
+              ? 'down'
+              : ''
+        }
         domainColor="revenue"
         infoTooltip="Total gross revenue before refunds."
         onClick={() => navigate('/admin/payments')}
@@ -45,10 +53,16 @@ export function AdminDashboardStats({ dashboardStats, pendingOrders, eventBookin
         value={
           dashboardStats?.stats?.totalEvents !== undefined
             ? dashboardStats.stats.totalEvents
-            : eventBookings.filter((b) => b.status !== 'Cancelled').length
+            : eventBookings?.filter((b) => b.status !== 'Cancelled').length || 0
         }
-        change="+8.1%"
-        changeType="up"
+        change={dashboardStats?.stats?.eventsChange ? `${dashboardStats.stats.eventsChange}%` : ''}
+        changeType={
+          dashboardStats?.stats?.eventsChange > 0
+            ? 'up'
+            : dashboardStats?.stats?.eventsChange < 0
+              ? 'down'
+              : ''
+        }
         domainColor="orders"
         infoTooltip="Upcoming event consultations and setups."
         onClick={() => navigate('/admin/events')}
@@ -56,7 +70,9 @@ export function AdminDashboardStats({ dashboardStats, pendingOrders, eventBookin
         progress={
           Math.min(
             100,
-            Math.round((eventBookings.filter((b) => b.status !== 'Cancelled').length / 50) * 100),
+            Math.round(
+              ((eventBookings?.filter((b) => b.status !== 'Cancelled').length || 0) / 50) * 100,
+            ),
           ) || 5
         }
       />
@@ -67,8 +83,16 @@ export function AdminDashboardStats({ dashboardStats, pendingOrders, eventBookin
           ? dashboardStats.stats.totalCustomers
           : customers?.length || 0
         ).toLocaleString()}
-        change="+11.3%"
-        changeType="up"
+        change={
+          dashboardStats?.stats?.customersChange ? `${dashboardStats.stats.customersChange}%` : ''
+        }
+        changeType={
+          dashboardStats?.stats?.customersChange > 0
+            ? 'up'
+            : dashboardStats?.stats?.customersChange < 0
+              ? 'down'
+              : ''
+        }
         domainColor="users"
         infoTooltip="Registered customers and accounts."
         onClick={() => navigate('/admin/customers')}

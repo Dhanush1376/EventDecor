@@ -18,7 +18,7 @@ import app from './src/app';
 import connectDB from './src/config/db';
 import { ensureIndexes } from './src/config/ensureIndexes';
 import { generateSitemap } from './src/utils/sitemapGenerator';
-import { initSocket, getIO, emitAdminNotification } from './src/socket';
+import { initSocket, getIO, emitAdminNotification, clearBroadcastInterval } from './src/socket';
 import { initJobs } from './src/jobs/cronJobs';
 import { initRedis, closeRedisConnections, setRedisAlertHandler } from './src/utils/cache/redis';
 import { initWorkers, closeWorkers } from './src/jobs/workers';
@@ -109,27 +109,9 @@ process.on('unhandledRejection', (reason: any) => {
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
 
-const initializeServicesProgressively = async (httpServer: Server) => {
+const initializeNonCriticalServices = async (httpServer: Server) => {
   try {
     const bootStartTime = performance.now();
-    // 1. Connect to Database (retry internally, throw if fails)
-    logger.info('[STARTUP] Progressive Init: Connecting to MongoDB...');
-    await connectDB();
-    logger.info('[STARTUP] MongoDB connected successfully');
-
-    // Quick reset of fake reviews
-    try {
-      const db = mongoose.connection.db;
-      if (db) {
-        await db
-          .collection('showcasecollections')
-          .updateMany({}, { $set: { rating: 0, reviewCount: 0 } });
-        await db.collection('products').updateMany({}, { $set: { rating: 0, reviews: 0 } });
-        logger.info('Cleaned up fake static reviews in DB');
-      }
-    } catch (err) {
-      logger.error('Failed to cleanup fake reviews:', err);
-    }
 
     // 1.a Start Forensic Database Auditor
     startDbAuditor();
@@ -222,7 +204,12 @@ const startServer = async () => {
       process.exit(1);
     }
 
-    // 1. Start Express Server Immediately
+    // 1. Connect to MongoDB FIRST — server must not accept traffic until DB is ready
+    logger.info('[STARTUP] Connecting to MongoDB before accepting traffic...');
+    await connectDB();
+    logger.info('[STARTUP] MongoDB connected successfully');
+
+    // 2. Start Express Server
     server = app.listen(PORT, '0.0.0.0', () => {
       logger.info(
         `[STARTUP] Server listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`,
@@ -231,8 +218,8 @@ const startServer = async () => {
         process.send('ready');
       }
 
-      // Kick off background initialization AFTER port is bound
-      initializeServicesProgressively(server);
+      // Kick off non-critical initialization AFTER port is bound and DB is ready
+      initializeNonCriticalServices(server);
     });
 
     // 1b. Prevent Slowloris and resource exhaustion attacks
@@ -255,6 +242,7 @@ const startServer = async () => {
       try {
         // 1. Close Socket.io connections first
         try {
+          clearBroadcastInterval();
           const io = getIO();
           io.close();
           logger.info('Socket.io connections closed.');

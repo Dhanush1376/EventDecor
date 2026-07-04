@@ -34,8 +34,9 @@ const TABS = [
   { id: 'risk', label: 'Account Security' },
 ];
 
-export default function CustomerProfile360() {
-  const { customerId } = useParams();
+export default function CustomerProfile360({ customerId: propCustomerId, onClose }) {
+  const params = useParams();
+  const customerId = propCustomerId || params.customerId;
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -136,12 +137,21 @@ export default function CustomerProfile360() {
   return (
     <div className="p-6 max-w-[1600px] mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/admin/customers')}
-          className="admin-btn admin-btn-outline p-2 h-10 w-10 shrink-0 flex items-center justify-center"
-        >
-          <ArrowLeft size={24} strokeWidth={2.5} className="text-[var(--admin-text-primary)]" />
-        </button>
+        {onClose ? (
+          <button
+            onClick={onClose}
+            className="admin-btn-icon w-10 h-10 p-0 text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] shrink-0"
+          >
+            <ArrowLeft size={20} strokeWidth={2.5} />
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate('/admin/customers')}
+            className="admin-btn-icon w-10 h-10 p-0 text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] shrink-0"
+          >
+            <ArrowLeft size={20} strokeWidth={2.5} />
+          </button>
+        )}
         <div>
           <h1 className="text-2xl font-bold text-gray-900 leading-tight">Customer Profile</h1>
           <p className="text-sm text-gray-500">Everything you need to know about this customer.</p>

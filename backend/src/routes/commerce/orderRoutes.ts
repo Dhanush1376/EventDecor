@@ -13,6 +13,7 @@ import {
   sendCodOtp,
   verifyCodOtp,
   updateOrderNotes,
+  getOrderTimeline,
 } from '../../controllers/commerce/orderController';
 import {
   requireAuth,
@@ -105,5 +106,6 @@ router.patch(
 );
 
 router.get('/:id', requireAuth, getOrderById);
+router.get('/:id/timeline', requireAuth, getOrderTimeline);
 
 export default router;

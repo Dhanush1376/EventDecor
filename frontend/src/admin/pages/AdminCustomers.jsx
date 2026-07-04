@@ -16,6 +16,7 @@ import { EXTERNAL_URLS } from '../../config/constants';
 import { io as socketIO } from 'socket.io-client';
 import { getAccessToken } from '../../services/api';
 import { getApiRootUrl } from '../../config/apiConfig';
+import CustomerProfile360 from './CustomerProfile360';
 
 const StatCard = ({ title, value, icon, color }) => (
   <div className="bg-[var(--admin-surface)] p-5 rounded-xl border border-[var(--admin-border)] shadow-sm flex items-center justify-between">
@@ -41,6 +42,7 @@ export function AdminCustomers() {
 
   const [tierFilter, setTierFilter] = useState('All');
   const [page, setPage] = useState(1);
+  const [selectedCustomerId, setSelectedCustomerId] = useState(null);
 
   const [customers, setCustomers] = useState([]);
   const [meta, setMeta] = useState({});
@@ -194,33 +196,18 @@ export function AdminCustomers() {
 
       {/* Dynamic KPI Dashboard */}
       {!kpiLoading && kpi && (
-        <motion.div
-          variants={fadeUp}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
-        >
+        <motion.div variants={fadeUp} className="admin-grid-stats mb-6">
           <StatCard
-            title="Active Customers"
-            value={kpi.activeCustomers || 0}
-            icon="verified_user"
+            title="Total Customers"
+            value={meta.total || kpi.activeCustomers || 0}
+            icon="group"
             color="#4ade80"
           />
           <StatCard
-            title="Total Traffic"
-            value={kpi.trafficSources?.reduce((acc, curr) => acc + curr.sessions, 0) || 0}
-            icon="monitoring"
+            title="New This Week"
+            value={kpi.newCustomersThisWeek || 0}
+            icon="fiber_new"
             color="#3b82f6"
-          />
-          <StatCard
-            title="Cart Abandonment"
-            value={`${(kpi.cartAbandonmentRate || 0).toFixed(1)}%`}
-            icon="remove_shopping_cart"
-            color="#f87171"
-          />
-          <StatCard
-            title="Checkout Success"
-            value={`${(kpi.checkoutCompletionRate || 0).toFixed(1)}%`}
-            icon="shopping_cart_checkout"
-            color="#fbbf24"
           />
         </motion.div>
       )}
@@ -408,13 +395,13 @@ export function AdminCustomers() {
                     <span className="hidden sm:inline truncate">WhatsApp</span>
                   </a>
                   <button
-                    onClick={() => navigate(`/admin/customers/${c._id}`)}
+                    onClick={() => setSelectedCustomerId(c._id)}
                     className="admin-btn min-h-[36px] h-8 text-[10px] px-2 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)] justify-center gap-1.5 w-full transition-all"
                   >
                     <span className="material-symbols-outlined text-[14px] shrink-0">
                       visibility
                     </span>
-                    <span className="hidden sm:inline truncate">Profile</span>
+                    <span className="hidden sm:inline truncate">Quick View</span>
                   </button>
                 </div>
               </motion.div>
@@ -445,6 +432,30 @@ export function AdminCustomers() {
           </button>
         </div>
       )}
+      {/* Slide-over Profile */}
+      <AnimatePresence>
+        {selectedCustomerId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="w-full max-w-4xl h-full bg-[var(--admin-bg)] overflow-y-auto shadow-2xl"
+            >
+              <CustomerProfile360
+                customerId={selectedCustomerId}
+                onClose={() => setSelectedCustomerId(null)}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

@@ -16,7 +16,7 @@ export const getShowcases = asyncHandler(async (req: Request, res: Response) => 
 });
 
 export const getShowcaseById = asyncHandler(async (req: Request, res: Response) => {
-  const collection = await ShowcaseCollection.findById(req.params.id);
+  const collection = await ShowcaseCollection.findById(req.params.id).lean();
   if (!collection) throw new ApiError(404, 'Showcase collection not found');
   res.status(200).json(new ApiResponse(true, 'Showcase collection details', collection));
 });

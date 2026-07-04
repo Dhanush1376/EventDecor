@@ -176,6 +176,7 @@ export interface IPaymentSchedule {
 
 export interface ICustomOrder extends ISoftDeleted {
   orderId: string;
+  customer?: mongoose.Types.ObjectId;
   customerEmail: string;
   customerName: string;
   customerPhone?: string;

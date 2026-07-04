@@ -131,13 +131,30 @@ export class PaymentWebhookService {
       };
 
       try {
-        const { PaymentVerificationService } = require('./PaymentVerificationService');
-        await PaymentVerificationService.verifyPayment(paymentData, 'system', 'admin', 'webhook');
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        try {
+          const { PaymentVerificationService } = require('./PaymentVerificationService');
+          await PaymentVerificationService.verifyPayment(
+            paymentData,
+            'system',
+            'admin',
+            'webhook',
+            session,
+          );
 
-        await PaymentWebhookEvent.updateOne(
-          { razorpayEventId: eventId },
-          { $set: { status: 'processed', updatedAt: new Date() } },
-        );
+          await PaymentWebhookEvent.updateOne(
+            { razorpayEventId: eventId },
+            { $set: { status: 'processed', updatedAt: new Date() } },
+          ).session(session);
+
+          await session.commitTransaction();
+        } catch (err: any) {
+          await session.abortTransaction();
+          throw err;
+        } finally {
+          session.endSession();
+        }
 
         AnalyticsService.clearCache();
         await bumpAdminAnalyticsCacheVersion();

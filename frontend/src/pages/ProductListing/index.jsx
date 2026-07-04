@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 
 import { SEO } from '../../components/seo/SEO';
 import { QuickViewModal } from '../../components/ui';
-import { useCart } from '../../context/CartContext';
 import { couponService } from '../../services/domainServices';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
@@ -21,7 +20,6 @@ import { ProductListingGrid } from './ProductListingGrid';
 import '../../styles/visual-search.css';
 
 export function ProductListing() {
-  const { setClaimedCoupon } = useCart();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isMobile = useMediaQuery('(max-width: 1023px)');
@@ -85,7 +83,6 @@ export function ProductListing() {
   const handleClaimOffer = () => {
     const code = promoCoupon ? promoCoupon.code : 'SIRI40';
     navigator.clipboard.writeText(code);
-    setClaimedCoupon(code);
     toast.success(
       (_t) => (
         <div className="flex flex-col gap-1 p-1">
@@ -97,9 +94,6 @@ export function ProductListing() {
           </span>
           <span className="text-[10px] text-on-surface-variant font-mono">
             Code "<strong className="text-primary font-bold">{code}</strong>" copied to clipboard.
-          </span>
-          <span className="text-[10px] text-green-800 font-semibold mt-1">
-            🎟️ We will automatically apply this coupon at checkout!
           </span>
         </div>
       ),

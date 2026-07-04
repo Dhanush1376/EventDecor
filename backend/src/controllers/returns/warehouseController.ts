@@ -59,7 +59,7 @@ export const submitInspection = asyncHandler(async (req: Request, res: Response)
  */
 export const getInspectionQueue = asyncHandler(async (req: Request, res: Response) => {
   const returns = await ReturnRequest.find({
-    status: { $in: ['picked_up', 'reached_warehouse', 'inspection_started'] },
+    status: { $in: ['return_picked_up', 'return_received', 'inspection_started'] },
     'items.warehouseStatus': { $in: ['pending', 'received'] },
   })
     .populate('orderId', 'orderStatus')

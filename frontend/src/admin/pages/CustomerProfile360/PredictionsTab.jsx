@@ -23,7 +23,7 @@ export default function PredictionsTab({ predictions, overview }) {
       <div className="bg-gradient-to-r from-[var(--admin-bg-subtle)] to-[var(--admin-surface-muted)] rounded-xl p-6 border border-[var(--admin-border-subtle)] flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-[var(--admin-text-primary)] flex items-center gap-2 mb-1">
-            <span className="text-xl">🔮</span> AI-Generated Forecast
+            <span className="text-xl">📊</span> Analytics & Estimates
           </h2>
           <p className="text-sm text-[var(--admin-text-secondary)]">
             Predictions are based on historical engagement, purchase intervals, and peer affinities.
@@ -38,9 +38,9 @@ export default function PredictionsTab({ predictions, overview }) {
             <TrendingDown className="w-24 h-24 text-red-500 -mr-8 -mt-8" />
           </div>
           <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <TrendingDown className="w-4 h-4 text-red-500" /> Risk of Leaving{' '}
+            <TrendingDown className="w-4 h-4 text-red-500" /> Inactivity Risk{' '}
             <span className="text-xs font-normal text-[var(--admin-accent)] bg-[var(--admin-bg-subtle)] px-2 py-0.5 rounded-full ml-1">
-              (Prediction)
+              (Estimate)
             </span>
           </h3>
           <div className="flex items-end gap-3 mb-2">
@@ -64,9 +64,9 @@ export default function PredictionsTab({ predictions, overview }) {
         {/* Next Purchase Date */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative overflow-hidden">
           <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <ArrowUpCircle className="w-4 h-4 text-[var(--admin-accent)]" /> Next Purchase Date{' '}
+            <ArrowUpCircle className="w-4 h-4 text-[var(--admin-accent)]" /> Expected Next Order{' '}
             <span className="text-xs font-normal text-[var(--admin-accent)] bg-[var(--admin-bg-subtle)] px-2 py-0.5 rounded-full ml-1">
-              (Prediction)
+              (Estimate)
             </span>
           </h3>
           <div className="text-2xl font-bold text-gray-900 mb-1">
@@ -90,9 +90,9 @@ export default function PredictionsTab({ predictions, overview }) {
       {/* Upsell Recommendations */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
         <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-          Recommended Products{' '}
+          Product Affinity{' '}
           <span className="text-xs font-normal text-[var(--admin-accent)] bg-[var(--admin-bg-subtle)] px-2 py-0.5 rounded-full ml-2">
-            (AI Suggested)
+            (Calculated)
           </span>
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

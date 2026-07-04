@@ -32,21 +32,21 @@ export const issueManualRefund = [
 
     if (entityType === 'Order') {
       const Order = require('../../models/Order').default;
-      const order = await Order.findById(entityId);
+      const order = await Order.findById(entityId).select('razorpayPaymentId').lean();
       if (!order) throw new ApiError(404, 'Order not found');
       if (!order.razorpayPaymentId)
         throw new ApiError(400, 'Order does not have a captured Razorpay payment');
       originalTransactionId = order.razorpayPaymentId;
     } else if (entityType === 'RentalOrder') {
       const RentalOrder = require('../../models/RentalOrder').default;
-      const rental = await RentalOrder.findById(entityId);
+      const rental = await RentalOrder.findById(entityId).select('razorpayPaymentId').lean();
       if (!rental) throw new ApiError(404, 'Rental Order not found');
       if (!rental.razorpayPaymentId)
         throw new ApiError(400, 'Rental Order does not have a captured Razorpay payment');
       originalTransactionId = rental.razorpayPaymentId;
     } else if (entityType === 'EventBooking') {
       const EventBooking = require('../../models/EventBooking').default;
-      const booking = await EventBooking.findById(entityId);
+      const booking = await EventBooking.findById(entityId).select('razorpayPaymentId').lean();
       if (!booking) throw new ApiError(404, 'Event Booking not found');
       if (!booking.razorpayPaymentId)
         throw new ApiError(400, 'Event Booking does not have a captured Razorpay payment');
@@ -105,15 +105,15 @@ export const getRefundStatus = asyncHandler(async (req: Request, res: Response) 
   } else {
     if (entityType === 'Order') {
       const Order = require('../../models/Order').default;
-      const order = await Order.findById(entityId);
+      const order = await Order.findById(entityId).select('user').lean();
       if (order && String(order.user) === String(req.user?.id)) isAuthorized = true;
     } else if (entityType === 'RentalOrder') {
       const RentalOrder = require('../../models/RentalOrder').default;
-      const rental = await RentalOrder.findById(entityId);
+      const rental = await RentalOrder.findById(entityId).select('user').lean();
       if (rental && String(rental.user) === String(req.user?.id)) isAuthorized = true;
     } else if (entityType === 'EventBooking') {
       const EventBooking = require('../../models/EventBooking').default;
-      const booking = await EventBooking.findById(entityId);
+      const booking = await EventBooking.findById(entityId).select('user').lean();
       if (booking && String(booking.user) === String(req.user?.id)) isAuthorized = true;
     }
   }

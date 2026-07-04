@@ -39,6 +39,7 @@ export function RentalsSection() {
             options={[
               { id: 'PURCHASE', label: 'Purchase Orders' },
               { id: 'RENTAL', label: 'Rental Orders' },
+              { id: 'CUSTOM', label: 'Custom Orders' },
             ]}
           />
 

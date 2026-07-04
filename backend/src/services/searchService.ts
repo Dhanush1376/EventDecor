@@ -14,13 +14,15 @@ import {
 } from './search/SearchAnalyticsService';
 
 import { getSearchCache, setSearchCache } from './search/searchCache';
+import SearchIndex from '../models/SearchIndex';
+import SearchPin from '../models/SearchPin';
 import {
-  analyzeQueryWithAI,
   getTransliterationsAndSynonyms,
   generateFuzzyVariants,
   predictCategories,
-  getIntentExpansions,
+  getSpellCorrectedQuery,
   analyzeQueryLocally,
+  analyzeQueryWithAI,
 } from './search/queryParser';
 export {
   analyzeQueryWithAI,
@@ -51,6 +53,9 @@ export interface AutocompleteResult {
   category?: string;
   image?: string;
   price?: number;
+  oldPrice?: number;
+  stockStatus?: string;
+  discount?: number;
   score: number;
   slug?: string;
 }
@@ -105,7 +110,7 @@ export async function getAutocomplete(
   const limit = options.limit || 8;
   const normalizedQuery = query.trim().toLowerCase();
 
-  if (normalizedQuery.length < 2) {
+  if (!normalizedQuery) {
     return { suggestions: [], predictedCategories: [] };
   }
 
@@ -146,40 +151,40 @@ export async function getAutocomplete(
 
     const baseSearchQuery = cleanedQuery || normalizedQuery;
 
-    // Generate transliterations and synonyms locally for instant speed using cleaned query
-    const allTerms = getTransliterationsAndSynonyms(baseSearchQuery);
-    const fuzzyTerms = generateFuzzyVariants(baseSearchQuery);
-    const searchTerms = [...new Set([...allTerms, ...fuzzyTerms])];
-    const _regexPatterns = searchTerms.map((term) => new RegExp(escapeRegex(term), 'i'));
+    // Check for pinned results
+    const pins = await SearchPin.find({ keyword: baseSearchQuery, isActive: true }).populate(
+      'pinnedProductIds',
+      '_id title teluguTitle imageSrc primaryCategory price rating slug description material stock',
+    );
+    const pinnedProducts = pins.flatMap((p) => p.pinnedProductIds);
+    const pinnedIds = new Set(pinnedProducts.map((p: any) => p._id.toString()));
 
-    // Predict intent categories using cleaned query
+    const spellCheck = getSpellCorrectedQuery(baseSearchQuery);
+    const searchTerms = getTransliterationsAndSynonyms(baseSearchQuery);
+
+    // Generate ngrams for query
+    const queryWords = baseSearchQuery.split(/\s+/).filter(Boolean);
+    const queryNgrams = queryWords.flatMap((w) => {
+      const res = [];
+      for (let i = 1; i <= Math.min(w.length, 6); i++) res.push(w.substring(0, i));
+      return res;
+    });
+
     const predictedCategories = predictCategories(baseSearchQuery);
 
-    const productQuery = MongoQueryBuilder.create<any>()
-      .withRegexFallback(searchTerms, ['title', 'teluguTitle', 'category', 'tags'])
-      .build();
-
-    const eventQuery = MongoQueryBuilder.create<any>()
-      .withRegexFallback(searchTerms, ['title', 'category', 'style', 'features'])
-      .build();
-
-    const _galleryQuery = MongoQueryBuilder.create<any>()
-      .withRegexFallback(searchTerms, ['title', 'teluguTitle', 'category', 'tags'])
-      .build();
-
-    const [products, events] = await Promise.all([
-      Product.find(productQuery)
-        .select('_id title teluguTitle imageSrc primaryCategory price rating slug')
-        .sort({ rating: -1, reviews: -1 })
-        .limit(5)
-        .lean(),
-
-      Event.find(eventQuery)
-        .select('_id title primaryCategory style basePrice slug')
-        .sort({ basePrice: -1 })
-        .limit(3)
-        .lean(),
-    ]);
+    // Query SearchIndex instead of raw models
+    const indexResults = await SearchIndex.find({
+      isActive: true,
+      entityType: { $ne: 'Gallery' },
+      $or: [
+        { ngrams: { $in: queryNgrams } },
+        { tokens: { $in: searchTerms } },
+        { synonymTokens: { $in: searchTerms } },
+      ],
+    })
+      .sort({ popularity: -1, adminBoost: -1 })
+      .limit(limit)
+      .lean();
 
     const suggestions: AutocompleteResult[] = [];
 
@@ -193,121 +198,82 @@ export async function getAutocomplete(
       });
     }
 
-    // Add intent expansion suggestions
-    const expandedIntents = getIntentExpansions(normalizedQuery);
-    if (expandedIntents.length > 0) {
-      for (const intent of expandedIntents) {
-        suggestions.push({
-          id: `intent:${intent}`,
-          title: intent,
-          type: 'suggestion',
-          score: 1.1,
-        });
-      }
-    }
-
-    // Score products
-    for (const p of products) {
+    // Add pinned products
+    for (const p of pinnedProducts) {
       suggestions.push({
-        id: (p._id as any).toString(),
-        title: p.title,
+        id: (p as any)._id.toString(),
+        title: (p as any).title,
         type: 'product',
-        category: p.primaryCategory?.toString(),
-        image: p.imageSrc,
-        price: p.price,
-        slug: p.slug,
-        score: computeSearchScore(
-          p.title,
-          p.primaryCategory?.toString(),
-          p.tags || [],
-          baseSearchQuery,
-          p.teluguTitle,
-        ),
+        category: (p as any).primaryCategory?.toString(),
+        image: (p as any).imageSrc,
+        price: (p as any).price,
+        slug: (p as any).slug,
+        score: 100, // Highest score for pins
+        stockStatus: (p as any).stock > 0 ? 'in_stock' : 'out_of_stock',
       });
     }
 
-    // Score events
-    for (const e of events) {
+    // Add indexed results
+    for (const item of indexResults) {
+      if (pinnedIds.has(item.entityId.toString())) continue;
+
       suggestions.push({
-        id: (e._id as any).toString(),
-        title: e.title,
-        type: 'event',
-        category: e.primaryCategory?.toString(),
-        image: e.image,
-        price: e.basePrice,
-        slug: (e as any).slug,
-        score: computeSearchScore(
-          e.title,
-          e.primaryCategory?.toString(),
-          e.features || [],
-          normalizedQuery,
-        ),
+        id: item.entityId.toString(),
+        title: item.title,
+        type: item.entityType.toLowerCase() as any,
+        image: item.image,
+        price: item.price,
+        slug: item.slug,
+        score:
+          computeSearchScore(
+            item.title,
+            '',
+            [],
+            baseSearchQuery,
+            undefined,
+            undefined,
+            [],
+            item.ngrams,
+          ) * (item.adminBoost || 1),
       });
     }
 
-    // Parse budget limit locally for suggestions sorting
-    let budgetLimit: number | null = null;
-    if (priceMaxMatch) {
-      let val = parseFloat(priceMaxMatch[1]);
-      const unit = priceMaxMatch[2]?.toLowerCase();
-      if (unit === 'k') val *= 1000;
-      else if (unit === 'lakh') val *= 100000;
-      budgetLimit = Math.round(val);
+    // Sort by score
+    suggestions.sort((a, b) => (b.score || 0) - (a.score || 0));
+
+    // Deduplicate suggestions by ID
+    const uniqueSuggestions: AutocompleteResult[] = [];
+    const seenIds = new Set();
+    for (const s of suggestions) {
+      if (!seenIds.has(s.id)) {
+        seenIds.add(s.id);
+        uniqueSuggestions.push(s);
+      }
     }
 
-    suggestions.sort((a, b) => {
-      const typeOrder: Record<string, number> = {
-        category: 1,
-        product: 2,
-        event: 2,
-        suggestion: 3,
-      };
-      const orderA = typeOrder[a.type] || 4;
-      const orderB = typeOrder[b.type] || 4;
-      if (orderA !== orderB) {
-        return orderA - orderB;
-      }
+    const finalSuggestions = uniqueSuggestions.slice(0, limit);
 
-      // If we have a budget limit and both are products/events, sort in-budget first, then out-of-budget by price asc
-      if (
-        budgetLimit !== null &&
-        (a.type === 'product' || a.type === 'event') &&
-        (b.type === 'product' || b.type === 'event')
-      ) {
-        const pA = a.price;
-        const pB = b.price;
-        const aIn = pA === undefined || pA <= budgetLimit;
-        const bIn = pB === undefined || pB <= budgetLimit;
-
-        if (aIn && !bIn) return -1;
-        if (!aIn && bIn) return 1;
-        if (!aIn && !bIn) {
-          return (pA ?? Infinity) - (pB ?? Infinity);
+    const productIds = finalSuggestions.filter((s) => s.type === 'product').map((s) => s.id);
+    if (productIds.length > 0) {
+      const products = await Product.find({ _id: { $in: productIds } })
+        .select('_id oldPrice')
+        .lean();
+      const productMap = new Map(
+        products.map((p) => [(p as any)._id.toString(), (p as any).oldPrice]),
+      );
+      for (const s of finalSuggestions) {
+        if (s.type === 'product' && productMap.has(s.id)) {
+          const oldPrice = productMap.get(s.id);
+          if (oldPrice) s.oldPrice = oldPrice;
         }
       }
-
-      if (b.score !== a.score) return b.score - a.score;
-      return (a.slug || a.id).localeCompare(b.slug || b.id);
-    });
-    const final = suggestions.slice(0, limit);
-
-    // Local spelling/transliteration recommendation for overlay banner
-    let correctedQuery: string | undefined;
-    const words = normalizedQuery.split(/\s+/);
-    const correctedWords = words.map((word) => {
-      const trans = TRANSLITERATION_MAP[word];
-      if (trans && trans.length > 0) {
-        const englishSuggested = trans.find((t) => !/[\u0c00-\u0c7f]/.test(t));
-        return englishSuggested || word;
-      }
-      return word;
-    });
-    const potentialCorrection = correctedWords.join(' ');
-    if (potentialCorrection !== normalizedQuery) {
-      correctedQuery = potentialCorrection;
     }
 
-    const result = { suggestions: final, predictedCategories, correctedQuery };
+    const result = {
+      suggestions: finalSuggestions,
+      predictedCategories,
+      correctedQuery: spellCheck.corrected !== baseSearchQuery ? spellCheck.corrected : undefined,
+    };
     await setSearchCache('ac', cacheKey, result, 5 * 60 * 1000);
 
     return result;
@@ -365,7 +331,7 @@ export async function searchAll(
       ...getTransliterationsAndSynonyms(searchBaseQuery),
       ...generateFuzzyVariants(searchBaseQuery),
     ];
-    const uniqueTerms = [...new Set(terms.filter((t) => t.length > 1))].slice(0, 15);
+    const uniqueTerms = [...new Set(terms.filter((t) => t.length > 0))].slice(0, 15);
     const _regexPatterns = uniqueTerms.map((term) => new RegExp(escapeRegex(term), 'i'));
 
     const seasonal = await getCachedSeasonalContext();
@@ -418,25 +384,57 @@ export async function searchAll(
     const queryBudgetMax =
       options.priceMax === undefined ? aiAnalysis.priceMax || undefined : undefined;
 
+    // Fetch pins
+    const pins = await SearchPin.find({ keyword: normalizedQuery, isActive: true });
+    const pinnedProductIds = pins.flatMap((p) => p.pinnedProductIds);
+
+    const queryWords = searchBaseQuery.split(/\s+/).filter(Boolean);
+    const queryNgrams = queryWords.flatMap((w) => {
+      const res = [];
+      for (let i = 1; i <= Math.min(w.length, 6); i++) res.push(w.substring(0, i));
+      return res;
+    });
+
+    const entityTypesToSearch: Array<'Product' | 'Event' | 'Gallery'> = [];
+    if (searchProducts) entityTypesToSearch.push('Product');
+    if (searchEvents) entityTypesToSearch.push('Event');
+    if (searchGalleries) entityTypesToSearch.push('Gallery');
+
+    const indexResults = await SearchIndex.find({
+      isActive: true,
+      entityType: { $in: entityTypesToSearch },
+      $or: [
+        { ngrams: { $in: queryNgrams } },
+        { tokens: { $in: uniqueTerms } },
+        { synonymTokens: { $in: uniqueTerms } },
+      ],
+    }).lean();
+
+    const matchedProductIds = [
+      ...indexResults.filter((r) => r.entityType === 'Product').map((r) => r.entityId),
+      ...pinnedProductIds,
+    ];
+    const matchedEventIds = indexResults
+      .filter((r) => r.entityType === 'Event')
+      .map((r) => r.entityId);
+    const matchedGalleryIds = indexResults
+      .filter((r) => r.entityType === 'Gallery')
+      .map((r) => r.entityId);
+    const pinnedSet = new Set(pinnedProductIds.map((id) => id.toString()));
+
     if (searchProducts) {
       const productQuery = MongoQueryBuilder.create<any>()
-        .withRegexFallback(uniqueTerms, [
-          'title',
-          'teluguTitle',
-          'category',
-          'tags',
-          'material',
-          'description',
-        ])
         .withCategory(activeProductCategory)
         .withPriceRange(dbMinPrice, dbMaxPrice, 'price')
         .withTags(aiAnalysis.colors)
         .build();
 
+      productQuery._id = { $in: matchedProductIds };
+
       promises.push(
-        Product.find(productQuery)
+        Product.find({ ...productQuery, isActive: true })
           .select(
-            '_id title teluguTitle imageSrc category price rating reviews tags slug material description',
+            '_id title teluguTitle imageSrc primaryCategory tags price rating reviews slug description materials stockStatus discount',
           )
           .limit(100)
           .maxTimeMS(5000)
@@ -449,6 +447,8 @@ export async function searchAll(
                 p.tags || [],
                 normalizedQuery,
                 p.teluguTitle,
+                p.description,
+                p.material ? [p.material] : [],
               );
               const seasonalBoost = computeSeasonalBoost(
                 p.primaryCategory?.toString(),
@@ -468,6 +468,7 @@ export async function searchAll(
 
               const productIdStr = (p._id as any).toString();
               const interactionBoost = interactionBoosts[productIdStr] || 0;
+              const pinBoost = pinnedSet.has(productIdStr) ? 50.0 : 0; // Huge boost for pins
 
               items.push({
                 id: productIdStr,
@@ -480,7 +481,11 @@ export async function searchAll(
                 reviews: p.reviews,
                 tags: p.tags,
                 slug: p.slug,
-                score: searchScore * seasonalBoost * aiBoost + popularityBoost + interactionBoost,
+                score:
+                  searchScore * seasonalBoost * aiBoost +
+                  popularityBoost +
+                  interactionBoost +
+                  pinBoost,
                 matchSource: getMatchSource(
                   p.title,
                   p.primaryCategory?.toString(),
@@ -496,10 +501,11 @@ export async function searchAll(
 
     if (searchEvents) {
       const eventQuery = MongoQueryBuilder.create<any>()
-        .withRegexFallback(uniqueTerms, ['title', 'category', 'style', 'features', 'description'])
         .withCategory(activeEventCategory)
         .withPriceRange(dbMinPrice, dbMaxPrice, 'basePrice')
         .build();
+
+      eventQuery._id = { $in: matchedEventIds };
 
       promises.push(
         Event.find(eventQuery)
@@ -514,6 +520,8 @@ export async function searchAll(
                 e.primaryCategory?.toString(),
                 e.features || [],
                 normalizedQuery,
+                undefined,
+                e.description,
               );
               const seasonalBoost = computeSeasonalBoost(
                 e.primaryCategory?.toString(),
@@ -557,9 +565,10 @@ export async function searchAll(
 
     if (searchGalleries) {
       const galleryQuery = MongoQueryBuilder.create<any>()
-        .withRegexFallback(uniqueTerms, ['title', 'teluguTitle', 'category', 'tags', 'description'])
         .withCategory(activeGalleryCategory)
         .build();
+
+      galleryQuery._id = { $in: matchedGalleryIds };
 
       promises.push(
         Gallery.find(galleryQuery)
@@ -575,6 +584,7 @@ export async function searchAll(
                 g.tags || [],
                 normalizedQuery,
                 g.teluguTitle,
+                g.description,
               );
               const popularityBoost =
                 Math.log2(Math.max(g.views || 1, 1)) * 0.05 + Math.min((g.likes || 0) / 50, 0.1);

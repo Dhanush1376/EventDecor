@@ -21,7 +21,7 @@ export function ControlsStep({ formData, setFormData }) {
           <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">
             visibility
           </span>
-          3. Storefront Visibility & Auto-Apply Settings
+          3. Storefront Visibility
         </h2>
         <div className="admin-card-inset p-4 space-y-4">
           <label className="admin-label">Where should this coupon be displayed?</label>
@@ -61,22 +61,6 @@ export function ControlsStep({ formData, setFormData }) {
               </p>
               <p className="text-[11px] text-[var(--admin-text-tertiary)]">
                 Highlighted on promotion banners
-              </p>
-            </div>
-          </label>
-          <label className="flex items-center gap-4 p-4 admin-card-inset rounded-[var(--admin-radius-lg)] cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.isAutoApply}
-              onChange={(e) => setFormData({ ...formData, isAutoApply: e.target.checked })}
-              className="w-4 h-4 rounded accent-[var(--admin-accent)]"
-            />
-            <div>
-              <p className="text-[13px] font-semibold text-[var(--admin-text-primary)]">
-                Auto-Apply at Checkout
-              </p>
-              <p className="text-[11px] text-[var(--admin-text-tertiary)]">
-                Applies automatically if conditions match
               </p>
             </div>
           </label>

@@ -1,6 +1,7 @@
 import { m as motion } from 'framer-motion';
 import { useCheckout } from './CheckoutProvider';
 import { useActiveCoupons } from '../hooks/useActiveCoupons';
+import { CustomerContactGate } from '../components/shared/CustomerContactGate';
 
 export default function CheckoutSidebar() {
   const {
@@ -510,30 +511,31 @@ export default function CheckoutSidebar() {
           {/* Integrated Payment Button at the bottom of the Price Details Card */}
           {checkoutSteps[activeStep] === 'PAYMENT' && (
             <div className="mt-4 pt-4 border-t border-outline-variant/30">
-              <motion.button
-                whileHover={!isProcessing ? { scale: 1.01 } : {}}
-                whileTap={!isProcessing ? { scale: 0.99 } : {}}
-                type="button"
-                disabled={isProcessing}
-                onClick={handleConfirmOrder}
-                className="w-full btn-primary py-3 rounded-full font-bold text-xs uppercase tracking-widest shadow-md transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group relative overflow-hidden"
-              >
-                {isProcessing ? (
-                  <>
-                    <div className="skeleton-box inline-block w-5 h-5 rounded-md" />
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>
-                      {paymentOption === 'razorpay' ? 'Pay & Place Order' : 'Place Order'}
-                    </span>
-                    <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">
-                      arrow_forward
-                    </span>
-                  </>
-                )}
-              </motion.button>
+              <CustomerContactGate onAction={handleConfirmOrder} className="w-full">
+                <motion.button
+                  whileHover={!isProcessing ? { scale: 1.01 } : {}}
+                  whileTap={!isProcessing ? { scale: 0.99 } : {}}
+                  type="button"
+                  disabled={isProcessing}
+                  className="w-full btn-primary py-3 rounded-full font-bold text-xs uppercase tracking-widest shadow-md transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group relative overflow-hidden"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="skeleton-box inline-block w-5 h-5 rounded-md" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        {paymentOption === 'razorpay' ? 'Pay & Place Order' : 'Place Order'}
+                      </span>
+                      <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">
+                        arrow_forward
+                      </span>
+                    </>
+                  )}
+                </motion.button>
+              </CustomerContactGate>
             </div>
           )}
         </div>

@@ -91,23 +91,23 @@ class AnalyticsService {
     const [recentOrders, recentLogs] = await Promise.all([
       Order.find().sort({ createdAt: -1 }).limit(10).select('_id customerName total createdAt'),
       AdminAuditLog.find()
-        .sort({ timestamp: -1 })
+        .sort({ createdAt: -1 })
         .limit(10)
-        .select('actor action details timestamp statusCode'),
+        .select('actorRole actorEmail action method path createdAt statusCode'),
     ]);
 
     const recentActivity = [
       ...recentOrders.map((o: any) => ({
         type: 'order',
-        action: `Order placed for ₹${o.total}`,
+        action: `Customer Order placed for ₹${o.total}`,
         user: o.customerName || 'Customer',
         timestamp: o.createdAt,
       })),
       ...recentLogs.map((l: any) => ({
         type: l.statusCode >= 400 ? 'system' : 'user',
-        action: l.action,
-        user: l.actor || 'System',
-        timestamp: l.timestamp,
+        action: l.action || l.path || l.method,
+        user: l.actorRole || l.actorEmail || 'System',
+        timestamp: l.createdAt,
       })),
     ]
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())

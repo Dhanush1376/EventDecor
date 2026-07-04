@@ -29,7 +29,7 @@ const mapDbProductToFrontend = (p) => {
   };
 };
 
-export function useAdminProducts({ activeRole, safetyLock, logAdminAction }) {
+export function useAdminProducts({ activeRole, safetyLock, logAdminAction, queryClient }) {
   const [products, setProducts] = useState([]);
   const [productsError, setProductsError] = useState(null);
 
@@ -51,6 +51,13 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction }) {
         const res = await productService.delete(productId);
         if (res.success) {
           setProducts((prev) => prev.filter((p) => (p._id || p.id) !== productId));
+
+          // Invalidate React Query cache so storefront and other views refresh
+          queryClient?.invalidateQueries({ queryKey: ['products'] });
+          queryClient?.invalidateQueries({ queryKey: ['product', productId] });
+          queryClient?.invalidateQueries({ queryKey: ['product_categories'] });
+          queryClient?.invalidateQueries({ queryKey: ['gallery'] });
+
           logAdminAction('DELETE_PRODUCT', `Deactivated product ID: ${productId}`);
           toast.success('Product deactivated');
         }
@@ -58,7 +65,7 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction }) {
         toast.error('Failed to delete product');
       }
     },
-    [activeRole, safetyLock, logAdminAction],
+    [activeRole, safetyLock, logAdminAction, queryClient],
   );
 
   const toggleProductFeatured = useCallback(
@@ -77,6 +84,10 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction }) {
           setProducts((prev) =>
             prev.map((p) => ((p._id || p.id) === productId ? { ...p, featured: !p.featured } : p)),
           );
+
+          queryClient?.invalidateQueries({ queryKey: ['products'] });
+          queryClient?.invalidateQueries({ queryKey: ['product', productId] });
+
           logAdminAction('TOGGLE_FEATURED', `Toggled featured status for product ID: ${productId}`);
           toast.success('Product featured status updated');
         }
@@ -84,7 +95,34 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction }) {
         toast.error('Failed to update product');
       }
     },
-    [activeRole, safetyLock, logAdminAction],
+    [activeRole, safetyLock, logAdminAction, queryClient],
+  );
+
+  const updateProductStock = useCallback(
+    async (productId, newStock) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return;
+      }
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return;
+      }
+      try {
+        const res = await productService.update(productId, { stock: newStock });
+        if (res.success) {
+          setProducts((prev) =>
+            prev.map((p) => ((p._id || p.id) === productId ? { ...p, stock: newStock } : p)),
+          );
+          queryClient?.invalidateQueries({ queryKey: ['products'] });
+          queryClient?.invalidateQueries({ queryKey: ['product', productId] });
+          toast.success('Stock updated');
+        }
+      } catch (_err) {
+        toast.error('Failed to update stock');
+      }
+    },
+    [activeRole, safetyLock, queryClient],
   );
 
   const refreshProducts = useCallback(async () => {
@@ -106,6 +144,7 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction }) {
     setProductsError,
     deleteProduct,
     toggleProductFeatured,
+    updateProductStock,
     refreshProducts,
     mapDbProductToFrontend,
   };

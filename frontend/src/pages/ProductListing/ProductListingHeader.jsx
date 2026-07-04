@@ -44,7 +44,7 @@ export const CountdownPromo = React.memo(
       return () => clearInterval(interval);
     }, [promoCoupon]);
 
-    if ((isMobile && searchParam) || shopContent?.promo?.isActive === false) return null;
+    if (shopContent?.promo?.isActive === false) return null;
 
     return (
       <PromoBanner
@@ -100,8 +100,6 @@ export const CountdownPromo = React.memo(
 );
 
 export const ProductListingHeader = ({ isMobile, searchParam, shopContent }) => {
-  if (isMobile && searchParam) return null;
-
   return (
     <section className="relative min-h-[320px] lg:h-[45vh] lg:h-[70vh] flex items-center overflow-hidden bg-on-surface-variant">
       <motion.div

@@ -33,6 +33,9 @@ export function MandalaArtDecor({
   const src = VARIANT_MAP[variant] || VARIANT_MAP[1];
   const blend = dark ? blendModeDark : blendMode;
 
+  // Enforce a minimum opacity to ensure the mandala art is clearly visible across the entire site
+  const effectiveOpacity = Math.max(opacity || 0, 0.25);
+
   return (
     <motion.img
       ref={ref}
@@ -41,9 +44,9 @@ export function MandalaArtDecor({
       aria-hidden="true"
       draggable={false}
       initial={{ opacity: 0, scale: 0.85 }}
-      animate={isInView ? { opacity, scale: 1 } : { opacity: 0, scale: 0.85 }}
+      animate={isInView ? { opacity: effectiveOpacity, scale: 1 } : { opacity: 0, scale: 0.85 }}
       transition={{ duration: 1.5, ease: 'easeOut' }}
-      className={`absolute object-contain rounded-full pointer-events-none select-none ${
+      className={`absolute object-contain pointer-events-none select-none ${
         spin ? 'animate-slow-spin' : ''
       } ${className}`}
       style={{
@@ -51,8 +54,9 @@ export function MandalaArtDecor({
         height: size,
         animation: spin ? `slow-spin ${spinDuration}s linear infinite` : 'none',
         mixBlendMode: blend,
-        WebkitMaskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 65%)',
-        maskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 65%)',
+        WebkitMaskImage:
+          'radial-gradient(circle closest-side, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)',
+        maskImage: 'radial-gradient(circle closest-side, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)',
         ...style,
       }}
       loading="lazy"

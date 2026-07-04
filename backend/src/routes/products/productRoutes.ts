@@ -17,6 +17,7 @@ import { createProductSchema, updateProductSchema } from '../../validators/produ
 import { validateRequest } from '../../middleware/zodValidationMiddleware';
 import { cacheResponse } from '../../middleware/cacheMiddleware';
 import { dynamicResponseCache } from '../../middleware/dynamicCacheMiddleware';
+import { idempotencyGuard } from '../../middleware/idempotencyMiddleware';
 
 const router = Router();
 
@@ -35,9 +36,23 @@ if (process.env.DISABLE_CACHE === 'true') {
   router.get('/:id', dynamicResponseCache(120, 'public'), cacheResponse(120), getProductById);
 }
 
-router.post('/', requireAuth, requireAdmin, validateRequest(createProductSchema), createProduct);
-router.put('/:id', requireAuth, requireAdmin, validateRequest(updateProductSchema), updateProduct);
-router.delete('/:id', requireAuth, requireAdmin, deleteProduct);
+router.post(
+  '/',
+  requireAuth,
+  requireAdmin,
+  idempotencyGuard(),
+  validateRequest(createProductSchema),
+  createProduct,
+);
+router.put(
+  '/:id',
+  requireAuth,
+  requireAdmin,
+  idempotencyGuard(),
+  validateRequest(updateProductSchema),
+  updateProduct,
+);
+router.delete('/:id', requireAuth, requireAdmin, idempotencyGuard(), deleteProduct);
 router.patch('/:id/toggle-featured', requireAuth, requireAdmin, toggleFeatured);
 router.post('/ai-autofill', requireAuth, requireAdmin, aiAutofillProduct);
 router.post('/ai-refine', requireAuth, requireAdmin, refineAiProduct);

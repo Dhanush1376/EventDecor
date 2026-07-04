@@ -3,17 +3,13 @@ import { STATUS_STEPS } from '../constants';
 
 export function TimelineTracker({ currentStatusIndex, isTimelineExpanded, setIsTimelineExpanded }) {
   return (
-    <div className="bg-surface-bright rounded-lg border border-outline-variant/40 p-6 space-y-6 shadow-xs text-[11px] text-left">
-      <div className="flex justify-between items-center border-b border-black/5 pb-4">
-        <div className="space-y-1">
-          <span className="text-[9px] font-bold uppercase tracking-widest text-secondary block">
-            Timeline Status
-          </span>
-          <h3 className="font-bold text-[18px] text-on-surface tracking-tight">
-            Setup Progress Tracker
-          </h3>
-        </div>
-        <span className="text-[10px] text-secondary font-mono tracking-widest uppercase font-bold bg-surface-container-lowest border border-outline-variant/40 px-3 py-1.5 rounded-[32px]">
+    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs text-left font-body space-y-5">
+      <div className="pb-4 mb-2 border-b border-outline-variant/20 flex justify-between items-center">
+        <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-[14px]">route</span>
+          Journey Tracker
+        </h2>
+        <span className="text-[8px] bg-surface-container-lowest text-secondary px-2 py-0.5 rounded uppercase tracking-widest border border-outline-variant/40 font-bold">
           Phase {currentStatusIndex + 1} of {STATUS_STEPS.length}
         </span>
       </div>
@@ -34,15 +30,15 @@ export function TimelineTracker({ currentStatusIndex, isTimelineExpanded, setIsT
         </div>
       </div>
 
-      <div className="p-5 bg-surface-container-lowest rounded-lg border border-outline-variant/30 flex items-start gap-4">
-        <div className="w-8 h-8 rounded-full border border-outline-variant/40 text-secondary flex items-center justify-center shrink-0 mt-0.5 animate-pulse bg-surface-bright">
+      <div className="p-4 bg-surface-container-lowest rounded-lg border border-outline-variant/20 flex items-start gap-4">
+        <div className="w-8 h-8 rounded-full border border-outline-variant/40 text-secondary flex items-center justify-center shrink-0 animate-pulse bg-surface-bright">
           <span className="material-symbols-outlined text-[14px]">hourglass_empty</span>
         </div>
-        <div className="space-y-2">
-          <span className="bg-[#2A2927] text-white px-3 py-1 rounded-[32px] text-[8px] uppercase tracking-widest font-bold">
+        <div className="space-y-1">
+          <span className="text-secondary text-[9px] uppercase tracking-widest font-bold">
             Current Phase: {STATUS_STEPS[currentStatusIndex]?.label}
           </span>
-          <p className="text-[11px] text-secondary font-medium leading-relaxed">
+          <p className="text-[11px] text-on-surface font-medium leading-relaxed">
             {STATUS_STEPS[currentStatusIndex]?.desc}
           </p>
         </div>
@@ -52,13 +48,14 @@ export function TimelineTracker({ currentStatusIndex, isTimelineExpanded, setIsT
         <button
           type="button"
           onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
-          className="flex items-center justify-between w-full px-5 py-3 rounded-lg border border-outline-variant/40 text-on-surface hover:bg-surface-container-lowest transition-colors text-[10px] uppercase tracking-widest font-bold cursor-pointer"
+          className="w-full px-5 py-4 flex items-center justify-between hover:bg-surface-container-low transition-colors font-bold text-[9px] uppercase tracking-widest text-on-surface border border-outline-variant/20 rounded-lg text-left cursor-pointer bg-transparent"
         >
-          <span>
+          <span className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[14px]">list_alt</span>
             {isTimelineExpanded ? 'Hide Full Timeline Roster' : 'View Full Timeline Roster'}
           </span>
           <span
-            className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${isTimelineExpanded ? 'rotate-180' : ''}`}
+            className={`material-symbols-outlined text-[16px] text-secondary transition-transform duration-200 ${isTimelineExpanded ? 'rotate-180' : ''}`}
           >
             expand_more
           </span>

@@ -31,7 +31,7 @@ export function MobileChatDrawer({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            className="relative z-10 bg-white rounded-t-[28px] flex flex-col"
+            className="relative z-10 bg-white rounded-t-[28px] flex flex-col shadow-[0_50vh_0_0_#ffffff]"
             style={{ height: '82vh' }}
           >
             {/* Drag handle pill */}

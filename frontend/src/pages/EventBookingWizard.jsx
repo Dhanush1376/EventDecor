@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import logger from '../utils/core/logger';
 import { EXTERNAL_URLS } from '../config/constants';
+import { CustomerContactGate } from '../components/shared/CustomerContactGate';
 
 // Wizard Steps
 import { OccasionStep } from '../components/booking-wizard/OccasionStep';
@@ -61,8 +62,8 @@ export function EventBookingWizard() {
     // Form persistence removed for PII security
   }, [formData]);
 
-  // AI Design Assistant State
-  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
+  // Design Assistant State
+  const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
   const [aiAnalysisResult, setAiAnalysisResult] = useState(null);
   const [uploadedFileName, setUploadedFileName] = useState('');
 
@@ -146,43 +147,50 @@ export function EventBookingWizard() {
     });
   };
 
-  const simulateAiAnalysis = () => {
-    setIsAiAnalyzing(true);
+  const generateDesignInspiration = () => {
+    setIsGeneratingDesign(true);
     setAiAnalysisResult(null);
 
-    setTimeout(() => {
-      setIsAiAnalyzing(false);
-      setAiAnalysisResult({
-        detectedOccasion:
-          (formData.eventType === 'other'
-            ? formData.customOccasion || 'Custom'
-            : formData.eventType
-          ).toUpperCase() + ' CELEBRATION',
-        mood: 'Sacred South Indian Royal Temple Heritage',
-        palette: ['#8B0000', '#FFD700', '#FFF8DC', '#228B22'],
-        paletteLabels: ['Deep Crimson', 'Gilded Gold', 'Temple Ivory', 'Forest Leaf Green'],
-        suggestedProps: [
-          'Bespoke Handcrafted Teak Mandapam',
-          'Hanging Fresh Mogra (Jasmine) & Red Rose Garlands',
-          'Traditional Brass Urlis with Floating Lotus Buds',
-          'Grand Gateway arch with Banana Stems & Mango Leaves',
-        ],
-        estimatedSetupTime: '12 - 16 Hours (Assigned to 18 Senior Artisans)',
-        recommendedInclusions:
-          'Vedic Backdrop Panels, Ambient Amber Up-lighting & Royal Entrance Swings',
-        estimatedPriceRange: '₹85,000 - ₹1,40,000',
-      });
-      // Add analyzed details to customization forms automatically
-      setFormData((prev) => ({
-        ...prev,
-        customization: {
-          ...prev.customization,
-          themeColor: 'Royal Crimson Vermillion & Gilded Gold Hues',
-          floralPreference: 'Premium Fresh Jasmine (Mogra) & Lotus Garland Swags',
-        },
-      }));
-      toast.success('Siri Arts AI Design Assistant: Blueprints & Moodboards Generated!');
-    }, 3200);
+    const occasionType = (
+      formData.eventType === 'other' ? formData.customOccasion || 'Custom' : formData.eventType
+    ).toUpperCase();
+
+    // Deterministically generate result based on occasion type and guest count
+    const isLarge = formData.guestCount > 300;
+    const mood = occasionType.includes('WEDDING')
+      ? 'Sacred South Indian Royal Temple Heritage'
+      : 'Elegant Contemporary Celebration';
+
+    const setupTime = isLarge ? '12 - 16 Hours (18 Artisans)' : '6 - 8 Hours (8 Artisans)';
+    const price = isLarge ? '₹1,50,000 - ₹3,00,000' : '₹60,000 - ₹1,20,000';
+
+    setAiAnalysisResult({
+      detectedOccasion: `${occasionType} CELEBRATION`,
+      mood,
+      palette: ['#8B0000', '#FFD700', '#FFF8DC', '#228B22'],
+      paletteLabels: ['Deep Crimson', 'Gilded Gold', 'Temple Ivory', 'Forest Leaf Green'],
+      suggestedProps: [
+        'Bespoke Handcrafted Teak Elements',
+        'Fresh Floral Garlands',
+        'Traditional Brass Decor Accents',
+        'Custom Entrance Gateway',
+      ],
+      estimatedSetupTime: setupTime,
+      recommendedInclusions: 'Thematic Backdrop, Ambient Lighting & Entrance Decor',
+      estimatedPriceRange: price,
+    });
+
+    setFormData((prev) => ({
+      ...prev,
+      customization: {
+        ...prev.customization,
+        themeColor: 'Royal Crimson Vermillion & Gilded Gold Hues',
+        floralPreference: 'Premium Fresh Jasmine & Lotus',
+      },
+    }));
+
+    setIsGeneratingDesign(false);
+    toast.success('Design Inspiration Blueprint Generated!');
   };
 
   const handleFileUploadSim = async (e) => {
@@ -190,63 +198,33 @@ export function EventBookingWizard() {
     if (!file) return;
 
     setUploadedFileName(file.name);
-    setIsAiAnalyzing(true);
+    setIsGeneratingDesign(true);
     setAiAnalysisResult(null);
 
     try {
       const fd = new FormData();
       fd.append('images', file);
 
-      // Perform real server upload!
+      // Perform real server upload
       const uploadRes = await uploadService.uploadInspirations(fd);
       if (uploadRes.success && uploadRes.images?.length > 0) {
         const uploadedUrl = uploadRes.images[0];
-        toast.success('Moodboard successfully uploaded to Siri Arts servers!');
+        toast.success('Inspiration image uploaded successfully!');
 
-        // Trigger the AI Design Assistant calculations
-        setTimeout(() => {
-          setIsAiAnalyzing(false);
-          setAiAnalysisResult({
-            detectedOccasion:
-              (formData.eventType === 'other'
-                ? formData.customOccasion || 'Custom'
-                : formData.eventType
-              ).toUpperCase() + ' CELEBRATION',
-            mood: 'Sacred South Indian Royal Temple Heritage',
-            palette: ['#8B0000', '#FFD700', '#FFF8DC', '#228B22'],
-            paletteLabels: ['Deep Crimson', 'Gilded Gold', 'Temple Ivory', 'Forest Leaf Green'],
-            suggestedProps: [
-              'Bespoke Handcrafted Teak Mandapam',
-              'Hanging Fresh Mogra (Jasmine) & Red Rose Garlands',
-              'Traditional Brass Urlis with Floating Lotus Buds',
-              'Grand Gateway arch with Banana Stems & Mango Leaves',
-            ],
-            estimatedSetupTime: '12 - 16 Hours (Assigned to 18 Senior Artisans)',
-            recommendedInclusions:
-              'Vedic Backdrop Panels, Ambient Amber Up-lighting & Royal Entrance Swings',
-            estimatedPriceRange: '₹85,000 - ₹1,40,000',
-          });
+        setFormData((prev) => ({
+          ...prev,
+          inspirationImages: [uploadedUrl],
+        }));
 
-          // Sync the actual uploaded image URL into the form!
-          setFormData((prev) => ({
-            ...prev,
-            inspirationImages: [uploadedUrl],
-            customization: {
-              ...prev.customization,
-              themeColor: 'Royal Crimson Vermillion & Gilded Gold Hues',
-              floralPreference: 'Premium Fresh Jasmine (Mogra) & Lotus Garland Swags',
-            },
-          }));
-          toast.success('Siri Arts AI Design Assistant: Blueprints & Moodboards Generated!');
-        }, 1800);
+        generateDesignInspiration();
       } else {
         throw new Error('No image URL returned');
       }
     } catch (err) {
       logger.error(err);
-      setIsAiAnalyzing(false);
-      toast.error('Upload server offline. Simulating local AI Design Assistant fallback...');
-      simulateAiAnalysis();
+      setIsGeneratingDesign(false);
+      toast.error('Upload failed. Generating design from existing inputs...');
+      generateDesignInspiration();
     }
   };
 
@@ -529,14 +507,15 @@ export function EventBookingWizard() {
                 Proceed Next →
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={handleSubmitBooking}
-                className="bg-black text-white px-8 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-xl shadow-black/20 hover:bg-primary hover:scale-105 transition-all flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[16px]">lock</span> Pay 50% Deposit
-                & Reserve
-              </button>
+              <CustomerContactGate onAction={handleSubmitBooking}>
+                <button
+                  type="button"
+                  className="bg-black text-white px-8 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-xl shadow-black/20 hover:bg-primary hover:scale-105 transition-all flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[16px]">lock</span> Pay 50%
+                  Deposit & Reserve
+                </button>
+              </CustomerContactGate>
             )}
           </div>
         </div>

@@ -85,9 +85,8 @@ export class OrderCheckoutService {
 
         subtotal = customOrderObj.quotation.total || 0;
 
-        // Push a single mock item into orderItems using a dummy product ID to satisfy schema
+        // Push a single mock item into orderItems for the custom order
         orderItems.push({
-          productId: new mongoose.Types.ObjectId(), // Dummy ID just to satisfy schema ref
           title: `Custom Design: ${customOrderObj.occasion || customOrderObj.productType || 'Decor'}`,
           price: subtotal,
           quantity: 1,
@@ -229,6 +228,23 @@ export class OrderCheckoutService {
       const publicTrackingToken = LogisticsService.generateTrackingToken(pendingOrderId.toString());
       const qrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
 
+      // --- RULE ENGINE INTEGRATION ---
+      const { RuleEngine } = require('../../domains/rules/services/RuleEngine');
+      const orderPayloadForRules = {
+        _id: pendingOrderId,
+        user: userId,
+        items: orderItems,
+        subtotal,
+        total,
+        discount,
+        couponCode,
+        paymentMethod: isCod ? 'cod' : 'razorpay',
+      };
+
+      const ruleResult = await RuleEngine.evaluate(orderPayloadForRules, 'Order', session);
+      const requiresApproval = ruleResult.requiresApproval;
+      // -------------------------------
+
       if (isCod) {
         // FOR COD: Perform all actual database mutations (Coupon, Wallet, Order)
         if (couponValid && couponDoc) {
@@ -276,9 +292,14 @@ export class OrderCheckoutService {
           couponCode: couponValid ? couponCode.toUpperCase() : undefined,
           paymentMethod: 'cod',
           paymentStatus: 'Pending COD',
-          orderStatus: 'Confirmed',
+          orderStatus: requiresApproval ? 'Pending Approval' : 'Confirmed',
           statusHistory: [
-            { status: 'Confirmed', note: 'Cash on Delivery order successfully placed' },
+            {
+              status: requiresApproval ? 'Pending Approval' : 'Confirmed',
+              note: requiresApproval
+                ? 'Order requires manual approval based on business rules'
+                : 'Cash on Delivery order successfully placed',
+            },
           ],
           reservationIds,
           invoiceNumber,
@@ -357,6 +378,13 @@ export class OrderCheckoutService {
 
         await session.commitTransaction();
 
+        try {
+          const { emitAdminEvent } = require('../../socket');
+          emitAdminEvent('order_update', { orderId: pendingOrderId });
+        } catch (e) {
+          logger.warn('Failed to emit admin order_update event for COD order', e);
+        }
+
         const resultCod = { order, type: 'cod' };
         await OrderIdempotencyManager.cacheResponseAndReleaseLock(
           userId,
@@ -416,6 +444,7 @@ export class OrderCheckoutService {
           idempotencyKey,
           isCustomOrder,
           customOrderId,
+          requiresApproval, // Added for webhook processing
         };
 
         await PaymentAttempt.create({

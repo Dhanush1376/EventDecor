@@ -9,7 +9,7 @@ import {
   Profiler,
 } from 'react';
 import { logRenderMetrics } from '../utils/performance/profilerLogger';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useWishlist } from './WishlistContext';
 import { useCart } from './CartContext';
@@ -42,6 +42,8 @@ export function DashboardProvider({ children }) {
   const [activeTab, setActiveTab] = useState('profile');
   const [mobileShowContent, setMobileShowContent] = useState(false);
 
+  const location = useLocation();
+
   // Sync tab from URL query params (retained for backward compatibility)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -66,13 +68,24 @@ export function DashboardProvider({ children }) {
     }
   }, [searchParams]);
 
+  // Handle path-based mobileShowContent logic
+  useEffect(() => {
+    if (location.pathname === '/dashboard' || location.pathname === '/dashboard/') {
+      setMobileShowContent(false);
+    } else if (location.pathname.startsWith('/dashboard/')) {
+      setMobileShowContent(true);
+    }
+  }, [location.pathname]);
+
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [selectedEventBookingId, setSelectedEventBookingId] = useState(null);
   const [selectedOrderItemIndex, setSelectedOrderItemIndex] = useState(0);
   const [isPriceDetailsOpen, setIsPriceDetailsOpen] = useState(true);
 
   useEffect(() => {
     setSelectedOrderId(null);
+    setSelectedEventBookingId(null);
   }, [activeTab]);
 
   const userId = user?._id || user?.id;
@@ -80,6 +93,7 @@ export function DashboardProvider({ children }) {
   const {
     orders,
     rentals,
+    customOrders,
     setOrders,
     addresses,
     setAddresses,
@@ -87,6 +101,7 @@ export function DashboardProvider({ children }) {
     setRecentlyViewed,
     isOrdersLoading,
     isRentalsLoading,
+    isCustomOrdersLoading,
     isAddressesLoading,
     isLoadingRecentlyViewed,
     refetch: refetchDashboardData,
@@ -111,47 +126,66 @@ export function DashboardProvider({ children }) {
 
   const [orderFilter, setOrderFilter] = useState('PURCHASE');
 
+  const allOrders = useMemo(() => {
+    return [...(orders || []), ...(rentals || []), ...(customOrders || [])].sort(
+      (a, b) => new Date(b.createdAt || b.orderDate) - new Date(a.createdAt || a.orderDate),
+    );
+  }, [orders, rentals, customOrders]);
+
   const filteredOrders = useMemo(() => {
-    if (!orders) return [];
-    if (orderFilter === 'DELIVERED') return orders.filter((o) => o.orderStatus === 'delivered');
+    if (!allOrders) return [];
+    if (orderFilter === 'DELIVERED')
+      return allOrders.filter((o) => o.orderStatus === 'delivered' || o.status === 'delivered');
     if (orderFilter === 'ON_THE_WAY')
-      return orders.filter((o) =>
-        ['confirmed', 'processing', 'shipped'].includes(o.orderStatus?.toLowerCase()),
+      return allOrders.filter((o) =>
+        ['confirmed', 'processing', 'shipped'].includes((o.orderStatus || o.status)?.toLowerCase()),
       );
     if (orderFilter === 'RENTAL')
-      return orders.filter(
-        (o) => o.orderType === 'rental' || o.items?.some((i) => i.type === 'rental'),
+      return allOrders.filter(
+        (o) => o.orderType === 'rental' || o.isRental || o.items?.some((i) => i.type === 'rental'),
       );
     if (orderFilter === 'PURCHASE')
-      return orders.filter(
-        (o) => o.orderType !== 'rental' && !o.items?.some((i) => i.type === 'rental'),
+      return allOrders.filter(
+        (o) =>
+          o.orderType !== 'rental' &&
+          !o.isRental &&
+          !o.items?.some((i) => i.type === 'rental') &&
+          o.customOrderId === undefined &&
+          !o.occasion,
       );
+    if (orderFilter === 'CUSTOM')
+      return allOrders.filter((o) => o.customOrderId !== undefined || o.occasion);
     if (orderFilter === 'RETURNS')
-      return orders.filter(
+      return allOrders.filter(
         (o) => o.hasActiveReturn || o.returnRequestIds?.length > 0 || o.returnRequests?.length > 0,
       );
-    return orders;
-  }, [orders, orderFilter]);
+    return allOrders;
+  }, [allOrders, orderFilter]);
 
   // Dashboard counts
   const dashboardCounts = useMemo(() => {
-    if (!orders) return { activeRentals: 0, upcomingReturns: 0, purchaseOrders: 0 };
+    if (!allOrders) return { activeRentals: 0, upcomingReturns: 0, purchaseOrders: 0 };
     return {
-      activeRentals: orders.filter(
+      activeRentals: allOrders.filter(
         (o) =>
-          (o.orderType === 'rental' || o.items?.some((i) => i.type === 'rental')) &&
-          !['completed', 'cancelled', 'returned'].includes(o.orderStatus?.toLowerCase()),
+          (o.orderType === 'rental' || o.isRental || o.items?.some((i) => i.type === 'rental')) &&
+          !['completed', 'cancelled', 'returned'].includes(
+            (o.orderStatus || o.status)?.toLowerCase(),
+          ),
       ).length,
-      upcomingReturns: orders.filter(
+      upcomingReturns: allOrders.filter(
         (o) =>
-          (o.orderType === 'rental' || o.items?.some((i) => i.type === 'rental')) &&
-          ['delivered', 'active rental', 'return requested'].includes(o.orderStatus?.toLowerCase()),
+          (o.orderType === 'rental' || o.isRental || o.items?.some((i) => i.type === 'rental')) &&
+          ['delivered', 'active rental', 'return requested'].includes(
+            (o.orderStatus || o.status)?.toLowerCase(),
+          ),
       ).length,
-      purchaseOrders: orders.filter(
-        (o) => o.orderType !== 'rental' && !o.items?.some((i) => i.type === 'rental'),
+      purchaseOrders: allOrders.filter(
+        (o) =>
+          o.orderType !== 'rental' && !o.isRental && !o.items?.some((i) => i.type === 'rental'),
       ).length,
     };
-  }, [orders]);
+  }, [allOrders]);
 
   const orderItems = useMemo(() => {
     const list = [];
@@ -164,8 +198,8 @@ export function DashboardProvider({ children }) {
   }, [filteredOrders]);
 
   const selectedOrder = useMemo(() => {
-    return orders?.find((o) => (o._id || o.id) === selectedOrderId);
-  }, [orders, selectedOrderId]);
+    return allOrders?.find((o) => (o._id || o.id) === selectedOrderId);
+  }, [allOrders, selectedOrderId]);
 
   const selectedItem = useMemo(() => {
     if (!selectedOrder) return null;
@@ -173,10 +207,10 @@ export function DashboardProvider({ children }) {
   }, [selectedOrder, selectedOrderItemIndex]);
 
   useEffect(() => {
-    if (selectedOrderId && orders && !selectedOrder) {
+    if (selectedOrderId && allOrders && !selectedOrder) {
       setSelectedOrderId(null);
     }
-  }, [orders, selectedOrderId, selectedOrder]);
+  }, [allOrders, selectedOrderId, selectedOrder]);
 
   // Avatar Upload
   const handleAvatarClick = useCallback(() => {
@@ -288,6 +322,8 @@ export function DashboardProvider({ children }) {
 
       selectedOrderId,
       setSelectedOrderId,
+      selectedEventBookingId,
+      setSelectedEventBookingId,
       selectedOrderItemIndex,
       setSelectedOrderItemIndex,
       isPriceDetailsOpen,
@@ -352,6 +388,7 @@ export function DashboardProvider({ children }) {
       mobileShowContent,
       isUploadingAvatar,
       selectedOrderId,
+      selectedEventBookingId,
       selectedOrderItemIndex,
       isPriceDetailsOpen,
       orders,

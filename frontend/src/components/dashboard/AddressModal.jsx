@@ -56,7 +56,7 @@ export function AddressModal() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed bottom-0 left-0 right-0 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:bottom-auto lg:max-w-2xl w-full bg-white rounded-t-lg lg:rounded-lg shadow-2xl z-[101] overflow-hidden max-h-[90vh] flex flex-col"
+          className="fixed bottom-0 left-0 right-0 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:bottom-auto lg:max-w-2xl w-full bg-white rounded-t-lg lg:rounded-lg shadow-[0_50vh_0_0_#ffffff,0_25px_50px_-12px_rgba(0,0,0,0.25)] z-[101] overflow-hidden max-h-[90vh] flex flex-col"
         >
           {/* Rotating Gold Mandala Overlay */}
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-[0.04] z-0">

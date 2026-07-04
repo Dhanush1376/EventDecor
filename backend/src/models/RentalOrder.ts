@@ -207,5 +207,12 @@ RentalOrderSchema.pre('save', function () {
   }
 });
 
+import TransactionSyncPlugin from '../utils/TransactionSyncPlugin';
+RentalOrderSchema.plugin(TransactionSyncPlugin, {
+  domain: 'rental',
+  statusField: 'status',
+  totalField: 'totalAmount',
+});
+
 const RentalOrder = mongoose.model<IRentalOrder>('RentalOrder', RentalOrderSchema);
 export default RentalOrder;

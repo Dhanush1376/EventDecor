@@ -23,6 +23,7 @@ export function OrderDetail() {
   const { resumePayment } = useRazorpay();
   const [isResuming, setIsResuming] = React.useState(false);
   const [returnRequest, setReturnRequest] = React.useState(null);
+  const activeStepRef = React.useRef(null);
 
   const socket = useUserSocket();
 
@@ -71,6 +72,100 @@ export function OrderDetail() {
     };
   }, [order, item, socket]);
 
+  // We'll calculate the true activeStepIndex further down, but for the scroll effect we can just depend on returnRequest
+
+  React.useEffect(() => {
+    // We lock the scroll to the top while the modal opens to prevent the browser
+    // from auto-focusing something at the bottom and ruining the animation start position.
+    let lockScroll = true;
+    let lockFrame;
+
+    const lockToTop = () => {
+      if (!lockScroll) return;
+      const scroller = document.querySelector('.overflow-y-auto');
+      if (scroller) scroller.scrollTop = 0;
+      lockFrame = requestAnimationFrame(lockToTop);
+    };
+    lockToTop();
+
+    if (activeStepRef.current) {
+      const timer = setTimeout(() => {
+        lockScroll = false; // Release the lock
+        cancelAnimationFrame(lockFrame);
+
+        const element = activeStepRef.current;
+        if (!element) return;
+
+        // Find scroll container
+        let container = element.parentElement;
+        while (container && container !== document.body) {
+          const style = window.getComputedStyle(container);
+          if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+            break;
+          }
+          container = container.parentElement;
+        }
+        if (!container || container === document.body) {
+          container = document.documentElement;
+        }
+
+        const startTop =
+          container === document.documentElement ? window.scrollY : container.scrollTop;
+        const elementRect = element.getBoundingClientRect();
+        const containerRect =
+          container === document.documentElement
+            ? { top: 0, height: window.innerHeight }
+            : container.getBoundingClientRect();
+
+        const targetTop =
+          startTop +
+          (elementRect.top - containerRect.top) -
+          containerRect.height / 2 +
+          elementRect.height / 2;
+
+        if (Math.abs(targetTop - startTop) < 10) return;
+
+        const duration = 1000;
+        const startTime = performance.now();
+
+        // easeOutQuart
+        const easeOutQuart = (t) => 1 - --t * t * t * t;
+
+        const animateScroll = (currentTime) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easeProgress = easeOutQuart(progress);
+
+          const currentPos = startTop + (targetTop - startTop) * easeProgress;
+
+          if (container === document.documentElement) {
+            window.scrollTo(0, currentPos);
+          } else {
+            container.scrollTop = currentPos;
+          }
+
+          if (progress < 1) {
+            requestAnimationFrame(animateScroll);
+          }
+        };
+
+        requestAnimationFrame(animateScroll);
+      }, 300); // 300ms is usually enough for modal to open
+
+      return () => {
+        lockScroll = false;
+        cancelAnimationFrame(lockFrame);
+        clearTimeout(timer);
+      };
+    } else {
+      // If no active step, just release lock after a bit
+      setTimeout(() => {
+        lockScroll = false;
+        cancelAnimationFrame(lockFrame);
+      }, 300);
+    }
+  }, [returnRequest]);
+
   if (!order || !item) return null;
 
   const prodTitle =
@@ -112,6 +207,151 @@ export function OrderDetail() {
     typeof item.productId === 'object' ? item.productId?.isNonRefundable : false;
   const isReturnExchangeBlocked =
     !isDelivered || returnRequest || isNonRefundable || isReturned || isRefunded || isCancelled;
+
+  // --- Dynamic Journey Steps Generation ---
+  const journeySteps = [];
+
+  journeySteps.push({
+    title: 'Order Confirmed',
+    description: 'Dispatched into production ledger',
+    timestamp: new Date(order.createdAt),
+    status: 'completed',
+    icon: 'receipt_long',
+    color: 'blue',
+  });
+
+  if (!isCancelled) {
+    journeySteps.push({
+      title: 'Processed & Shipped',
+      description: 'In transit with Courier Logistics',
+      meta: order.trackingNumber ? `AWB: ${order.trackingNumber}` : null,
+      status: isShipped || isDelivered ? 'completed' : 'pending',
+      icon: 'local_shipping',
+      color: 'amber',
+    });
+
+    journeySteps.push({
+      title: 'Delivery Completed',
+      description: 'Signature check & hand-off validation active',
+      status: isDelivered ? 'completed' : 'pending',
+      icon: 'inventory_2',
+      color: 'emerald',
+    });
+  } else {
+    journeySteps.push({
+      title: 'Order Cancelled',
+      description: 'Order was cancelled and will not be shipped',
+      status: 'error',
+      icon: 'cancel',
+      color: 'red',
+    });
+  }
+
+  if (returnRequest) {
+    journeySteps.push({
+      title: 'Return Request Submitted',
+      description: 'Request is under review by our team',
+      timestamp: new Date(returnRequest.createdAt),
+      status: 'completed',
+      icon: 'assignment_return',
+      color: 'blue',
+    });
+
+    const isReturnRejected = returnRequest.status === 'rejected';
+    const isReturnApproved = [
+      'approved',
+      'pickup_assigned',
+      'pickup_accepted',
+      'picked_up',
+      'reached_warehouse',
+      'inspection_started',
+      'inspection_passed',
+      'refund_triggered',
+      'completed',
+    ].includes(returnRequest.status);
+
+    journeySteps.push({
+      title: isReturnRejected ? 'Return Request Rejected' : 'Return Approved & Pickup',
+      description: isReturnRejected
+        ? 'Return request was declined'
+        : 'Approved for pickup from your location',
+      status: isReturnRejected ? 'error' : isReturnApproved ? 'completed' : 'pending',
+      icon: isReturnRejected ? 'cancel' : 'thumb_up',
+      color: isReturnRejected ? 'red' : 'amber',
+    });
+
+    if (!isReturnRejected) {
+      const isQCPassed = ['inspection_passed', 'refund_triggered', 'completed'].includes(
+        returnRequest.status,
+      );
+      journeySteps.push({
+        title: 'Return Quality Check',
+        description: 'Item successfully inspected at warehouse',
+        status: isQCPassed ? 'completed' : 'pending',
+        icon: 'fact_check',
+        color: 'emerald',
+      });
+
+      const isRefundedStatus = ['refund_triggered', 'completed'].includes(returnRequest.status);
+      journeySteps.push({
+        title: 'Refund Processed',
+        description: `Amount credited via ${returnRequest.refundMethod || 'Original Method'}`,
+        timestamp: returnRequest.status === 'completed' ? new Date(returnRequest.updatedAt) : null,
+        status: isRefundedStatus ? 'completed' : 'pending',
+        icon: 'account_balance_wallet',
+        color: 'emerald',
+      });
+    }
+  } else {
+    if (isReturned) {
+      journeySteps.push({
+        title: 'Returned',
+        description: 'Item was successfully returned to our facility',
+        status: 'completed',
+        icon: 'assignment_return',
+        color: 'amber',
+      });
+    }
+    if (isRefunded || isCancelled) {
+      journeySteps.push({
+        title: 'Refund Processed',
+        description: 'Amount has been refunded to your original payment method',
+        status: 'completed',
+        icon: 'currency_exchange',
+        color: 'emerald',
+      });
+    }
+  }
+
+  // Find the "current" active step
+  const firstPendingIndex = journeySteps.findIndex((s) => s.status === 'pending');
+  const activeStepIndex =
+    firstPendingIndex === -1 ? journeySteps.length - 1 : Math.max(0, firstPendingIndex - 1);
+  if (journeySteps[activeStepIndex]?.status === 'completed') {
+    journeySteps[activeStepIndex].isCurrent = true;
+  } else if (journeySteps[activeStepIndex]?.status === 'error') {
+    journeySteps[activeStepIndex].isCurrent = true;
+  }
+
+  const getColorClasses = (color, status, isCurrent) => {
+    if (status === 'pending')
+      return 'bg-surface-container-high border-outline-variant text-secondary';
+    if (status === 'error')
+      return 'bg-red-500 border-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]';
+
+    const colors = {
+      blue: 'bg-blue-500 border-blue-500 text-white',
+      amber: 'bg-amber-500 border-amber-500 text-white',
+      emerald: 'bg-emerald-500 border-emerald-500 text-white',
+      red: 'bg-red-500 border-red-500 text-white',
+    };
+
+    let classes = colors[color] || colors.blue;
+    if (isCurrent) {
+      classes += ` shadow-[0_0_15px_var(--color-${color}-500,rgba(59,130,246,0.4))] ring-4 ring-${color}-500/20`;
+    }
+    return classes;
+  };
 
   return (
     <div className="space-y-4 text-left font-body">
@@ -155,234 +395,97 @@ export function OrderDetail() {
         </div>
       </div>
 
-      {/* Timeline Tracker */}
-      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
-        <div className="pb-4 mb-4 border-b border-outline-variant/20">
-          <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[14px]">local_shipping</span>
-            Delivery Journey
+      {/* Dynamic Timeline Tracker */}
+      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
+
+        <div className="pb-4 mb-2 border-b border-outline-variant/15">
+          <h2 className="text-[9px] font-bold uppercase tracking-widest text-on-surface flex items-center gap-2">
+            <span className="material-symbols-outlined text-[14px] text-primary">route</span>
+            Journey Tracker
           </h2>
         </div>
 
-        <div className="relative pl-2 py-2">
-          {/* Solid Connection Line */}
-          <div className="absolute left-[14px] top-4 bottom-4 w-[2px] bg-gray-400" />
+        <div className="relative pt-3">
+          <div className="space-y-0">
+            {journeySteps.map((step, idx) => {
+              const isLast = idx === journeySteps.length - 1;
+              const isCompleted = step.status === 'completed';
+              const isError = step.status === 'error';
 
-          <div className="space-y-6 pl-8">
-            {/* Event 1 */}
-            <div className="relative">
-              <span className="absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-blue-100/50" />
-              <strong className="text-on-surface text-[11px] block font-bold">
-                Order Confirmed
-              </strong>
-              <span className="text-[9px] text-secondary block mt-0.5 tracking-wider">
-                Dispatched into production ledger
-              </span>
-              <span className="block text-[8px] text-secondary/70 font-mono mt-1">
-                {new Date(order.createdAt).toLocaleString('en-IN', {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                })}
-              </span>
-            </div>
+              return (
+                <div
+                  key={idx}
+                  ref={step.isCurrent ? activeStepRef : null}
+                  className="relative pl-8 pb-6 group"
+                >
+                  {/* Connecting Line Segment */}
+                  {!isLast && (
+                    <div
+                      className={`absolute left-[11px] top-6 bottom-[-4px] w-[2px] transition-colors duration-500 ${
+                        isCompleted && journeySteps[idx + 1]?.status !== 'pending'
+                          ? 'bg-emerald-500'
+                          : 'border-l-2 border-dashed border-outline-variant/40'
+                      }`}
+                    />
+                  )}
 
-            {/* Event 2: Shipped */}
-            {!isCancelled && (
-              <div className="relative">
-                <span
-                  className={`absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full ${isShipped ? 'bg-amber-500 ring-2 ring-amber-100/50' : 'bg-outline-variant'}`}
-                />
-                <strong className="text-on-surface text-[11px] block font-bold">
-                  Processed & Shipped
-                </strong>
-                <span className="text-[9px] text-secondary block mt-0.5 tracking-wider">
-                  In transit with Courier Logistics
-                </span>
-                {order.trackingNumber && (
-                  <span className="block text-[9px] text-[#8c7335] font-semibold uppercase tracking-widest mt-1">
-                    AWB: {order.trackingNumber}
-                  </span>
-                )}
-              </div>
-            )}
+                  {/* Step Icon / Dot */}
+                  <div
+                    className={`absolute left-0 top-1 w-6 h-6 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-300 z-10 shrink-0 overflow-hidden ${getColorClasses(step.color, step.status, step.isCurrent)}`}
+                  >
+                    {step.status === 'completed' && !step.isCurrent ? (
+                      <span
+                        className="material-symbols-outlined font-bold flex items-center justify-center w-full h-full leading-none"
+                        style={{ fontSize: '14px' }}
+                      >
+                        check
+                      </span>
+                    ) : (
+                      <span
+                        className="material-symbols-outlined flex items-center justify-center w-full h-full leading-none"
+                        style={{ fontSize: '14px' }}
+                      >
+                        {step.icon}
+                      </span>
+                    )}
+                  </div>
 
-            {/* Event 3: Delivered */}
-            {!isCancelled && (
-              <div className="relative">
-                <span
-                  className={`absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full ${isDelivered ? 'bg-emerald-600 ring-2 ring-emerald-100/50' : 'bg-outline-variant'}`}
-                />
-                <strong className="text-on-surface text-[11px] block font-bold">
-                  Delivery Completed
-                </strong>
-                <span className="text-[9px] text-secondary block mt-0.5 tracking-wider">
-                  Signature check & hand-off validation active
-                </span>
-              </div>
-            )}
+                  {/* Step Content */}
+                  <div
+                    className={`transition-all duration-300 ${step.status === 'pending' ? 'opacity-60' : 'opacity-100'} pl-2`}
+                  >
+                    <strong
+                      className={`text-[11px] block font-bold tracking-wide ${isError ? 'text-red-600' : 'text-on-surface'}`}
+                    >
+                      {step.title}
+                    </strong>
+                    <span className="text-[9px] text-secondary block mt-0.5 tracking-wider leading-relaxed">
+                      {step.description}
+                    </span>
 
-            {/* Cancelled Event */}
-            {isCancelled && (
-              <div className="relative">
-                <span
-                  className={`absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-red-100/50`}
-                />
-                <strong className="text-on-surface text-[11px] block font-bold text-red-600">
-                  Order Cancelled
-                </strong>
-                <span className="text-[9px] text-secondary block mt-0.5 tracking-wider">
-                  Order was cancelled and will not be shipped
-                </span>
-              </div>
-            )}
+                    {step.meta && (
+                      <span className="inline-block mt-1.5 px-1.5 py-0.5 bg-surface-container-low border border-outline-variant/30 rounded text-[8px] text-primary font-semibold uppercase tracking-widest">
+                        {step.meta}
+                      </span>
+                    )}
 
-            {/* Returned Event */}
-            {isReturned && (
-              <div className="relative">
-                <span
-                  className={`absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-amber-100/50`}
-                />
-                <strong className="text-on-surface text-[11px] block font-bold">Returned</strong>
-                <span className="text-[9px] text-secondary block mt-0.5 tracking-wider">
-                  Item was successfully returned to our facility
-                </span>
-              </div>
-            )}
-
-            {/* Refunded Event */}
-            {(isRefunded || isCancelled) && (
-              <div className="relative">
-                <span
-                  className={`absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full ${isRefunded ? 'bg-emerald-600 ring-2 ring-emerald-100/50' : 'bg-outline-variant'}`}
-                />
-                <strong className="text-on-surface text-[11px] block font-bold">
-                  Refund Processed
-                </strong>
-                <span className="text-[9px] text-secondary block mt-0.5 tracking-wider">
-                  Amount has been refunded to your original payment method
-                </span>
-              </div>
-            )}
+                    {step.timestamp && (
+                      <span className="block text-[8px] text-secondary/60 font-mono mt-1 uppercase tracking-wider">
+                        {step.timestamp.toLocaleString('en-IN', {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
-
-      {/* Return Journey Tracker */}
-      {returnRequest && (
-        <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
-          <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center">
-            <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[14px]">assignment_return</span>
-              Return Journey
-            </h2>
-            <span className="text-[9px] text-secondary font-mono tracking-wider">
-              {returnRequest.returnId}
-            </span>
-          </div>
-
-          <div className="relative pl-2 py-2">
-            <div className="absolute left-[14px] top-4 bottom-4 w-[2px] bg-gray-400" />
-
-            <div className="space-y-6 pl-8">
-              {/* Event 1 */}
-              <div className="relative">
-                <span className="absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-blue-100/50" />
-                <strong className="text-on-surface text-[11px] block font-bold">
-                  Request Submitted
-                </strong>
-                <span className="text-[9px] text-secondary block mt-0.5 tracking-wider">
-                  Request is under review by our team
-                </span>
-                <span className="block text-[8px] text-secondary/70 font-mono mt-1">
-                  {new Date(returnRequest.createdAt).toLocaleString('en-IN', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  })}
-                </span>
-              </div>
-
-              {/* Event 2 */}
-              <div className="relative">
-                <span
-                  className={`absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full ${
-                    [
-                      'approved',
-                      'pickup_assigned',
-                      'pickup_accepted',
-                      'picked_up',
-                      'reached_warehouse',
-                      'inspection_started',
-                      'inspection_passed',
-                      'refund_triggered',
-                      'completed',
-                    ].includes(returnRequest.status)
-                      ? 'bg-amber-500 ring-2 ring-amber-100/50'
-                      : returnRequest.status === 'rejected'
-                        ? 'bg-red-500 ring-2 ring-red-100/50'
-                        : 'bg-outline-variant'
-                  }`}
-                />
-                <strong className="text-on-surface text-[11px] block font-bold">
-                  {returnRequest.status === 'rejected' ? 'Request Rejected' : 'Approved & Pickup'}
-                </strong>
-                <span className="text-[9px] text-secondary block mt-0.5 tracking-wider">
-                  {returnRequest.status === 'rejected'
-                    ? 'Return request was declined'
-                    : 'Approved for pickup from your location'}
-                </span>
-              </div>
-
-              {/* Event 3 */}
-              {returnRequest.status !== 'rejected' && (
-                <div className="relative">
-                  <span
-                    className={`absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full ${
-                      ['inspection_passed', 'refund_triggered', 'completed'].includes(
-                        returnRequest.status,
-                      )
-                        ? 'bg-emerald-600 ring-2 ring-emerald-100/50'
-                        : 'bg-outline-variant'
-                    }`}
-                  />
-                  <strong className="text-on-surface text-[11px] block font-bold">
-                    Quality Check Passed
-                  </strong>
-                  <span className="text-[9px] text-secondary block mt-0.5 tracking-wider">
-                    Item successfully inspected at warehouse
-                  </span>
-                </div>
-              )}
-
-              {/* Event 4 */}
-              {returnRequest.status !== 'rejected' && (
-                <div className="relative">
-                  <span
-                    className={`absolute -left-[30px] top-1 w-2.5 h-2.5 rounded-full ${
-                      ['refund_triggered', 'completed'].includes(returnRequest.status)
-                        ? 'bg-emerald-600 ring-2 ring-emerald-100/50'
-                        : 'bg-outline-variant'
-                    }`}
-                  />
-                  <strong className="text-on-surface text-[11px] block font-bold">
-                    Refund Processed
-                  </strong>
-                  <span className="text-[9px] text-secondary block mt-0.5 tracking-wider">
-                    Amount credited via {returnRequest.refundMethod || 'Original Method'}
-                  </span>
-                  {returnRequest.status === 'completed' && (
-                    <span className="block text-[8px] text-secondary/70 font-mono mt-1">
-                      {new Date(returnRequest.updatedAt).toLocaleString('en-IN', {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                      })}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Loyalty Review Callout */}
       <div

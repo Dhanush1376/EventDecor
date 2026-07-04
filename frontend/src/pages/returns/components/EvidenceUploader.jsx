@@ -1,6 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { m as motion } from 'framer-motion';
 
+import api from '../../../services/api';
+import toast from 'react-hot-toast';
+
 const EvidenceUploader = ({
   images,
   videos,
@@ -10,6 +13,7 @@ const EvidenceUploader = ({
   maxVideos = 2,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleDragOver = (e) => {
@@ -37,26 +41,55 @@ const EvidenceUploader = ({
     }
   };
 
-  const handleFiles = (files) => {
-    const newImages = [];
-    const newVideos = [];
+  const handleFiles = async (files) => {
+    const formData = new FormData();
+    let imageCount = images.length;
+    let videoCount = videos.length;
+    let hasFiles = false;
 
     Array.from(files).forEach((file) => {
-      if (file.type.startsWith('image/') && images.length + newImages.length < maxImages) {
-        // Mocking upload for now - in production this would upload to S3/Cloudinary and return URL
-        const mockUrl = URL.createObjectURL(file);
-        newImages.push(mockUrl);
-      } else if (file.type.startsWith('video/') && videos.length + newVideos.length < maxVideos) {
-        const mockUrl = URL.createObjectURL(file);
-        newVideos.push(mockUrl);
+      if (file.type.startsWith('image/') && imageCount < maxImages) {
+        formData.append('images', file);
+        imageCount++;
+        hasFiles = true;
+      } else if (file.type.startsWith('video/') && videoCount < maxVideos) {
+        formData.append('images', file);
+        videoCount++;
+        hasFiles = true;
       }
     });
 
-    if (newImages.length > 0) onImagesChange([...images, ...newImages]);
-    if (newVideos.length > 0) onVideosChange([...videos, ...newVideos]);
+    if (!hasFiles) return;
 
-    // Reset file input
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    try {
+      setIsUploading(true);
+      const res = await api.post('/api/v1/upload/inspirations', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (res.data?.success && res.data.images) {
+        const newImages = [];
+        const newVideos = [];
+
+        res.data.images.forEach((url) => {
+          if (url.match(/\.(mp4|webm|mov|ogg)$/i)) {
+            newVideos.push(url);
+          } else {
+            newImages.push(url);
+          }
+        });
+
+        if (newImages.length > 0) onImagesChange([...images, ...newImages]);
+        if (newVideos.length > 0) onVideosChange([...videos, ...newVideos]);
+        toast.success('Files uploaded successfully');
+      }
+    } catch (err) {
+      console.error('Upload failed:', err);
+      toast.error(err?.response?.data?.message || 'Failed to upload evidence files');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const removeImage = (index) => {
@@ -87,7 +120,9 @@ const EvidenceUploader = ({
         <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-2">
           cloud_upload
         </span>
-        <h3 className="text-on-surface font-medium mb-1">Click or drag files to upload</h3>
+        <h3 className="text-on-surface font-medium mb-1">
+          {isUploading ? 'Uploading...' : 'Click or drag files to upload'}
+        </h3>
         <p className="text-sm text-on-surface-variant">
           Images (max {maxImages}), Videos (max {maxVideos})
         </p>

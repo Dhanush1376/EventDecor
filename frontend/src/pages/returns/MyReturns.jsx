@@ -1,22 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { returnService } from '../../services/api/returnService';
-import { OptimizedImage, OrdersListSkeleton } from '../../components/ui';
+import { OptimizedImage, OrdersListSkeleton, StatusPill, FilterTabs } from '../../components/ui';
 import { useDashboard } from '../../context/DashboardContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUserSocket } from '../../context/UserSocketProvider';
 
-const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
+const fadeUp = { hidden: { opacity: 0, scale: 0.98 }, show: { opacity: 1, scale: 1 } };
 
 export const MyReturns = () => {
   const [returns, setReturns] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [returnFilter, setReturnFilter] = useState('RETURN');
   const { setSelectedOrderId, setSelectedOrderItemIndex, orders } = useDashboard();
   const navigate = useNavigate();
   const socket = useUserSocket();
 
   const handleTrackJourney = (ret) => {
-    navigate(`/dashboard/returns/${ret._id}`);
+    const targetOrderId = typeof ret.orderId === 'object' ? ret.orderId._id : ret.orderId;
+    if (targetOrderId) {
+      setSelectedOrderId(targetOrderId);
+      navigate('/dashboard/orders');
+    }
   };
 
   const fetchReturns = async () => {
@@ -55,69 +60,62 @@ export const MyReturns = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'submitted':
-        return 'bg-amber-100 text-amber-800';
+        return 'warning';
       case 'approved':
-        return 'bg-blue-100 text-blue-800';
+        return 'info';
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'success';
       case 'rejected':
-        return 'bg-red-100 text-red-800';
+        return 'error';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'neutral';
     }
   };
 
   if (loading) {
     return (
-      <div className="space-y-6 text-left max-w-4xl">
-        <div className="flex flex-col mb-6 pb-4 border-b border-outline-variant/30">
-          <h2 className="text-[12px] font-bold uppercase tracking-widest text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px]">assignment_return</span>
-            My Returns & Exchanges
-          </h2>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-secondary mt-1.5 ml-6">
-            Track the status of your reverse logistics
-          </p>
-        </div>
+      <div className="space-y-4 text-[11px]">
+        <FilterTabs
+          value={returnFilter}
+          onChange={setReturnFilter}
+          options={[
+            { id: 'RETURN', label: 'Returns' },
+            { id: 'EXCHANGE', label: 'Exchanges' },
+          ]}
+        />
         <OrdersListSkeleton rows={3} />
       </div>
     );
   }
 
-  return (
-    <motion.div
-      variants={fadeUp}
-      initial="hidden"
-      animate="show"
-      className="space-y-6 text-left max-w-4xl"
-    >
-      <div className="flex flex-col gap-2.5 mb-6 pb-5 border-b border-black/5">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded border-[1.5px] border-black flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-[18px] text-black">
-              assignment_return
-            </span>
-          </div>
-          <h2 className="text-[13px] font-bold uppercase tracking-[0.15em] text-on-surface">
-            My Returns & Exchanges
-          </h2>
-        </div>
-        <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-secondary ml-8">
-          Track the status of your reverse logistics
-        </p>
-      </div>
+  const filteredReturns = returns.filter((ret) =>
+    returnFilter === 'RETURN' ? ret.returnType !== 'exchange' : ret.returnType === 'exchange',
+  );
 
-      {!returns || returns.length === 0 ? (
+  return (
+    <motion.div variants={fadeUp} initial="hidden" animate="show" className="space-y-4 text-[11px]">
+      <FilterTabs
+        value={returnFilter}
+        onChange={setReturnFilter}
+        options={[
+          { id: 'RETURN', label: 'Returns' },
+          { id: 'EXCHANGE', label: 'Exchanges' },
+        ]}
+      />
+
+      {filteredReturns.length === 0 ? (
         <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[40vh]">
           <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
-            <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+            <span className="material-symbols-outlined text-[20px]">assignment_return</span>
           </div>
+
           <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
-            No Returns Yet
+            No {returnFilter === 'RETURN' ? 'Returns' : 'Exchanges'} Found
           </h3>
           <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px] mb-6">
-            You haven't requested any returns or exchanges.
+            You have no active {returnFilter === 'RETURN' ? 'returns' : 'exchanges'}.
           </p>
+
           <div className="flex justify-center mt-6">
             <Link
               to="/collections"
@@ -131,73 +129,143 @@ export const MyReturns = () => {
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
-          {returns.map((ret) => (
-            <div
-              key={ret._id}
-              className="bg-surface-bright border border-outline-variant/40 rounded-lg overflow-hidden shadow-xs hover:shadow-sm transition-shadow"
-            >
-              <div className="bg-surface-container-lowest px-5 py-3 border-b border-outline-variant/20 flex justify-between items-center text-[9px] font-bold uppercase tracking-widest">
-                <div className="flex items-center gap-2 text-secondary">
-                  <span className="material-symbols-outlined text-[12px]">receipt_long</span>
-                  <span>Return ID:</span>
-                  <span className="font-mono text-on-surface">{ret.returnId}</span>
+        <motion.div layout className="space-y-4">
+          <AnimatePresence>
+            {filteredReturns.map((ret, index) => (
+              <motion.div
+                layout
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.2, delay: index * 0.02 }}
+                key={ret._id}
+                className="bg-surface-bright border border-outline-variant/30 rounded-lg overflow-hidden shadow-2xs hover:border-outline-variant hover:shadow-xs transition-all text-left"
+              >
+                <div className="bg-surface-container-low px-4 py-3 flex items-center justify-between border-b border-outline-variant/15">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 text-primary shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                      />
+                    </svg>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface">
+                      {ret.status.replace('_', ' ')}
+                    </span>
+                    <span className="text-[9px] text-secondary font-light">
+                      on{' '}
+                      {new Date(ret.createdAt).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <StatusPill color="neutral">ID: {ret.returnId}</StatusPill>
+                    <StatusPill color={getStatusColor(ret.status)}>
+                      {ret.returnType === 'exchange' ? 'Exchange' : 'Return'}
+                    </StatusPill>
+                  </div>
                 </div>
-                <div>
-                  <span
-                    className={`px-2.5 py-1 rounded-[4px] text-[8px] font-bold uppercase tracking-wider ${getStatusColor(ret.status)}`}
-                  >
-                    {ret.status.replace('_', ' ')}
-                  </span>
-                </div>
-              </div>
-              <div className="p-5 flex flex-col lg:flex-row gap-5 justify-between">
-                <div className="flex-1 space-y-4">
-                  {ret.items.map((item, i) => (
-                    <div key={i} className="flex gap-4">
-                      <div className="w-14 h-14 rounded-md overflow-hidden shrink-0 border border-outline-variant/30">
-                        <OptimizedImage
-                          src={item.imageSrc || item.productId?.imageSrc || '/placeholder.png'}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex flex-col justify-center">
-                        <h4 className="font-bold text-[10px] uppercase tracking-widest text-on-surface line-clamp-1">
-                          {item.title || item.productId?.title || 'Product'}
+
+                {ret.items.map((item, i) => {
+                  const prodTitle = item.title || item.productId?.title || 'Product';
+                  const prodImage = item.imageSrc || item.productId?.imageSrc || '/placeholder.png';
+                  const prodPrice = item.price || item.productId?.price || 0;
+                  const prodVariant = item.variant || 'Default';
+
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => handleTrackJourney(ret)}
+                      className={`p-4 flex gap-4 items-center cursor-pointer hover:bg-surface-container/10 transition-colors group ${
+                        i > 0 ? 'border-t border-outline-variant/15' : ''
+                      }`}
+                    >
+                      <OptimizedImage
+                        src={prodImage}
+                        alt={prodTitle}
+                        containerClassName="w-16 h-20 rounded-lg bg-surface-container border border-outline-variant/20 flex-shrink-0 shadow-3xs"
+                        className="w-full h-full object-cover"
+                      />
+
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <span className="text-[9px] uppercase font-bold text-primary tracking-widest block font-label">
+                          Siri Atelier Collection
+                        </span>
+                        <h4 className="font-display font-medium text-on-surface text-[12px] truncate">
+                          {prodTitle}
                         </h4>
-                        <div className="text-[9px] text-secondary mt-1 font-bold tracking-widest uppercase flex gap-3">
-                          <span>Qty: {item.returnQuantity}</span>
-                          <span className="opacity-50">|</span>
-                          <span>{item.reason}</span>
+                        <p className="text-secondary text-[10px] font-light font-body">
+                          Variant:{' '}
+                          <span className="font-medium text-on-surface">{prodVariant}</span> | Qty:{' '}
+                          <span className="font-medium text-on-surface">{item.returnQuantity}</span>
+                        </p>
+                        <div className="flex items-center gap-1.5 pt-0.5 font-body">
+                          <span className="text-xs font-bold text-primary">
+                            ₹{(prodPrice * item.returnQuantity).toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-secondary font-light">
+                            {item.reason}
+                          </span>
                         </div>
                       </div>
+
+                      <svg
+                        className="w-4 h-4 text-secondary group-hover:text-primary transition-colors pr-1 shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
-                  ))}
-                </div>
-                <div className="shrink-0 lg:w-48 space-y-3 border-t lg:border-t-0 lg:border-l border-outline-variant/20 pt-4 lg:pt-0 lg:pl-5 flex flex-col justify-center">
-                  <div>
-                    <div className="text-[8px] uppercase tracking-widest text-secondary font-bold mb-1">
-                      Refund Amount
+                  );
+                })}
+
+                <div className="px-4 py-3 bg-surface-container-low/40 border-t border-outline-variant/15 flex items-center justify-between text-[10px] text-secondary font-body">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-2 sm:gap-0">
+                    <div className="flex items-center gap-1.5">
+                      <svg
+                        className="w-3.5 h-3.5 text-secondary/70 shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>
+                        Refund Amount:{' '}
+                        <span className="font-bold text-on-surface">
+                          ₹{(ret.refundBreakdown?.grandTotal || 0).toLocaleString()}
+                        </span>
+                      </span>
                     </div>
-                    <div className="font-bold text-lg text-primary tracking-tight">
-                      ₹{(ret.refundBreakdown?.grandTotal || 0).toLocaleString()}
-                    </div>
-                    <div className="text-[8px] font-bold uppercase tracking-widest text-secondary mt-0.5">
-                      Via {ret.refundMethod}
+                    <div className="flex items-center gap-1.5">
+                      <span>Refund Method:</span>
+                      <span className="font-bold text-on-surface">
+                        {ret.refundMethod || 'original'}
+                      </span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleTrackJourney(ret)}
-                    className="w-full py-2.5 bg-black hover:bg-gray-900 text-white border-0 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1.5 mt-2"
-                  >
-                    <span className="material-symbols-outlined text-[12px]">local_shipping</span>
-                    Track Journey
-                  </button>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
     </motion.div>
   );

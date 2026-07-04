@@ -47,9 +47,16 @@ export const createResponseInterceptor = ({
     const method = originalRequest?.method?.toLowerCase() || 'get';
     const isGet = method === 'get';
     const status = error.response?.status;
-    const isDatabaseDown =
-      status === 503 &&
-      error.response?.data?.message?.includes('Database connection is temporarily unavailable');
+    const isDatabaseDown = status === 503 && error.response?.data?.message?.includes('Database');
+
+    // Auto-retry database unavailability errors once after a brief wait
+    if (isDatabaseDown && !originalRequest._dbRetry) {
+      originalRequest._dbRetry = true;
+      const retryDelay = error.response?.data?.retryAfterMs || 3000;
+      logger.warn(`[API] Database temporarily unavailable. Auto-retrying in ${retryDelay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      return api(originalRequest);
+    }
 
     // Don't treat database readiness guard 503s as generic transient errors to avoid 2-minute UI hangs
     const isTransientError =

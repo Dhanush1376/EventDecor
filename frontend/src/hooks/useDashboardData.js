@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { orderService } from '../services/domainServices';
+import { orderService, customOrderService } from '../services/domainServices';
 import rentalService from '../services/api/rentalService';
 import { useUserAddresses, useRecentlyViewed } from './useUserQueries';
 
@@ -37,6 +37,18 @@ export function useDashboardData(userId) {
     gcTime: 30 * 60 * 1000,
   });
 
+  const customOrdersQuery = useQuery({
+    queryKey: ['dashboard', 'customOrders', userId],
+    queryFn: async () => {
+      const res = await customOrderService.getMyOrders();
+      const payload = res.data ?? res ?? [];
+      return Array.isArray(payload) ? payload : payload.data || [];
+    },
+    enabled: Boolean(userId),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+
   const addressesQuery = useUserAddresses();
   const recentlyViewedQuery = useRecentlyViewed();
 
@@ -44,6 +56,7 @@ export function useDashboardData(userId) {
     if (userId) {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'orders', userId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'rentals', userId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'customOrders', userId] });
     }
     queryClient.invalidateQueries({ queryKey: ['user', 'addresses'] });
     queryClient.invalidateQueries({ queryKey: ['user', 'recentlyViewed'] });
@@ -84,14 +97,20 @@ export function useDashboardData(userId) {
   return {
     orders: ordersQuery.data || EMPTY_ARRAY,
     rentals: rentalsQuery.data || EMPTY_ARRAY,
+    customOrders: customOrdersQuery.data || EMPTY_ARRAY,
     addresses: addressesQuery.data || EMPTY_ARRAY,
     recentlyViewed: recentlyViewedQuery.data || EMPTY_ARRAY,
     isOrdersLoading: ordersQuery.isLoading,
     isRentalsLoading: rentalsQuery.isLoading,
+    isCustomOrdersLoading: customOrdersQuery.isLoading,
     isAddressesLoading: addressesQuery.isLoading,
     isLoadingRecentlyViewed: recentlyViewedQuery.isLoading,
     error:
-      ordersQuery.error || rentalsQuery.error || addressesQuery.error || recentlyViewedQuery.error,
+      ordersQuery.error ||
+      rentalsQuery.error ||
+      customOrdersQuery.error ||
+      addressesQuery.error ||
+      recentlyViewedQuery.error,
     refetch,
     // Keep setter functions for signature compatibility
     setOrders,

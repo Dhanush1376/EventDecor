@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { useAdminEventsData } from './useAdminEventsData';
-import { PageHeader, FilterBar, stagger } from '../../components/AdminUIKit';
+import { PageHeader, stagger } from '../../components/AdminUIKit';
 
 // Tabs
 import { DashboardTab } from './tabs/DashboardTab';
@@ -90,16 +90,6 @@ export function AdminEvents() {
         subtitle={`${bookings.length} active event bookings recorded`}
         icon="event"
         iconColor="orders"
-        headerAction={
-          <div className="w-full sm:max-w-md">
-            <FilterBar
-              filters={tabs.map((t) => t.id)}
-              value={activeTab}
-              onChange={setActiveTab}
-              className="pb-0 border-b border-[var(--admin-border-subtle)]"
-            />
-          </div>
-        }
       >
         <button
           onClick={() => navigate('/admin/showcases/add')}
@@ -109,6 +99,24 @@ export function AdminEvents() {
           Add Showcase
         </button>
       </PageHeader>
+
+      {/* Smart Filter Tabs */}
+      <div className="flex border-b border-[var(--admin-border-subtle)] overflow-x-auto no-scrollbar mt-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-6 py-4 font-semibold text-[14px] border-b-2 transition-colors whitespace-nowrap ${
+              activeTab === tab.id
+                ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]'
+                : 'border-transparent text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border-strong)]'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       <AnimatePresence mode="wait">
         {activeTab === 'dashboard' && (

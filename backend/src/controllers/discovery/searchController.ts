@@ -9,6 +9,8 @@ import {
   getDiscoveryData,
   learnSearchPatterns,
 } from '../../services/search/SearchAnalyticsService';
+import { EnterpriseSearchService } from '../../domains/search/services/EnterpriseSearchService';
+import { reindexAll } from '../../services/search/searchIndexer';
 import logger from '../../config/logger';
 
 const stripUnsafeControlChars = (value: string) =>
@@ -202,6 +204,60 @@ export const relatedSearches = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to load related searches',
+    });
+  }
+};
+
+/**
+ * GET /search/enterprise?q=...
+ * Unified admin search for products, orders, users, and shipments.
+ */
+export const enterpriseSearch = async (req: Request, res: Response) => {
+  try {
+    const query = (req.query.q as string) || '';
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+
+    if (query.trim().length < 2) {
+      return res
+        .status(200)
+        .json({ success: true, data: { products: [], orders: [], users: [], shipments: [] } });
+    }
+
+    const result = await EnterpriseSearchService.globalSearch(query, limit);
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (err: any) {
+    logger.error(`[SEARCH CTRL] Enterprise search error: ${err.message}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to execute enterprise search',
+    });
+  }
+};
+
+/**
+ * POST /search/reindex
+ * Trigger a full background reindex of the search database (Admin only).
+ */
+export const reindexSearch = async (req: Request, res: Response) => {
+  try {
+    // Fire and forget (don't await) so we don't block the request
+    reindexAll().catch((err) => {
+      logger.error(`[SEARCH CTRL] Background reindex error: ${err.message}`);
+    });
+
+    return res.status(202).json({
+      success: true,
+      message: 'Reindex process started in the background.',
+    });
+  } catch (err: any) {
+    logger.error(`[SEARCH CTRL] Failed to start reindex: ${err.message}`);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to start reindex',
     });
   }
 };

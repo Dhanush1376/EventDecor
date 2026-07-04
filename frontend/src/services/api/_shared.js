@@ -88,10 +88,12 @@ export const uploadDirectToCloudinary = async (
         try {
           // Route through backend proxy to bypass CORS/Hotlink protection
           const apiRoot = getApiRootUrl();
-          const origin = apiRoot.startsWith('/') ? window.location.origin : '';
-          const proxyUrl = `${origin}${apiRoot}/v1/media/optimize?url=${encodeURIComponent(u)}&q=100`;
+          const proxyPath = `/media/optimize?url=${encodeURIComponent(u)}&q=100`;
 
-          const response = await axios.get(proxyUrl, { responseType: 'blob' });
+          const response = await api.get(proxyPath, {
+            responseType: 'blob',
+            _bypassOfflineQueue: true,
+          });
           const blob = response.data;
 
           let fileName = u.split('/').pop()?.split('?')[0] || 'remote_image.jpg';

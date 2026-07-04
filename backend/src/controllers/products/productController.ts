@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import Product from '../../models/Product';
 import ProductService from '../../services/productService';
 import { ProductAiService } from '../../services/ProductAiService';
 import FilterService from '../../services/FilterService';
@@ -49,7 +50,11 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
 
 export const createProduct = asyncHandler(async (req: Request, res: Response) => {
   const product = await ProductService.createProduct(req.body, req.user);
-  res.status(201).json(new ApiResponse(true, 'Product created successfully', product));
+  const populated = await Product.findById(product._id)
+    .populate('primaryCategory', 'name slug type')
+    .populate('secondaryCategories', 'name slug type')
+    .lean();
+  res.status(201).json(new ApiResponse(true, 'Product created successfully', populated));
 });
 
 export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
@@ -57,7 +62,11 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
-  res.status(200).json(new ApiResponse(true, 'Product updated successfully', product));
+  const populated = await Product.findById(product._id)
+    .populate('primaryCategory', 'name slug type')
+    .populate('secondaryCategories', 'name slug type')
+    .lean();
+  res.status(200).json(new ApiResponse(true, 'Product updated successfully', populated));
 });
 
 export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {

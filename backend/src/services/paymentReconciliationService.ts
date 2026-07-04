@@ -110,7 +110,7 @@ export class PaymentReconciliationService {
         try {
           const { UnifiedWebhookRouter } = require('./payments/UnifiedWebhookRouter');
           logger.info(`[RECONCILE] Auto-healing revenue leakage for Order ${o._id}`);
-          const mockEvent = {
+          const webhookEvent = {
             payload: {
               payment: {
                 entity: {
@@ -125,7 +125,7 @@ export class PaymentReconciliationService {
           };
           await UnifiedWebhookRouter.routeWebhookEvent(
             'order.paid',
-            mockEvent,
+            webhookEvent,
             'reconciliation',
             `recon_heal_${o._id}`,
           );
@@ -380,23 +380,39 @@ export class PaymentReconciliationService {
           actualStatus = rzpOrder.status; // 'created', 'attempted', 'paid'
           if (actualStatus === 'paid') {
             logger.info(`[RECONCILE] Recovering missed payment for ${entityType} ${entity._id}`);
-            const mockEvent = {
+            let rzpPaymentId = `recon_${entity.razorpayOrderId}`; // Fallback only
+            try {
+              const payments = await RazorpayGateway.getOrderPayments(entity.razorpayOrderId);
+              if (payments && payments.items && payments.items.length > 0) {
+                const successfulPayment = payments.items.find(
+                  (p: any) => p.status === 'captured' || p.status === 'authorized',
+                );
+                if (successfulPayment) {
+                  rzpPaymentId = successfulPayment.id;
+                }
+              }
+            } catch (e) {
+              logger.warn(`Could not fetch payments for order ${entity.razorpayOrderId}`);
+            }
+
+            const webhookEvent = {
               payload: {
                 payment: {
                   entity: {
-                    id: `recon_${entity.razorpayOrderId}`,
+                    id: rzpPaymentId,
                     order_id: entity.razorpayOrderId,
                     amount: rzpOrder.amount,
                     currency: 'INR',
+                    status: 'captured',
                   },
                 },
               },
             };
             await UnifiedWebhookRouter.routeWebhookEvent(
               'order.paid',
-              mockEvent,
+              webhookEvent,
               'reconciliation',
-              `recon_${Date.now()}`,
+              rzpPaymentId,
             );
             return; // Successfully recovered
           }

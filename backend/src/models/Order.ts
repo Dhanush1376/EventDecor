@@ -9,7 +9,7 @@ const OrderSchema: Schema = new Schema(
     items: {
       type: [
         {
-          productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+          productId: { type: Schema.Types.ObjectId, ref: 'Product' },
           title: { type: String, required: true },
           price: { type: Number, required: true },
           quantity: { type: Number, required: true },
@@ -112,7 +112,7 @@ const OrderSchema: Schema = new Schema(
     barcodeData: { type: String },
     qrCodeData: { type: String },
     notes: { type: String },
-    needByDate: { type: String },
+    needByDate: { type: Date },
     idempotencyKey: { type: String, unique: true, sparse: true },
     publicTrackingToken: { type: String, select: false },
     codCollected: { type: Boolean, default: false },
@@ -128,6 +128,17 @@ const OrderSchema: Schema = new Schema(
     returnRequestIds: [{ type: Schema.Types.ObjectId, ref: 'ReturnRequest' }],
     refundStatus: { type: String, enum: ['none', 'partial', 'full'], default: 'none' },
     hasActiveReturn: { type: Boolean, default: false },
+    orderNumber: { type: String, index: true },
+    orderUuid: { type: String, index: true },
+    packageIds: [{ type: String }],
+    shipmentIds: [{ type: String }],
+    orderQrCode: { type: String },
+    orderQrSignature: { type: String },
+    estimatedDeliveryDate: { type: Date },
+    dispatchDate: { type: Date },
+    transitDays: { type: Number },
+    delayWarning: { type: Boolean, default: false },
+    productSnapshots: [{ type: Schema.Types.Mixed }],
   },
   { timestamps: true },
 );
@@ -152,6 +163,9 @@ OrderSchema.plugin(SoftDeletePlugin);
 
 import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 OrderSchema.plugin(ForensicAuditPlugin);
+
+import TransactionSyncPlugin from '../utils/TransactionSyncPlugin';
+OrderSchema.plugin(TransactionSyncPlugin, { domain: 'purchase' });
 
 const Order = mongoose.model<IOrder, SoftDeleteModel<IOrder>>('Order', OrderSchema);
 export default Order;

@@ -41,9 +41,7 @@ export const uploadService = {
   },
   uploadInspirations: async (formData) => {
     return uploadWithRetry(async (fd) => {
-      const response = await api.post('/upload/inspirations', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const response = await api.post('/upload/inspirations', fd);
       return response.data;
     }, formData);
   },

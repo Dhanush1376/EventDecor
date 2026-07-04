@@ -121,11 +121,17 @@ const AdminDrafts = lazy(() =>
 const AdminDashboard = lazy(() =>
   import('../admin/pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
 );
+const AdminEnterpriseSearch = lazy(() =>
+  import('../admin/pages/AdminEnterpriseSearch').then((m) => ({ default: m.default })),
+);
 const AdminProducts = lazy(() =>
   import('../admin/pages/AdminProducts').then((m) => ({ default: m.AdminProducts })),
 );
 const AdminAddProduct = lazy(() =>
   import('../admin/pages/AdminAddProduct').then((m) => ({ default: m.AdminAddProduct })),
+);
+const AdminOrdersHub = lazy(() =>
+  import('../admin/pages/AdminOrdersHub').then((m) => ({ default: m.default })),
 );
 const AdminOrders = lazy(() =>
   import('../admin/pages/AdminOrders').then((m) => ({ default: m.AdminOrders })),
@@ -145,6 +151,11 @@ const AdminInquiries = lazy(() =>
 const AdminCustomers = lazy(() =>
   import('../admin/pages/AdminCustomers').then((m) => ({ default: m.AdminCustomers })),
 );
+
+const AdminWarehouseHub = lazy(() => import('../admin/pages/AdminWarehouseHub'));
+const AdminProductionHub = lazy(() => import('../admin/pages/AdminProductionHub'));
+const AdminBusinessRules = lazy(() => import('../admin/pages/AdminBusinessRules'));
+const AdminApprovalsQueue = lazy(() => import('../admin/pages/AdminApprovalsQueue'));
 
 const AdminExecutiveDashboard = lazy(() => import('../admin/pages/ExecutiveDashboard'));
 const CustomerProfile360 = lazy(() => import('../admin/pages/CustomerProfile360'));
@@ -180,11 +191,8 @@ const AdminInventory = lazy(() =>
 const AdminCoupons = lazy(() =>
   import('../admin/pages/AdminCoupons').then((m) => ({ default: m.AdminCoupons })),
 );
-const AdminRentalOrders = lazy(() =>
-  import('../admin/pages/AdminRentalOrders').then((m) => ({ default: m.AdminRentalOrders })),
-);
-const AdminRentalCalendar = lazy(() =>
-  import('../admin/pages/AdminRentalCalendar').then((m) => ({ default: m.AdminRentalCalendar })),
+const AdminRentalsHub = lazy(() =>
+  import('../admin/pages/AdminRentalsHub').then((m) => ({ default: m.default })),
 );
 const AdminRentalPolicies = lazy(() => import('../admin/pages/AdminRentalPolicies'));
 const AdminCreateCoupon = lazy(() =>
@@ -231,15 +239,12 @@ const AdminVisualSearch = lazy(() =>
 const AdminServiceAreas = lazy(() => import('../admin/pages/AdminServiceAreas'));
 
 // Returns & Exchanges (Admin)
-const AdminReturnDashboard = lazy(() => import('../admin/pages/returns/AdminReturnDashboard'));
-const AdminReturnRequests = lazy(() => import('../admin/pages/returns/AdminReturnRequests'));
+const AdminReturnsHub = lazy(() => import('../admin/pages/returns/AdminReturnsHub'));
 const AdminReturnDetail = lazy(() => import('../admin/pages/returns/AdminReturnDetail'));
-const AdminExchangeRequests = lazy(() => import('../admin/pages/returns/AdminExchangeRequests'));
-const AdminRefundDashboard = lazy(() => import('../admin/pages/returns/AdminRefundDashboard'));
-const AdminPickupManagement = lazy(() => import('../admin/pages/returns/AdminPickupManagement'));
-const AdminReturnAnalytics = lazy(() => import('../admin/pages/returns/AdminReturnAnalytics'));
-const AdminFraudDetection = lazy(() => import('../admin/pages/returns/AdminFraudDetection'));
-const AdminReturnSettings = lazy(() => import('../admin/pages/returns/AdminReturnSettings'));
+
+const AdminSystemHub = lazy(() =>
+  import('../admin/pages/AdminSystemHub').then((m) => ({ default: m.default })),
+);
 
 const BackupCenter = lazy(() => import('../admin/pages/BackupCenter/BackupCenter'));
 
@@ -369,13 +374,11 @@ export function AppRoutes() {
               <Route path="policies" element={<AdminPolicies />} />
               <Route path="policies/add" element={<AdminPolicyEditor />} />
               <Route path="policies/edit/:id" element={<AdminPolicyEditor />} />
-              <Route path="recommendations" element={<AdminRecommendationAnalytics />} />
               <Route path="products/add" element={<AdminAddProduct />} />
               <Route path="products/edit/:id" element={<AdminAddProduct />} />
-              <Route path="orders" element={<AdminOrders />} />
+              <Route path="orders/*" element={<AdminOrdersHub />} />
               <Route path="orders/:orderId" element={<AdminOrderDetail />} />
-              <Route path="rentals" element={<AdminRentalOrders />} />
-              <Route path="rental-calendar" element={<AdminRentalCalendar />} />
+              <Route path="rentals/*" element={<AdminRentalsHub />} />
               <Route path="rental-policies" element={<AdminRentalPolicies />} />
               <Route path="service-areas" element={<AdminServiceAreas />} />
               <Route path="custom-orders" element={<AdminInquiries />} />
@@ -395,31 +398,53 @@ export function AppRoutes() {
               <Route path="showcases/add" element={<AdminAddShowcase />} />
               <Route path="showcases/edit/:id" element={<AdminAddShowcase />} />
               <Route path="events/:bookingId" element={<AdminBookingDetail />} />
+              <Route path="search" element={<AdminEnterpriseSearch />} />
               <Route path="analytics" element={<AdminAnalytics />} />
+              <Route path="analytics/operations" element={<AdminRecommendationAnalytics />} />
               <Route path="inventory" element={<AdminInventory />} />
               <Route path="coupons" element={<AdminCoupons />} />
               <Route path="coupons/create" element={<AdminCreateCoupon />} />
               <Route path="coupons/edit/:id" element={<AdminCreateCoupon />} />
               <Route path="payments" element={<AdminPayments />} />
-              <Route path="notifications" element={<AdminNotifications />} />
+
               <Route path="campaigns" element={<AdminCampaigns />} />
               <Route path="campaigns/add" element={<AdminCampaignCreate />} />
               <Route path="campaigns/templates/add" element={<AdminTemplateCreate />} />
               <Route path="campaigns/templates/edit/:id" element={<AdminTemplateCreate />} />
               <Route path="content" element={<AdminContent />} />
-              <Route path="team" element={<AdminTeam />} />
+
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="visual-search" element={<AdminVisualSearch />} />
 
-              <Route path="returns" element={<AdminReturnDashboard />} />
-              <Route path="returns/requests" element={<AdminReturnRequests />} />
+              {/* Warehouse Routes */}
+              <Route path="warehouse" element={<AdminWarehouseHub />} />
+              <Route path="warehouse/receive" element={<AdminWarehouseHub />} />
+              <Route path="warehouse/pick" element={<AdminWarehouseHub />} />
+              <Route path="warehouse/pack" element={<AdminWarehouseHub />} />
+              <Route path="warehouse/dispatch" element={<AdminWarehouseHub />} />
+              <Route path="warehouse/count" element={<AdminWarehouseHub />} />
+
+              {/* Production Routes */}
+              <Route path="production" element={<AdminProductionHub />} />
+              <Route path="production/qa" element={<AdminProductionHub />} />
+              <Route path="production/ready" element={<AdminProductionHub />} />
+
+              {/* Operations Routes */}
+              <Route path="rules" element={<AdminBusinessRules />} />
+              <Route path="approvals" element={<AdminApprovalsQueue />} />
+
+              {/* System Routes */}
+              <Route path="system" element={<AdminSystemHub />} />
+              <Route path="system/users" element={<AdminSystemHub />} />
+              <Route path="system/roles" element={<AdminSystemHub />} />
+              <Route path="system/notifications" element={<AdminSystemHub />} />
+              <Route path="system/settings" element={<AdminSystemHub />} />
+              <Route path="system/audit" element={<AdminSystemHub />} />
+
+              <Route path="returns" element={<AdminReturnsHub />} />
               <Route path="returns/requests/:id" element={<AdminReturnDetail />} />
-              <Route path="returns/exchanges" element={<AdminExchangeRequests />} />
-              <Route path="returns/refunds" element={<AdminRefundDashboard />} />
-              <Route path="returns/pickups" element={<AdminPickupManagement />} />
-              <Route path="returns/analytics" element={<AdminReturnAnalytics />} />
-              <Route path="returns/fraud" element={<AdminFraudDetection />} />
-              <Route path="returns/settings" element={<AdminReturnSettings />} />
+
+              <Route path="enterprise-search" element={<AdminEnterpriseSearch />} />
 
               <Route path="backup-center/*" element={<BackupCenter />} />
             </Route>

@@ -20,16 +20,17 @@ const generateNonce = (req: Request, res: Response, next: NextFunction) => {
 const helmetConfig = helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'none'"],
-      baseUri: ["'none'"],
-      fontSrc: ["'none'"],
-      formAction: ["'none'"],
+      defaultSrc: ["'self'"],
+      baseUri: ["'self'"],
+      fontSrc: ["'self'", 'https:', 'data:'],
+      formAction: ["'self'"],
       frameAncestors: ["'none'"],
-      imgSrc: ["'none'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
       objectSrc: ["'none'"],
-      scriptSrc: ["'none'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Required for Swagger UI
       scriptSrcAttr: ["'none'"],
-      styleSrc: ["'none'"],
+      styleSrc: ["'self'", 'https:', "'unsafe-inline'"], // Required for Swagger UI
+      connectSrc: ["'self'", 'https://checkout.razorpay.com'],
       upgradeInsecureRequests: [],
     },
   },

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { SEO } from '../../components/seo/SEO';
 import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
@@ -8,12 +9,17 @@ import { DesktopChatWindow } from '../../components/dashboard/DesktopChatWindow'
 
 import { useDashboardData } from './hooks/useDashboardData';
 import { BookingList } from './components/BookingList';
+import { BookingCard } from './components/BookingCard';
 import { BookingDetailsCard } from './components/BookingDetailsCard';
 import { LogisticsCard } from './components/LogisticsCard';
 import { TimelineTracker } from './components/TimelineTracker';
 import { QuotationCard } from './components/QuotationCard';
 
-export function EventCustomerDashboard({ isEmbedded = false }) {
+export function EventCustomerDashboard({
+  isEmbedded = false,
+  selectedEventBookingId,
+  setSelectedEventBookingId,
+}) {
   const {
     bookings,
     selectedBooking,
@@ -36,7 +42,21 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
     handleProcessPayment,
     handleSelectBooking,
     currentStatusIndex,
-  } = useDashboardData();
+    setSelectedBooking,
+  } = useDashboardData(isEmbedded);
+
+  // Sync with dashboard context if embedded
+  useEffect(() => {
+    if (isEmbedded && setSelectedEventBookingId) {
+      setSelectedEventBookingId(selectedBooking?._id || selectedBooking?.id || null);
+    }
+  }, [selectedBooking, isEmbedded, setSelectedEventBookingId]);
+
+  useEffect(() => {
+    if (isEmbedded && selectedEventBookingId === null && selectedBooking) {
+      setSelectedBooking(null);
+    }
+  }, [selectedEventBookingId, isEmbedded, selectedBooking, setSelectedBooking]);
 
   return (
     <div
@@ -128,15 +148,44 @@ export function EventCustomerDashboard({ isEmbedded = false }) {
           </div>
         ) : (
           <div className="space-y-6">
-            <BookingList
-              bookings={bookings}
-              selectedBooking={selectedBooking}
-              handleSelectBooking={handleSelectBooking}
-            />
+            {!isEmbedded && (
+              <BookingList
+                bookings={bookings}
+                selectedBooking={selectedBooking}
+                handleSelectBooking={handleSelectBooking}
+              />
+            )}
+
+            {isEmbedded && !selectedBooking && (
+              <div className="space-y-4">
+                {bookings.map((booking, idx) => (
+                  <BookingCard
+                    key={booking._id || booking.id}
+                    booking={booking}
+                    idx={idx}
+                    onClick={() => handleSelectBooking(booking)}
+                  />
+                ))}
+              </div>
+            )}
 
             {selectedBooking && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <div className="lg:col-span-8 space-y-6">
+                  {isEmbedded && (
+                    <button
+                      onClick={() => {
+                        setSelectedBooking(null);
+                        if (setSelectedEventBookingId) setSelectedEventBookingId(null);
+                      }}
+                      className="hidden lg:flex group items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-secondary hover:text-[#1a1a1a] transition-all mb-2 cursor-pointer bg-transparent border-0 p-0"
+                    >
+                      <span className="material-symbols-outlined text-[16px] transition-transform group-hover:-translate-x-1">
+                        arrow_back
+                      </span>
+                      Back to Events
+                    </button>
+                  )}
                   <BookingDetailsCard
                     selectedBooking={selectedBooking}
                     setIsMobileChatOpen={setIsMobileChatOpen}

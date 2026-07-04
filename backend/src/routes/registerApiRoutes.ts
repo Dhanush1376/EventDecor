@@ -59,6 +59,14 @@ export const registerApiRoutes = (
   apiRouter.use('/showcases', lazyRouter('./cms/showcaseRoutes'));
   apiRouter.use('/admin', noCacheMiddleware, lazyRouter('./system/adminSystemRoutes'));
   apiRouter.use('/admin/invites', noCacheMiddleware, lazyRouter('./auth/adminInviteRoutes'));
+  apiRouter.use('/admin/approvals', noCacheMiddleware, lazyRouter('./system/approvalRoutes'));
+  apiRouter.use('/admin/rules', noCacheMiddleware, lazyRouter('./system/businessRuleRoutes'));
+  apiRouter.use('/admin/search', noCacheMiddleware, lazyRouter('./admin/synonymRoutes'));
+  apiRouter.use(
+    '/admin/operations-center',
+    noCacheMiddleware,
+    lazyRouter('./admin/operationsCenterRoutes'),
+  );
   apiRouter.use('/returns', noCacheMiddleware, lazyRouter('./returns/returnRoutes'));
   apiRouter.use('/exchanges', noCacheMiddleware, lazyRouter('./returns/exchangeRoutes'));
   apiRouter.use('/recommendations', lazyRouter('./discovery/recommendationRoutes'));
@@ -74,6 +82,9 @@ export const registerApiRoutes = (
     lazyRouter('./system/customerIntelligenceRoutes'),
   );
 
+  apiRouter.use('/customer/tracking', noCacheMiddleware, lazyRouter('./customer/trackingRoutes'));
+
+  apiRouter.use('/contact', noCacheMiddleware, lazyRouter('./commerce/contactRoutes'));
   apiRouter.use('/refunds', noCacheMiddleware, lazyRouter('./commerce/refundRoutes'));
 
   // Aggregated endpoints
@@ -83,6 +94,7 @@ export const registerApiRoutes = (
   apiRouter.use('/settings', lazyRouter('./system/storeSettingsRoutes'));
   apiRouter.use('/categories', lazyRouter('./products/categoryRoutes'));
 
+  apiRouter.use('/search/analytics', lazyRouter('./discovery/searchAnalyticsRoutes'));
   apiRouter.use('/search', lazyRouter('./discovery/searchRoutes'));
   apiRouter.use('/media', lazyRouter('./media/mediaRoutes'));
 
@@ -106,6 +118,12 @@ export const registerApiRoutes = (
 
   // Enterprise Backup & DR Routes
   apiRouter.use('/admin/backup', noCacheMiddleware, lazyRouter('./system/backupRoutes'));
+
+  // Enterprise Domain Routes
+  apiRouter.use('/warehouse', lazyRouter('./warehouse/warehouseRoutes'));
+  apiRouter.use('/production', lazyRouter('./production/productionRoutes'));
+  apiRouter.use('/shipping', lazyRouter('./shipping/shippingRoutes'));
+  apiRouter.use('/documents', lazyRouter('./documents/documentRoutes'));
 
   app.use(prefix, apiRouter);
 };

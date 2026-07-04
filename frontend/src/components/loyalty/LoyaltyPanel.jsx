@@ -1,7 +1,6 @@
 const LoyaltySkeleton = () => <div className="animate-pulse bg-gray-200 h-48 rounded-md"></div>;
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import storeSettingsService from '../../services/api/storeSettingsService';
 import { loyaltyService } from '../../services/domainServices';
@@ -232,14 +231,11 @@ export function LoyaltyPanel() {
         </div>
 
         {/* Loyalty Progression metrics panel */}
-        <div className="lg:col-span-5 flex flex-col justify-between pt-4 lg:pt-0 lg:pl-6 lg:border-l border-outline-variant/30">
+        <div className="lg:col-span-5 flex flex-col justify-between bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs font-body">
           <div>
             <h4 className="font-body font-bold text-xs uppercase tracking-widest text-on-surface mb-1">
               VIP Tier Progression
             </h4>
-            <span className="text-[10px] text-secondary font-light">
-              Upgrade lifetime purchases to unlock higher cashback percentages.
-            </span>
           </div>
 
           {/* Gamified progress bar bar */}
@@ -288,276 +284,12 @@ export function LoyaltyPanel() {
         </div>
       </div>
 
-      {/* 2. REFERRAL & REWARD PROGRAM */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-outline-variant/30">
-        {/* Refer Friends Panel */}
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary/5 flex items-center justify-center text-primary border border-primary/10 shrink-0">
-              <span className="material-symbols-outlined text-sm">share</span>
-            </div>
-            <div>
-              <h4 className="font-body font-bold text-xs uppercase tracking-widest text-on-surface">
-                Refer & Earn Siri Cash
-              </h4>
-              <span className="text-[10px] text-secondary font-light block">
-                Share your code. They get{' '}
-                <strong className="text-on-surface font-semibold">
-                  ₹{refereeReward} welcome cash
-                </strong>
-                . You earn{' '}
-                <strong className="text-on-surface font-semibold">₹{referrerReward}</strong> on
-                their first order!
-              </span>
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <label className="block text-[9px] uppercase tracking-widest text-secondary font-bold mb-1.5">
-              Your Personal Referral Link
-            </label>
-            <div className="flex bg-surface-container-low border border-outline-variant/30 rounded-lg overflow-hidden p-1 items-center justify-between">
-              <span className="text-[10px] sm:text-[11px] font-mono text-on-surface font-medium pl-3 pr-2 truncate select-all">
-                {`${window.location.origin}/auth?ref=${data.referralCode}`}
-              </span>
-              <button
-                onClick={() =>
-                  copyToClipboard(
-                    `${window.location.origin}/auth?ref=${data.referralCode}`,
-                    'Referral link copied! Share with your friends.',
-                  )
-                }
-                className="bg-primary/10 hover:bg-primary text-primary hover:text-white px-3 py-1.5 rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors cursor-pointer shrink-0"
-              >
-                Copy Link
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Claim Referral Bonus */}
-        <div className="space-y-4 lg:border-l border-outline-variant/30 lg:pl-8">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center text-green-700 border border-green-200 shrink-0">
-              <span className="material-symbols-outlined text-sm">redeem</span>
-            </div>
-            <div>
-              <h4 className="font-body font-bold text-xs uppercase tracking-widest text-on-surface">
-                Have a Referral Code?
-              </h4>
-              <span className="text-[10px] text-secondary font-light block">
-                Claim ₹{refereeReward} onboarding wallet credit instantly by entering a friend's
-                referral code.
-              </span>
-            </div>
-          </div>
-
-          <form onSubmit={handleApplyReferral} className="pt-2">
-            <label className="block text-[9px] uppercase tracking-widest text-secondary font-bold mb-1.5">
-              Friend's Referral Code
-            </label>
-            <div className="flex bg-surface-container-low border border-outline-variant/30 rounded-lg overflow-hidden p-1 items-center justify-between">
-              <input
-                type="text"
-                disabled={submittingReferral}
-                value={referralInput}
-                onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
-                placeholder="e.g. SIRI-AMB-1080"
-                className="flex-1 bg-transparent border-none outline-none text-[10px] sm:text-[11px] font-mono text-on-surface font-medium pl-3 pr-2 placeholder:text-secondary/50 uppercase"
-              />
-              <button
-                type="submit"
-                disabled={submittingReferral}
-                className="bg-primary/10 hover:bg-primary text-primary hover:text-white px-3 py-1.5 rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors cursor-pointer shrink-0 min-w-[80px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submittingReferral ? 'Claiming...' : `Claim ₹${refereeReward}`}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* 3. BESPOKE ACTIVE COUPONS CAROUSEL CENTER */}
-      <div className="space-y-4 pt-2">
-        <div className="flex justify-between items-center pb-2 border-b border-outline-variant/30">
-          <div>
-            <h4 className="font-body font-bold text-xs uppercase tracking-widest text-on-surface">
-              Promotional Coupons & Voucher Center
-            </h4>
-            <span className="text-[10px] text-secondary font-light">
-              Tap any verified code card below to copy and redeem during checkout.
-            </span>
-          </div>
-          <span className="material-symbols-outlined text-secondary text-sm">local_activity</span>
-        </div>
-
-        <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs hover:border-primary/30 transition-all duration-300">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-              <span className="material-symbols-outlined text-[24px]">local_activity</span>
-            </div>
-            <div className="space-y-0.5">
-              <h5 className="font-body text-[13px] font-bold text-on-surface uppercase tracking-wider">
-                {data.coupons?.length || 0} Exclusive Vouchers Available
-              </h5>
-              <p className="text-[10px] text-secondary font-light leading-relaxed">
-                Unlock bespoke member discounts and special savings on your next luxury craft
-                selection.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setIsCouponModalOpen(true)}
-            className="w-full sm:w-auto text-[10px] text-primary border border-primary/20 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 font-bold px-5 py-2.5 rounded-lg cursor-pointer uppercase tracking-widest shrink-0 text-center"
-          >
-            View Available Coupons
-          </button>
-        </div>
-      </div>
-
-      {/* Premium Coupon Selector Modal bottom sheet */}
-      {typeof document !== 'undefined' &&
-        createPortal(
-          <AnimatePresence>
-            {isCouponModalOpen && (
-              <div className="fixed inset-0 z-[1000] flex items-end justify-center sm:items-center sm:p-4">
-                {/* Backdrop blur */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setIsCouponModalOpen(false)}
-                  className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                />
-
-                {/* Bottom Sheet Card */}
-                <motion.div
-                  initial={{ y: '100%' }}
-                  animate={{ y: 0 }}
-                  exit={{ y: '100%' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                  className="relative bg-surface-bright w-full max-w-[500px] rounded-t-[24px] sm:rounded-[24px] p-6 sm:p-8 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col z-[1001]"
-                >
-                  {/* Pull Indicator for Mobile */}
-                  <div className="w-12 h-1.5 bg-outline-variant/60 rounded-full mx-auto mb-6 sm:hidden" />
-
-                  {/* Close Button */}
-                  <button
-                    onClick={() => setIsCouponModalOpen(false)}
-                    className="absolute top-6 right-6 w-8 h-8 min-h-0 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
-
-                  {/* Content Container */}
-                  <div className="relative z-10 flex flex-col h-full max-h-[75vh]">
-                    {/* Header */}
-                    <div className="mb-6">
-                      <h2 className="text-[20px] font-bold text-on-surface leading-tight mb-1 font-body">
-                        Promotional Coupons
-                      </h2>
-                      <p className="text-secondary text-[12px]">
-                        Tap any luxury coupon code to copy and apply at checkout
-                      </p>
-                    </div>
-
-                    {/* Scrollable Coupons List */}
-                    <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-thin">
-                      <span className="text-[11px] font-bold uppercase tracking-widest text-secondary block">
-                        Available Offers
-                      </span>
-
-                      {!data.coupons || data.coupons.length === 0 ? (
-                        <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[40vh] my-4">
-                          <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
-                            <span className="material-symbols-outlined text-[20px]">
-                              local_activity
-                            </span>
-                          </div>
-                          <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
-                            No Active Coupons
-                          </h3>
-                          <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px]">
-                            There are currently no promotional vouchers available. Check back later!
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {data.coupons.map((coupon) => (
-                            <div
-                              key={coupon._id || coupon.code}
-                              onClick={() => {
-                                copyToClipboard(
-                                  coupon.code,
-                                  `Coupon "${coupon.code}" copied! Paste at checkout.`,
-                                );
-                              }}
-                              className="bg-surface-container-lowest border border-outline-variant/60 hover:border-primary/45 rounded-2xl p-4 transition-all duration-300 flex flex-col gap-3 cursor-pointer group hover:shadow-xs"
-                            >
-                              <div className="flex justify-between items-start gap-4">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-mono font-bold text-on-surface text-[13px] uppercase tracking-wider group-hover:text-primary transition-colors">
-                                      {coupon.code}
-                                    </span>
-                                  </div>
-                                  <p className="text-[13px] font-bold text-on-surface leading-snug">
-                                    {coupon.discountType === 'percentage'
-                                      ? `${coupon.discountValue}% off`
-                                      : `₹${coupon.discountValue} off`}
-                                    {coupon.maxDiscount ? ` up to ₹${coupon.maxDiscount}` : ''}
-                                  </p>
-                                  <p className="text-[11px] text-secondary">
-                                    On minimum purchase of ₹{coupon.minOrderAmount}
-                                  </p>
-                                </div>
-                                <button
-                                  type="button"
-                                  className="text-[11px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg transition-all text-primary bg-primary/10 group-hover:bg-primary/20 flex items-center gap-1.5"
-                                >
-                                  Copy
-                                  <span className="material-symbols-outlined text-[13px]">
-                                    content_copy
-                                  </span>
-                                </button>
-                              </div>
-
-                              {/* Expiry Footer */}
-                              <div className="flex items-center justify-between border-t border-outline-variant/30 pt-3 mt-1 text-[10px] text-secondary">
-                                <span className="font-semibold text-primary group-hover:underline">
-                                  TAP TO COPY
-                                </span>
-                                <span>
-                                  Valid till{' '}
-                                  {new Date(coupon.expiryDate).toLocaleDateString('en-IN', {
-                                    day: 'numeric',
-                                    month: 'short',
-                                    year: 'numeric',
-                                  })}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>,
-          document.body,
-        )}
-
       {/* 4. WALLET AUDIT TRANSACTION HISTORY TIMELINE */}
-      <div className="space-y-4 pt-4 border-t border-outline-variant/30">
-        <div className="pb-2">
-          <h4 className="font-body font-bold text-xs uppercase tracking-widest text-on-surface">
+      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs font-body space-y-4">
+        <div className="pb-3 border-b border-outline-variant/20">
+          <h4 className="font-body font-bold text-[11px] uppercase tracking-widest text-on-surface">
             Wallet Transaction Ledger
           </h4>
-          <span className="text-[10px] text-secondary font-light">
-            Auditable double-entry record of all Siri Cash credit and debit events.
-          </span>
         </div>
 
         {data.transactions && data.transactions.length > 0 ? (
@@ -582,7 +314,7 @@ export function LoyaltyPanel() {
                       <div className="flex items-center gap-2">
                         <strong className="text-on-surface font-semibold">{tx.description}</strong>
                         <span
-                          className={`text-[8px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${
+                          className={`text-[7px] sm:text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full ${
                             tx.source === 'purchase_cashback'
                               ? 'bg-amber-50 text-amber-700 border border-amber-200/50'
                               : tx.source === 'referral_bonus'

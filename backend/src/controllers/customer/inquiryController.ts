@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import Inquiry from '../../models/Inquiry';
 import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
@@ -63,7 +63,7 @@ export const getInquiries = asyncHandler(async (req: Request, res: Response) => 
   const skip = (page - 1) * limit;
 
   const [inquiries, total] = await Promise.all([
-    Inquiry.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Inquiry.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
     Inquiry.countDocuments(),
   ]);
 

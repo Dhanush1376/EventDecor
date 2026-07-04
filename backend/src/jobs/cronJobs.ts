@@ -16,6 +16,7 @@ import { initBackupJobs } from './backupJob';
 import { initRestoreDrills } from './RestoreDrillJob';
 import { initDataMonitorJob } from './DataMonitorJob';
 import { runMediaIntegrityCheck } from './mediaIntegrityJob';
+import { startDocumentBackupJob } from './S3SyncJob';
 
 export const initJobs = () => {
   if (process.env.ENABLE_CRON === 'false') {
@@ -426,6 +427,9 @@ export const initJobs = () => {
       await ReturnReconciliationJob.run();
     });
   });
+
+  // 23. S3 Disaster Recovery Sync
+  startDocumentBackupJob();
 
   logger.info('⏰ Background jobs initialized (distributed locks active when REDIS_URL is set)');
 };

@@ -17,7 +17,7 @@ export const generatePolicyAi = async (req: Request, res: Response, next: NextFu
 };
 export const getAllPolicies = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const policies = await Policy.find().sort({ createdAt: -1 });
+    const policies = await Policy.find().sort({ createdAt: -1 }).lean();
     res.status(200).json({ success: true, data: policies });
   } catch (error) {
     next(error);
@@ -28,7 +28,8 @@ export const getPublicPolicies = async (req: Request, res: Response, next: NextF
   try {
     const policies = await Policy.find({ status: 'published' })
       .select('title slug')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     res.status(200).json({ success: true, data: policies });
   } catch (error) {
     next(error);
@@ -39,7 +40,7 @@ export const getPolicyBySlug = async (req: Request, res: Response, next: NextFun
   try {
     const { slug } = req.params;
     // Only return published policies for public storefront
-    const policy = await Policy.findOne({ slug, status: 'published' });
+    const policy = await Policy.findOne({ slug, status: 'published' }).lean();
     if (!policy) {
       throw new ApiError(404, 'Policy not found');
     }
@@ -52,7 +53,7 @@ export const getPolicyBySlug = async (req: Request, res: Response, next: NextFun
 export const getPolicyById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const policy = await Policy.findById(id);
+    const policy = await Policy.findById(id).lean();
     if (!policy) {
       throw new ApiError(404, 'Policy not found');
     }
@@ -83,7 +84,7 @@ export const createPolicy = async (req: Request, res: Response, next: NextFuncti
 
     try {
       getIO().of('/visitor').emit('policy-updated', { slug: policy.slug });
-    // eslint-disable-next-line unused-imports/no-unused-vars
+      // eslint-disable-next-line unused-imports/no-unused-vars
     } catch (e) {}
 
     res.status(201).json({ success: true, data: policy });
@@ -125,7 +126,7 @@ export const updatePolicy = async (req: Request, res: Response, next: NextFuncti
 
     try {
       getIO().of('/visitor').emit('policy-updated', { slug: policy.slug });
-    // eslint-disable-next-line unused-imports/no-unused-vars
+      // eslint-disable-next-line unused-imports/no-unused-vars
     } catch (e) {}
 
     res.status(200).json({ success: true, data: policy });
@@ -155,7 +156,7 @@ export const deletePolicy = async (req: Request, res: Response, next: NextFuncti
 
     try {
       getIO().of('/visitor').emit('policy-deleted', { slug: policy.slug });
-    // eslint-disable-next-line unused-imports/no-unused-vars
+      // eslint-disable-next-line unused-imports/no-unused-vars
     } catch (e) {}
 
     res.status(200).json({ success: true, message: 'Policy deleted successfully' });
@@ -167,9 +168,11 @@ export const deletePolicy = async (req: Request, res: Response, next: NextFuncti
 export const getPolicyVersions = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const versions = await VersionHistory.find({ entityType: 'Policy', entityId: id }).sort({
-      version: -1,
-    });
+    const versions = await VersionHistory.find({ entityType: 'Policy', entityId: id })
+      .sort({
+        version: -1,
+      })
+      .lean();
     res.status(200).json({ success: true, data: versions });
   } catch (error) {
     next(error);
@@ -223,7 +226,7 @@ export const restorePolicyVersion = async (req: Request, res: Response, next: Ne
 
     try {
       getIO().of('/user').emit('policy-updated', { slug: policy.slug });
-    // eslint-disable-next-line unused-imports/no-unused-vars
+      // eslint-disable-next-line unused-imports/no-unused-vars
     } catch (e) {}
 
     res.status(200).json({ success: true, data: policy, message: 'Policy restored successfully' });

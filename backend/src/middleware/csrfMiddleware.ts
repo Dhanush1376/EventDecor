@@ -65,7 +65,7 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
   }
 
   const original = req.originalUrl || req.path;
-  if (CSRF_EXEMPT_SUFFIXES.some((suffix) => original.includes(suffix))) {
+  if (CSRF_EXEMPT_SUFFIXES.some((suffix) => original.split('?')[0].endsWith(suffix))) {
     return next();
   }
 

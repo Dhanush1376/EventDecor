@@ -26,38 +26,58 @@ export class HealthController {
    * Used by load balancers to decide whether to route traffic.
    */
   static async readiness(req: Request, res: Response) {
-    const checks: Record<string, { status: string; latencyMs?: number }> = {};
+    const checks: Record<string, { status: string; latencyMs?: number; readyState?: number }> = {};
 
     // MongoDB check
     const mongoStart = Date.now();
     try {
       const mongoState = mongoose.connection.readyState;
-      if (mongoState === 1) {
-        checks.mongodb = { status: 'connected', latencyMs: Date.now() - mongoStart };
+      if (mongoState === 1 && mongoose.connection.db) {
+        const pingResult = await Promise.race([
+          mongoose.connection.db.admin().ping(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Ping timeout')), 15000)),
+        ]);
+        if (pingResult && (pingResult as any).ok === 1) {
+          checks.mongodb = { status: 'connected', latencyMs: Date.now() - mongoStart };
+        } else {
+          checks.mongodb = { status: 'degraded', latencyMs: Date.now() - mongoStart };
+        }
       } else {
         checks.mongodb = { status: 'disconnected' };
       }
-    } catch {
-      checks.mongodb = { status: 'error' };
+    } catch (err: any) {
+      checks.mongodb = { status: 'error', latencyMs: Date.now() - mongoStart };
+      logger.warn(`[HEALTH] MongoDB readiness check failed: ${err.message}`);
     }
 
-    // Redis check (optional dependency)
+    // Redis check
     const redisStart = Date.now();
     try {
       if (redisClient && redisClient.isReady) {
-        await redisClient.ping();
-        checks.redis = { status: 'connected', latencyMs: Date.now() - redisStart };
+        const pong = await Promise.race([
+          redisClient.ping(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Redis ping timeout')), 3000),
+          ),
+        ]);
+        checks.redis = {
+          status: pong === 'PONG' ? 'connected' : 'degraded',
+          latencyMs: Date.now() - redisStart,
+        };
       } else {
         checks.redis = { status: 'not_configured' };
       }
     } catch {
-      checks.redis = { status: 'error' };
+      checks.redis = { status: 'error', latencyMs: Date.now() - redisStart };
     }
 
-    const isReady = checks.mongodb.status === 'connected';
-    const statusCode = isReady ? 200 : 503;
+    checks.connectionPool = {
+      status: 'info',
+      readyState: mongoose.connection.readyState,
+    };
 
-    res.status(statusCode).json({
+    const isReady = checks.mongodb.status === 'connected';
+    res.status(isReady ? 200 : 503).json({
       status: isReady ? 'ready' : 'not_ready',
       timestamp: new Date().toISOString(),
       checks,

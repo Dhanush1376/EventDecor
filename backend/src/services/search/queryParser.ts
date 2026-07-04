@@ -9,6 +9,7 @@ import {
   EVENT_KNOWLEDGE_GRAPH,
 } from './searchDictionaries';
 import { getSearchCache, setSearchCache } from './searchCache';
+import { levenshteinSimilarity } from './rankingEngine';
 
 export interface AIAnalysisResult {
   detectedLanguage: string;
@@ -346,7 +347,10 @@ export function analyzeQueryLocally(query: string): AIAnalysisResult {
 
   // Basic script-based language check
   const teluguRegex = /[\u0c00-\u0c7f]/;
-  const detectedLanguage = teluguRegex.test(query) ? 'telugu' : 'english';
+  const hindiRegex = /[\u0900-\u097f]/;
+  let detectedLanguage = 'english';
+  if (teluguRegex.test(query)) detectedLanguage = 'telugu';
+  else if (hindiRegex.test(query)) detectedLanguage = 'hindi';
 
   const expandedTerms = [
     ...new Set([...getTransliterationsAndSynonyms(cleanedQuery), ...expandedFromGraph]),
@@ -372,9 +376,12 @@ export function analyzeQueryLocally(query: string): AIAnalysisResult {
     expertResponse = `I found some lovely handcrafted props and setups ${budgetLabel}. Check out these budget-friendly recommendations.`;
   }
 
+  const spellCheck = getSpellCorrectedQuery(cleanedQuery);
+  const correctedQuery = spellCheck.corrected || query;
+
   return {
     detectedLanguage,
-    correctedQuery: query,
+    correctedQuery,
     category,
     style,
     colors,
@@ -667,6 +674,59 @@ export function generateFuzzyVariants(query: string): string[] {
   }
 
   return Array.from(variants).slice(0, 6);
+}
+
+export function getSpellCorrectedQuery(query: string): { corrected: string; confidence: number } {
+  const words = query.toLowerCase().trim().split(/\s+/);
+  let overallConfidence = 0;
+
+  // Build vocabulary from all known keys in dictionaries
+  const vocabulary = new Set([
+    ...Object.keys(TRANSLITERATION_MAP),
+    ...Object.keys(SYNONYM_MAP),
+    ...Object.keys(CATEGORY_KEYWORDS),
+  ]);
+
+  Object.values(EVENT_KNOWLEDGE_GRAPH).forEach((g) => {
+    g.aliases.forEach((a) => vocabulary.add(a));
+    g.searchTerms.forEach((s) => vocabulary.add(s));
+  });
+
+  const vocabArray = Array.from(vocabulary);
+  const correctedWords = [];
+
+  for (const word of words) {
+    if (vocabulary.has(word) || word.length < 3) {
+      correctedWords.push(word);
+      overallConfidence += 1;
+      continue;
+    }
+
+    let bestMatch = word;
+    let maxSimilarity = 0;
+
+    for (const vWord of vocabArray) {
+      const sim = levenshteinSimilarity(word, vWord);
+      if (sim > maxSimilarity) {
+        maxSimilarity = sim;
+        bestMatch = vWord;
+      }
+    }
+
+    if (maxSimilarity > 0.7) {
+      correctedWords.push(bestMatch);
+      overallConfidence += maxSimilarity;
+    } else {
+      correctedWords.push(word);
+      overallConfidence += 0.5; // low confidence fallback
+    }
+  }
+
+  const corrected = correctedWords.join(' ');
+  return {
+    corrected: corrected !== query ? corrected : query,
+    confidence: overallConfidence / words.length,
+  };
 }
 
 export function predictCategories(query: string): string[] {

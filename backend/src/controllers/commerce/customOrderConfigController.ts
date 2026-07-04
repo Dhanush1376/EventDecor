@@ -58,7 +58,7 @@ export const getCustomOrderConfig = asyncHandler(async (req: Request, res: Respo
   }
 
   // Fallback to V1
-  const v1Config = await WebsiteContent.findOne({ key: 'customOrderConfig' });
+  const v1Config = await WebsiteContent.findOne({ key: 'customOrderConfig' }).lean();
   if (v1Config) {
     res
       .status(200)

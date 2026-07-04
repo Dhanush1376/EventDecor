@@ -205,12 +205,12 @@ class DatabaseManager {
       autoIndex: process.env.NODE_ENV !== 'production',
       maxPoolSize: this.maxPoolSize,
       minPoolSize: this.minPoolSize,
-      serverSelectionTimeoutMS: 5000, // Fail fast if database is unreachable
+      serverSelectionTimeoutMS: 30000, // Increased for slower networks / sleeping clusters
       socketTimeoutMS: 30000, // Clean up hung sockets after 30s
       heartbeatFrequencyMS: 10000, // Perform keep-alive check every 10s
       maxIdleTimeMS: 30000, // Release idle sockets after 30s to conserve database resources
       waitQueueTimeoutMS: 10000, // How long to wait for connection pool slot before failing
-      family: 4, // Force IPv4 DNS resolution to fix querySrv ETIMEOUT on some networks
+      // family: 4, // Commented out to prevent DNS resolution issues on Windows/IPv6 setups
       bufferCommands: false, // Disable buffering to fail-fast during transient database issues
       compressors: ['zstd', 'snappy'], // Enable wire protocol network compression
       retryReads: true,
@@ -342,7 +342,7 @@ class DatabaseManager {
       const admin = mongoose.connection.db.admin();
       const result = await Promise.race([
         admin.ping(),
-        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Ping timeout')), 10000)),
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Ping timeout')), 20000)),
       ]);
       const isOk = result && result.ok === 1;
 

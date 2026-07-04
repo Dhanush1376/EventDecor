@@ -105,6 +105,20 @@ export interface IOrder extends ISoftDeleted {
   courierCharges?: number;
   earnings?: number;
   reservationIds?: mongoose.Types.ObjectId[];
+  returnRequestIds?: mongoose.Types.ObjectId[];
+  refundStatus?: 'none' | 'partial' | 'full';
+  hasActiveReturn?: boolean;
+  orderNumber?: string;
+  orderUuid?: string;
+  packageIds?: mongoose.Types.ObjectId[];
+  shipmentIds?: mongoose.Types.ObjectId[];
+  orderQrCode?: string;
+  orderQrSignature?: string;
+  estimatedDeliveryDate?: Date;
+  dispatchDate?: Date;
+  transitDays?: number;
+  delayWarning?: boolean;
+  productSnapshots?: any[];
   createdAt: Date;
   updatedAt: Date;
 }

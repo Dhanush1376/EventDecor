@@ -1,6 +1,6 @@
-import axios from 'axios';
+import api from './api';
 
-const API_URL = '/api/v1/media';
+const API_URL = '/media';
 
 export const mediaLibraryService = {
   /**
@@ -12,11 +12,7 @@ export const mediaLibraryService = {
     if (folder) formData.append('folder', folder);
     if (tags.length) formData.append('tags', tags.join(','));
 
-    const response = await axios.post(`${API_URL}/upload?v=${version}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.post(`${API_URL}/upload?v=${version}`, formData);
     return response.data;
   },
 
@@ -28,11 +24,7 @@ export const mediaLibraryService = {
     formData.append('file', file);
     if (tags.length) formData.append('tags', tags.join(','));
 
-    const response = await axios.put(`${API_URL}/library/${id}/replace`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.put(`${API_URL}/library/${id}/replace`, formData);
     return response.data;
   },
 
@@ -51,7 +43,7 @@ export const mediaLibraryService = {
     if (type) query.append('type', type);
     if (search) query.append('search', search);
 
-    const response = await axios.get(`${API_URL}/library?${query.toString()}`);
+    const response = await api.get(`${API_URL}/library?${query.toString()}`);
     return response.data;
   },
 
@@ -59,7 +51,7 @@ export const mediaLibraryService = {
    * Soft deletes a media asset from the library.
    */
   deleteMedia: async (id) => {
-    const response = await axios.delete(`${API_URL}/library/${id}`);
+    const response = await api.delete(`${API_URL}/library/${id}`);
     return response.data;
   },
 
@@ -67,7 +59,7 @@ export const mediaLibraryService = {
    * Restores a soft-deleted media asset.
    */
   restoreMedia: async (id) => {
-    const response = await axios.post(`${API_URL}/library/${id}/restore`);
+    const response = await api.post(`${API_URL}/library/${id}/restore`);
     return response.data;
   },
 
@@ -75,7 +67,7 @@ export const mediaLibraryService = {
    * Retrieves high-level media stats.
    */
   getMediaStats: async () => {
-    const response = await axios.get(`${API_URL}/stats`);
+    const response = await api.get(`${API_URL}/stats`);
     return response.data;
   },
 };

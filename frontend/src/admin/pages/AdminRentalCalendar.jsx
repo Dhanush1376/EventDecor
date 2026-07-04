@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import rentalService from '../../services/api/rentalService';
 
-export function AdminRentalCalendar() {
+export function AdminRentalCalendar({ hideHeader = false }) {
   const [calendarData, setCalendarData] = useState([]);
   const [_dataLoading, setDataLoading] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
@@ -58,12 +58,14 @@ export function AdminRentalCalendar() {
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
-      <PageHeader
-        title="Rental Calendar"
-        subtitle="Track product availability and upcoming returns"
-        icon="calendar_month"
-        iconColor="info"
-      />
+      {!hideHeader && (
+        <PageHeader
+          title="Rental Calendar"
+          subtitle="Track product availability and upcoming returns"
+          icon="calendar_month"
+          iconColor="info"
+        />
+      )}
 
       <motion.div variants={fadeUp} className="admin-card p-6 flex flex-col items-center">
         <div className="flex items-center justify-between w-full mb-6">

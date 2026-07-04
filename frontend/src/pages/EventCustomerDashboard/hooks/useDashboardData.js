@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { bookingService } from '../../../services/domainServices';
 import toast from 'react-hot-toast';
 import logger from '../../../utils/core/logger';
 import { STATUS_STEPS } from '../constants';
 
-export function useDashboardData() {
+export function useDashboardData(isEmbedded = false) {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,14 +24,14 @@ export function useDashboardData() {
   // Mobile chat bottom-sheet state
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
-  async function fetchBookings() {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
     try {
       const res = await bookingService.getMyBookings();
       if (res.success) {
         const list = res.data || [];
         setBookings(list);
-        if (list.length > 0) {
+        if (list.length > 0 && !isEmbedded) {
           setSelectedBooking(list[0]);
         }
       }
@@ -41,14 +41,14 @@ export function useDashboardData() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [isEmbedded]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchBookings();
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [fetchBookings]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -106,6 +106,12 @@ export function useDashboardData() {
     const amt = parseFloat(paymentAmount);
     if (isNaN(amt) || amt <= 0 || !selectedBooking) {
       toast.error('Please specify a valid transaction amount.');
+      return;
+    }
+
+    if (process.env.NODE_ENV === 'production') {
+      toast.error('Payment Gateway integration is required in production environments.');
+      setIsPaymentModalOpen(false);
       return;
     }
 
@@ -174,5 +180,6 @@ export function useDashboardData() {
     handleProcessPayment,
     handleSelectBooking,
     currentStatusIndex,
+    setSelectedBooking,
   };
 }

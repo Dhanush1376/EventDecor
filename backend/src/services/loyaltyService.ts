@@ -13,7 +13,7 @@ export class LoyaltyService {
    * Computes all loyalty dashboard metrics including aggregations
    */
   static async getDashboardData(userId: string) {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean();
     if (!user) {
       throw new ApiError(404, 'User not found');
     }
@@ -158,7 +158,7 @@ export class LoyaltyService {
    * Apply a referral code at signup — wallet credit and ledger row in one transaction.
    */
   static async applyReferralCode(userId: string, referralCode: string) {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean();
     if (!user) throw new ApiError(404, 'User session not found');
     if (user.referredBy) throw new ApiError(400, 'You have already applied a referral code');
 
@@ -167,7 +167,7 @@ export class LoyaltyService {
       throw new ApiError(400, "Self-referral is forbidden. Please enter a friend's referral code.");
     }
 
-    const referrer = await User.findOne({ referralCode: cleanCode });
+    const referrer = await User.findOne({ referralCode: cleanCode }).lean();
     if (!referrer) {
       throw new ApiError(404, 'Invalid referral code. Please check and try again.');
     }
@@ -374,7 +374,7 @@ export class LoyaltyService {
    */
   static async evaluateTierUpgrades(userId: string) {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).lean();
       if (!user) return;
 
       // Calculate lifetime purchase spend (excluding cancelled/refunded orders) via DB Aggregation

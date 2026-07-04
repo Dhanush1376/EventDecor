@@ -5,7 +5,6 @@ import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
 import { PromoBanner, EventFilterPanel, CategoryTabs, QuickViewModal } from '../../components/ui';
 import { eventService, productService, couponService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import { useCart } from '../../context/CartContext';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -17,7 +16,6 @@ import { EventGrid } from './EventGrid';
 import { ComplementaryProducts } from './ComplementaryProducts';
 
 export function EventCollections() {
-  const { setClaimedCoupon } = useCart();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category') || 'All Occasions';
@@ -170,7 +168,6 @@ export function EventCollections() {
   const handleClaimOffer = () => {
     const code = promoCoupon ? promoCoupon.code : 'SIRI40';
     navigator.clipboard.writeText(code);
-    setClaimedCoupon(code);
     toast.success(
       (_t) => (
         <div className="flex flex-col gap-1 p-1">
@@ -182,9 +179,6 @@ export function EventCollections() {
           </span>
           <span className="text-[10px] text-on-surface-variant font-mono">
             Code "<strong className="text-primary font-bold">{code}</strong>" copied to clipboard.
-          </span>
-          <span className="text-[10px] text-green-800 font-semibold mt-1">
-            🎟️ We will automatically apply this coupon at checkout!
           </span>
         </div>
       ),
@@ -255,7 +249,7 @@ export function EventCollections() {
       }
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        setIsSticky(rect.top <= currentNavHeight + 1);
+        setIsSticky(rect.top <= currentNavHeight + 5);
       }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });

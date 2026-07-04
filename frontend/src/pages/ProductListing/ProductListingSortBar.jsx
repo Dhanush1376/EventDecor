@@ -35,7 +35,7 @@ export const ProductListingSortBar = ({
         const rect = navRef.current.getBoundingClientRect();
         const topThreshold = parseFloat(navRef.current.style.top) || 0;
         setIsStuck((prev) => {
-          const current = rect.top <= topThreshold + 1;
+          const current = rect.top <= topThreshold + 5;
           return prev === current ? prev : current;
         });
       }
@@ -63,7 +63,7 @@ export const ProductListingSortBar = ({
   return (
     <nav
       ref={navRef}
-      className={`sticky ${isMobile && searchParam ? 'mt-6' : '-mt-12 lg:-mt-16'} mb-4 lg:mb-6 transition-all duration-300 ${isStuck ? 'px-0' : 'px-3 lg:px-margin-desktop'}`}
+      className={`sticky -mt-12 lg:-mt-16 mb-4 lg:mb-6 transition-all duration-300 ${isStuck ? 'px-0' : 'px-3 lg:px-margin-desktop'}`}
       style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px`, zIndex: 49 }}
     >
       <div

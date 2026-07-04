@@ -21,10 +21,10 @@ export const ProductReturnStep = ({ formData, setFormData }) => {
       <motion.div variants={fadeUp} className="admin-card">
         <div className="admin-card-header">
           <h2 className="admin-card-title flex items-center gap-2">
-            <span className="material-icons-outlined text-[var(--admin-primary)]">
+            <span className="material-symbols-outlined text-[var(--admin-primary)]">
               assignment_return
             </span>
-            Return Policy (Req #7)
+            Return Policy
           </h2>
         </div>
         <div className="admin-card-body space-y-6">
@@ -93,7 +93,7 @@ export const ProductReturnStep = ({ formData, setFormData }) => {
       <motion.div variants={fadeUp} className="admin-card">
         <div className="admin-card-header">
           <h2 className="admin-card-title flex items-center gap-2">
-            <span className="material-icons-outlined text-[var(--admin-info)]">swap_horiz</span>
+            <span className="material-symbols-outlined text-[var(--admin-info)]">swap_horiz</span>
             Exchange Policy
           </h2>
         </div>
@@ -147,7 +147,9 @@ export const ProductReturnStep = ({ formData, setFormData }) => {
       <motion.div variants={fadeUp} className="admin-card">
         <div className="admin-card-header">
           <h2 className="admin-card-title flex items-center gap-2">
-            <span className="material-icons-outlined text-[var(--admin-warning)]">fact_check</span>
+            <span className="material-symbols-outlined text-[var(--admin-warning)]">
+              fact_check
+            </span>
             Warehouse Inspection
           </h2>
         </div>

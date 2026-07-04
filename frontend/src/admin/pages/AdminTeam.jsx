@@ -31,7 +31,7 @@ const ROLE_WEIGHTS = {
   user: 0,
 };
 
-export function AdminTeam() {
+export function AdminTeam({ hideHeader }) {
   const { user: currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState([]);
@@ -223,10 +223,36 @@ export function AdminTeam() {
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
-      <PageHeader
-        title="Team Workspace & Authorization"
-        subtitle="Manage team access and invitations"
-        headerAction={
+      {!hideHeader && (
+        <PageHeader
+          title="Team Workspace & Authorization"
+          subtitle="Manage team access and invitations"
+          headerAction={
+            <div className="w-full sm:max-w-md">
+              <FilterBar
+                filters={['roster', 'pending', 'history']}
+                value={activeTab}
+                onChange={setActiveTab}
+                className="pb-0 border-b border-[var(--admin-border-subtle)]"
+                formatLabel={(id) => {
+                  if (id === 'roster') return `Active Roster (${members.length})`;
+                  if (id === 'pending') return `Pending Invites (${invites.length})`;
+                  if (id === 'history') return `Invitation History (${history.length})`;
+                  return id;
+                }}
+              />
+            </div>
+          }
+        >
+          <button onClick={() => setIsInviteOpen(true)} className="admin-btn admin-btn-primary h-9">
+            <span className="material-symbols-outlined text-[16px]">person_add</span>
+            Invite Team Member
+          </button>
+        </PageHeader>
+      )}
+
+      {hideHeader && (
+        <div className="flex items-center justify-between gap-4 mb-6">
           <div className="w-full sm:max-w-md">
             <FilterBar
               filters={['roster', 'pending', 'history']}
@@ -241,13 +267,12 @@ export function AdminTeam() {
               }}
             />
           </div>
-        }
-      >
-        <button onClick={() => setIsInviteOpen(true)} className="admin-btn admin-btn-primary h-9">
-          <span className="material-symbols-outlined text-[16px]">person_add</span>
-          Invite Team Member
-        </button>
-      </PageHeader>
+          <button onClick={() => setIsInviteOpen(true)} className="admin-btn admin-btn-primary h-9">
+            <span className="material-symbols-outlined text-[16px]">person_add</span>
+            Invite Team Member
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <SkeletonDashboard />

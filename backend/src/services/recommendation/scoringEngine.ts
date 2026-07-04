@@ -82,7 +82,7 @@ export async function scoreItemsForUser(
     const scoreMap = new Map<string, ScoredItem>();
 
     for (const interaction of interactions) {
-      const targetIdStr = interaction.targetId.toString();
+      const targetIdStr = interaction.targetId!.toString();
       const daysSince =
         (Date.now() - new Date(interaction.timestamp).getTime()) / (1000 * 60 * 60 * 24);
       const decayedWeight = computeDecayedWeight(interaction.eventType, daysSince);
@@ -152,7 +152,7 @@ export async function scoreItemsForSession(
     const scoreMap = new Map<string, ScoredItem>();
 
     for (const interaction of interactions) {
-      const targetIdStr = interaction.targetId.toString();
+      const targetIdStr = interaction.targetId!.toString();
       // Use shorter decay for session-based scoring (minutes vs days)
       const minutesSince = (Date.now() - new Date(interaction.timestamp).getTime()) / (1000 * 60);
       const recencyBoost = Math.max(0.1, 1 - minutesSince / lookbackMinutes);

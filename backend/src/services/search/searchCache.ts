@@ -34,3 +34,9 @@ export async function setSearchCache<T>(
 
   return tieredCacheSet(redisKey, val, ttlMs, fallbackCache);
 }
+
+export async function clearAllCaches(): Promise<void> {
+  autocompleteCache.clear();
+  trendingSearchCache.clear();
+  searchResultsCache.clear();
+}

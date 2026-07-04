@@ -57,10 +57,10 @@ export function ProfileSection() {
       transition={{ duration: 0.3 }}
       className="space-y-4 text-left"
     >
-      <div className="py-5">
-        <div className="pb-5 mb-5 border-b border-outline-variant/20">
+      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs font-body mb-4">
+        <div className="pb-4 mb-5 border-b border-outline-variant/20">
           <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[12px]">person</span>
+            <span className="material-symbols-outlined text-[14px]">person</span>
             Profile Settings
           </h2>
         </div>

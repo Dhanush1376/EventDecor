@@ -98,8 +98,18 @@ export class HealthAnalyzer {
    * Evaluates overall system health and DR readiness
    */
   public static async getSystemHealth(): Promise<SystemHealth> {
-    // Mock logic for the plan
-    const score = 85;
+    const BackupRecord =
+      require('../../models/BackupRecord').default || require('../../models/BackupRecord');
+    const recentBackups = await BackupRecord.find({ status: 'completed' })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    let score = 0;
+    if (recentBackups.length > 0) {
+      const scores = recentBackups.map((b: any) => this.computeIntegrityScore(b));
+      score = scores.reduce((a: number, b: number) => a + b, 0) / scores.length;
+    }
 
     let grade: 'A+' | 'A' | 'B+' | 'B' | 'C' | 'D' | 'F';
     if (score >= 95) grade = 'A+';
@@ -110,17 +120,17 @@ export class HealthAnalyzer {
     else grade = 'F';
 
     return {
-      score,
+      score: Math.round(score),
       grade,
       dimensions: {
-        freshness: 15,
-        successRate: 15,
-        encryption: 10,
-        verification: 10,
-        restoreTest: 5,
-        replication: 10,
-        crossRegion: 5,
-        immutability: 5,
+        freshness: score > 0 ? 15 : 0,
+        successRate: score > 0 ? 15 : 0,
+        encryption: score > 0 ? 10 : 0,
+        verification: score > 0 ? 10 : 0,
+        restoreTest: score > 0 ? 5 : 0,
+        replication: score > 0 ? 10 : 0,
+        crossRegion: score > 0 ? 5 : 0,
+        immutability: score > 0 ? 5 : 0,
       },
     };
   }

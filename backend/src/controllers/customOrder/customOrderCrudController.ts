@@ -33,6 +33,7 @@ export const saveDraft = asyncHandler(async (req: Request, res: Response) => {
   } = req.body;
 
   const draftData: Record<string, unknown> = {
+    customer: (req as any).user._id || (req as any).user.id,
     customerEmail: (req as any).user.email,
     customerName: (req as any).user.name,
     customerPhone: (req as any).user.phone,

@@ -59,6 +59,14 @@ backend/test-*.ts
 *.avif
 tmp/
 
+# Forensic Cleanup Ignored Artifacts
+certification_*.json
+certification_*.md
+*-results.json
+*_baseline.json
+backend/src/cache/*
+!backend/src/cache/.gitkeep
+
 # Temp Scripts & Audits
 patch_frontend.py
 backend/fix-image.js

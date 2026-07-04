@@ -1,5 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
+import { indexEvent } from '../services/search/searchIndexer';
+import logger from '../config/logger';
 
 export interface IEvent extends ISoftDeleted {
   title: string;
@@ -77,8 +79,25 @@ EventSchema.index({ isActive: 1, createdAt: -1 }); // Global listing sort
 
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
 
-EventSchema.post('save', () => {
-  triggerSitemapUpdate();
+EventSchema.post('save', async function (doc) {
+  try {
+    triggerSitemapUpdate();
+    if (!doc.deletedAt) {
+      await indexEvent(doc);
+    }
+  } catch (err: any) {
+    logger.error(`[Search Indexer] Failed to index event: ${err.message}`);
+  }
+});
+
+EventSchema.post('findOneAndUpdate', async function (doc) {
+  try {
+    if (doc && !doc.deletedAt) {
+      await indexEvent(doc);
+    }
+  } catch (err: any) {
+    logger.error(`[Search Indexer] Failed to index event on update: ${err.message}`);
+  }
 });
 
 EventSchema.plugin(SoftDeletePlugin);

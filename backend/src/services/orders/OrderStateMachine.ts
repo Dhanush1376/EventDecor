@@ -2,6 +2,7 @@ import ApiError from '../../utils/ApiError';
 import * as Sentry from '@sentry/node';
 
 export type OrderState =
+  | 'Payment Pending'
   | 'Pending'
   | 'Confirmed'
   | 'Packed'
@@ -10,12 +11,14 @@ export type OrderState =
   | 'Out for Delivery'
   | 'Delivered'
   | 'Cancelled'
+  | 'On Hold'
   | 'Returned'
   | 'Refunded'
   | 'Settled';
 
 export class OrderStateMachine {
   private static readonly validTransitions: Record<OrderState, OrderState[]> = {
+    'Payment Pending': ['Pending', 'Confirmed', 'Cancelled', 'On Hold'],
     Pending: [
       'Confirmed',
       'Packed',
@@ -24,7 +27,9 @@ export class OrderStateMachine {
       'Out for Delivery',
       'Delivered',
       'Cancelled',
+      'On Hold',
     ],
+    'On Hold': ['Confirmed', 'Cancelled'],
     Confirmed: ['Packed', 'Ready to Ship', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'],
     Packed: ['Ready to Ship', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'],
     'Ready to Ship': ['Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'],

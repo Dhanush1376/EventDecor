@@ -10,6 +10,7 @@ import { PaymentRefundService } from '../PaymentRefundService';
 import { OrderRollbackService } from './OrderRollbackService';
 import OutboxEvent from '../../models/OutboxEvent';
 import storeSettingsService from '../../services/StoreSettingsService';
+import { RuleEngine } from '../../domains/rules/services/RuleEngine';
 
 export class OrderFulfillmentService {
   static async updateOrderStatus(
@@ -42,6 +43,16 @@ export class OrderFulfillmentService {
 
         // State Machine Validation
         const oldStatus = order.orderStatus as any;
+
+        // Evaluate rules before confirming
+        if (finalStatus === 'Confirmed' && oldStatus === 'Pending') {
+          const { requiresApproval } = await RuleEngine.evaluate(order, 'Order', session);
+          if (requiresApproval) {
+            finalStatus = 'On Hold';
+            note = 'Order flagged by business rules. Placed On Hold pending admin approval.';
+          }
+        }
+
         OrderStateMachine.validateTransition(id, oldStatus, finalStatus as any);
 
         // Track successful state transitions for analytics and audit
@@ -185,6 +196,17 @@ export class OrderFulfillmentService {
             },
           ],
           { session },
+        );
+
+        const { OrderEventService } = require('../../domains/orders/services/OrderEventService');
+        await OrderEventService.recordEvent(
+          order._id,
+          (order as any).orderType || 'purchase',
+          `StatusUpdated:${finalStatus}`,
+          { name: 'System', role: 'system' }, // Ideally from req.user, but we don't have it in this scope directly. Will use System as fallback.
+          'system',
+          { oldStatus, finalStatus, note },
+          session,
         );
 
         await order.save({ session });

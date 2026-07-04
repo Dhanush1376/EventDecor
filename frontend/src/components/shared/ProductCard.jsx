@@ -346,11 +346,25 @@ export const ProductCard = React.memo(function ProductCard({
                   </div>
                 )}
                 {badges.map((badge, idx) => {
-                  const badgeText =
+                  const rawBadgeText =
                     typeof badge === 'object' && badge !== null ? badge.text : badge;
                   const badgeIcon = typeof badge === 'object' && badge !== null ? badge.icon : null;
 
-                  if (!badgeText && !badgeIcon) return null;
+                  if (!rawBadgeText && !badgeIcon) return null;
+
+                  const couponMatch = rawBadgeText
+                    ? String(rawBadgeText).match(/:([A-Za-z0-9_-]+)/)
+                    : null;
+                  const couponCode = couponMatch ? couponMatch[1] : null;
+                  let badgeText = couponMatch
+                    ? String(rawBadgeText).replace(couponMatch[0], '').trim()
+                    : rawBadgeText;
+
+                  // If the badge ONLY contained the coupon code (e.g. ":siri40"),
+                  // badgeText would be empty. Fall back to showing the code itself.
+                  if (couponCode && !badgeText) {
+                    badgeText = couponCode;
+                  }
 
                   const words = String(badgeText || '')
                     .trim()
@@ -383,14 +397,27 @@ export const ProductCard = React.memo(function ProductCard({
                       </>
                     );
 
+                  const Component = couponCode ? 'button' : 'div';
+                  const extraProps = couponCode
+                    ? {
+                        onClick: (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          navigate(`/collections?coupon=${couponCode}`);
+                        },
+                        title: `Click to view all products for coupon ${couponCode}`,
+                      }
+                    : {};
+
                   return (
-                    <div
+                    <Component
                       key={`badge-${idx}`}
-                      className="relative w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-white/95 backdrop-blur-md text-black/80 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white hover:scale-110 transition-transform duration-300 select-none"
+                      {...extraProps}
+                      className={`relative w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-white/95 backdrop-blur-md text-black/80 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white transition-transform duration-300 select-none ${couponCode ? 'hover:scale-110 cursor-pointer hover:bg-[#e0d6b8] hover:text-[#1a1c1a] active:scale-95 z-50' : 'hover:scale-110 z-[20]'}`}
                       style={{ zIndex: 20 - idx }}
                     >
                       {displayContent}
-                    </div>
+                    </Component>
                   );
                 })}
               </>

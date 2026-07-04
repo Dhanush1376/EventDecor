@@ -250,36 +250,40 @@ export class StorageManager {
    * Heatmap visualization data
    */
   public async getStorageHeatMap(): Promise<any> {
-    // In a real implementation, this would aggregate data from BackupRecords and provider.list()
-    // Mock return for now based on plan
+    // Collect sizes from all providers based on their lists
+    const providerStats = await Promise.all(
+      this.providers.map(async (p) => {
+        let usedBytes = 0;
+        try {
+          const files = await p.list('');
+          usedBytes = files.reduce((acc, f) => acc + f.sizeBytes, 0);
+        } catch (e) {
+          // Ignore errors during heatmap generation
+        }
+        return {
+          provider: p.name,
+          usedBytes: usedBytes || 0,
+          capacity: 1024 * 1024 * 1024 * 1000, // Fixed 1TB theoretical capacity
+          utilization: (usedBytes || 0) / (1024 * 1024 * 1024 * 1000),
+          region: p.region,
+        };
+      }),
+    );
+
     return {
-      byProvider: this.providers.map((p) => ({
-        provider: p.name,
-        usedBytes: Math.floor(Math.random() * 1024 * 1024 * 1024 * 50), // Random 0-50GB mock
-        capacity: 1024 * 1024 * 1024 * 1000, // 1TB mock
-        utilization: 0.05,
+      byProvider: providerStats.map((s) => ({
+        provider: s.provider,
+        usedBytes: s.usedBytes,
+        capacity: s.capacity,
+        utilization: s.utilization,
       })),
-      byRegion: this.providers.map((p) => ({
-        region: p.region,
-        usedBytes: Math.floor(Math.random() * 1024 * 1024 * 1024 * 50),
-        backupCount: 15,
+      byRegion: providerStats.map((s) => ({
+        region: s.region,
+        usedBytes: s.usedBytes,
+        backupCount: 1, // Need actual counts for more precision
       })),
-      byMonth: [
-        {
-          month: '2026-06',
-          growthBytes: 1024 * 1024 * 500,
-          cumulativeBytes: 1024 * 1024 * 1024 * 10,
-        },
-        {
-          month: '2026-07',
-          growthBytes: 1024 * 1024 * 800,
-          cumulativeBytes: 1024 * 1024 * 1024 * 10.8,
-        },
-      ],
-      byType: [
-        { type: 'full', usedBytes: 1024 * 1024 * 1024 * 8, percentage: 0.8 },
-        { type: 'incremental', usedBytes: 1024 * 1024 * 1024 * 2, percentage: 0.2 },
-      ],
+      byMonth: [],
+      byType: [],
     };
   }
 }

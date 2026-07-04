@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAutocomplete, useTrendingSearches, useDiscoveryData } from './useSearchQueries';
+import { useSearchAnalytics } from './useSearchAnalytics';
 
 const RECENT_SEARCHES_KEY = 'siri_recent_searches';
-const MAX_RECENT = 8;
+const MAX_RECENT = 12;
 
 /**
  * useSearchOverlay — manages the intelligent floating search overlay.
@@ -15,7 +16,9 @@ export function useSearchOverlay() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState([]);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const abortControllerRef = useRef(null);
   const navigate = useNavigate();
+  const { trackEvent } = useSearchAnalytics();
 
   // Load recent searches from localStorage on mount
   useEffect(() => {
@@ -29,12 +32,21 @@ export function useSearchOverlay() {
     }
   }, []);
 
-  // Debounce the search query to minimize API calls
+  // Debounce the search query to minimize API calls and cancel previous requests
   useEffect(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const newController = new AbortController();
+    abortControllerRef.current = newController;
+
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
-    }, 250);
-    return () => clearTimeout(timer);
+    }, 150);
+    return () => {
+      clearTimeout(timer);
+      newController.abort();
+    };
   }, [query]);
 
   // Fetch full discovery data
@@ -63,17 +75,37 @@ export function useSearchOverlay() {
   // Fetch autocomplete suggestions via React Query
   const autocompleteQuery = useAutocomplete(debouncedQuery, {
     limit: 8,
-    enabled: isOpen && debouncedQuery.trim().length >= 2,
+    enabled: isOpen && debouncedQuery.trim().length >= 1,
+    signal: abortControllerRef.current?.signal,
   });
-
-  const suggestions = useMemo(() => {
-    if (!debouncedQuery.trim()) return [];
-    const list = autocompleteQuery.data?.suggestions || [];
-    return list.filter((item) => item.type !== 'gallery');
-  }, [autocompleteQuery.data, debouncedQuery]);
 
   const predictedCategories = useMemo(() => {
     return autocompleteQuery.data?.predictedCategories || [];
+  }, [autocompleteQuery.data]);
+
+  const suggestions = useMemo(() => {
+    let list = autocompleteQuery.data?.suggestions || autocompleteQuery.data?.items || [];
+    const hasProducts = list.some((s) => s.type === 'product');
+
+    if (hasProducts) {
+      list = list.filter((s) => s.type !== 'keyword');
+    }
+
+    const groups = [
+      { id: 'categories', items: [] },
+      { id: 'collections', items: [] },
+      { id: 'products', items: [] },
+      { id: 'others', items: [] },
+    ];
+
+    list.forEach((item) => {
+      if (item.type === 'category') groups[0].items.push(item);
+      else if (item.type === 'event' || item.type === 'gallery') groups[1].items.push(item);
+      else if (item.type === 'product') groups[2].items.push(item);
+      else groups[3].items.push(item);
+    });
+
+    return groups.flatMap((g) => g.items);
   }, [autocompleteQuery.data]);
 
   const correctedQuery = useMemo(() => {
@@ -119,7 +151,7 @@ export function useSearchOverlay() {
 
   // Save a search to recent history
   const saveRecentSearch = useCallback((searchQuery) => {
-    if (!searchQuery || searchQuery.trim().length < 2) return;
+    if (!searchQuery || searchQuery.trim().length < 1) return;
 
     const trimmed = searchQuery.trim();
     setRecentSearches((prev) => {
@@ -161,6 +193,11 @@ export function useSearchOverlay() {
   const selectSuggestion = useCallback(
     (suggestion) => {
       saveRecentSearch(suggestion.title || query);
+      trackEvent('suggestion_clicked', debouncedQuery, {
+        itemId: suggestion.id,
+        itemType: suggestion.type,
+        itemTitle: suggestion.title,
+      });
 
       if (suggestion.type === 'category') {
         navigate(`/collections?category=${encodeURIComponent(suggestion.title)}`);
@@ -183,7 +220,7 @@ export function useSearchOverlay() {
 
       handleClose();
     },
-    [navigate, query, saveRecentSearch, handleClose],
+    [navigate, query, debouncedQuery, saveRecentSearch, handleClose, trackEvent],
   );
 
   // Execute a full search
@@ -193,6 +230,7 @@ export function useSearchOverlay() {
       if (q.length < 1) return;
 
       saveRecentSearch(q);
+      trackEvent('search_executed', q);
 
       const currentPath = window.location.pathname;
       if (currentPath.startsWith('/events')) {
@@ -205,7 +243,7 @@ export function useSearchOverlay() {
 
       handleClose();
     },
-    [navigate, query, saveRecentSearch, handleClose],
+    [navigate, query, saveRecentSearch, handleClose, trackEvent],
   );
 
   // Handle keyboard navigation

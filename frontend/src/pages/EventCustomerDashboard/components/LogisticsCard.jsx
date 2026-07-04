@@ -8,10 +8,13 @@ export function LogisticsCard({ selectedBooking }) {
   }
 
   return (
-    <div className="bg-surface-bright rounded-lg border border-outline-variant/40 p-6 space-y-6 shadow-xs text-[11px] text-left">
-      <h3 className="font-bold text-[18px] text-on-surface tracking-tight border-b border-black/5 pb-4">
-        Logistics & Crew Roster
-      </h3>
+    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs text-left font-body">
+      <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center">
+        <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-[14px]">local_shipping</span>
+          Logistics & Crew Roster
+        </h2>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-secondary">
@@ -48,7 +51,7 @@ export function LogisticsCard({ selectedBooking }) {
         </div>
 
         {selectedBooking.assignedTeam?.length > 0 && (
-          <div className="sm:col-span-2 space-y-3 pt-4 border-t border-black/5 mt-2">
+          <div className="sm:col-span-2 space-y-3 pt-4 border-t border-outline-variant/20 mt-2">
             <span className="text-[9px] uppercase tracking-widest text-secondary font-bold block">
               Assigned Setup Team
             </span>

@@ -40,7 +40,7 @@ const typeColors = {
   system: 'bg-[var(--admin-error-light)] text-[var(--admin-error)] border-none hover:opacity-90',
 };
 
-export function AdminNotifications() {
+export function AdminNotifications({ hideHeader }) {
   const {
     notifications,
     unreadNotifications: unreadCount,
@@ -97,38 +97,40 @@ export function AdminNotifications() {
       className="max-w-[1000px] mx-auto space-y-6  text-[var(--admin-text-primary)]"
     >
       {/* Header Block */}
-      <motion.div
-        variants={fadeUp}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-      >
-        <div>
-          <h2 className="text-[26px] font-bold  text-[var(--admin-text-primary)]">
-            Notification Center
-          </h2>
-          <p className="text-[13px] text-[var(--admin-text-tertiary)] mt-0.5">
-            {unreadCount > 0 ? (
-              <span className="text-[var(--admin-text-primary)] font-bold">
-                {unreadCount} actionable alerts needing response
-              </span>
-            ) : (
-              <span className="text-[var(--admin-success)] font-bold">
-                All caught up! No pending alerts
-              </span>
+      {!hideHeader && (
+        <motion.div
+          variants={fadeUp}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        >
+          <div>
+            <h2 className="text-[26px] font-bold  text-[var(--admin-text-primary)]">
+              Notification Center
+            </h2>
+            <p className="text-[13px] text-[var(--admin-text-tertiary)] mt-0.5">
+              {unreadCount > 0 ? (
+                <span className="text-[var(--admin-text-primary)] font-bold">
+                  {unreadCount} actionable alerts needing response
+                </span>
+              ) : (
+                <span className="text-[var(--admin-success)] font-bold">
+                  All caught up! No pending alerts
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="admin-btn admin-btn-outline h-9 px-4 text-[12px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[16px]">done_all</span>
+                Mark All Read
+              </button>
             )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {unreadCount > 0 && (
-            <button
-              onClick={handleMarkAllRead}
-              className="admin-btn admin-btn-outline h-9 px-4 text-[12px] font-bold uppercase tracking-wider flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-[16px]">done_all</span>
-              Mark All Read
-            </button>
-          )}
-        </div>
-      </motion.div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Tabs Filter Bar */}
       <motion.div

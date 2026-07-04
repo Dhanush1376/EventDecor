@@ -52,10 +52,10 @@ export const queryClient = new QueryClient({
 
 queryClient.setQueryDefaults(['product'], { staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 30 });
 queryClient.setQueryDefaults(['products'], {
-  staleTime: 1000 * 60 * 10,
-  gcTime: 1000 * 60 * 60,
-  refetchOnMount: false,
-  refetchOnReconnect: false,
+  staleTime: 1000 * 60 * 2,
+  gcTime: 1000 * 60 * 30,
+  refetchOnMount: true,
+  refetchOnReconnect: true,
 });
 queryClient.setQueryDefaults(['cart'], { staleTime: 1000 * 30, gcTime: 1000 * 60 * 5 });
 queryClient.setQueryDefaults(['profile'], { staleTime: 1000 * 60 * 2, gcTime: 1000 * 60 * 10 });

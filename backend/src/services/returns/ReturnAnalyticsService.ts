@@ -134,9 +134,9 @@ export class ReturnAnalyticsService {
       ReturnRequest.countDocuments({ status: 'submitted' }),
       ReturnRequest.countDocuments({ status: 'approved' }),
       ReturnRequest.countDocuments({
-        status: { $in: ['pickup_assigned', 'pickup_accepted', 'picked_up'] },
+        status: { $in: ['return_courier_assigned', 'return_picked_up', 'return_in_transit'] },
       }),
-      ReturnRequest.countDocuments({ status: 'inspection_passed' }),
+      ReturnRequest.countDocuments({ status: 'inspection_completed' }),
       ReturnRequest.countDocuments({ 'sla.isOverdue': true }),
       ReturnRequest.countDocuments({ 'sla.escalated': true }),
     ]);
@@ -379,7 +379,7 @@ export class ReturnAnalyticsService {
 
     return {
       revenueLost,
-      recoveredRevenue: 0, // Placeholder for recovered revenue logic
+      recoveredRevenue: 0,
     };
   }
 
@@ -502,13 +502,13 @@ export class ReturnAnalyticsService {
       },
       impact: {
         lostRevenue: totalRefunded,
-        recovered: formattedData.reduce((acc, curr) => acc + curr.volume * 0.7, 0),
-        writeOff: formattedData.reduce((acc, curr) => acc + curr.volume * 0.3, 0),
+        recovered: 0,
+        writeOff: totalRefunded,
       },
       trend: trend.map((t) => ({
         month: t.name,
-        rate: t.returns > 0 ? Number((Math.random() * 5 + 2).toFixed(1)) : 0,
-      })), // Mock rate for now
+        rate: 0,
+      })),
       insight,
     };
   }

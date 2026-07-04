@@ -1,18 +1,52 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../../context/AuthContext';
+import { useAdmin } from '../../context/AdminContext';
 
 export function AdminMobileBottomNav({ isFabOpen, setIsFabOpen, fabActions }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const { activeRole } = useAdmin();
 
-  const navItems = [
-    { label: 'Dashboard', icon: 'dashboard', path: '/admin' },
-    { label: 'Products', icon: 'inventory_2', path: '/admin/products' },
-    { label: 'Add', icon: 'add', path: '/admin/products/add', isAction: true },
-    { label: 'Orders', icon: 'shopping_bag', path: '/admin/orders' },
-    { label: 'Settings', icon: 'settings', path: '/admin/settings' },
-  ];
+  const effectiveRole = activeRole || user?.role || 'owner';
+
+  let navItems = [];
+  if (effectiveRole === 'warehouse') {
+    navItems = [
+      { label: 'Dashboard', icon: 'dashboard', path: '/admin' },
+      { label: 'Receive', icon: 'move_to_inbox', path: '/admin/warehouse/receive' },
+      { label: 'Scan', icon: 'qr_code_scanner', path: '/admin/warehouse', isAction: true },
+      { label: 'Pick', icon: 'front_hand', path: '/admin/warehouse/pick' },
+      { label: 'Pack', icon: 'inventory', path: '/admin/warehouse/pack' },
+    ];
+  } else if (effectiveRole === 'production') {
+    navItems = [
+      { label: 'Dashboard', icon: 'dashboard', path: '/admin' },
+      { label: 'Work', icon: 'precision_manufacturing', path: '/admin/production' },
+      { label: 'QA', icon: 'fact_check', path: '/admin/production/qa', isAction: true },
+      { label: 'Ready', icon: 'box', path: '/admin/production/ready' },
+      { label: 'Products', icon: 'inventory_2', path: '/admin/products' },
+    ];
+  } else if (effectiveRole === 'support') {
+    navItems = [
+      { label: 'Dashboard', icon: 'dashboard', path: '/admin' },
+      { label: 'Orders', icon: 'shopping_bag', path: '/admin/orders' },
+      { label: 'Search', icon: 'search', path: '/admin/enterprise-search', isAction: true },
+      { label: 'Customers', icon: 'group', path: '/admin/customers' },
+      { label: 'Returns', icon: 'assignment_return', path: '/admin/returns' },
+    ];
+  } else {
+    // Owner / Manager
+    navItems = [
+      { label: 'Dashboard', icon: 'dashboard', path: '/admin' },
+      { label: 'Products', icon: 'inventory_2', path: '/admin/products' },
+      { label: 'Add', icon: 'add', path: '/admin/products/add', isAction: true },
+      { label: 'Orders', icon: 'shopping_bag', path: '/admin/orders' },
+      { label: 'Customers', icon: 'group', path: '/admin/customers' },
+    ];
+  }
 
   return (
     <>

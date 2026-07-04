@@ -83,9 +83,9 @@ export class ReturnReconciliationJob {
       // Specific SLAs based on stage
       if (ret.status === 'submitted')
         maxHours = 24; // Needs approval within 24h
-      else if (ret.status === 'reached_warehouse')
+      else if (ret.status === 'return_received')
         maxHours = 48; // Needs inspection within 48h
-      else if (ret.status === 'inspection_passed') maxHours = 24; // Needs refund within 24h
+      else if (ret.status === 'inspection_completed') maxHours = 24; // Needs refund within 24h
 
       if (timeInStageHours > maxHours) {
         ret.sla.isOverdue = true;
@@ -116,7 +116,7 @@ export class ReturnReconciliationJob {
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
     const stalledReturns = await ReturnRequest.find({
-      status: 'inspection_passed',
+      status: 'inspection_completed',
       'sla.stageEnteredAt': { $lte: twentyFourHoursAgo },
     }).lean();
 

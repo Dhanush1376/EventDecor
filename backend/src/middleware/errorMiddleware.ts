@@ -40,7 +40,16 @@ const errorMiddleware = (err: any, req: Request, res: Response, _next: NextFunct
     (err.name === 'MongooseError' && err.message?.includes('timed out'))
   ) {
     statusCode = 503;
-    message = 'Database connection is temporarily unavailable. Please try again in a few seconds.';
+    if (err.name === 'MongoNotConnectedError' || err.message?.includes('not connected')) {
+      message =
+        'Database connection lost. The server is reconnecting automatically. Please retry in a few seconds.';
+    } else if (err.message?.includes('timed out') || err.message?.includes('buffering timed out')) {
+      message = 'Database operation timed out. Please try again.';
+    } else if (err.name === 'MongoNetworkError' || err.message?.includes('ECONNREFUSED')) {
+      message = 'Database is temporarily unreachable. Please retry in a moment.';
+    } else {
+      message = 'Database service is temporarily unavailable. Please retry shortly.';
+    }
   }
 
   // Handle JSON SyntaxError (malformed payload from body-parser)

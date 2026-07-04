@@ -14,7 +14,7 @@ export const CartModeSelector = ({
         {/* Purchase Cart Tab */}
         <button
           onClick={() => setActiveCartMode('purchase')}
-          className={`relative flex flex-1 items-center justify-center gap-1.5 px-5 py-2.5 min-h-0 rounded-full font-sans text-[11px] uppercase tracking-widest transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+          className={`relative flex flex-1 items-center justify-center py-2.5 min-h-0 rounded-full font-sans text-[10px] sm:text-[11px] uppercase tracking-wider sm:tracking-widest transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
             activeCartMode === 'purchase'
               ? 'text-primary font-bold'
               : 'text-on-surface-variant/70 hover:text-on-surface font-medium'
@@ -27,25 +27,27 @@ export const CartModeSelector = ({
               transition={{ type: 'spring', stiffness: 380, damping: 30 }}
             />
           )}
-          <span
-            className={`absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full text-[8px] font-bold flex items-center justify-center border shadow-sm transition-all duration-300 z-20 ${
-              activeCartMode === 'purchase'
-                ? 'bg-primary text-white border-white'
-                : 'bg-outline-variant/60 text-on-surface-variant/80 border-surface-bright'
-            }`}
-          >
-            {purchaseCartCount}
-          </span>
-          <span className="material-symbols-outlined text-[15px] sm:text-[17px]">
-            shopping_cart
-          </span>
-          <span>Purchase</span>
+          <div className="relative flex items-center gap-1 sm:gap-1.5">
+            <span
+              className={`absolute -top-1.5 -right-2.5 sm:-right-3 w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] rounded-full text-[8px] font-bold flex items-center justify-center border shadow-sm transition-all duration-300 z-20 ${
+                activeCartMode === 'purchase'
+                  ? 'bg-primary text-white border-white'
+                  : 'bg-outline-variant/60 text-on-surface-variant/80 border-surface-bright'
+              }`}
+            >
+              {purchaseCartCount}
+            </span>
+            <span className="material-symbols-outlined text-[15px] sm:text-[17px]">
+              shopping_cart
+            </span>
+            <span>Purchase</span>
+          </div>
         </button>
 
         {/* Rental Cart Tab */}
         <button
           onClick={() => setActiveCartMode('rental')}
-          className={`relative flex flex-1 items-center justify-center gap-1.5 px-5 py-2.5 min-h-0 rounded-full font-sans text-[11px] uppercase tracking-widest transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+          className={`relative flex flex-1 items-center justify-center py-2.5 min-h-0 rounded-full font-sans text-[10px] sm:text-[11px] uppercase tracking-wider sm:tracking-widest transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
             activeCartMode === 'rental'
               ? 'text-primary font-bold'
               : 'text-on-surface-variant/70 hover:text-on-surface font-medium'
@@ -58,23 +60,25 @@ export const CartModeSelector = ({
               transition={{ type: 'spring', stiffness: 380, damping: 30 }}
             />
           )}
-          <span
-            className={`absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full text-[8px] font-bold flex items-center justify-center border shadow-sm transition-all duration-300 z-20 ${
-              activeCartMode === 'rental'
-                ? 'bg-primary text-white border-white'
-                : 'bg-outline-variant/60 text-on-surface-variant/80 border-surface-bright'
-            }`}
-          >
-            {rentalCartCount}
-          </span>
-          <span className="material-symbols-outlined text-[15px] sm:text-[17px]">sell</span>
-          <span>Rental</span>
+          <div className="relative flex items-center gap-1 sm:gap-1.5">
+            <span
+              className={`absolute -top-1.5 -right-2.5 sm:-right-3 w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] rounded-full text-[8px] font-bold flex items-center justify-center border shadow-sm transition-all duration-300 z-20 ${
+                activeCartMode === 'rental'
+                  ? 'bg-primary text-white border-white'
+                  : 'bg-outline-variant/60 text-on-surface-variant/80 border-surface-bright'
+              }`}
+            >
+              {rentalCartCount}
+            </span>
+            <span className="material-symbols-outlined text-[15px] sm:text-[17px]">sell</span>
+            <span>Rental</span>
+          </div>
         </button>
 
         {/* Custom Cart Tab */}
         <button
           onClick={() => setActiveCartMode('custom')}
-          className={`relative flex flex-1 items-center justify-center gap-1.5 px-5 py-2.5 min-h-0 rounded-full font-sans text-[11px] uppercase tracking-widest transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+          className={`relative flex flex-1 items-center justify-center py-2.5 min-h-0 rounded-full font-sans text-[10px] sm:text-[11px] uppercase tracking-wider sm:tracking-widest transition-colors duration-300 cursor-pointer z-10 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
             activeCartMode === 'custom'
               ? 'text-primary font-bold'
               : 'text-on-surface-variant/70 hover:text-on-surface font-medium'
@@ -87,17 +91,19 @@ export const CartModeSelector = ({
               transition={{ type: 'spring', stiffness: 380, damping: 30 }}
             />
           )}
-          <span
-            className={`absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full text-[8px] font-bold flex items-center justify-center border shadow-sm transition-all duration-300 z-20 ${
-              activeCartMode === 'custom'
-                ? 'bg-primary text-white border-white'
-                : 'bg-outline-variant/60 text-on-surface-variant/80 border-surface-bright'
-            }`}
-          >
-            {customCartCount}
-          </span>
-          <span className="material-symbols-outlined text-[15px] sm:text-[17px]">palette</span>
-          <span>Custom</span>
+          <div className="relative flex items-center gap-1 sm:gap-1.5">
+            <span
+              className={`absolute -top-1.5 -right-2.5 sm:-right-3 w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] rounded-full text-[8px] font-bold flex items-center justify-center border shadow-sm transition-all duration-300 z-20 ${
+                activeCartMode === 'custom'
+                  ? 'bg-primary text-white border-white'
+                  : 'bg-outline-variant/60 text-on-surface-variant/80 border-surface-bright'
+              }`}
+            >
+              {customCartCount}
+            </span>
+            <span className="material-symbols-outlined text-[15px] sm:text-[17px]">palette</span>
+            <span>Custom</span>
+          </div>
         </button>
       </div>
     </div>

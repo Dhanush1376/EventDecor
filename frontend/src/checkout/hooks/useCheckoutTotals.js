@@ -100,22 +100,7 @@ export function useCheckoutTotals({
     }
   }, [isAuthenticated]);
 
-  // Auto-apply feature disabled per user request
-  // useEffect(() => {
-  //   if (isAuthenticated && !autoApplyAttemptedRef.current) {
-  //     const couponCodeToApply = location?.state?.couponCode || claimedCoupon;
-  //     if (couponCodeToApply && couponCodeToApply !== appliedCoupon) {
-  //       logger.info(`Auto-applying coupon: ${couponCodeToApply}`);
-  //       setCouponInput(couponCodeToApply);
-  //       setAppliedCoupon(couponCodeToApply);
-  //       autoApplyAttemptedRef.current = true;
-  //       if (claimedCoupon) {
-  //         setClaimedCoupon('');
-  //       }
-  //       toast.success(`Auto-applied coupon "${couponCodeToApply}"!`);
-  //     }
-  //   }
-  // }, [isAuthenticated, claimedCoupon, location, appliedCoupon, setClaimedCoupon]);
+  // Auto-apply feature removed per user request
 
   const fetchBackendTotals = useCallback(
     async (couponToApply = '') => {

@@ -5,13 +5,13 @@ import ApiResponse from '../../utils/ApiResponse';
 import asyncHandler from '../../utils/asyncHandler';
 
 export const getLocations = asyncHandler(async (req: Request, res: Response) => {
-  const locations = await Location.find();
+  const locations = await Location.find().lean();
   res.status(200).json(new ApiResponse(true, 'Locations fetched successfully', locations));
 });
 
 export const getLocationBySlug = asyncHandler(async (req: Request, res: Response) => {
   const { slug } = req.params;
-  const location = await Location.findOne({ slug });
+  const location = await Location.findOne({ slug }).lean();
 
   if (!location) {
     throw new ApiError(404, 'Location not found');

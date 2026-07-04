@@ -24,6 +24,7 @@ export interface IReturnRequestItem {
     inspectionScore: number;
     inspectedBy?: mongoose.Types.ObjectId;
     inspectedAt?: Date;
+    inventoryDecision?: 'restock_available' | 'mark_damaged' | 'mark_lost';
   };
   warehouseStatus:
     | 'pending'
@@ -50,16 +51,19 @@ export interface IReturnRequest extends ISoftDeleted {
   status:
     | 'submitted'
     | 'approved'
-    | 'pickup_assigned'
-    | 'pickup_accepted'
-    | 'picked_up'
-    | 'reached_warehouse'
+    | 'return_courier_assigned'
+    | 'return_picked_up'
+    | 'return_in_transit'
+    | 'return_received'
     | 'inspection_started'
-    | 'inspection_passed'
-    | 'refund_triggered'
+    | 'inspection_completed'
+    | 'refund_initiated'
+    | 'refund_completed'
     | 'completed'
     | 'rejected'
     | 'cancelled';
+
+  returnShipmentId?: mongoose.Types.ObjectId;
 
   refundBreakdown?: {
     productTotal: number;
@@ -167,6 +171,7 @@ const ReturnRequestItemSchema = new Schema<IReturnRequestItem>({
     inspectionScore: { type: Number, min: 0, max: 100 },
     inspectedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     inspectedAt: { type: Date },
+    inventoryDecision: { type: String, enum: ['restock_available', 'mark_damaged', 'mark_lost'] },
   },
   warehouseStatus: {
     type: String,
@@ -200,13 +205,14 @@ const ReturnRequestSchema = new Schema<IReturnRequest>(
       enum: [
         'submitted',
         'approved',
-        'pickup_assigned',
-        'pickup_accepted',
-        'picked_up',
-        'reached_warehouse',
+        'return_courier_assigned',
+        'return_picked_up',
+        'return_in_transit',
+        'return_received',
         'inspection_started',
-        'inspection_passed',
-        'refund_triggered',
+        'inspection_completed',
+        'refund_initiated',
+        'refund_completed',
         'completed',
         'rejected',
         'cancelled',
@@ -214,6 +220,7 @@ const ReturnRequestSchema = new Schema<IReturnRequest>(
       default: 'submitted',
       index: true,
     },
+    returnShipmentId: { type: Schema.Types.ObjectId, ref: 'Shipment' },
 
     refundBreakdown: {
       productTotal: { type: Number, default: 0 },

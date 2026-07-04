@@ -12,7 +12,9 @@ import Product from '../models/Product';
 import User from '../models/User';
 import AnalyticsService from './analyticsService';
 import PaymentAttempt from '../models/PaymentAttempt';
+import PaymentEvent from '../domains/payments/models/PaymentEvent';
 import Coupon from '../models/Coupon';
+import { generateUuid } from '../shared/utils/uuidGenerator';
 import WalletTransaction from '../models/WalletTransaction';
 import { debitWalletBalance } from '../utils/payment/walletMutations';
 import RentalOrder from '../models/RentalOrder';
@@ -21,6 +23,7 @@ import EventBooking from '../models/EventBooking';
 import { EventResourcePlanningService } from './eventBooking/EventResourcePlanningService';
 import BookingMessage from '../models/BookingMessage';
 import { PaymentRefundService } from './PaymentRefundService';
+import { RuleEngine } from '../domains/rules/services/RuleEngine';
 
 export class PaymentVerificationService {
   static async verifyPayment(
@@ -28,6 +31,7 @@ export class PaymentVerificationService {
     invokerId: string,
     role: string,
     source: 'frontend' | 'webhook' = 'frontend',
+    externalSession?: mongoose.ClientSession,
   ) {
     const razorpay_order_id = paymentData.razorpay_order_id || paymentData.razorpayOrderId;
     const razorpay_payment_id = paymentData.razorpay_payment_id || paymentData.razorpayPaymentId;
@@ -66,12 +70,13 @@ export class PaymentVerificationService {
       throw new ApiError(502, 'Failed to connect to payment gateway for verification');
     }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    const session = externalSession || (await mongoose.startSession());
+    if (!externalSession) session.startTransaction();
     let finalOrder: any;
 
+    let attempt: any;
     try {
-      const attempt = await PaymentAttempt.findOneAndUpdate(
+      attempt = await PaymentAttempt.findOneAndUpdate(
         {
           razorpayOrderId: razorpay_order_id,
           status: { $in: ['initiated', 'failed'] },
@@ -104,16 +109,20 @@ export class PaymentVerificationService {
             ).session(session);
           }
 
-          await session.abortTransaction();
-          session.endSession();
+          if (!externalSession) {
+            await session.abortTransaction();
+            session.endSession();
+          }
           return existingDoc;
         }
         if (existingAttempt && existingAttempt.status === 'processing') {
           logger.info(
             `[PAYMENT RACE] Intent ${existingAttempt._id} is actively being processed by a webhook.`,
           );
-          await session.abortTransaction();
-          session.endSession();
+          if (!externalSession) {
+            await session.abortTransaction();
+            session.endSession();
+          }
           // Ideally poll here, but for now just return error to let client retry
           throw new ApiError(
             409,
@@ -169,8 +178,21 @@ export class PaymentVerificationService {
       if (!isValid) {
         attempt.status = 'failed';
         await attempt.save({ session });
-        await session.commitTransaction();
-        session.endSession();
+
+        if (attempt.orderData?.reservationIds?.length > 0) {
+          for (const resId of attempt.orderData.reservationIds) {
+            try {
+              await InventoryService.cancelReservation(resId.toString(), session);
+            } catch (err) {
+              logger.error(`Failed to cancel reservation ${resId} on failed payment:`, err);
+            }
+          }
+        }
+
+        if (!externalSession) {
+          await session.commitTransaction();
+          session.endSession();
+        }
 
         if (fetchedPayment && fetchedPayment.status === 'captured') {
           try {
@@ -193,8 +215,44 @@ export class PaymentVerificationService {
           extra: { attemptId: attempt._id, razorpay_order_id, razorpay_payment_id },
         });
 
+        await PaymentEvent.create(
+          [
+            {
+              eventId: generateUuid(),
+              orderId: attempt.orderData.pendingOrderId,
+              orderType: attempt.type,
+              eventType: 'failed',
+              amount: expectedAmount / 100,
+              currency: 'INR',
+              razorpayOrderId: razorpay_order_id,
+              razorpayPaymentId: razorpay_payment_id,
+              performedBy: 'system',
+              gatewayResponse: fetchedPayment,
+            },
+          ],
+          { session },
+        );
+
         throw new ApiError(400, 'Invalid payment details. Payment untrusted.');
       }
+
+      await PaymentEvent.create(
+        [
+          {
+            eventId: generateUuid(),
+            orderId: attempt.orderData.pendingOrderId,
+            orderType: attempt.type,
+            eventType: 'paid',
+            amount: expectedAmount / 100,
+            currency: 'INR',
+            razorpayOrderId: razorpay_order_id,
+            razorpayPaymentId: razorpay_payment_id,
+            performedBy: 'system',
+            gatewayResponse: fetchedPayment,
+          },
+        ],
+        { session },
+      );
 
       // Valid payment. Let's create the actual order/booking based on attempt.type
       const orderData = attempt.orderData;
@@ -254,9 +312,24 @@ export class PaymentVerificationService {
           { session },
         );
 
-        if (orderData.reservationIds && orderData.reservationIds.length > 0) {
-          for (const resId of orderData.reservationIds) {
-            await InventoryService.confirmReservation(resId.toString(), session);
+        // Apply rules engine
+        let initialStatus = 'Confirmed';
+        let initialNote = 'Payment verified and order confirmed';
+        const evalResult = await RuleEngine.evaluate(orderData, 'Order', session);
+        if (evalResult.requiresApproval) {
+          initialStatus = 'On Hold';
+          initialNote = 'Order flagged by business rules. Placed On Hold pending admin approval.';
+
+          if (orderData.reservationIds && orderData.reservationIds.length > 0) {
+            for (const resId of orderData.reservationIds) {
+              await InventoryService.freezeReservation(resId.toString(), 7, session);
+            }
+          }
+        } else {
+          if (orderData.reservationIds && orderData.reservationIds.length > 0) {
+            for (const resId of orderData.reservationIds) {
+              await InventoryService.confirmReservation(resId.toString(), session);
+            }
           }
         }
 
@@ -289,12 +362,12 @@ export class PaymentVerificationService {
               couponCode: orderData.couponCode,
               paymentMethod: orderData.paymentMethod,
               paymentStatus: 'paid',
-              orderStatus: 'Confirmed',
+              orderStatus: initialStatus as any,
               reservationIds: orderData.reservationIds,
               statusHistory: [
                 {
-                  status: 'Confirmed',
-                  note: 'Payment verified and order confirmed',
+                  status: initialStatus as any,
+                  note: initialNote,
                 },
               ],
               invoiceNumber: orderData.invoiceNumber,
@@ -335,6 +408,14 @@ export class PaymentVerificationService {
         // --- RENTAL VERIFICATION ---
         await RentalAvailabilityService.confirmDates(orderData.pendingOrderId.toString(), session);
 
+        let initialStatus = 'confirmed';
+        let initialNote = 'Payment verified and rental order confirmed';
+        const evalResult = await RuleEngine.evaluate(orderData, 'RentalOrder', session);
+        if (evalResult.requiresApproval) {
+          initialStatus = 'pending_approval';
+          initialNote = 'Rental flagged by business rules. Pending admin approval.';
+        }
+
         finalOrder = await RentalOrder.create(
           [
             {
@@ -352,7 +433,6 @@ export class PaymentVerificationService {
               deliveryCharge: orderData.deliveryCharge,
               tax: orderData.tax,
               totalAmount: orderData.totalAmount,
-              status: 'confirmed',
               paymentMethod: 'razorpay',
               paymentStatus: 'paid',
               shippingAddress: orderData.shippingAddress,
@@ -361,16 +441,17 @@ export class PaymentVerificationService {
               razorpayOrderId: razorpay_order_id,
               razorpayPaymentId: razorpay_payment_id,
               razorpaySignature: razorpay_signature,
+              status: initialStatus as any,
               statusHistory: [
                 {
-                  status: 'confirmed',
-                  note: 'Payment verified and rental order confirmed',
+                  status: initialStatus as any,
+                  note: initialNote,
                 },
               ],
             },
           ],
           { session },
-        ).then((res) => res[0]);
+        ).then((res: any) => res[0]);
 
         await OutboxEvent.create(
           [
@@ -467,7 +548,7 @@ export class PaymentVerificationService {
             },
           ],
           { session },
-        ).then((res) => res[0]);
+        ).then((res: any) => res[0]);
 
         await BookingMessage.create(
           [
@@ -498,18 +579,31 @@ export class PaymentVerificationService {
       attempt.status = 'success';
       await attempt.save({ session });
 
-      await session.commitTransaction();
+      if (!externalSession) await session.commitTransaction();
     } catch (error) {
-      if (session.inTransaction()) {
+      if (!externalSession && session.inTransaction()) {
         await session.abortTransaction();
       }
       throw error;
     } finally {
-      session.endSession();
+      if (!externalSession) session.endSession();
     }
 
     AnalyticsService.clearCache();
     logger.info(`Payment verified and entity created successfully: ${finalOrder._id}`);
+
+    try {
+      const { emitAdminEvent } = require('../socket');
+      if (attempt.type === 'purchase') {
+        emitAdminEvent('order_update', { orderId: finalOrder._id });
+      } else if (attempt.type === 'event_booking') {
+        emitAdminEvent('booking_update', { bookingId: finalOrder._id });
+      } else if (attempt.type === 'rental') {
+        emitAdminEvent('rental_update', { rentalId: finalOrder._id });
+      }
+    } catch (e) {
+      logger.warn('Failed to emit admin event for verified payment', e);
+    }
 
     return finalOrder;
   }

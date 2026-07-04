@@ -39,6 +39,10 @@ const CategorySchema: Schema = new Schema(
 
 // Indexes for common frontend queries
 CategorySchema.index({ type: 1, isActive: 1, displayOrder: 1 });
+CategorySchema.index(
+  { name: 'text', description: 'text' },
+  { name: 'CategoryTextIndex', weights: { name: 10, description: 2 } },
+);
 
 CategorySchema.plugin(SoftDeletePlugin);
 

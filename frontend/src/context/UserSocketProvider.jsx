@@ -59,6 +59,22 @@ export function UserSocketProvider({ children }) {
           queryClient.invalidateQueries({ queryKey: ['cart'] });
         });
 
+        socket.on('product_update', () => {
+          logger.dev('[WEBSOCKET] Product update received, invalidating cart and wishlist');
+          queryClient.invalidateQueries({ queryKey: ['cart'] });
+          queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+          queryClient.invalidateQueries({ queryKey: ['products'] });
+          queryClient.invalidateQueries({ queryKey: ['product'] });
+        });
+
+        socket.on('stock_update', () => {
+          logger.dev('[WEBSOCKET] Stock update received, invalidating cart and wishlist');
+          queryClient.invalidateQueries({ queryKey: ['cart'] });
+          queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+          queryClient.invalidateQueries({ queryKey: ['products'] });
+          queryClient.invalidateQueries({ queryKey: ['product'] });
+        });
+
         socket.on('wishlist_update', () => {
           logger.dev('[WEBSOCKET] Wishlist update received, invalidating queries');
           queryClient.invalidateQueries({ queryKey: ['wishlist'] });
@@ -68,6 +84,50 @@ export function UserSocketProvider({ children }) {
           logger.dev('[WEBSOCKET] Order update received, invalidating queries');
           queryClient.invalidateQueries({ queryKey: ['orders'] });
           queryClient.invalidateQueries({ queryKey: ['order'] });
+        });
+
+        socket.on('order_status_updated', () => {
+          logger.dev('[WEBSOCKET] Order status updated, invalidating queries');
+          queryClient.invalidateQueries({ queryKey: ['orders'] });
+          queryClient.invalidateQueries({ queryKey: ['order'] });
+        });
+
+        socket.on('order_status_update', () => {
+          logger.dev('[WEBSOCKET] Order status update, invalidating queries');
+          queryClient.invalidateQueries({ queryKey: ['orders'] });
+          queryClient.invalidateQueries({ queryKey: ['order'] });
+        });
+
+        socket.on('refund:status_updated', () => {
+          logger.dev('[WEBSOCKET] Refund status updated, invalidating queries');
+          queryClient.invalidateQueries({ queryKey: ['orders'] });
+          queryClient.invalidateQueries({ queryKey: ['order'] });
+        });
+
+        socket.on('booking_status_updated', () => {
+          logger.dev('[WEBSOCKET] Booking status updated, invalidating queries');
+          queryClient.invalidateQueries({ queryKey: ['bookings'] });
+          queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+        });
+
+        socket.on('customOrder:newMessage', () => {
+          logger.dev('[WEBSOCKET] Custom order new message, invalidating queries');
+          queryClient.invalidateQueries({ queryKey: ['custom-orders'] });
+        });
+
+        socket.on('customOrder:statusChange', () => {
+          logger.dev('[WEBSOCKET] Custom order status change, invalidating queries');
+          queryClient.invalidateQueries({ queryKey: ['custom-orders'] });
+        });
+
+        socket.on('customOrder:quoteCreated', () => {
+          logger.dev('[WEBSOCKET] Custom order quote created, invalidating queries');
+          queryClient.invalidateQueries({ queryKey: ['custom-orders'] });
+        });
+
+        socket.on('timeline_update', () => {
+          logger.dev('[WEBSOCKET] Timeline update, invalidating queries');
+          queryClient.invalidateQueries({ queryKey: ['order-timeline'] });
         });
 
         socket.on('return:status_updated', (data) => {

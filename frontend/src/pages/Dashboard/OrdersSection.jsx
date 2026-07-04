@@ -2,7 +2,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
-import { StatCards } from '../../components/dashboard/StatCards';
 import { OrderCard } from '../../components/dashboard/OrderCard';
 import { OrderDetail } from '../../components/dashboard/OrderDetail';
 import { OrdersListSkeleton, FilterTabs } from '../../components/ui';
@@ -30,9 +29,6 @@ export function OrdersSection() {
       {selectedOrderId === null ? (
         /* MAIN LIST VIEW */
         <>
-          {/* Metric Summary Cards */}
-          <StatCards />
-
           <FilterTabs
             value={orderFilter}
             onChange={setOrderFilter}

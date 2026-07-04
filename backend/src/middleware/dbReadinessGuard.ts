@@ -9,7 +9,7 @@ const skipEndpoints = [
   '/api/version',
   '/favicon.ico',
   '/api/v1/media/optimize',
-  '/api/media/optimize'
+  '/api/media/optimize',
 ];
 
 export const dbReadinessGuard = (req: Request, res: Response, next: NextFunction) => {
@@ -25,12 +25,15 @@ export const dbReadinessGuard = (req: Request, res: Response, next: NextFunction
 
   // readyState: 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
   if (mongoose.connection.readyState !== 1) {
-    logger.warn(`[READINESS GUARD] Request blocked for path ${req.originalUrl} - Database not connected (readyState: ${mongoose.connection.readyState})`);
-    
+    logger.warn(
+      `[READINESS GUARD] Request blocked for path ${req.originalUrl} - Database not connected (readyState: ${mongoose.connection.readyState})`,
+    );
+    const stateLabel = mongoose.connection.readyState === 2 ? 'reconnecting' : 'disconnected';
     return res.status(503).json({
       success: false,
-      message: 'Database is currently starting up or temporarily disconnected. Please try again in a few seconds.',
-      timestamp: new Date().toISOString()
+      message: `Database is temporarily ${stateLabel}. The server is attempting to reconnect automatically. Please retry in a few seconds.`,
+      retryAfterMs: 3000,
+      timestamp: new Date().toISOString(),
     });
   }
 

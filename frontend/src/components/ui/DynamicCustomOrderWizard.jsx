@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { customOrderService } from '../../services/domainServices';
 import { uploadService } from '../../services/api/uploadService';
 import toast from 'react-hot-toast';
+import { CustomerContactGate } from '../shared/CustomerContactGate';
 import { Skeleton } from './Skeleton';
 
 export function DynamicCustomOrderWizard({
@@ -798,14 +799,15 @@ export function DynamicCustomOrderWizard({
                 Next Step
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="flex-1 sm:flex-none px-4 sm:px-8 py-3 bg-[var(--color-gold)] text-white rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-black transition-all shadow-md cursor-pointer disabled:opacity-50 whitespace-nowrap text-center"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Request'}
-              </button>
+              <CustomerContactGate onAction={handleSubmit}>
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  className="flex-1 sm:flex-none px-4 sm:px-8 py-3 bg-[var(--color-gold)] text-white rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-black transition-all shadow-md cursor-pointer disabled:opacity-50 whitespace-nowrap text-center"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </CustomerContactGate>
             )}
           </div>
         </div>

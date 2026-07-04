@@ -17,16 +17,19 @@ export type InteractionEventType =
   | 'search'
   | 'category_explore'
   | 'review_read'
-  | 'review_submit';
+  | 'review_submit'
+  | 'search_executed'
+  | 'search_suggestion_clicked'
+  | 'search_zero_results';
 
-export type TargetType = 'product' | 'event' | 'gallery' | 'showcase';
+export type TargetType = 'product' | 'event' | 'gallery' | 'showcase' | 'search_event';
 
 export interface IUserInteraction extends Document {
   userId?: mongoose.Types.ObjectId;
   sessionId: string;
   eventType: InteractionEventType;
   targetType: TargetType;
-  targetId: mongoose.Types.ObjectId;
+  targetId?: mongoose.Types.ObjectId;
   metadata: {
     category?: string;
     style?: string;
@@ -49,21 +52,34 @@ const UserInteractionSchema: Schema = new Schema(
       type: String,
       required: true,
       enum: [
-        'product_view', 'product_click', 'gallery_view', 'gallery_click',
-        'event_view', 'event_click', 'showcase_view',
-        'wishlist_add', 'wishlist_remove',
-        'cart_add', 'cart_remove',
-        'purchase', 'booking',
-        'search', 'category_explore',
-        'review_read', 'review_submit',
+        'product_view',
+        'product_click',
+        'gallery_view',
+        'gallery_click',
+        'event_view',
+        'event_click',
+        'showcase_view',
+        'wishlist_add',
+        'wishlist_remove',
+        'cart_add',
+        'cart_remove',
+        'purchase',
+        'booking',
+        'search',
+        'category_explore',
+        'review_read',
+        'review_submit',
+        'search_executed',
+        'search_suggestion_clicked',
+        'search_zero_results',
       ],
     },
     targetType: {
       type: String,
       required: true,
-      enum: ['product', 'event', 'gallery', 'showcase'],
+      enum: ['product', 'event', 'gallery', 'showcase', 'search_event'],
     },
-    targetId: { type: Schema.Types.ObjectId, required: true },
+    targetId: { type: Schema.Types.ObjectId },
     metadata: {
       category: { type: String },
       style: { type: String },
@@ -78,7 +94,7 @@ const UserInteractionSchema: Schema = new Schema(
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
-  }
+  },
 );
 
 // ── Performance Indexes ──

@@ -9,9 +9,11 @@ export function useProductListingState() {
   const visualSearch = useVisualSearch();
   const navigate = useNavigate();
 
-  const categoryParam = searchParams.get('category') || 'All';
+  const categoryParam = searchParams.get('category') || searchParams.get('collection') || 'All';
   const searchParam = searchParams.get('search') || '';
   const pageParam = parseInt(searchParams.get('page') || '1', 10);
+  const idsParam = searchParams.get('ids') || undefined;
+  const couponParam = searchParams.get('coupon') || undefined;
 
   const [localSearch, setLocalSearch] = useState(searchParam);
   const [sortBy, setSortBy] = useState(() => {
@@ -69,6 +71,8 @@ export function useProductListingState() {
     limit: 50,
     search: searchParam,
     category: categoryParam !== 'All' ? categoryParam : undefined,
+    ids: idsParam,
+    coupon: couponParam,
     sort: sortMap[sortBy] || 'newest',
     spellcheck: searchParams.get('spellcheck') || undefined,
   };

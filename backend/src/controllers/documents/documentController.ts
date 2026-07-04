@@ -1,0 +1,30 @@
+import { Request, Response } from 'express';
+import { DocumentService } from '../../domains/documents/services/DocumentService';
+import { ShippingLabelGenerator } from '../../domains/documents/services/ShippingLabelGenerator';
+import logger from '../../config/logger';
+
+export const generateInvoice = async (req: Request, res: Response) => {
+  try {
+    const orderId = req.params.orderId as string;
+
+    const document = await DocumentService.generateInvoice(orderId);
+
+    res.json({ success: true, data: document });
+  } catch (error: any) {
+    logger.error('generateInvoice Error:', error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+export const generateShippingLabel = async (req: Request, res: Response) => {
+  try {
+    const shipmentId = req.params.shipmentId as string;
+
+    const document = await ShippingLabelGenerator.generateLabel(shipmentId);
+
+    res.json({ success: true, data: document });
+  } catch (error: any) {
+    logger.error('generateShippingLabel Error:', error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};

@@ -28,7 +28,7 @@ const slideDrawer = {
   exit: { x: '100%', opacity: 0 },
 };
 
-export function AdminOrders() {
+export function AdminOrders({ hideHeader = false }) {
   const navigate = useNavigate();
   const { orders, dataLoading, updateOrderStatus, updateOrderNotes, searchQuery } = useAdmin();
 
@@ -149,54 +149,91 @@ export function AdminOrders() {
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
-      <PageHeader
-        title="Orders"
-        subtitle={`${orders.length} orders`}
-        icon="shopping_bag"
-        iconColor="orders"
-        mobileRow={true}
-      >
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1">
+      {!hideHeader && (
+        <PageHeader
+          title="Orders"
+          subtitle={`${orders.length} orders`}
+          icon="shopping_bag"
+          iconColor="orders"
+          mobileRow={true}
+        >
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-1.5 rounded-lg cursor-pointer transition-all flex items-center justify-center ${
+                  viewMode === 'table'
+                    ? 'text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]'
+                    : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]'
+                }`}
+                title="Table View"
+              >
+                <span className="material-symbols-outlined text-[18px]">view_list</span>
+              </button>
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={`p-1.5 rounded-lg cursor-pointer transition-all flex items-center justify-center ${
+                  viewMode === 'kanban'
+                    ? 'text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]'
+                    : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]'
+                }`}
+                title="Kanban View"
+              >
+                <span className="material-symbols-outlined text-[18px]">view_kanban</span>
+              </button>
+            </div>
             <button
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg cursor-pointer transition-all flex items-center justify-center ${
-                viewMode === 'table'
-                  ? 'text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]'
-                  : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]'
-              }`}
-              title="Table View"
+              onClick={handleExportCSV}
+              className="flex items-center justify-center p-1.5 rounded-lg text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] transition-all active:scale-95 cursor-pointer shrink-0"
+              title="Export CSV"
             >
-              <span className="material-symbols-outlined text-[18px]">view_list</span>
-            </button>
-            <button
-              onClick={() => setViewMode('kanban')}
-              className={`p-1.5 rounded-lg cursor-pointer transition-all flex items-center justify-center ${
-                viewMode === 'kanban'
-                  ? 'text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]'
-                  : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]'
-              }`}
-              title="Kanban View"
-            >
-              <span className="material-symbols-outlined text-[18px]">dashboard</span>
+              <span className="material-symbols-outlined text-[20px]">download</span>
             </button>
           </div>
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center justify-center p-1.5 rounded-lg text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] transition-all active:scale-95 cursor-pointer shrink-0"
-            title="Export CSV"
-          >
-            <span className="material-symbols-outlined text-[18px]">download</span>
-          </button>
-        </div>
-      </PageHeader>
+        </PageHeader>
+      )}
 
-      <div className="flex w-full mt-[-8px]">
+      <div className="flex items-center justify-between w-full mt-[-8px]">
         <PeriodSelector
           value={dateFilter}
           onChange={setDateFilter}
           periods={['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year']}
         />
+        {hideHeader && (
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-1.5 rounded-lg cursor-pointer transition-all flex items-center justify-center ${
+                  viewMode === 'table'
+                    ? 'text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]'
+                    : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]'
+                }`}
+                title="Table View"
+              >
+                <span className="material-symbols-outlined text-[18px]">view_list</span>
+              </button>
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={`p-1.5 rounded-lg cursor-pointer transition-all flex items-center justify-center ${
+                  viewMode === 'kanban'
+                    ? 'text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)]'
+                    : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]'
+                }`}
+                title="Kanban View"
+              >
+                <span className="material-symbols-outlined text-[18px]">view_kanban</span>
+              </button>
+            </div>
+            <button
+              onClick={handleExportCSV}
+              className="admin-btn admin-btn-ghost h-9 px-2"
+              title="Export CSV"
+            >
+              <span className="material-symbols-outlined text-[20px]">download</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Real-time Logistics & COD Remittance Reconciliation Ledger */}

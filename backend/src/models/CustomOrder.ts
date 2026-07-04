@@ -228,6 +228,7 @@ const PaymentScheduleSchema = new Schema({
 const CustomOrderSchema: Schema = new Schema(
   {
     orderId: { type: String, unique: true, sparse: true, index: true },
+    customer: { type: Schema.Types.ObjectId, ref: 'User', index: true },
     customerEmail: { type: String, required: true, index: true },
     customerName: { type: String, required: true },
     customerPhone: { type: String },
@@ -383,6 +384,15 @@ CustomOrderSchema.pre<ICustomOrder>('save', async function () {
 
 CustomOrderSchema.plugin(SoftDeletePlugin);
 CustomOrderSchema.plugin(ForensicAuditPlugin);
+
+import TransactionSyncPlugin from '../utils/TransactionSyncPlugin';
+CustomOrderSchema.plugin(TransactionSyncPlugin, {
+  domain: 'custom',
+  statusField: 'status',
+  totalField: 'costEstimation.total',
+  paymentStatusField: 'status', // We map standard status since custom orders have unique workflow
+  customerField: 'customer',
+});
 
 export default mongoose.model<ICustomOrder, SoftDeleteModel<ICustomOrder>>(
   'CustomOrder',

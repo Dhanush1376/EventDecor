@@ -100,7 +100,9 @@ const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) => void)
       return next(lastError || new Error('Authentication error: Invalid token'));
     }
 
-    const user = await User.findById(decoded.id).select('role email isVerified passwordChangedAt');
+    const user = await User.findById(decoded.id)
+      .select('role email isVerified passwordChangedAt')
+      .lean();
     if (!user || !user.isVerified) {
       return next(new Error('Authentication error: Invalid user'));
     }
@@ -187,36 +189,46 @@ const registerNamespace = (namespace: Namespace, options: { adminOnly?: boolean 
 // In-memory active visitor registry for throttling heartbeats
 const activeVisitors = new Map<string, any>();
 
-// Broadcast active visitors to admins every 5 seconds
-setInterval(() => {
-  if (!io) return;
-  const ioServer = io;
-  if (!ioServer) return;
+let broadcastInterval: NodeJS.Timeout;
 
-  const adminSockets = ioServer.of('/admin').sockets.size;
-  if (adminSockets === 0) return; // No admins connected, skip broadcast
+export const startBroadcastInterval = () => {
+  if (broadcastInterval) clearInterval(broadcastInterval);
+  broadcastInterval = setInterval(() => {
+    if (!io) return;
+    const ioServer = io;
+    if (!ioServer) return;
 
-  const now = Date.now();
-  const visitorsArray = [];
+    const adminSockets = ioServer.of('/admin').sockets.size;
+    if (adminSockets === 0) return; // No admins connected, skip broadcast
 
-  // Clean stale and build broadcast payload
-  for (const [socketId, data] of activeVisitors.entries()) {
-    if (now - data.lastSeen > 60000) {
-      activeVisitors.delete(socketId);
-    } else {
-      visitorsArray.push(data);
+    const now = Date.now();
+    const visitorsArray = [];
+
+    // Clean stale and build broadcast payload
+    for (const [socketId, data] of activeVisitors.entries()) {
+      if (now - data.lastSeen > 60000) {
+        activeVisitors.delete(socketId);
+      } else {
+        visitorsArray.push(data);
+      }
     }
-  }
 
-  // Push aggregated state to admins
-  if (visitorsArray.length > 0) {
-    ioServer.of('/admin').to('admin-alerts').emit('live:visitor_sync', {
-      activeCount: visitorsArray.length,
-      visitors: visitorsArray,
-      timestamp: now,
-    });
+    // Push aggregated state to admins
+    if (visitorsArray.length > 0) {
+      ioServer.of('/admin').to('admin-alerts').emit('live:visitor_sync', {
+        activeCount: visitorsArray.length,
+        visitors: visitorsArray,
+        timestamp: now,
+      });
+    }
+  }, 5000);
+};
+
+export const clearBroadcastInterval = () => {
+  if (broadcastInterval) {
+    clearInterval(broadcastInterval);
   }
-}, 5000);
+};
 
 const registerVisitorNamespace = (namespace: Namespace) => {
   // Unauthenticated namespace for live traffic analytics
@@ -288,6 +300,8 @@ export const initSocket = (server: HttpServer) => {
   registerNamespace(io.of('/user'), { adminOnly: false });
   registerVisitorNamespace(io.of('/visitor'));
 
+  startBroadcastInterval();
+
   logger.info(
     `[SOCKET] Namespaces ready (/admin, /user, /visitor) — adapter: ${hasRedisAdapter ? 'redis' : 'memory'}`,
   );
@@ -318,6 +332,14 @@ export const emitAdminNotification = (payload: unknown) => {
   io.of('/admin').to('admin-alerts').emit('new_notification', payload);
 };
 
+export const emitAdminEvent = (event: string, payload: unknown) => {
+  if (!io) {
+    logger.debug(`[Socket /admin] Skipped emit "${event}" — Socket.io not initialized`);
+    return;
+  }
+  io.of('/admin').to('admin-alerts').emit(event, payload);
+};
+
 /** Push order/booking updates to a specific customer socket room. */
 export const emitUserEvent = (userId: string, event: string, payload: unknown) => {
   if (!io) {
@@ -325,4 +347,9 @@ export const emitUserEvent = (userId: string, event: string, payload: unknown) =
     return;
   }
   io.of('/user').to(`user-${userId}`).emit(event, payload);
+};
+
+export const emitGlobalUserEvent = (event: string, payload: unknown) => {
+  if (!io) return;
+  io.of('/user').emit(event, payload);
 };

@@ -30,6 +30,9 @@ export const MandalaElement = React.memo(function MandalaElement({
   const isInView = useInView(ref, { amount: 0.1 });
   const src = VARIANT_MAP[variant] || VARIANT_MAP[1];
 
+  // Enforce a minimum opacity to ensure the mandala art is clearly visible across the entire site
+  const effectiveOpacity = Math.max(opacity || 0, 0.25);
+
   return (
     <motion.img
       ref={ref}
@@ -37,10 +40,10 @@ export const MandalaElement = React.memo(function MandalaElement({
       alt=""
       aria-hidden="true"
       draggable={false}
-      initial={{ opacity: skipFade ? opacity : 0 }}
-      animate={{ opacity }}
+      initial={{ opacity: skipFade ? effectiveOpacity : 0 }}
+      animate={{ opacity: effectiveOpacity }}
       transition={{ opacity: { duration: 1.5 } }}
-      className={`pointer-events-none select-none z-0 object-contain rounded-full ${
+      className={`pointer-events-none select-none z-0 object-contain ${
         rotate ? 'animate-slow-spin' : ''
       } ${className}`}
       style={{
@@ -50,8 +53,9 @@ export const MandalaElement = React.memo(function MandalaElement({
         maxHeight: '100%',
         animation: rotate ? `slow-spin ${duration}s linear infinite` : 'none',
         mixBlendMode: 'darken',
-        WebkitMaskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 75%)',
-        maskImage: 'radial-gradient(circle at center, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 75%)',
+        WebkitMaskImage:
+          'radial-gradient(circle closest-side, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)',
+        maskImage: 'radial-gradient(circle closest-side, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)',
       }}
       loading="lazy"
     />

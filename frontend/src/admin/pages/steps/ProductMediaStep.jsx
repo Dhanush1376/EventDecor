@@ -42,9 +42,14 @@ export function ProductMediaStep({
                 if (input.value) {
                   setIsCompressing(true);
                   try {
+                    // Fix: Use _shared.js direct Cloudinary upload for remote URLs to avoid the empty file issue
+                    const { uploadDirectToCloudinary } =
+                      await import('../../../services/api/_shared');
                     const uploadData = new FormData();
                     uploadData.append('urls', input.value);
-                    const res = await uploadService.uploadImages(uploadData, 'products');
+
+                    const res = await uploadDirectToCloudinary(uploadData, false, 'products');
+
                     if (res.success && res.images) {
                       setFormData((prev) => {
                         const combined = [...prev.images, ...res.images];
@@ -60,9 +65,11 @@ export function ProductMediaStep({
                       });
                       toast.success('Image fetched & optimized!');
                       input.value = '';
+                    } else {
+                      toast.error('Failed to upload from URL: ' + (res.error || 'Unknown error'));
                     }
-                  } catch (_err) {
-                    toast.error('Failed to upload from URL');
+                  } catch (err) {
+                    toast.error('Failed to upload from URL: ' + err.message);
                   } finally {
                     setIsCompressing(false);
                   }

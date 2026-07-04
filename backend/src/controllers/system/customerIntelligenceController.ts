@@ -155,7 +155,7 @@ export const getExecutiveSummary = async (req: Request, res: Response) => {
         ]),
       ]);
 
-    // Funnel Math & Fallbacks (to ensure UI looks alive even in dev environments with zero events)
+    // Funnel Math
     let checkoutStarted = 0;
     let checkoutCompleted = 0;
     funnelEvents.forEach((e: any) => {

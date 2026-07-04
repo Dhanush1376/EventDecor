@@ -145,7 +145,7 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
 
   if (productId) {
     // Verify product exists
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId).lean();
     if (!product) throw new ApiError(404, 'Product not found');
 
     // --- PURCHASER GATE: Only customers who received this product can review ---
@@ -153,19 +153,22 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
       user: req.user!.id,
       orderStatus: 'Delivered',
       'items.productId': productId,
-    });
+    }).lean();
     if (!purchasedOrder) {
       throw new ApiError(403, 'You can only review products you have purchased and received.');
     }
 
     // Check if user already reviewed this product
-    const existingReview = await Review.findOne({ product: productId, customer: req.user!.id });
+    const existingReview = await Review.findOne({
+      product: productId,
+      customer: req.user!.id,
+    }).lean();
     if (existingReview) throw new ApiError(400, 'You have already reviewed this product');
   }
 
   if (showcaseId) {
     // Verify showcase exists
-    const showcase = await ShowcaseCollection.findById(showcaseId);
+    const showcase = await ShowcaseCollection.findById(showcaseId).lean();
     if (!showcase) throw new ApiError(404, 'Showcase not found');
 
     // --- PURCHASER GATE: Only customers who completed this showcase booking can review ---
@@ -173,7 +176,7 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
       user: req.user!.id,
       status: 'completed',
       eventPackage: showcaseId,
-    });
+    }).lean();
     if (!completedBooking) {
       throw new ApiError(
         403,
@@ -182,11 +185,14 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
     }
 
     // Check if user already reviewed this showcase
-    const existingReview = await Review.findOne({ showcase: showcaseId, customer: req.user!.id });
+    const existingReview = await Review.findOne({
+      showcase: showcaseId,
+      customer: req.user!.id,
+    }).lean();
     if (existingReview) throw new ApiError(400, 'You have already reviewed this showcase');
   }
 
-  const user = await User.findById(req.user!.id);
+  const user = await User.findById(req.user!.id).lean();
   const reviewerName = user?.name || req.user!.name || req.body.customerName || 'Anonymous';
 
   const review = new Review({
@@ -222,6 +228,14 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
 
   if (showcaseId) {
     await updateShowcaseRating(showcaseId);
+  }
+
+  try {
+    const { emitAdminEvent } = require('../../socket');
+    emitAdminEvent('review_update', { reviewId: review._id });
+  } catch (e) {
+    const logger = require('../../config/logger').default || require('../../config/logger');
+    logger.debug('Failed to emit review_update event', e);
   }
 
   res.status(201).json(new ApiResponse(true, 'Review submitted successfully', review));
@@ -276,6 +290,14 @@ export const updateReviewStatus = asyncHandler(async (req: Request, res: Respons
     await updateShowcaseRating(review.showcase);
   }
 
+  try {
+    const { emitAdminEvent } = require('../../socket');
+    emitAdminEvent('review_update', { reviewId: review._id });
+  } catch (e) {
+    const logger = require('../../config/logger').default || require('../../config/logger');
+    logger.debug('Failed to emit review_update event', e);
+  }
+
   res.status(200).json(new ApiResponse(true, 'Review status updated', review));
 });
 
@@ -300,6 +322,14 @@ export const deleteReview = asyncHandler(async (req: Request, res: Response) => 
   }
   if (review.showcase) {
     await updateShowcaseRating(review.showcase);
+  }
+
+  try {
+    const { emitAdminEvent } = require('../../socket');
+    emitAdminEvent('review_update', { reviewId: review._id });
+  } catch (e) {
+    const logger = require('../../config/logger').default || require('../../config/logger');
+    logger.debug('Failed to emit review_update event', e);
   }
 
   res.status(200).json(new ApiResponse(true, 'Review deleted', review));
@@ -359,7 +389,7 @@ export const canReview = asyncHandler(async (req: Request, res: Response) => {
   const { productId } = req.params;
   const userId = req.user!.id;
 
-  const alreadyReviewed = !!(await Review.findOne({ product: productId, customer: userId }));
+  const alreadyReviewed = !!(await Review.findOne({ product: productId, customer: userId }).lean());
   if (alreadyReviewed) {
     return res.status(200).json(
       new ApiResponse(true, 'Review eligibility checked', {
@@ -374,7 +404,7 @@ export const canReview = asyncHandler(async (req: Request, res: Response) => {
     user: userId,
     orderStatus: 'Delivered',
     'items.productId': productId,
-  });
+  }).lean();
 
   if (!purchasedOrder) {
     return res.status(200).json(
@@ -399,7 +429,10 @@ export const canReviewShowcase = asyncHandler(async (req: Request, res: Response
   const { showcaseId } = req.params;
   const userId = req.user!.id;
 
-  const alreadyReviewed = !!(await Review.findOne({ showcase: showcaseId, customer: userId }));
+  const alreadyReviewed = !!(await Review.findOne({
+    showcase: showcaseId,
+    customer: userId,
+  }).lean());
   if (alreadyReviewed) {
     return res.status(200).json(
       new ApiResponse(true, 'Review eligibility checked', {
@@ -414,7 +447,7 @@ export const canReviewShowcase = asyncHandler(async (req: Request, res: Response
     user: userId,
     status: 'completed',
     eventPackage: showcaseId,
-  });
+  }).lean();
 
   if (!completedBooking) {
     return res.status(200).json(

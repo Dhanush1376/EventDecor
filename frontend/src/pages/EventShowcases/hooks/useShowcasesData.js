@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { showcaseService, bookingService } from '../../../services/domainServices';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useScrollDirection } from '../../../hooks/useScrollDirection';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
@@ -20,8 +20,11 @@ export function useShowcasesData() {
   const navigate = useNavigate();
   const { isAuthenticated, runProtectedAction } = useAuth();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchParam = searchParams.get('search') || '';
+
+  const [searchQuery, setSearchQuery] = useState(searchParam);
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParam);
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortBy, setSortBy] = useState('Popularity');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -75,6 +78,28 @@ export function useShowcasesData() {
   }, [searchQuery]);
 
   useEffect(() => {
+    if (debouncedSearch !== searchParam) {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          if (debouncedSearch) params.set('search', debouncedSearch);
+          else params.delete('search');
+          return params;
+        },
+        { replace: true },
+      );
+    }
+  }, [debouncedSearch, searchParam, setSearchParams]);
+
+  useEffect(() => {
+    const s = searchParams.get('search') || '';
+    if (s !== searchQuery && s !== debouncedSearch) {
+      setSearchQuery(s);
+      setDebouncedSearch(s);
+    }
+  }, [searchParams, searchQuery, debouncedSearch]);
+
+  useEffect(() => {
     const handleScroll = () => {
       const topNav = document.querySelector('.top-navbar');
       let currentNavHeight = navbarHeight;
@@ -84,7 +109,7 @@ export function useShowcasesData() {
       }
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        setIsSticky(rect.top <= currentNavHeight + 1);
+        setIsSticky(rect.top <= currentNavHeight + 5);
       }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });

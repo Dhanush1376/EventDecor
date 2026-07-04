@@ -1,5 +1,5 @@
 import ContentSection from '../models/ContentSection';
-import { PLACEHOLDER_IMAGES } from '../constants/placeholderImages';
+
 import ApiError from '../utils/ApiError';
 import { cmsCache } from '../utils/cache/MemoryCache';
 import { bumpPublicCacheVersion } from '../utils/cache/cacheVersion';
@@ -98,7 +98,7 @@ class ContentService {
               id: 'p1',
               name: 'Traditional Return Gifts',
               count: 24,
-              image: PLACEHOLDER_IMAGES.emptyCart,
+              image: '',
               active: true,
               description: 'Bespoke brass tambulam bowls and handcrafted shagun packaging.',
             },
@@ -106,7 +106,7 @@ class ContentService {
               id: 'p2',
               name: 'Engagement Ring Trays',
               count: 18,
-              image: PLACEHOLDER_IMAGES.mandalaArt3,
+              image: '',
               active: true,
               description: 'Pearl beaded trays and custom carved wooden initials.',
             },
@@ -114,7 +114,7 @@ class ContentService {
               id: 'p3',
               name: 'Carved Coconuts & Shagun',
               count: 12,
-              image: PLACEHOLDER_IMAGES.collectionWedding,
+              image: '',
               active: true,
               description: 'Artisanal hand-painted coconuts for traditional ceremonies.',
             },
@@ -122,7 +122,7 @@ class ContentService {
               id: 'p4',
               name: 'Customized Gift Hampers',
               count: 30,
-              image: PLACEHOLDER_IMAGES.mandalaArt2,
+              image: '',
               active: true,
               description: 'Velvet presentation hampers with South Indian sweet boxes.',
             },
@@ -132,7 +132,7 @@ class ContentService {
               id: 'e1',
               name: 'Telugu Heritage (Pellikuthuru)',
               count: 8,
-              image: PLACEHOLDER_IMAGES.collectionWedding,
+              image: '',
               active: true,
               description: 'Royal Mysore brass urlis, marigold strings, and wooden carved seats.',
             },
@@ -140,7 +140,7 @@ class ContentService {
               id: 'e2',
               name: 'Engagement Gift Setup',
               count: 15,
-              image: PLACEHOLDER_IMAGES.heroBackground,
+              image: '',
               active: true,
               description: 'Side-stage gift presentation pedestals and LED uplighting.',
             },
@@ -148,7 +148,7 @@ class ContentService {
               id: 'e3',
               name: 'Ring Ceremony Showcases',
               count: 10,
-              image: PLACEHOLDER_IMAGES.mandalaHero,
+              image: '',
               active: true,
               description: 'Gold-leaf backdrop rings and velvet pedestal arrangements.',
             },
@@ -156,7 +156,7 @@ class ContentService {
               id: 'e4',
               name: 'Tambulam & Shagun Counter',
               count: 20,
-              image: PLACEHOLDER_IMAGES.mandalaArt4,
+              image: '',
               active: true,
               description: 'Royal wooden shelving with fresh jasmine runners.',
             },
@@ -205,6 +205,7 @@ class ContentService {
         section.data = payload;
         section.lastModified = new Date();
         section.status = 'published'; // Always publish on update/save from admin
+        section.markModified('data');
         await section.save();
       } else {
         section = new ContentSection({

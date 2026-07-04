@@ -52,6 +52,16 @@ export class RazorpayGateway {
   }
 
   /**
+   * Fetches payments for a Razorpay Order
+   */
+  static async getOrderPayments(orderId: string) {
+    return razorpayCircuitBreaker.execute(async () => {
+      const razorpay = this.getInstance();
+      return await razorpay.orders.fetchPayments(orderId);
+    });
+  }
+
+  /**
    * Fetches multiple Razorpay Orders (e.g. by receipt)
    */
   static async getAllOrders(options: {

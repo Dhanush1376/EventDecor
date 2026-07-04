@@ -430,7 +430,7 @@ export function AdminContent() {
                   )}
                   {activeSection === 'contact' && (
                     <ContactInfoEditor
-                      contact={activeContent.contact}
+                      content={activeContent.contact}
                       onUpdate={handleUpdateContent}
                     />
                   )}

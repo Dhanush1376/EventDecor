@@ -54,15 +54,49 @@ export const verifyBookingCheckout = asyncHandler(async (req: Request, res: Resp
   res.status(200).json(new ApiResponse(true, 'Payment successful. Booking confirmed!', booking));
 });
 
-// 2. Get Customer Event Bookings
 export const getMyEventBookings = asyncHandler(async (req: Request, res: Response) => {
   const bookings = await EventBooking.find({ user: (req as any).user?.id })
     .populate('eventPackage', 'title image') // only get necessary package fields
     .select(
-      'bookingId title eventType date status pricing.totalPrice pricing.paymentStatus createdAt',
+      'bookingId title eventType date status pricing.totalPrice pricing.paymentStatus createdAt venue timing eventPackage inspirationImages',
     )
     .sort({ createdAt: -1 })
     .lean();
+
+  // If a booking is actually a rental for a product, eventPackage will be null (due to ref mismatch).
+  // Batch-load product images instead of querying in a loop (N+1 fix).
+  const Product = require('../../models/Product').default;
+  const bookingsMissingPackage = bookings.filter((b: any) => !b.eventPackage && b.title);
+  if (bookingsMissingPackage.length > 0) {
+    const cleanTitles = bookingsMissingPackage.map((b: any) =>
+      b.title
+        .replace(/^rent:\s*/i, '')
+        .replace(/\s*booking$/i, '')
+        .trim(),
+    );
+    const titleRegexes = cleanTitles.map(
+      (t: string) => new RegExp(`^${t.replace(/[.*+?^${}()|[\]\\\\]/g, '\\\\$&')}$`, 'i'),
+    );
+    const products = await Product.find({ title: { $in: titleRegexes } })
+      .select('title imageSrc')
+      .lean();
+    const productMap = new Map(products.map((p: any) => [p.title.toLowerCase(), p]));
+    for (const booking of bookingsMissingPackage) {
+      const cleanTitle = (booking as any).title
+        .replace(/^rent:\s*/i, '')
+        .replace(/\s*booking$/i, '')
+        .trim();
+      const product: any = productMap.get(cleanTitle.toLowerCase());
+      if (product && product.imageSrc) {
+        (booking as any).eventPackage = {
+          _id: product._id,
+          title: (booking as any).title,
+          image: product.imageSrc,
+        };
+      }
+    }
+  }
+
   res
     .status(200)
     .json(new ApiResponse(true, 'Your active event curation synced successfully', bookings));
@@ -77,6 +111,30 @@ export const getSingleEventBooking = asyncHandler(async (req: Request, res: Resp
 
   if (!booking) {
     throw new ApiError(404, 'Event details could not be found.');
+  }
+
+  // Fallback for product rentals
+  if (!booking.eventPackage && booking.title) {
+    const Product = require('../../models/Product').default;
+    const cleanTitle = booking.title
+      .replace(/^rent:\s*/i, '')
+      .replace(/\s*booking$/i, '')
+      .trim();
+    const titleRegex = new RegExp(
+      `^${cleanTitle.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}$`,
+      'i',
+    );
+    const product = await Product.findOne({ title: titleRegex })
+      .select('imageSrc basePrice')
+      .lean();
+    if (product && product.imageSrc) {
+      booking.eventPackage = {
+        _id: product._id,
+        title: booking.title,
+        basePrice: product.price,
+        image: product.imageSrc,
+      } as any;
+    }
   }
 
   // Security bounds checks

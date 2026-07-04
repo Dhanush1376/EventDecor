@@ -63,6 +63,7 @@ export const createProductSchema = z.object({
     })
     .optional(),
   variants: z.array(z.any()).optional(),
+  __v: z.number().optional(),
 });
 
 export const updateProductSchema = createProductSchema.partial();

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { searchService } from '../services/api/searchService';
 
 export function useSearch(query, options = {}) {
@@ -46,9 +46,12 @@ export function useAutocomplete(query, options = {}) {
       const res = await searchService.autocomplete(query, { ...options, signal });
       return res.success ? res.data : res;
     },
-    enabled: Boolean(query && query.trim().length >= 2) && enabled,
+    enabled: Boolean(query && query.trim().length >= 1) && enabled,
     staleTime,
     gcTime,
+    placeholderData: keepPreviousData,
+    structuralSharing: true,
+    retry: 1,
     ...restOptions,
   });
 }

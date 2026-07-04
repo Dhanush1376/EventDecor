@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import Event from '../../models/Event';
 import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
@@ -7,14 +7,24 @@ import { bumpPublicCacheVersion } from '../../utils/cache/cacheVersion';
 import { getPaginationOptions, formatPaginationResponse } from '../../utils/pagination';
 
 export const getEvents = asyncHandler(async (req: Request, res: Response) => {
-  const { category, style } = req.query;
+  const { category, style, search } = req.query;
   const { page, limit, skip } = getPaginationOptions(req.query);
   const filter: any = { isActive: true };
   if (category) filter.category = category;
   if (style) filter.style = style;
 
+  let sortQuery: any = { createdAt: -1 };
+
+  if (search) {
+    const cleanSearch = String(search).trim();
+    if (cleanSearch) {
+      filter.$text = { $search: cleanSearch };
+      sortQuery = { score: { $meta: 'textScore' } };
+    }
+  }
+
   const [events, totalCount] = await Promise.all([
-    Event.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Event.find(filter).sort(sortQuery).skip(skip).limit(limit).lean(),
     Event.countDocuments(filter),
   ]);
 

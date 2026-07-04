@@ -103,9 +103,9 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = String(
-    req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
+    req.body?.refreshToken ||
+      req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
       req.cookies?.[ADMIN_REFRESH_COOKIE] ||
-      req.body?.refreshToken ||
       req.headers['x-refresh-token'] ||
       '',
   ).trim();

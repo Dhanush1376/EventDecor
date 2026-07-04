@@ -3,6 +3,7 @@ import AnalyticsService from '../../services/analyticsService';
 import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import AdminAuditLog from '../../models/AdminAuditLog';
+import Order from '../../models/Order';
 import { getPaginationOptions, formatPaginationResponse } from '../../utils/pagination';
 import { setPaginationHeaders } from '../../utils/paginationHeaders';
 
@@ -14,10 +15,36 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
 export const getAuditLogs = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
 
-  const [logs, totalCount] = await Promise.all([
+  const [logs, orders, logsCount, ordersCount] = await Promise.all([
     AdminAuditLog.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Order.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('_id customerName total createdAt')
+      .lean(),
     AdminAuditLog.countDocuments(),
+    Order.countDocuments(),
   ]);
+
+  const combinedLogs = [
+    ...orders.map((o: any) => ({
+      _id: o._id,
+      actorRole: 'CUSTOMER',
+      actorEmail: o.customerName || 'Customer',
+      action: `Customer Order placed for ₹${o.total}`,
+      method: 'SYSTEM_ACTION',
+      path: '/api/v1/orders',
+      statusCode: 200,
+      createdAt: o.createdAt,
+    })),
+    ...logs,
+  ].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  // Since we are merging two paginated sets loosely on the backend,
+  // we just return the combined slice that matches limit, and sum the total count.
+  const totalCount = logsCount + ordersCount;
+  const finalSlice = combinedLogs.slice(0, limit);
 
   setPaginationHeaders(res, totalCount, page, limit);
   res
@@ -26,7 +53,7 @@ export const getAuditLogs = asyncHandler(async (req: Request, res: Response) => 
       new ApiResponse(
         true,
         'Audit logs retrieved',
-        formatPaginationResponse(logs, totalCount, page, limit),
+        formatPaginationResponse(finalSlice, totalCount, page, limit),
       ),
     );
 });

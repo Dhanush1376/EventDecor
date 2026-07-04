@@ -1,5 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
+import { indexGallery } from '../services/search/searchIndexer';
+import logger from '../config/logger';
 
 export interface IGallery extends ISoftDeleted {
   title: string;
@@ -99,8 +101,25 @@ GallerySchema.index({ isActive: 1, views: -1 }); // Global popularity sort (cold
 
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
 
-GallerySchema.post('save', () => {
-  triggerSitemapUpdate();
+GallerySchema.post('save', async function (doc) {
+  try {
+    triggerSitemapUpdate();
+    if (!doc.deletedAt) {
+      await indexGallery(doc);
+    }
+  } catch (err: any) {
+    logger.error(`[Search Indexer] Failed to index gallery: ${err.message}`);
+  }
+});
+
+GallerySchema.post('findOneAndUpdate', async function (doc) {
+  try {
+    if (doc && !doc.deletedAt) {
+      await indexGallery(doc);
+    }
+  } catch (err: any) {
+    logger.error(`[Search Indexer] Failed to index gallery on update: ${err.message}`);
+  }
 });
 
 GallerySchema.plugin(SoftDeletePlugin);

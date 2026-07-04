@@ -97,10 +97,34 @@ export function useDraft({
     [draftKey, module, pageTitle, location.pathname, enabled, debounceMs],
   );
 
-  // Clean up debounce on unmount
+  // Clean up debounce on unmount and flush any pending saves
   useEffect(() => {
-    return () => debouncedSave.cancel();
+    return () => {
+      if (hasUnsavedChanges.current) {
+        debouncedSave.flush();
+      } else {
+        debouncedSave.cancel();
+      }
+    };
   }, [debouncedSave]);
+
+  // Protect against accidental refresh or close
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges.current) {
+        e.preventDefault();
+        e.returnValue = ''; // Required for Chrome
+      }
+    };
+
+    if (enabled) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [enabled]);
 
   // Setters that trigger auto-save
   const setFormData = useCallback(

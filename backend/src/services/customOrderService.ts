@@ -27,6 +27,7 @@ export class CustomOrderService {
     }
 
     const orderData: Record<string, unknown> = {
+      customer: user?._id || user?.id,
       customerEmail: user?.email || payload.customerEmail,
       customerName: user?.name || payload.customerName || 'Valued Customer',
       customerPhone: payload.customerPhone || user?.phone,
@@ -134,13 +135,14 @@ export class CustomOrderService {
 
     // Emit socket event
     try {
-      const { emitAdminNotification } = require('../socket');
+      const { emitAdminNotification, emitAdminEvent } = require('../socket');
       emitAdminNotification({
         type: 'customOrder:newSubmission',
         orderId: order.orderId,
         customerName: order.customerName,
         occasion: order.occasion,
       });
+      emitAdminEvent('custom_order_update', { orderId: order._id });
     } catch {
       // Ignored
     }
@@ -179,6 +181,7 @@ export class CustomOrderService {
     };
 
     const orderData = {
+      customer: user?._id || user?.id,
       customerEmail: user.email,
       customerName: user.name,
       customerPhone: payload.customerPhone || user.phone,
@@ -271,13 +274,14 @@ export class CustomOrderService {
 
     // Emit socket event
     try {
-      const { emitAdminNotification } = require('../socket');
+      const { emitAdminNotification, emitAdminEvent } = require('../socket');
       emitAdminNotification({
         type: 'customOrder:newSubmission',
         orderId: order.orderId,
         customerName: order.customerName,
         productTitle: product.title,
       });
+      emitAdminEvent('custom_order_update', { orderId: order._id });
     } catch {
       // Ignored
     }

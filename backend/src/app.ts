@@ -106,7 +106,7 @@ app.post(
   },
   (req: Request, res: Response, next: express.NextFunction) => {
     try {
-      const controller = require('./controllers/orderController');
+      const controller = require('./controllers/commerce/orderController');
       controller.handleRazorpayWebhook(req, res, next);
     } catch (err) {
       next(err);
@@ -319,7 +319,7 @@ app.use('/api/v1/upload', (req: Request, res: Response, next: express.NextFuncti
 });
 
 // API Routes Registration
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api/docs', requireAuth, requireAdmin, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 registerApiRoutes(app, '/api/v1', 'v1');
 
 // Sentry Error Handler (must be before any other error middleware)

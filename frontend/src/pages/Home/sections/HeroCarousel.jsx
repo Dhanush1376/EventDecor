@@ -263,7 +263,7 @@ export function HeroCarousel() {
         })}
 
         {slides.length > 1 && (
-          <div className="h1-hero__dots">
+          <div className="h1-hero__dots z-[30]">
             {slides.map((_, idx) => (
               <button
                 key={idx}

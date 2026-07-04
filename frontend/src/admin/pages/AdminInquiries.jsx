@@ -14,7 +14,7 @@ import { InquiryDetailDrawer } from '../components/inquiries/InquiryDetailDrawer
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
-export function AdminInquiries() {
+export function AdminInquiries({ hideHeader = false }) {
   const { searchQuery } = useAdmin();
   const queryClient = useQueryClient();
 
@@ -108,19 +108,23 @@ export function AdminInquiries() {
           {/* Page Header Area */}
           <motion.div
             variants={fadeUp}
-            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[var(--admin-border)] pb-5"
+            className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${!hideHeader ? 'border-b border-[var(--admin-border)] pb-5' : ''}`}
           >
-            <div>
-              <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
-                Custom Orders Manager
-              </h2>
-              <p className="text-[12px] text-[var(--admin-text-tertiary)] font-medium mt-0.5">
-                Manage custom customer requests, write quotations, chat with customers, and edit
-                storefront form options.
-              </p>
-            </div>
+            {!hideHeader && (
+              <div>
+                <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
+                  Custom Orders Manager
+                </h2>
+                <p className="text-[12px] text-[var(--admin-text-tertiary)] font-medium mt-0.5">
+                  Manage custom customer requests, write quotations, chat with customers, and edit
+                  storefront form options.
+                </p>
+              </div>
+            )}
 
-            <div className="flex bg-[var(--admin-surface-muted)] p-0.5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] self-start sm:self-auto">
+            <div
+              className={`flex bg-[var(--admin-surface-muted)] p-0.5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] ${hideHeader ? 'self-end' : 'self-start sm:self-auto'}`}
+            >
               <button
                 onClick={() => setCurrentWorkspace('active')}
                 className={`px-5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-300 ${

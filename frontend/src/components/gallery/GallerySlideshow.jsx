@@ -104,45 +104,6 @@ export function GallerySlideshow({
     }
   }, [currentIndex]);
 
-  const handleThumbnailScroll = useCallback(
-    (e) => {
-      if (isProgrammaticScroll.current) return;
-
-      const container = e.target;
-      // Calculate the exact center pixel of the scroll container
-      const scrollCenter = container.scrollLeft + container.clientWidth / 2;
-
-      let closestIndex = currentIndex;
-      let minDistance = Infinity;
-
-      // Find the thumbnail that is closest to the center
-      Array.from(container.children).forEach((child) => {
-        const index = parseInt(child.dataset.index, 10);
-        if (isNaN(index)) return;
-
-        const containerRect = container.getBoundingClientRect();
-        const childRect = child.getBoundingClientRect();
-
-        const childCenter =
-          childRect.left - containerRect.left + childRect.width / 2 + container.scrollLeft;
-        const distance = Math.abs(childCenter - scrollCenter);
-
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestIndex = index;
-        }
-      });
-
-      const childWidthEstimate = 64;
-      if (closestIndex !== currentIndex && minDistance < childWidthEstimate) {
-        actionSource.current = 'thumbnail';
-        setDirection(closestIndex > currentIndex ? 1 : -1);
-        if (onSelect) onSelect(closestIndex);
-      }
-    },
-    [currentIndex, onSelect],
-  );
-
   if (!currentItem && items.length > 0) return null;
 
   const displayImage = currentItem ? currentItem.image || currentItem.imageSrc : '';
@@ -235,11 +196,12 @@ export function GallerySlideshow({
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
                     dragElastic={0.2}
-                    onDragEnd={(e, { offset, _velocity }) => {
+                    onDragEnd={(e, { offset, velocity }) => {
                       const swipe = offset.x;
-                      if (swipe < -80) {
+                      const swipeVelocity = velocity.x;
+                      if (swipe < -80 || swipeVelocity < -500) {
                         handleNext();
-                      } else if (swipe > 80) {
+                      } else if (swipe > 80 || swipeVelocity > 500) {
                         handlePrev();
                       }
                     }}
@@ -352,7 +314,6 @@ export function GallerySlideshow({
                 {/* Thumbnails Container */}
                 <div
                   ref={thumbnailContainerRef}
-                  onScroll={handleThumbnailScroll}
                   className="w-full flex items-center gap-2 lg:gap-2.5 overflow-x-auto no-scrollbar py-1.5 lg:py-2 snap-x snap-mandatory px-[calc(50vw-20px)] lg:px-[calc(50%-20px)] border-t border-black/5 mt-0.5 lg:mt-1"
                 >
                   {items.map((item, idx) => {
@@ -365,6 +326,7 @@ export function GallerySlideshow({
                         key={idx}
                         data-index={idx}
                         onClick={() => {
+                          actionSource.current = 'external';
                           setDirection(idx > currentIndex ? 1 : -1);
                           if (onSelect) onSelect(idx);
                         }}

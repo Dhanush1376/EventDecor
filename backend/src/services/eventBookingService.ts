@@ -169,6 +169,15 @@ export class EventBookingService {
         );
 
         await session.commitTransaction();
+
+        try {
+          const { emitAdminEvent } = require('../socket');
+          emitAdminEvent('booking_update', { bookingId: newBooking._id });
+        } catch (socketErr) {
+          const logger = require('../config/logger').default;
+          logger.debug('Could not emit admin booking_update event:', socketErr);
+        }
+
         return newBooking;
       } catch (err: any) {
         await session.abortTransaction();
@@ -386,7 +395,7 @@ export class EventBookingService {
     await booking.save();
 
     try {
-      const { emitUserEvent } = require('../socket');
+      const { emitUserEvent, emitAdminEvent } = require('../socket');
       const userId = (booking.user as any)?._id?.toString() || booking.user?.toString();
       if (userId) {
         emitUserEvent(userId, 'booking_status_updated', {
@@ -396,9 +405,10 @@ export class EventBookingService {
           previousStatus: oldStatus,
         });
       }
+      emitAdminEvent('booking_update', { bookingId: booking._id });
     } catch (socketErr) {
       const logger = require('../config/logger').default;
-      logger.debug('Could not emit user booking status socket event:', socketErr);
+      logger.debug('Could not emit booking status socket event:', socketErr);
     }
 
     const { EventBookingMailService } = require('../services/eventBookingMailService');

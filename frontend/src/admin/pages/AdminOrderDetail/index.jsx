@@ -6,6 +6,7 @@ import { InvoiceTemplate } from '../../../components/ui';
 import { SkeletonDashboard, stagger, fadeUp } from '../../components/AdminUIKit';
 import { OrderHeader } from './OrderHeader';
 import { OrderStatusTimeline } from './OrderStatusTimeline';
+import OrderTimeline from '../../components/OrderTimeline';
 import { OrderSettlement } from './OrderSettlement';
 import { OrderItems } from './OrderItems';
 import { OrderLogistics } from './OrderLogistics';
@@ -117,6 +118,13 @@ export function AdminOrderDetail() {
           {/* Main Content */}
           <div className="space-y-6">
             <OrderStatusTimeline order={order} updateOrderStatus={updateOrderStatus} />
+            <motion.div variants={fadeUp} className="admin-card p-6">
+              <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">history</span>
+                Rich Event Timeline
+              </h2>
+              <OrderTimeline orderId={order.rawOrder?._id || order.id} />
+            </motion.div>
             <OrderSettlement
               order={order}
               updateOrderStatus={updateOrderStatus}

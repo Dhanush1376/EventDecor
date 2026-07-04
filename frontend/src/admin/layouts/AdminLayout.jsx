@@ -74,7 +74,7 @@ function AdminLayoutInner() {
               className="bg-[var(--admin-error)] text-white px-4 py-2 flex items-center justify-center gap-1.5 shadow-sm text-center overflow-hidden"
             >
               <span className="material-symbols-outlined text-[13px]">lock</span>
-              Global Portal Safety Lock Active — All Database Writes Restricted
+              ⚠️ Safety lock is on — changes cannot be saved right now
             </motion.div>
           )}
         </AnimatePresence>
@@ -88,13 +88,13 @@ function AdminLayoutInner() {
             >
               <div className="flex items-center gap-1.5 flex-1 justify-center">
                 <span className="material-symbols-outlined text-[13px]">construction</span>
-                Storefront Shielded — Maintenance Mode Active
+                🔧 Your shop is temporarily offline for maintenance
               </div>
               <button
                 onClick={toggleMaintenanceMode}
                 className="px-3 py-1 bg-white/20 hover:bg-white/30 text-white rounded text-[10px] font-bold tracking-wider transition-colors"
               >
-                DISABLE NOW
+                TURN OFF
               </button>
             </motion.div>
           )}
@@ -107,8 +107,8 @@ function AdminLayoutInner() {
               exit={{ height: 0, opacity: 0 }}
               className="bg-orange-600 text-white px-4 py-2 flex items-center justify-center gap-1.5 shadow-sm text-center overflow-hidden"
             >
-              <span className="material-symbols-outlined text-[13px]">wifi_off</span>
-              Real-Time Alerts Degraded — Redis Not Configured
+              <span className="material-symbols-outlined text-[13px]">wifi_off</span>⚡ Live updates
+              may be delayed
             </motion.div>
           )}
         </AnimatePresence>
@@ -159,11 +159,10 @@ function AdminLayoutInner() {
               </div>
               <div>
                 <h3 className="text-[15px] font-bold text-[var(--admin-text-primary)]">
-                  Inactivity Timeout Warning
+                  Still here? Your session will end soon for security.
                 </h3>
                 <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-1.5 leading-normal">
-                  Your portal session has been idle. You will be automatically logged out for
-                  security in:
+                  We'll log you out in a few seconds to keep your account safe.
                 </p>
                 <div className="text-[28px] font-black text-[var(--admin-text-primary)] mt-2.5 font-mono tracking-tight animate-pulse">
                   {idleSecondsLeft}s
@@ -173,11 +172,11 @@ function AdminLayoutInner() {
                 onClick={() => {
                   setShowIdleWarning(false);
                   window.dispatchEvent(new Event('mousemove'));
-                  toast.success('Session heartbeat renewed!');
+                  toast.success('Session extended!');
                 }}
                 className="admin-btn admin-btn-primary w-full text-[12px] min-h-[42px]"
               >
-                Extend Session
+                I'm still here
               </button>
             </motion.div>
           </div>

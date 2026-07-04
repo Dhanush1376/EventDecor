@@ -261,6 +261,9 @@ export function EventDetail() {
                     }
                     hideDetails={false}
                     compact={true}
+                    price={showcase.basePrice || showcase.price}
+                    rentalPrice={showcase.rentalPrice || showcase.basePrice}
+                    setupTimeHours={showcase.setupTimeHours}
                   />
                 </div>
               ))}

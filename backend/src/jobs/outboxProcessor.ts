@@ -79,8 +79,8 @@ async function processEvent(event: any): Promise<void> {
   switch (`${event.aggregateType}:${event.eventType}`) {
     // ─── ORDER EVENTS ───────────────────────────────────────────────
     case 'Order:OrderCreated': {
-      const order = await Order.findById(event.aggregateId).populate('items.product');
-      const user = await User.findById(event.payload.userId);
+      const order = await Order.findById(event.aggregateId).populate('items.product').lean();
+      const user = await User.findById(event.payload.userId).lean();
 
       if (order && user) {
         // [MIGRATION]: Replaced OrderNotificationService with Universal NotificationEngine
@@ -108,9 +108,9 @@ async function processEvent(event: any): Promise<void> {
     }
 
     case 'Order:PaymentFailed': {
-      const order = await Order.findById(event.aggregateId);
+      const order = await Order.findById(event.aggregateId).lean();
       if (order) {
-        const user = await User.findById(order.user);
+        const user = await User.findById(order.user).lean();
         if (user?.email) {
           await sendDirectEmail({
             email: user.email,
@@ -135,7 +135,7 @@ async function processEvent(event: any): Promise<void> {
     }
 
     case 'Order:PaymentDisputed': {
-      const order = await Order.findById(event.aggregateId);
+      const order = await Order.findById(event.aggregateId).lean();
       for (const email of adminEmails) {
         await sendDirectEmail({
           email,
@@ -149,9 +149,9 @@ async function processEvent(event: any): Promise<void> {
     }
 
     case 'Order:OrderDelivered': {
-      const order = await Order.findById(event.aggregateId);
+      const order = await Order.findById(event.aggregateId).lean();
       if (order) {
-        const user = await User.findById(order.user);
+        const user = await User.findById(order.user).lean();
         if (user?.email) {
           await sendDirectEmail({
             email: user.email,
@@ -207,7 +207,7 @@ async function processEvent(event: any): Promise<void> {
 
     // ─── EVENT BOOKING EVENTS ───────────────────────────────────────
     case 'EventBooking:BookingInquirySubmitted': {
-      const booking = await EventBooking.findById(event.aggregateId).populate('user');
+      const booking = await EventBooking.findById(event.aggregateId).populate('user').lean();
       if (booking) {
         const user = booking.user as any;
         const eventDateStr = new Date(booking.date).toLocaleDateString('en-IN', {
@@ -231,7 +231,7 @@ async function processEvent(event: any): Promise<void> {
     }
 
     case 'EventBooking:BookingConfirmed': {
-      const booking = await EventBooking.findById(event.aggregateId).populate('user');
+      const booking = await EventBooking.findById(event.aggregateId).populate('user').lean();
       if (booking) {
         const user = booking.user as any;
         if (user?.email) {
@@ -260,7 +260,7 @@ async function processEvent(event: any): Promise<void> {
     }
 
     case 'EventBooking:PaymentFailed': {
-      const booking = await EventBooking.findById(event.aggregateId).populate('user');
+      const booking = await EventBooking.findById(event.aggregateId).populate('user').lean();
       if (booking) {
         const user = booking.user as any;
         if (user?.email) {
@@ -277,7 +277,7 @@ async function processEvent(event: any): Promise<void> {
     }
 
     case 'EventBooking:BookingCancelled': {
-      const booking = await EventBooking.findById(event.aggregateId).populate('user');
+      const booking = await EventBooking.findById(event.aggregateId).populate('user').lean();
       if (booking) {
         const user = booking.user as any;
         if (user?.email) {
@@ -304,7 +304,7 @@ async function processEvent(event: any): Promise<void> {
 
     // ─── RENTAL EVENTS ──────────────────────────────────────────────
     case 'RentalOrder:RentalCreated': {
-      const rental = await RentalOrder.findById(event.aggregateId).populate('user');
+      const rental = await RentalOrder.findById(event.aggregateId).populate('user').lean();
       if (rental) {
         const user = rental.user as any;
         const paymentType = event.payload.type === 'cod' ? 'Cash on Delivery' : 'Online Payment';
@@ -332,7 +332,7 @@ async function processEvent(event: any): Promise<void> {
     }
 
     case 'RentalOrder:RentalPaymentFailed': {
-      const rental = await RentalOrder.findById(event.aggregateId).populate('user');
+      const rental = await RentalOrder.findById(event.aggregateId).populate('user').lean();
       if (rental) {
         const user = rental.user as any;
         if (user?.email) {
@@ -349,7 +349,7 @@ async function processEvent(event: any): Promise<void> {
     }
 
     case 'RentalOrder:RentalCancelled': {
-      const rental = await RentalOrder.findById(event.aggregateId).populate('user');
+      const rental = await RentalOrder.findById(event.aggregateId).populate('user').lean();
       if (rental) {
         const user = rental.user as any;
         if (user?.email) {
@@ -377,7 +377,7 @@ async function processEvent(event: any): Promise<void> {
     // ─── REFUND EVENTS ──────────────────────────────────────────────
     case 'RentalOrder:RentalDepositRefunded': {
       const { orderId, userId, depositAmount, refundAmount, deductions } = event.payload;
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).lean();
       if (user?.email) {
         await sendDirectEmail({
           email: user.email,
@@ -398,7 +398,7 @@ async function processEvent(event: any): Promise<void> {
 
     case 'RentalOrder:RentalDepositForfeited': {
       const { orderId, userId, depositAmount, deductions } = event.payload;
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).lean();
       if (user?.email) {
         await sendDirectEmail({
           email: user.email,
@@ -445,7 +445,7 @@ async function processEvent(event: any): Promise<void> {
     // ─── CUSTOM ORDER EVENTS ──────────────────────────────────────────────
     case 'CustomOrder:CustomOrderSubmitted': {
       const CustomOrder = require('../models/CustomOrder').default;
-      const order = await CustomOrder.findById(event.aggregateId);
+      const order = await CustomOrder.findById(event.aggregateId).lean();
       if (order) {
         await CustomOrderMailService.sendSubmissionEmails(order);
       }

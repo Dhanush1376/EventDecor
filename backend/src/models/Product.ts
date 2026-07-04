@@ -1,5 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
+import { indexProduct } from '../services/search/searchIndexer';
+import logger from '../config/logger';
 
 export interface IRentalPricing {
   daily: number;
@@ -35,12 +37,50 @@ export interface IProduct extends ISoftDeleted {
   images: string[];
   description: string;
   badges: string[];
-  dimensions?: string;
-  weight?: string;
+  dimensions?: {
+    length: number;
+    width: number;
+    height: number;
+  };
+  weight?: number;
   seoTitle?: string;
   seoDescription?: string;
   stock: number;
   reservedStock: number;
+  inventory?: {
+    available: number;
+    reserved: number;
+    production: number;
+    packing: number;
+    transit: number;
+    rental: number;
+    maintenance: number;
+    returned: number;
+    damaged: number;
+    lost: number;
+    qualityHold: number;
+  };
+  sku?: string;
+  barcode?: string;
+  productUuid?: string;
+  qrCode?: string;
+  qrSignature?: string;
+  warehouseLocations?: {
+    warehouseId: string;
+    zoneId: string;
+    aisleId: string;
+    shelfId: string;
+    binId: string;
+    fullPath: string;
+    quantity: number;
+  }[];
+  batchNumber?: string;
+  manufacturingDate?: Date;
+  preparationTimeDays?: number;
+  maxStock?: number;
+  fragilityLevel?: number;
+  packageSize?: 'small' | 'medium' | 'large' | 'oversized';
+  version: number;
   lowStockThreshold: number;
   featured: boolean;
   isActive: boolean;
@@ -119,12 +159,56 @@ const ProductSchema: Schema = new Schema(
     images: [{ type: String }],
     description: { type: String, required: true },
     badges: [{ type: String }],
-    dimensions: { type: String },
-    weight: { type: String },
+    dimensions: {
+      length: { type: Number },
+      width: { type: Number },
+      height: { type: Number },
+    },
+    weight: { type: Number },
     seoTitle: { type: String },
     seoDescription: { type: String },
     stock: { type: Number, default: 0, min: 0 },
     reservedStock: { type: Number, default: 0, min: 0 },
+    inventory: {
+      available: { type: Number, default: 0 },
+      reserved: { type: Number, default: 0 },
+      production: { type: Number, default: 0 },
+      packing: { type: Number, default: 0 },
+      transit: { type: Number, default: 0 },
+      rental: { type: Number, default: 0 },
+      maintenance: { type: Number, default: 0 },
+      returned: { type: Number, default: 0 },
+      damaged: { type: Number, default: 0 },
+      lost: { type: Number, default: 0 },
+      qualityHold: { type: Number, default: 0 },
+    },
+    sku: { type: String, unique: true, sparse: true, index: true },
+    barcode: { type: String, unique: true, sparse: true, index: true },
+    productUuid: { type: String, index: true },
+    qrCode: { type: String },
+    qrSignature: { type: String },
+    warehouseLocations: [
+      {
+        warehouseId: { type: String },
+        zoneId: { type: String },
+        aisleId: { type: String },
+        shelfId: { type: String },
+        binId: { type: String },
+        fullPath: { type: String },
+        quantity: { type: Number, default: 0 },
+      },
+    ],
+    batchNumber: { type: String },
+    manufacturingDate: { type: Date },
+    preparationTimeDays: { type: Number, default: 3 },
+    maxStock: { type: Number },
+    fragilityLevel: { type: Number, min: 1, max: 5, default: 1 },
+    packageSize: {
+      type: String,
+      enum: ['small', 'medium', 'large', 'oversized'],
+      default: 'medium',
+    },
+    version: { type: Number, default: 1 },
     lowStockThreshold: { type: Number, default: 5, min: 0 },
     featured: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
@@ -228,6 +312,26 @@ import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 
 ProductSchema.post('save', () => {
   triggerSitemapUpdate();
+});
+
+ProductSchema.post('save', async function (doc) {
+  try {
+    if (!doc.deletedAt) {
+      await indexProduct(doc);
+    }
+  } catch (err: any) {
+    logger.error(`[Search Indexer] Failed to index product: ${err.message}`);
+  }
+});
+
+ProductSchema.post('findOneAndUpdate', async function (doc) {
+  try {
+    if (doc && !doc.deletedAt) {
+      await indexProduct(doc);
+    }
+  } catch (err: any) {
+    logger.error(`[Search Indexer] Failed to index product on update: ${err.message}`);
+  }
 });
 
 ProductSchema.plugin(SoftDeletePlugin);

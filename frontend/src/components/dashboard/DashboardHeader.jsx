@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -10,14 +10,24 @@ export function DashboardHeader() {
     setMobileShowContent,
     selectedOrderId,
     setSelectedOrderId,
+    selectedEventBookingId,
+    setSelectedEventBookingId,
     activeTab,
     whatsappUrl,
   } = useDashboard();
 
   const navigate = useNavigate();
-  const location = useLocation();
+  const handleMobileBack = () => {
+    setSelectedOrderId(null);
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      setMobileShowContent(false);
+      navigate('/dashboard');
+    }
+  };
 
-  const handleBackToAccount = () => {
+  const handleBreadcrumbAccount = () => {
     setSelectedOrderId(null);
     setMobileShowContent(false);
     navigate('/dashboard');
@@ -25,7 +35,10 @@ export function DashboardHeader() {
 
   const handleBackToOrders = () => {
     setSelectedOrderId(null);
-    navigate('/dashboard/orders');
+  };
+
+  const handleBackToEvents = () => {
+    setSelectedEventBookingId(null);
   };
 
   const isMobile = useMediaQuery('(max-width: 1023px)');
@@ -82,7 +95,7 @@ export function DashboardHeader() {
       className={`sticky z-40 transition-all duration-300 flex justify-between items-center gap-4 h-[52px] mb-4 border-b ${
         isStuck
           ? 'bg-white/95 backdrop-blur-md border-black/5 -mx-margin-mobile lg:-mx-margin-desktop px-margin-mobile lg:px-margin-desktop'
-          : 'border-outline-variant/20 bg-transparent'
+          : 'border-outline-variant/20 bg-surface-container-low'
       }`}
       style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
     >
@@ -95,15 +108,23 @@ export function DashboardHeader() {
               className="text-[11px] text-black hover:text-black/70 transition-colors cursor-pointer uppercase font-bold flex items-center gap-1 bg-transparent border-0 p-0"
             >
               <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-              <span>My Order History</span>
+              <span>Back</span>
             </button>
-          ) : (
+          ) : activeTab === 'bookings' && selectedEventBookingId ? (
             <button
-              onClick={handleBackToAccount}
+              onClick={handleBackToEvents}
               className="text-[11px] text-black hover:text-black/70 transition-colors cursor-pointer uppercase font-bold flex items-center gap-1 bg-transparent border-0 p-0"
             >
               <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-              <span>My Account</span>
+              <span>Back</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleMobileBack}
+              className="text-[11px] text-black hover:text-black/70 transition-colors cursor-pointer uppercase font-bold flex items-center gap-1 bg-transparent border-0 p-0"
+            >
+              <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              <span>Back</span>
             </button>
           )
         ) : (
@@ -124,7 +145,7 @@ export function DashboardHeader() {
         </Link>
         <span className="text-outline-variant/50">/</span>
         <button
-          onClick={handleBackToAccount}
+          onClick={handleBreadcrumbAccount}
           className={`hover:text-black/70 transition-colors cursor-pointer uppercase bg-transparent border-0 p-0 font-bold ${!mobileShowContent ? 'text-black' : 'text-black/70'}`}
         >
           My Account
@@ -149,7 +170,21 @@ export function DashboardHeader() {
                 <span className="text-on-surface">My Order History</span>
               ))}
             {activeTab === 'rentals' && <span className="text-on-surface">My Rentals</span>}
-            {activeTab === 'bookings' && <span className="text-on-surface">My Event Bookings</span>}
+            {activeTab === 'bookings' &&
+              (selectedEventBookingId ? (
+                <>
+                  <button
+                    onClick={handleBackToEvents}
+                    className="hover:text-black/70 transition-colors cursor-pointer uppercase text-black font-bold bg-transparent border-0 p-0"
+                  >
+                    My Event Bookings
+                  </button>
+                  <span className="text-outline-variant/50">/</span>
+                  <span className="text-on-surface">Booking Details</span>
+                </>
+              ) : (
+                <span className="text-on-surface">My Event Bookings</span>
+              ))}
             {activeTab === 'addresses' && <span className="text-on-surface">Delivery Sites</span>}
             {activeTab === 'preferences' && (
               <span className="text-on-surface">Platform Preferences</span>

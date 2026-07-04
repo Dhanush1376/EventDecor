@@ -11,7 +11,6 @@ import { WalletSection } from './Dashboard/WalletSection';
 import { MyReturns } from './returns/MyReturns';
 import { ReturnRequestPage } from './returns/ReturnRequestPage';
 import { ExchangeRequestPage } from './returns/ExchangeRequestPage';
-import { ReturnDetailPage } from './returns/ReturnDetailPage';
 
 function DashboardIndex() {
   const [searchParams] = useSearchParams();
@@ -25,7 +24,20 @@ function DashboardIndex() {
   if (tab === 'wishlist') return <Navigate to="/wishlist" replace />;
   if (tab === 'loyalty') return <Navigate to="wallet" replace />;
 
-  return <Navigate to="profile" replace />;
+  return (
+    <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[50vh] hidden lg:flex">
+      <div className="w-16 h-16 rounded-full bg-surface-container-low border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
+        <span className="material-symbols-outlined text-[32px]">dashboard</span>
+      </div>
+      <h2 className="font-display text-xl lg:text-2xl font-bold text-on-surface mb-2 tracking-wide uppercase">
+        Welcome to your Dashboard
+      </h2>
+      <p className="text-secondary text-[11px] lg:text-[13px] max-w-md mx-auto uppercase tracking-wider font-bold">
+        Select an option from the sidebar to manage your profile, orders, events, and account
+        settings.
+      </p>
+    </div>
+  );
 }
 
 export function Dashboard() {
@@ -43,7 +55,7 @@ export function Dashboard() {
           <Route path="wallet" element={<WalletSection />} />
           <Route path="returns" element={<MyReturns />} />
           <Route path="returns/new" element={<ReturnRequestPage />} />
-          <Route path="returns/:id" element={<ReturnDetailPage />} />
+
           <Route path="returns/exchanges/new" element={<ExchangeRequestPage />} />
           <Route path="*" element={<Navigate to="profile" replace />} />
         </Route>

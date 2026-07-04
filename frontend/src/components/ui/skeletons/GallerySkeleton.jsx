@@ -81,7 +81,7 @@ export function GallerySkeleton() {
               ))}
             </div>
 
-            <div className="columns-2 lg:columns-2 lg:columns-4 xl:columns-4 gap-2 lg:gap-3 space-y-2 lg:space-y-3">
+            <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-4 gap-2 lg:gap-3 space-y-2 lg:space-y-3">
               {aspectPatterns.map((aspect, i) => (
                 <div
                   key={i}

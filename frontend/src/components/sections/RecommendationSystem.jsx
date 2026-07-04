@@ -159,7 +159,7 @@ export function RecommendationSystem({
           variant={3}
           size={800}
           opacity={0.06}
-          className="-bottom-[300px] -left-[250px]"
+          className="-bottom-[300px] -left-[20px] lg:left-0"
           spinDuration={180}
         />
       )}

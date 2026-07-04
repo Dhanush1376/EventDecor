@@ -34,7 +34,7 @@ import {
   StorefrontSettingsPanel,
 } from '../components/settings/StoreSettingsPanels';
 
-export function AdminSettings() {
+export function AdminSettings({ hideHeader }) {
   const { user: authUser, setUser: setAuthUser } = useAuth();
   const {
     activeRole,
@@ -376,10 +376,27 @@ export function AdminSettings() {
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
-      <PageHeader
-        title="System Settings & Profile"
-        subtitle="Administer your contact profile, business models, and secure API gateways"
-      />
+      {!hideHeader && (
+        <PageHeader
+          title="System Settings"
+          subtitle="Configure security, branding, integrations, and advanced preferences."
+          icon="settings"
+          actions={
+            <div className="flex flex-col sm:flex-row gap-3 min-w-[300px]">
+              <div className="relative flex-1">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-tertiary)] text-[20px]">
+                  search
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search settings..."
+                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] text-[var(--admin-text-primary)] pl-10 pr-4 py-2.5 rounded-[var(--admin-radius-sm)] focus:border-[var(--admin-accent)] outline-none text-[14px] shadow-sm transition-all placeholder:text-[var(--admin-text-tertiary)] hover:border-[var(--admin-border-strong)]"
+                />
+              </div>
+            </div>
+          }
+        />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
         <motion.div

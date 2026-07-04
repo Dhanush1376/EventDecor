@@ -18,6 +18,7 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
   const [quantity, _setQuantity] = React.useState(1);
   const [added, setAdded] = React.useState(false);
   const [_startingChat, _setStartingChat] = React.useState(false);
+  const [localAppliedCoupon, setLocalAppliedCoupon] = React.useState(null);
 
   const productId = product?._id || product?.id;
   const { data: couponsData } = useQuery({
@@ -27,16 +28,19 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
   });
 
   const allCoupons = couponsData?.data?.all || [];
-  const activeCoupon = allCoupons.find((c) => c.code === claimedCoupon);
 
   let discountedPrice = product?.price || 0;
-  if (activeCoupon && product?.price) {
+  const activeCoupon = allCoupons.find((c) => c.code === localAppliedCoupon);
+  if (activeCoupon && product?.price && product.price >= (activeCoupon.minOrderAmount || 0)) {
     const isPercentage = activeCoupon.discountType === 'percentage';
     if (isPercentage) {
       discountedPrice = product.price * (1 - activeCoupon.discountValue / 100);
     } else {
       discountedPrice = Math.max(0, product.price - activeCoupon.discountValue);
     }
+  } else if (localAppliedCoupon) {
+    // If it doesn't meet criteria, clear it
+    setLocalAppliedCoupon(null);
   }
 
   const canPurchase = !product?.availabilityMode || product.availabilityMode !== 'rent_only';
@@ -236,12 +240,16 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
       />
 
       {/* Available Coupons & Savings Section */}
-      <ProductCoupons product={product} />
+      <ProductCoupons
+        product={product}
+        localAppliedCoupon={localAppliedCoupon}
+        setLocalAppliedCoupon={setLocalAppliedCoupon}
+      />
 
       {/* Pricing & Shipping */}
       <div className="py-2 border-b border-outline-variant/10">
         <div className="flex flex-wrap items-baseline gap-3 mb-4">
-          {activeCoupon ? (
+          {activeCoupon && product.price >= (activeCoupon.minOrderAmount || 0) ? (
             <>
               <span className="font-display text-[24px] sm:text-[32px] text-green-700 font-medium">
                 Rs. {discountedPrice?.toLocaleString()}
@@ -255,16 +263,18 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
               Rs. {product.price?.toLocaleString()}
             </span>
           )}
-          {oldPrice > 0 && !activeCoupon && (
-            <span className="font-display text-on-surface/40 font-light line-through text-[13px] sm:text-[15px]">
-              Rs. {oldPrice.toLocaleString()}
-            </span>
-          )}
-          {discount > 0 && !activeCoupon && (
-            <span className="text-primary font-label-sm text-[11px] sm:text-[12px] font-bold">
-              ({discount}% off)
-            </span>
-          )}
+          {oldPrice > 0 &&
+            (!activeCoupon || product.price < (activeCoupon.minOrderAmount || 0)) && (
+              <span className="font-display text-on-surface/40 font-light line-through text-[13px] sm:text-[15px]">
+                Rs. {oldPrice.toLocaleString()}
+              </span>
+            )}
+          {discount > 0 &&
+            (!activeCoupon || product.price < (activeCoupon.minOrderAmount || 0)) && (
+              <span className="text-primary font-label-sm text-[11px] sm:text-[12px] font-bold">
+                ({discount}% off)
+              </span>
+            )}
         </div>
 
         <div className="space-y-2.5">

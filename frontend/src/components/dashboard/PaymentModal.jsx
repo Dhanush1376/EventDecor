@@ -70,11 +70,11 @@ export function PaymentModal({
 
               <div className="p-4 bg-primary/5 rounded-lg border border-primary/10 space-y-1 text-[11px] leading-relaxed">
                 <span className="font-display font-bold text-primary block">
-                  💳 Gilded UPI gateway simulation:
+                  💳 Secure Payment Gateway
                 </span>
                 <p className="text-secondary">
-                  Clicking below will simulate a secure UPI transaction callback and log credit
-                  milestones directly into your Siri Arts & Crafts workspace ledger.
+                  Clicking below will redirect you to our secure payment gateway to lodge the
+                  milestone payment.
                 </p>
               </div>
 
@@ -82,7 +82,7 @@ export function PaymentModal({
                 type="submit"
                 className="w-full bg-black text-white py-2.5 rounded-full font-label text-[9px] uppercase tracking-widest font-bold hover:bg-primary hover:text-black transition-colors shadow-md"
               >
-                Confirm simulated deposit
+                Proceed to Payment
               </button>
             </form>
           </motion.div>

@@ -1,12 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Skeleton } from '../../components/ui';
+import { useDashboard } from '../../context/DashboardContext';
 
 const EventCustomerDashboard = React.lazy(() =>
   import('../EventCustomerDashboard').then((m) => ({ default: m.EventCustomerDashboard })),
 );
 
 export function EventsSection() {
+  const { selectedEventBookingId, setSelectedEventBookingId } = useDashboard();
+
   return (
     <motion.div
       id="panel-bookings"
@@ -18,11 +21,11 @@ export function EventsSection() {
       transition={{ duration: 0.3 }}
       className="space-y-4 text-left"
     >
-      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 flex flex-col gap-2 shadow-xs text-left">
-        <h2 className="font-bold text-[18px] text-on-surface tracking-tight">My Event Bookings</h2>
-        <span className="text-[11px] text-secondary font-medium">
-          Track your reserved setups, theme boards, milestone deposits, and site lead coordinates.
-        </span>
+      <div className="pb-4 mb-4 border-b border-outline-variant/20">
+        <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-[12px]">celebration</span>
+          My Event Bookings
+        </h2>
       </div>
       <React.Suspense
         fallback={
@@ -44,7 +47,11 @@ export function EventsSection() {
           </div>
         }
       >
-        <EventCustomerDashboard isEmbedded={true} />
+        <EventCustomerDashboard
+          isEmbedded={true}
+          selectedEventBookingId={selectedEventBookingId}
+          setSelectedEventBookingId={setSelectedEventBookingId}
+        />
       </React.Suspense>
     </motion.div>
   );

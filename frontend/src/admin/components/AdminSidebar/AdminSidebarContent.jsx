@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SiriLogo } from '../../../components/ui/SiriLogo';
 import { useAuth } from '../../../context/AuthContext';
+import { useAdmin } from '../../context/AdminContext';
 
 export function AdminSidebarContent({
   sidebarOpen,
@@ -19,6 +20,14 @@ export function AdminSidebarContent({
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { activeRole } = useAdmin();
+
+  const effectiveRole = activeRole || user?.role || 'owner';
+
+  // Filter sections by role before rendering
+  const allowedSections = filteredNavSections.filter(
+    (section) => !section.roles || section.roles.includes(effectiveRole),
+  );
 
   return (
     <div
@@ -107,7 +116,7 @@ export function AdminSidebarContent({
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto py-2 px-2 custom-scrollbar space-y-3"
       >
-        {filteredNavSections.map((section, si) => {
+        {allowedSections.map((section, si) => {
           const isCollapsed = collapsedSections[si] && sidebarOpen && !sidebarSearch;
           return (
             <div key={si} className="space-y-0.5">
@@ -116,9 +125,16 @@ export function AdminSidebarContent({
                   onClick={() => toggleSection(si)}
                   className="w-full flex items-center justify-between px-3 py-1.5 mb-0.5 group min-h-0 text-left outline-none cursor-pointer hover:bg-[var(--admin-surface-hover)] rounded-[var(--admin-radius-md)] transition-colors"
                 >
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-text-primary)] transition-colors">
-                    {section.label}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-text-primary)] transition-colors">
+                      {section.label}
+                    </span>
+                    {section.subtitle && (
+                      <span className="text-[9px] text-[var(--admin-text-tertiary)] group-hover:text-[var(--admin-text-secondary)] mt-0.5">
+                        {section.subtitle}
+                      </span>
+                    )}
+                  </div>
                   <span
                     className={`material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)] transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
                   >
@@ -139,73 +155,75 @@ export function AdminSidebarContent({
                     transition={{ duration: 0.2, ease: 'easeInOut' }}
                     className="space-y-0.5"
                   >
-                    {section.items.map((item, ii) => {
-                      if (
-                        item.path === '/admin/executive' &&
-                        !['super_admin', 'manager'].includes(user?.role)
-                      ) {
-                        return null; // Restrict Executive Summary
-                      }
-
-                      const isActive =
-                        location.pathname === item.path ||
-                        (item.path !== '/admin' && location.pathname.startsWith(item.path));
-                      return (
-                        <NavLink
-                          key={ii}
-                          to={item.path}
-                          end={item.path === '/admin'}
-                          onClick={() => setSidebarMobileOpen(false)}
-                          title={!sidebarOpen ? item.label : ''}
-                          className={`flex items-center gap-2.5 px-3 py-2 rounded-[var(--admin-radius-md)] text-[13px] font-medium transition-all duration-150 group relative min-h-[36px] ${
-                            isActive
-                              ? 'text-[var(--admin-accent-text)] font-semibold'
-                              : 'text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)]'
-                          } ${!sidebarOpen ? 'justify-center px-2' : ''}`}
-                        >
-                          {/* Active background */}
-                          {isActive && (
-                            <motion.div
-                              layoutId="sidebarActiveBackground"
-                              className="absolute inset-0 rounded-[var(--admin-radius-md)] z-0"
-                              style={{
-                                background: `var(--admin-domain-${item.domain || 'settings'}-bg)`,
-                                borderLeft: `2px solid var(--admin-domain-${item.domain || 'settings'})`,
-                              }}
-                              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                            />
-                          )}
-
-                          <span
-                            className={`material-symbols-outlined text-[18px] relative z-10 transition-colors ${
+                    {section.items
+                      .filter((item) => !item.roles || item.roles.includes(effectiveRole))
+                      .map((item, ii) => {
+                        // We only want exact match or if it's not a root hub path.
+                        // To prevent 'Active Rentals' from highlighting when 'Due Returns' is selected.
+                        const isExact = location.pathname === item.path;
+                        const isSubPath =
+                          item.path !== '/admin' &&
+                          item.path !== '/admin/rentals' &&
+                          item.path !== '/admin/orders' &&
+                          item.path !== '/admin/system' &&
+                          location.pathname.startsWith(item.path);
+                        const isActive = isExact || isSubPath;
+                        return (
+                          <NavLink
+                            key={ii}
+                            to={item.path}
+                            end={item.path === '/admin'}
+                            onClick={() => setSidebarMobileOpen(false)}
+                            title={!sidebarOpen ? item.label : ''}
+                            className={`flex items-center gap-2.5 px-3 py-2 rounded-[var(--admin-radius-md)] text-[13px] font-medium transition-all duration-150 group relative min-h-[36px] ${
                               isActive
-                                ? ''
-                                : 'text-[var(--admin-text-tertiary)] group-hover:text-[var(--admin-text-secondary)]'
-                            }`}
-                            style={{
-                              color: isActive
-                                ? `var(--admin-domain-${item.domain || 'settings'})`
-                                : undefined,
-                              fontVariationSettings: isActive
-                                ? "'FILL' 1, 'wght' 500"
-                                : "'FILL' 0, 'wght' 400",
-                            }}
+                                ? 'text-[var(--admin-accent-text)] font-semibold'
+                                : 'text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)]'
+                            } ${!sidebarOpen ? 'justify-center px-2' : ''}`}
                           >
-                            {item.icon}
-                          </span>
+                            {/* Active background */}
+                            {isActive && (
+                              <motion.div
+                                layoutId="sidebarActiveBackground"
+                                className="absolute inset-0 rounded-[var(--admin-radius-md)] z-0"
+                                style={{
+                                  background: `var(--admin-domain-${item.domain || 'settings'}-bg)`,
+                                  borderLeft: `2px solid var(--admin-domain-${item.domain || 'settings'})`,
+                                }}
+                                transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                              />
+                            )}
 
-                          {sidebarOpen && (
-                            <span className="relative z-10 truncate">{item.label}</span>
-                          )}
+                            <span
+                              className={`material-symbols-outlined text-[18px] relative z-10 transition-colors ${
+                                isActive
+                                  ? ''
+                                  : 'text-[var(--admin-text-tertiary)] group-hover:text-[var(--admin-text-secondary)]'
+                              }`}
+                              style={{
+                                color: isActive
+                                  ? `var(--admin-domain-${item.domain || 'settings'})`
+                                  : undefined,
+                                fontVariationSettings: isActive
+                                  ? "'FILL' 1, 'wght' 500"
+                                  : "'FILL' 0, 'wght' 400",
+                              }}
+                            >
+                              {item.icon}
+                            </span>
 
-                          {!sidebarOpen && (
-                            <div className="absolute left-full ml-2.5 px-2.5 py-1 bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] text-[10px] rounded-[var(--admin-radius-md)] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] shadow-[var(--admin-shadow-lg)] transition-opacity duration-150 font-semibold">
-                              {item.label}
-                            </div>
-                          )}
-                        </NavLink>
-                      );
-                    })}
+                            {sidebarOpen && (
+                              <span className="relative z-10 truncate">{item.label}</span>
+                            )}
+
+                            {!sidebarOpen && (
+                              <div className="absolute left-full ml-2.5 px-2.5 py-1 bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] text-[10px] rounded-[var(--admin-radius-md)] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] shadow-[var(--admin-shadow-lg)] transition-opacity duration-150 font-semibold">
+                                {item.label}
+                              </div>
+                            )}
+                          </NavLink>
+                        );
+                      })}
                   </motion.div>
                 )}
               </AnimatePresence>

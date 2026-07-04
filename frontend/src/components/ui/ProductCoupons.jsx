@@ -6,7 +6,7 @@ import { couponService } from '../../services/domainServices';
 import { useCart } from '../../context/CartContext';
 import logger from '../../utils/core/logger';
 
-export function ProductCoupons({ product }) {
+export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCoupon }) {
   const { setClaimedCoupon, claimedCoupon } = useCart();
   const [expanded, setExpanded] = useState(false);
   const [copiedCode, setCopiedCode] = useState(null);
@@ -42,14 +42,20 @@ export function ProductCoupons({ product }) {
   const initialCoupons = allCoupons.slice(0, 3);
   const extraCoupons = allCoupons.slice(3);
 
-  const handleCopy = (code) => {
-    navigator.clipboard.writeText(code).catch((err) => {
+  const handleApply = (coupon) => {
+    const isEligible = product.price >= (coupon.minOrderAmount || 0);
+    if (!isEligible) return;
+
+    navigator.clipboard.writeText(coupon.code).catch((err) => {
       logger.error('Failed to copy text: ', err);
     });
     if (setClaimedCoupon) {
-      setClaimedCoupon(code);
+      setClaimedCoupon(coupon.code);
     }
-    setCopiedCode(code);
+    if (setLocalAppliedCoupon) {
+      setLocalAppliedCoupon(coupon.code);
+    }
+    setCopiedCode(coupon.code);
 
     // Confetti effect using the site's gold and warm color palette
     confetti({
@@ -90,9 +96,9 @@ export function ProductCoupons({ product }) {
             <CouponCard
               coupon={coupon}
               isBest={idx === 0}
-              onCopy={handleCopy}
-              isCopied={copiedCode === coupon.code}
-              isApplied={claimedCoupon === coupon.code}
+              onApply={() => handleApply(coupon)}
+              isApplied={localAppliedCoupon === coupon.code}
+              isEligible={product.price >= (coupon.minOrderAmount || 0)}
             />
           </div>
         ))}
@@ -131,9 +137,9 @@ export function ProductCoupons({ product }) {
                       <CouponCard
                         coupon={coupon}
                         isBest={false}
-                        onCopy={handleCopy}
-                        isCopied={copiedCode === coupon.code}
-                        isApplied={claimedCoupon === coupon.code}
+                        onApply={() => handleApply(coupon)}
+                        isApplied={localAppliedCoupon === coupon.code}
+                        isEligible={product.price >= (coupon.minOrderAmount || 0)}
                       />
                     </div>
                   ))}
@@ -147,7 +153,7 @@ export function ProductCoupons({ product }) {
   );
 }
 
-function CouponCard({ coupon, isBest, onCopy, isApplied }) {
+function CouponCard({ coupon, isBest, onApply, isApplied, isEligible }) {
   const isPercentage = coupon.discountType === 'percentage';
   const discountText = isPercentage
     ? `${coupon.discountValue}% Off`
@@ -166,20 +172,22 @@ function CouponCard({ coupon, isBest, onCopy, isApplied }) {
 
   return (
     <div
-      onClick={() => onCopy(coupon.code)}
+      onClick={isEligible ? onApply : undefined}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (isEligible && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
-          onCopy(coupon.code);
+          onApply();
         }
       }}
       role="button"
-      tabIndex={0}
+      tabIndex={isEligible ? 0 : -1}
       aria-label={`Coupon ${coupon.code}: ${discountText}, ${minOrderText}`}
-      className={`border-2 border-dashed rounded-xl p-3 flex flex-col justify-between gap-1 bg-[#fcfbf9]/60 hover:bg-[#faf6e6]/60 backdrop-blur-md cursor-pointer transition-all duration-300 relative overflow-hidden group select-none ${
-        isBest
-          ? 'border-primary/50 ring-1 ring-primary/20 shadow-2xs hover:shadow-xs'
-          : 'border-outline-variant/30 hover:border-primary/30'
+      className={`border-2 border-dashed rounded-xl p-3 flex flex-col justify-between gap-1 bg-[#fcfbf9]/60 backdrop-blur-md transition-all duration-300 relative overflow-hidden group select-none ${
+        !isEligible
+          ? 'border-outline-variant/20 opacity-60 grayscale cursor-not-allowed'
+          : isBest
+            ? 'border-primary/50 ring-1 ring-primary/20 shadow-2xs hover:shadow-xs hover:bg-[#faf6e6]/60 cursor-pointer'
+            : 'border-outline-variant/30 hover:border-primary/30 hover:bg-[#faf6e6]/60 cursor-pointer'
       }`}
     >
       {/* Decorative Ticket Circles */}
@@ -191,7 +199,7 @@ function CouponCard({ coupon, isBest, onCopy, isApplied }) {
           <span className="font-label text-[10px] font-bold tracking-wider text-on-surface bg-[#e9e8e5] px-2 py-0.5 rounded uppercase">
             {coupon.code}
           </span>
-          {isBest && (
+          {isBest && isEligible && (
             <span className="bg-primary-container/20 border border-primary/40 text-primary font-bold px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider whitespace-nowrap">
               Best Offer
             </span>
@@ -201,7 +209,9 @@ function CouponCard({ coupon, isBest, onCopy, isApplied }) {
         <div className="font-display text-[15px] sm:text-[16px] text-on-surface font-semibold tracking-tight leading-snug">
           {discountText}
         </div>
-        <p className="font-body text-[11px] text-on-surface/60 font-medium leading-normal mt-0.5">
+        <p
+          className={`font-body text-[11px] font-medium leading-normal mt-0.5 ${!isEligible ? 'text-error' : 'text-on-surface/60'}`}
+        >
           {minOrderText}
         </p>
       </div>
@@ -211,15 +221,20 @@ function CouponCard({ coupon, isBest, onCopy, isApplied }) {
           Exp: {formattedExpiry}
         </span>
         <button
+          disabled={!isEligible}
           className={`flex items-center gap-1 text-[9px] uppercase tracking-widest font-extrabold focus:outline-none transition-colors duration-300 pointer-events-none ${
-            isApplied ? 'text-green-700' : 'text-primary group-hover:text-primary-container'
+            !isEligible
+              ? 'text-on-surface/40'
+              : isApplied
+                ? 'text-green-700'
+                : 'text-primary group-hover:text-primary-container'
           }`}
           aria-hidden="true"
         >
           <span className="material-symbols-outlined text-[12px]" style={{ transform: 'none' }}>
-            {isApplied ? 'check_circle' : 'local_offer'}
+            {!isEligible ? 'block' : isApplied ? 'check_circle' : 'local_offer'}
           </span>
-          {isApplied ? 'Applied' : 'Apply'}
+          {!isEligible ? 'Not Eligible' : isApplied ? 'Applied' : 'Apply'}
         </button>
       </div>
     </div>

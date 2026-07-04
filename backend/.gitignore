@@ -7,3 +7,6 @@ dist/
 v8.log
 isolate-*.log
 *-report.json
+.eslintcache
+stats.html
+coverage/

@@ -31,9 +31,13 @@ export function PromoBanner() {
   // CMS configuration takes priority if active and has text
   if (promo?.isActive !== false && promo?.text) {
     promoText = promo.text;
-    promoLink = promo.link || '/collections';
+    let targetLink = promo.link || '/collections';
     ctaText = promo.ctaText || 'CLAIM OFFER';
     couponCode = promo.couponCode;
+    if (couponCode && !targetLink.includes('coupon=')) {
+      targetLink += targetLink.includes('?') ? `&coupon=${couponCode}` : `?coupon=${couponCode}`;
+    }
+    promoLink = targetLink;
   } else if (bannerCoupon) {
     // Fallback to active coupon with 'banner' display location
     const discountStr =
@@ -49,6 +53,9 @@ export function PromoBanner() {
     } else if (bannerCoupon.targetType === 'products' && bannerCoupon.targetProductIds?.length) {
       targetLink = `/collections?ids=${bannerCoupon.targetProductIds.join(',')}`;
     }
+    targetLink += targetLink.includes('?')
+      ? `&coupon=${bannerCoupon.code}`
+      : `?coupon=${bannerCoupon.code}`;
     promoLink = targetLink;
   } else {
     return null;

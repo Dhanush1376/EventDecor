@@ -3,14 +3,14 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 const FilterSection = ({ title, id, children, activeSections, onToggle }) => (
-  <div className="mb-5 border-b border-outline-variant/10 pb-4 last:border-0 last:pb-0">
+  <div className="mb-3 border-b border-outline-variant/10 pb-3 last:border-0 last:pb-0">
     <button
       onClick={() => onToggle(id)}
-      className="w-full flex justify-between items-center py-1 text-left font-label text-label-md text-on-surface hover:text-primary transition-colors group"
+      className="w-full flex justify-between items-center py-1 text-left font-label text-[12px] text-on-surface hover:text-primary transition-colors group min-h-0"
     >
-      <span className="uppercase tracking-[0.2em] font-bold">{title}</span>
+      <span className="uppercase tracking-[0.15em] font-bold">{title}</span>
       <span
-        className={`material-symbols-outlined text-secondary transition-transform duration-500 ${activeSections[id] ? 'rotate-180' : ''}`}
+        className={`material-symbols-outlined text-secondary text-[18px] transition-transform duration-500 ${activeSections[id] ? 'rotate-180' : ''}`}
       >
         expand_more
       </span>
@@ -24,7 +24,7 @@ const FilterSection = ({ title, id, children, activeSections, onToggle }) => (
           transition={{ duration: 0.4, ease: [0.2, 1, 0.2, 1] }}
           className="overflow-hidden"
         >
-          <div className="mt-2 space-y-1.5 pl-1">{children}</div>
+          <div className="mt-1 space-y-0 pl-1">{children}</div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -34,7 +34,7 @@ const FilterSection = ({ title, id, children, activeSections, onToggle }) => (
 const Checkbox = ({ label, count, type, currentFilters, onToggleFilter }) => {
   const isChecked = currentFilters[type]?.includes(label);
   return (
-    <label className="flex items-center justify-between cursor-pointer group py-1.5 px-2 hover:bg-surface-container-low rounded-lg transition-all duration-300">
+    <label className="flex items-center justify-between cursor-pointer group py-1 px-2 hover:bg-surface-container-low rounded-lg transition-all duration-300">
       <div className="flex items-center gap-3">
         <div className="relative flex items-center justify-center">
           <input
@@ -48,7 +48,7 @@ const Checkbox = ({ label, count, type, currentFilters, onToggleFilter }) => {
           </span>
         </div>
         <span
-          className={`font-body text-[14px] lg:text-[15px] transition-colors ${isChecked ? 'text-primary font-semibold' : 'text-on-surface/70 group-hover:text-on-surface'}`}
+          className={`font-body text-[13px] lg:text-[14px] transition-colors ${isChecked ? 'text-primary font-semibold' : 'text-on-surface/70 group-hover:text-on-surface'}`}
         >
           {label}
         </span>
@@ -59,6 +59,57 @@ const Checkbox = ({ label, count, type, currentFilters, onToggleFilter }) => {
         </span>
       )}
     </label>
+  );
+};
+
+const PriceRangeSlider = ({ maxPossible, initialMax, group, onSetFilterValue }) => {
+  const [localMax, setLocalMax] = useState(initialMax);
+
+  useEffect(() => {
+    setLocalMax(initialMax);
+  }, [initialMax]);
+
+  const handleCommit = () => {
+    if (onSetFilterValue) {
+      if (localMax === maxPossible) {
+        onSetFilterValue(group.id, []);
+      } else {
+        onSetFilterValue(group.id, [`0-${localMax}`]);
+      }
+    }
+  };
+
+  return (
+    <div className="px-1 pt-3 pb-2">
+      <input
+        type="range"
+        min="0"
+        max={maxPossible}
+        step="500"
+        value={localMax}
+        onChange={(e) => setLocalMax(parseInt(e.target.value, 10))}
+        onMouseUp={handleCommit}
+        onTouchEnd={handleCommit}
+        className="w-full h-1.5 rounded-lg cursor-pointer accent-primary focus:outline-none"
+      />
+      <div className="flex items-center justify-between gap-3 mt-5">
+        <div className="flex-1 bg-surface-bright border border-outline-variant/30 rounded-2xl p-2.5 flex flex-col items-center justify-center shadow-sm transition-all">
+          <span className="text-[8px] uppercase tracking-[0.2em] text-secondary/70 font-bold mb-0.5">
+            Min Price
+          </span>
+          <span className="text-sm font-bold text-on-surface">₹0</span>
+        </div>
+        <div className="w-3 h-[2px] bg-outline-variant/30 shrink-0 rounded-full"></div>
+        <div className="flex-1 bg-surface-bright border border-primary/20 rounded-2xl p-2.5 flex flex-col items-center justify-center shadow-sm transition-all">
+          <span className="text-[8px] uppercase tracking-[0.2em] text-secondary/70 font-bold mb-0.5">
+            Max Price
+          </span>
+          <span className="text-sm font-bold text-primary">
+            {localMax === maxPossible ? 'No Limit' : `₹${localMax.toLocaleString()}`}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -172,7 +223,7 @@ export function FilterPanel({
 
   const panelContent = (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-6 pb-3 border-b border-outline-variant/30">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-outline-variant/30">
         <div className="flex flex-col">
           <h2 className="font-label font-headline-md text-on-surface font-normal">Filters</h2>
           {isOpen && (
@@ -205,15 +256,15 @@ export function FilterPanel({
             <button
               key={opt.value}
               onClick={() => onSortChange(opt.value)}
-              className={`w-full flex items-center justify-between py-1.5 px-2 rounded-lg group transition-all duration-300 ${sortBy === opt.value ? 'bg-primary/5 text-primary' : 'text-on-surface/60 hover:bg-surface-container-low'}`}
+              className={`w-full flex items-center justify-between py-1 px-2 min-h-0 rounded-lg group transition-all duration-300 ${sortBy === opt.value ? 'bg-primary/5 text-primary' : 'text-on-surface/60 hover:bg-surface-container-low'}`}
             >
               <span
-                className={`font-body text-[14px] lg:text-[15px] transition-colors ${sortBy === opt.value ? 'font-semibold' : 'group-hover:text-on-surface'}`}
+                className={`font-body text-[13px] lg:text-[14px] transition-colors ${sortBy === opt.value ? 'font-semibold' : 'group-hover:text-on-surface'}`}
               >
                 {opt.label}
               </span>
               {sortBy === opt.value && (
-                <span className="material-symbols-outlined text-[18px] text-primary animate-scale-in">
+                <span className="material-symbols-outlined text-[16px] text-primary animate-scale-in">
                   check_circle
                 </span>
               )}
@@ -265,47 +316,12 @@ export function FilterPanel({
                     activeSections={activeSections}
                     onToggle={toggleSection}
                   >
-                    <div className="px-1 pt-4 pb-2">
-                      <input
-                        type="range"
-                        min="0"
-                        max={maxPossible}
-                        step="500"
-                        value={currentMax}
-                        onChange={(e) => {
-                          if (onSetFilterValue) {
-                            const val = parseInt(e.target.value, 10);
-                            if (val === maxPossible) {
-                              onSetFilterValue(group.id, []);
-                            } else {
-                              onSetFilterValue(group.id, [`0-${val}`]);
-                            }
-                          }
-                        }}
-                        style={{
-                          background: `linear-gradient(to right, var(--color-primary, #C4A87C) 0%, var(--color-primary, #C4A87C) ${(currentMax / maxPossible) * 100}%, rgba(0, 0, 0, 0.08) ${(currentMax / maxPossible) * 100}%, rgba(0, 0, 0, 0.08) 100%)`,
-                        }}
-                        className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none transition-all duration-300"
-                      />
-                      <div className="flex items-center justify-between gap-3 mt-4">
-                        <div className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-xl px-3 py-1.5 flex flex-col transition-all duration-300">
-                          <span className="text-[9px] uppercase tracking-wider text-on-surface-variant/50 font-bold">
-                            Min Price
-                          </span>
-                          <span className="text-xs font-semibold text-on-surface mt-0.5">₹0</span>
-                        </div>
-                        <div className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-xl px-3 py-1.5 flex flex-col text-right transition-all duration-300">
-                          <span className="text-[9px] uppercase tracking-wider text-on-surface-variant/50 font-bold">
-                            Max Price
-                          </span>
-                          <span className="text-xs font-semibold text-primary mt-0.5">
-                            {currentMax === maxPossible
-                              ? 'No Limit'
-                              : `₹${currentMax.toLocaleString()}`}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    <PriceRangeSlider
+                      maxPossible={maxPossible}
+                      initialMax={currentMax}
+                      group={group}
+                      onSetFilterValue={onSetFilterValue}
+                    />
                   </FilterSection>
                 );
               }
@@ -357,25 +373,25 @@ export function FilterPanel({
                     stiffness: 300,
                     mass: 0.8,
                   }}
-                  className="relative w-full bg-surface rounded-t-[40px] p-6 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10"
+                  className="relative w-full bg-surface rounded-t-[32px] p-5 shadow-[0_50vh_0_0_var(--color-surface),0_25px_50px_-12px_rgba(0,0,0,0.25)] flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10"
                 >
                   {/* Handlebar for bottom sheet feel */}
                   <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-4 shrink-0" />
 
                   <button
                     onClick={onClose}
-                    className="absolute top-6 right-6 w-10 h-10 min-h-0 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
+                    className="absolute top-5 right-5 w-9 h-9 min-h-0 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
                   >
-                    <span className="material-symbols-outlined text-[20px]">close</span>
+                    <span className="material-symbols-outlined text-[18px]">close</span>
                   </button>
 
                   <div className="flex-1 overflow-y-auto no-scrollbar pt-2">{panelContent}</div>
 
                   {/* Bottom Action Bar */}
-                  <div className="mt-6 pt-6 border-t border-outline-variant/20">
+                  <div className="mt-3 pt-4 border-t border-outline-variant/20">
                     <button
                       onClick={onClose}
-                      className="w-full bg-on-surface-variant text-surface py-4 rounded-full font-label text-[11px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary transition-all active:scale-[0.98]"
+                      className="w-full bg-on-surface-variant text-surface py-3.5 rounded-full font-label text-[11px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary transition-all active:scale-[0.98]"
                     >
                       Apply Filters
                     </button>

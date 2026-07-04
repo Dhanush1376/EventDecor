@@ -6,7 +6,6 @@ import { SearchBar, CategoryTabs, CustomDropdown } from '../components/ui';
 import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { GallerySlideshow } from '../components/gallery/GallerySlideshow';
-import { GallerySkeleton } from '../components/ui/Skeleton';
 import { FilterPanel } from '../components/ui/FilterPanel';
 import React, { useState, useEffect } from 'react';
 import { galleryService } from '../services/domainServices';
@@ -152,7 +151,7 @@ export function GalleryInner() {
       }
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        setIsSticky(rect.top <= currentNavHeight + 1);
+        setIsSticky(rect.top <= currentNavHeight + 5);
       }
     };
 
@@ -260,11 +259,12 @@ export function GalleryInner() {
         description="Explore our curated collection of artisanal event transformations and heritage decor inspirations."
       />
 
-      <MandalaElement className="absolute -top-40 -left-40 opacity-[0.06]" size={800} />
+      <MandalaElement className="absolute -top-40 -left-40" size={800} opacity={0.25} />
       <MandalaElement
-        className="absolute -bottom-[150px] -right-[150px] opacity-[0.08] pointer-events-none"
+        className="absolute -bottom-[150px] -right-[150px] pointer-events-none"
         size={900}
         variant={2}
+        opacity={0.3}
       />
 
       {/* Editorial Header Hero */}
@@ -450,7 +450,25 @@ export function GalleryInner() {
 
           <div className="flex-1 min-w-0">
             {isLoading ? (
-              <GallerySkeleton />
+              <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-4 gap-2 lg:gap-3 space-y-2 lg:space-y-3">
+                {[
+                  'aspect-[2/3]',
+                  'aspect-square',
+                  'aspect-[4/5]',
+                  'aspect-[3/4]',
+                  'aspect-[2/3]',
+                  'aspect-square',
+                  'aspect-[4/5]',
+                  'aspect-[3/4]',
+                ].map((aspect, i) => (
+                  <div
+                    key={i}
+                    className={`break-inside-avoid relative w-full ${aspect} rounded-[16px] lg:rounded-[24px] overflow-hidden bg-surface border border-black/5 animate-pulse`}
+                  >
+                    <div className="absolute inset-0 bg-surface-container-high/50 w-full h-full" />
+                  </div>
+                ))}
+              </div>
             ) : (
               <>
                 <VirtualizedMasonry

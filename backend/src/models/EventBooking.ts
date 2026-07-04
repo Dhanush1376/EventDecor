@@ -304,5 +304,13 @@ EventBookingSchema.index({ user: 1, status: 1 });
 EventBookingSchema.index({ user: 1, date: 1 });
 EventBookingSchema.index({ date: 1, status: 1 });
 
+import TransactionSyncPlugin from '../utils/TransactionSyncPlugin';
+EventBookingSchema.plugin(TransactionSyncPlugin, {
+  domain: 'event',
+  statusField: 'status',
+  totalField: 'pricing.totalPrice',
+  paymentStatusField: 'pricing.paymentStatus',
+});
+
 const EventBooking = mongoose.model<IEventBooking>('EventBooking', EventBookingSchema);
 export default EventBooking;

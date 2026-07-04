@@ -98,7 +98,7 @@ export function AdminInventory() {
           </PageHeader>
 
           {/* Summary Cards */}
-          <motion.div variants={stagger} className="grid grid-cols-3 gap-2.5 sm:gap-4">
+          <motion.div variants={stagger} className="admin-grid-stats">
             <StatCard
               icon="error"
               label="Out of Stock"

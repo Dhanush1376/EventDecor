@@ -179,7 +179,8 @@ export const getDynamicGalleryFilters = asyncHandler(async (req: Request, res: R
 export const getGalleryById = asyncHandler(async (req: Request, res: Response) => {
   const item = await Gallery.findById(req.params.id)
     .populate('linkedProducts')
-    .populate('similarInspirations');
+    .populate('similarInspirations')
+    .lean();
   if (!item) throw new ApiError(404, 'Gallery item not found');
 
   // Increment view count

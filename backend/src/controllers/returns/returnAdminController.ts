@@ -360,11 +360,16 @@ export const updatePickupDetails = asyncHandler(async (req: Request, res: Respon
 
   if (req.body.status && returnRequest.pickup && req.body.status !== returnRequest.pickup.status) {
     if (req.body.status === 'assigned' && returnRequest.status === 'approved') {
-      await ReturnStateMachine.transition(req.params.id as string, 'pickup_assigned', adminId, {
-        reason: 'Pickup scheduled',
-      });
-    } else if (req.body.status === 'picked_up' && returnRequest.status !== 'picked_up') {
-      await ReturnStateMachine.transition(req.params.id as string, 'picked_up', adminId, {
+      await ReturnStateMachine.transition(
+        req.params.id as string,
+        'return_courier_assigned',
+        adminId,
+        {
+          reason: 'Pickup scheduled',
+        },
+      );
+    } else if (req.body.status === 'picked_up' && returnRequest.status !== 'return_picked_up') {
+      await ReturnStateMachine.transition(req.params.id as string, 'return_picked_up', adminId, {
         reason: 'Item picked up by courier',
       });
     }

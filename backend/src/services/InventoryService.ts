@@ -1,12 +1,51 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import Product from '../models/Product';
 import InventoryReservation from '../models/InventoryReservation';
-import InventoryLog from '../models/InventoryLog';
+import InventoryEvent from '../domains/inventory/models/InventoryEvent';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import * as Sentry from '@sentry/node';
 
 export class InventoryService {
+  private static async createInventoryEvent(
+    productId: string,
+    quantity: number,
+    eventType: string,
+    source: 'scan' | 'api' | 'system' | 'manual_override',
+    performedByStr: string,
+    notes: string,
+    orderId?: string,
+    session?: mongoose.ClientSession,
+  ) {
+    const eventId = `INV-${Date.now().toString().slice(-8)}-${Math.floor(Math.random() * 1000)}`;
+
+    let performedBy: any = { name: 'System', role: 'system' };
+    if (mongoose.Types.ObjectId.isValid(performedByStr)) {
+      performedBy = {
+        userId: new mongoose.Types.ObjectId(performedByStr),
+        name: 'User',
+        role: 'user',
+      };
+    } else if (performedByStr && performedByStr !== 'system') {
+      performedBy = { name: performedByStr, role: 'admin' };
+    }
+
+    const event = new InventoryEvent({
+      eventId,
+      productId,
+      eventType,
+      toState: 'updated',
+      quantity,
+      performedBy,
+      source,
+      notes,
+      orderId,
+    });
+
+    if (session) await event.save({ session });
+    else await event.save();
+  }
+
   /**
    * Soft-allocates inventory (creates a TTL reservation).
    * Uses ATOMIC $inc to prevent race conditions under concurrent checkout.
@@ -60,19 +99,15 @@ export class InventoryService {
     );
 
     // Audit trail
-    await InventoryLog.create(
-      [
-        {
-          product: productId,
-          previousStock: product.stock,
-          newStock: product.stock, // stock itself doesn't change on reservation
-          delta: 0,
-          reason: 'order_placed' as const,
-          performedBy: userId,
-          note: `Reserved ${quantity} units (reservedStock: ${previousReservedStock} â†’ ${product.reservedStock}). ReservationId: ${reservation[0]._id}. TTL: ${ttlMinutes}min`,
-        },
-      ],
-      { session },
+    await InventoryService.createInventoryEvent(
+      productId,
+      0, // reservation doesn't change actual stock yet
+      'reserved',
+      'api',
+      userId,
+      `Reserved ${quantity} units (reservedStock: ${previousReservedStock} → ${product.reservedStock}). ReservationId: ${reservation[0]._id}. TTL: ${ttlMinutes}min`,
+      undefined,
+      session,
     );
 
     return reservation[0];
@@ -140,18 +175,44 @@ export class InventoryService {
     await reservation.save({ session });
 
     // Audit trail
-    await InventoryLog.create(
-      [
-        {
-          product: reservation.product,
-          previousStock,
-          newStock: product.stock,
-          delta: -reservation.quantity,
-          reason: 'order_placed' as const,
-          note: `Reservation confirmed. Stock: ${previousStock} â†’ ${product.stock}. ReservedStock: ${previousReservedStock} â†’ ${product.reservedStock}. ReservationId: ${reservationId}`,
-        },
-      ],
-      { session },
+    await InventoryService.createInventoryEvent(
+      reservation.product.toString(),
+      -reservation.quantity,
+      'confirmed',
+      'api',
+      'system',
+      `Reservation confirmed. Stock: ${previousStock} → ${product.stock}. ReservedStock: ${previousReservedStock} → ${product.reservedStock}. ReservationId: ${reservationId}`,
+      undefined,
+      session,
+    );
+
+    return reservation;
+  }
+
+  /**
+   * Freezes a reservation (extends TTL significantly) when an order requires manual admin approval.
+   */
+  static async freezeReservation(
+    reservationId: string,
+    daysToExtend: number = 7,
+    session?: mongoose.ClientSession,
+  ) {
+    const reservation = await InventoryReservation.findById(reservationId).session(session || null);
+    if (!reservation) return null;
+
+    // Extend expiry by daysToExtend
+    reservation.expiresAt = new Date(Date.now() + daysToExtend * 24 * 60 * 60 * 1000);
+    await reservation.save({ session });
+
+    await InventoryService.createInventoryEvent(
+      reservation.product.toString(),
+      0,
+      'frozen',
+      'system',
+      'system',
+      `Reservation frozen for admin review. Expiry extended by ${daysToExtend} days. ReservationId: ${reservationId}`,
+      undefined,
+      session,
     );
 
     return reservation;
@@ -191,18 +252,15 @@ export class InventoryService {
     await reservation.save({ session });
 
     // Audit trail
-    await InventoryLog.create(
-      [
-        {
-          product: reservation.product,
-          previousStock: product?.stock || 0,
-          newStock: product?.stock || 0, // stock unchanged on cancel
-          delta: 0,
-          reason: 'payment_failed' as const,
-          note: `Reservation cancelled. ReservedStock: ${previousReservedStock} â†’ ${product?.reservedStock ?? 0}. ReservationId: ${reservationId}`,
-        },
-      ],
-      { session },
+    await InventoryService.createInventoryEvent(
+      reservation.product.toString(),
+      0,
+      'cancelled',
+      'system',
+      'system',
+      `Reservation cancelled. ReservedStock: ${previousReservedStock} → ${product?.reservedStock ?? 0}. ReservationId: ${reservationId}`,
+      undefined,
+      session,
     );
 
     return reservation;
@@ -236,21 +294,15 @@ export class InventoryService {
     const previousStock = product.stock - quantity;
 
     // Audit trail
-    await InventoryLog.create(
-      [
-        {
-          product: productId,
-          previousStock,
-          newStock: product.stock,
-          delta: quantity,
-          reason,
-          orderId: orderId ? new mongoose.Types.ObjectId(orderId) : undefined,
-          referenceType: referenceType || (orderId ? 'Order' : undefined),
-          performedBy: performedBy || 'system',
-          note: `Stock restored: ${previousStock} â†’ ${product.stock} (+${quantity})`,
-        },
-      ],
-      { session },
+    await InventoryService.createInventoryEvent(
+      productId,
+      quantity,
+      'restored',
+      'system',
+      performedBy || 'system',
+      `Stock restored: ${previousStock} → ${product.stock} (+${quantity})`,
+      orderId,
+      session,
     );
   }
 
@@ -289,21 +341,15 @@ export class InventoryService {
         `[INVENTORY] ReservedStock underflow during release for product ${productId}. Clamped to 0.`,
       );
 
-      await InventoryLog.create(
-        [
-          {
-            product: productId,
-            previousStock: fallbackProduct.stock,
-            newStock: fallbackProduct.stock,
-            delta: 0,
-            reason,
-            orderId: orderId ? new mongoose.Types.ObjectId(orderId) : undefined,
-            referenceType: referenceType || (orderId ? 'Order' : undefined),
-            performedBy: performedBy || 'system',
-            note: `ReservedStock released with underflow clamp. ReservedStock â†’ 0 (requested -${quantity})`,
-          },
-        ],
-        { session },
+      await InventoryService.createInventoryEvent(
+        productId,
+        0,
+        'released_underflow',
+        'system',
+        performedBy || 'system',
+        `ReservedStock released with underflow clamp. ReservedStock → 0 (requested -${quantity})`,
+        orderId,
+        session,
       );
       return;
     }
@@ -311,21 +357,15 @@ export class InventoryService {
     const previousReservedStock = product.reservedStock + quantity;
 
     // Audit trail
-    await InventoryLog.create(
-      [
-        {
-          product: productId,
-          previousStock: product.stock,
-          newStock: product.stock,
-          delta: 0,
-          reason,
-          orderId: orderId ? new mongoose.Types.ObjectId(orderId) : undefined,
-          referenceType: referenceType || (orderId ? 'Order' : undefined),
-          performedBy: performedBy || 'system',
-          note: `ReservedStock released: ${previousReservedStock} â†’ ${product.reservedStock} (-${quantity})`,
-        },
-      ],
-      { session },
+    await InventoryService.createInventoryEvent(
+      productId,
+      0,
+      'released',
+      'system',
+      performedBy || 'system',
+      `ReservedStock released: ${previousReservedStock} → ${product.reservedStock} (-${quantity})`,
+      orderId,
+      session,
     );
   }
 
@@ -359,19 +399,15 @@ export class InventoryService {
       logger.warn(`[INVENTORY] Negative stock after adjustment for ${productId}. Clamped to 0.`);
     }
 
-    await InventoryLog.create(
-      [
-        {
-          product: productId,
-          previousStock,
-          newStock: Math.max(0, product.stock),
-          delta: adjustment,
-          reason: 'admin_adjustment' as any,
-          performedBy,
-          note: `Manual inventory adjustment by ${performedBy}: ${previousStock} â†’ ${product.stock} (${adjustment >= 0 ? '+' : ''}${adjustment}). Reason: ${reason}`,
-        },
-      ],
-      { session },
+    await InventoryService.createInventoryEvent(
+      productId,
+      adjustment,
+      'adjusted',
+      'manual_override',
+      performedBy,
+      `Manual inventory adjustment by ${performedBy}: ${previousStock} → ${product.stock} (${adjustment >= 0 ? '+' : ''}${adjustment}). Reason: ${reason}`,
+      undefined,
+      session,
     );
 
     return { previousStock, newStock: Math.max(0, product.stock), adjustment };
@@ -411,19 +447,15 @@ export class InventoryService {
     }
 
     // Audit trail
-    await InventoryLog.create(
-      [
-        {
-          product: productId,
-          previousStock,
-          newStock: Math.max(0, product.stock),
-          delta: -quantity,
-          reason: 'admin_adjustment' as any,
-          performedBy,
-          note: `Damage reported: -${quantity} units. Notes: ${notes}`,
-        },
-      ],
-      { session },
+    await InventoryService.createInventoryEvent(
+      productId,
+      -quantity,
+      'damaged',
+      'manual_override',
+      performedBy,
+      `Damage reported: -${quantity} units. Notes: ${notes}`,
+      undefined,
+      session,
     );
 
     return { previousStock, newStock: Math.max(0, product.stock), damaged: quantity };
@@ -465,19 +497,15 @@ export class InventoryService {
         const previousReservedStock = product ? product.reservedStock + res.quantity : 0;
 
         // Audit trail
-        await InventoryLog.create(
-          [
-            {
-              product: res.product,
-              previousStock: product?.stock || 0,
-              newStock: product?.stock || 0,
-              delta: 0,
-              reason: 'stale_release' as const,
-              performedBy: 'system',
-              note: `Expired reservation swept. ReservedStock: ${previousReservedStock} â†’ ${product?.reservedStock ?? 0}. ReservationId: ${res._id}`,
-            },
-          ],
-          { session },
+        await InventoryService.createInventoryEvent(
+          res.product.toString(),
+          0,
+          'swept',
+          'system',
+          'system',
+          `Expired reservation swept. ReservedStock: ${previousReservedStock} → ${product?.reservedStock ?? 0}. ReservationId: ${res._id}`,
+          undefined,
+          session,
         );
 
         res.status = 'expired';

@@ -17,16 +17,16 @@ export const productService = {
     const response = await api.get(`/products/${id}`);
     return response.data;
   },
-  create: async (data) => {
-    const response = await api.post('/products', data);
+  create: async (data, config = {}) => {
+    const response = await api.post('/products', data, config);
     return response.data;
   },
-  update: async (id, data) => {
-    const response = await api.put(`/products/${id}`, data);
+  update: async (id, data, config = {}) => {
+    const response = await api.put(`/products/${id}`, data, config);
     return response.data;
   },
-  delete: async (id) => {
-    const response = await api.delete(`/products/${id}`);
+  delete: async (id, config = {}) => {
+    const response = await api.delete(`/products/${id}`, config);
     return response.data;
   },
   toggleFeatured: async (id) => {

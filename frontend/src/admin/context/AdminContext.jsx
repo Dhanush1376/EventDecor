@@ -144,6 +144,7 @@ export function AdminProvider({ children }) {
             rawLogs.map((log) => ({
               id: log._id || log.id,
               actor: (log.actorRole || 'OWNER').toUpperCase(),
+              actorEmail: log.actorEmail || 'System',
               action: log.path || log.method,
               details:
                 log.method === 'CLIENT_ACTION'
@@ -330,6 +331,27 @@ export function AdminProvider({ children }) {
 
     socket.on('booking_update', () => {
       refreshEvents();
+      refreshDashboard();
+    });
+
+    socket.on('timeline_update', () => {
+      ordersHook.refreshOrders();
+      refreshDashboard();
+    });
+
+    socket.on('custom_order_update', () => {
+      // In the absence of a dedicated custom order refresh in this context,
+      // refresh events and dashboard which may contain related data.
+      refreshEvents();
+      refreshDashboard();
+    });
+
+    socket.on('rental_update', () => {
+      refreshDashboard();
+    });
+
+    socket.on('review_update', () => {
+      refreshReviews();
       refreshDashboard();
     });
 

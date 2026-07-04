@@ -117,32 +117,46 @@ export function AdminRecommendationAnalytics() {
           icon="touch_app"
           label="Total Interactions"
           value={stats.engagementMetrics?.totalInteractions || 0}
-          change="+15.4%" // Mocked change value
-          changeType="up"
+          change={stats.engagementMetrics?.change ? `${stats.engagementMetrics.change}%` : ''}
+          changeType={
+            stats.engagementMetrics?.change > 0
+              ? 'up'
+              : stats.engagementMetrics?.change < 0
+                ? 'down'
+                : ''
+          }
           color="var(--admin-info)"
         />
         <StatCard
           icon="psychology"
           label="Active Profiles"
           value={stats.userMetrics?.activeProfiles || 0}
-          change="+8.2%"
-          changeType="up"
+          change={stats.userMetrics?.change ? `${stats.userMetrics.change}%` : ''}
+          changeType={
+            stats.userMetrics?.change > 0 ? 'up' : stats.userMetrics?.change < 0 ? 'down' : ''
+          }
           color="var(--admin-accent)"
         />
         <StatCard
           icon="ads_click"
           label="Avg Global CTR"
           value={`${((stats.conversionMetrics?.globalClickThroughRate || 0) * 100).toFixed(1)}%`}
-          change="+0.5%"
-          changeType="up"
+          change={stats.conversionMetrics?.change ? `${stats.conversionMetrics.change}%` : ''}
+          changeType={
+            stats.conversionMetrics?.change > 0
+              ? 'up'
+              : stats.conversionMetrics?.change < 0
+                ? 'down'
+                : ''
+          }
           color="var(--admin-success)"
         />
         <StatCard
           icon="trending_up"
           label="Top Trending"
           value={stats.trendingMetrics?.topCategories?.[0]?._id || 'N/A'}
-          change="Updated"
-          changeType="up"
+          change={stats.trendingMetrics?.topCategories?.[0]?._id ? 'Updated' : ''}
+          changeType="neutral"
           color="var(--admin-warning)"
         />
       </motion.div>

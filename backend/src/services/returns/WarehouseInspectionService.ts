@@ -28,10 +28,10 @@ export class WarehouseInspectionService {
       ].includes(i.warehouseStatus),
     );
 
-    if (allReceived && request.status !== 'reached_warehouse') {
-      request.status = 'reached_warehouse';
+    if (allReceived && request.status !== 'return_received') {
+      request.status = 'return_received';
       request.sla = {
-        currentStage: 'reached_warehouse',
+        currentStage: 'return_received',
         stageEnteredAt: new Date(),
         isOverdue: false,
         escalated: false,

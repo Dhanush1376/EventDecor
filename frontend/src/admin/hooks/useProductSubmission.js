@@ -154,15 +154,32 @@ export function useProductSubmission({
           : undefined,
       };
 
+      const idempotencyKey = `product_${isEditMode ? 'update' : 'create'}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
       const res = isEditMode
-        ? await productService.update(id, payload)
-        : await productService.create(payload);
+        ? await productService.update(
+            id,
+            { ...payload, __v: formData.__v },
+            { headers: { 'X-Idempotency-Key': idempotencyKey } },
+          )
+        : await productService.create(payload, {
+            headers: { 'X-Idempotency-Key': idempotencyKey },
+          });
 
       if (res.success) {
         await deleteDraft(); // Delete draft on success
         toast.success(isEditMode ? 'Product updated' : 'Product published');
+
+        // Use the server-returned entity to update the cache directly
+        const returnedProduct = res.data?.product || res.data;
+        if (returnedProduct?._id) {
+          queryClient.setQueryData(['product', returnedProduct._id], returnedProduct);
+        }
+
         queryClient.invalidateQueries({ queryKey: ['products'] });
-        queryClient.invalidateQueries({ queryKey: ['categories'] });
+        queryClient.invalidateQueries({ queryKey: ['product_categories'] });
+        queryClient.invalidateQueries({ queryKey: ['gallery'] });
+        queryClient.invalidateQueries({ queryKey: ['showcases'] });
         if (refreshProducts) {
           try {
             await refreshProducts();

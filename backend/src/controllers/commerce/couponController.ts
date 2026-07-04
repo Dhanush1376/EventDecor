@@ -35,7 +35,7 @@ export const getCouponByCode = asyncHandler(async (req: Request, res: Response) 
   const code = (req.params.code as string)?.toUpperCase();
   if (!code) throw new ApiError(400, 'Coupon code is required');
 
-  const coupon = await Coupon.findOne({ code, isActive: true });
+  const coupon = await Coupon.findOne({ code, isActive: true }).lean();
   if (!coupon) throw new ApiError(404, 'Coupon not found or expired');
 
   // Validate expiry and usage
@@ -126,7 +126,7 @@ export const applyCoupon = asyncHandler(async (req: Request, res: Response) => {
   const { orderAmount } = req.body;
   if (!code) throw new ApiError(400, 'Coupon code is required');
 
-  const coupon = await Coupon.findOne({ code, isActive: true });
+  const coupon = await Coupon.findOne({ code, isActive: true }).lean();
   if (!coupon) throw new ApiError(404, 'Invalid coupon code');
 
   if (new Date() > coupon.expiryDate) throw new ApiError(400, 'Coupon has expired');

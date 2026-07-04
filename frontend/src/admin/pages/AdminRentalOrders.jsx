@@ -30,12 +30,12 @@ const allStatuses = [
   'cancelled',
 ];
 
-export function AdminRentalOrders() {
+export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' }) {
   const _navigate = useNavigate();
   const [rentals, setRentals] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('All');
+  const [filterStatus, setFilterStatus] = useState(initialFilter);
   const [dateFilter, setDateFilter] = useState('All Time');
 
   const [selectedRental, setSelectedRental] = useState(null);
@@ -156,28 +156,39 @@ export function AdminRentalOrders() {
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
-      <PageHeader
-        title="Rental Orders"
-        subtitle={`${rentals.length} active rentals`}
-        icon="inventory_2"
-        iconColor="info"
-        mobileRow={true}
-      >
-        <button
-          onClick={downloadExcel}
-          className="admin-btn-icon text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
-          title="Export to Excel"
+      {!hideHeader && (
+        <PageHeader
+          title="Rental Orders"
+          subtitle={`${rentals.length} active rentals`}
+          icon="inventory_2"
+          iconColor="info"
+          mobileRow={true}
         >
-          <span className="material-symbols-outlined text-[24px]">download</span>
-        </button>
-      </PageHeader>
+          <button
+            onClick={downloadExcel}
+            className="admin-btn-icon text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+            title="Export to Excel"
+          >
+            <span className="material-symbols-outlined text-[24px]">download</span>
+          </button>
+        </PageHeader>
+      )}
 
-      <div className="flex w-full mt-[-8px]">
+      <div className="flex items-center justify-between w-full mt-[-8px]">
         <PeriodSelector
           value={dateFilter}
           onChange={setDateFilter}
           periods={['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year']}
         />
+        {hideHeader && (
+          <button
+            onClick={downloadExcel}
+            className="admin-btn-icon text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+            title="Export to Excel"
+          >
+            <span className="material-symbols-outlined text-[24px]">download</span>
+          </button>
+        )}
       </div>
 
       {/* Real-time Rental Financial & Operations Ledger */}

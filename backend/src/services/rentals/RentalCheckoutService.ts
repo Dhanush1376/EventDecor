@@ -247,6 +247,14 @@ export class RentalCheckoutService {
             );
 
             await session.commitTransaction();
+
+            try {
+              const { emitAdminEvent } = require('../../socket');
+              emitAdminEvent('rental_update', { rentalId: rentalOrder._id });
+            } catch (e) {
+              logger.debug('Failed to emit rental_update event', e);
+            }
+
             session.endSession();
 
             return { rentalOrder };

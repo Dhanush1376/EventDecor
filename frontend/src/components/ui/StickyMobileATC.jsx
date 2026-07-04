@@ -2,35 +2,15 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { couponService } from '../../services/domainServices';
 
 export function StickyMobileATC({ product, triggerRef }) {
-  const { addItem, setIsCartOpen, claimedCoupon } = useCart();
+  const { addItem, setIsCartOpen } = useCart();
   const { runProtectedAction } = useAuth();
   const [isVisible, setIsVisible] = React.useState(false);
   const [isScrollingDown, setIsScrollingDown] = React.useState(false);
   const lastScrollY = React.useRef(0);
 
   const productId = product?._id || product?.id;
-  const { data: couponsData } = useQuery({
-    queryKey: ['product-coupons', productId],
-    queryFn: () => couponService.getProductCoupons(productId),
-    enabled: !!productId,
-  });
-
-  const allCoupons = couponsData?.data?.all || [];
-  const activeCoupon = allCoupons.find((c) => c.code === claimedCoupon);
-
-  let discountedPrice = product?.price || 0;
-  if (activeCoupon && product?.price) {
-    const isPercentage = activeCoupon.discountType === 'percentage';
-    if (isPercentage) {
-      discountedPrice = product.price * (1 - activeCoupon.discountValue / 100);
-    } else {
-      discountedPrice = Math.max(0, product.price - activeCoupon.discountValue);
-    }
-  }
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -82,7 +62,7 @@ export function StickyMobileATC({ product, triggerRef }) {
   const handleAddToCart = () => {
     runProtectedAction(() => {
       addItem({
-        id: product.id,
+        id: productId,
         title: product.title,
         price: product.price,
         imageSrc: product.imageSrc || product.image,
@@ -108,18 +88,7 @@ export function StickyMobileATC({ product, triggerRef }) {
               Price
             </span>
             <p className="font-display text-[18px] text-black font-medium leading-none mt-1.5">
-              {activeCoupon ? (
-                <span className="flex items-baseline gap-1.5">
-                  <span className="line-through text-stone-400 text-[11px] font-normal">
-                    ₹{product?.price?.toLocaleString('en-IN')}
-                  </span>
-                  <span className="text-green-700">
-                    ₹{discountedPrice?.toLocaleString('en-IN')}
-                  </span>
-                </span>
-              ) : (
-                `₹${product?.price?.toLocaleString('en-IN')}`
-              )}
+              ₹{product?.price?.toLocaleString('en-IN')}
             </p>
           </div>
 

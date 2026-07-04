@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../../context/AuthContext';
 import { useAdmin } from '../../context/AdminContext';
 import { navSections } from './AdminSidebarData';
 import { AdminSidebarContent } from './AdminSidebarContent';
@@ -9,19 +10,34 @@ import { AdminMobileBottomNav } from './AdminMobileBottomNav';
 let preservedSidebarScrollTop = 0;
 
 export function AdminSidebar() {
-  const { sidebarOpen, sidebarMobileOpen, setSidebarMobileOpen, products } = useAdmin();
+  const { user } = useAuth();
+  const { sidebarOpen, sidebarMobileOpen, setSidebarMobileOpen, products, activeRole } = useAdmin();
   const mobileSidebarRef = React.useRef(null);
   const [sidebarSearch, setSidebarSearch] = useState('');
-  const [collapsedSections, setCollapsedSections] = useState({});
+  const [collapsedSections, setCollapsedSections] = useState({ 10: true }); // Collapse Website by default
   const [isFabOpen, setIsFabOpen] = useState(false);
 
-  const fabActions = [
-    { label: 'Coupon', icon: 'sell', path: '/admin/coupons/add' },
-    { label: 'Showcase', icon: 'view_carousel', path: '/admin/showcases/add' },
-    { label: 'Product', icon: 'inventory_2', path: '/admin/products/add' },
-    { label: 'Category', icon: 'category', path: '/admin/categories/add' },
-    { label: 'Campaign', icon: 'campaign', path: '/admin/campaigns/add' },
-  ];
+  const effectiveRole = activeRole || user?.role || 'owner';
+
+  let fabActions = [];
+  if (effectiveRole === 'warehouse') {
+    fabActions = [{ label: 'Scan', icon: 'qr_code_scanner', path: '/admin/warehouse' }];
+  } else if (effectiveRole === 'production') {
+    fabActions = [{ label: 'Start QA', icon: 'fact_check', path: '/admin/production/qa' }];
+  } else if (effectiveRole === 'support') {
+    fabActions = [
+      { label: 'Find Order', icon: 'search', path: '/admin/enterprise-search' },
+      { label: 'New Return', icon: 'assignment_return', path: '/admin/returns/new' },
+    ];
+  } else {
+    fabActions = [
+      { label: 'Coupon', icon: 'sell', path: '/admin/coupons/add' },
+      { label: 'Showcase', icon: 'view_carousel', path: '/admin/events/showcases/add' },
+      { label: 'Product', icon: 'inventory_2', path: '/admin/products/add' },
+      { label: 'Category', icon: 'category', path: '/admin/categories/add' },
+      { label: 'Campaign', icon: 'campaign', path: '/admin/campaigns/add' },
+    ];
+  }
 
   const toggleSection = (si) => {
     setCollapsedSections((prev) => ({ ...prev, [si]: !prev[si] }));

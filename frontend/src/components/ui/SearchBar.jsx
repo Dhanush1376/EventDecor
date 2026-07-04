@@ -1,5 +1,5 @@
 import debounce from 'lodash.debounce';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 
 export function SearchBar({
   value = '',
@@ -10,15 +10,28 @@ export function SearchBar({
   onClick,
 }) {
   const [localValue, setLocalValue] = useState(value);
+  const onChangeRef = useRef(onChange);
+  const lastEmittedValue = useRef(value);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   // Sync internal state with external prop (for clear/reset)
   useEffect(() => {
-    setLocalValue(value);
+    if (value !== lastEmittedValue.current) {
+      setLocalValue(value);
+      lastEmittedValue.current = value;
+    }
   }, [value]);
 
   const debouncedOnChange = useMemo(
-    () => debounce((newVal) => onChange?.({ target: { value: newVal } }), 400),
-    [onChange],
+    () =>
+      debounce((newVal) => {
+        lastEmittedValue.current = newVal;
+        onChangeRef.current?.({ target: { value: newVal } });
+      }, 400),
+    [],
   );
 
   useEffect(() => {
@@ -33,6 +46,7 @@ export function SearchBar({
 
   const handleClear = () => {
     setLocalValue('');
+    lastEmittedValue.current = '';
     debouncedOnChange.cancel();
     onChange?.({ target: { value: '' } });
   };
@@ -75,6 +89,12 @@ export function SearchBar({
           boxShadow: 'none',
           WebkitAppearance: 'none',
           appearance: 'none',
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.target.blur();
+          }
         }}
         aria-label="Search"
       />

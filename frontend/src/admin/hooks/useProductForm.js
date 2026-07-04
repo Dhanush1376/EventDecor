@@ -111,6 +111,7 @@ export function useProductForm({ id, isEditMode }) {
         exchangeWindowDays: 7,
         requiresInspection: true,
       },
+      __v: 0,
     }),
     [],
   );
@@ -223,6 +224,7 @@ export function useProductForm({ id, isEditMode }) {
                 exchangeWindowDays: 7,
                 requiresInspection: true,
               },
+              __v: p.__v !== undefined ? p.__v : 0,
             });
             if (p.rentalEnabled) setShowRentalSettings(true);
           }
