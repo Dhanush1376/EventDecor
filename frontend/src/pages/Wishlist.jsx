@@ -2,15 +2,25 @@
 import React, { useState, useEffect } from 'react';
 import { m as motion } from 'framer-motion';
 import { WishlistView } from '../components/wishlist/WishlistView';
+import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
+
 export function Wishlist() {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-surface min-h-screen pt-24 pb-32 font-body text-on-surface"
+      className="bg-surface min-h-screen pt-24 pb-32 font-body text-on-surface relative overflow-hidden"
     >
-      <WishlistView isEmbedded={false} />
+      <MandalaArtDecor
+        variant={2}
+        size={450}
+        className="-top-24 -right-24 absolute opacity-[0.06] z-0"
+        spinDuration={240}
+      />
+      <div className="relative z-10">
+        <WishlistView isEmbedded={false} />
+      </div>
     </motion.div>
   );
 }

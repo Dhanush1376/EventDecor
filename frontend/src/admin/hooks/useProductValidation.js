@@ -11,29 +11,28 @@ export function useProductValidation({
   handleCancelAction,
   setLastDraftSaved,
 }) {
-  // Form Validation per step
   const getStepErrors = () => {
     const errors = {};
     if (currentStep === 0) {
+      if (!formData.title.trim()) errors.title = 'Product title is required';
+      if (!formData.category && !formData.primaryCategory) errors.category = 'Category is required';
+    }
+    if (currentStep === 1) {
+      if (!formData.price || Number(formData.price) <= 0) errors.price = 'Enter a valid price';
+      if (formData.stock === '' || Number(formData.stock) < 0)
+        errors.stock = 'Enter stock quantity';
+    }
+    if (currentStep === 2) {
       // Check if we have any images in the array or as a primary image string
-      const hasAnyImage = formData.images.length > 0 || !!formData.imageSrc;
+      const hasAnyImage = formData.images?.length > 0 || !!formData.imageSrc;
 
-      if (formData.images.length > 0 && !formData.imageSrc) {
+      if (formData.images?.length > 0 && !formData.imageSrc) {
         setFormData((prev) => ({ ...prev, imageSrc: prev.images[0] }));
       }
 
       if (!hasAnyImage) {
         errors.imageSrc = 'At least one product image is required';
       }
-    }
-    if (currentStep === 1) {
-      if (!formData.title.trim()) errors.title = 'Product title is required';
-      if (!formData.category && !formData.primaryCategory) errors.category = 'Category is required';
-    }
-    if (currentStep === 4) {
-      if (!formData.price || Number(formData.price) <= 0) errors.price = 'Enter a valid price';
-      if (formData.stock === '' || Number(formData.stock) < 0)
-        errors.stock = 'Enter stock quantity';
     }
     return errors;
   };

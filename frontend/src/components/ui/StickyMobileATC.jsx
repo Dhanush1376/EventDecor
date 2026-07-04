@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 export function StickyMobileATC({ product, triggerRef }) {
   const { addItem, setIsCartOpen } = useCart();
   const { runProtectedAction } = useAuth();
+  const [added, setAdded] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
   const [isScrollingDown, setIsScrollingDown] = React.useState(false);
   const lastScrollY = React.useRef(0);
@@ -69,7 +70,8 @@ export function StickyMobileATC({ product, triggerRef }) {
         formattedPrice: `Rs. ${product.price?.toLocaleString()}`,
         quantity: 1,
       });
-      setIsCartOpen(true);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
     });
   };
 
@@ -94,12 +96,40 @@ export function StickyMobileATC({ product, triggerRef }) {
 
           <button
             type="button"
-            onClick={handleAddToCart}
-            className="bg-black text-white h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg active:scale-[0.96] transition-all flex items-center justify-center gap-1.5 shrink-0 border-none cursor-pointer"
+            onClick={added ? undefined : handleAddToCart}
+            disabled={added}
+            className={`h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg active:scale-[0.96] transition-all flex items-center justify-center gap-1.5 shrink-0 border-none ${
+              added
+                ? 'bg-[#e0d6b8] text-[#1a1c1a] cursor-default'
+                : 'bg-black text-white cursor-pointer'
+            }`}
             aria-label={`Add ${product?.title || 'product'} to bag`}
           >
-            <span className="material-symbols-outlined text-[15px]">shopping_bag</span>
-            <span>Add to Bag</span>
+            <AnimatePresence mode="wait">
+              {added ? (
+                <motion.span
+                  key="added"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[15px]">check</span>
+                  <span>Added</span>
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="add"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[15px]">shopping_bag</span>
+                  <span>Add to Bag</span>
+                </motion.span>
+              )}
+            </AnimatePresence>
           </button>
         </motion.div>
       )}

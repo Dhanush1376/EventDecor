@@ -333,7 +333,7 @@ export function CartView({ isEmbedded = false }) {
         {items.length === 0 ? (
           <CartEmptyState activeCartMode={activeCartMode} />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-6">
             {/* Left Content List: Cart Entities */}
             <div className="lg:col-span-7 xl:col-span-8 space-y-3">
               {discountOnMRP + couponDiscountAmount > 0 && (
@@ -411,7 +411,7 @@ export function CartView({ isEmbedded = false }) {
                 </AnimatePresence>
               </motion.div>
 
-              <div className="mt-6">
+              <div className="mt-2 lg:mt-6">
                 <React.Suspense fallback={<Skeleton className="h-52 w-full rounded-2xl" />}>
                   <RecommendationSystem
                     category={items.length > 0 ? items[0].category : undefined}
@@ -529,7 +529,7 @@ export function CartView({ isEmbedded = false }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
-            className="bg-surface-container-low min-h-screen pt-[72px] lg:pt-[88px] pb-[160px] lg:pb-28 font-body text-on-surface"
+            className="bg-surface-container-low min-h-screen pt-[56px] lg:pt-[64px] pb-[160px] lg:pb-28 font-body text-on-surface"
           >
             {innerContent}
           </motion.div>

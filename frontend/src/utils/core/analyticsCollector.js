@@ -62,7 +62,8 @@ const flushEvents = async () => {
   try {
     // We use fetch with keepalive for page unloads, or regular axios otherwise
     if (document.visibilityState === 'hidden') {
-      const url = `${import.meta.env.VITE_API_URL}/analytics/events`;
+      const { getApiUrl } = await import('../../config/apiConfig');
+      const url = `${getApiUrl()}/analytics/events`;
       const token = localStorage.getItem('token');
 
       const headers = { 'Content-Type': 'application/json' };

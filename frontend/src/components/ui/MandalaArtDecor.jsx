@@ -34,7 +34,13 @@ export function MandalaArtDecor({
   const blend = dark ? blendModeDark : blendMode;
 
   // Enforce a minimum opacity to ensure the mandala art is clearly visible across the entire site
-  const effectiveOpacity = Math.max(opacity || 0, 0.25);
+  const effectiveOpacity =
+    variant === 2 ? Math.max(opacity || 0, 0.65) : Math.max(opacity || 0, 0.25);
+
+  const fadeMask =
+    variant === 2
+      ? 'radial-gradient(circle closest-side, rgba(0,0,0,1) 15%, rgba(0,0,0,0) 80%)'
+      : 'radial-gradient(circle closest-side, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)';
 
   return (
     <motion.img
@@ -54,9 +60,8 @@ export function MandalaArtDecor({
         height: size,
         animation: spin ? `slow-spin ${spinDuration}s linear infinite` : 'none',
         mixBlendMode: blend,
-        WebkitMaskImage:
-          'radial-gradient(circle closest-side, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)',
-        maskImage: 'radial-gradient(circle closest-side, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)',
+        WebkitMaskImage: fadeMask,
+        maskImage: fadeMask,
         ...style,
       }}
       loading="lazy"

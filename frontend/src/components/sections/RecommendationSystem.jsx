@@ -151,18 +151,15 @@ export function RecommendationSystem({
       className={`${compact ? 'pt-1 pb-0 lg:py-2' : 'pt-6 pb-12 lg:pt-10 lg:pb-16'} bg-transparent relative overflow-hidden`}
     >
       {/* Subtle Glow Accent */}
-      <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
+      <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none z-0" />
 
-      {/* Mandala Aesthetics */}
-      {!compact && (
-        <MandalaArtDecor
-          variant={3}
-          size={800}
-          opacity={0.06}
-          className="-bottom-[300px] -left-[20px] lg:left-0"
-          spinDuration={180}
-        />
-      )}
+      <MandalaArtDecor
+        variant={3}
+        size={compact ? 350 : 600}
+        opacity={0.06}
+        className="absolute -bottom-[100px] -left-[100px] lg:-bottom-[150px] lg:-left-[150px] pointer-events-none z-0"
+        spinDuration={180}
+      />
 
       <div className="max-w-max-width mx-auto px-4 lg:px-6 lg:px-8 relative z-10">
         {!compact && !hideHeader && (

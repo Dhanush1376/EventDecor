@@ -1,5 +1,4 @@
-import debounce from 'lodash.debounce';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export function SearchBar({
   value = '',
@@ -25,29 +24,16 @@ export function SearchBar({
     }
   }, [value]);
 
-  const debouncedOnChange = useMemo(
-    () =>
-      debounce((newVal) => {
-        lastEmittedValue.current = newVal;
-        onChangeRef.current?.({ target: { value: newVal } });
-      }, 400),
-    [],
-  );
-
-  useEffect(() => {
-    return () => debouncedOnChange.cancel();
-  }, [debouncedOnChange]);
-
   const handleInputChange = (e) => {
     const newValue = e.target.value;
     setLocalValue(newValue);
-    debouncedOnChange(newValue);
+    lastEmittedValue.current = newValue;
+    onChange?.({ target: { value: newValue } });
   };
 
   const handleClear = () => {
     setLocalValue('');
     lastEmittedValue.current = '';
-    debouncedOnChange.cancel();
     onChange?.({ target: { value: '' } });
   };
 

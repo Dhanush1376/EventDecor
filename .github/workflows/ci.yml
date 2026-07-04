@@ -20,6 +20,14 @@ env:
   FIELD_ENCRYPTION_KEY: ci_field_encryption_key_must_be_at_least_32_chars_long
   BACKEND_URL: http://localhost:5000
   GROQ_API_KEY: ci_groq_placeholder_key
+  # Services and Webhooks placeholders
+  REDIS_URL: redis://127.0.0.1:6379
+  SENTRY_DSN: https://ci_placeholder@sentry.io/12345
+  ALERT_WEBHOOK_URL: https://discord.com/api/webhooks/ci_placeholder
+  # GitHub Backup placeholders
+  GITHUB_BACKUP_TOKEN: ci_github_token_placeholder
+  GITHUB_BACKUP_OWNER: ci_placeholder_owner
+  GITHUB_BACKUP_REPO: ci_placeholder_repo
   # Payment placeholders (required by envSchema.ts)
   RAZORPAY_KEY_ID: rzp_test_ci_placeholder_key
   RAZORPAY_KEY_SECRET: ci_razorpay_secret_placeholder

@@ -37,6 +37,7 @@ const errorMiddleware = (err: any, req: Request, res: Response, _next: NextFunct
     err.message?.includes('topology destroyed') ||
     err.message?.includes('ECONNREFUSED') ||
     err.message?.includes('buffering timed out') ||
+    err.name === 'MongoWaitQueueTimeoutError' ||
     (err.name === 'MongooseError' && err.message?.includes('timed out'))
   ) {
     statusCode = 503;

@@ -159,7 +159,7 @@ function CheckoutContent() {
         ))}
 
       <div className="max-w-[1240px] mx-auto w-full pt-6 lg:pt-10 px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-6 items-start">
           {/* Left Column: Active Step Form Details */}
           <div
             className={

@@ -159,11 +159,13 @@ export function AdminContent() {
         let updatedSection;
         if (Array.isArray(payload)) {
           updatedSection = [...payload];
+          updatedSection.status = 'modified';
         } else if (Array.isArray(prev[section])) {
           updatedSection = [...prev[section]];
           Object.assign(updatedSection, payload);
+          updatedSection.status = 'modified';
         } else {
-          updatedSection = { ...(prev[section] || {}), ...payload };
+          updatedSection = { ...(prev[section] || {}), ...payload, status: 'modified' };
         }
         return {
           ...prev,

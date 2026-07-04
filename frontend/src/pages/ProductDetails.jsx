@@ -143,8 +143,9 @@ export function ProductDetails() {
       {/* Decorative Mandalas */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
         <MandalaElement
-          className="absolute top-[40%] -right-20 opacity-[0.03]"
-          size={600}
+          className="absolute top-[35%] -right-[25%]"
+          size={700}
+          opacity={0.65}
           duration={180}
           variant={2}
         />

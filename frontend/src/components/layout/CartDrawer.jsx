@@ -194,7 +194,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                   x: -30,
                                   transition: { duration: 0.2 },
                                 }}
-                                key={`${item.id}-${item.variant || ''}`}
+                                key={`${item.id || item._id}-${item.variant || ''}`}
                                 className="relative flex gap-5 p-4 rounded-3xl bg-gradient-to-br from-white to-[#fafafa] border border-black/[0.04] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition-all duration-300 group"
                               >
                                 <div className="w-[85px] h-[105px] rounded-[16px] overflow-hidden flex-shrink-0 bg-[#f5f5f5] relative shadow-inner border border-black/[0.02]">
@@ -236,7 +236,11 @@ export function CartDrawer({ isOpen, onClose }) {
                                       {item.quantity > 1 ? (
                                         <button
                                           onClick={() =>
-                                            updateQuantity(item.id, item.variant, item.quantity - 1)
+                                            updateQuantity(
+                                              item.id || item._id,
+                                              item.variant,
+                                              item.quantity - 1,
+                                            )
                                           }
                                           className="w-7 h-7 min-h-0 rounded-full flex items-center justify-center text-black/50 hover:bg-black/5 hover:text-[#1a1a1a] transition-all cursor-pointer active:scale-95"
                                           aria-label="Decrease quantity"
@@ -250,15 +254,15 @@ export function CartDrawer({ isOpen, onClose }) {
                                           <button
                                             onClick={() =>
                                               setConfirmingRemove({
-                                                id: item.id,
+                                                id: item.id || item._id,
                                                 variant: item.variant,
                                               })
                                             }
-                                            className={`w-7 h-7 min-h-0 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${confirmingRemove?.id === item.id && confirmingRemove?.variant === item.variant ? 'bg-[#ff3b30] text-white shadow-md' : 'text-black/30 hover:bg-[#ff3b30]/10 hover:text-[#ff3b30]'}`}
+                                            className={`w-7 h-7 min-h-0 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${confirmingRemove?.id === (item.id || item._id) && confirmingRemove?.variant === item.variant ? 'bg-[#ff3b30] text-white shadow-md' : 'text-black/30 hover:bg-[#ff3b30]/10 hover:text-[#ff3b30]'}`}
                                             aria-label="Confirm remove"
                                           >
                                             <span className="material-symbols-outlined text-[15px]">
-                                              {confirmingRemove?.id === item.id &&
+                                              {confirmingRemove?.id === (item.id || item._id) &&
                                               confirmingRemove?.variant === item.variant
                                                 ? 'check'
                                                 : 'delete'}
@@ -271,7 +275,11 @@ export function CartDrawer({ isOpen, onClose }) {
                                       </span>
                                       <button
                                         onClick={() =>
-                                          updateQuantity(item.id, item.variant, item.quantity + 1)
+                                          updateQuantity(
+                                            item.id || item._id,
+                                            item.variant,
+                                            item.quantity + 1,
+                                          )
                                         }
                                         className="w-7 h-7 rounded-full flex items-center justify-center text-black/50 hover:bg-black/5 hover:text-[#1a1a1a] transition-all cursor-pointer active:scale-95"
                                         aria-label="Increase quantity"
@@ -283,13 +291,13 @@ export function CartDrawer({ isOpen, onClose }) {
                                     </div>
                                   </div>
                                 </div>
-                                {confirmingRemove?.id === item.id &&
+                                {confirmingRemove?.id === (item.id || item._id) &&
                                   confirmingRemove?.variant === item.variant && (
                                     <motion.button
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
                                       onClick={() => {
-                                        removeItem(item.id, item.variant);
+                                        removeItem(item.id || item._id, item.variant);
                                         setConfirmingRemove(null);
                                       }}
                                       className="absolute inset-0 z-20 bg-[#ff3b30]/95 backdrop-blur-sm text-white flex flex-col items-center justify-center gap-1.5 rounded-3xl font-label text-[10px] uppercase tracking-widest font-bold shadow-inner transition-colors hover:bg-[#ff3b30]"
@@ -328,7 +336,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                   x: -30,
                                   transition: { duration: 0.2 },
                                 }}
-                                key={`${item.id}-${item.variant || ''}`}
+                                key={`${item.id || item._id}-${item.variant || ''}`}
                                 className="relative flex gap-5 p-4 rounded-3xl bg-gradient-to-br from-[#faf8f2] to-[#f5f1e6] border border-[#b38235]/10 shadow-[0_4px_20px_rgba(179,130,53,0.06)] hover:shadow-[0_12px_30px_rgba(179,130,53,0.12)] hover:-translate-y-0.5 transition-all duration-300 group"
                               >
                                 <div className="w-[85px] h-[105px] rounded-[16px] overflow-hidden flex-shrink-0 bg-[#eeeade] relative shadow-inner border border-black/[0.02]">
@@ -374,15 +382,15 @@ export function CartDrawer({ isOpen, onClose }) {
                                         <button
                                           onClick={() =>
                                             setConfirmingRemove({
-                                              id: item.id,
+                                              id: item.id || item._id,
                                               variant: item.variant,
                                             })
                                           }
-                                          className={`w-7 h-7 min-h-0 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${confirmingRemove?.id === item.id && confirmingRemove?.variant === item.variant ? 'bg-[#ff3b30] text-white shadow-md' : 'text-black/30 hover:bg-[#ff3b30]/10 hover:text-[#ff3b30]'}`}
+                                          className={`w-7 h-7 min-h-0 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${confirmingRemove?.id === (item.id || item._id) && confirmingRemove?.variant === item.variant ? 'bg-[#ff3b30] text-white shadow-md' : 'text-black/30 hover:bg-[#ff3b30]/10 hover:text-[#ff3b30]'}`}
                                           aria-label="Confirm remove"
                                         >
                                           <span className="material-symbols-outlined text-[15px]">
-                                            {confirmingRemove?.id === item.id &&
+                                            {confirmingRemove?.id === (item.id || item._id) &&
                                             confirmingRemove?.variant === item.variant
                                               ? 'check'
                                               : 'delete'}
@@ -392,13 +400,13 @@ export function CartDrawer({ isOpen, onClose }) {
                                     </div>
                                   </div>
                                 </div>
-                                {confirmingRemove?.id === item.id &&
+                                {confirmingRemove?.id === (item.id || item._id) &&
                                   confirmingRemove?.variant === item.variant && (
                                     <motion.button
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
                                       onClick={() => {
-                                        removeItem(item.id, item.variant);
+                                        removeItem(item.id || item._id, item.variant);
                                         setConfirmingRemove(null);
                                       }}
                                       className="absolute inset-0 z-20 bg-[#ff3b30]/95 backdrop-blur-sm text-white flex flex-col items-center justify-center gap-1.5 rounded-3xl font-label text-[10px] uppercase tracking-widest font-bold shadow-inner transition-colors hover:bg-[#ff3b30]"
@@ -439,7 +447,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                   x: -30,
                                   transition: { duration: 0.2 },
                                 }}
-                                key={`${item.id}-${item.variant || ''}`}
+                                key={`${item.id || item._id}-${item.variant || ''}`}
                                 className="relative flex gap-5 p-4 rounded-3xl bg-gradient-to-br from-[#faf8f2] to-[#f5f1e6] border border-[#8c7335]/10 shadow-[0_4px_20px_rgba(140,115,53,0.06)] hover:shadow-[0_12px_30px_rgba(140,115,53,0.12)] hover:-translate-y-0.5 transition-all duration-300 group"
                               >
                                 <div className="w-[85px] h-[105px] rounded-[16px] overflow-hidden flex-shrink-0 bg-[#eeeade] relative shadow-inner border border-black/[0.02]">
@@ -484,7 +492,11 @@ export function CartDrawer({ isOpen, onClose }) {
                                       {item.quantity > 1 ? (
                                         <button
                                           onClick={() =>
-                                            updateQuantity(item.id, item.variant, item.quantity - 1)
+                                            updateQuantity(
+                                              item.id || item._id,
+                                              item.variant,
+                                              item.quantity - 1,
+                                            )
                                           }
                                           className="w-7 h-7 min-h-0 rounded-full flex items-center justify-center text-black/50 hover:bg-[#8c7335]/10 hover:text-[#8c7335] transition-all cursor-pointer active:scale-95"
                                           aria-label="Decrease quantity"
@@ -498,15 +510,15 @@ export function CartDrawer({ isOpen, onClose }) {
                                           <button
                                             onClick={() =>
                                               setConfirmingRemove({
-                                                id: item.id,
+                                                id: item.id || item._id,
                                                 variant: item.variant,
                                               })
                                             }
-                                            className={`w-7 h-7 min-h-0 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${confirmingRemove?.id === item.id && confirmingRemove?.variant === item.variant ? 'bg-[#ff3b30] text-white shadow-md' : 'text-black/30 hover:bg-[#ff3b30]/10 hover:text-[#ff3b30]'}`}
+                                            className={`w-7 h-7 min-h-0 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${confirmingRemove?.id === (item.id || item._id) && confirmingRemove?.variant === item.variant ? 'bg-[#ff3b30] text-white shadow-md' : 'text-black/30 hover:bg-[#ff3b30]/10 hover:text-[#ff3b30]'}`}
                                             aria-label="Confirm remove"
                                           >
                                             <span className="material-symbols-outlined text-[15px]">
-                                              {confirmingRemove?.id === item.id &&
+                                              {confirmingRemove?.id === (item.id || item._id) &&
                                               confirmingRemove?.variant === item.variant
                                                 ? 'check'
                                                 : 'delete'}
@@ -519,7 +531,11 @@ export function CartDrawer({ isOpen, onClose }) {
                                       </span>
                                       <button
                                         onClick={() =>
-                                          updateQuantity(item.id, item.variant, item.quantity + 1)
+                                          updateQuantity(
+                                            item.id || item._id,
+                                            item.variant,
+                                            item.quantity + 1,
+                                          )
                                         }
                                         className="w-7 h-7 rounded-full flex items-center justify-center text-black/50 hover:bg-[#8c7335]/10 hover:text-[#8c7335] transition-all cursor-pointer active:scale-95"
                                         aria-label="Increase quantity"
@@ -531,13 +547,13 @@ export function CartDrawer({ isOpen, onClose }) {
                                     </div>
                                   </div>
                                 </div>
-                                {confirmingRemove?.id === item.id &&
+                                {confirmingRemove?.id === (item.id || item._id) &&
                                   confirmingRemove?.variant === item.variant && (
                                     <motion.button
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
                                       onClick={() => {
-                                        removeItem(item.id, item.variant);
+                                        removeItem(item.id || item._id, item.variant);
                                         setConfirmingRemove(null);
                                       }}
                                       className="absolute inset-0 z-20 bg-[#ff3b30]/95 backdrop-blur-sm text-white flex flex-col items-center justify-center gap-1.5 rounded-3xl font-label text-[10px] uppercase tracking-widest font-bold shadow-inner transition-colors hover:bg-[#ff3b30]"
@@ -561,33 +577,33 @@ export function CartDrawer({ isOpen, onClose }) {
             {/* Footer with Totals & Promotions */}
             {items.length > 0 && (
               <div
-                className="p-5 pt-4 border-t border-black/[0.04] space-y-3 bg-white/90 backdrop-blur-xl relative flex-shrink-0"
-                style={{ paddingBottom: `calc(16px + env(safe-area-inset-bottom, 0px))` }}
+                className="p-4 pt-3 border-t border-black/[0.04] space-y-2 bg-white/90 backdrop-blur-xl relative flex-shrink-0"
+                style={{ paddingBottom: `calc(12px + env(safe-area-inset-bottom, 0px))` }}
               >
                 {/* Promotions Panel */}
                 {drawerCoupons.length > 0 && !appliedCoupon && (
-                  <div className="mb-4 -mx-5 px-5">
-                    <h4 className="font-display text-[10px] uppercase tracking-[0.2em] text-black/40 font-bold mb-2">
+                  <div className="mb-2 -mx-4 px-4">
+                    <h4 className="font-display text-[9px] uppercase tracking-[0.2em] text-black/40 font-bold mb-1.5">
                       Available Offers
                     </h4>
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x">
+                    <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-hide snap-x">
                       {drawerCoupons.map((coupon) => (
                         <div
                           key={coupon.code}
                           onClick={() => {
                             setClaimedCoupon(coupon.code);
                           }}
-                          className="snap-start shrink-0 w-[240px] p-3 rounded-xl border border-[var(--color-gold-dark)]/20 bg-gradient-to-br from-[#faf8f2] to-white shadow-sm cursor-pointer hover:shadow-md transition-all group"
+                          className="snap-start shrink-0 w-[200px] p-2 rounded-lg border border-[var(--color-gold-dark)]/20 bg-gradient-to-br from-[#faf8f2] to-white shadow-sm cursor-pointer hover:shadow-md transition-all group"
                         >
-                          <div className="flex justify-between items-start mb-1">
-                            <span className="font-mono text-[12px] font-bold text-[#1a1a1a] bg-black/5 px-1.5 py-0.5 rounded">
+                          <div className="flex justify-between items-start mb-0.5">
+                            <span className="font-mono text-[10px] font-bold text-[#1a1a1a] bg-black/5 px-1.5 py-0.5 rounded">
                               {coupon.code}
                             </span>
-                            <span className="text-[10px] font-bold text-[var(--color-gold-dark)] group-hover:scale-105 transition-transform">
+                            <span className="text-[9px] font-bold text-[var(--color-gold-dark)] group-hover:scale-105 transition-transform">
                               Tap to Apply
                             </span>
                           </div>
-                          <p className="font-body text-[11px] text-black/60 leading-tight">
+                          <p className="font-body text-[10px] text-black/60 leading-tight">
                             {coupon.discountType === 'percentage'
                               ? `Get ${coupon.discountValue}% OFF`
                               : `Get ₹${coupon.discountValue} OFF`}
@@ -600,16 +616,16 @@ export function CartDrawer({ isOpen, onClose }) {
                   </div>
                 )}
 
-                <div className="flex justify-between items-center text-[13px]">
+                <div className="flex justify-between items-center text-[12px]">
                   <span className="font-body text-black/50 font-medium">Subtotal</span>
                   <span className="font-display font-medium text-[#1a1a1a]">
                     ₹{subtotal.toLocaleString()}
                   </span>
                 </div>
                 {appliedCoupon && appliedCoupon.calculatedDiscount > 0 && (
-                  <div className="flex justify-between items-center text-[13px] text-green-700 font-medium bg-green-50/50 p-1.5 rounded-lg -mx-1.5">
+                  <div className="flex justify-between items-center text-[12px] text-green-700 font-medium bg-green-50/50 p-1 rounded -mx-1">
                     <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px] text-green-600">
+                      <span className="material-symbols-outlined text-[13px] text-green-600">
                         local_activity
                       </span>
                       Discount ({appliedCoupon.code})
@@ -618,45 +634,45 @@ export function CartDrawer({ isOpen, onClose }) {
                   </div>
                 )}
 
-                <div className="h-[1px] bg-gradient-to-r from-transparent via-black/[0.06] to-transparent my-2" />
+                <div className="h-[1px] bg-gradient-to-r from-transparent via-black/[0.06] to-transparent my-1.5" />
 
                 <div className="flex justify-between items-end">
                   <div className="space-y-0.5">
-                    <span className="font-body text-[14px] font-bold text-[#1a1a1a]">
+                    <span className="font-body text-[13px] font-bold text-[#1a1a1a]">
                       Estimated Total
                     </span>
-                    <p className="font-body text-[10px] text-black/40 uppercase tracking-[0.1em] font-bold">
+                    <p className="font-body text-[9px] text-black/40 uppercase tracking-[0.1em] font-bold">
                       Shipping calculated at checkout
                     </p>
                   </div>
-                  <span className="font-display text-[20px] leading-none font-bold text-[#1a1a1a]">
+                  <span className="font-display text-[18px] leading-none font-bold text-[#1a1a1a]">
                     ₹{(subtotal - (appliedCoupon?.calculatedDiscount || 0)).toLocaleString()}
                   </span>
                 </div>
 
-                <div className="pt-4 pb-2 space-y-2.5 flex flex-col">
+                <div className="pt-2 pb-1 flex gap-2">
+                  <Link
+                    to="/cart"
+                    onClick={onClose}
+                    className="flex-1 block text-center py-2.5 rounded-full font-label text-[10px] uppercase tracking-[0.15em] text-[#1a1a1a] bg-transparent hover:bg-black/5 border border-black/10 active:scale-[0.98] transition-all duration-300 font-bold group"
+                  >
+                    View Bag
+                  </Link>
                   <Link
                     to="/checkout"
                     onMouseEnter={() =>
                       prefetchManager.prefetchRoute('/checkout', { kind: 'hover' })
                     }
                     onClick={onClose}
-                    className="relative overflow-hidden block w-full bg-[#1a1a1a] text-white py-3.5 rounded-full font-label text-[11px] uppercase tracking-[0.15em] text-center hover:bg-black active:scale-[0.98] transition-all duration-300 shadow-md font-bold group"
+                    className="flex-[1.5] relative overflow-hidden block bg-[#1a1a1a] text-white py-2.5 rounded-full font-label text-[10px] uppercase tracking-[0.15em] text-center hover:bg-black active:scale-[0.98] transition-all duration-300 shadow-sm font-bold group"
                   >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      Proceed to Checkout
-                      <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform duration-300">
+                    <span className="relative z-10 flex items-center justify-center gap-1.5">
+                      Checkout
+                      <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform duration-300">
                         arrow_forward
                       </span>
                     </span>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                  </Link>
-                  <Link
-                    to="/cart"
-                    onClick={onClose}
-                    className="block w-full text-center py-3 rounded-full font-label text-[11px] uppercase tracking-[0.15em] text-[#1a1a1a] bg-transparent hover:bg-black/5 border border-black/10 active:scale-[0.98] transition-all duration-300 font-bold group"
-                  >
-                    View Full Bag
                   </Link>
                 </div>
               </div>

@@ -31,9 +31,14 @@ const requiredVars = [
   'GITHUB_BACKUP_REPO',
 ];
 
-console.log('\\n=========================================');
+console.log('\n=========================================');
 console.log('   PHASE A.0: PRE-DEPLOYMENT VALIDATION  ');
-console.log('=========================================\\n');
+console.log('=========================================\n');
+
+if (process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true') {
+  console.log('✅ CI Environment detected. Skipping production credential validation.');
+  process.exit(0);
+}
 
 let allPass = true;
 

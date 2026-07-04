@@ -77,11 +77,11 @@ export function GalleryInspiration() {
       id="h1-inspiration"
     >
       {/* Background glow gradient behind mandala */}
-      <div className="absolute -bottom-32 -right-32 w-[250px] h-[250px] bg-primary-container/15 rounded-full blur-[70px] pointer-events-none z-[-1]" />
+      <div className="absolute -bottom-32 -left-32 w-[250px] h-[250px] bg-primary-container/15 rounded-full blur-[70px] pointer-events-none z-[-1]" />
       <MandalaArtDecor
-        variant={3}
+        variant={2}
         size={450}
-        className="-bottom-20 -right-20 z-[-1]"
+        className="-bottom-20 -left-20 z-[-1]"
         opacity={0.07}
         spinDuration={160}
       />

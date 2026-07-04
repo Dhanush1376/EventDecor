@@ -56,7 +56,8 @@ export function EventCustomerDashboard({
     if (isEmbedded && selectedEventBookingId === null && selectedBooking) {
       setSelectedBooking(null);
     }
-  }, [selectedEventBookingId, isEmbedded, selectedBooking, setSelectedBooking]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEventBookingId, isEmbedded, setSelectedBooking]);
 
   return (
     <div
