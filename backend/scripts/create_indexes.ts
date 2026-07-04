@@ -15,7 +15,7 @@ try {
 }
 dotenv.config();
 
-const mongoUri = process.env.MONGO_URI;
+const mongoUri = process.env.MONGO_URI as string;
 
 if (!mongoUri) {
   logger.error('MONGO_URI is not defined in environment variables.');
