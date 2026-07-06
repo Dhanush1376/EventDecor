@@ -30,6 +30,13 @@ const defaultOptions: sanitizeHtml.IOptions = {
     '*': ['style', 'class', 'id'],
   },
   allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
+  textFilter: (text) =>
+    text
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>'),
 };
 
 export const sanitizeString = (str: string, options?: sanitizeHtml.IOptions): string => {

@@ -81,77 +81,50 @@ export function useProductSubmission({
           (url) => url && (url.startsWith('blob:') || url.startsWith('http')),
         );
 
-        if (activeLocalUrls.length > 0) {
-          const uploadData = new FormData();
-          const remoteUrlUploadData = new FormData();
+        const uploadData = new FormData();
+        const localUrlMap = {};
+        let uploadIndex = 0;
 
-          const localUrlMap = {};
-          const remoteUrlMap = {};
-
-          let uploadIndex = 0;
-          let remoteUploadIndex = 0;
-
+        try {
           for (const url of activeLocalUrls) {
             const pending = formData.pendingUploads.find((p) => p.localUrl === url);
             if (pending) {
-              if (typeof pending.file === 'string' && remoteUrlMap[url] === undefined) {
-                // It's a remote URL that needs to be uploaded to Cloudinary
-                remoteUrlUploadData.append('urls', pending.file);
-                remoteUrlMap[url] = remoteUploadIndex++;
-              } else if (typeof pending.file !== 'string' && localUrlMap[url] === undefined) {
-                // It's a File object that goes to the backend media library
-                uploadData.append('images', pending.file);
+              if (localUrlMap[url] === undefined) {
+                uploadData.append('file', pending.file);
                 localUrlMap[url] = uploadIndex++;
               }
             }
           }
 
-          try {
-            // Upload local files via backend Media Library
-            let uploadedLocalImages = [];
-            if (uploadIndex > 0) {
-              const res = await uploadService.uploadImages(uploadData, 'products');
-              if (res.success && res.images) {
-                uploadedLocalImages = res.images;
-              } else {
-                throw new Error('Failed to upload local images');
-              }
-            }
+          // Upload all pending files and remote URLs directly to Cloudinary (bypassing backend limits)
+          let uploadedImages = [];
+          if (uploadIndex > 0) {
+            const { uploadDirectToCloudinary } = await import('../../services/api/_shared');
+            const res = await uploadDirectToCloudinary(uploadData, false, 'products');
 
-            // Upload remote URLs directly to Cloudinary
-            let uploadedRemoteImages = [];
-            if (remoteUploadIndex > 0) {
-              const { uploadDirectToCloudinary } = await import('../../services/api/_shared');
-              const res = await uploadDirectToCloudinary(remoteUrlUploadData, false, 'products');
-              if (res.success && res.images) {
-                uploadedRemoteImages = res.images;
-              } else {
-                throw new Error('Failed to upload remote URLs');
-              }
+            if (res.success && res.images) {
+              uploadedImages = res.images;
+            } else {
+              throw new Error('Failed to upload images');
             }
-
-            // Replace local blob URLs and pending remote URLs with the uploaded Cloudinary URLs
-            if (finalImageSrc) {
-              if (localUrlMap[finalImageSrc] !== undefined) {
-                finalImageSrc = uploadedLocalImages[localUrlMap[finalImageSrc]];
-              } else if (remoteUrlMap[finalImageSrc] !== undefined) {
-                finalImageSrc = uploadedRemoteImages[remoteUrlMap[finalImageSrc]];
-              }
-            }
-
-            for (let i = 0; i < finalImages.length; i++) {
-              if (finalImages[i]) {
-                if (localUrlMap[finalImages[i]] !== undefined) {
-                  finalImages[i] = uploadedLocalImages[localUrlMap[finalImages[i]]];
-                } else if (remoteUrlMap[finalImages[i]] !== undefined) {
-                  finalImages[i] = uploadedRemoteImages[remoteUrlMap[finalImages[i]]];
-                }
-              }
-            }
-          } catch (uploadErr) {
-            toast.dismiss('upload-toast');
-            throw uploadErr;
           }
+
+          // Replace local blob URLs and pending remote URLs with the uploaded Cloudinary URLs
+          if (finalImageSrc && localUrlMap[finalImageSrc] !== undefined) {
+            finalImageSrc = uploadedImages[localUrlMap[finalImageSrc]];
+          }
+
+          for (let i = 0; i < finalImages.length; i++) {
+            if (finalImages[i] && localUrlMap[finalImages[i]] !== undefined) {
+              finalImages[i] = uploadedImages[localUrlMap[finalImages[i]]];
+            }
+          }
+        } catch (error) {
+          import('../../utils/core/logger').then(({ default: logger }) => {
+            logger.error('Failed to upload pending images:', error);
+          });
+          toast.error(error.message || 'Failed to upload images. Please try again.');
+          return null; // Return null instead of re-throwing to handle gracefully
         }
         toast.dismiss('upload-toast');
       }

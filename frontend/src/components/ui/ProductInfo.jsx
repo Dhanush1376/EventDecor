@@ -10,7 +10,13 @@ import { useQuery } from '@tanstack/react-query';
 import { couponService } from '../../services/domainServices';
 import { MandalaArtDecor } from './MandalaArtDecor';
 
-export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
+export function ProductInfo({
+  product,
+  atcRef,
+  localAppliedCoupon,
+  setLocalAppliedCoupon,
+  _maxQuantity = 10,
+}) {
   const navigate = useNavigate();
   const { attemptAddToCart, claimedCoupon } = useCart();
   const { toggleItem, isWishlisted } = useWishlist();
@@ -18,7 +24,6 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
   const [quantity, _setQuantity] = React.useState(1);
   const [added, setAdded] = React.useState(false);
   const [_startingChat, _setStartingChat] = React.useState(false);
-  const [localAppliedCoupon, setLocalAppliedCoupon] = React.useState(null);
 
   const productId = product?._id || product?.id;
   const { data: couponsData } = useQuery({
@@ -237,13 +242,6 @@ export function ProductInfo({ product, atcRef, _maxQuantity = 10 }) {
       <ProductNoteCard
         customerNote={product.customerNote}
         complimentaryGift={product.complimentaryGift}
-      />
-
-      {/* Available Coupons & Savings Section */}
-      <ProductCoupons
-        product={product}
-        localAppliedCoupon={localAppliedCoupon}
-        setLocalAppliedCoupon={setLocalAppliedCoupon}
       />
 
       {/* Pricing & Shipping */}

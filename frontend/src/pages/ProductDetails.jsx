@@ -1,11 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
 import { ProductGallery } from '../components/ui/ProductGallery';
 import { ProductInfo, CustomThemeCard } from '../components/ui/ProductInfo';
+import { ProductCoupons } from '../components/ui/ProductCoupons';
 import { Skeleton, ProductDetailSkeleton } from '../components/ui/Skeleton';
 import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { StickyMobileATC } from '../components/ui/StickyMobileATC';
-import React, { useEffect, useMemo, useRef, Suspense } from 'react';
+import React, { useEffect, useMemo, useRef, Suspense, useState } from 'react';
 import { userService } from '../services/domainServices';
 import { useProduct } from '../hooks/useProductQueries';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +32,7 @@ export function ProductDetails() {
   const atcRef = useRef(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [localAppliedCoupon, setLocalAppliedCoupon] = useState(null);
 
   const { data: product, isLoading: loading, error } = useProduct(id);
 
@@ -171,12 +173,25 @@ export function ProductDetails() {
           <div className="flex flex-col gap-6 lg:gap-10">
             <ProductGallery images={galleryImages} product={product} />
 
+            <div className="flex flex-col gap-6 lg:gap-8">
+              <ProductCoupons
+                product={product}
+                localAppliedCoupon={localAppliedCoupon}
+                setLocalAppliedCoupon={setLocalAppliedCoupon}
+              />
+            </div>
+
             {/* Show in left column ONLY on lg and above (Laptop) */}
             <div className="hidden lg:flex flex-col gap-8 pt-4">
               <CustomThemeCard product={product} />
             </div>
           </div>
-          <ProductInfo product={product} atcRef={atcRef} />
+          <ProductInfo
+            product={product}
+            atcRef={atcRef}
+            localAppliedCoupon={localAppliedCoupon}
+            setLocalAppliedCoupon={setLocalAppliedCoupon}
+          />
         </div>
 
         {/* Show full width ONLY on md and below lg (Tablet) */}

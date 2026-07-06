@@ -31,7 +31,7 @@ export function useOptimisticCartMutation({
         const action = async () => {
           setIsCartOpen(true);
           await queryClient.cancelQueries({ queryKey: ['cart'] });
-          const previousCart = queryClient.getQueryData(['cart']);
+          const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
           let rollbackCart = previousCart;
 
           if (previousCart) {
@@ -75,7 +75,7 @@ export function useOptimisticCartMutation({
               previousCart[targetCartKey]?.summary?.shippingFee || 0,
             );
 
-            queryClient.setQueryData(['cart'], {
+            queryClient.setQueryData(['cart', 'authenticated'], {
               ...previousCart,
               [targetCartKey]: {
                 ...previousCart[targetCartKey],
@@ -101,7 +101,7 @@ export function useOptimisticCartMutation({
           } catch (err) {
             logger.error('Failed to add item to database cart:', err);
             toast.error(getErrorMessage(err, 'Unable to add item to bag'));
-            if (rollbackCart) queryClient.setQueryData(['cart'], rollbackCart);
+            if (rollbackCart) queryClient.setQueryData(['cart', 'authenticated'], rollbackCart);
           }
         };
         runProtectedAction(action);
@@ -204,7 +204,7 @@ export function useOptimisticCartMutation({
       if (isAuthenticated && activeCartMode !== 'custom') {
         const action = async () => {
           await queryClient.cancelQueries({ queryKey: ['cart'] });
-          const previousCart = queryClient.getQueryData(['cart']);
+          const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
           let rollbackCart = previousCart;
 
           if (previousCart) {
@@ -225,7 +225,7 @@ export function useOptimisticCartMutation({
               previousCart[targetCartKey]?.summary?.shippingFee || 0,
             );
 
-            queryClient.setQueryData(['cart'], {
+            queryClient.setQueryData(['cart', 'authenticated'], {
               ...previousCart,
               [targetCartKey]: {
                 ...previousCart[targetCartKey],
@@ -245,7 +245,7 @@ export function useOptimisticCartMutation({
           } catch (err) {
             logger.error('Failed to remove item from database cart:', err);
             toast.error(getErrorMessage(err, 'Unable to remove item from bag'));
-            if (rollbackCart) queryClient.setQueryData(['cart'], rollbackCart);
+            if (rollbackCart) queryClient.setQueryData(['cart', 'authenticated'], rollbackCart);
           }
         };
         runProtectedAction(action);
@@ -303,7 +303,7 @@ export function useOptimisticCartMutation({
       if (isAuthenticated && activeCartMode !== 'custom') {
         const action = async () => {
           await queryClient.cancelQueries({ queryKey: ['cart'] });
-          const previousCart = queryClient.getQueryData(['cart']);
+          const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
           if (previousCart) {
             let targetCartKey =
               activeCartMode === 'purchase'
@@ -325,7 +325,7 @@ export function useOptimisticCartMutation({
               previousCart[targetCartKey].summary?.shippingFee || 0,
             );
 
-            queryClient.setQueryData(['cart'], {
+            queryClient.setQueryData(['cart', 'authenticated'], {
               ...previousCart,
               [targetCartKey]: {
                 ...previousCart[targetCartKey],
@@ -345,7 +345,7 @@ export function useOptimisticCartMutation({
           }
 
           syncTimeoutRef.current = setTimeout(async () => {
-            const currentCart = queryClient.getQueryData(['cart']);
+            const currentCart = queryClient.getQueryData(['cart', 'authenticated']);
             const allItems = [
               ...(currentCart?.purchaseCart?.items || []),
               ...(currentCart?.rentalCart?.items || []),
@@ -418,7 +418,7 @@ export function useOptimisticCartMutation({
       if (isAuthenticated && activeCartMode !== 'custom') {
         try {
           await queryClient.cancelQueries({ queryKey: ['cart'] });
-          const currentCart = queryClient.getQueryData(['cart']);
+          const currentCart = queryClient.getQueryData(['cart', 'authenticated']);
           const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart'; // Note: skipping custom for this quick merge since custom uses its own mode
           const otherItems = currentCart?.[otherCartKey]?.items || [];
           const payload = otherItems.map((item) => {
