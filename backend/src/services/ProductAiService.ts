@@ -29,7 +29,11 @@ export class ProductAiService {
 
     if (imageSrc) {
       try {
-        if (imageSrc.startsWith('/')) {
+        if (imageSrc.startsWith('data:image/')) {
+          const parts = imageSrc.split(';');
+          mimeType = parts[0].split(':')[1];
+          base64Image = parts[1].split(',')[1];
+        } else if (imageSrc.startsWith('/')) {
           const absolutePath = path.resolve(process.cwd(), 'public', imageSrc.substring(1));
           if (fs.existsSync(absolutePath)) {
             const buffer = fs.readFileSync(absolutePath);

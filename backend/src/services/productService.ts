@@ -29,8 +29,25 @@ function enforceSmartPricing(data: Partial<IProduct>, existingProduct?: IProduct
       ? data.isManualRentalPricing
       : existingProduct?.isManualRentalPricing;
 
-  // If manual pricing is enabled, we just accept the incoming values (they should be validated by mongoose schema)
-  if (isManual === true) return;
+  // If manual pricing is explicitly disabled, we overwrite. If explicitly enabled, we return.
+  if (data.isManualRentalPricing === false) {
+    // proceed with smart pricing overwrite
+  } else if (isManual === true) {
+    return;
+  } else {
+    // Auto-detect if explicit non-zero values were sent in case the flag was dropped
+    const hasManualRental =
+      data.rentalPricing &&
+      (Number(data.rentalPricing.daily) > 0 ||
+        Number(data.rentalPricing.weekly) > 0 ||
+        Number(data.rentalPricing.monthly) > 0);
+    const hasManualDeposit = data.securityDeposit !== undefined && Number(data.securityDeposit) > 0;
+
+    if (hasManualRental || hasManualDeposit) {
+      data.isManualRentalPricing = true;
+      return;
+    }
+  }
 
   const price = data.price !== undefined ? Number(data.price) : Number(existingProduct?.price || 0);
 

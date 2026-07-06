@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard } from 'lucide-react';
+import CreditCard from 'lucide-react/dist/esm/icons/credit-card';
 import { m as motion, AnimatePresence } from 'framer-motion';
 
 export function PaymentModal({

@@ -3,7 +3,7 @@ import { OptimizedImage } from '../../../components/ui/OptimizedImage';
 import toast from 'react-hot-toast';
 import { uploadService } from '../../../services/domainServices';
 import { compressImage } from '../../../utils/media/imageCompressor';
-import { Check } from 'lucide-react';
+import Check from 'lucide-react/dist/esm/icons/check';
 
 export function CustomizerDrawer({
   selectedShowcase,

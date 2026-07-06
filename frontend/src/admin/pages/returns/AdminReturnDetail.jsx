@@ -4,7 +4,8 @@ import { format } from 'date-fns';
 import { useReturnManagement } from '../../hooks/useReturnManagement';
 import { handleImageError } from '../../../utils/media/imageUtils';
 import { PLACEHOLDER_IMAGES } from '../../../constants/placeholderImages';
-import { Check, X } from 'lucide-react';
+import Check from 'lucide-react/dist/esm/icons/check';
+import X from 'lucide-react/dist/esm/icons/x';
 import {
   PageHeader,
   StatusBadge,

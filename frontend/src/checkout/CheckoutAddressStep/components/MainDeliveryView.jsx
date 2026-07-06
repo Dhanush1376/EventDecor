@@ -1,5 +1,5 @@
 import toast from 'react-hot-toast';
-import { Check } from 'lucide-react';
+import Check from 'lucide-react/dist/esm/icons/check';
 
 export function MainDeliveryView({
   activeSelectedAddress,

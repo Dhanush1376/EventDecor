@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import {
-  AlertTriangle,
-  ShieldAlert,
-  CheckCircle,
-  ArrowRight,
-  PlayCircle,
-  Clock,
-} from 'lucide-react';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import ShieldAlert from 'lucide-react/dist/esm/icons/shield-alert';
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
+import PlayCircle from 'lucide-react/dist/esm/icons/play-circle';
+import Clock from 'lucide-react/dist/esm/icons/clock';
 import backupService from '../../services/backupService';
 import './BackupCenter.css';
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { EVENT_TYPES } from '../../config/constants';
 import { LocationSelectorModal } from '../../components/ui/LocationSelectorModal';
-import { Check } from 'lucide-react';
+import Check from 'lucide-react/dist/esm/icons/check';
 
 export function EventCustomizerDrawer({ event, bookingForm }) {
   const { state, actions } = bookingForm;

@@ -7,7 +7,7 @@ import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowRight } from 'lucide-react';
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
 
 // Extracted Wizard Steps
 import { MediaStep } from '../components/showcase-wizard/MediaStep';

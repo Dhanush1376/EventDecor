@@ -167,33 +167,13 @@ export function ProductDetails() {
       </div>
 
       <section className="pt-[68px] lg:pt-0 pb-12 lg:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-8 lg:gap-12 xl:gap-20">
           <div className="flex flex-col gap-6 lg:gap-10">
             <ProductGallery images={galleryImages} product={product} />
 
-            {/* Desktop Only: Moved from ProductInfo to balance layout */}
-            <div className="hidden md:flex flex-col gap-8 mt-2">
-              <div className="space-y-3">
-                <h3 className="font-label-sm text-[11px] text-on-surface/40 uppercase tracking-[0.25em] font-bold">
-                  About this Item
-                </h3>
-                <p className="font-body-md text-on-surface/80 font-normal leading-relaxed text-[15px]">
-                  {product.description ||
-                    'A beautiful handmade item that mixes traditional Indian design with modern style.'}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-6 border-t border-outline-variant/10">
-                <FeatureItem icon="draw" label="Handmade Work" />
-                <FeatureItem icon="workspace_premium" label="100% Original" />
-                <FeatureItem icon="all_inclusive" label="Lifetime Warranty" />
-                <FeatureItem icon="public" label="Fairly Sourced" />
-              </div>
-
-              {/* Show in left column ONLY on lg and above (Laptop) */}
-              <div className="hidden lg:block pt-2">
-                <CustomThemeCard product={product} />
-              </div>
+            {/* Show in left column ONLY on lg and above (Laptop) */}
+            <div className="hidden lg:flex flex-col gap-8 pt-4">
+              <CustomThemeCard product={product} />
             </div>
           </div>
           <ProductInfo product={product} atcRef={atcRef} />

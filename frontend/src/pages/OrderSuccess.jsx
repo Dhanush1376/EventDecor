@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { handleImageError } from '../utils/media/imageUtils';
 import { orderService, rentalService } from '../services/domainServices';
 import logger from '../utils/core/logger';
-import { Check } from 'lucide-react';
+import Check from 'lucide-react/dist/esm/icons/check';
 
 const _BarcodeSVG = ({ _val }) => (
   <svg viewBox="0 0 200 40" className="w-full h-9" xmlns="http://www.w3.org/2000/svg">

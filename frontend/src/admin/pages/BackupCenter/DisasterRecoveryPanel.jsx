@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import {
-  Shield,
-  Zap,
-  AlertOctagon,
-  Activity,
-  ChevronRight,
-  Settings,
-  CheckCircle,
-} from 'lucide-react';
+import Shield from 'lucide-react/dist/esm/icons/shield';
+import Zap from 'lucide-react/dist/esm/icons/zap';
+import AlertOctagon from 'lucide-react/dist/esm/icons/alert-octagon';
+import Activity from 'lucide-react/dist/esm/icons/activity';
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
+import Settings from 'lucide-react/dist/esm/icons/settings';
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 import backupService from '../../services/backupService';
 
 const DisasterRecoveryPanel = () => {

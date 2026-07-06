@@ -22,11 +22,9 @@ export const dynamicResponseCache = (ttlSeconds: number, scope: CacheScope = 'pu
   return async (req: Request, res: Response, next: NextFunction) => {
     if (req.method !== 'GET') return next();
 
-    // For public routes, authenticated requests should bypass cache to prevent leaking state
-    if (scope === 'public') {
-      const isAuthRequest = req.headers.authorization || req.cookies?.siri_refresh_token;
-      if (isAuthRequest) return next();
-    }
+    // Removed: Authenticated users should NOT bypass cache for public catalog endpoints.
+    // Public product and category data is identical for all users. Bypassing the cache
+    // for authenticated sessions causes severe database load in production.
 
     // If redis is unavailable but we are in production, we fallback to memory cache
     if (
@@ -75,7 +73,7 @@ export const dynamicResponseCache = (ttlSeconds: number, scope: CacheScope = 'pu
           const stringified = typeof body === 'string' ? body : JSON.stringify(body);
           if (redisClient) {
             redisClient
-              .setex(cacheKey, ttlSeconds, stringified)
+              .setEx(cacheKey, ttlSeconds, stringified)
               .catch((err) =>
                 logger.warn(`[${scope.toUpperCase()} CACHE] Failed to store response:`, err),
               );

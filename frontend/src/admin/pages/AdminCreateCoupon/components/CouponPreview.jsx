@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react';
+import Star from 'lucide-react/dist/esm/icons/star';
 export function CouponPreview({ formData }) {
   return (
     <div className="admin-card overflow-hidden">

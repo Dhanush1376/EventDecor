@@ -5,7 +5,7 @@ import { uploadService } from '../../services/api/uploadService';
 import toast from 'react-hot-toast';
 import { CustomerContactGate } from '../shared/CustomerContactGate';
 import { Skeleton } from './Skeleton';
-import { Check } from 'lucide-react';
+import Check from 'lucide-react/dist/esm/icons/check';
 
 export function DynamicCustomOrderWizard({
   onComplete,

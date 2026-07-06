@@ -396,6 +396,7 @@ export function ProductGallery({ images = [], product }) {
                         compact={true}
                         horizontalScroll={true}
                         hideHeader={true}
+                        hideMandala={true}
                       />
                     </React.Suspense>
                   </div>

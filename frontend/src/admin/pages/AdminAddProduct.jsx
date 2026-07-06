@@ -18,7 +18,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useProductForm } from '../hooks/useProductForm';
 import toast from 'react-hot-toast';
 
-import { ArrowRight } from 'lucide-react';
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
 import { useAdmin } from '../context/AdminContext';
 import { useProductAI } from '../hooks/useProductAI';
 import { useProductValidation } from '../hooks/useProductValidation';

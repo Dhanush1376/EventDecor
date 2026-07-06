@@ -105,7 +105,13 @@ export const TrendingProducts = React.memo(function TrendingProducts() {
     );
   }
   if (!products || products.length === 0) {
-    return null;
+    return (
+      <HomeSectionState
+        title={`No products available for ${config.sectionTitle || 'Trending Now'}`}
+        message="Check back soon for new arrivals."
+        icon="inventory_2"
+      />
+    );
   }
 
   return (

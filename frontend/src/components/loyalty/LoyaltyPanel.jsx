@@ -1,6 +1,6 @@
 const LoyaltySkeleton = () => <div className="animate-pulse bg-gray-200 h-48 rounded-md"></div>;
 import { m as motion } from 'framer-motion';
-import { PartyPopper } from 'lucide-react';
+import PartyPopper from 'lucide-react/dist/esm/icons/party-popper';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import storeSettingsService from '../../services/api/storeSettingsService';

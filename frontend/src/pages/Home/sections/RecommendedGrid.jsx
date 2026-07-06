@@ -85,7 +85,13 @@ export function RecommendedGrid() {
     );
   }
   if (!products || products.length === 0) {
-    return null;
+    return (
+      <HomeSectionState
+        title={`No products available for ${config.sectionTitle || 'Recommended For You'}`}
+        message="Check back soon for new arrivals."
+        icon="inventory_2"
+      />
+    );
   }
 
   return (

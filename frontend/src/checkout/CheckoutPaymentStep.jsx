@@ -1,4 +1,4 @@
-import { AlertTriangle } from 'lucide-react';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import toast from 'react-hot-toast';

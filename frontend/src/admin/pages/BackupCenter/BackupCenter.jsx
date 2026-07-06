@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Routes, Route, Link, useLocation } from 'react-router-dom';
-import {
-  Activity,
-  Shield,
-  HardDrive,
-  AlertTriangle,
-  Cloud,
-  Server,
-  DownloadCloud,
-  Zap,
-  CheckCircle,
-  Database,
-} from 'lucide-react';
+import Activity from 'lucide-react/dist/esm/icons/activity';
+import Shield from 'lucide-react/dist/esm/icons/shield';
+import HardDrive from 'lucide-react/dist/esm/icons/hard-drive';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import Cloud from 'lucide-react/dist/esm/icons/cloud';
+import Server from 'lucide-react/dist/esm/icons/server';
+import DownloadCloud from 'lucide-react/dist/esm/icons/download-cloud';
+import Zap from 'lucide-react/dist/esm/icons/zap';
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
+import Database from 'lucide-react/dist/esm/icons/database';
 import backupService from '../../services/backupService';
 import './BackupCenter.css';
 

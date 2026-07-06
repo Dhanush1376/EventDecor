@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Save, Lock, Key } from 'lucide-react';
+import Save from 'lucide-react/dist/esm/icons/save';
+import Lock from 'lucide-react/dist/esm/icons/lock';
+import Key from 'lucide-react/dist/esm/icons/key';
 import backupService from '../../services/backupService';
 
 const RetentionManager = () => {

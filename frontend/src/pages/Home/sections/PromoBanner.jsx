@@ -3,7 +3,7 @@ import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { useCart } from '../../../context/CartContext';
 import { useActiveCoupons } from '../../../hooks/useActiveCoupons';
 import toast from 'react-hot-toast';
-import { Sparkles } from 'lucide-react';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
 
 /**
  * A slim, elegant promotional banner that highlights an offer or campaign.

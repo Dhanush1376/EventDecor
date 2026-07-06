@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Search, Shield } from 'lucide-react';
+import Download from 'lucide-react/dist/esm/icons/download';
+import Search from 'lucide-react/dist/esm/icons/search';
+import Shield from 'lucide-react/dist/esm/icons/shield';
 import backupService from '../../services/backupService';
 
 const AuditTrail = () => {

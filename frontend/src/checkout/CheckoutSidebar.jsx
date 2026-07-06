@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { AlertTriangle, Check } from 'lucide-react';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import Check from 'lucide-react/dist/esm/icons/check';
 import { useCheckout } from './CheckoutProvider';
 import { useActiveCoupons } from '../hooks/useActiveCoupons';
 import { CustomerContactGate } from '../components/shared/CustomerContactGate';

@@ -65,7 +65,13 @@ export function BestSellers() {
     );
   }
   if (!products || products.length === 0) {
-    return null;
+    return (
+      <HomeSectionState
+        title={`No products available for ${config.sectionTitle || 'Featured Products'}`}
+        message="Check back soon for new arrivals."
+        icon="inventory_2"
+      />
+    );
   }
 
   return (

@@ -15,7 +15,6 @@ export default function AdminSystemHub() {
   // Determine initial tab based on URL path
   const getInitialTab = () => {
     const path = location.pathname;
-    if (path.includes('/system/roles')) return 'roles';
     if (path.includes('/system/notifications')) return 'notifications';
     if (path.includes('/system/settings')) return 'settings';
     if (path.includes('/system/audit')) return 'audit';
@@ -31,8 +30,7 @@ export default function AdminSystemHub() {
   };
 
   const tabs = [
-    { id: 'users', label: 'Users', icon: 'groups' },
-    { id: 'roles', label: 'Roles', icon: 'admin_panel_settings' },
+    { id: 'users', label: 'Users & Roles', icon: 'groups' },
     { id: 'notifications', label: 'Notifications', icon: 'notifications' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
     { id: 'audit', label: 'Audit History', icon: 'history' },
@@ -68,8 +66,6 @@ export default function AdminSystemHub() {
 
       <div>
         {activeTab === 'users' && <AdminTeam hideHeader={true} />}
-        {activeTab === 'roles' && <AdminTeam hideHeader={true} />}{' '}
-        {/* Roles is managed inside Team */}
         {activeTab === 'notifications' && <AdminNotifications hideHeader={true} />}
         {activeTab === 'settings' && <AdminSettings hideHeader={true} />}
         {activeTab === 'audit' && <AdminAuditHistory hideHeader={true} />}

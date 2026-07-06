@@ -31,18 +31,33 @@ export function useProductAI({
     setIsAIGenerating(true);
     try {
       let imageToAnalyze = actualFile;
-      if (!imageToAnalyze && formData.imageSrc && typeof formData.imageSrc === 'string') {
-        imageToAnalyze = formData.imageSrc;
+      if (!imageToAnalyze && formData.imageSrc) {
+        if (formData.pendingUploads?.length > 0) {
+          const upload = formData.pendingUploads.find((p) => p.localUrl === formData.imageSrc);
+          if (upload) imageToAnalyze = upload.file;
+        }
+        if (
+          !imageToAnalyze &&
+          typeof formData.imageSrc === 'string' &&
+          !formData.imageSrc.startsWith('blob:')
+        ) {
+          imageToAnalyze = formData.imageSrc;
+        }
+      }
+
+      let finalImageSrc = typeof imageToAnalyze === 'string' ? imageToAnalyze : null;
+      if (imageToAnalyze instanceof File || imageToAnalyze instanceof Blob) {
+        finalImageSrc = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(imageToAnalyze);
+        });
       }
 
       const categoryList = categoriesList;
       const title = formData.title || '';
 
-      const generatedData = await productService.aiAutofill(
-        title,
-        typeof imageToAnalyze === 'string' ? imageToAnalyze : null,
-        categoryList,
-      );
+      const generatedData = await productService.aiAutofill(title, finalImageSrc, categoryList);
 
       if (generatedData?.success && generatedData?.data) {
         setAiAnalysisResult(generatedData.data);

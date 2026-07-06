@@ -2,7 +2,7 @@ import { m as motion } from 'framer-motion';
 import { SkeletonDashboard, fadeUp, stagger } from '../components/AdminUIKit';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin } from 'lucide-react';
+import MapPin from 'lucide-react/dist/esm/icons/map-pin';
 import { bookingService, userService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import logger from '../../utils/core/logger';

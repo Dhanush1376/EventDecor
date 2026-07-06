@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import X from 'lucide-react/dist/esm/icons/x';
 import { customOrderService } from '../../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../../utils/core/errorHelpers';

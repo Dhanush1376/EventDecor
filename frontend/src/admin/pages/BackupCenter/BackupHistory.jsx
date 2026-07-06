@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Eye, Download, ShieldCheck, Lock, Unlock, CheckCircle } from 'lucide-react';
+import Eye from 'lucide-react/dist/esm/icons/eye';
+import Download from 'lucide-react/dist/esm/icons/download';
+import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check';
+import Lock from 'lucide-react/dist/esm/icons/lock';
+import Unlock from 'lucide-react/dist/esm/icons/unlock';
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 import backupService from '../../services/backupService';
 import './BackupCenter.css';
 

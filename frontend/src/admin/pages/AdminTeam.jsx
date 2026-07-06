@@ -579,113 +579,109 @@ export function AdminTeam({ hideHeader }) {
       )}
 
       {/* Dynamic Slide-Up Bottom-Sheet Curation Drawer */}
-      {typeof document !== 'undefined' &&
-        createPortal(
-          <AnimatePresence>
-            {isInviteOpen && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[990] flex items-end sm:items-center justify-center admin-section-root p-0 sm:p-4"
-              >
-                <div
+      <AnimatePresence>
+        {isInviteOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[990] flex items-end sm:items-center justify-center admin-section-root p-0 sm:p-4"
+          >
+            <div
+              onClick={() => setIsInviteOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+              className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] sm:rounded-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] sm:max-h-[85vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t sm:border border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))] sm:pb-8"
+            >
+              {/* Grab Handle (Mobile Only) */}
+              <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0 sm:hidden" />
+
+              <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-4 mb-5 shrink-0">
+                <div>
+                  <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
+                      person_add
+                    </span>
+                    Invite Team Member
+                  </h3>
+                  <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5 leading-normal">
+                    Grants admin access to an existing user email.
+                  </p>
+                </div>
+                <button
                   onClick={() => setIsInviteOpen(false)}
-                  className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
-                />
-
-                <motion.div
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 50 }}
-                  transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-                  className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] sm:rounded-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] sm:max-h-[85vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t sm:border border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+env(safe-area-inset-bottom))] sm:pb-8"
+                  className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
                 >
-                  {/* Grab Handle (Mobile Only) */}
-                  <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0 sm:hidden" />
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
 
-                  <div className="flex items-start justify-between border-b border-[var(--admin-border-subtle)] pb-4 mb-5 shrink-0">
-                    <div>
-                      <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
-                          person_add
-                        </span>
-                        Invite Team Member
-                      </h3>
-                      <p className="text-[10.5px] text-[var(--admin-text-tertiary)] mt-0.5 leading-normal">
-                        Grants admin access to an existing user email.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setIsInviteOpen(false)}
-                      className="w-7 h-7 rounded-full bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-error-light)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-error)] flex items-center justify-center transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">close</span>
-                    </button>
-                  </div>
+              <form onSubmit={handleSendInvite} className="space-y-4 flex-1">
+                <div className="space-y-1">
+                  <label className="admin-label">Member Registered Email *</label>
+                  <input
+                    required
+                    type="email"
+                    placeholder="e.g. team.member@gmail.com"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    className="admin-input"
+                  />
+                </div>
 
-                  <form onSubmit={handleSendInvite} className="space-y-4 flex-1">
-                    <div className="space-y-1">
-                      <label className="admin-label">Member Registered Email *</label>
-                      <input
-                        required
-                        type="email"
-                        placeholder="e.g. team.member@gmail.com"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
-                        className="admin-input"
-                      />
-                    </div>
+                <div className="space-y-1">
+                  <label className="admin-label">Team Role Designation *</label>
+                  <CustomSelect
+                    value={inviteRole}
+                    onChange={setInviteRole}
+                    options={assignableRoles.map((role) => ({
+                      label: role.replace('_', ' ').toUpperCase(),
+                      value: role,
+                    }))}
+                    disabled={assignableRoles.length === 0}
+                    placeholder={
+                      assignableRoles.length === 0
+                        ? 'No assignable roles available'
+                        : 'Select a role'
+                    }
+                  />
+                </div>
 
-                    <div className="space-y-1">
-                      <label className="admin-label">Team Role Designation *</label>
-                      <CustomSelect
-                        value={inviteRole}
-                        onChange={setInviteRole}
-                        options={assignableRoles.map((role) => ({
-                          label: role.replace('_', ' ').toUpperCase(),
-                          value: role,
-                        }))}
-                        disabled={assignableRoles.length === 0}
-                        placeholder={
-                          assignableRoles.length === 0
-                            ? 'No assignable roles available'
-                            : 'Select a role'
-                        }
-                      />
-                    </div>
+                <div className="space-y-1">
+                  <label className="admin-label">Access Scope Permissions</label>
+                  <input
+                    type="text"
+                    value={invitePermissions}
+                    onChange={(e) => setInvitePermissions(e.target.value)}
+                    placeholder="e.g. Products, Inventory, Custom Blueprints"
+                    className="admin-input"
+                  />
+                </div>
 
-                    <div className="space-y-1">
-                      <label className="admin-label">Access Scope Permissions</label>
-                      <input
-                        type="text"
-                        value={invitePermissions}
-                        onChange={(e) => setInvitePermissions(e.target.value)}
-                        placeholder="e.g. Products, Inventory, Custom Blueprints"
-                        className="admin-input"
-                      />
-                    </div>
+                <button
+                  disabled={submitting}
+                  type="submit"
+                  className="admin-btn admin-btn-primary w-full py-3 text-[11px] font-bold uppercase tracking-wider mt-6 active:scale-95 shadow-sm"
+                >
+                  {submitting ? 'Sending...' : 'Send Invitation Request'}
+                </button>
+              </form>
 
-                    <button
-                      disabled={submitting}
-                      type="submit"
-                      className="admin-btn admin-btn-primary w-full py-3 text-[11px] font-bold uppercase tracking-wider mt-6 active:scale-95 shadow-sm"
-                    >
-                      {submitting ? 'Sending...' : 'Send Invitation Request'}
-                    </button>
-                  </form>
-
-                  <div className="border-t border-[var(--admin-border-subtle)] pt-4 mt-5 text-[10.5px] text-[var(--admin-text-tertiary)] leading-relaxed shrink-0">
-                    <strong>SMTP Security Note:</strong> Members invited receive an explicit secure
-                    email. Access rights to the studio panel are pending until the user logs into
-                    their account and clicks accept.
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body,
+              <div className="border-t border-[var(--admin-border-subtle)] pt-4 mt-5 text-[10.5px] text-[var(--admin-text-tertiary)] leading-relaxed shrink-0">
+                <strong>SMTP Security Note:</strong> Members invited receive an explicit secure
+                email. Access rights to the studio panel are pending until the user logs into their
+                account and clicks accept.
+              </div>
+            </motion.div>
+          </motion.div>
         )}
+      </AnimatePresence>
     </motion.div>
   );
 }

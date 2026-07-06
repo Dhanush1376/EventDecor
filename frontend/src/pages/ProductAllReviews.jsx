@@ -9,7 +9,7 @@ import { WriteReviewModal, getPremiumReviewerName } from '../components/sections
 import { OptimizedImage } from '../components/ui/OptimizedImage';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { Star } from 'lucide-react';
+import Star from 'lucide-react/dist/esm/icons/star';
 
 // Premium Gold Star Rating
 function StarRating({ value = 0, max = 5, size = 15 }) {

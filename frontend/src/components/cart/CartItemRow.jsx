@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { handleImageError, getOptimizedUrl, getBlurDataUri } from '../../utils/media/imageUtils';
 import { useProduct } from '../../hooks/useProductQueries';
 import { customOrderService } from '../../services/domainServices';
-import { ArrowRight } from 'lucide-react';
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
 
 export const CartItemRow = React.memo(function CartItemRow({
   item,

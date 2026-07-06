@@ -1,7 +1,9 @@
 import { useEffect, useState, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Wrench, Zap } from 'lucide-react';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import Wrench from 'lucide-react/dist/esm/icons/wrench';
+import Zap from 'lucide-react/dist/esm/icons/zap';
 import { AdminProvider, useAdmin } from '../context/AdminContext';
 import { DraftProvider } from '../context/DraftProvider';
 import { AdminSidebar } from '../components/AdminSidebar';

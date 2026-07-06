@@ -5,6 +5,7 @@ import { MandalaElement } from '../../../components/ui/MandalaElement';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 import { useState, useEffect } from 'react';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
+import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 
 /**
  * Shop By Occasion / Event Types using real digital studio event types.
@@ -75,7 +76,13 @@ export function ShopByOccasion() {
     });
 
   if (!occasions || occasions.length === 0) {
-    return null;
+    return (
+      <HomeSectionState
+        title={`No occasions available for ${config.sectionTitle || 'Shop By Occasion'}`}
+        message="Configure showcases in the admin dashboard."
+        icon="celebration"
+      />
+    );
   }
 
   const handleDragStart = () => {
