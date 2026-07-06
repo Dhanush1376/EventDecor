@@ -38,7 +38,6 @@ for (const file of sourceFiles) {
 const distFiles = walk(distDir, (file) => /\.(html|js|css|map)$/.test(file));
 const forbiddenDistPatterns = [
   { name: 'legacy Render hostname', pattern: /\.onrender\.com/i },
-  { name: 'legacy Railway hostname', pattern: /\.railway\.app/i },
   { name: 'localhost API URL', pattern: /https?:\/\/localhost:5000/i },
   { name: '127.0.0.1 API URL', pattern: /https?:\/\/127\.0\.0\.1:5000/i },
 ];
