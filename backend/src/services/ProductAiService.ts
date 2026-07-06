@@ -282,8 +282,8 @@ export class ProductAiService {
       // Ensure uniqueness against DB for title and slug across both Product and Showcase
       const Product = (await import('../models/Product.js')).default as any;
       const ShowcaseCollection = (await import('../models/ShowcaseCollection.js')).default as any;
-      let baseSlug = parsedData.slug;
-      let baseTitle = parsedData.english_title;
+      const baseSlug = parsedData.slug;
+      const baseTitle = parsedData.english_title;
 
       let isUnique = false;
       let counter = 1;

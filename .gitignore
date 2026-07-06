@@ -112,7 +112,8 @@ frontend/lint-errors.log
 frontend/errors.txt
  
 # Backups & Temp
-/backups/`n/backend/backups/
+/backups/
+/backend/backups/
 /backup/
 temp/
 reports/

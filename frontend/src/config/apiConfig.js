@@ -41,15 +41,16 @@ export const getApiConfig = () => {
   if (cachedConfig) return cachedConfig;
 
   const isDev = import.meta.env.DEV;
-  const configured = import.meta.env.VITE_API_URL?.trim() || '';
   const deployVersion =
     import.meta.env.VITE_BUILD_ID ||
     import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA?.slice?.(0, 12) ||
     'local';
 
   let baseUrl;
+  let configured = '';
 
   if (isDev) {
+    configured = import.meta.env.VITE_API_URL?.trim() || '';
     const pointsToLocalBackend =
       !configured || /localhost:5000|127\.0\.0\.1:5000/i.test(configured);
     baseUrl = pointsToLocalBackend ? '/api/v1' : normalizeApiBase(configured);
