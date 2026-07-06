@@ -42,7 +42,7 @@ export const getCachedSessionJson = async <T>(key: string): Promise<T | null> =>
 export const setCachedSessionJson = async (
   key: string,
   data: unknown,
-  ttlSeconds: number
+  ttlSeconds: number,
 ): Promise<void> => {
   if (!redisClient || !redisClient.isReady) return;
   try {
@@ -60,7 +60,8 @@ export const invalidateUserSessionCaches = async (userId: string): Promise<void>
     sessionKeys.wishlist(userId),
   ];
   try {
-    await redisClient.del(keys);
+    // Execute DEL commands individually to prevent CROSSSLOT errors on Redis clusters
+    await Promise.all(keys.map((key) => redisClient.del(key)));
   } catch (err) {
     logger.warn(`[SESSION CACHE] Invalidation failed for user ${userId}:`, err);
   }

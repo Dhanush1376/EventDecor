@@ -1,4 +1,5 @@
-import { useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useRef, useCallback, Suspense } from 'react';
+import { lazyWithRetry as lazy } from '../../utils/performance/lazyWithRetry';
 import { SEO } from '../../components/seo/SEO';
 
 import { HeroCarousel } from './sections/HeroCarousel';

@@ -6,6 +6,7 @@ import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { StickyMobileATC } from '../components/ui/StickyMobileATC';
 import React, { useEffect, useMemo, useRef, Suspense } from 'react';
+import { lazyWithRetry as lazy } from '../utils/performance/lazyWithRetry';
 import { userService } from '../services/domainServices';
 import { useProduct } from '../hooks/useProductQueries';
 import { useAuth } from '../context/AuthContext';

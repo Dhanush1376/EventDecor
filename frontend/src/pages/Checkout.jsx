@@ -1,4 +1,5 @@
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, useState } from 'react';
+import { lazyWithRetry as lazy } from '../utils/performance/lazyWithRetry';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
