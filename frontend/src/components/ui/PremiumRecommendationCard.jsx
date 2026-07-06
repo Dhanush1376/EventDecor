@@ -84,11 +84,9 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
     e.preventDefault();
     e.stopPropagation();
     if (targetType === 'product') {
-      runProtectedAction(() => {
-        addItem({ id, title, price, imageSrc: image, quantity: 1, variant: 'Default' });
-        setAdded(true);
-        setTimeout(() => setAdded(false), 2000);
-      });
+      addItem({ id, title, price, imageSrc: image, quantity: 1, variant: 'Default' });
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
     } else {
       navigate(link);
     }

@@ -30,18 +30,16 @@ export const QuickViewModal = ({ isOpen, onClose, product }) => {
       navigate(`/events/${product._id || product.id}`);
       return;
     }
-    runProtectedAction(() => {
-      addItem({
-        id: product._id || product.id,
-        title: product.title,
-        price: product.price,
-        imageSrc: product.imageSrc,
-        quantity: 1,
-        variant: 'Default',
-      });
-      onClose();
-      toast.success('Added to Bag!');
+    addItem({
+      id: product._id || product.id,
+      title: product.title,
+      price: product.price,
+      imageSrc: product.imageSrc,
+      quantity: 1,
+      variant: 'Default',
     });
+    onClose();
+    toast.success('Added to Bag!');
   };
 
   React.useEffect(() => {

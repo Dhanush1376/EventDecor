@@ -174,21 +174,19 @@ export const ProductCard = React.memo(function ProductCard({
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    runProtectedAction(() => {
-      attemptAddToCart({
-        id: productId,
-        title,
-        price: resolvedPrice,
-        imageSrc,
-        quantity: 1,
-        variant: 'Default',
-        type: resolvedCartType,
-        deposit: resolvedDeposit,
-        isNonRefundable,
-      });
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
+    attemptAddToCart({
+      id: productId,
+      title,
+      price: resolvedPrice,
+      imageSrc,
+      quantity: 1,
+      variant: 'Default',
+      type: resolvedCartType,
+      deposit: resolvedDeposit,
+      isNonRefundable,
     });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   };
 
   const handleKeyDown = (e) => {

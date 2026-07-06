@@ -61,18 +61,16 @@ export function StickyMobileATC({ product, triggerRef }) {
   }, [isVisible, isScrollingDown]);
 
   const handleAddToCart = () => {
-    runProtectedAction(() => {
-      addItem({
-        id: productId,
-        title: product.title,
-        price: product.price,
-        imageSrc: product.imageSrc || product.image,
-        formattedPrice: `Rs. ${product.price?.toLocaleString()}`,
-        quantity: 1,
-      });
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
+    addItem({
+      id: productId,
+      title: product.title,
+      price: product.price,
+      imageSrc: product.imageSrc || product.image,
+      formattedPrice: `Rs. ${product.price?.toLocaleString()}`,
+      quantity: 1,
     });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   };
 
   return (
