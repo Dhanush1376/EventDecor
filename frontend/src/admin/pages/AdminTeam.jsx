@@ -1,6 +1,5 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';
 import { adminInviteService } from '../../services/domainServices';
 import api from '../../services/api';

@@ -1,7 +1,6 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 import { compressImage, formatBytes } from '../../../utils/media/imageCompressor';
-import { uploadService } from '../../../services/domainServices';
 
 export function MediaStep({
   formData,

@@ -8,7 +8,7 @@ import {
 import toast from 'react-hot-toast';
 import { io as socketIO } from 'socket.io-client';
 import { getAccessToken } from '../../services/api';
-import { getApiRootUrl, getWebSocketUrl } from '../../config/apiConfig';
+import { getWebSocketUrl } from '../../config/apiConfig';
 import logger from '../../utils/core/logger';
 
 import { useAdminSecurity } from '../hooks/useAdminSecurity';

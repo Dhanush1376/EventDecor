@@ -4,7 +4,6 @@ import './styles/globals.css';
 import App from './App.jsx';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { runAppBootstrap } from './utils/core/bootstrap';
-import { getApiRootUrl } from './config/apiConfig';
 import { logStartupDiagnostics } from './utils/core/diagnostics';
 import { isPrerendering } from './utils/performance/prerender';
 

@@ -1,5 +1,4 @@
 import React from 'react';
-import { uploadService } from '../../../services/domainServices';
 import { compressImage, formatBytes } from '../../../utils/media/imageCompressor';
 import toast from 'react-hot-toast';
 

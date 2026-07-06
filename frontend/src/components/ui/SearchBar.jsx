@@ -23,7 +23,7 @@ export function SearchBar({
       setLocalValue(value);
       lastEmittedValue.current = value;
     }
-  }, [value]);
+  }, [value, localValue]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
