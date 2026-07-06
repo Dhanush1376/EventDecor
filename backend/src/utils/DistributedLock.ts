@@ -15,12 +15,16 @@ export class DistributedLock {
    * @param ttlSeconds The maximum time (in seconds) the lock should be held to prevent deadlocks.
    * @returns A lock ID if successful, null if the lock is currently held by someone else.
    */
-  static async acquireLock(resourceKey: string, ttlSeconds: number = 30): Promise<string | null> {
+  static async acquireLock(
+    resourceKey: string,
+    ttlSeconds: number = 30,
+    allowFallback: boolean = false,
+  ): Promise<string | null> {
     if (!redisClient || !redisClient.isReady) {
       const isProduction = process.env.NODE_ENV === 'production';
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
 
-      if (requireRedis || isProduction) {
+      if (!allowFallback && (requireRedis || isProduction)) {
         logger.warn(`[DistributedLock] Redis is down. Cannot acquire lock for ${resourceKey}`);
         return null;
       }
@@ -61,12 +65,16 @@ export class DistributedLock {
    * @param resourceKey The unique key representing the resource.
    * @param lockId The lock ID returned by acquireLock.
    */
-  static async releaseLock(resourceKey: string, lockId: string): Promise<boolean> {
+  static async releaseLock(
+    resourceKey: string,
+    lockId: string,
+    allowFallback: boolean = false,
+  ): Promise<boolean> {
     if (!redisClient || !redisClient.isReady) {
       const isProduction = process.env.NODE_ENV === 'production';
       const requireRedis = process.env.REQUIRE_REDIS === 'true';
 
-      if (requireRedis || isProduction) {
+      if (!allowFallback && (requireRedis || isProduction)) {
         return false;
       }
 
@@ -139,7 +147,7 @@ export class DistributedLock {
     }
 
     while (attempts <= retryCount) {
-      lockId = await this.acquireLock(resourceKey, ttlSeconds);
+      lockId = await this.acquireLock(resourceKey, ttlSeconds, !failClosed);
       if (lockId) {
         break;
       }
@@ -157,7 +165,7 @@ export class DistributedLock {
       return await operation();
     } finally {
       if (lockId) {
-        await this.releaseLock(resourceKey, lockId);
+        await this.releaseLock(resourceKey, lockId, !failClosed);
       }
     }
   }

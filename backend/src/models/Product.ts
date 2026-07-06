@@ -37,12 +37,8 @@ export interface IProduct extends ISoftDeleted {
   images: string[];
   description: string;
   badges: string[];
-  dimensions?: {
-    length: number;
-    width: number;
-    height: number;
-  };
-  weight?: number;
+  dimensions?: string;
+  weight?: string;
   seoTitle?: string;
   seoDescription?: string;
   stock: number;
@@ -159,12 +155,8 @@ const ProductSchema: Schema = new Schema(
     images: [{ type: String }],
     description: { type: String, required: true },
     badges: [{ type: String }],
-    dimensions: {
-      length: { type: Number },
-      width: { type: Number },
-      height: { type: Number },
-    },
-    weight: { type: Number },
+    dimensions: { type: String },
+    weight: { type: String },
     seoTitle: { type: String },
     seoDescription: { type: String },
     stock: { type: Number, default: 0, min: 0 },

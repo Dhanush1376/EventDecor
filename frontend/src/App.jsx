@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useEffect } from 'react';
-import { LazyMotion, domAnimation } from 'framer-motion';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 import toast, { Toaster, ToastBar } from 'react-hot-toast';
 import debounce from 'lodash.debounce';
 
@@ -68,7 +68,7 @@ function App() {
           <Toaster
             position={toastPosition}
             toastOptions={{
-              duration: 2500,
+              duration: 3500,
               style: {
                 background: 'rgba(255, 255, 255, 0.4)',
                 backdropFilter: 'blur(20px)',
@@ -86,12 +86,20 @@ function App() {
             }}
           >
             {(t) => (
-              <div
+              <m.div
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={{ top: 1, bottom: 0 }}
+                onDragEnd={(e, info) => {
+                  if (info.offset.y < -20 || info.offset.y > 20) {
+                    toast.dismiss(t.id);
+                  }
+                }}
                 onClick={() => toast.dismiss(t.id)}
-                className="cursor-pointer active:scale-95 transition-transform"
+                className="cursor-pointer active:scale-95 transition-transform touch-none"
               >
                 <ToastBar toast={t} />
-              </div>
+              </m.div>
             )}
           </Toaster>
         )}

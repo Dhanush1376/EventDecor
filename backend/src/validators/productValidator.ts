@@ -62,6 +62,17 @@ export const createProductSchema = z.object({
       helperText: z.string().max(500).optional(),
     })
     .optional(),
+  returnSettings: z
+    .object({
+      returnWindow: z.number().optional(),
+      exchangeWindow: z.number().optional(),
+      refundType: z.enum(['full', 'partial', 'store_credit', 'no_refund']).optional(),
+      restockingFeePercent: z.number().min(0).max(100).optional(),
+      returnShippingFee: z.number().min(0).optional(),
+      inspectionRequired: z.boolean().optional(),
+      replacementAllowed: z.boolean().optional(),
+    })
+    .optional(),
   variants: z.array(z.any()).optional(),
   __v: z.number().optional(),
 });

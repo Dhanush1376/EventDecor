@@ -675,9 +675,12 @@ class ProductService {
       await resolveCategories(data);
       enforceSmartPricing(data, oldProduct as IProduct);
 
+      const updateData = { ...data };
+      delete updateData.__v;
+
       const product = await Product.findOneAndUpdate(
         { _id: id, __v: oldProduct.__v },
-        { ...data, $inc: { __v: 1 } },
+        { ...updateData, $inc: { __v: 1 } },
         { returnDocument: 'after', runValidators: true, session },
       );
 

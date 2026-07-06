@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { AdminToggle } from '../../components/AdminUIKit';
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
@@ -7,13 +8,30 @@ export const ProductReturnStep = ({ formData, setFormData }) => {
   const { returnSettings = {} } = formData;
 
   const handleReturnSettingChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      returnSettings: {
+    setFormData((prev) => {
+      const newSettings = {
         ...prev.returnSettings,
         [field]: value,
-      },
-    }));
+      };
+
+      // Automatically turn ON inspection if returns or exchanges are being enabled
+      if ((field === 'isReturnable' || field === 'isExchangeable') && value === true) {
+        newSettings.requiresInspection = true;
+      }
+
+      // Automatically turn OFF inspection if BOTH are being disabled
+      if ((field === 'isReturnable' || field === 'isExchangeable') && value === false) {
+        const otherField = field === 'isReturnable' ? 'isExchangeable' : 'isReturnable';
+        if (!newSettings[otherField]) {
+          newSettings.requiresInspection = false;
+        }
+      }
+
+      return {
+        ...prev,
+        returnSettings: newSettings,
+      };
+    });
   };
 
   return (
@@ -28,20 +46,22 @@ export const ProductReturnStep = ({ formData, setFormData }) => {
           </h2>
         </div>
         <div className="admin-card-body space-y-6">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="admin-checkbox"
-              checked={returnSettings.isReturnable}
-              onChange={(e) => handleReturnSettingChange('isReturnable', e.target.checked)}
-            />
+          <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-[var(--admin-text-primary)]">Accept Returns</div>
+              <div className="font-medium text-[var(--admin-text-primary)]">
+                Non-Refundable Item
+              </div>
               <div className="text-sm text-[var(--admin-text-secondary)]">
-                Allow customers to return this product for a refund.
+                Customers cannot request returns or refunds for this product after purchase.
               </div>
             </div>
-          </label>
+            <AdminToggle
+              checked={!returnSettings.isReturnable}
+              onChange={() =>
+                handleReturnSettingChange('isReturnable', !returnSettings.isReturnable)
+              }
+            />
+          </div>
 
           {returnSettings.isReturnable && (
             <motion.div
@@ -98,20 +118,23 @@ export const ProductReturnStep = ({ formData, setFormData }) => {
           </h2>
         </div>
         <div className="admin-card-body space-y-6">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="admin-checkbox"
-              checked={returnSettings.isExchangeable}
-              onChange={(e) => handleReturnSettingChange('isExchangeable', e.target.checked)}
-            />
+          <div className="flex items-center justify-between">
             <div>
-              <div className="font-medium text-[var(--admin-text-primary)]">Accept Exchanges</div>
+              <div className="font-medium text-[var(--admin-text-primary)]">
+                Non-Exchangeable Item
+              </div>
               <div className="text-sm text-[var(--admin-text-secondary)]">
-                Allow customers to exchange this product (e.g. for a different size/color).
+                Customers cannot request exchanges for this product (e.g. for a different
+                size/color).
               </div>
             </div>
-          </label>
+            <AdminToggle
+              checked={!returnSettings.isExchangeable}
+              onChange={() =>
+                handleReturnSettingChange('isExchangeable', !returnSettings.isExchangeable)
+              }
+            />
+          </div>
 
           {returnSettings.isExchangeable && (
             <motion.div
@@ -144,7 +167,10 @@ export const ProductReturnStep = ({ formData, setFormData }) => {
         </div>
       </motion.div>
 
-      <motion.div variants={fadeUp} className="admin-card">
+      <motion.div
+        variants={fadeUp}
+        className={`admin-card transition-opacity ${!returnSettings.isReturnable && !returnSettings.isExchangeable ? 'opacity-50' : ''}`}
+      >
         <div className="admin-card-header">
           <h2 className="admin-card-title flex items-center gap-2">
             <span className="material-symbols-outlined text-[var(--admin-warning)]">
@@ -154,13 +180,7 @@ export const ProductReturnStep = ({ formData, setFormData }) => {
           </h2>
         </div>
         <div className="admin-card-body">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="admin-checkbox"
-              checked={returnSettings.requiresInspection}
-              onChange={(e) => handleReturnSettingChange('requiresInspection', e.target.checked)}
-            />
+          <div className="flex items-center justify-between">
             <div>
               <div className="font-medium text-[var(--admin-text-primary)]">
                 Mandatory Physical Inspection
@@ -170,7 +190,14 @@ export const ProductReturnStep = ({ formData, setFormData }) => {
                 and approves the returned item.
               </div>
             </div>
-          </label>
+            <AdminToggle
+              checked={returnSettings.requiresInspection}
+              disabled={!returnSettings.isReturnable && !returnSettings.isExchangeable}
+              onChange={() =>
+                handleReturnSettingChange('requiresInspection', !returnSettings.requiresInspection)
+              }
+            />
+          </div>
         </div>
       </motion.div>
     </div>

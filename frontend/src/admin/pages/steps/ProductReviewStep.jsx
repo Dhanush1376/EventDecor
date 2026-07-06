@@ -66,24 +66,6 @@ export function ProductReviewStep({ formData, setFormData }) {
           />
         </div>
 
-        {/* Non-Refundable Item Toggle */}
-        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex items-center justify-between col-span-1 sm:col-span-2">
-          <div>
-            <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
-              Non-Refundable Item
-            </p>
-            <p className="text-[11px] text-[var(--admin-text-secondary)]">
-              Customers cannot request returns or refunds for this product after purchase.
-            </p>
-          </div>
-          <AdminToggle
-            checked={formData.isNonRefundable}
-            onChange={() =>
-              setFormData({ ...formData, isNonRefundable: !formData.isNonRefundable })
-            }
-          />
-        </div>
-
         {/* Summary Data Review list */}
         <div className="col-span-1 sm:col-span-2 p-5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-4 text-[12px]">
           <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] border-b border-[var(--admin-border)]/60 pb-1.5 mb-4">
