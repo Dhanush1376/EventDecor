@@ -214,6 +214,7 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
   );
   await invalidateUserSessionCaches(String(req.user.id));
   const cartDetails = await UserService.computeAndValidateCart(updatedUser);
+  await cacheCart(String(req.user.id), cartDetails);
   res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Cart updated', cartDetails));
 });
@@ -223,6 +224,7 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
   const user = await UserCartService.syncCart(req.user.id, cartItems);
   await invalidateUserSessionCaches(String(req.user.id));
   const cartDetails = await UserService.computeAndValidateCart(user);
+  await cacheCart(String(req.user.id), cartDetails);
   res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Cart synced successfully', cartDetails));
 });
@@ -232,6 +234,7 @@ export const removeFromCart = asyncHandler(async (req: any, res: Response) => {
   const user = await UserCartService.removeFromCart(req.user.id, productId);
   await invalidateUserSessionCaches(String(req.user.id));
   const cartDetails = await UserService.computeAndValidateCart(user);
+  await cacheCart(String(req.user.id), cartDetails);
   res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Removed from cart', cartDetails));
 });
