@@ -37,11 +37,7 @@ export class UserService {
       );
     }
 
-    const user = await User.findByIdAndUpdate(
-      targetUserId,
-      { role: newRole },
-      { returnDocument: 'after' },
-    );
+    const user = await User.findByIdAndUpdate(targetUserId, { role: newRole }, { new: true });
     if (!user) throw new ApiError(404, 'User not found');
     return user;
   }
@@ -97,8 +93,9 @@ export class UserService {
         item.quantity = 50;
         cartChanged = true;
       }
-      if (item.quantity > item.product.stock) {
-        item.quantity = item.product.stock;
+      const availableStock = item.product.stock ?? 10;
+      if (item.quantity > availableStock) {
+        item.quantity = availableStock;
         cartChanged = true;
       }
 

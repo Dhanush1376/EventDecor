@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import EventBooking from '../../models/EventBooking';
 import { createAdminNotification } from '../../services/notificationService';
 import BookingMessage from '../../models/BookingMessage';
@@ -68,31 +69,77 @@ export const getMyEventBookings = asyncHandler(async (req: Request, res: Respons
   const Product = require('../../models/Product').default;
   const bookingsMissingPackage = bookings.filter((b: any) => !b.eventPackage && b.title);
   if (bookingsMissingPackage.length > 0) {
-    const cleanTitles = bookingsMissingPackage.map((b: any) =>
-      b.title
-        .replace(/^rent:\s*/i, '')
-        .replace(/\s*booking$/i, '')
-        .trim(),
+    const products = await Product.find({}).select('title imageSrc').lean();
+
+    // Also include ShowcaseCollection and Event models for fallback
+    const ShowcaseCollection =
+      mongoose.models.ShowcaseCollection || require('../../models/ShowcaseCollection').default;
+    const showcases = await ShowcaseCollection.find({}).select('title image').lean();
+    const Event = mongoose.models.Event || require('../../models/Event').default;
+    const events = await Event.find({}).select('title image').lean();
+
+    logger.info(
+      `[DEBUG] Found products: ${products.length}, showcases: ${showcases.length}, events: ${events.length}. Missing package bookings: ${bookingsMissingPackage.length}`,
     );
-    const titleRegexes = cleanTitles.map(
-      (t: string) => new RegExp(`^${t.replace(/[.*+?^${}()|[\]\\\\]/g, '\\\\$&')}$`, 'i'),
-    );
-    const products = await Product.find({ title: { $in: titleRegexes } })
-      .select('title imageSrc')
-      .lean();
-    const productMap = new Map(products.map((p: any) => [p.title.toLowerCase(), p]));
+
     for (const booking of bookingsMissingPackage) {
       const cleanTitle = (booking as any).title
         .replace(/^rent:\s*/i, '')
         .replace(/\s*booking$/i, '')
-        .trim();
-      const product: any = productMap.get(cleanTitle.toLowerCase());
-      if (product && product.imageSrc) {
-        (booking as any).eventPackage = {
-          _id: product._id,
-          title: (booking as any).title,
-          image: product.imageSrc,
-        };
+        .trim()
+        .toLowerCase();
+
+      logger.info(
+        `[DEBUG] Trying to match cleanTitle: "${cleanTitle}" from original title: "${(booking as any).title}"`,
+      );
+
+      let matchedItem = products.find((p: any) => p.title.toLowerCase().trim() === cleanTitle);
+
+      if (!matchedItem) {
+        matchedItem = products.find(
+          (p: any) =>
+            p.title.toLowerCase().includes(cleanTitle) ||
+            cleanTitle.includes(p.title.toLowerCase()),
+        );
+      }
+
+      // If not in products, check showcases
+      if (!matchedItem) {
+        matchedItem = showcases.find((s: any) => s.title.toLowerCase().trim() === cleanTitle);
+        if (!matchedItem) {
+          matchedItem = showcases.find(
+            (s: any) =>
+              s.title.toLowerCase().includes(cleanTitle) ||
+              cleanTitle.includes(s.title.toLowerCase()),
+          );
+        }
+      }
+
+      // If not in showcases, check events
+      if (!matchedItem) {
+        matchedItem = events.find((e: any) => e.title.toLowerCase().trim() === cleanTitle);
+        if (!matchedItem) {
+          matchedItem = events.find(
+            (e: any) =>
+              e.title.toLowerCase().includes(cleanTitle) ||
+              cleanTitle.includes(e.title.toLowerCase()),
+          );
+        }
+      }
+
+      logger.info(
+        `[DEBUG] Matched item for "${cleanTitle}": ${matchedItem ? matchedItem.title : 'NONE'}`,
+      );
+
+      if (matchedItem) {
+        const image = matchedItem.imageSrc || matchedItem.image;
+        if (image) {
+          (booking as any).eventPackage = {
+            _id: matchedItem._id,
+            title: (booking as any).title,
+            image: image,
+          };
+        }
       }
     }
   }

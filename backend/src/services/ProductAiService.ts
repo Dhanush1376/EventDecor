@@ -249,7 +249,7 @@ export class ProductAiService {
         },
         signal: groqController.signal,
         body: JSON.stringify({
-          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          model: 'llama-3.2-90b-vision-preview',
           messages,
           temperature: 0.2,
         }),

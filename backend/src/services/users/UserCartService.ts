@@ -33,13 +33,13 @@ export class UserCartService {
             $inc: { 'cart.$.quantity': qty },
             $set: { 'cart.$.rentalInfo': rentalInfo },
           },
-          { returnDocument: 'after' },
+          { new: true },
         );
       } else {
         updatedUser = await User.findOneAndUpdate(
           { _id: userId, 'cart.product': productId, 'cart.type': itemType } as any,
           { $inc: { 'cart.$.quantity': qty } },
-          { returnDocument: 'after' },
+          { new: true },
         );
       }
     } else if (qty > 0) {
@@ -60,7 +60,7 @@ export class UserCartService {
             },
           },
         },
-        { returnDocument: 'after' },
+        { new: true },
       );
     } else {
       updatedUser = await User.findById(userId);
@@ -96,7 +96,7 @@ export class UserCartService {
     const user = await User.findOneAndUpdate(
       { _id: userId },
       { $pull: { cart: { product: productId } } },
-      { returnDocument: 'after' },
+      { new: true },
     );
 
     if (!user) throw new ApiError(404, 'User not found');

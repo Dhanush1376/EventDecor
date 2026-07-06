@@ -11,6 +11,7 @@ export function SearchBar({
   const [localValue, setLocalValue] = useState(value);
   const onChangeRef = useRef(onChange);
   const lastEmittedValue = useRef(value);
+  const isFocused = useRef(false);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -18,7 +19,7 @@ export function SearchBar({
 
   // Sync internal state with external prop (for clear/reset)
   useEffect(() => {
-    if (value !== lastEmittedValue.current) {
+    if (value !== localValue && (!isFocused.current || value === '')) {
       setLocalValue(value);
       lastEmittedValue.current = value;
     }
@@ -63,10 +64,14 @@ export function SearchBar({
         placeholder={placeholder}
         readOnly={!!onClick}
         onFocus={(e) => {
+          isFocused.current = true;
           if (onClick) {
             e.target.blur();
             onClick();
           }
+        }}
+        onBlur={() => {
+          isFocused.current = false;
         }}
         className={`w-full h-full pl-9 lg:pl-12 ${paddingRightClass} py-0 bg-transparent border-none outline-none appearance-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none focus:!shadow-none font-body text-[14px] text-on-surface font-medium placeholder:text-on-surface-variant/50 search-portal-input ${onClick ? 'cursor-pointer' : ''}`}
         style={{

@@ -145,7 +145,7 @@ export function useProductForm({ id, isEditMode }) {
       const fetchProduct = async () => {
         setIsLoading(true);
         try {
-          const res = await productService.getById(id);
+          const res = await productService.getById(`${id}?_t=${Date.now()}`);
           if (res.success) {
             const p = res.data;
             const pCatName = p.primaryCategory?.name || p.primaryCategory || '';

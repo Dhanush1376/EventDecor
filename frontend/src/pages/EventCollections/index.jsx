@@ -67,24 +67,21 @@ export function EventCollections() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Sync debounced search to URL search query param
   useEffect(() => {
-    const currentSearchInUrl = searchParams.get('search') || '';
-    if (debouncedSearch !== currentSearchInUrl) {
-      setSearchParams(
-        (prev) => {
-          const params = new URLSearchParams(prev);
-          if (debouncedSearch) {
-            params.set('search', debouncedSearch);
-          } else {
-            params.delete('search');
-          }
-          params.delete('page');
-          return params;
-        },
-        { replace: true },
-      );
-    }
-  }, [debouncedSearch, setSearchParams, searchParams]);
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (debouncedSearch) {
+          params.set('search', debouncedSearch);
+        } else {
+          params.delete('search');
+        }
+        return params;
+      },
+      { replace: true },
+    );
+  }, [debouncedSearch, setSearchParams]);
 
   const websiteContent = useWebsiteContent();
   const eventsPageContent = websiteContent?.eventsPage || {

@@ -275,9 +275,18 @@ export function useProductSubmission({
         }
         if (!options.stayOnPage) {
           handleSuccessAction();
-        } else if (!isEditMode && res.data?.product?._id) {
-          window.history.replaceState(null, '', `/admin/products/edit/${res.data.product._id}`);
-          // trigger a reload or refresh if we want, but window.history is smooth
+        } else {
+          // If staying on page, update formData with the real Cloudinary URLs and clear pendingUploads
+          setFormData((prev) => ({
+            ...prev,
+            imageSrc: finalImageSrc,
+            images: Array.from(new Set([finalImageSrc, ...finalImages].filter(Boolean))),
+            pendingUploads: [],
+            __v: returnedProduct.__v || prev.__v + 1,
+          }));
+          if (!isEditMode && res.data?.product?._id) {
+            window.history.replaceState(null, '', `/admin/products/edit/${res.data.product._id}`);
+          }
         }
       }
     } catch (err) {

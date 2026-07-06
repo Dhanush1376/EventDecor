@@ -24,7 +24,6 @@ export function useShowcasesData() {
   const searchParam = searchParams.get('search') || '';
 
   const [searchQuery, setSearchQuery] = useState(searchParam);
-  const [debouncedSearch, setDebouncedSearch] = useState(searchParam);
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortBy, setSortBy] = useState('Popularity');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -72,32 +71,29 @@ export function useShowcasesData() {
     if (isError) toast.error('Failed to load event design packages.');
   }, [isError]);
 
+  // Sync internal search query to URL (acting as debounced search)
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 350);
+    const timer = setTimeout(() => {
+      if (searchQuery !== searchParam) {
+        setCurrentPage(1); // Reset page on new search
+        setSearchParams(
+          (prev) => {
+            const params = new URLSearchParams(prev);
+            if (searchQuery) params.set('search', searchQuery);
+            else params.delete('search');
+            return params;
+          },
+          { replace: true },
+        );
+      }
+    }, 350);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, searchParam, setSearchParams]);
 
+  // Sync external URL changes (e.g., back button) to local state
   useEffect(() => {
-    if (debouncedSearch !== searchParam) {
-      setSearchParams(
-        (prev) => {
-          const params = new URLSearchParams(prev);
-          if (debouncedSearch) params.set('search', debouncedSearch);
-          else params.delete('search');
-          return params;
-        },
-        { replace: true },
-      );
-    }
-  }, [debouncedSearch, searchParam, setSearchParams]);
-
-  useEffect(() => {
-    const s = searchParams.get('search') || '';
-    if (s !== searchQuery && s !== debouncedSearch) {
-      setSearchQuery(s);
-      setDebouncedSearch(s);
-    }
-  }, [searchParams, searchQuery, debouncedSearch]);
+    setSearchQuery(searchParam);
+  }, [searchParam]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -130,15 +126,20 @@ export function useShowcasesData() {
   const filteredAndSortedShowcases = useMemo(() => {
     let list = [...showcases];
 
-    if (debouncedSearch.trim()) {
-      const q = debouncedSearch.toLowerCase().trim();
-      list = list.filter(
-        (s) =>
-          s.title?.toLowerCase().includes(q) ||
-          s.description?.toLowerCase().includes(q) ||
-          s.subtitle?.toLowerCase().includes(q) ||
-          s.inclusions?.some((inc) => inc.name?.toLowerCase().includes(q)),
-      );
+    if (searchParam.trim()) {
+      const queryWords = searchParam.toLowerCase().trim().split(/\s+/);
+      list = list.filter((s) => {
+        const searchableText = [
+          s.title || '',
+          s.description || '',
+          s.subtitle || '',
+          ...(s.inclusions?.map((inc) => inc.name || '') || []),
+        ]
+          .join(' ')
+          .toLowerCase();
+
+        return queryWords.every((word) => searchableText.includes(word));
+      });
     }
 
     if (activeCategory !== 'All') {
@@ -189,7 +190,7 @@ export function useShowcasesData() {
     }
 
     return list;
-  }, [showcases, debouncedSearch, activeCategory, sortBy, filters]);
+  }, [showcases, searchParam, activeCategory, sortBy, filters]);
 
   const totalCount = filteredAndSortedShowcases.length;
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;

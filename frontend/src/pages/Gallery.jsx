@@ -56,22 +56,19 @@ export function GalleryInner() {
 
   // Sync debounced search to URL search query param
   useEffect(() => {
-    const currentSearchInUrl = searchParams.get('search') || '';
-    if (debouncedSearch !== currentSearchInUrl) {
-      setSearchParams(
-        (prev) => {
-          const params = new URLSearchParams(prev);
-          if (debouncedSearch) {
-            params.set('search', debouncedSearch);
-          } else {
-            params.delete('search');
-          }
-          return params;
-        },
-        { replace: true },
-      );
-    }
-  }, [debouncedSearch, setSearchParams, searchParams]);
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (debouncedSearch) {
+          params.set('search', debouncedSearch);
+        } else {
+          params.delete('search');
+        }
+        return params;
+      },
+      { replace: true },
+    );
+  }, [debouncedSearch, setSearchParams]);
 
   const queryParams = {
     category: activeCategory,

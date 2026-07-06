@@ -72,7 +72,7 @@ export function transformDbCart(dbCartItems) {
       title: item.product.title,
       price: item.product.price,
       oldPrice: item.product.oldPrice || item.product.price,
-      stock: item.product.stock || 0,
+      stock: item.product.stock ?? 10,
       seller: item.product.seller || 'Siri Arts & Crafts Artisans',
       rating: item.product.rating || 0,
       imageSrc: item.product.imageSrc,
