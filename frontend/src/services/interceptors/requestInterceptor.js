@@ -20,8 +20,9 @@ export const createRequestInterceptor =
   async (config) => {
     config.baseURL = getApiUrl();
     const path = (config.url || '').toLowerCase();
+    const method = (config.method || 'get').toLowerCase();
 
-    const isProtectedRoute = isPathProtected(path);
+    const isProtectedRoute = isPathProtected(path, method);
 
     const isAuthLifecycleRequest =
       path.includes('/auth/refresh') ||
@@ -73,7 +74,6 @@ export const createRequestInterceptor =
       }
     }
 
-    const method = (config.method || 'get').toLowerCase();
     if (MUTATING_METHODS.has(method) && !config.url?.includes('/orders/webhook')) {
       const token = await ensureCsrfToken();
       if (token) {

@@ -135,17 +135,27 @@ export function ShopByOccasion() {
             let opacity = 1;
             let brightness = 1;
 
-            // Perfect non-overlapping side-by-side gallery calculations
-            if (idx < activeIndex) {
-              x = `-${95 + (activeIndex - idx - 1) * 90}%`;
+            // Circular array math for infinite looping
+            const N = occasions.length;
+            let diff = idx - activeIndex;
+
+            // Normalize diff to be between -N/2 and N/2
+            if (diff > N / 2) {
+              diff -= N;
+            } else if (diff < -N / 2) {
+              diff += N;
+            }
+
+            if (diff < 0) {
+              x = `-${95 + (Math.abs(diff) - 1) * 90}%`;
               scale = 0.85;
-              zIndex = 20 - (activeIndex - idx);
+              zIndex = 20 - Math.abs(diff);
               opacity = 0.9;
               brightness = 0.6;
-            } else if (idx > activeIndex) {
-              x = `${95 + (idx - activeIndex - 1) * 90}%`;
+            } else if (diff > 0) {
+              x = `${95 + (diff - 1) * 90}%`;
               scale = 0.85;
-              zIndex = 20 - (idx - activeIndex);
+              zIndex = 20 - diff;
               opacity = 0.9;
               brightness = 0.6;
             }
@@ -186,31 +196,33 @@ export function ShopByOccasion() {
                     ) : (
                       <div className="w-full h-full bg-surface-container-high" aria-hidden="true" />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
 
                     {/* Liquid Glass Shield Bulge Effect */}
                     <div className="absolute inset-0 rounded-[36px] pointer-events-none shadow-[inset_0_4px_14px_rgba(255,255,255,0.4),inset_0_-4px_14px_rgba(0,0,0,0.4)] border-[1.5px] border-white/30 group-hover:border-white/50 group-hover:shadow-[inset_0_6px_20px_rgba(255,255,255,0.5),inset_0_-6px_20px_rgba(0,0,0,0.5)] transition-all duration-500 z-20" />
                   </div>
 
+                  {/* Elegant Editorial Mobile Overlay */}
                   <div
-                    className={`absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 p-4 sm:p-5 flex items-center justify-between z-10 gap-3 transition-all duration-500 rounded-[20px] bg-black/30 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] ${
+                    className={`absolute bottom-0 left-0 right-0 p-6 sm:p-8 flex flex-col justify-end z-10 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                       idx === activeIndex
                         ? 'opacity-100 translate-y-0'
-                        : 'opacity-0 translate-y-4 pointer-events-none'
+                        : 'opacity-0 translate-y-6 pointer-events-none'
                     }`}
                   >
-                    <div className="flex flex-col items-start text-left min-w-0 flex-1">
-                      <span className="font-sans text-[9px] sm:text-[10px] text-white/70 uppercase tracking-[0.2em] mb-1 font-semibold">
-                        Curated Setups
-                      </span>
-                      <h3 className="font-serif text-[18px] sm:text-[20px] text-white font-medium tracking-wide leading-tight drop-shadow-md break-words">
-                        {occasion.label}
-                      </h3>
-                    </div>
-                    <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/50 bg-black/20 text-white flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-500 shadow-sm">
-                      <span className="material-symbols-outlined text-[20px] transition-transform duration-500 group-hover:translate-x-0.5">
-                        arrow_forward
-                      </span>
+                    <div className="flex items-end justify-between gap-4 w-full">
+                      <div className="flex flex-col items-start text-left min-w-0 flex-1">
+                        <h3 className="font-serif text-[20px] sm:text-[22px] text-white font-normal tracking-wide leading-tight drop-shadow-md break-words">
+                          {occasion.label}
+                        </h3>
+                      </div>
+
+                      {/* Simple minimal arrow, no circles or borders */}
+                      <div className="flex-shrink-0 text-white flex items-center justify-center transition-transform duration-500 group-hover:translate-x-2">
+                        <span className="material-symbols-outlined text-[28px] sm:text-[32px] font-light">
+                          arrow_right_alt
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </Link>
@@ -244,8 +256,8 @@ export function ShopByOccasion() {
                 aria-hidden="true"
               />
             )}
-            {/* Base dark gradient, becomes darker on hover for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10 opacity-70 group-hover:opacity-90 transition-all duration-700"></div>
+            {/* Base dark gradient, becomes slightly darker on hover for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-60 group-hover:opacity-80 transition-all duration-700"></div>
 
             <div className="absolute inset-0 flex flex-col justify-end p-8">
               {/* Vertical Text (Visible when contracted) */}
@@ -256,21 +268,16 @@ export function ShopByOccasion() {
               </div>
 
               {/* Expanded Content (Visible on hover) */}
-              <div className="absolute bottom-6 left-6 right-6 opacity-0 translate-y-12 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-700 delay-100 p-6 xl:p-8 rounded-[28px] bg-black/30 backdrop-blur-xl border border-white/20 shadow-[0_12px_40px_rgba(0,0,0,0.4)] flex flex-row items-center justify-between gap-6 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-
+              <div className="absolute bottom-0 left-0 right-0 opacity-0 translate-y-8 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-700 delay-100 p-8 xl:p-12 flex flex-row items-end justify-between gap-6 overflow-hidden">
                 <div className="flex flex-col items-start min-w-0 flex-1 relative z-10">
-                  <span className="font-sans text-[11px] xl:text-[13px] text-white/70 uppercase tracking-[0.25em] mb-2 font-semibold">
-                    Curated Event Collection
-                  </span>
-                  <h3 className="font-serif text-[28px] xl:text-[36px] text-white leading-tight drop-shadow-xl font-medium min-w-0 break-words w-full">
+                  <h3 className="font-serif text-[24px] xl:text-[28px] text-white leading-tight drop-shadow-lg font-normal min-w-0 break-words w-full">
                     {occasion.label}
                   </h3>
                 </div>
 
-                <div className="flex-shrink-0 w-14 h-14 xl:w-16 xl:h-16 rounded-full border border-white/50 bg-black/20 text-white flex items-center justify-center transition-all duration-500 shadow-lg group-hover:bg-white group-hover:text-black group-hover:scale-110 relative z-10">
-                  <span className="material-symbols-outlined text-[24px] xl:text-[28px] transition-transform duration-500 group-hover:translate-x-1">
-                    arrow_forward
+                <div className="flex-shrink-0 text-white flex items-center justify-center transition-transform duration-500 group-hover:translate-x-3 relative z-10">
+                  <span className="material-symbols-outlined text-[36px] xl:text-[44px] font-light">
+                    arrow_right_alt
                   </span>
                 </div>
               </div>

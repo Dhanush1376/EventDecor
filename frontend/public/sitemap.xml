@@ -448,16 +448,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/product/6a4bc77a0cadbc258b874ba7</loc>
-    <lastmod>2026-07-06</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>test.jpg</image:loc>
-      <image:title>Test Product</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://siriartsandcrafts.com/gallery/6a0c74fa9b8633afb920de7c</loc>
     <lastmod>2026-06-16</lastmod>
     <changefreq>weekly</changefreq>

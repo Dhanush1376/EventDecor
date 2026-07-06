@@ -8,7 +8,7 @@ import {
 import toast from 'react-hot-toast';
 import { io as socketIO } from 'socket.io-client';
 import { getAccessToken } from '../../services/api';
-import { getApiRootUrl } from '../../config/apiConfig';
+import { getApiRootUrl, getWebSocketUrl } from '../../config/apiConfig';
 import logger from '../../utils/core/logger';
 
 import { useAdminSecurity } from '../hooks/useAdminSecurity';
@@ -270,13 +270,7 @@ export function AdminProvider({ children }) {
     const token = getAccessToken();
     if (!token) return;
 
-    const rawApiUrl = getApiRootUrl();
-    let socketServerUrl = rawApiUrl;
-    if (socketServerUrl.endsWith('/api/v1')) {
-      socketServerUrl = socketServerUrl.slice(0, -7);
-    } else if (socketServerUrl.endsWith('/api')) {
-      socketServerUrl = socketServerUrl.slice(0, -4);
-    }
+    const socketServerUrl = getWebSocketUrl();
 
     const socket = socketIO(`${socketServerUrl}/admin`, {
       auth: { token },

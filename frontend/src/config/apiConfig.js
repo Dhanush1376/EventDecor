@@ -79,3 +79,17 @@ export const getApiUrl = () => getApiConfig().baseUrl;
 export const getApiRootUrl = () => getApiConfig().apiRootUrl;
 
 export const getApiOrigin = () => getApiConfig().apiOrigin;
+
+export const getWebSocketUrl = () => {
+  const config = getApiConfig();
+  if (!config.isDev && PRODUCTION_API_ORIGIN) {
+    return PRODUCTION_API_ORIGIN;
+  }
+  let socketServerUrl = config.apiRootUrl;
+  if (socketServerUrl.endsWith('/api/v1')) {
+    socketServerUrl = socketServerUrl.slice(0, -7);
+  } else if (socketServerUrl.endsWith('/api')) {
+    socketServerUrl = socketServerUrl.slice(0, -4);
+  }
+  return socketServerUrl;
+};

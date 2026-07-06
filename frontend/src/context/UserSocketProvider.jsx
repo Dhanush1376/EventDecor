@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useRef } from 'react';
 // socket.io is imported dynamically inside the useEffect to keep it out of the initial bundle
 import { useAuth } from './AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
-import { getApiRootUrl } from '../config/apiConfig';
+import { getWebSocketUrl } from '../config/apiConfig';
 import { getAccessToken } from '../services/api';
 import logger from '../utils/core/logger';
 
@@ -28,13 +28,7 @@ export function UserSocketProvider({ children }) {
       return;
     }
 
-    const rawApiUrl = getApiRootUrl();
-    let socketServerUrl = rawApiUrl;
-    if (socketServerUrl.endsWith('/api/v1')) {
-      socketServerUrl = socketServerUrl.slice(0, -7);
-    } else if (socketServerUrl.endsWith('/api')) {
-      socketServerUrl = socketServerUrl.slice(0, -4);
-    }
+    const socketServerUrl = getWebSocketUrl();
 
     const token = getAccessToken();
 

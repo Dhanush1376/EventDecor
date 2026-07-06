@@ -35,8 +35,16 @@ export const getRequestDescription = (config) => {
   return `${method} request to ${url.split('/').pop()}`;
 };
 
-export const isPathProtected = (path) => {
+export const isPathProtected = (path, method = 'get') => {
   if (!path) return false;
+
+  const m = method.toLowerCase();
+  if (MUTATING_METHODS.has(m)) {
+    if (path.includes('/products') || path.includes('/gallery') || path.includes('/events')) {
+      return true;
+    }
+  }
+
   return (
     path.includes('/auth/profile') ||
     path.includes('/users/cart') ||
