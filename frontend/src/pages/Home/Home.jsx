@@ -292,9 +292,8 @@ function HomepageEmptyState() {
 /**
  * IntersectionObserver-based fade-in-up reveal wrapper.
  */
-function RevealSection({ children, threshold = 0.1 }) {
+function RevealSection({ children, threshold = 0.05 }) {
   const ref = useRef(null);
-
   const handleIntersect = useCallback((entries, observer) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
@@ -308,16 +307,16 @@ function RevealSection({ children, threshold = 0.1 }) {
     const el = ref.current;
     if (!el) return;
 
+    const observer = new IntersectionObserver(handleIntersect, {
+      rootMargin: '0px',
+      threshold,
+    });
+
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {
       el.classList.add('h1-reveal--visible');
       return;
     }
-
-    const observer = new IntersectionObserver(handleIntersect, {
-      rootMargin: '0px 0px -60px 0px',
-      threshold,
-    });
 
     observer.observe(el);
     return () => observer.disconnect();

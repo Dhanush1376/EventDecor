@@ -237,11 +237,9 @@ export const ProductListingGrid = React.memo(
                       filter_list_off
                     </span>
                   </div>
-                  <h3 className="font-headline-sm text-on-surface mb-3">
-                    No search results available
-                  </h3>
+                  <h3 className="font-headline-sm text-on-surface mb-3">No products found</h3>
                   <p className="font-body-md text-on-surface-variant/50 font-light mb-10 max-w-md mx-auto">
-                    Try adjusting your filters or search terms to find what you're looking for.
+                    We currently don't have any live pieces matching these filters or category.
                   </p>
                   <button onClick={clearAllFilters} className="btn-primary">
                     Clear All Filters
