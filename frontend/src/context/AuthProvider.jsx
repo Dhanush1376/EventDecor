@@ -147,6 +147,15 @@ export function AuthProvider({ children }) {
           }
         } catch (refreshErr) {
           logger.error('[Auth] Failed to refresh token in error recovery', refreshErr);
+          if (
+            refreshErr.response?.status === 401 ||
+            refreshErr.response?.status === 403 ||
+            refreshErr.code === 'ERR_NO_SESSION'
+          ) {
+            logger.warn('[Auth] Refresh token invalid — logging out');
+            logout(true);
+            return false;
+          }
         }
 
         if (!cachedProfile && !user) {

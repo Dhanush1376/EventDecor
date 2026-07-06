@@ -3,7 +3,8 @@
  * Production uses the same-origin /api proxy. Development uses the Vite /api proxy.
  */
 
-export const PRODUCTION_API_ORIGIN = import.meta.env.VITE_PRODUCTION_API_ORIGIN || '';
+export const PRODUCTION_API_ORIGIN =
+  import.meta.env.VITE_PRODUCTION_API_ORIGIN || 'https://eventdecor-production-1647.up.railway.app';
 
 const normalizeApiBase = (url) => {
   let trimmed = String(url || '')
