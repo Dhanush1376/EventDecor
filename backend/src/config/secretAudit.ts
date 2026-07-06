@@ -54,7 +54,7 @@ export const secretLeakInterceptor = (req: Request, res: Response, next: NextFun
           /mongodb(\+srv)?:\/\//i, // MongoDB URI
           /rzp_live_[a-zA-Z0-9]+/i, // Razorpay Live Key
           /sk_live_[a-zA-Z0-9]+/i, // Stripe Live Key
-          /eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/, // JWT (could be normal if it's the auth endpoint, but we only flag if it's not auth route)
+          /eyJhbGci[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/, // Strict JWT matching '{"alg":'
         ];
 
         // We allow JWTs on auth routes and order routes (which return JWT tracking tokens)
