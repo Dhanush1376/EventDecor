@@ -61,7 +61,7 @@ export const invalidateUserSessionCaches = async (userId: string): Promise<void>
   ];
   try {
     // Execute DEL commands individually to prevent CROSSSLOT errors on Redis clusters
-    await Promise.all(keys.map((key) => redisClient.del(key)));
+    await Promise.all(keys.map((key) => redisClient!.del(key)));
   } catch (err) {
     logger.warn(`[SESSION CACHE] Invalidation failed for user ${userId}:`, err);
   }
