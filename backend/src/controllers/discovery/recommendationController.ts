@@ -271,7 +271,7 @@ export const getSeasonal = async (req: Request, res: Response) => {
       ],
     })
       .select(
-        '_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+        '_id title imageSrc images category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
       )
       .sort({ rating: -1, reviews: -1 })
       .limit(limit)
@@ -282,6 +282,7 @@ export const getSeasonal = async (req: Request, res: Response) => {
       targetType: 'product',
       title: p.title,
       imageSrc: p.imageSrc,
+      images: p.images,
       category: p.primaryCategory?.toString()?.toString(),
       price: p.price,
       rating: p.rating,
@@ -486,14 +487,14 @@ async function enrichTrendingItems(items: any[]): Promise<any[]> {
     productIds.length > 0
       ? Product.find({ _id: { $in: productIds }, isActive: true })
           .select(
-            '_id title imageSrc primaryCategory price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+            '_id title imageSrc images primaryCategory price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
           )
           .populate('primaryCategory', 'name')
           .lean()
       : Promise.resolve([]),
     eventIds.length > 0
       ? Event.find({ _id: { $in: eventIds }, isActive: true })
-          .select('_id title image primaryCategory style basePrice')
+          .select('_id title image gallery primaryCategory style basePrice')
           .populate('primaryCategory', 'name')
           .lean()
       : Promise.resolve([]),
@@ -516,6 +517,8 @@ async function enrichTrendingItems(items: any[]): Promise<any[]> {
         title: full.title,
         imageSrc: full.imageSrc,
         image: full.image,
+        images: full.images,
+        gallery: full.gallery,
         category: full.primaryCategory?.name || undefined,
         style: full.style,
         price: full.price,

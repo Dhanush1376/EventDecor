@@ -30,6 +30,7 @@ export function useOptimisticCartMutation({
       if (isAuthenticated && itemType !== 'custom') {
         const action = async () => {
           setIsCartOpen(true);
+          await queryClient.cancelQueries({ queryKey: ['cart'] });
           const previousCart = queryClient.getQueryData(['cart']);
           let rollbackCart = previousCart;
 
@@ -202,6 +203,7 @@ export function useOptimisticCartMutation({
       // For removals we don't have itemType easily, but we know activeCartMode
       if (isAuthenticated && activeCartMode !== 'custom') {
         const action = async () => {
+          await queryClient.cancelQueries({ queryKey: ['cart'] });
           const previousCart = queryClient.getQueryData(['cart']);
           let rollbackCart = previousCart;
 
@@ -299,7 +301,8 @@ export function useOptimisticCartMutation({
       }
 
       if (isAuthenticated && activeCartMode !== 'custom') {
-        const action = () => {
+        const action = async () => {
+          await queryClient.cancelQueries({ queryKey: ['cart'] });
           const previousCart = queryClient.getQueryData(['cart']);
           if (previousCart) {
             let targetCartKey =
@@ -414,6 +417,7 @@ export function useOptimisticCartMutation({
     const action = async () => {
       if (isAuthenticated && activeCartMode !== 'custom') {
         try {
+          await queryClient.cancelQueries({ queryKey: ['cart'] });
           const currentCart = queryClient.getQueryData(['cart']);
           const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart'; // Note: skipping custom for this quick merge since custom uses its own mode
           const otherItems = currentCart?.[otherCartKey]?.items || [];

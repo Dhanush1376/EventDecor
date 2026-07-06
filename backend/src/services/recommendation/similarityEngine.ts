@@ -342,7 +342,7 @@ export async function getFastFallbackSimilar(
         isActive: true,
       })
         .select(
-          '_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+          '_id title imageSrc images category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
         )
         .limit(limit)
         .lean();
@@ -352,6 +352,7 @@ export async function getFastFallbackSimilar(
         targetType: 'product',
         title: p.title,
         imageSrc: p.imageSrc,
+        images: p.images,
         category: p.primaryCategory?.toString()?.toString(),
         price: p.price,
         rating: p.rating,
@@ -372,7 +373,7 @@ export async function getFastFallbackSimilar(
         _id: { $ne: targetId },
         isActive: true,
       })
-        .select('_id title image primaryCategory style basePrice')
+        .select('_id title image gallery primaryCategory style basePrice')
         .limit(limit)
         .lean();
 
@@ -381,6 +382,7 @@ export async function getFastFallbackSimilar(
         targetType: 'event',
         title: e.title,
         image: e.image,
+        gallery: e.gallery,
         category: e.primaryCategory,
         style: e.style,
         basePrice: e.basePrice,
@@ -418,7 +420,7 @@ export async function getFastFallbackCompleteSetup(
         _id: { $ne: targetId },
         isActive: true,
       })
-        .select('_id title image primaryCategory style basePrice')
+        .select('_id title image gallery primaryCategory style basePrice')
         .limit(limit)
         .lean();
 
@@ -427,6 +429,7 @@ export async function getFastFallbackCompleteSetup(
         targetType: 'event',
         title: e.title,
         image: e.image,
+        gallery: e.gallery,
         category: e.primaryCategory,
         style: e.style,
         basePrice: e.basePrice,

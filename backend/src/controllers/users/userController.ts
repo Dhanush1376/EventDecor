@@ -190,6 +190,7 @@ export const getCart = asyncHandler(async (req: any, res: Response) => {
   const cached = await getCachedSessionJson<any>(cacheKey);
   if (cached) {
     res.setHeader('X-Session-Cache', 'HIT');
+    res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
     return res.status(200).json(new ApiResponse(true, 'Cart fetched', cached));
   }
 
@@ -198,6 +199,7 @@ export const getCart = asyncHandler(async (req: any, res: Response) => {
   const cartDetails = await UserService.computeAndValidateCart(user);
   await cacheCart(userId, cartDetails);
   res.setHeader('X-Session-Cache', 'MISS');
+  res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Cart fetched', cartDetails));
 });
 
@@ -212,6 +214,7 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
   );
   await invalidateUserSessionCaches(String(req.user.id));
   const cartDetails = await UserService.computeAndValidateCart(updatedUser);
+  res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Cart updated', cartDetails));
 });
 
@@ -220,6 +223,7 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
   const user = await UserCartService.syncCart(req.user.id, cartItems);
   await invalidateUserSessionCaches(String(req.user.id));
   const cartDetails = await UserService.computeAndValidateCart(user);
+  res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Cart synced successfully', cartDetails));
 });
 
@@ -228,6 +232,7 @@ export const removeFromCart = asyncHandler(async (req: any, res: Response) => {
   const user = await UserCartService.removeFromCart(req.user.id, productId);
   await invalidateUserSessionCaches(String(req.user.id));
   const cartDetails = await UserService.computeAndValidateCart(user);
+  res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Removed from cart', cartDetails));
 });
 

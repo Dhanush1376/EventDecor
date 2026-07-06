@@ -13,8 +13,9 @@ const emptyCart = {
 const defaultCart = { purchaseCart: emptyCart, rentalCart: emptyCart };
 
 export function useCartQuery() {
+  const isAuth = checkAuthLocal();
   return useQuery({
-    queryKey: ['cart'],
+    queryKey: ['cart', isAuth ? 'authenticated' : 'guest'],
     queryFn: async ({ signal }) => {
       const res = await userService.getCart({ signal });
       return res.success ? res.data : res;
@@ -34,7 +35,7 @@ export function useCartMutations() {
       return res.success ? res.data : res;
     },
     onSuccess: (data) => {
-      if (data) queryClient.setQueryData(['cart'], data);
+      if (data) queryClient.setQueryData(['cart', 'authenticated'], data);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -47,7 +48,7 @@ export function useCartMutations() {
       return res.success ? res.data : res;
     },
     onSuccess: (data) => {
-      if (data) queryClient.setQueryData(['cart'], data);
+      if (data) queryClient.setQueryData(['cart', 'authenticated'], data);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -63,7 +64,7 @@ export function useCartMutations() {
       toast.error(getErrorMessage(err, 'Unable to sync bag'));
     },
     onSuccess: (data) => {
-      if (data) queryClient.setQueryData(['cart'], data);
+      if (data) queryClient.setQueryData(['cart', 'authenticated'], data);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });

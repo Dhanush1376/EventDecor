@@ -232,9 +232,9 @@ export function useProductSubmission({
         },
         returnSettings: formData.returnSettings
           ? {
-              returnWindow: formData.returnSettings.returnWindowDays,
-              exchangeWindow: formData.returnSettings.exchangeWindowDays,
-              restockingFeePercent: formData.returnSettings.restockingFeePercentage,
+              returnWindow: Number(formData.returnSettings.returnWindowDays) || 0,
+              exchangeWindow: Number(formData.returnSettings.exchangeWindowDays) || 0,
+              restockingFeePercent: Number(formData.returnSettings.restockingFeePercentage) || 0,
               inspectionRequired: formData.returnSettings.requiresInspection,
             }
           : undefined,

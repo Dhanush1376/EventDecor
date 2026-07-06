@@ -409,7 +409,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a42df9df2886846ac840216</loc>
-    <lastmod>2026-07-05</lastmod>
+    <lastmod>2026-07-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -419,7 +419,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a47e4df9245d19e4fa46ed6</loc>
-    <lastmod>2026-07-05</lastmod>
+    <lastmod>2026-07-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -445,6 +445,16 @@
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783282624/products/wzozgoaaoyja02s4ni3u.webp</image:loc>
       <image:title>Pink Floral Ring Tray</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/product/6a4bc77a0cadbc258b874ba7</loc>
+    <lastmod>2026-07-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>test.jpg</image:loc>
+      <image:title>Test Product</image:title>
     </image:image>
   </url>
   <url>

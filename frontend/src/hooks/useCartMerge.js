@@ -77,13 +77,13 @@ export function useCartMerge({
             await syncCart({ cartItems: syncPayload });
             toast.success('Your guest shopping bag was merged successfully!');
           }
-
+        } catch (err) {
+          logger.error('[Cart] Guest-to-auth cart merge failed:', err);
+        } finally {
           setGuestPurchaseCart({ items: [], summary: emptySummary });
           setGuestRentalCart({ items: [], summary: { ...emptySummary, depositTotal: 0 } });
           if (setGuestCustomCart) setGuestCustomCart({ items: [], summary: emptySummary });
           persistentStorage.removeItem('siri_cart_cache');
-        } catch (err) {
-          logger.error('[Cart] Guest-to-auth cart merge failed:', err);
         }
       };
 
