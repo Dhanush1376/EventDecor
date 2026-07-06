@@ -243,20 +243,44 @@ export const ProductCard = React.memo(function ProductCard({
         {availableImages.length > 1 && (
           <>
             {/* Dots Indicator */}
-            <div className="absolute bottom-3 left-3 lg:bottom-4 lg:left-4 flex items-center gap-1.5 z-10 pointer-events-none bg-black/20 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/10 shadow-sm">
+            <div className="absolute bottom-3 left-3 lg:bottom-4 lg:left-4 flex items-center gap-1.5 z-20 bg-black/20 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/10 shadow-sm pointer-events-auto">
               {availableImages.map((_, i) => (
                 <div
                   key={i}
-                  className={`transition-all duration-300 rounded-full shadow-md border border-black/10 ${
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (scrollContainerRef.current) {
+                      scrollContainerRef.current.scrollTo({
+                        left: i * scrollContainerRef.current.clientWidth,
+                        behavior: 'smooth',
+                      });
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (scrollContainerRef.current) {
+                        scrollContainerRef.current.scrollTo({
+                          left: i * scrollContainerRef.current.clientWidth,
+                          behavior: 'smooth',
+                        });
+                      }
+                    }
+                  }}
+                  className={`transition-all duration-300 rounded-full shadow-md border border-black/10 outline-none cursor-pointer hover:scale-125 flex-shrink-0 p-0 m-0 ${
                     i === activeIndex
                       ? 'w-2 h-2 lg:w-2.5 lg:h-2.5 bg-white'
-                      : 'w-1.5 h-1.5 lg:w-2 lg:h-2 bg-white/60'
+                      : 'w-1.5 h-1.5 lg:w-2 lg:h-2 bg-white/60 hover:bg-white/80'
                   }`}
+                  style={{ minHeight: 'auto', minWidth: 'auto' }}
+                  aria-label={`Go to image ${i + 1}`}
                 />
               ))}
             </div>
-
-            {/* Navigation Arrows (Hover) - Removed by request */}
           </>
         )}
         {/* Floating Utility Actions */}

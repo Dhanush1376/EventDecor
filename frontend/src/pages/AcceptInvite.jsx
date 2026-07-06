@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import { Sparkles } from 'lucide-react';
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
@@ -90,9 +91,11 @@ export function AcceptInvite() {
 
         {/* Logo/Branding Header */}
         <motion.div variants={fadeUp} className="mb-8">
-          <div className="text-[32px] text-primary mb-3 select-none">✦</div>
+          <div className="text-primary mb-3 flex justify-center">
+            <Sparkles className="w-6 h-6" />
+          </div>
           <h2 className="text-[28px] font-bold text-on-surface font-display tracking-[0.2em] uppercase leading-none">
-            Siri Arts
+            Siri Arts & Crafts
           </h2>
           <p className="text-[10px] text-outline-variant font-bold tracking-[0.3em] uppercase mt-2">
             Craft & Heritage Studio

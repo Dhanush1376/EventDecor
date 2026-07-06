@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { productService } from '../../services/domainServices';
+import { productService, uploadService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import logger from '../../utils/core/logger';
 
@@ -70,6 +70,92 @@ export function useProductSubmission({
 
     setIsLoading(true);
     try {
+      let finalImageSrc = formData.imageSrc;
+      let finalImages = [...formData.images].filter(Boolean);
+
+      // Upload pending local images and remote URLs
+      if (formData.pendingUploads && formData.pendingUploads.length > 0) {
+        toast.loading('Uploading images...', { id: 'upload-toast' });
+        // Include http/https to catch newly added pending remote URLs
+        const activeLocalUrls = [finalImageSrc, ...finalImages].filter(
+          (url) => url && (url.startsWith('blob:') || url.startsWith('http')),
+        );
+
+        if (activeLocalUrls.length > 0) {
+          const uploadData = new FormData();
+          const remoteUrlUploadData = new FormData();
+
+          const localUrlMap = {};
+          const remoteUrlMap = {};
+
+          let uploadIndex = 0;
+          let remoteUploadIndex = 0;
+
+          for (const url of activeLocalUrls) {
+            const pending = formData.pendingUploads.find((p) => p.localUrl === url);
+            if (pending) {
+              if (typeof pending.file === 'string' && remoteUrlMap[url] === undefined) {
+                // It's a remote URL that needs to be uploaded to Cloudinary
+                remoteUrlUploadData.append('urls', pending.file);
+                remoteUrlMap[url] = remoteUploadIndex++;
+              } else if (typeof pending.file !== 'string' && localUrlMap[url] === undefined) {
+                // It's a File object that goes to the backend media library
+                uploadData.append('images', pending.file);
+                localUrlMap[url] = uploadIndex++;
+              }
+            }
+          }
+
+          try {
+            // Upload local files via backend Media Library
+            let uploadedLocalImages = [];
+            if (uploadIndex > 0) {
+              const res = await uploadService.uploadImages(uploadData, 'products');
+              if (res.success && res.images) {
+                uploadedLocalImages = res.images;
+              } else {
+                throw new Error('Failed to upload local images');
+              }
+            }
+
+            // Upload remote URLs directly to Cloudinary
+            let uploadedRemoteImages = [];
+            if (remoteUploadIndex > 0) {
+              const { uploadDirectToCloudinary } = await import('../../services/api/_shared');
+              const res = await uploadDirectToCloudinary(remoteUrlUploadData, false, 'products');
+              if (res.success && res.images) {
+                uploadedRemoteImages = res.images;
+              } else {
+                throw new Error('Failed to upload remote URLs');
+              }
+            }
+
+            // Replace local blob URLs and pending remote URLs with the uploaded Cloudinary URLs
+            if (finalImageSrc) {
+              if (localUrlMap[finalImageSrc] !== undefined) {
+                finalImageSrc = uploadedLocalImages[localUrlMap[finalImageSrc]];
+              } else if (remoteUrlMap[finalImageSrc] !== undefined) {
+                finalImageSrc = uploadedRemoteImages[remoteUrlMap[finalImageSrc]];
+              }
+            }
+
+            for (let i = 0; i < finalImages.length; i++) {
+              if (finalImages[i]) {
+                if (localUrlMap[finalImages[i]] !== undefined) {
+                  finalImages[i] = uploadedLocalImages[localUrlMap[finalImages[i]]];
+                } else if (remoteUrlMap[finalImages[i]] !== undefined) {
+                  finalImages[i] = uploadedRemoteImages[remoteUrlMap[finalImages[i]]];
+                }
+              }
+            }
+          } catch (uploadErr) {
+            toast.dismiss('upload-toast');
+            throw uploadErr;
+          }
+        }
+        toast.dismiss('upload-toast');
+      }
+
       const payload = {
         title: formData.title,
         teluguTitle: formData.teluguTitle || undefined,
@@ -101,8 +187,8 @@ export function useProductSubmission({
         price: Number(formData.price),
         oldPrice: formData.oldPrice ? Number(formData.oldPrice) : undefined,
         stock: Number(formData.stock),
-        imageSrc: formData.imageSrc,
-        images: Array.from(new Set([formData.imageSrc, ...formData.images].filter(Boolean))),
+        imageSrc: finalImageSrc,
+        images: Array.from(new Set([finalImageSrc, ...finalImages].filter(Boolean))),
         badges:
           typeof formData.badges === 'string'
             ? formData.badges

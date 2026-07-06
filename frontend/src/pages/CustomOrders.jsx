@@ -99,7 +99,7 @@ export function CustomOrders() {
   return (
     <div className="relative selection:bg-primary/20 bg-[var(--color-surface-ivory)] min-h-screen text-[var(--color-on-surface)] font-body pt-20 lg:pt-32">
       <SEO
-        title="Custom Decor Studio & Consultancy | Siri Arts"
+        title="Custom Decor Studio & Consultancy | Siri Arts & Crafts"
         description="Design your dream Indian ceremony with Siri's interactive digital planning studio. Consult with our Telugu heritage master artisans for bespoke backdrops, floral canopies, and custom pooja trays."
       />
       {/* Decorative Mandalas */}

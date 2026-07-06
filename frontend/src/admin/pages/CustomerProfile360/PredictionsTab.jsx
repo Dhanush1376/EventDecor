@@ -2,6 +2,7 @@ import React from 'react';
 import BrainCircuit from 'lucide-react/dist/esm/icons/brain-circuit';
 import TrendingDown from 'lucide-react/dist/esm/icons/trending-down';
 import ArrowUpCircle from 'lucide-react/dist/esm/icons/arrow-up-circle';
+import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
 
 export default function PredictionsTab({ predictions, overview }) {
   if (!predictions) {
@@ -23,7 +24,7 @@ export default function PredictionsTab({ predictions, overview }) {
       <div className="bg-gradient-to-r from-[var(--admin-bg-subtle)] to-[var(--admin-surface-muted)] rounded-xl p-6 border border-[var(--admin-border-subtle)] flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-[var(--admin-text-primary)] flex items-center gap-2 mb-1">
-            <span className="text-xl">📊</span> Analytics & Estimates
+            <BarChart3 className="w-5 h-5 text-indigo-500" /> Analytics & Estimates
           </h2>
           <p className="text-sm text-[var(--admin-text-secondary)]">
             Predictions are based on historical engagement, purchase intervals, and peer affinities.

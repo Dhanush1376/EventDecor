@@ -50,7 +50,7 @@ export function OrderTrackingPublic() {
   if (error || !order) {
     return (
       <div className="min-h-screen bg-surface-bright flex flex-col items-center justify-center p-6 text-center">
-        <SEO title="Tracking Error | Siri Arts" />
+        <SEO title="Tracking Error | Siri Arts & Crafts" />
         <span className="material-symbols-outlined text-[64px] text-red-400 mb-4 animate-bounce">
           local_shipping
         </span>

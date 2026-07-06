@@ -6,6 +6,7 @@ import ShoppingCart from 'lucide-react/dist/esm/icons/shopping-cart';
 import Search from 'lucide-react/dist/esm/icons/search';
 import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import BrainCircuit from 'lucide-react/dist/esm/icons/brain-circuit';
 import api from '../../services/api';
 import { formatCurrency } from '../components/AdminUIKit';
 
@@ -113,7 +114,7 @@ export default function ExecutiveDashboard() {
         {/* AI Actionable Insights */}
         <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-xl shadow-sm border border-indigo-800 p-6 text-white flex flex-col">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-indigo-100">
-            <span className="text-xl">🤖</span> Executive AI Insights
+            <BrainCircuit className="w-5 h-5" /> Executive AI Insights
           </h3>
           <div className="flex-1 space-y-4 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
             {metrics.aiInsights?.length > 0 ? (

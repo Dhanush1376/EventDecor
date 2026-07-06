@@ -88,7 +88,7 @@ export function CollectionDetail() {
   const description =
     heroProduct?.seoDescription ||
     heroProduct?.description ||
-    `Explore live ${collectionTitle} pieces from the Siri Arts catalog.`;
+    `Explore live ${collectionTitle} pieces from the Siri Arts & Crafts catalog.`;
 
   return (
     <div className="pt-20 lg:pt-28">

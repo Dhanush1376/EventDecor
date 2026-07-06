@@ -98,6 +98,37 @@ Do NOT include any extra text before or after the JSON.`;
       const extractedJson = generatedText.match(/\{[\s\S]*\}/);
       if (!extractedJson) throw new Error('No JSON object found in response');
       parsedPayload = JSON.parse(extractedJson[0]);
+
+      // Ensure uniqueness against DB for title and slug across both Product and Showcase
+      const ShowcaseCollection = (await import('../../models/ShowcaseCollection.js'))
+        .default as any;
+      const ProductCollection = (await import('../../models/Product.js')).default as any;
+
+      const baseTitle = parsedPayload.title;
+      const baseSlug = baseTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+      let isUnique = false;
+      let counter = 1;
+      let currentTitle = baseTitle;
+      let currentSlug = baseSlug;
+
+      while (!isUnique) {
+        const existingShowcase = await ShowcaseCollection.exists({ title: currentTitle });
+        const existingProduct = await ProductCollection.exists({
+          $or: [{ title: currentTitle }, { slug: currentSlug }],
+        });
+
+        if (existingShowcase || existingProduct) {
+          currentTitle = `${baseTitle} ${counter}`;
+          currentSlug = `${baseSlug}-${counter}`;
+          counter++;
+        } else {
+          isUnique = true;
+        }
+      }
+      parsedPayload.title = currentTitle;
     } catch {
       logger.error('Failed to parse Groq response: ' + generatedText);
       throw new ApiError(500, 'AI returned malformed JSON');

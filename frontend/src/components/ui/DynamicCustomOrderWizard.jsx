@@ -5,6 +5,7 @@ import { uploadService } from '../../services/api/uploadService';
 import toast from 'react-hot-toast';
 import { CustomerContactGate } from '../shared/CustomerContactGate';
 import { Skeleton } from './Skeleton';
+import { Check } from 'lucide-react';
 
 export function DynamicCustomOrderWizard({
   onComplete,
@@ -47,7 +48,7 @@ export function DynamicCustomOrderWizard({
       const timer = setTimeout(() => {
         const draftKey = `custom_order_draft_${selectedType}`;
         localStorage.setItem(draftKey, JSON.stringify({ currentStep, formData }));
-        toast.success('Draft Saved', { id: 'autosave', icon: '✓', duration: 1500 });
+        toast.success('Draft Saved', { id: 'autosave', duration: 1500 });
       }, 5000);
       return () => clearTimeout(timer);
     }
@@ -313,7 +314,7 @@ export function DynamicCustomOrderWizard({
                 isReviewScreen ? 'bg-black text-white border-black' : 'border-black/10'
               }`}
             >
-              ✓
+              <Check className="w-4 h-4" />
             </div>
             <span className="text-[12px] font-bold uppercase tracking-wider">Review & Submit</span>
           </div>

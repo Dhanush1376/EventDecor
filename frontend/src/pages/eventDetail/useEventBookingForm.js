@@ -252,7 +252,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
         key,
         amount: amount * 100,
         currency,
-        name: 'Siri Arts Event Decor',
+        name: 'Siri Arts & Crafts',
         description: `Advance Deposit for ${event.title}`,
         order_id: razorpayOrderId,
         handler: async function (response) {

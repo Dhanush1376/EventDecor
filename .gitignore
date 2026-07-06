@@ -112,7 +112,7 @@ frontend/lint-errors.log
 frontend/errors.txt
  
 # Backups & Temp
-backups/
+/backups/`n/backend/backups/
 /backup/
 temp/
 reports/
@@ -189,3 +189,12 @@ cypress/screenshots/
 
 # Vite bundle analyzer
 stats.html
+# Hardened Generated Artifacts
+*.log
+build_output.log
+network-data.json
+stats.html
+temp_*.json
+*.patch
+diff.txt
+

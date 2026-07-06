@@ -10,10 +10,10 @@ export function Wishlist() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-surface min-h-screen pt-24 pb-32 font-body text-on-surface relative overflow-hidden"
+      className="bg-surface min-h-screen pt-[60px] pb-32 font-body text-on-surface relative overflow-hidden"
     >
       <MandalaArtDecor
-        variant={2}
+        variant={3}
         size={450}
         className="-top-24 -right-24 absolute opacity-[0.06] z-0"
         spinDuration={240}

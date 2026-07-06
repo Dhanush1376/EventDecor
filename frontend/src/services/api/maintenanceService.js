@@ -55,4 +55,13 @@ export const maintenanceService = {
     });
     return response.data;
   },
+
+  getDeadLetters: async (token, page = 1) => {
+    const response = await api.get(`/maintenance/dead-letters?page=${page}`, {
+      headers: {
+        'X-Maintenance-Token': token,
+      },
+    });
+    return response.data;
+  },
 };

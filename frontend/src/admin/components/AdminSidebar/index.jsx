@@ -14,7 +14,7 @@ export function AdminSidebar() {
   const { sidebarOpen, sidebarMobileOpen, setSidebarMobileOpen, products, activeRole } = useAdmin();
   const mobileSidebarRef = React.useRef(null);
   const [sidebarSearch, setSidebarSearch] = useState('');
-  const [collapsedSections, setCollapsedSections] = useState({ 10: true }); // Collapse Website by default
+  const [collapsedSections, setCollapsedSections] = useState({});
   const [isFabOpen, setIsFabOpen] = useState(false);
 
   const effectiveRole = activeRole || user?.role || 'owner';

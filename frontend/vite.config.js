@@ -7,7 +7,6 @@ import viteCompression from 'vite-plugin-compression';
 const buildId =
   process.env.VITE_BUILD_ID ||
   process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ||
-  process.env.RENDER_GIT_COMMIT?.slice(0, 12) ||
   String(Date.now());
 
 export default defineConfig({
@@ -102,25 +101,16 @@ export default defineConfig({
           if (id.includes('node_modules/leaflet/') || id.includes('node_modules/react-leaflet/')) {
             return 'maps';
           }
-          if (/node_modules[\\/](chart\.js|recharts|victory-vendor|d3-[^\\/]+)/.test(id)) {
-            return 'charts';
-          }
+
           if (/node_modules[\\/](quill|slate|draft-js|codemirror|prosemirror)/.test(id)) {
             return 'editor';
           }
 
-          // Group 5: UI Utilities (Icons, Dates, Lodash, DOMPurify)
-          if (
-            id.includes('node_modules/lucide-react/') ||
-            id.includes('node_modules/date-fns/') ||
-            id.includes('node_modules/moment/') ||
-            id.includes('node_modules/lodash/') ||
-            id.includes('node_modules/canvas-confetti/') ||
-            id.includes('node_modules/qrcode.react/') ||
-            id.includes('node_modules/react-barcode/') ||
-            id.includes('node_modules/dompurify/')
-          ) {
-            return 'ui-utils';
+          // Keep icons and interaction-only utilities with their route/feature owners.
+          // A broad "ui-utils" vendor chunk makes unrelated routes download the same
+          // optional code for Lucide, QR/barcode, confetti, and sanitizers.
+          if (id.includes('node_modules/date-fns/')) {
+            return 'date-utils';
           }
 
           // Let Vite handle the rest automatically

@@ -1,3 +1,4 @@
+import { AlertTriangle } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import toast from 'react-hot-toast';
@@ -466,8 +467,9 @@ export default function CheckoutPaymentStep() {
       </div>
 
       {paymentError && (
-        <div className="mx-4 mt-4 p-3 bg-red-50 text-red-600 rounded text-xs font-semibold border border-red-200">
-          ⚠️ {paymentError}
+        <div className="bg-red-50 text-red-700 p-4 rounded-lg flex items-start gap-3 border border-red-200 shadow-sm animate-shake mx-4 mt-4">
+          <AlertTriangle className="w-5 h-5 shrink-0 text-red-600 mt-0.5" aria-hidden="true" />
+          <span className="font-semibold text-xs">{paymentError}</span>
         </div>
       )}
 

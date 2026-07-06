@@ -79,7 +79,7 @@ export class CloudinaryAdapter {
       });
     };
 
-    return (cloudinaryCircuitBreaker as any).fire(action);
+    return cloudinaryCircuitBreaker.execute(action);
   }
 
   /**
@@ -95,7 +95,7 @@ export class CloudinaryAdapter {
     };
 
     try {
-      return await (cloudinaryCircuitBreaker as any).fire(action);
+      return await cloudinaryCircuitBreaker.execute(action);
     } catch (error) {
       logger.error(`[CloudinaryAdapter] Failed to delete ${publicId}:`, error);
       return false;
@@ -132,7 +132,7 @@ export class CloudinaryAdapter {
       return { succeeded, failed };
     };
 
-    return (cloudinaryCircuitBreaker as any).fire(action);
+    return cloudinaryCircuitBreaker.execute(action);
   }
 
   /**
@@ -143,7 +143,7 @@ export class CloudinaryAdapter {
       return await cloudinary.api.resource(publicId, { resource_type: resourceType });
     };
 
-    return (cloudinaryCircuitBreaker as any).fire(action);
+    return cloudinaryCircuitBreaker.execute(action);
   }
 
   /**
@@ -160,7 +160,7 @@ export class CloudinaryAdapter {
     };
 
     try {
-      await (cloudinaryCircuitBreaker as any).fire(action);
+      await cloudinaryCircuitBreaker.execute(action);
     } catch (error) {
       logger.error(`[CloudinaryAdapter] Failed to invalidate cache for ${publicId}:`, error);
     }
@@ -184,6 +184,6 @@ export class CloudinaryAdapter {
       return result.resources;
     };
 
-    return (cloudinaryCircuitBreaker as any).fire(action);
+    return cloudinaryCircuitBreaker.execute(action);
   }
 }

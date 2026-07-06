@@ -14,25 +14,25 @@ export function useProductValidation({
   const getStepErrors = () => {
     const errors = {};
     if (currentStep === 0) {
-      if (!formData.title.trim()) errors.title = 'Product title is required';
-      if (!formData.category && !formData.primaryCategory) errors.category = 'Category is required';
-    }
-    if (currentStep === 1) {
-      if (!formData.price || Number(formData.price) <= 0) errors.price = 'Enter a valid price';
-      if (formData.stock === '' || Number(formData.stock) < 0)
-        errors.stock = 'Enter stock quantity';
-    }
-    if (currentStep === 2) {
-      // Check if we have any images in the array or as a primary image string
+      // Media step
       const hasAnyImage = formData.images?.length > 0 || !!formData.imageSrc;
-
       if (formData.images?.length > 0 && !formData.imageSrc) {
         setFormData((prev) => ({ ...prev, imageSrc: prev.images[0] }));
       }
-
       if (!hasAnyImage) {
         errors.imageSrc = 'At least one product image is required';
       }
+    }
+    if (currentStep === 1) {
+      // Basic Info step
+      if (!formData.title || !formData.title.trim()) errors.title = 'Product title is required';
+      if (!formData.category && !formData.primaryCategory) errors.category = 'Category is required';
+    }
+    if (currentStep === 3) {
+      // Pricing step
+      if (!formData.price || Number(formData.price) <= 0) errors.price = 'Enter a valid price';
+      if (formData.stock === '' || Number(formData.stock) < 0)
+        errors.stock = 'Enter stock quantity';
     }
     return errors;
   };

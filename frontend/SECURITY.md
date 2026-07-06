@@ -1,6 +1,6 @@
 # Frontend Security & XSS Mitigation Guide
 
-This document outlines the security mechanisms implemented in the Siri Arts frontend application to defend against Cross-Site Scripting (XSS), Data Exfiltration, and Client-Side vulnerabilities.
+This document outlines the security mechanisms implemented in the Siri Arts & Crafts frontend application to defend against Cross-Site Scripting (XSS), Data Exfiltration, and Client-Side vulnerabilities.
 
 ## 1. Safe HTML Rendering (React)
 

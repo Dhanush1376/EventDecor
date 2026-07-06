@@ -1,4 +1,5 @@
 import toast from 'react-hot-toast';
+import { Check } from 'lucide-react';
 
 export function MainDeliveryView({
   activeSelectedAddress,
@@ -58,7 +59,9 @@ export function MainDeliveryView({
                 <span className="material-symbols-outlined text-[16px] mt-0.5">verified</span>
                 <div>
                   <p className="text-[12px] font-bold">Rental Availability Check</p>
-                  <p className="text-[11px] mt-1">✓ Rentals are available at your pincode.</p>
+                  <p className="text-[11px] mt-1 flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Rentals are available at your pincode.
+                  </p>
                 </div>
               </div>
             )}

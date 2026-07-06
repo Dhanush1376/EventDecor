@@ -9,7 +9,7 @@ Siri Arts & Crafts is an enterprise-grade, high-performance digital sanctuary de
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [System Architecture](#system-architecture)
 - [Engineering Documentation & Guides](#engineering-documentation--guides)
@@ -23,7 +23,7 @@ Siri Arts & Crafts is an enterprise-grade, high-performance digital sanctuary de
 
 ---
 
-## 📚 Engineering Documentation & Guides
+## Engineering Documentation & Guides
 
 We maintain a comprehensive suite of engineering documentation to help developers understand, run, and extend the EventDecor platform.
 
@@ -53,7 +53,7 @@ We maintain a comprehensive suite of engineering documentation to help developer
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 This project is organized as a unified monorepo. Dependencies and build pipelines are orchestrated at the root layer to allow single-command bootstrap and execution:
 
@@ -74,7 +74,7 @@ This project is organized as a unified monorepo. Dependencies and build pipeline
 
 ---
 
-## 🚀 Getting Started & Local Development
+## Getting Started & Local Development
 
 ### 1. Prerequisite Installations
 
@@ -98,7 +98,7 @@ npm run dev
 
 ---
 
-## 🔒 Production Security & Hardening Features
+## Production Security & Hardening Features
 
 The codebase has undergone a complete pre-production audit and hardening sequence:
 
@@ -142,7 +142,7 @@ npm run create-indexes
 ### 6. Real-Time (Socket.io) & Redis
 
 - Admin alerts connect to the `/admin` namespace; customer updates use `/user`.
-- Set `REDIS_URL` in production when running more than one API instance (Render, Kubernetes, etc.). Without Redis, socket events only reach clients on the same instance.
+- Set `REDIS_URL` in production when running more than one API instance (Railway, Kubernetes, etc.). Without Redis, socket events only reach clients on the same instance.
 - Optional: `REQUIRE_REDIS=true` fails startup if `REDIS_URL` is missing (use when horizontally scaled).
 
 ### 7. Email Templates
@@ -173,10 +173,10 @@ API clients should use **`/api/v1`** as the stable contract; see [docs/API_VERSI
 
 #### JWT access token lifetime (dev vs production)
 
-| Environment            | `JWT_EXPIRES_IN`                  | Notes                                                           |
-| ---------------------- | --------------------------------- | --------------------------------------------------------------- |
-| Local `.env`           | `15m` (default in `.env.example`) | Matches production refresh behaviour                            |
-| Render (`render.yaml`) | `15m`                             | Short-lived access tokens; clients must use `/api/auth/refresh` |
+| Environment  | `JWT_EXPIRES_IN`                  | Notes                                                           |
+| ------------ | --------------------------------- | --------------------------------------------------------------- |
+| Local `.env` | `15m` (default in `.env.example`) | Matches production refresh behaviour                            |
+| Production   | `15m`                             | Short-lived access tokens; clients must use `/api/auth/refresh` |
 
 Do **not** use `7d` access tokens in production — refresh-token rotation and session revocation only surface when access tokens expire quickly.
 
@@ -206,7 +206,7 @@ Do **not** use `7d` access tokens in production — refresh-token rotation and s
 | **RPO** (max data loss) | ≤ 24 h with Atlas continuous backup; ≤ 1 h with Point-in-Time Recovery (PITR) |
 | **RTO** (max downtime)  | Document cluster restore steps in Atlas; test restore quarterly               |
 
-Enable **continuous backup** or **PITR** in the MongoDB Atlas project (not in `render.yaml`). A weekly cron job logs a backup reminder; `backend/scripts/prod-maintenance.sh` prints an Atlas backup check during maintenance runs.
+Enable **continuous backup** or **PITR** in the MongoDB Atlas project (not in your hosting provider config). A weekly cron job logs a backup reminder; `backend/scripts/prod-maintenance.sh` prints an Atlas backup check during maintenance runs.
 
 ### 10. CI/CD
 
@@ -226,7 +226,6 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every PR to `main`:
 | **OpenGraph**    | `frontend/public/og-image.jpg` and `og-image.png` served at `/og-image.jpg`          |
 | **2FA secrets**  | `twoFactorSecret` encrypted at rest (`FIELD_ENCRYPTION_KEY` or `JWT_SECRET`)         |
 | **Socket logs**  | `correlationId` = Socket.io `socket.id` on connect/disconnect/room join              |
-| **Render plan**  | Upgrade from `starter` to **Standard** (2GB+) for production traffic                 |
 | **Safety lock**  | Cached in Redis (5s TTL) when `REDIS_URL` is set                                     |
 | **Cron jobs**    | Redis `SETNX` distributed locks per job when scaled                                  |
 | **MongoDB pool** | `MONGO_POOL_SIZE` (default 20) — see `backend/.env.example`                          |
@@ -235,7 +234,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every PR to `main`:
 
 ---
 
-## ⚙️ Environment Configuration
+## Environment Configuration
 
 ### Backend Environment Variables (`/backend/.env`)
 
@@ -281,7 +280,7 @@ VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
 
 ---
 
-## 📦 Deployment Workflows
+## Deployment Workflows
 
 ### Frontend Deployment: Vercel
 
@@ -291,22 +290,22 @@ VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
 4.  Configure `VITE_API_URL` and `VITE_RAZORPAY_KEY_ID` under Vercel project environment variables.
 5.  Set output directory to `dist`.
 
-### Backend Deployment: Render
+### Backend Deployment: Railway
 
-1.  Create a new **Web Service** on **Render**.
+1.  Connect your repository to **Railway**.
 2.  Set **Root Directory** to `backend`.
 3.  Choose your closest Region (e.g. `Singapore (Southeast Asia)`).
-4.  **Plan:** use **Standard** (2 GB RAM / 1 CPU minimum) or higher for production. The `starter` plan in `render.yaml` is fine for staging only — concurrent MongoDB + Redis + Socket.io pools can OOM on starter under load.
+4.  **Plan:** use **Standard** (2 GB RAM / 1 CPU minimum) or higher for production.
 5.  Use these exact build settings:
     - **Build Command**: `npm install && npm run build`
     - **Start Command**: `npm start`
-6.  Populate all Environment Variables in Render's configuration tab.
+6.  Populate all Environment Variables in Railway's variables tab.
 
-**Ephemeral filesystem:** Render web services do not persist local disk across deploys or restarts. The API does not write PDFs or uploads to local disk in the request hot path (invoices are streamed or held in memory for email; media goes to Cloudinary). Do not add `disk` mounts expecting durable temp files unless you introduce external object storage.
+**Ephemeral filesystem:** Railway web services do not persist local disk across deploys or restarts. The API does not write PDFs or uploads to local disk in the request hot path (invoices are streamed or held in memory for email; media goes to Cloudinary). Do not add `disk` mounts expecting durable temp files unless you introduce external object storage.
 
 ---
 
-## 📜 Monorepo Orchestration Scripts
+## Monorepo Orchestration Scripts
 
 Run these scripts from the monorepo root:
 
@@ -316,13 +315,13 @@ Run these scripts from the monorepo root:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on how to submit pull requests, report issues, and set up your development environment.
 
 ---
 
-## 📜 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 

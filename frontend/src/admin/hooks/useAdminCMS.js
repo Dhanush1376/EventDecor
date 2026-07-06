@@ -235,8 +235,35 @@ export function useAdminCMS({
         ([, val]) => val?.status === 'modified',
       );
 
+      const { PendingUploadRegistry } = await import('../components/ImageUpload');
+      const { uploadService } = await import('../../services/domainServices');
+
+      let contentString = JSON.stringify(sectionsToPublish);
+      const activeBlobUrls = Array.from(PendingUploadRegistry.keys()).filter((url) =>
+        contentString.includes(url),
+      );
+
+      if (activeBlobUrls.length > 0) {
+        toast.loading('Uploading pending CMS images...', { id: 'cms-upload' });
+        for (const url of activeBlobUrls) {
+          const pending = PendingUploadRegistry.get(url);
+          if (pending && pending.file) {
+            const fd = new FormData();
+            fd.append('file', pending.file);
+            const res = await uploadService.uploadCMS(fd);
+            if (res && res.success && res.data && res.data.url) {
+              contentString = contentString.replaceAll(url, res.data.url);
+              PendingUploadRegistry.delete(url);
+            }
+          }
+        }
+        toast.dismiss('cms-upload');
+      }
+
+      const updatedSectionsToPublish = JSON.parse(contentString);
+
       const results = await Promise.allSettled(
-        sectionsToPublish.map(([key, data]) => cmsService.updateSection(key, data)),
+        updatedSectionsToPublish.map(([key, data]) => cmsService.updateSection(key, data)),
       );
 
       const failedSections = [];
@@ -264,6 +291,7 @@ export function useAdminCMS({
         return updated;
       });
       setLastSaved(new Date());
+      setHasUnsavedContent(false);
 
       await refreshWebsiteContent();
 

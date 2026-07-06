@@ -155,7 +155,7 @@ export function WishlistView({ isEmbedded = false }) {
       {/* Address Bar - Attached perfectly below topnav */}
       {enhancedItems.length > 0 && !isEmbedded && (
         <div
-          className={`w-full bg-[#fbf9f6] border-b border-black/10 relative -mt-6 mb-6 hover:bg-[#f6f2ea] transition-colors ${isAddressDropdownOpen ? 'z-50' : 'z-30'}`}
+          className={`w-full bg-[#fbf9f6] relative hover:bg-[#f6f2ea] transition-colors ${isAddressDropdownOpen ? 'z-50' : 'z-30'}`}
         >
           <div className="max-w-[1440px] mx-auto px-4 sm:px-8 relative">
             <div
@@ -169,7 +169,7 @@ export function WishlistView({ isEmbedded = false }) {
                 <span className="text-[11px] lg:text-xs text-[#1a1817] font-semibold truncate leading-none">
                   {activeAddress
                     ? `${activeAddress.name} - ${activeAddress.addressString || activeAddress.address}, ${activeAddress.locality || ''}, ${activeAddress.city}`
-                    : 'Dhanush Atmakuri - Block- 15 (Uni mall)-shop-404 - Nellore'}
+                    : 'Select a Delivery Destination'}
                 </span>
               </div>
               <span className="material-symbols-outlined text-[18px] text-black/40">
@@ -233,63 +233,69 @@ export function WishlistView({ isEmbedded = false }) {
         </div>
       )}
 
+      {/* Full-width Filters Bar Wrapper */}
+      {enhancedItems.length > 0 && (
+        <div className="w-full bg-[#fbf9f6] border-b border-black/10 pb-4 pt-0 mb-4 relative z-20">
+          <div className={containerClasses}>
+            <div className="flex justify-center w-full relative">
+              {/* Collections Segmented Switch */}
+              <div className="w-full max-w-[500px] bg-white backdrop-blur-xl border border-outline-variant/20 p-1.5 rounded-full flex gap-1 items-center relative select-none overflow-visible shadow-sm mx-auto">
+                {[
+                  { id: 'product', label: 'Products', icon: 'shopping_bag', count: productCount },
+                  { id: 'event', label: 'Events', icon: 'event', count: eventCount },
+                ].map((opt) => {
+                  const isActive = itemTypeFilter === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => {
+                        setItemTypeFilter(opt.id);
+                        setSelectedCategory(null);
+                      }}
+                      className={`relative flex flex-1 items-center justify-center gap-1.5 px-5 py-2.5 min-h-0 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer border-0 bg-transparent ${
+                        isActive ? 'text-black' : 'text-[#685c57]/70 hover:text-black/90'
+                      }`}
+                    >
+                      {/* Active sliding background pill */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="wishlistActiveTab"
+                          className="absolute inset-0 bg-surface-container-low border border-black/5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] z-0"
+                          transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+                        />
+                      )}
+
+                      {/* Icon & Label */}
+                      <span className="material-symbols-outlined text-[16px] relative z-10">
+                        {opt.icon}
+                      </span>
+                      <span className="relative z-10">{opt.label}</span>
+
+                      {/* Top-Right Overlapping Badge */}
+                      <span
+                        className={`absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold border border-white shadow-sm transition-colors z-20 ${
+                          isActive ? 'bg-black text-white' : 'bg-[#e8e3d9] text-[#685c57]'
+                        }`}
+                      >
+                        {opt.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={containerClasses}>
         <div className="relative z-0">
           {/* Header - Hidden when empty */}
           {enhancedItems.length > 0 && (
             <>
-              {/* Filters Bar */}
-              <div className="flex justify-center w-full mb-6 relative">
-                {/* Collections Segmented Switch */}
-                <div className="w-full bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 p-1.5 rounded-full flex gap-1 items-center relative select-none overflow-visible shadow-inner">
-                  {[
-                    { id: 'product', label: 'Products', icon: 'shopping_bag', count: productCount },
-                    { id: 'event', label: 'Events', icon: 'event', count: eventCount },
-                  ].map((opt) => {
-                    const isActive = itemTypeFilter === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        onClick={() => {
-                          setItemTypeFilter(opt.id);
-                          setSelectedCategory(null);
-                        }}
-                        className={`relative flex flex-1 items-center justify-center gap-1.5 px-5 py-2.5 min-h-0 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer border-0 bg-transparent ${
-                          isActive ? 'text-black' : 'text-[#685c57]/70 hover:text-black/90'
-                        }`}
-                      >
-                        {/* Active sliding background pill */}
-                        {isActive && (
-                          <motion.div
-                            layoutId="wishlistActiveTab"
-                            className="absolute inset-0 bg-white border border-black/5 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.05)] z-0"
-                            transition={{ type: 'spring', damping: 25, stiffness: 250 }}
-                          />
-                        )}
-
-                        {/* Icon & Label */}
-                        <span className="material-symbols-outlined text-[16px] relative z-10">
-                          {opt.icon}
-                        </span>
-                        <span className="relative z-10">{opt.label}</span>
-
-                        {/* Top-Right Overlapping Badge */}
-                        <span
-                          className={`absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold border border-white shadow-sm transition-colors z-20 ${
-                            isActive ? 'bg-black text-white' : 'bg-[#e8e3d9] text-[#685c57]'
-                          }`}
-                        >
-                          {opt.count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* Categories Carousel */}
               {categoriesList.length > 0 && (
-                <div className="mb-8 border-b border-black/5 pb-6">
+                <div className="mb-4 border-b border-black/5 pb-4">
                   <div className="flex items-center gap-4 overflow-x-auto scrollbar-none py-2 px-1 select-none scroll-smooth">
                     {/* "All" Category Circular Item */}
                     <div

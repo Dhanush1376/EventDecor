@@ -136,7 +136,7 @@ export function BookingCard({ booking, idx, onClick }) {
           </span>
         </div>
         <span className="font-mono text-[9px] font-medium opacity-60">
-          ID: {booking._id?.substring(18).toUpperCase()}
+          ID: {(booking._id || booking.id || '').substring(18).toUpperCase()}
         </span>
       </div>
     </motion.div>

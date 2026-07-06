@@ -1,4 +1,5 @@
-// Shared Sentry promise — preloaded once, reused everywhere
+// Shared Sentry promise. Keep Sentry out of startup; load it only when an error
+// is captured or the deferred observability bootstrap runs.
 let _sentryPromise = null;
 
 export function getSentry() {
@@ -6,9 +7,4 @@ export function getSentry() {
     _sentryPromise = import('@sentry/react').catch(() => null);
   }
   return _sentryPromise;
-}
-
-// Kick off preload immediately (will resolve during idle)
-if (typeof window !== 'undefined') {
-  getSentry();
 }

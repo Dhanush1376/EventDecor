@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { handleImageError } from '../utils/media/imageUtils';
 import { orderService, rentalService } from '../services/domainServices';
 import logger from '../utils/core/logger';
+import { Check } from 'lucide-react';
 
 const _BarcodeSVG = ({ _val }) => (
   <svg viewBox="0 0 200 40" className="w-full h-9" xmlns="http://www.w3.org/2000/svg">
@@ -321,7 +322,7 @@ export function OrderSuccess() {
 
               <h2 className="font-display text-2xl lg:text-3xl text-on-surface font-bold mb-3">
                 {order.orderType === 'rental' || order.items.some((i) => i.type === 'rental')
-                  ? '🏷 Rental Booking Confirmed!'
+                  ? 'Rental Booking Confirmed!'
                   : 'Order Confirmed!'}
               </h2>
               <p className="text-xs text-secondary max-w-md mx-auto leading-relaxed mb-8">
@@ -429,8 +430,9 @@ export function OrderSuccess() {
                             </h4>
                             {item.type === 'rental' && (
                               <span className="bg-[#8c7335]/10 text-[#8c7335] text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded flex items-center gap-1 border border-[#8c7335]/20">
-                                <span className="material-symbols-outlined text-[10px]">sell</span>{' '}
-                                🏷 RENTAL
+                                <span className="text-[10px] uppercase font-bold tracking-widest text-accent flex items-center gap-1">
+                                  <Check className="w-3 h-3" aria-hidden="true" /> RENTAL
+                                </span>
                               </span>
                             )}
                           </div>

@@ -53,7 +53,7 @@ export function Coupons() {
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)] pt-32 pb-20 px-6">
       <Helmet>
-        <title>Active Offers & Coupons | Event Decor</title>
+        <title>Active Offers & Coupons | Siri Arts & Crafts</title>
         <meta name="description" content="Discover our latest offers and discount coupons." />
       </Helmet>
 

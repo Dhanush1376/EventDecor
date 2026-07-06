@@ -157,7 +157,7 @@ export function AdminTemplateCreate() {
               type="text"
               value={templateForm.subjectLine}
               onChange={(e) => setTemplateForm({ ...templateForm, subjectLine: e.target.value })}
-              placeholder="e.g. ✦ Unveiling Timeless Diya Curations"
+              placeholder="e.g. — Unveiling Timeless Diya Curations"
               className="admin-input"
             />
           </div>

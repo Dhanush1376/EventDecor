@@ -36,7 +36,7 @@ export const initialWebsiteContent = {
     },
     {
       id: 2,
-      text: '🎉 Festive Season Special — 15% Off All Side-Stage & Tray Curation Rentals',
+      text: 'Festive Season Special — 15% Off All Side-Stage & Tray Curation Rentals',
       icon: 'celebration',
       isActive: false,
       position: 'top',
@@ -47,7 +47,7 @@ export const initialWebsiteContent = {
   // ABOUT PAGE
   // ═══════════════════════════════════════════════════════
   aboutPage: {
-    heroTitle: 'The Siri Arts Story',
+    heroTitle: 'The Siri Arts & Crafts Story',
     heroSubtitle: 'Preserving Heritage, Crafting Dreams',
     heroImage: IMAGES.luxuryRoyalWedding,
     storyImage: IMAGES.templeStyleMandap,

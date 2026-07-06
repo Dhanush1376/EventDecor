@@ -204,7 +204,7 @@ export function AdminCampaignCreate() {
                 required
                 value={campaignForm.subject}
                 onChange={(e) => setCampaignForm({ ...campaignForm, subject: e.target.value })}
-                placeholder="e.g. Unveiling Siri Arts Festive Splendors ✦ 50% Early Access"
+                placeholder="e.g. Unveiling Siri Arts & Crafts Festive Splendors — 50% Early Access"
                 className="w-full bg-[var(--admin-bg-subtle)]/40 rounded-xl px-4 py-2.5 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-white transition-all font-medium"
               />
             </div>
@@ -301,7 +301,7 @@ export function AdminCampaignCreate() {
                 <div className="bg-[var(--admin-surface)] rounded-xl p-2.5 border border-[var(--admin-border-subtle)] shrink-0">
                   <p className="text-[10px] text-black/40 font-mono truncate">
                     <span className="font-bold text-black">Subject:</span>{' '}
-                    {campaignForm.subject || '✦ Siri Arts Splendors'}
+                    {campaignForm.subject || '— Siri Arts & Crafts Splendors'}
                   </p>
                 </div>
                 <div
@@ -327,8 +327,8 @@ export function AdminCampaignCreate() {
               Secure Dispatch Redirection Active
             </span>
             <p className="text-[9px] text-black/45 font-light leading-relaxed mt-0.5">
-              On send trigger, Siri Arts Campaign dispatcher will automatically inject pixel
-              tracking logs and secure redirect headers.
+              On send trigger, Siri Arts & Crafts Campaign dispatcher will automatically inject
+              pixel tracking logs and secure redirect headers.
             </p>
           </div>
         </motion.div>

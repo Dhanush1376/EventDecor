@@ -251,10 +251,10 @@ export function useProductForm({ id, isEditMode }) {
       if (calculated) {
         setFormData((prev) => {
           if (
-            prev.rentalPricing?.daily === calculated.daily &&
-            prev.rentalPricing?.weekly === calculated.weekly &&
-            prev.rentalPricing?.monthly === calculated.monthly &&
-            prev.securityDeposit === calculated.securityDeposit
+            Number(prev.rentalPricing?.daily) === calculated.daily &&
+            Number(prev.rentalPricing?.weekly) === calculated.weekly &&
+            Number(prev.rentalPricing?.monthly) === calculated.monthly &&
+            Number(prev.securityDeposit) === calculated.securityDeposit
           ) {
             return prev;
           }

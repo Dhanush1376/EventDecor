@@ -1,3 +1,4 @@
+import { Star } from 'lucide-react';
 export function CouponPreview({ formData }) {
   return (
     <div className="admin-card overflow-hidden">
@@ -34,7 +35,14 @@ export function CouponPreview({ formData }) {
 
               <div className="z-10 text-center w-full">
                 <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--admin-accent)] block mb-1">
-                  {formData.isFeatured ? '⭐ Featured Offer' : 'Special Offer'}
+                  {formData.isFeatured ? (
+                    <span className="flex items-center gap-1">
+                      <Star className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
+                      Featured Offer
+                    </span>
+                  ) : (
+                    'Special Offer'
+                  )}
                 </span>
                 <h3 className="text-3xl font-black text-[var(--admin-text-primary)] tracking-tight">
                   {formData.discountType === 'percentage'

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { showcaseService } from '../../services/domainServices';
+import { showcaseService, uploadService } from '../../services/domainServices';
 
 export function useShowcaseSubmission({
   isEditMode,
@@ -45,6 +45,91 @@ export function useShowcaseSubmission({
     setIsSaving(true);
     if (setIsLoading) setIsLoading(true);
     try {
+      let finalImage = formData.image;
+      let finalGallery = [...(formData.galleryImages || [])].filter(Boolean);
+
+      if (formData.pendingUploads && formData.pendingUploads.length > 0) {
+        toast.loading('Uploading images...', { id: 'upload-toast' });
+        // Include http/https to catch newly added pending remote URLs
+        const activeLocalUrls = [finalImage, ...finalGallery].filter(
+          (url) => url && (url.startsWith('blob:') || url.startsWith('http')),
+        );
+
+        if (activeLocalUrls.length > 0) {
+          const uploadData = new FormData();
+          const remoteUrlUploadData = new FormData();
+
+          const localUrlMap = {};
+          const remoteUrlMap = {};
+
+          let uploadIndex = 0;
+          let remoteUploadIndex = 0;
+
+          for (const url of activeLocalUrls) {
+            const pending = formData.pendingUploads.find((p) => p.localUrl === url);
+            if (pending) {
+              if (typeof pending.file === 'string' && remoteUrlMap[url] === undefined) {
+                // Remote URL
+                remoteUrlUploadData.append('urls', pending.file);
+                remoteUrlMap[url] = remoteUploadIndex++;
+              } else if (typeof pending.file !== 'string' && localUrlMap[url] === undefined) {
+                // Local File
+                uploadData.append('images', pending.file);
+                localUrlMap[url] = uploadIndex++;
+              }
+            }
+          }
+
+          try {
+            // Upload local files
+            let uploadedLocalImages = [];
+            if (uploadIndex > 0) {
+              const res = await uploadService.uploadImages(uploadData, 'events');
+              if (res.success && res.images) {
+                uploadedLocalImages = res.images;
+              } else {
+                throw new Error('Failed to upload local images');
+              }
+            }
+
+            // Upload remote URLs
+            let uploadedRemoteImages = [];
+            if (remoteUploadIndex > 0) {
+              const { uploadDirectToCloudinary } = await import('../../services/api/_shared');
+              const res = await uploadDirectToCloudinary(remoteUrlUploadData, false, 'events');
+              if (res.success && res.images) {
+                uploadedRemoteImages = res.images;
+              } else {
+                throw new Error('Failed to upload remote URLs');
+              }
+            }
+
+            // Replace local blob URLs and pending remote URLs with uploaded Cloudinary URLs
+            if (finalImage) {
+              if (localUrlMap[finalImage] !== undefined) {
+                finalImage = uploadedLocalImages[localUrlMap[finalImage]];
+              } else if (remoteUrlMap[finalImage] !== undefined) {
+                finalImage = uploadedRemoteImages[remoteUrlMap[finalImage]];
+              }
+            }
+
+            for (let i = 0; i < finalGallery.length; i++) {
+              if (finalGallery[i]) {
+                if (localUrlMap[finalGallery[i]] !== undefined) {
+                  finalGallery[i] = uploadedLocalImages[localUrlMap[finalGallery[i]]];
+                } else if (remoteUrlMap[finalGallery[i]] !== undefined) {
+                  finalGallery[i] = uploadedRemoteImages[remoteUrlMap[finalGallery[i]]];
+                }
+              }
+            }
+          } catch (uploadErr) {
+            toast.dismiss('upload-toast');
+            throw uploadErr;
+          }
+        }
+        toast.dismiss('upload-toast');
+      }
+
       const incList =
         formData.inclusions && formData.inclusions.length > 0
           ? formData.inclusions.map((i) => ({
@@ -65,8 +150,8 @@ export function useShowcaseSubmission({
         category: formData.category,
         rentalPrice: Number(formData.rentalPrice) || 12000,
         description: formData.description,
-        image: formData.image,
-        gallery: formData.galleryImages.filter(Boolean),
+        image: finalImage,
+        gallery: finalGallery,
         inclusions: incList,
         colorPalette: formData.colorPalette
           ? formData.colorPalette

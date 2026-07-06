@@ -125,7 +125,7 @@ export function Contact() {
   return (
     <div className="bg-[var(--color-surface-ivory)] min-h-screen pt-24 lg:pt-32 pb-20 relative overflow-hidden selection:bg-primary/20">
       <SEO
-        title="Contact Us | Siri Arts"
+        title="Contact Us | Siri Arts & Crafts"
         description="Connect with our design studio for bespoke heritage decor consultations and curated event masteries."
       />
 

@@ -17,7 +17,7 @@ export function CustomerContactGate({ onAction, children, className }) {
     if (e && e.preventDefault) e.preventDefault();
 
     if (!user) {
-      toast('Please login to continue', { icon: '🔒' });
+      toast('Please login to continue');
       openAuthModal();
       return;
     }

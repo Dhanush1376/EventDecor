@@ -37,42 +37,35 @@ export function ProductMediaStep({
             />
             <button
               type="button"
-              onClick={async () => {
+              onClick={() => {
                 const input = document.getElementById('directUrlInput');
                 if (input.value) {
-                  setIsCompressing(true);
-                  try {
-                    // Fix: Use _shared.js direct Cloudinary upload for remote URLs to avoid the empty file issue
-                    const { uploadDirectToCloudinary } =
-                      await import('../../../services/api/_shared');
-                    const uploadData = new FormData();
-                    uploadData.append('urls', input.value);
+                  const inputUrl = input.value.trim();
 
-                    const res = await uploadDirectToCloudinary(uploadData, false, 'products');
+                  setFormData((prev) => {
+                    const combinedImages = [...(prev.images || []), inputUrl];
+                    const limitedImages = combinedImages.slice(0, 4);
 
-                    if (res.success && res.images) {
-                      setFormData((prev) => {
-                        const combined = [...prev.images, ...res.images];
-                        if (combined.length > 4) {
-                          toast.error('Maximum 4 images allowed. Only the first 4 were kept.');
-                        }
-                        const limitedImages = combined.slice(0, 4);
-                        return {
-                          ...prev,
-                          images: limitedImages,
-                          imageSrc: limitedImages[0] || '',
-                        };
-                      });
-                      toast.success('Image fetched & optimized!');
-                      input.value = '';
-                    } else {
-                      toast.error('Failed to upload from URL: ' + (res.error || 'Unknown error'));
+                    if (combinedImages.length > 4) {
+                      toast.error('Maximum 4 images allowed. Only the first 4 were kept.');
                     }
-                  } catch (err) {
-                    toast.error('Failed to upload from URL: ' + err.message);
-                  } finally {
-                    setIsCompressing(false);
-                  }
+
+                    const pendingUrlObj = {
+                      localUrl: inputUrl,
+                      file: inputUrl, // String, distinguished from File object
+                    };
+
+                    const previousPending = prev.pendingUploads || [];
+
+                    return {
+                      ...prev,
+                      images: limitedImages,
+                      imageSrc: limitedImages[0] || '',
+                      pendingUploads: [...previousPending, pendingUrlObj],
+                    };
+                  });
+                  toast.success('Image URL added locally! Will upload on publish.');
+                  input.value = '';
                 }
               }}
               className="shrink-0 bg-[var(--admin-accent)] text-white hover:brightness-110 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-transform active:scale-95 cursor-pointer whitespace-nowrap"
@@ -103,13 +96,14 @@ export function ProductMediaStep({
               setCompressionProgress(0);
               setCompressionStats([]);
               try {
-                const uploadData = new FormData();
                 const newStats = [];
+                const localImages = [];
+                const pendingUploads = [];
 
                 for (let i = 0; i < rawFiles.length; i++) {
                   const file = rawFiles[i];
+                  // Compress image first to get the optimized File object
                   const optimizedFile = await compressImage(file);
-                  uploadData.append('images', optimizedFile);
 
                   newStats.push({
                     name: file.name,
@@ -118,47 +112,52 @@ export function ProductMediaStep({
                     reduction:
                       file.size > 0 ? ((1 - optimizedFile.size / file.size) * 100).toFixed(1) : 0,
                   });
-                }
-                setCompressionStats(newStats);
 
-                const onProgress = (filename, percent) => {
-                  setCompressionProgress(percent);
-                };
+                  // Generate a local blob URL for preview instead of uploading immediately
+                  const localUrl = URL.createObjectURL(optimizedFile);
+                  localImages.push(localUrl);
 
-                const res = await uploadService.uploadImages(uploadData, 'products', onProgress);
-                if (res.success && res.images) {
-                  setFormData((prev) => {
-                    const combined = [...prev.images, ...res.images];
-                    if (combined.length > 4) {
-                      toast.error('Maximum 4 images allowed. Only the first 4 were kept.');
-                    }
-                    const limitedImages = combined.slice(0, 4);
-                    return {
-                      ...prev,
-                      images: limitedImages,
-                      imageSrc: limitedImages[0] || '',
-                    };
+                  // Store the file to be uploaded later
+                  pendingUploads.push({
+                    localUrl,
+                    file: optimizedFile,
                   });
-                  toast.success(`Photos uploaded successfully!`);
                 }
-              } catch (err) {
-                let msg =
-                  err?.response?.status === 401
-                    ? 'Upload failed: Please log in again or refresh the page'
-                    : err?.response?.data?.message ||
-                      err?.message ||
-                      'Upload failed. Please try again.';
 
-                if (err?.message === 'Network Error') {
-                  msg = `Network Error! URL: ${err?.config?.url || 'unknown'}. Check if CORS or AdBlocker is blocking it.`;
-                }
-                toast.error(msg);
+                setCompressionStats(newStats);
+                setCompressionProgress(100);
+
+                // Update form data with the local previews and pending files
+                setFormData((prev) => {
+                  const combinedImages = [...(prev.images || []), ...localImages];
+                  const limitedImages = combinedImages.slice(0, 4);
+
+                  if (combinedImages.length > 4) {
+                    toast.error('Maximum 4 images allowed. Only the first 4 were kept.');
+                  }
+
+                  // Keep track of which pending uploads are actually in the limited images
+                  const validPendingUploads = pendingUploads.filter((p) =>
+                    limitedImages.includes(p.localUrl),
+                  );
+                  const previousPending = prev.pendingUploads || [];
+
+                  return {
+                    ...prev,
+                    images: limitedImages,
+                    imageSrc: limitedImages[0] || '',
+                    pendingUploads: [...previousPending, ...validPendingUploads],
+                  };
+                });
+                toast.success(`Photos selected and ready to upload!`);
+              } catch (err) {
+                toast.error('Failed to process images: ' + err.message);
               } finally {
                 setTimeout(() => {
                   setIsCompressing(false);
                   setCompressionProgress(0);
                   setCompressionStats([]);
-                }, 1500);
+                }, 1000);
               }
             }}
             className="w-full text-[11px] text-[var(--admin-text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:uppercase file:tracking-wider file:bg-[var(--admin-accent)] file:text-white hover:file:bg-[var(--admin-accent-hover)] cursor-pointer shadow-sm border border-[var(--admin-border)] rounded-xl p-2 bg-[var(--admin-surface)] focus:border-[var(--admin-accent)] focus:outline-none transition-all"

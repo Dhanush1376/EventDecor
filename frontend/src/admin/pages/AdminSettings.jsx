@@ -287,7 +287,7 @@ export function AdminSettings({ hideHeader }) {
         phone: profileForm.phone,
       });
       if (res.success) {
-        toast.success('Profile updated', { icon: '👤' });
+        toast.success('Profile updated');
         if (setAuthUser && res.data) setAuthUser(res.data);
       }
     } catch (err) {
@@ -305,7 +305,7 @@ export function AdminSettings({ hideHeader }) {
       const res = await cmsService.updateSection('studio_settings', settingsToSave);
       if (res) {
         await deleteDraft();
-        toast.success('Settings saved', { icon: '⚙️' });
+        toast.success('Settings saved');
       }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to commit settings changes.'));

@@ -14,9 +14,6 @@ import { createResponseInterceptor } from './interceptors/responseInterceptor';
 const api = axios.create({
   timeout: 15000, // 15s timeout to prevent hanging connections and give early feedback
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 let accessToken = null;
@@ -61,6 +58,7 @@ export const setAccessToken = (token) => {
 };
 
 export const getAccessToken = () => accessToken;
+export const getRefreshPromise = () => refreshPromise;
 
 const applyRefreshPayload = (payload) => {
   const token = payload?.accessToken || payload?.token;
@@ -150,6 +148,7 @@ api.interceptors.request.use(
     hasLocalAuthMarker,
     refreshAccessToken,
     ensureCsrfToken,
+    getRefreshPromise,
   }),
   (error) => Promise.reject(error),
 );

@@ -1,6 +1,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
+import { AlertTriangle, Wrench, Zap } from 'lucide-react';
 import { AdminProvider, useAdmin } from '../context/AdminContext';
 import { DraftProvider } from '../context/DraftProvider';
 import { AdminSidebar } from '../components/AdminSidebar';
@@ -9,8 +10,13 @@ import { PublishToast } from '../components/AdminUIKit';
 import { AdminErrorBoundary } from '../components/AdminErrorBoundary';
 import { GlobalSearchPalette } from '../components/GlobalSearchPalette';
 import { AdminLoader } from '../../components/ui/PageLoader';
+import { lazyWithRetry as lazy } from '../../utils/performance/lazyWithRetry';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+
+const AdminInviteModal = lazy(() =>
+  import('../../components/auth/AdminInviteModal').then((m) => ({ default: m.AdminInviteModal })),
+);
 
 import '../../styles/admin.css';
 
@@ -73,8 +79,10 @@ function AdminLayoutInner() {
               exit={{ height: 0, opacity: 0 }}
               className="bg-[var(--admin-error)] text-white px-4 py-2 flex items-center justify-center gap-1.5 shadow-sm text-center overflow-hidden"
             >
-              <span className="material-symbols-outlined text-[13px]">lock</span>
-              ⚠️ Safety lock is on — changes cannot be saved right now
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span className="font-medium">
+                Safety lock is on — changes cannot be saved right now
+              </span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -87,8 +95,10 @@ function AdminLayoutInner() {
               className="bg-[var(--admin-warning)] text-white px-4 py-2 flex items-center justify-center gap-1.5 shadow-sm text-center overflow-hidden"
             >
               <div className="flex items-center gap-1.5 flex-1 justify-center">
-                <span className="material-symbols-outlined text-[13px]">construction</span>
-                🔧 Your shop is temporarily offline for maintenance
+                <Wrench className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span className="font-medium">
+                  Your shop is temporarily offline for maintenance
+                </span>
               </div>
               <button
                 onClick={toggleMaintenanceMode}
@@ -107,8 +117,8 @@ function AdminLayoutInner() {
               exit={{ height: 0, opacity: 0 }}
               className="bg-orange-600 text-white px-4 py-2 flex items-center justify-center gap-1.5 shadow-sm text-center overflow-hidden"
             >
-              <span className="material-symbols-outlined text-[13px]">wifi_off</span>⚡ Live updates
-              may be delayed
+              <Zap className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              Live updates may be delayed
             </motion.div>
           )}
         </AnimatePresence>
@@ -143,6 +153,10 @@ function AdminLayoutInner() {
 
       {/* Global Command & Search Palette */}
       <GlobalSearchPalette isOpen={searchPaletteOpen} onClose={() => setSearchPaletteOpen(false)} />
+
+      <Suspense fallback={null}>
+        <AdminInviteModal />
+      </Suspense>
 
       {/* Inactivity Idle Alert Modal */}
       <AnimatePresence>

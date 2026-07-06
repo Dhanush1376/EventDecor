@@ -362,10 +362,10 @@ export function AdminTopBar() {
                       onChange={(e) => changeActiveRole(e.target.value)}
                       className="admin-select py-1 text-[11px] min-h-0"
                     >
-                      <option value="owner">♛ Owner (Full)</option>
-                      <option value="manager">🛡️ Manager (Ops)</option>
-                      <option value="editor">✍️ Editor (CMS)</option>
-                      <option value="viewer">👁️ Viewer (Read)</option>
+                      <option value="owner">Owner (Full)</option>
+                      <option value="manager">Manager (Ops)</option>
+                      <option value="editor">Editor (CMS)</option>
+                      <option value="viewer">Viewer (Read)</option>
                     </select>
                   </div>
 

@@ -187,7 +187,7 @@ export function useOptimisticCartMutation({
       if (itemType !== activeCartMode) {
         toast(
           `Switched to ${itemType === 'rental' ? 'Rental' : itemType === 'custom' ? 'Custom' : 'Purchase'} Cart to add this item`,
-          { icon: '🔄' },
+          // Removed icon
         );
         setActiveCartMode(itemType);
       }

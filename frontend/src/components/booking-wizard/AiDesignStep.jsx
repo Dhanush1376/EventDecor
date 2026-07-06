@@ -76,7 +76,7 @@ export function AiDesignStep({
                 </div>
                 <div className="space-y-1.5">
                   <span className="font-label text-[9px] uppercase tracking-[0.25em] text-primary font-bold block animate-pulse">
-                    SIRI ARTS DESIGN GENERATOR
+                    SIRI ARTS & CRAFTS DESIGN GENERATOR
                   </span>
                   <p className="font-body text-black/50 text-xs">
                     Generating spatial layers, garland structures, and color swatches based on

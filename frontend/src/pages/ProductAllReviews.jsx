@@ -9,6 +9,7 @@ import { WriteReviewModal, getPremiumReviewerName } from '../components/sections
 import { OptimizedImage } from '../components/ui/OptimizedImage';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { m as motion, AnimatePresence } from 'framer-motion';
+import { Star } from 'lucide-react';
 
 // Premium Gold Star Rating
 function StarRating({ value = 0, max = 5, size = 15 }) {
@@ -330,7 +331,7 @@ export function ProductAllReviews() {
                     <span className="font-label text-[11px] font-bold text-[#2D2B29]/60 w-4 shrink-0 text-center">
                       {star}
                     </span>
-                    <span className="text-[#D4AF37] text-xs shrink-0 select-none">★</span>
+                    <Star className="w-3.5 h-3.5 fill-current text-[#D4AF37] shrink-0" />
                     <div className="flex-1 h-1 bg-[#F3EFE7] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-[#D4AF37] rounded-full"

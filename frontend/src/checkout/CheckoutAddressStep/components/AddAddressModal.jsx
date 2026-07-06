@@ -1,3 +1,4 @@
+import { AlertTriangle } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { LocationMarker } from './LocationMarker';
@@ -50,8 +51,12 @@ export function AddAddressModal({
               <form id="address-form" onSubmit={handleSaveNewAddress}>
                 <div className="space-y-4">
                   {addressError && (
-                    <div className="p-3 bg-red-50 text-red-600 rounded text-[11px] font-semibold mb-2">
-                      ⚠️ {addressError}
+                    <div className="flex items-start gap-3 p-3 bg-red-50 text-red-600 rounded text-[11px] mb-2">
+                      <AlertTriangle
+                        className="w-5 h-5 shrink-0 text-red-600 mt-0.5"
+                        aria-hidden="true"
+                      />
+                      <span className="font-semibold flex-1">{addressError}</span>
                     </div>
                   )}
 

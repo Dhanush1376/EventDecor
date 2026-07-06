@@ -138,7 +138,7 @@ export function useCheckoutShipping({ isAuthenticated, user, setActiveStep, setI
             headers: {
               Accept: 'application/json',
               'Accept-Language': 'en',
-              'User-Agent': 'SiriArtsAndCrafts/1.0 (checkout address autofill)',
+              'User-Agent': 'Siri Arts & CraftsAndCrafts/1.0 (checkout address autofill)',
             },
           },
         );

@@ -3,6 +3,7 @@ import { OptimizedImage } from '../../../components/ui/OptimizedImage';
 import toast from 'react-hot-toast';
 import { uploadService } from '../../../services/domainServices';
 import { compressImage } from '../../../utils/media/imageCompressor';
+import { Check } from 'lucide-react';
 
 export function CustomizerDrawer({
   selectedShowcase,
@@ -146,8 +147,8 @@ export function CustomizerDrawer({
                       onChange={() => toggleInclusion(item.name)}
                       className="w-4 h-4 accent-primary cursor-pointer"
                     />
-                    <span className="font-body text-xs text-black font-bold leading-tight">
-                      {item.name}
+                    <span className="text-[11px] font-bold text-[#6a8738] ml-3 uppercase tracking-wider">
+                      <Check className="w-3 h-3 mr-1 inline-block -mt-0.5" /> Validated
                     </span>
                   </div>
                   {item.selected && (
@@ -253,7 +254,7 @@ export function CustomizerDrawer({
             </div>
             {uploadedReferenceUrl && (
               <span className="font-mono text-[10px] text-[#8B0000] block font-semibold">
-                ✓ Linked successfully!
+                <Check className="w-3.5 h-3.5 mr-1 inline-block -mt-0.5" /> Linked successfully!
               </span>
             )}
           </div>

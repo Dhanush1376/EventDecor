@@ -21,15 +21,23 @@ export function WhatsAppWidget() {
         >
           {/* Symmetrical Close Button */}
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsVisible(false);
-            }}
+            onClick={() => setIsVisible(false)}
             aria-label="Dismiss chat widget"
-            className="absolute -top-1 -right-1 w-5 h-5 min-h-0 aspect-square p-0 bg-black text-white rounded-full flex items-center justify-center text-[9px] font-bold shadow-md cursor-pointer hover:bg-red-500 transition-all z-50 border-2 border-white select-none shrink-0"
+            className="absolute -top-2 -right-2 bg-white text-gray-500 hover:text-black w-[22px] h-[22px] min-w-[22px] min-h-[22px] p-0 shrink-0 rounded-full flex items-center justify-center shadow-md border border-gray-100 hover:scale-110 transition-transform z-10"
           >
-            ✕
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
           </button>
 
           <a

@@ -2,6 +2,7 @@ import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { EVENT_TYPES } from '../../config/constants';
 import { LocationSelectorModal } from '../../components/ui/LocationSelectorModal';
+import { Check } from 'lucide-react';
 
 export function EventCustomizerDrawer({ event, bookingForm }) {
   const { state, actions } = bookingForm;
@@ -52,7 +53,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                           : 'bg-stone-200 text-stone-400'
                     }`}
                   >
-                    {state.customizerStep > stepNum ? '✓' : stepNum}
+                    {state.customizerStep > stepNum ? <Check className="w-3 h-3" /> : stepNum}
                   </div>
                 ))}
               </div>

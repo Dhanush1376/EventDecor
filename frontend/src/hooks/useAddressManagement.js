@@ -126,7 +126,7 @@ export function useAddressManagement({
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
         {
           headers: {
-            'User-Agent': 'SiriArtsAndCrafts/1.0 (dashboard address autofill)',
+            'User-Agent': 'Siri Arts and Crafts/1.0 (dashboard address autofill)',
           },
         },
       );

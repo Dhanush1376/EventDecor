@@ -1,5 +1,4 @@
 import cloudImageMappings from '../../assets/cloud_image_mappings.json';
-import { getApiRootUrl } from '../../config/apiConfig';
 
 /**
  * Resolve a legacy local public path (e.g. /mandala_hero_art.png) to its Cloudinary URL.
@@ -24,13 +23,28 @@ export const getResponsiveWidth = (targetWidth) => {
   return width || breakpoints[breakpoints.length - 1]; // Fallback to max if larger
 };
 
+export const MEDIA_PRESETS = {
+  THUMBNAIL: { w: 150, q: 'auto:eco', c: 'fill' },
+  PRODUCT_CARD: { w: 400, q: 'auto:good', c: 'limit' },
+  PRODUCT_DETAIL_MOBILE: { w: 600, q: 'auto:good', c: 'limit' },
+  PRODUCT_DETAIL_DESKTOP: { w: 1200, q: 'auto:good', c: 'limit' },
+  PRODUCT_GALLERY_PREVIEW: { w: 250, q: 'auto:eco', c: 'fill' },
+  PRODUCT_ZOOM: { w: 2000, q: 'auto:best', c: 'limit' },
+  CART_THUMBNAIL: { w: 100, q: 'auto:eco', c: 'fill' },
+  ORDER_THUMBNAIL: { w: 100, q: 'auto:eco', c: 'fill' },
+  ADMIN_TABLE_THUMBNAIL: { w: 80, q: 'auto:eco', c: 'fill' },
+  CATEGORY_CARD: { w: 600, q: 'auto:good', c: 'limit' },
+  EVENT_GALLERY_PREVIEW: { w: 400, q: 'auto:good', c: 'limit' },
+  CUSTOM_ORDER_PREVIEW: { w: 400, q: 'auto:good', c: 'limit' },
+};
+
 const urlCache = new Map();
 
 /**
  * Generate an optimized image URL with dynamic transformations.
  * Supports Cloudinary CDN parameters as well as backend /api/v1/media/optimize fallback.
  */
-export const getOptimizedUrl = (url, width, height, quality = 'auto', format = 'auto') => {
+export const getOptimizedUrl = (url, widthOrPreset, height, quality = 'auto', format = 'auto') => {
   if (!url) return '';
 
   // Fix for old cloudinary cloud name
@@ -38,7 +52,21 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
     url = url.replace('dwy7sz5eh', 'drxgnnzeb');
   }
 
-  const cacheKey = `${url}|${width}|${height}|${quality}|${format}`;
+  let w = widthOrPreset;
+  let h = height;
+  let q = quality;
+  let f = format;
+  let cropMode = 'limit';
+
+  if (typeof widthOrPreset === 'string' && MEDIA_PRESETS[widthOrPreset]) {
+    const preset = MEDIA_PRESETS[widthOrPreset];
+    w = preset.w;
+    h = preset.h || null;
+    q = preset.q || 'auto';
+    cropMode = preset.c || 'limit';
+  }
+
+  const cacheKey = `${url}|${w}|${h}|${q}|${f}`;
   if (urlCache.has(cacheKey)) {
     return urlCache.get(cacheKey);
   }
@@ -50,20 +78,20 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
     let transform = [];
 
     // Normalize to nearest breakpoint to maximize cache hits
-    const normalizedWidth = width ? getResponsiveWidth(width) : null;
-    const normalizedHeight = height ? getResponsiveWidth(height) : null;
+    const normalizedWidth = w ? getResponsiveWidth(w) : null;
+    const normalizedHeight = h ? getResponsiveWidth(h) : null;
 
-    if (normalizedWidth) transform.push(`w_${normalizedWidth},c_limit`);
-    if (normalizedHeight) transform.push(`h_${normalizedHeight},c_limit`);
+    if (normalizedWidth) transform.push(`w_${normalizedWidth},c_${cropMode}`);
+    if (normalizedHeight) transform.push(`h_${normalizedHeight},c_${cropMode}`);
 
     // Size-aware quality tiers
     const effectiveQuality =
       normalizedWidth && normalizedWidth <= 400 ? 'q_auto:eco' : 'q_auto:good';
 
-    if (quality && quality !== 'auto') transform.push(`q_${quality}`);
+    if (q && q !== 'auto') transform.push(`q_${q}`);
     else transform.push(effectiveQuality);
 
-    if (format && format !== 'auto') transform.push(`f_${format}`);
+    if (f && f !== 'auto') transform.push(`f_${f}`);
     else transform.push('f_auto');
 
     transform.push('fl_strip_profile');
@@ -92,37 +120,23 @@ export const getOptimizedUrl = (url, width, height, quality = 'auto', format = '
       resultUrl = url;
     }
 
-    // Bypass local certificate errors by routing through the backend proxy in dev
-    if (import.meta.env.DEV) {
-      resultUrl = `${window.location.origin}/api/v1/media/optimize?url=${encodeURIComponent(resultUrl)}`;
-    }
+    // Removed backend proxy for Cloudinary URLs in DEV to prevent bandwidth leaks and masked CDN issues.
   } else {
-    // Local/static images route through backend dynamic media optimization pipeline
+    // Local/static images should be served directly by the frontend CDN (Vercel/Vite)
+    // We strictly avoid proxying them through the backend Node.js server.
     const isAbsoluteExternal = url.startsWith('http://') || url.startsWith('https://');
 
     if (!url.startsWith('data:') && !url.startsWith('blob:') && !isAbsoluteExternal) {
-      let targetUrl = `${window.location.origin}/api/v1/media/optimize?url=${encodeURIComponent(url)}`;
-
-      if (!import.meta.env.DEV) {
-        const apiRoot = getApiRootUrl();
-        targetUrl = `${apiRoot}/v1/media/optimize?url=${encodeURIComponent(url)}`;
-      }
-
-      if (width) targetUrl += `&w=${width}`;
-      if (height) targetUrl += `&h=${height}`;
-      if (quality && quality !== 'auto') targetUrl += `&q=${quality}`;
-      if (format && format !== 'auto') targetUrl += `&fmt=${format}`;
-
-      resultUrl = targetUrl;
+      resultUrl = url; // Serve static asset directly
     } else if (isAbsoluteExternal) {
       if (url.includes('googleusercontent.com') && !url.includes('=')) {
         let flags = [];
-        if (width) flags.push(`w${width}`);
-        if (height) flags.push(`h${height}`);
+        if (w) flags.push(`w${w}`);
+        if (h) flags.push(`h${h}`);
         flags.push('rw'); // request webp format
         resultUrl = `${url}=${flags.join('-')}`;
       } else {
-        resultUrl = url;
+        resultUrl = url; // External trusted images (not proxied through backend)
       }
     }
   }

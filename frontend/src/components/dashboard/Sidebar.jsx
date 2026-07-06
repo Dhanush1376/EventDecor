@@ -116,7 +116,7 @@ export function Sidebar() {
                       : 'bg-amber-50 text-amber-700 border-amber-200'
                   }`}
                 >
-                  {user.isVerified ? '✔ Verified Session' : 'Pending Verification'}
+                  {user.isVerified ? 'Verified Session' : 'Pending Verification'}
                 </span>
 
                 {user.createdAt && (

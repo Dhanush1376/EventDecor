@@ -37,40 +37,37 @@ export function MediaStep({
               onClick={async () => {
                 const input = document.getElementById('showcaseDirectUrlInput');
                 if (input.value) {
-                  setIsCompressing(true);
-                  try {
-                    const uploadData = new FormData();
-                    uploadData.append('urls', input.value);
-                    const res = await uploadService.uploadImages(uploadData, 'events');
-                    if (res.success && res.images && res.images.length > 0) {
-                      setFormData((prev) => {
-                        // If no main image, set it
-                        if (!prev.image) {
-                          return { ...prev, image: res.images[0] };
-                        }
-                        // Otherwise try to fill galleryImages
-                        const newGallery = [...(prev.galleryImages || [])];
-                        let added = false;
-                        for (let i = 0; i < newGallery.length; i++) {
-                          if (!newGallery[i]) {
-                            newGallery[i] = res.images[0];
-                            added = true;
-                            break;
-                          }
-                        }
-                        if (!added) {
-                          newGallery.push(res.images[0]);
-                        }
-                        return { ...prev, galleryImages: newGallery };
-                      });
-                      toast.success('Image fetched & optimized!');
-                      input.value = '';
+                  const inputUrl = input.value.trim();
+
+                  setFormData((prev) => {
+                    const updates = { ...prev };
+
+                    // Add to pendingUploads as a remote URL string
+                    const pendingUrlObj = {
+                      localUrl: inputUrl,
+                      file: inputUrl,
+                    };
+                    updates.pendingUploads = [...(prev.pendingUploads || []), pendingUrlObj];
+
+                    // Set preview logic
+                    if (!updates.image) {
+                      updates.image = inputUrl;
+                    } else {
+                      const newGallery = [...(updates.galleryImages || ['', ''])];
+                      const emptySlot = newGallery.findIndex((url) => !url);
+                      if (emptySlot !== -1) {
+                        newGallery[emptySlot] = inputUrl;
+                      } else {
+                        newGallery.push(inputUrl);
+                      }
+                      updates.galleryImages = newGallery;
                     }
-                  } catch (_err) {
-                    toast.error('Failed to upload from URL');
-                  } finally {
-                    setIsCompressing(false);
-                  }
+
+                    return updates;
+                  });
+
+                  toast.success('Image URL added! Will upload on publish.');
+                  input.value = '';
                 }
               }}
               className="shrink-0 bg-[var(--admin-accent)] text-white hover:brightness-110 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-transform active:scale-95 cursor-pointer whitespace-nowrap"
@@ -96,13 +93,13 @@ export function MediaStep({
               setCompressionProgress(0);
               setCompressionStats([]);
               try {
-                const uploadData = new FormData();
                 const newStats = [];
+                const localImages = [];
+                const newPending = [];
 
                 for (let i = 0; i < rawFiles.length; i++) {
                   const file = rawFiles[i];
                   const optimizedFile = await compressImage(file);
-                  uploadData.append('images', optimizedFile);
 
                   newStats.push({
                     name: file.name,
@@ -111,48 +108,39 @@ export function MediaStep({
                     reduction:
                       file.size > 0 ? ((1 - optimizedFile.size / file.size) * 100).toFixed(1) : 0,
                   });
+
+                  // Create local preview URL
+                  const localUrl = URL.createObjectURL(optimizedFile);
+                  localImages.push(localUrl);
+                  newPending.push({ file: optimizedFile, localUrl });
                 }
+
                 setCompressionStats(newStats);
 
-                const onProgress = (filename, percent) => {
-                  setCompressionProgress(percent);
-                };
+                setFormData((prev) => {
+                  const updates = { ...prev };
+                  updates.pendingUploads = [...(prev.pendingUploads || []), ...newPending];
 
-                const res = await uploadService.uploadImages(uploadData, 'events', onProgress);
-                if (res.success && res.images && res.images.length > 0) {
-                  setFormData((prev) => {
-                    const updates = { ...prev };
-                    let imgIdx = 0;
-                    if (!updates.image) {
-                      updates.image = res.images[imgIdx++];
+                  let imgIdx = 0;
+                  if (!updates.image) {
+                    updates.image = localImages[imgIdx++];
+                  }
+                  const newGallery = [...(updates.galleryImages || ['', ''])];
+                  while (imgIdx < localImages.length) {
+                    const emptySlot = newGallery.findIndex((url) => !url);
+                    if (emptySlot !== -1) {
+                      newGallery[emptySlot] = localImages[imgIdx];
+                    } else {
+                      newGallery.push(localImages[imgIdx]); // append if full
                     }
-                    const newGallery = [...(updates.galleryImages || ['', ''])];
-                    while (imgIdx < res.images.length) {
-                      const emptySlot = newGallery.findIndex((url) => !url);
-                      if (emptySlot !== -1) {
-                        newGallery[emptySlot] = res.images[imgIdx];
-                      } else {
-                        newGallery.push(res.images[imgIdx]); // append if full
-                      }
-                      imgIdx++;
-                    }
-                    updates.galleryImages = newGallery;
-                    return updates;
-                  });
-                  toast.success(`Showcase media uploaded successfully!`);
-                }
+                    imgIdx++;
+                  }
+                  updates.galleryImages = newGallery;
+                  return updates;
+                });
+                toast.success(`Media preview added locally. Will upload on publish.`);
               } catch (err) {
-                let msg =
-                  err?.response?.status === 401
-                    ? 'Upload failed: Please log in again or refresh the page'
-                    : err?.response?.data?.message ||
-                      err?.message ||
-                      'Upload failed. Please try again.';
-
-                if (err?.message === 'Network Error') {
-                  msg = `Network Error! URL: ${err?.config?.url || 'unknown'}. Check if CORS or AdBlocker is blocking it.`;
-                }
-                toast.error(msg);
+                toast.error('Failed to process image locally.');
               } finally {
                 setTimeout(() => {
                   setIsCompressing(false);

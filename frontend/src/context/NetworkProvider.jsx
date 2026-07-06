@@ -17,10 +17,12 @@ export function NetworkProvider({ children }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isBooting, setIsBooting] = useState(true);
   const failedPingsRef = useRef(0);
+  const isBootingRef = useRef(true);
 
   // Turn off booting state after 25 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
+      isBootingRef.current = false;
       setIsBooting(false);
     }, 25000);
     return () => clearTimeout(timer);
@@ -91,6 +93,7 @@ export function NetworkProvider({ children }) {
 
         failedPingsRef.current = 0;
         setNetworkState('online');
+        isBootingRef.current = false;
         setIsBooting(false);
         toast.dismiss('backend-cold-start');
 
@@ -102,7 +105,7 @@ export function NetworkProvider({ children }) {
         return true;
       }
     } catch (error) {
-      logger.warn('🌐 [Network Check] API Health check failed:', error.message);
+      logger.warn('[Network Check] API Health check failed:', error.message);
     } finally {
       clearTimeout(timeoutId);
     }
@@ -111,7 +114,7 @@ export function NetworkProvider({ children }) {
     failedPingsRef.current += 1;
 
     let nextState = networkState;
-    if (isBooting) {
+    if (isBootingRef.current) {
       // Show a friendly loading toast on second failure if it's during initial boot to avoid false positives on fast local refresh
       if (failedPingsRef.current === 2 && !import.meta.env.DEV) {
         toast.loading('Warming up the server. This might take a moment on cold start...', {
@@ -135,7 +138,7 @@ export function NetworkProvider({ children }) {
     }
 
     return false;
-  }, [isBooting, networkState]);
+  }, [networkState]);
 
   // Background ping — less aggressive when stable to reduce cold-start API noise
   useEffect(() => {
@@ -185,7 +188,6 @@ export function NetworkProvider({ children }) {
     });
 
     toast.success(`Action saved offline: ${newQueueItem.description}`, {
-      icon: '💾',
       duration: 5000,
     });
 
@@ -278,7 +280,6 @@ export function NetworkProvider({ children }) {
       toast.success(`Successfully synchronized ${successCount} offline action(s)!`, {
         id: 'sync-toast',
         duration: 5000,
-        icon: '',
       });
     } else if (failedCount > 0) {
       toast.error(`Sync completed with ${failedCount} failure(s).`, {
@@ -298,7 +299,6 @@ export function NetworkProvider({ children }) {
       toast.success('Back online! Reconnecting to services...', {
         id: 'network-status',
         duration: 4000,
-        icon: '⚡',
       });
       syncQueue();
     }
@@ -309,17 +309,26 @@ export function NetworkProvider({ children }) {
     checkConnection();
   }, [checkConnection]);
 
+  const hasRunInitialCheck = useRef(false);
+
   // Listen to window connectivity events
   useEffect(() => {
     if (isPrerendering()) {
       setNetworkState('online');
+      isBootingRef.current = false;
       setIsBooting(false);
       return;
     }
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    const runInitialCheck = () => checkConnection();
+    const runInitialCheck = () => {
+      if (!hasRunInitialCheck.current) {
+        hasRunInitialCheck.current = true;
+        checkConnection();
+      }
+    };
+
     if (typeof requestIdleCallback === 'function') {
       requestIdleCallback(runInitialCheck, { timeout: 3000 });
     } else {

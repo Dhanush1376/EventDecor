@@ -35,7 +35,7 @@ for (const { file, rawKb, gzipKb } of rows) {
     overGzip++;
     flags.push(`gzip≈>${GZIP_LIMIT_KB}KB`);
   }
-  const flag = flags.length ? ` ⚠️  ${flags.join(', ')}` : '';
+  const flag = flags.length ? ` [WARNING: ${flags.join(', ')}]` : '';
   const vendor = file.startsWith('vendor-') ? ' [vendor]' : '';
   console.log(
     `  ${file.padEnd(48)} ${rawKb.toFixed(1).padStart(7)} KB raw  ${gzipKb.toFixed(1).padStart(6)} KB gzip${vendor}${flag}`

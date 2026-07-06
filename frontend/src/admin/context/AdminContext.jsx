@@ -364,25 +364,44 @@ export function AdminProvider({ children }) {
   const [lastDataRefresh, setLastDataRefresh] = useState(new Date());
 
   useEffect(() => {
+    // 5-minute low-frequency fallback reconciliation
     const pollInterval = setInterval(async () => {
-      try {
-        await Promise.allSettled([
-          ordersHook.refreshOrders(),
-          refreshDashboard(),
-          (async () => {
-            const alertsRes = await notificationService.getAdminAlerts();
-            if (alertsRes?.success) {
-              const list =
-                alertsRes.data?.notifications ||
-                (Array.isArray(alertsRes.data) ? alertsRes.data : []);
-              setNotifications(list.map(mapDbNotificationToFrontend));
-            }
-          })(),
-        ]);
-        setLastDataRefresh(new Date());
-      } catch (_err) {}
-    }, 60000);
-    return () => clearInterval(pollInterval);
+      // Only poll if the tab is actively visible to prevent hidden background bandwidth drain
+      if (document.visibilityState === 'visible') {
+        try {
+          await Promise.allSettled([
+            ordersHook.refreshOrders(),
+            refreshDashboard(),
+            (async () => {
+              const alertsRes = await notificationService.getAdminAlerts();
+              if (alertsRes?.success) {
+                const list =
+                  alertsRes.data?.notifications ||
+                  (Array.isArray(alertsRes.data) ? alertsRes.data : []);
+                setNotifications(list.map(mapDbNotificationToFrontend));
+              }
+            })(),
+          ]);
+          setLastDataRefresh(new Date());
+        } catch (_err) {}
+      }
+    }, 300000); // 5 minutes
+
+    // Reconcile immediately when the tab becomes visible after being hidden
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          await Promise.allSettled([ordersHook.refreshOrders(), refreshDashboard()]);
+          setLastDataRefresh(new Date());
+        } catch (_err) {}
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ordersHook.refreshOrders, refreshDashboard]);
 

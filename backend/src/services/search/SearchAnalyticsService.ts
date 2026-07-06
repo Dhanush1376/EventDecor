@@ -73,6 +73,9 @@ export async function getTrendingSearches(
       const normalized = r._id.trim();
       if (normalized.length < 2) continue;
 
+      // Filter out raw MongoDB ObjectIds and other long hex IDs (20+ chars) from trending searches
+      if (/^[0-9a-f]{20,}$/i.test(normalized)) continue;
+
       const isDuplicate = Array.from(seen).some(
         (existing) =>
           existing.includes(normalized) ||
@@ -124,6 +127,9 @@ export async function getTrendingSearches(
       for (const term of extraTerms) {
         if (trending.length >= limit) break;
         const normalizedTerm = term.trim();
+
+        if (/^[0-9a-f]{20,}$/i.test(normalizedTerm)) continue;
+
         const displayTerm = normalizedTerm
           .split(/\s+/)
           .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())

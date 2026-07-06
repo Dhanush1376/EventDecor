@@ -5,17 +5,29 @@ import { TopNavbar } from '../components/layout/TopNavbar';
 import { GlobalAnnouncementBanner } from '../components/layout/GlobalAnnouncementBanner';
 import { Footer } from '../components/layout/Footer';
 import { BottomNav } from '../components/layout/BottomNav';
-import { CartDrawer } from '../components/layout/CartDrawer';
 import { CheckoutNavbar } from '../components/layout/CheckoutNavbar';
-import { ConsentPopup } from '../components/layout/ConsentPopup';
 import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
-import { WhatsAppWidget } from '../components/ui/WhatsAppWidget';
-import { FloatingOfferCard } from '../components/promotions/FloatingOfferCard';
 import { getRouteSkeletonVariant, RouteSkeleton } from '../components/ui/RouteSkeleton';
 import { AuthGate } from '../components/auth/AuthGate';
 import { ScrollToTopButton } from '../components/ui';
+import { lazyWithRetry as lazy } from '../utils/performance/lazyWithRetry';
+
+const CartDrawer = lazy(() =>
+  import('../components/layout/CartDrawer').then((m) => ({ default: m.CartDrawer })),
+);
+const ConsentPopup = lazy(() =>
+  import('../components/layout/ConsentPopup').then((m) => ({ default: m.ConsentPopup })),
+);
+const WhatsAppWidget = lazy(() =>
+  import('../components/ui/WhatsAppWidget').then((m) => ({ default: m.WhatsAppWidget })),
+);
+const FloatingOfferCard = lazy(() =>
+  import('../components/promotions/FloatingOfferCard').then((m) => ({
+    default: m.FloatingOfferCard,
+  })),
+);
 
 export function MainLayout() {
   const { pathname } = useLocation();
@@ -75,7 +87,11 @@ export function MainLayout() {
 
       <GlobalAnnouncementBanner />
       <TopNavbar />
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      {isCartOpen && (
+        <Suspense fallback={null}>
+          <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+        </Suspense>
+      )}
       <main id="main-content" className="flex-1 relative" tabIndex={-1}>
         <ErrorBoundary>
           <AuthGate>
@@ -90,12 +106,18 @@ export function MainLayout() {
       </main>
       {pathname !== '/cart' && <Footer />}
       <BottomNav />
-      <FloatingOfferCard />
+      <Suspense fallback={null}>
+        <FloatingOfferCard />
+      </Suspense>
       <div className="fixed bottom-[calc(80px+env(safe-area-inset-bottom,0px))] lg:bottom-8 right-4 lg:right-10 z-[40] flex flex-col gap-4 items-center pointer-events-none">
         <ScrollToTopButton />
-        <WhatsAppWidget />
+        <Suspense fallback={null}>
+          <WhatsAppWidget />
+        </Suspense>
       </div>
-      <ConsentPopup />
+      <Suspense fallback={null}>
+        <ConsentPopup />
+      </Suspense>
     </div>
   );
 }

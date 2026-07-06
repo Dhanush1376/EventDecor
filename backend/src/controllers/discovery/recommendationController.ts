@@ -486,13 +486,15 @@ async function enrichTrendingItems(items: any[]): Promise<any[]> {
     productIds.length > 0
       ? Product.find({ _id: { $in: productIds }, isActive: true })
           .select(
-            '_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+            '_id title imageSrc primaryCategory price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
           )
+          .populate('primaryCategory', 'name')
           .lean()
       : Promise.resolve([]),
     eventIds.length > 0
       ? Event.find({ _id: { $in: eventIds }, isActive: true })
-          .select('_id title image category style basePrice')
+          .select('_id title image primaryCategory style basePrice')
+          .populate('primaryCategory', 'name')
           .lean()
       : Promise.resolve([]),
   ]);
@@ -514,7 +516,7 @@ async function enrichTrendingItems(items: any[]): Promise<any[]> {
         title: full.title,
         imageSrc: full.imageSrc,
         image: full.image,
-        category: full.primaryCategory?.toString()?.toString()?.toString(),
+        category: full.primaryCategory?.name || undefined,
         style: full.style,
         price: full.price,
         basePrice: full.basePrice,

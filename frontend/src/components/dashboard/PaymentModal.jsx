@@ -1,4 +1,5 @@
 import React from 'react';
+import { CreditCard } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 
 export function PaymentModal({
@@ -13,7 +14,7 @@ export function PaymentModal({
   return (
     <AnimatePresence>
       {isPaymentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center sm:p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -22,10 +23,11 @@ export function PaymentModal({
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           />
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-surface-bright rounded-lg border border-outline-variant/30 shadow-2xl p-6 lg:p-8 max-w-md w-full relative z-10 space-y-6"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="bg-surface-bright rounded-t-2xl sm:rounded-2xl border border-outline-variant/30 shadow-2xl p-6 lg:p-8 w-full sm:max-w-md relative z-10 space-y-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-between items-start border-b border-outline-variant/20 pb-3">
               <div className="space-y-0.5">
@@ -70,7 +72,8 @@ export function PaymentModal({
 
               <div className="p-4 bg-primary/5 rounded-lg border border-primary/10 space-y-1 text-[11px] leading-relaxed">
                 <span className="font-display font-bold text-primary block">
-                  💳 Secure Payment Gateway
+                  <CreditCard className="inline-block w-4 h-4 mr-1.5 -mt-0.5" aria-hidden="true" />
+                  Secure Payment Gateway
                 </span>
                 <p className="text-secondary">
                   Clicking below will redirect you to our secure payment gateway to lodge the

@@ -2,6 +2,7 @@ import { m as motion } from 'framer-motion';
 import { SkeletonDashboard, fadeUp, stagger } from '../components/AdminUIKit';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { MapPin } from 'lucide-react';
 import { bookingService, userService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import logger from '../../utils/core/logger';
@@ -513,7 +514,11 @@ export function AdminBookingDetail() {
                 <div id="admin-leaflet-map" className="w-full h-full z-10" />
               </div>
               <p className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
-                📍 Drag the marker or click on the map to auto-geocode fields!
+                <MapPin
+                  className="w-4 h-4 inline-block mr-1 text-[var(--admin-primary)]"
+                  aria-hidden="true"
+                />
+                Drag the marker or click on the map to auto-geocode fields!
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

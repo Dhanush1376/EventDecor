@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useEffect } from 'react';
-import { LazyMotion, domMax } from 'framer-motion';
+import { LazyMotion, domAnimation } from 'framer-motion';
 import toast, { Toaster, ToastBar } from 'react-hot-toast';
 import debounce from 'lodash.debounce';
 
@@ -16,12 +16,7 @@ const SlowConnectionBanner = lazy(() =>
 
 hydrateQueryClientCache(queryClient);
 
-const AdminInviteModal = lazy(() =>
-  import('./components/auth/AdminInviteModal').then((m) => ({ default: m.AdminInviteModal })),
-);
-const AuthModal = lazy(() =>
-  import('./components/auth/AuthModal').then((m) => ({ default: m.AuthModal })),
-);
+import { AuthModals } from './components/auth/AuthModals';
 
 function App() {
   const [isMounted, setIsMounted] = useState(false);
@@ -53,7 +48,7 @@ function App() {
   }, []);
 
   return (
-    <LazyMotion features={domMax}>
+    <LazyMotion features={domAnimation}>
       <AppProviders>
         {isMounted && (
           <a
@@ -101,12 +96,7 @@ function App() {
           </Toaster>
         )}
 
-        {isMounted && (
-          <Suspense fallback={null}>
-            <AuthModal />
-            <AdminInviteModal />
-          </Suspense>
-        )}
+        {isMounted && <AuthModals />}
 
         <AppRoutes />
       </AppProviders>

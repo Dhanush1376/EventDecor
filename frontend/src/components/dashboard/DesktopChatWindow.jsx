@@ -31,7 +31,7 @@ export function DesktopChatWindow({
               className={`flex flex-col max-w-[85%] ${isAdmin ? 'self-start text-left' : 'self-end text-right ml-auto'}`}
             >
               <span className="font-label text-[8px] text-black/35 font-bold uppercase tracking-widest mb-1 block">
-                {isAdmin ? 'Siri Arts Designer' : 'You'}
+                {isAdmin ? 'Siri Arts & Crafts Designer' : 'You'}
               </span>
               <div
                 className={`p-3 rounded-[18px] text-xs leading-relaxed font-light ${

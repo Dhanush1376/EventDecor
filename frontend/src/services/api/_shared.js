@@ -1,7 +1,6 @@
 import api from '../api';
 import axios from 'axios';
 import logger from '../../utils/core/logger';
-import { getApiRootUrl } from '../../config/apiConfig';
 import { EXTERNAL_URLS } from '../../config/constants';
 
 let imageCompression = null;
@@ -84,46 +83,9 @@ export const uploadDirectToCloudinary = async (
         .filter((s) => s.startsWith('http'));
 
       for (const u of urls) {
-        let fileObj = null;
-        try {
-          // Route through backend proxy to bypass CORS/Hotlink protection
-          const apiRoot = getApiRootUrl();
-          const proxyPath = `/media/optimize?url=${encodeURIComponent(u)}&q=100`;
-
-          const response = await api.get(proxyPath, {
-            responseType: 'blob',
-            _bypassOfflineQueue: true,
-          });
-          const blob = response.data;
-
-          let fileName = u.split('/').pop()?.split('?')[0] || 'remote_image.jpg';
-          if (!fileName.includes('.')) fileName += '.jpg';
-          fileObj = new File([blob], fileName, { type: blob.type });
-
-          // Apply compression on the downloaded file
-          if (
-            fileObj.type.startsWith('image/') &&
-            !fileObj.type.includes('svg') &&
-            !fileObj.type.includes('gif')
-          ) {
-            const compressor = await getImageCompression();
-            const compressedFile = await compressor(fileObj, DEFAULT_COMPRESSION_OPTIONS);
-            logger.debug(
-              `[UPLOAD] Compressed Remote URL ${u}: ${(fileObj.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
-            );
-            files.push(compressedFile);
-          } else {
-            files.push(fileObj);
-          }
-        } catch (e) {
-          logger.error(`Error processing remote URL ${u}:`, e);
-          if (fileObj) {
-            logger.warn(`Fallback: Uploading uncompressed remote image file for ${u}`);
-            files.push(fileObj);
-          } else {
-            throw new Error(`Failed to fetch remote image via proxy: ${e.message}`);
-          }
-        }
+        // Push the URL string directly. Cloudinary natively supports uploading from a remote URL,
+        // avoiding client-side CORS issues entirely.
+        files.push(u);
       }
     }
   }

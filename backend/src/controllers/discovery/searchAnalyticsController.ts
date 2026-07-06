@@ -59,6 +59,7 @@ export async function getSearchDashboardStats(req: Request, res: Response) {
           },
         },
         { $group: { _id: { $toLower: '$metadata.searchQuery' }, count: { $sum: 1 } } },
+        { $match: { _id: { $not: /^[0-9a-fA-F]{20,}$/ } } },
         { $sort: { count: -1 } },
         { $limit: 10 },
       ]),

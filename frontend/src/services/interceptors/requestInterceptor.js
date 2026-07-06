@@ -10,7 +10,13 @@ import {
 } from '../apiHelpers';
 
 export const createRequestInterceptor =
-  ({ getAccessToken, hasLocalAuthMarker, refreshAccessToken, ensureCsrfToken }) =>
+  ({
+    getAccessToken,
+    hasLocalAuthMarker,
+    refreshAccessToken,
+    ensureCsrfToken,
+    getRefreshPromise,
+  }) =>
   async (config) => {
     config.baseURL = getApiUrl();
     const path = (config.url || '').toLowerCase();
@@ -23,6 +29,7 @@ export const createRequestInterceptor =
       path.includes('/auth/register') ||
       path.includes('/auth/logout') ||
       path.includes('/auth/google') ||
+      path.includes('/csrf-token') ||
       config._skipAuthRetry === true;
 
     const accessToken = getAccessToken();
@@ -35,7 +42,21 @@ export const createRequestInterceptor =
 
     // ─── AUTH TOKEN INTEGRATION & QUEUEING ───
     if (!isAuthLifecycleRequest) {
-      if (isProtectedRoute && !accessToken && hasLocalAuthMarker()) {
+      // Completely block parallel requests globally while refreshing
+      const activeRefresh = getRefreshPromise ? getRefreshPromise() : null;
+
+      if (activeRefresh) {
+        try {
+          await activeRefresh;
+        } catch (e) {
+          return Promise.reject(e);
+        }
+      }
+
+      // Re-fetch access token after potential refresh block
+      const currentToken = getAccessToken();
+
+      if (isProtectedRoute && !currentToken && hasLocalAuthMarker()) {
         try {
           const token = await refreshAccessToken();
           if (token) {

@@ -120,7 +120,7 @@ export class ProductAiService {
       ${title ? `The admin has provided the title: "${title}"` : ''}
 
       Please perform a rigorous 7-stage analysis:
-      STAGE 1 — OBJECT DETECTION: Identify the exact object (e.g. coconut, tray, plate, basket, garland, welcome board, mandala, floral decor, pooja item, chocolate gift cones, dry fruit hamper, flower basket, gift box).
+      STAGE 1 — OBJECT DETECTION: Identify the exact object (e.g. coconut, tray, plate, basket, garland, welcome board, floral decor, pooja item, chocolate gift cones, dry fruit hamper, flower basket, gift box).
       STAGE 2 — MATERIAL DETECTION: Detect specific craft materials used (e.g. silk thread, beads, pearls, stones, brass, fabric, wood, coconut shell, chocolate, dry fruits, flowers).
       STAGE 3 — CULTURAL CONTEXT DETECTION: Determine cultural use cases (e.g. Hindu wedding, Telugu heritage, engagement, haldi, mehendi, pooja, return gift, housewarming, festival, birthday, corporate event).
       STAGE 4 — CUSTOMER-FRIENDLY TITLE GENERATION: Generate a clean, elegant, human-readable title.
@@ -277,9 +277,43 @@ export class ProductAiService {
     try {
       const extractedJson = textResponse.match(/\{[\s\S]*\}/);
       if (!extractedJson) throw new Error('No JSON object found in response');
-      return JSON.parse(extractedJson[0]);
-    } catch {
-      logger.error('Failed to parse Groq JSON:', textResponse);
+      const parsedData = JSON.parse(extractedJson[0]);
+
+      // Ensure uniqueness against DB for title and slug across both Product and Showcase
+      const Product = (await import('../models/Product.js')).default as any;
+      const ShowcaseCollection = (await import('../models/ShowcaseCollection.js')).default as any;
+      let baseSlug = parsedData.slug;
+      let baseTitle = parsedData.english_title;
+
+      let isUnique = false;
+      let counter = 1;
+      let currentSlug = baseSlug;
+      let currentTitle = baseTitle;
+
+      while (!isUnique) {
+        // Check if either slug or title already exists in the database
+        const existingProduct = await Product.exists({
+          $or: [{ slug: currentSlug }, { title: currentTitle }],
+        });
+
+        const existingShowcase = await ShowcaseCollection.exists({ title: currentTitle });
+
+        if (existingProduct || existingShowcase) {
+          // If exists, append a counter to make it unique
+          currentSlug = `${baseSlug}-${counter}`;
+          currentTitle = `${baseTitle} ${counter}`;
+          counter++;
+        } else {
+          isUnique = true;
+        }
+      }
+
+      parsedData.slug = currentSlug;
+      parsedData.english_title = currentTitle;
+
+      return parsedData;
+    } catch (err) {
+      logger.error('Failed to parse Groq JSON:', textResponse, err);
       throw new ApiError(500, 'AI response could not be parsed as clean JSON.');
     }
   }

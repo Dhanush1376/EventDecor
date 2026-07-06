@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 import { customOrderService } from '../../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../../utils/core/errorHelpers';
@@ -241,7 +242,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                   onClick={() => setSelectedOrder(null)}
                   className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border border-[var(--admin-border-subtle)] flex items-center justify-center shadow-sm cursor-pointer transition-all active:scale-90"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>

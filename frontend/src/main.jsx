@@ -62,34 +62,6 @@ window.addEventListener(
   true,
 ); // Use capture phase to catch resource load errors
 
-// Pre-warm backend (Render cold start)
-const warmBackend = () => {
-  const root = getApiRootUrl();
-  const healthUrl = root.startsWith('/') ? `${root}/readiness` : `${root}/readiness`;
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-  fetch(`${healthUrl}?t=${Date.now()}`, {
-    credentials: 'include',
-    cache: 'no-store',
-    signal: controller.signal,
-  })
-    .then(() => clearTimeout(timeoutId))
-    .catch((err) => {
-      clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
-        logger.warn(
-          'Backend cold start ping timed out. Consider setting up a cron job (e.g. cron-job.org) to keep the Render service awake.',
-        );
-      }
-    });
-};
-if (!isPrerendering()) {
-  // Start backend warmup instantly since cold-start is the biggest latency bottleneck
-  warmBackend();
-}
-
 const rootEl = document.getElementById('root');
 const shellEl = document.getElementById('app-shell');
 

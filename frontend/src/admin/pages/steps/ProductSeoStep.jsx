@@ -62,7 +62,7 @@ export function ProductSeoStep({ formData, setFormData, focusedField }) {
             <span className="text-[#70757a]">17 May 2026 — </span>
             {formData.seoDescription ||
               formData.description ||
-              'Discover organic handcrafted Urli bowls, Rosewood Jharokha mirrors, traditional brass artifacts for wedding backdrops at Siri Arts.'}
+              'Discover organic handcrafted Urli bowls, Rosewood Jharokha mirrors, traditional brass artifacts for wedding backdrops at Siri Arts & Crafts.'}
           </p>
         </div>
       </div>

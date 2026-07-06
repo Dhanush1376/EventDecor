@@ -17,6 +17,8 @@ import { DraftConflictViewer } from '../components/DraftConflictViewer';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useProductForm } from '../hooks/useProductForm';
 import toast from 'react-hot-toast';
+
+import { ArrowRight } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { useProductAI } from '../hooks/useProductAI';
 import { useProductValidation } from '../hooks/useProductValidation';
@@ -31,10 +33,13 @@ const slideIn = {
 };
 
 const WIZARD_STEPS = [
-  { id: 'basics', label: 'Basics & Variants', icon: 'info' },
-  { id: 'pricing', label: 'Pricing & Inventory', icon: 'payments' },
-  { id: 'images', label: 'Media & Imagery', icon: 'photo_library' },
-  { id: 'seo', label: 'Content & Publish', icon: 'search' },
+  { id: 'images', label: 'Media', icon: 'photo_library' },
+  { id: 'basics', label: 'Basic Info', icon: 'info' },
+  { id: 'variants', label: 'Variants', icon: 'style' },
+  { id: 'pricing', label: 'Pricing', icon: 'payments' },
+  { id: 'policies', label: 'Policies', icon: 'assignment_return' },
+  { id: 'seo', label: 'SEO', icon: 'search' },
+  { id: 'review', label: 'Publish', icon: 'publish' },
 ];
 
 export function AdminAddProduct({ editId }) {
@@ -357,8 +362,10 @@ export function AdminAddProduct({ editId }) {
                           {stat.name}
                         </div>
                         <div className="flex justify-between items-center">
-                          <span>
-                            {stat.originalSize} ➔ {stat.optimizedSize}
+                          <span className="text-black font-semibold ml-1">
+                            {stat.originalSize}{' '}
+                            <ArrowRight className="w-3 h-3 inline-block mx-1 text-black/40" />{' '}
+                            {stat.optimizedSize}
                           </span>
                           <span className="text-[var(--admin-success)] font-bold">
                             -{stat.reduction}%
@@ -395,50 +402,8 @@ export function AdminAddProduct({ editId }) {
                 transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
-                {/* STEP 1: BASICS */}
+                {/* STEP 0: IMAGES */}
                 {currentStep === 0 && (
-                  <div className="space-y-8">
-                    <ProductInfoStep
-                      formData={formData}
-                      setFormData={setFormData}
-                      categoriesList={categoriesList}
-                      isAIGenerating={isAIGenerating}
-                      isCustomCategory={isCustomCategory}
-                      setIsCustomCategory={setIsCustomCategory}
-                      focusedField={focusedField}
-                      handleAIFill={handleAIFill}
-                    />
-                    <div className="border-t border-[var(--admin-border-subtle)] pt-8">
-                      <ProductVariantsStep
-                        formData={formData}
-                        setFormData={setFormData}
-                        isAIGenerating={isAIGenerating}
-                        handleAIFill={handleAIFill}
-                        focusedField={focusedField}
-                        newVariant={newVariant}
-                        setNewVariant={setNewVariant}
-                        handleAddVariant={handleAddVariant}
-                        handleRemoveVariant={handleRemoveVariant}
-                      />
-                    </div>
-                  </div>
-                )}
-                {/* STEP 2: PRICING & INVENTORY */}
-                {currentStep === 1 && (
-                  <div className="space-y-8">
-                    <ProductPricingStep
-                      formData={formData}
-                      setFormData={setFormData}
-                      showRentalSettings={showRentalSettings}
-                      setShowRentalSettings={setShowRentalSettings}
-                    />
-                    <div className="border-t border-[var(--admin-border-subtle)] pt-8">
-                      <ProductReturnStep formData={formData} setFormData={setFormData} />
-                    </div>
-                  </div>
-                )}
-                {/* STEP 3: IMAGES */}
-                {currentStep === 2 && (
                   <ProductMediaStep
                     formData={formData}
                     setFormData={setFormData}
@@ -450,18 +415,63 @@ export function AdminAddProduct({ editId }) {
                     setCompressionStats={setCompressionStats}
                   />
                 )}
-                {/* STEP 4: CONTENT & SEO */}
+
+                {/* STEP 1: BASICS */}
+                {currentStep === 1 && (
+                  <ProductInfoStep
+                    formData={formData}
+                    setFormData={setFormData}
+                    categoriesList={categoriesList}
+                    isAIGenerating={isAIGenerating}
+                    isCustomCategory={isCustomCategory}
+                    setIsCustomCategory={setIsCustomCategory}
+                    focusedField={focusedField}
+                    handleAIFill={handleAIFill}
+                  />
+                )}
+
+                {/* STEP 2: VARIANTS */}
+                {currentStep === 2 && (
+                  <ProductVariantsStep
+                    formData={formData}
+                    setFormData={setFormData}
+                    isAIGenerating={isAIGenerating}
+                    handleAIFill={handleAIFill}
+                    focusedField={focusedField}
+                    newVariant={newVariant}
+                    setNewVariant={setNewVariant}
+                    handleAddVariant={handleAddVariant}
+                    handleRemoveVariant={handleRemoveVariant}
+                  />
+                )}
+
+                {/* STEP 3: PRICING & INVENTORY */}
                 {currentStep === 3 && (
-                  <div className="space-y-8">
-                    <ProductSeoStep
-                      formData={formData}
-                      setFormData={setFormData}
-                      focusedField={focusedField}
-                    />
-                    <div className="border-t border-[var(--admin-border-subtle)] pt-8">
-                      <ProductReviewStep formData={formData} setFormData={setFormData} />
-                    </div>
-                  </div>
+                  <ProductPricingStep
+                    formData={formData}
+                    setFormData={setFormData}
+                    showRentalSettings={showRentalSettings}
+                    setShowRentalSettings={setShowRentalSettings}
+                  />
+                )}
+
+                {/* STEP 4: RETURN POLICIES */}
+                {currentStep === 4 && (
+                  <ProductReturnStep formData={formData} setFormData={setFormData} />
+                )}
+
+                {/* STEP 5: SEO */}
+                {currentStep === 5 && (
+                  <ProductSeoStep
+                    formData={formData}
+                    setFormData={setFormData}
+                    focusedField={focusedField}
+                  />
+                )}
+
+                {/* STEP 6: REVIEW */}
+                {currentStep === 6 && (
+                  <ProductReviewStep formData={formData} setFormData={setFormData} />
                 )}
               </motion.div>
             </AnimatePresence>

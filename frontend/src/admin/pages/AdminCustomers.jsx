@@ -326,7 +326,7 @@ export function AdminCustomers() {
                               : 'bg-[#fffbeb] text-[#d97706] border-[#fde68a]'
                       }`}
                     >
-                      👑 {c.loyaltyTier || 'Bronze'}
+                      {c.loyaltyTier || 'Bronze'}
                     </span>
 
                     <div className="mt-1 flex flex-col items-end gap-1 text-[11px] text-[var(--admin-text-secondary)] font-semibold">

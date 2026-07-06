@@ -274,11 +274,9 @@ export function AdminNotifications({ hideHeader }) {
                     {/* Details Column */}
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
-                        <span
-                          className={`text-[13px] font-bold ${!n.read ? 'text-[var(--admin-text-primary)]' : 'text-[var(--admin-text-tertiary)]'}`}
-                        >
-                          {(n.title || '').replace('âš ï¸', '⚠️').replace('âš', '⚠️')}
-                        </span>
+                        <h4 className="text-sm font-semibold text-[var(--admin-text-main)] mb-1">
+                          {n.title || ''}
+                        </h4>
                         {!n.read && (
                           <span className="flex h-2 w-2 relative shrink-0">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--admin-accent)] opacity-75"></span>

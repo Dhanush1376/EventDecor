@@ -3,6 +3,7 @@ import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { useCart } from '../../../context/CartContext';
 import { useActiveCoupons } from '../../../hooks/useActiveCoupons';
 import toast from 'react-hot-toast';
+import { Sparkles } from 'lucide-react';
 
 /**
  * A slim, elegant promotional banner that highlights an offer or campaign.
@@ -64,7 +65,7 @@ export function PromoBanner() {
   const renderItems = () =>
     [...Array(4)].map((_, i) => (
       <div key={i} className="flex items-center gap-8 shrink-0">
-        <span className="text-[#d4af37] text-[16px] animate-pulse">✦</span>
+        <Sparkles className="w-3.5 h-3.5 opacity-50 text-[var(--color-primary-variant)]" />
         <span className="text-neutral-500 font-label-sm text-[10px] tracking-[0.25em] uppercase font-bold">
           {promoText}
         </span>
@@ -80,7 +81,7 @@ export function PromoBanner() {
       if (cart.setClaimedCoupon) cart.setClaimedCoupon(couponCode);
       if (cart.setAppliedCoupon) cart.setAppliedCoupon(couponCode);
       toast.success(`Coupon code ${couponCode} applied!`, {
-        icon: '🎟️',
+        // removed icon property
         style: {
           border: '1px solid #BFA15F',
           padding: '12px 16px',

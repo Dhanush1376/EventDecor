@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { useReturnManagement } from '../../hooks/useReturnManagement';
 import { handleImageError } from '../../../utils/media/imageUtils';
 import { PLACEHOLDER_IMAGES } from '../../../constants/placeholderImages';
+import { Check, X } from 'lucide-react';
 import {
   PageHeader,
   StatusBadge,
@@ -391,23 +392,64 @@ const AdminReturnDetail = () => {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="flex justify-between border-b pb-1">
                           <span className="text-admin-text-muted">Original Product:</span>
-                          <span>{item.inspectionResult.originalProduct ? '✅ Yes' : '❌ No'}</span>
+                          <span>
+                            {item.inspectionResult.originalProduct ? (
+                              <span className="inline-flex items-center gap-1">
+                                <Check className="w-3.5 h-3.5 text-green-500" aria-hidden="true" />{' '}
+                                Yes
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1">
+                                <X className="w-3.5 h-3.5 text-red-500" aria-hidden="true" /> No
+                              </span>
+                            )}
+                          </span>
                         </div>
                         <div className="flex justify-between border-b pb-1">
                           <span className="text-admin-text-muted">Accessories:</span>
                           <span>
-                            {item.inspectionResult.accessoriesPresent ? '✅ Yes' : '❌ No'}
+                            {item.inspectionResult.accessoriesPresent ? (
+                              <span className="inline-flex items-center gap-1">
+                                <Check className="w-3.5 h-3.5 text-green-500" aria-hidden="true" />{' '}
+                                Yes
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1">
+                                <X className="w-3.5 h-3.5 text-red-500" aria-hidden="true" /> No
+                              </span>
+                            )}
                           </span>
                         </div>
                         <div className="flex justify-between border-b pb-1">
                           <span className="text-admin-text-muted">Packaging:</span>
                           <span>
-                            {item.inspectionResult.packagingIntact ? '✅ Intact' : '❌ Damaged'}
+                            {item.inspectionResult.packagingIntact ? (
+                              <span className="inline-flex items-center gap-1">
+                                <Check className="w-3.5 h-3.5 text-green-500" aria-hidden="true" />{' '}
+                                Intact
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1">
+                                <X className="w-3.5 h-3.5 text-red-500" aria-hidden="true" />{' '}
+                                Damaged
+                              </span>
+                            )}
                           </span>
                         </div>
                         <div className="flex justify-between border-b pb-1">
                           <span className="text-admin-text-muted">Working Condition:</span>
-                          <span>{item.inspectionResult.workingCondition ? '✅ Yes' : '❌ No'}</span>
+                          <span>
+                            {item.inspectionResult.workingCondition ? (
+                              <span className="inline-flex items-center gap-1">
+                                <Check className="w-3.5 h-3.5 text-green-500" aria-hidden="true" />{' '}
+                                Yes
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1">
+                                <X className="w-3.5 h-3.5 text-red-500" aria-hidden="true" /> No
+                              </span>
+                            )}
+                          </span>
                         </div>
                       </div>
                       {item.inspectionResult.remarks && (

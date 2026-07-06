@@ -1,6 +1,6 @@
 /**
  * Centralized API configuration for all environments.
- * Production must use VITE_API_URL (Render backend). Development uses the Vite /api proxy.
+ * Production uses the same-origin /api proxy. Development uses the Vite /api proxy.
  */
 
 export const PRODUCTION_API_ORIGIN = import.meta.env.VITE_PRODUCTION_API_ORIGIN || '';

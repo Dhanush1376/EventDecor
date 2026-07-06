@@ -9,6 +9,7 @@ export function MaintenanceConsole() {
   const { session, logout, clearSession } = useMaintenanceSession();
   const [status, setStatus] = useState(null);
   const [logs, setLogs] = useState([]);
+  const [deadLetters, setDeadLetters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [disabling, setDisabling] = useState(false);
   const navigate = useNavigate();
@@ -19,15 +20,28 @@ export function MaintenanceConsole() {
       return;
     }
 
+    let abortController = new AbortController();
+    let isFetching = false;
+    let isActive = true;
+
     const fetchData = async () => {
+      // Do not poll if the tab is hidden or a request is already in flight
+      if (!isActive || document.visibilityState !== 'visible' || isFetching) return;
+
+      isFetching = true;
       try {
-        const [statusRes, logsRes] = await Promise.all([
-          maintenanceService.getStatus(),
-          maintenanceService.getAuditLogs(session.token),
+        const [statusRes, logsRes, deadLettersRes] = await Promise.all([
+          maintenanceService.getStatus({ signal: abortController.signal }),
+          maintenanceService.getAuditLogs(session.token, { signal: abortController.signal }),
+          maintenanceService.getDeadLetters(session.token),
         ]);
-        setStatus(statusRes.data);
-        setLogs(logsRes.data || []);
+        if (isActive) {
+          setStatus(statusRes.data);
+          setLogs(logsRes.data || []);
+          setDeadLetters(deadLettersRes.data?.jobs || []);
+        }
       } catch (err) {
+        if (!isActive || err.name === 'AbortError' || err.code === 'ERR_CANCELED') return;
         if (err.response?.status === 401) {
           clearSession();
           navigate('/admin');
@@ -35,13 +49,30 @@ export function MaintenanceConsole() {
           toast.error('Failed to load console data');
         }
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+          isFetching = false;
+        }
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 10000); // refresh every 10s
-    return () => clearInterval(interval);
+    // 30 seconds reconciliation
+    const interval = setInterval(fetchData, 30000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      isActive = false;
+      clearInterval(interval);
+      abortController.abort();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [session, navigate, clearSession]);
 
   const handleDisable = async () => {
@@ -185,6 +216,50 @@ export function MaintenanceConsole() {
                       <tr>
                         <td colSpan="4" className="py-8 text-center text-white/40">
                           No audit logs found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Dead Letter Queue */}
+            <div className="bg-[#141414] p-6 rounded-2xl border border-white/5 shadow-xl">
+              <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
+                <span className="material-symbols-outlined text-orange-500">warning</span>
+                Dead Letter Jobs
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead>
+                    <tr className="text-white/40 border-b border-white/5">
+                      <th className="pb-3 font-medium">Time</th>
+                      <th className="pb-3 font-medium">Queue</th>
+                      <th className="pb-3 font-medium">Job Name</th>
+                      <th className="pb-3 font-medium">Error Message</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {deadLetters.map((job) => (
+                      <tr key={job._id}>
+                        <td className="py-3 text-white/60">
+                          {new Date(job.createdAt).toLocaleTimeString()}
+                        </td>
+                        <td className="py-3 font-mono text-xs">{job.queueName}</td>
+                        <td className="py-3 font-mono text-xs text-white/80">{job.jobName}</td>
+                        <td
+                          className="py-3 text-red-400 text-xs truncate max-w-[200px]"
+                          title={job.errorMessage}
+                        >
+                          {job.errorMessage}
+                        </td>
+                      </tr>
+                    ))}
+                    {deadLetters.length === 0 && (
+                      <tr>
+                        <td colSpan="4" className="py-8 text-center text-white/40">
+                          No dead letter jobs found.
                         </td>
                       </tr>
                     )}

@@ -1,5 +1,6 @@
 const LoyaltySkeleton = () => <div className="animate-pulse bg-gray-200 h-48 rounded-md"></div>;
 import { m as motion } from 'framer-motion';
+import { PartyPopper } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import storeSettingsService from '../../services/api/storeSettingsService';
@@ -85,7 +86,6 @@ export function LoyaltyPanel() {
   const copyToClipboard = (text, message = 'Copied to clipboard!') => {
     navigator.clipboard.writeText(text);
     toast.success(message, {
-      icon: '✦',
       style: {
         background: '#121110',
         color: '#d4af37',
@@ -172,7 +172,7 @@ export function LoyaltyPanel() {
             <span
               className={`text-[8px] sm:text-[10px] font-bold tracking-widest uppercase px-2 sm:px-3 py-1 rounded-full ${tier.badge} shadow-sm shrink-0 whitespace-nowrap mt-1`}
             >
-              ✦ {data.loyaltyTier}
+              • {data.loyaltyTier}
             </span>
           </div>
 
@@ -220,8 +220,8 @@ export function LoyaltyPanel() {
                         ? 5
                         : 2);
                 if (data.loyaltyTier === 'Platinum')
-                  return `✦ Earn ${percent}% Platinum Cashback & VIP Priority Perks`;
-                return `✦ Earn ${percent}% Cashback & ${settings?.loyalty?.earnRatePoints || 1} Coin per ₹${settings?.loyalty?.earnRateAmount || 10} spent`;
+                  return `• Earn ${percent}% Platinum Cashback & VIP Priority Perks`;
+                return `• Earn ${percent}% Cashback & ${settings?.loyalty?.earnRatePoints || 1} Coin per ₹${settings?.loyalty?.earnRateAmount || 10} spent`;
               })()}
             </div>
             <span className="font-mono text-[9px] text-white/50 tracking-wider bg-black/20 px-2 py-1 rounded self-start sm:self-auto">
@@ -264,7 +264,11 @@ export function LoyaltyPanel() {
               </span>
             ) : (
               <span className="text-[9px] text-green-600 font-semibold block text-center">
-                🎉 Maximum elite tier reached! Enjoy 12% cashback rewards!
+                <PartyPopper
+                  className="inline-block w-4 h-4 mr-1.5 -mt-0.5 text-yellow-500"
+                  aria-hidden="true"
+                />{' '}
+                Maximum elite tier reached! Enjoy 12% cashback rewards!
               </span>
             )}
           </div>

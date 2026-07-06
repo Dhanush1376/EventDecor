@@ -16,7 +16,7 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
             <span className="text-[9px] uppercase tracking-widest font-bold">Chat</span>
           </button>
           <span className="text-[9px] text-secondary font-mono tracking-wider">
-            ID: {selectedBooking._id?.substring(18).toUpperCase()}
+            ID: {(selectedBooking._id || selectedBooking.id || '').substring(18).toUpperCase()}
           </span>
         </div>
       </div>

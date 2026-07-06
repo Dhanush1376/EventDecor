@@ -286,7 +286,7 @@ export function EventBookingWizard() {
         key,
         amount,
         currency,
-        name: 'Siri Arts Event Decor',
+        name: 'Siri Arts & Crafts',
         description: `Advance Deposit for ${formData.title}`,
         order_id: razorpayOrderId,
         handler: async function (response) {
@@ -364,7 +364,7 @@ export function EventBookingWizard() {
         {/* Editorial Heading */}
         <div className="text-center mb-10 lg:mb-16">
           <span className="font-label text-[10px] lg:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block mb-3">
-            SIRI CREATIVE STUDIO
+            SIRI ARTS & CRAFTS STUDIO
           </span>
           <h2 className="font-display text-[28px] lg:text-[54px] text-black font-light tracking-tight leading-tight">
             Design Your Celebration.

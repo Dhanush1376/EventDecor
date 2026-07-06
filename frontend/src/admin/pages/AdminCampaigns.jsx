@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
+import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check';
 
 import logger from '../../utils/core/logger';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
@@ -251,7 +252,8 @@ export function AdminCampaigns() {
                               </span>
                               {camp.targetAudience.consentedOnly && (
                                 <span className="text-[9px] text-black/60 font-medium block mt-1">
-                                  ✦ Checked Consent Only
+                                  <ShieldCheck className="w-3 h-3 inline-block mr-1 -mt-0.5" />{' '}
+                                  Checked Consent Only
                                 </span>
                               )}
                             </td>

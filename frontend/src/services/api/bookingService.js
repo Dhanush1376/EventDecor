@@ -29,6 +29,10 @@ export const bookingService = {
     const response = await api.post(`/event-bookings/${id}/payment`, paymentData);
     return response.data;
   },
+  initializeMilestonePayment: async (id, amount) => {
+    const response = await api.post(`/event-bookings/${id}/payment/initialize`, { amount });
+    return response.data;
+  },
   postChat: async (id, message, attachments = []) => {
     const response = await api.post(`/event-bookings/${id}/chat`, { message, attachments });
     return response.data;

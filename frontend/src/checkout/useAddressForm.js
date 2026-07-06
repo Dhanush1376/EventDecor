@@ -18,7 +18,7 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
         {
           headers: {
-            'User-Agent': 'SiriArtsAndCrafts/1.0 (checkout address autofill)',
+            'User-Agent': 'Siri Arts & CraftsAndCrafts/1.0 (checkout address autofill)',
           },
         },
       );

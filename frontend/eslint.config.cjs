@@ -29,6 +29,15 @@ module.exports = [
     },
     rules: {
       'no-undef': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "ImportNamespaceSpecifier[parent.source.value='lucide-react'], ImportExpression[source.value='lucide-react']",
+          message:
+            'Do not import the full lucide-react namespace; import explicit icons or a small local registry.'
+        }
+      ],
       'react/jsx-no-undef': 'error',
       'react/jsx-uses-react': 'error',
       'react/jsx-uses-vars': 'error',

@@ -140,7 +140,7 @@ export const useRazorpay = () => {
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
         name: 'Siri Arts & Crafts',
-        description: 'Luxury Event Decor Order',
+        description: 'Siri Arts & Crafts Order',
         image:
           import.meta.env.VITE_LOGO_URL ||
           `${EXTERNAL_URLS.CLOUDINARY_CDN_BASE}/siriartscrafts/image/upload/v1/SiriLogo.webp`,

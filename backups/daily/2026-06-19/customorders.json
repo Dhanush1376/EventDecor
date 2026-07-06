@@ -1,0 +1,219 @@
+[
+  {
+    "_id": "6a0984f7ebb9f01cc8f0bcdc",
+    "customerEmail": "dhanujanu1315@gmail.com",
+    "customerName": "Dhanush",
+    "customerPhone": "9154691315",
+    "occasion": "Wedding / Vivaham",
+    "productType": "Artisanal Table Centerpieces",
+    "inspirationImages": [],
+    "customRequirements": "ffn",
+    "quantity": 1,
+    "eventDate": null,
+    "city": "",
+    "bookingType": "Video Meet",
+    "referenceImages": [],
+    "voiceNotes": [],
+    "videoReferences": [],
+    "status": "Approved",
+    "priority": "medium",
+    "quotation": {
+      "items": [
+        {
+          "description": "Custom Decor Setup & Designing",
+          "amount": 25000,
+          "_id": "6a098794ebb9f01cc8f0bcfb"
+        }
+      ],
+      "tax": 10,
+      "shipping": 5000,
+      "total": 30010,
+      "notes": "25000",
+      "status": "approved",
+      "_id": "6a098794ebb9f01cc8f0bcfa"
+    },
+    "messages": [
+      {
+        "sender": "admin",
+        "senderName": "Siri Arts & Crafts",
+        "text": "Welcome to your custom design workspace! Our design team is currently reviewing your blueprint and inspiration images.",
+        "attachments": [],
+        "createdAt": "2026-05-17T09:05:59.141Z",
+        "_id": "6a0984f7ebb9f01cc8f0bcdd"
+      },
+      {
+        "sender": "admin",
+        "senderName": "Siri Design Team",
+        "text": "Yeahh that is Okayy",
+        "attachments": [],
+        "createdAt": "2026-05-17T09:06:53.734Z",
+        "_id": "6a09852debb9f01cc8f0bce2"
+      },
+      {
+        "sender": "customer",
+        "senderName": "Dhanush",
+        "text": "What is the cost of that item",
+        "attachments": [],
+        "createdAt": "2026-05-17T09:14:25.819Z",
+        "_id": "6a0986f1ebb9f01cc8f0bce7"
+      },
+      {
+        "sender": "admin",
+        "senderName": "System Logger",
+        "text": "Workspace status transition: Changed from \"Pending\" to \"Quote Sent\".",
+        "attachments": [],
+        "createdAt": "2026-05-17T09:16:40.178Z",
+        "_id": "6a098778ebb9f01cc8f0bcf1"
+      },
+      {
+        "sender": "admin",
+        "senderName": "System Logger",
+        "text": "An itemized studio estimate totaling ₹30,010 has been compiled and dispatched for review.",
+        "attachments": [],
+        "createdAt": "2026-05-17T09:17:08.736Z",
+        "_id": "6a098794ebb9f01cc8f0bcfc"
+      },
+      {
+        "sender": "customer",
+        "senderName": "Dhanush",
+        "text": "I have APPROVED the provided estimate. Ready to proceed with scheduling and deposit transactions!",
+        "attachments": [],
+        "createdAt": "2026-05-17T09:17:24.433Z",
+        "_id": "6a0987a4ebb9f01cc8f0bd09"
+      }
+    ],
+    "isDraft": false,
+    "archived": false,
+    "createdAt": "2026-05-17T09:05:59.159Z",
+    "updatedAt": "2026-05-17T09:17:24.438Z",
+    "isDeleted": false,
+    "deletedAt": null,
+    "deletedBy": null,
+    "deletionReason": null,
+    "__v": 0,
+    "customizationData": [],
+    "files": [],
+    "annotations": [],
+    "costEstimation": {
+      "basePrice": 0,
+      "customizationCharges": 0,
+      "additionalFeatures": 0,
+      "designCost": 0,
+      "materialCost": 0,
+      "productionCost": 0,
+      "deliveryCost": 0,
+      "total": 0,
+      "_id": "6a2548d1855f88ca3b0ef538"
+    },
+    "statusHistory": [],
+    "assignedStaff": [],
+    "internalNotes": [],
+    "versions": []
+  },
+  {
+    "_id": "6a098fafebb9f01cc8f0bd26",
+    "customerEmail": "dhanujanu1315@gmail.com",
+    "customerName": "Dhanush",
+    "customerPhone": "9154691315",
+    "occasion": "Wedding / Vivaham",
+    "productType": "Full Mandapam Setup",
+    "inspirationImages": [
+      "https://i.pinimg.com/736x/2f/26/d3/2f26d3debeb84fd1bd78644c148114e9.jpg"
+    ],
+    "customRequirements": "I need that engagement ring tray could you please specify how much does it cost",
+    "budget": 1000050000,
+    "quantity": 1,
+    "eventDate": "2026-05-23T00:00:00.000Z",
+    "city": "Hyderabad",
+    "bookingType": "Video Meet",
+    "referenceImages": [],
+    "voiceNotes": [],
+    "videoReferences": [],
+    "status": "Approved",
+    "priority": "medium",
+    "quotation": {
+      "items": [
+        {
+          "description": "Custom Decor Setup & Designing",
+          "amount": 2500,
+          "_id": "6a098fe7ebb9f01cc8f0bd3e"
+        }
+      ],
+      "tax": 100,
+      "shipping": 200,
+      "total": 2800,
+      "notes": "",
+      "status": "approved",
+      "_id": "6a098fe7ebb9f01cc8f0bd3d"
+    },
+    "messages": [
+      {
+        "sender": "admin",
+        "senderName": "Siri Arts & Crafts",
+        "text": "Welcome to your custom design workspace! Our design team is currently reviewing your blueprint and inspiration images.",
+        "attachments": [],
+        "createdAt": "2026-05-17T09:51:43.213Z",
+        "_id": "6a098fafebb9f01cc8f0bd27"
+      },
+      {
+        "sender": "admin",
+        "senderName": "Siri Design Team",
+        "text": "Done it will be costing around 2500 rs",
+        "attachments": [],
+        "createdAt": "2026-05-17T09:52:18.321Z",
+        "_id": "6a098fd2ebb9f01cc8f0bd3a"
+      },
+      {
+        "sender": "admin",
+        "senderName": "System Logger",
+        "text": "An itemized studio estimate totaling ₹2,800 has been compiled and dispatched for review.",
+        "attachments": [],
+        "createdAt": "2026-05-17T09:52:39.943Z",
+        "_id": "6a098fe7ebb9f01cc8f0bd3f"
+      },
+      {
+        "sender": "customer",
+        "senderName": "Dhanush",
+        "text": "I have APPROVED the provided estimate. Ready to proceed with scheduling and deposit transactions!",
+        "attachments": [],
+        "createdAt": "2026-05-17T09:52:59.114Z",
+        "_id": "6a098ffbebb9f01cc8f0bd4f"
+      },
+      {
+        "sender": "admin",
+        "senderName": "Siri Design Team",
+        "text": "The product is readyy",
+        "attachments": [],
+        "createdAt": "2026-05-17T09:56:19.920Z",
+        "_id": "6a0990c38a161638f305240e"
+      }
+    ],
+    "isDraft": false,
+    "archived": false,
+    "createdAt": "2026-05-17T09:51:43.221Z",
+    "updatedAt": "2026-05-17T09:56:19.967Z",
+    "isDeleted": false,
+    "deletedAt": null,
+    "deletedBy": null,
+    "deletionReason": null,
+    "__v": 0,
+    "customizationData": [],
+    "files": [],
+    "annotations": [],
+    "costEstimation": {
+      "basePrice": 0,
+      "customizationCharges": 0,
+      "additionalFeatures": 0,
+      "designCost": 0,
+      "materialCost": 0,
+      "productionCost": 0,
+      "deliveryCost": 0,
+      "total": 0,
+      "_id": "6a2548d1855f88ca3b0ef541"
+    },
+    "statusHistory": [],
+    "assignedStaff": [],
+    "internalNotes": [],
+    "versions": []
+  }
+]

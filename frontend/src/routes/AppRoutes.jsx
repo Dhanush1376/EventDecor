@@ -407,6 +407,7 @@ export function AppRoutes() {
               <Route path="coupons/edit/:id" element={<AdminCreateCoupon />} />
               <Route path="payments" element={<AdminPayments />} />
 
+              <Route path="notifications" element={<AdminNotifications />} />
               <Route path="campaigns" element={<AdminCampaigns />} />
               <Route path="campaigns/add" element={<AdminCampaignCreate />} />
               <Route path="campaigns/templates/add" element={<AdminTemplateCreate />} />

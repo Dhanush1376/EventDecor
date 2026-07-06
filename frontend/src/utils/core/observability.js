@@ -1,9 +1,10 @@
-import * as Sentry from '@sentry/react';
-import LogRocket from 'logrocket';
 import logger from '../core/logger';
 import { hasAnalyticsConsent } from '../core/analytics';
 
 const isProduction = import.meta.env.PROD || import.meta.env.MODE === 'production';
+const LOGROCKET_SESSION_SAMPLE_RATE = Number(
+  import.meta.env.VITE_LOGROCKET_SESSION_SAMPLE_RATE || (isProduction ? 0.02 : 0),
+);
 
 const SENSITIVE_KEY = /password|otp|token|secret|cvv|card|razorpay|authorization/i;
 
@@ -25,14 +26,48 @@ const redactObject = (obj) => {
   return out;
 };
 
+let sentryPromise = null;
+let logRocketPromise = null;
+let sentryClient = null;
+let logRocketClient = null;
+let logRocketEnabled = false;
+
+const getSentryClient = () => {
+  if (!sentryPromise) {
+    sentryPromise = import('@sentry/react').then((module) => {
+      sentryClient = module;
+      return module;
+    });
+  }
+  return sentryPromise;
+};
+
+const getLogRocketClient = () => {
+  if (!logRocketPromise) {
+    logRocketPromise = import('logrocket').then((module) => {
+      logRocketClient = module.default || module;
+      return logRocketClient;
+    });
+  }
+  return logRocketPromise;
+};
+
+const shouldStartLogRocket = () => {
+  if (!isProduction && import.meta.env.VITE_ENABLE_LOGROCKET_DEV !== 'true') return false;
+  if (!hasAnalyticsConsent()) return false;
+  if (import.meta.env.VITE_LOGROCKET_FORCE === 'true') return true;
+  return Math.random() < LOGROCKET_SESSION_SAMPLE_RATE;
+};
+
 /**
  * Bootstraps enterprise frontend observability layers (Sentry & LogRocket).
  */
-export const initObservability = () => {
+export const initObservability = async () => {
   const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
   const logRocketId = import.meta.env.VITE_LOGROCKET_ID;
 
-  if (logRocketId && hasAnalyticsConsent()) {
+  if (logRocketId && shouldStartLogRocket()) {
+    const LogRocket = await getLogRocketClient();
     LogRocket.init(logRocketId, {
       shouldCaptureIP: false,
       dom: {
@@ -55,9 +90,11 @@ export const initObservability = () => {
         }),
       },
     });
+    logRocketEnabled = true;
   }
 
   if (sentryDsn) {
+    const Sentry = await getSentryClient();
     Sentry.init({
       dsn: sentryDsn,
       integrations: [
@@ -67,21 +104,26 @@ export const initObservability = () => {
           blockAllMedia: true,
         }),
       ],
-      tracesSampleRate: isProduction ? 0.1 : 1.0,
-      replaysSessionSampleRate: 0.1,
-      replaysOnErrorSampleRate: 1.0,
+      tracesSampleRate: Number(
+        import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE || (isProduction ? 0.05 : 0),
+      ),
+      replaysSessionSampleRate: Number(import.meta.env.VITE_SENTRY_REPLAY_SESSION_SAMPLE_RATE || 0),
+      replaysOnErrorSampleRate: Number(
+        import.meta.env.VITE_SENTRY_REPLAY_ERROR_SAMPLE_RATE || (isProduction ? 0.05 : 0),
+      ),
       environment: import.meta.env.MODE || 'development',
     });
 
-    if (logRocketId) {
+    if (logRocketEnabled) {
       linkLogRocketToSentry();
     }
   }
 };
 
-export const linkLogRocketToSentry = () => {
-  if (!import.meta.env.VITE_LOGROCKET_ID || !import.meta.env.VITE_SENTRY_DSN) return;
+export const linkLogRocketToSentry = async () => {
+  if (!logRocketEnabled || !import.meta.env.VITE_SENTRY_DSN) return;
 
+  const [LogRocket, Sentry] = await Promise.all([getLogRocketClient(), getSentryClient()]);
   LogRocket.getSessionURL((sessionURL) => {
     if (!sessionURL) return;
     Sentry.setExtra('sessionURL', sessionURL);
@@ -93,28 +135,36 @@ export const linkLogRocketToSentry = () => {
 export const captureException = (error, context = {}) => {
   logger.error('[Observability Exception]:', error, context);
 
-  if (import.meta.env.VITE_LOGROCKET_ID && import.meta.env.VITE_SENTRY_DSN) {
-    LogRocket.getSessionURL((sessionURL) => {
-      if (sessionURL) {
-        Sentry.withScope((scope) => {
-          scope.setExtra('sessionURL', sessionURL);
-          scope.setExtra('logrocketSessionURL', sessionURL);
-          scope.setContext('logrocket', { sessionURL });
+  if (logRocketEnabled && import.meta.env.VITE_SENTRY_DSN) {
+    Promise.all([getLogRocketClient(), getSentryClient()])
+      .then(([LogRocket, Sentry]) => {
+        LogRocket.getSessionURL((sessionURL) => {
+          if (sessionURL) {
+            Sentry.withScope((scope) => {
+              scope.setExtra('sessionURL', sessionURL);
+              scope.setExtra('logrocketSessionURL', sessionURL);
+              scope.setContext('logrocket', { sessionURL });
+              Sentry.captureException(error, { extra: redactObject(context) });
+            });
+            return;
+          }
           Sentry.captureException(error, { extra: redactObject(context) });
         });
-        return;
-      }
-      Sentry.captureException(error, { extra: redactObject(context) });
-    });
+      })
+      .catch(() => {});
     return;
   }
 
   if (import.meta.env.VITE_SENTRY_DSN) {
-    Sentry.captureException(error, { extra: redactObject(context) });
+    getSentryClient()
+      .then((Sentry) => Sentry.captureException(error, { extra: redactObject(context) }))
+      .catch(() => {});
   }
 
-  if (import.meta.env.VITE_LOGROCKET_ID) {
-    LogRocket.captureException(error, { extra: redactObject(context) });
+  if (logRocketEnabled) {
+    getLogRocketClient()
+      .then((LogRocket) => LogRocket.captureException(error, { extra: redactObject(context) }))
+      .catch(() => {});
   }
 };
 
@@ -122,7 +172,7 @@ export { linkLogRocketToSentry as syncLogRocketSessionToSentry };
 
 export const setUserContext = (user) => {
   if (!user) {
-    if (import.meta.env.VITE_SENTRY_DSN) Sentry.setUser(null);
+    if (sentryClient) sentryClient.setUser(null);
     return;
   }
 
@@ -132,12 +182,12 @@ export const setUserContext = (user) => {
     role: user.role || 'customer',
   };
 
-  if (import.meta.env.VITE_SENTRY_DSN) {
-    Sentry.setUser(identity);
+  if (sentryClient) {
+    sentryClient.setUser(identity);
   }
 
-  if (import.meta.env.VITE_LOGROCKET_ID) {
-    LogRocket.identify(identity.id, {
+  if (logRocketEnabled && logRocketClient) {
+    logRocketClient.identify(identity.id, {
       name: user.name || user.email.split('@')[0],
       email: identity.email,
       role: identity.role,

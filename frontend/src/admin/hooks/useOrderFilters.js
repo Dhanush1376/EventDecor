@@ -101,7 +101,10 @@ export function useOrderFilters(orders, searchQuery) {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `SiriArts_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute(
+      'download',
+      `Siri Arts & Crafts_Orders_${new Date().toISOString().slice(0, 10)}.csv`,
+    );
     link.click();
     toast.success('Export ready');
   };

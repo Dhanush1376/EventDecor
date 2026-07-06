@@ -1,11 +1,9 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { IntelligentSearchOverlay } from '../search/IntelligentSearchOverlay';
-import { VisualSearchOverlay } from '../search/VisualSearchOverlay';
 import { SiriLogo } from '../ui/SiriLogo';
 import { MandalaElement } from '../ui/MandalaElement';
 import { MandalaArtDecor } from '../ui/MandalaArtDecor';
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -16,6 +14,16 @@ import { prefetchManager } from '../../utils/performance/prefetchManager';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useVisualSearch } from '../../hooks/useVisualSearch';
 import { customOrderService } from '../../services/api/customOrderService';
+import { lazyWithRetry as lazy } from '../../utils/performance/lazyWithRetry';
+
+const IntelligentSearchOverlay = lazy(() =>
+  import('../search/IntelligentSearchOverlay').then((m) => ({
+    default: m.IntelligentSearchOverlay,
+  })),
+);
+const VisualSearchOverlay = lazy(() =>
+  import('../search/VisualSearchOverlay').then((m) => ({ default: m.VisualSearchOverlay })),
+);
 
 // Search caching is now handled by useSearchOverlay hook
 
@@ -54,8 +62,7 @@ export function TopNavbar() {
 
   // Disable transparency on shop page if on mobile with an active search (since hero is hidden)
   const isTransparent =
-    (isHomePage || (isShopPage && !(isMobile && searchParam)) || isEventsPage || isAboutPage) &&
-    isAtTop;
+    (isHomePage || (isShopPage && !(isMobile && searchParam)) || isEventsPage) && isAtTop;
 
   const adminRoles = [
     'owner',
@@ -786,41 +793,45 @@ export function TopNavbar() {
         )}
       </AnimatePresence>
 
-      <IntelligentSearchOverlay
-        isOpen={search.isOpen}
-        initialMode={search.initialMode}
-        query={search.query}
-        setQuery={search.setQuery}
-        suggestions={search.suggestions}
-        predictedCategories={search.predictedCategories}
-        trendingSearches={search.trendingSearches}
-        recentSearches={search.recentSearches}
-        discoveryData={search.discoveryData}
-        onRemoveRecent={search.removeRecentSearch}
-        loading={search.loading}
-        activeIndex={search.activeIndex}
-        setActiveIndex={search.setActiveIndex}
-        onClose={search.handleClose}
-        onKeyDown={search.handleKeyDown}
-        onSelectSuggestion={search.selectSuggestion}
-        onExecuteSearch={search.executeSearch}
-        onClearRecent={search.clearRecentSearches}
-        correctedQuery={search.correctedQuery}
-        visualSearch={visualSearch}
-      />
-      <VisualSearchOverlay
-        isOpen={visualSearch.isOpen}
-        phase={visualSearch.phase}
-        previewUrl={visualSearch.previewUrl}
-        results={visualSearch.results}
-        error={visualSearch.error}
-        scanProgress={visualSearch.scanProgress}
-        scanStatus={visualSearch.scanStatus}
-        onClose={visualSearch.close}
-        onImageSelect={(file, mode) => visualSearch.handleImageSelect(file, mode || 'upload')}
-        onRetry={visualSearch.retry}
-        onReset={visualSearch.reset}
-      />
+      {(search.isOpen || visualSearch.isOpen) && (
+        <Suspense fallback={null}>
+          <IntelligentSearchOverlay
+            isOpen={search.isOpen}
+            initialMode={search.initialMode}
+            query={search.query}
+            setQuery={search.setQuery}
+            suggestions={search.suggestions}
+            predictedCategories={search.predictedCategories}
+            trendingSearches={search.trendingSearches}
+            recentSearches={search.recentSearches}
+            discoveryData={search.discoveryData}
+            onRemoveRecent={search.removeRecentSearch}
+            loading={search.loading}
+            activeIndex={search.activeIndex}
+            setActiveIndex={search.setActiveIndex}
+            onClose={search.handleClose}
+            onKeyDown={search.handleKeyDown}
+            onSelectSuggestion={search.selectSuggestion}
+            onExecuteSearch={search.executeSearch}
+            onClearRecent={search.clearRecentSearches}
+            correctedQuery={search.correctedQuery}
+            visualSearch={visualSearch}
+          />
+          <VisualSearchOverlay
+            isOpen={visualSearch.isOpen}
+            phase={visualSearch.phase}
+            previewUrl={visualSearch.previewUrl}
+            results={visualSearch.results}
+            error={visualSearch.error}
+            scanProgress={visualSearch.scanProgress}
+            scanStatus={visualSearch.scanStatus}
+            onClose={visualSearch.close}
+            onImageSelect={(file, mode) => visualSearch.handleImageSelect(file, mode || 'upload')}
+            onRetry={visualSearch.retry}
+            onReset={visualSearch.reset}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

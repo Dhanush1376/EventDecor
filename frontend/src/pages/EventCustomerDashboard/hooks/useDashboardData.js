@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { bookingService } from '../../../services/domainServices';
 import toast from 'react-hot-toast';
 import logger from '../../../utils/core/logger';
+import { loadRazorpayScript } from '../../../pages/eventDetail/useEventBookingForm';
 import { STATUS_STEPS } from '../constants';
 
 export function useDashboardData(isEmbedded = false) {
@@ -109,34 +110,93 @@ export function useDashboardData(isEmbedded = false) {
       return;
     }
 
-    if (process.env.NODE_ENV === 'production') {
-      toast.error('Payment Gateway integration is required in production environments.');
-      setIsPaymentModalOpen(false);
-      return;
-    }
-
-    const loadId = toast.loading('Processing milestone transaction...');
+    const loadId = toast.loading('Initializing secure payment...');
     try {
-      const res = await bookingService.submitPayment(selectedBooking._id || selectedBooking.id, {
-        amount: amt,
-        transactionId: `UPI-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-        note: paymentNote,
-      });
-      toast.dismiss(loadId);
-      if (res.success) {
-        toast.success(`Milestone payment of ₹${amt.toLocaleString('en-IN')} lodged successfully!`);
-        setIsPaymentModalOpen(false);
-        setPaymentAmount('');
-        const updated = await bookingService.getById(selectedBooking._id || selectedBooking.id);
-        if (updated.success) {
-          setSelectedBooking(updated.data);
-          setBookings((prev) => prev.map((b) => (b._id === updated.data._id ? updated.data : b)));
-        }
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded) {
+        toast.dismiss(loadId);
+        toast.error('Razorpay SDK failed to load. Please check your internet connection.');
+        return;
       }
+
+      // Initialize checkout on backend
+      const initRes = await bookingService.initializeMilestonePayment(
+        selectedBooking._id || selectedBooking.id,
+        amt,
+      );
+
+      if (!initRes.success || !initRes.data) {
+        toast.dismiss(loadId);
+        toast.error(initRes.message || 'Failed to initialize checkout.');
+        return;
+      }
+
+      const { razorpayOrderId, amount, currency, key } = initRes.data;
+      toast.dismiss(loadId);
+
+      const options = {
+        key,
+        amount: amount * 100,
+        currency,
+        name: 'Siri Arts & Crafts',
+        description: `Milestone Payment for Booking ${selectedBooking.bookingId || ''}`,
+        order_id: razorpayOrderId,
+        handler: async function (response) {
+          const verifyLoadId = toast.loading('Verifying your payment securely...');
+          try {
+            // Use the standard submitPayment endpoint which acts as our verification handler here
+            const verifyRes = await bookingService.submitPayment(
+              selectedBooking._id || selectedBooking.id,
+              {
+                amount: amt,
+                transactionId: response.razorpay_payment_id,
+                note: paymentNote,
+              },
+            );
+
+            toast.dismiss(verifyLoadId);
+            if (verifyRes.success) {
+              toast.success(
+                `Milestone payment of ₹${amt.toLocaleString('en-IN')} lodged successfully!`,
+              );
+              setIsPaymentModalOpen(false);
+              setPaymentAmount('');
+
+              // Refresh booking data
+              const updated = await bookingService.getById(
+                selectedBooking._id || selectedBooking.id,
+              );
+              if (updated.success) {
+                setSelectedBooking(updated.data);
+                setBookings((prev) =>
+                  prev.map((b) => (b._id === updated.data._id ? updated.data : b)),
+                );
+              }
+            } else {
+              toast.error(verifyRes.message || 'Payment verification failed.');
+            }
+          } catch (err) {
+            toast.dismiss(verifyLoadId);
+            logger.error('Verification Error:', err);
+            toast.error('An error occurred during verification. Contact support.');
+          }
+        },
+        prefill: {
+          name: selectedBooking.user?.name || 'Customer',
+          email: selectedBooking.user?.email || '',
+        },
+        theme: { color: 'var(--color-gold-dark)' },
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.on('payment.failed', function (response) {
+        toast.error(`Payment Failed: ${response.error.description}`);
+      });
+      paymentObject.open();
     } catch (err) {
       toast.dismiss(loadId);
       logger.error(err);
-      toast.error('Transaction error. Please try again.');
+      toast.error('Transaction initialization error. Please try again.');
     }
   };
 

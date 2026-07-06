@@ -40,12 +40,12 @@ npm run start
 
 ## 🏥 Uptime Monitoring
 
-To prevent Render "Free Plan" spin-down and monitor health:
+To prevent Railway sleeping and monitor health:
 
 1. Go to **[UptimeRobot](https://uptimerobot.com/)** or **[BetterStack](https://betterstack.com/)**.
 2. Create a new "HTTP(S)" Monitor.
 3. URL: `https://eventdecor-production-1647.up.railway.app/api/health`
-4. Interval: Every **14 minutes** (crucial for keeping free instances awake).
+4. Interval: Every **14 minutes**.
 
 ---
 
@@ -76,11 +76,11 @@ To prevent Render "Free Plan" spin-down and monitor health:
 
 ---
 
-## 🏗️ Deployment Guide (Render.com)
+## 🏗️ Deployment Guide (Railway)
 
 1. **GitHub**: Push your code to a GitHub repository.
-2. **New Web Service**: Connect your repo to Render.
-3. **Blueprint**: Render will automatically detect `render.yaml`.
+2. **New Project**: Connect your repo to Railway.
+3. **Build settings**: Set the root directory to `backend` and use `npm run build`.
 4. **Environment Variables**:
-   - Manually add `MONGO_URI`, `RAZORPAY_KEY_SECRET`, etc., in the Render Dashboard → Environment tab.
+   - Manually add `MONGO_URI`, `RAZORPAY_KEY_SECRET`, etc., in the Railway Variables tab.
 5. **CORS**: Ensure `FRONTEND_URLS` includes your final production frontend URL.

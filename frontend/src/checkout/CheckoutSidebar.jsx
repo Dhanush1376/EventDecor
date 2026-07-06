@@ -1,4 +1,5 @@
-import { m as motion } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { AlertTriangle, Check } from 'lucide-react';
 import { useCheckout } from './CheckoutProvider';
 import { useActiveCoupons } from '../hooks/useActiveCoupons';
 import { CustomerContactGate } from '../components/shared/CustomerContactGate';
@@ -194,7 +195,12 @@ export default function CheckoutSidebar() {
               <div
                 className={`mt-2 text-[11px] font-semibold ${couponValid ? 'text-primary' : 'text-red-600'}`}
               >
-                {couponValid ? '✓' : '⚠️'} {couponMessage}
+                {couponValid ? (
+                  <Check className="w-3.5 h-3.5 inline-block -mt-0.5" />
+                ) : (
+                  <AlertTriangle className="w-3.5 h-3.5 inline-block -mt-0.5" aria-hidden="true" />
+                )}{' '}
+                {couponMessage}
               </div>
             )}
 

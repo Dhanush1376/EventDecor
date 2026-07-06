@@ -39,6 +39,9 @@ export const ConfigProvider = ({ children }) => {
 
     fetchGlobalData();
 
+    // Visitor sockets are intentionally opt-in; the public config fetch remains the canonical source.
+    if (import.meta.env.VITE_ENABLE_VISITOR_SOCKET !== 'true') return;
+
     // Setup Socket for live maintenance toggles
     let socketServerUrl = getApiRootUrl();
     if (socketServerUrl.endsWith('/api/v1')) {

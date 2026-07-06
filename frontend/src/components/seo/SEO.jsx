@@ -13,7 +13,7 @@ import { getOptimizedUrl } from '../../utils/media/imageUtils';
 
 const DEFAULT_DESCRIPTION =
   'Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor.';
-const DEFAULT_TITLE = 'Luxury Event Decor & Artisanal Heritage';
+const DEFAULT_TITLE = 'Siri Arts & Crafts — Luxury Event Decor & Artisanal Heritage';
 const priceValidUntilDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   .toISOString()
   .split('T')[0];

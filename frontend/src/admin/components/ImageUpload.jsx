@@ -3,8 +3,10 @@ import { uploadService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { compressImage } from '../../utils/media/imageCompressor';
 import logger from '../../utils/core/logger';
+export const PendingUploadRegistry = new Map();
+
 export function ImageUpload({ value, onChange, folder = 'products', label = 'Upload Image' }) {
-  const [isUploading, setIsUploading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleUpload = async (e) => {
@@ -33,7 +35,6 @@ export function ImageUpload({ value, onChange, folder = 'products', label = 'Upl
       const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
       const isHEIC = fileExt === '.heic' || fileExt === '.heif';
 
-      // Extension and MIME Validation
       if (!allowedExts.includes(fileExt) || (!file.type.startsWith('image/') && !isHEIC)) {
         toast.error(
           `Invalid image format: ${file.name}. Only JPG, JPEG, PNG, WEBP, AVIF, HEIC, HEIF, GIF, BMP, TIFF, ICO, and SVG are permitted.`,
@@ -42,7 +43,6 @@ export function ImageUpload({ value, onChange, folder = 'products', label = 'Upl
         return;
       }
 
-      // Payload Size Restrictions
       if (file.size > maxSizeBytes) {
         const sizeLimitMsg = folder === 'gallery' ? '10MB' : '5MB';
         toast.error(`Image size too large: ${file.name}. Maximum limit is ${sizeLimitMsg}.`);
@@ -51,35 +51,22 @@ export function ImageUpload({ value, onChange, folder = 'products', label = 'Upl
       }
     }
 
-    setIsUploading(true);
-    const toastId = toast.loading(`Uploading secure ${folder} asset...`);
+    setIsProcessing(true);
+    const toastId = toast.loading(`Preparing secure ${folder} asset preview...`);
     try {
-      const formData = new FormData();
-      for (const file of files) {
-        const optimized = await compressImage(file);
-        formData.append('images', optimized);
-      }
+      const file = files[0];
+      const optimized = await compressImage(file);
 
-      if (folder === 'cms') {
-        const formDataSingle = new FormData();
-        const optimizedSingle = await compressImage(files[0]);
-        formDataSingle.append('image', optimizedSingle);
-        const res = await uploadService.uploadCMS(formDataSingle);
-        onChange(res.url);
-      } else {
-        const res = await uploadService.uploadImages(formData, folder);
-        onChange(res.images[0]);
-      }
-      toast.success('Asset uploaded!', { id: toastId });
+      const localUrl = URL.createObjectURL(optimized);
+      PendingUploadRegistry.set(localUrl, { file: optimized, folder });
+      onChange(localUrl);
+
+      toast.success('Asset preview ready! Will upload on publish.', { id: toastId });
     } catch (err) {
-      logger.error('Upload failed:', err);
-      toast.error(
-        err.response?.data?.message ||
-          'Failed to upload image. Please verify file signature and try again.',
-        { id: toastId },
-      );
+      logger.error('Preview prep failed:', err);
+      toast.error('Failed to prepare image preview locally.', { id: toastId });
     } finally {
-      setIsUploading(false);
+      setIsProcessing(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -95,11 +82,11 @@ export function ImageUpload({ value, onChange, folder = 'products', label = 'Upl
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
+          disabled={isProcessing}
           className="text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] transition-colors font-bold text-[11px] cursor-pointer flex items-center gap-1"
         >
           <span className="material-symbols-outlined text-[12px] block">upload_file</span>
-          <span>{isUploading ? 'Uploading...' : value ? 'Change Image' : 'Upload Image'}</span>
+          <span>{isProcessing ? 'Processing...' : value ? 'Change Image' : 'Upload Image'}</span>
         </button>
       </div>
 
@@ -111,7 +98,7 @@ export function ImageUpload({ value, onChange, folder = 'products', label = 'Upl
         onChange={handleUpload}
       />
 
-      {isUploading ? (
+      {isProcessing ? (
         <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center shrink-0 border border-neutral-200">
           <span className="w-3 h-3 border border-amber-600 border-t-transparent rounded-full animate-spin" />
         </div>

@@ -68,6 +68,18 @@ export function HeroCarousel() {
 
   const slides = [...productSlides, ...showcaseSlides];
 
+  // Track which slides have been initialized to prevent downloading all images on initial load
+  const [initializedSlides, setInitializedSlides] = useState([0]);
+
+  useEffect(() => {
+    setInitializedSlides((prev) => {
+      if (slides.length === 0) return prev;
+      const nextSlide = (currentSlide + 1) % slides.length;
+      if (prev.includes(currentSlide) && prev.includes(nextSlide)) return prev;
+      return Array.from(new Set([...prev, currentSlide, nextSlide]));
+    });
+  }, [currentSlide, slides.length]);
+
   // Swipe tracking
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -209,32 +221,38 @@ export function HeroCarousel() {
 
               <div className="h1-hero__slide-image-wrap bg-black">
                 {/* 1. Blurred Background Image (Desktop Only) - Fetching only 100px width! */}
-                <CloudinaryImage
-                  src={slide.backgroundImage}
-                  alt=""
-                  className="hidden lg:block w-full h-full object-cover opacity-60 blur-[60px] scale-125"
-                  loading="lazy"
-                  fetchPriority="low"
-                  containerClassName="hidden lg:block w-full h-full absolute inset-0 overflow-hidden"
-                  width={100}
-                  sizes="100px"
-                  aria-hidden="true"
-                />
+                {initializedSlides.includes(idx) && (
+                  <CloudinaryImage
+                    src={slide.backgroundImage}
+                    alt=""
+                    className="hidden lg:block w-full h-full object-cover opacity-60 blur-[60px] scale-125"
+                    loading="lazy"
+                    fetchPriority="low"
+                    containerClassName="hidden lg:block w-full h-full absolute inset-0 overflow-hidden"
+                    width={100}
+                    sizes="100px"
+                    aria-hidden="true"
+                    skipObserver={isActive}
+                  />
+                )}
 
                 {/* 2. Dark Gradient Overlay (Desktop Only) */}
                 <div className="hidden lg:block absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent z-[1]" />
 
                 {/* 3. Sharp Foreground Image (Full on mobile, right-aligned with mask on desktop) */}
-                <CloudinaryImage
-                  src={slide.backgroundImage}
-                  alt={slide.title}
-                  className="h1-hero__slide-image w-full h-full object-cover lg:object-cover"
-                  loading={isActive ? 'eager' : 'lazy'}
-                  fetchPriority={isActive ? 'high' : 'auto'}
-                  containerClassName="w-full lg:w-[60%] h-full relative z-[2] ml-auto"
-                  width={1280}
-                  sizes="(max-width: 768px) 100vw, 60vw"
-                />
+                {initializedSlides.includes(idx) && (
+                  <CloudinaryImage
+                    src={slide.backgroundImage}
+                    alt={slide.title}
+                    className="h1-hero__slide-image w-full h-full object-cover lg:object-cover"
+                    loading={isActive ? 'eager' : 'lazy'}
+                    fetchPriority={isActive ? 'high' : 'auto'}
+                    containerClassName="w-full lg:w-[60%] h-full relative z-[2] ml-auto"
+                    width={1280}
+                    sizes="(max-width: 768px) 100vw, 60vw"
+                    skipObserver={isActive}
+                  />
+                )}
 
                 <div className="h1-hero__slide-overlay z-[3]" />
               </div>

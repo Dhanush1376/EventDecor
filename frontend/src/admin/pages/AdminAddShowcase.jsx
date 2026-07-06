@@ -7,6 +7,7 @@ import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { ArrowRight } from 'lucide-react';
 
 // Extracted Wizard Steps
 import { MediaStep } from '../components/showcase-wizard/MediaStep';
@@ -353,8 +354,10 @@ export function AdminAddShowcase() {
                           {stat.name}
                         </div>
                         <div className="flex justify-between items-center">
-                          <span>
-                            {stat.originalSize} ➔ {stat.optimizedSize}
+                          <span className="text-black font-semibold ml-1">
+                            {stat.originalSize}{' '}
+                            <ArrowRight className="w-3 h-3 inline-block mx-1 text-black/40" />{' '}
+                            {stat.optimizedSize}
                           </span>
                           <span className="text-[var(--admin-success)] font-bold">
                             -{stat.reduction}%

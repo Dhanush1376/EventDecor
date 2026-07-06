@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { handleImageError, getOptimizedUrl, getBlurDataUri } from '../../utils/media/imageUtils';
 import { useProduct } from '../../hooks/useProductQueries';
 import { customOrderService } from '../../services/domainServices';
+import { ArrowRight } from 'lucide-react';
 
 export const CartItemRow = React.memo(function CartItemRow({
   item,
@@ -129,7 +130,7 @@ export const CartItemRow = React.memo(function CartItemRow({
         <div className="flex-1 min-w-0 pr-8 py-1">
           {activeCartMode === 'rental' && (
             <span className="inline-block bg-primary/10 text-primary text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-[3px] mb-2 border border-primary/20">
-              🏷 Rental Item
+              Rental Item
             </span>
           )}
           <Link to={`/product/${item.id || item._id}`}>
@@ -307,7 +308,7 @@ export const CartItemRow = React.memo(function CartItemRow({
               <span>
                 Duration:{' '}
                 <span className="font-extrabold text-primary uppercase text-[9.5px] tracking-wider ml-1">
-                  Select at checkout ➝
+                  Select at checkout <ArrowRight className="w-3 h-3 inline-block ml-1 -mt-0.5" />
                 </span>
               </span>
             </div>
