@@ -107,7 +107,7 @@ export function ProductInfo({
   };
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-7 lg:sticky lg:top-32 relative">
+    <div className="flex flex-col gap-6 lg:gap-7 lg:sticky lg:top-32 relative lg:self-start">
       <MandalaArtDecor
         variant={1}
         size={400}

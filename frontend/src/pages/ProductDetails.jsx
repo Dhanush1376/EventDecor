@@ -188,7 +188,7 @@ export function ProductDetails() {
 
       <section className="pt-[68px] lg:pt-0 pb-12 lg:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 md:gap-8 lg:gap-12 xl:gap-20">
-          <div className="flex flex-col gap-6 lg:gap-10">
+          <div className="flex flex-col gap-6 lg:gap-10 md:sticky md:top-24 lg:static lg:top-auto md:self-start lg:self-auto">
             <ProductGallery images={galleryImages} product={product} />
 
             <div className="hidden lg:flex flex-col gap-6 lg:gap-8">
