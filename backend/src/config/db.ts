@@ -40,6 +40,12 @@ export interface DbMetrics {
   pingDurationMs: number | null;
   totalFailedPings: number;
   reconnectAttempts: number;
+  pool: {
+    currentCheckedOut: number;
+    peakCheckedOut: number;
+    totalCheckoutFailures: number;
+    totalCheckedOut: number;
+  };
 }
 
 class DatabaseManager {
@@ -59,6 +65,13 @@ class DatabaseManager {
   private maxPoolSize = 50;
   private minPoolSize = 10;
 
+  // CMAP pool telemetry (in-memory counters, exposed via getMetrics)
+  private cmapListenersRegistered = false;
+  private poolCurrentCheckedOut = 0;
+  private poolPeakCheckedOut = 0;
+  private poolTotalCheckoutFailures = 0;
+  private poolTotalCheckedOut = 0;
+
   private constructor() {}
 
   public static getInstance(): DatabaseManager {
@@ -70,7 +83,8 @@ class DatabaseManager {
 
   /**
    * Determine the connection pool configuration based on PM2 instances and CPU cores.
-   * Target total connection budget is 100.
+   * Target total connection budget is 40 — conservative for single-instance e-commerce.
+   * Override at runtime with MONGO_POOL_SIZE / MONGO_MIN_POOL_SIZE env vars.
    */
   private calculatePoolLimits(): { maxPoolSize: number; minPoolSize: number } {
     const envMax = process.env.MONGO_POOL_SIZE ? Number(process.env.MONGO_POOL_SIZE) : null;
@@ -95,11 +109,11 @@ class DatabaseManager {
       }
     }
 
-    // Set max connections budget across all instances to a safe value (100)
-    // To accommodate horizontal scaling (e.g. 5 containers = max 100 connections total)
-    const TOTAL_BUDGET = 100;
+    // Set max connections budget across all instances to a conservative value (40)
+    // Override with MONGO_POOL_SIZE env var if production metrics indicate higher demand
+    const TOTAL_BUDGET = 40;
     const calculatedMax = Math.max(10, Math.floor(TOTAL_BUDGET / instances));
-    const calculatedMin = Math.max(2, Math.floor(calculatedMax / 5));
+    const calculatedMin = Math.max(2, Math.floor(calculatedMax / 8));
 
     logger.info(
       `[DATABASE] Dynamic connection pool: ${instances} instances detected. Configured maxPoolSize=${calculatedMax}, minPoolSize=${calculatedMin}`,
@@ -134,7 +148,57 @@ class DatabaseManager {
       pingDurationMs: this.pingDurationMs,
       totalFailedPings: this.totalFailedPings,
       reconnectAttempts: this.reconnectAttempts,
+      pool: {
+        currentCheckedOut: this.poolCurrentCheckedOut,
+        peakCheckedOut: this.poolPeakCheckedOut,
+        totalCheckoutFailures: this.poolTotalCheckoutFailures,
+        totalCheckedOut: this.poolTotalCheckedOut,
+      },
     };
+  }
+
+  /**
+   * Register CMAP (Connection Monitoring and Pooling) event listeners on the
+   * underlying MongoDB driver client. Maintains in-memory counters only —
+   * does NOT log individual checkout/checkin events to avoid noise.
+   * Aggregated metrics are exposed via getMetrics() and /api/metrics.
+   */
+  private registerCmapListeners(): void {
+    if (this.cmapListenersRegistered) return;
+    this.cmapListenersRegistered = true;
+
+    try {
+      const client = mongoose.connection.getClient();
+
+      client.on('connectionCheckedOut', () => {
+        this.poolCurrentCheckedOut++;
+        this.poolTotalCheckedOut++;
+        if (this.poolCurrentCheckedOut > this.poolPeakCheckedOut) {
+          this.poolPeakCheckedOut = this.poolCurrentCheckedOut;
+        }
+      });
+
+      client.on('connectionCheckedIn', () => {
+        if (this.poolCurrentCheckedOut > 0) this.poolCurrentCheckedOut--;
+      });
+
+      client.on('connectionCheckOutFailed', (event: any) => {
+        this.poolTotalCheckoutFailures++;
+        logger.warn(`[POOL] Connection checkout failed: ${event?.reason || 'unknown'}`);
+      });
+
+      client.on('connectionPoolCreated', (event: any) => {
+        logger.info('[POOL] Connection pool created', { maxPoolSize: event?.options?.maxPoolSize });
+      });
+
+      client.on('connectionPoolClosed', () => {
+        logger.info('[POOL] Connection pool closed');
+      });
+
+      logger.info('[DATABASE] CMAP pool telemetry listeners registered');
+    } catch (err: any) {
+      logger.warn(`[DATABASE] Failed to register CMAP listeners: ${err.message}`);
+    }
   }
 
   public async connect(): Promise<typeof mongoose> {
@@ -266,6 +330,7 @@ class DatabaseManager {
         logger.info(`[DATABASE] Connecting to MongoDB (Attempt ${attempt}/${maxRetries})...`);
         const conn = await mongoose.connect(MONGO_URI, options);
         logger.info('[DATABASE] MongoDB Connection Succeeded');
+        this.registerCmapListeners();
         return conn;
       } catch (err: any) {
         logger.error(`[DATABASE] MongoDB connection attempt ${attempt} failed: ${err.message}`);
@@ -387,6 +452,8 @@ class DatabaseManager {
     );
 
     this.cachedConnectionPromise = null;
+    this.cmapListenersRegistered = false;
+    this.poolCurrentCheckedOut = 0;
 
     const performReset = async () => {
       try {
@@ -416,6 +483,8 @@ class DatabaseManager {
   public async disconnect(): Promise<void> {
     this.stopHealthCheck();
     this.cachedConnectionPromise = null;
+    this.cmapListenersRegistered = false;
+    this.poolCurrentCheckedOut = 0;
     if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.close();
     }

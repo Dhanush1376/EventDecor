@@ -471,14 +471,7 @@ body.filters-open img[src*='mandala'] {
 }
 
 .gallery-detail-image {
-  position: relative;
-}
-
-@media (min-width: 1024px) {
-  .gallery-detail-image {
-    position: sticky;
-    top: var(--navbar-height, 60px);
-  }
+  /* Tailwind classes handle the sticky positioning */
 }
 
 /* Discovery masonry feed */

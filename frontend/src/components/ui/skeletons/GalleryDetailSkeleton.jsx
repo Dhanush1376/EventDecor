@@ -4,16 +4,9 @@ import { Skeleton } from '../SkeletonBase';
 export function GalleryDetailSkeleton() {
   return (
     <div className="bg-[#fcfbf9] min-h-screen pt-[56px] lg:pt-20 pb-32 lg:pb-20 overflow-hidden">
-      {/* Breadcrumbs */}
-      <div className="hidden lg:flex items-center gap-2 max-w-[1340px] mx-auto px-6 lg:px-10 mb-8">
-        <Skeleton className="h-3 w-12" />
-        <Skeleton className="h-3 w-4" />
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-3 w-4" />
-        <Skeleton className="h-3 w-32" />
-      </div>
+      {/* Removed breadcrumbs from the top */}
 
-      <main className="max-w-[1340px] mx-auto lg:px-6 lg:px-10">
+      <main className="max-w-[1340px] mx-auto md:px-6 lg:px-10">
         {/* MOBILE Layout Skeleton */}
         <div className="md:hidden lg:hidden flex flex-col bg-white overflow-hidden border-b border-black/5 pb-8 mb-8">
           <Skeleton className="w-full h-[60vh] !rounded-none" />
@@ -39,12 +32,21 @@ export function GalleryDetailSkeleton() {
         {/* DESKTOP Layout Skeleton */}
         <div className="hidden md:grid lg:grid gallery-detail-grid">
           {/* Left: Image Card */}
-          <div className="gallery-detail-image z-0 md:self-start md:sticky md:top-24 lg:top-32">
-            <Skeleton className="w-full h-[75vh] lg:rounded-[28px] !rounded-none" />
+          <div className="gallery-detail-image z-0 md:self-start md:sticky md:top-[52px] lg:top-[60px]">
+            <Skeleton className="w-full h-[75vh] md:rounded-[24px] lg:rounded-[28px]" />
           </div>
 
           {/* Right: Info Panel */}
           <div className="px-5 lg:px-0 py-6 lg:py-0 space-y-7 lg:space-y-8">
+            {/* Breadcrumbs inside the details panel */}
+            <div className="flex items-center gap-2 mb-4">
+              <Skeleton className="h-2.5 w-10" />
+              <Skeleton className="h-2.5 w-3" />
+              <Skeleton className="h-2.5 w-14" />
+              <Skeleton className="h-2.5 w-3" />
+              <Skeleton className="h-2.5 w-24" />
+            </div>
+
             {/* Tags */}
             <div className="flex gap-2.5">
               <Skeleton className="h-6 w-20 rounded-full" />

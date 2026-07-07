@@ -57,7 +57,7 @@ queryClient.setQueryDefaults(['products'], {
   refetchOnMount: true,
   refetchOnReconnect: true,
 });
-queryClient.setQueryDefaults(['cart'], { staleTime: 1000 * 30, gcTime: 1000 * 60 * 5 });
+queryClient.setQueryDefaults(['cart'], { staleTime: 1000 * 60 * 2, gcTime: 1000 * 60 * 5 });
 queryClient.setQueryDefaults(['profile'], { staleTime: 1000 * 60 * 2, gcTime: 1000 * 60 * 10 });
 queryClient.setQueryDefaults(['cms'], {
   staleTime: 1000 * 60 * 15,

@@ -26,6 +26,7 @@ export function useCartQuery() {
     },
     enabled: checkAuthLocal(),
     gcTime: 30 * 60 * 1000,
+    staleTime: 1000 * 60 * 2,
   });
 }
 
@@ -40,18 +41,12 @@ export function useCartMutations() {
       const res = await userService.addToCart(productId, quantity, type, rentalInfo);
       return res.success ? res.data : res;
     },
-    onSuccess: (data) => {
-      if (data) queryClient.setQueryData(['cart', cartKey], data);
-    },
   });
 
   const removeFromCartMutation = useMutation({
     mutationFn: async ({ productId }) => {
       const res = await userService.removeFromCart(productId);
       return res.success ? res.data : res;
-    },
-    onSuccess: (data) => {
-      if (data) queryClient.setQueryData(['cart', cartKey], data);
     },
   });
 
@@ -62,9 +57,6 @@ export function useCartMutations() {
     },
     onError: (err) => {
       toast.error(getErrorMessage(err, 'Unable to sync bag'));
-    },
-    onSuccess: (data) => {
-      if (data) queryClient.setQueryData(['cart', cartKey], data);
     },
   });
 

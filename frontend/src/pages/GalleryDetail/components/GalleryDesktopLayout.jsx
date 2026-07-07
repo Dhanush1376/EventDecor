@@ -29,7 +29,7 @@ export function GalleryDesktopLayout({
           variants={scaleIn}
           initial="hidden"
           animate="visible"
-          className="relative lg:rounded-[28px] overflow-hidden bg-[#f5f3ef] group"
+          className="relative md:rounded-[24px] lg:rounded-[28px] overflow-hidden bg-[#f5f3ef] group"
           onMouseEnter={() => setImageHovered(true)}
           onMouseLeave={() => setImageHovered(false)}
         >
@@ -143,6 +143,22 @@ export function GalleryDesktopLayout({
       <div className="px-5 lg:px-0 py-6 lg:py-0 flex flex-col h-full">
         {/* Title */}
         <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}>
+          {/* Breadcrumbs inside the details panel */}
+          <nav
+            className="flex items-center gap-2 font-label text-[10px] uppercase tracking-[0.25em] mb-4 text-black/40"
+            aria-label="Breadcrumb"
+          >
+            <Link to="/" className="hover:text-primary transition-colors">
+              Home
+            </Link>
+            <span className="opacity-30">/</span>
+            <Link to="/gallery" className="hover:text-primary transition-colors">
+              Gallery
+            </Link>
+            <span className="opacity-30">/</span>
+            <span className="text-black font-bold truncate max-w-[200px]">{item.title}</span>
+          </nav>
+
           <h1 className="font-display text-[26px] lg:text-[34px] text-black leading-[1.15] font-bold tracking-tight">
             {item.title}
           </h1>

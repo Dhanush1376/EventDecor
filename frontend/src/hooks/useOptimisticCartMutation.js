@@ -31,7 +31,7 @@ export function useOptimisticCartMutation({
       const itemType = product.type || 'purchase';
 
       runProtectedAction(async () => {
-        await queryClient.cancelQueries({ queryKey: ['cart'] });
+        await queryClient.cancelQueries({ queryKey: ['cart', cartKey], exact: true });
         const previousCart = queryClient.getQueryData(['cart', cartKey]);
         let rollbackCart = previousCart;
 
@@ -94,13 +94,17 @@ export function useOptimisticCartMutation({
         setIsCartOpen(true);
 
         try {
-          await addToCart({
+          const serverResponse = await addToCart({
             productId: itemKey,
             quantity: qty,
             type: itemType,
             rentalInfo: cleanRentalInfo(product.rentalInfo),
             productInfo: product,
           });
+
+          if (serverResponse) {
+            queryClient.setQueryData(['cart', cartKey], serverResponse);
+          }
         } catch (err) {
           logger.error('Failed to add item to database cart:', err);
           toast.error(getErrorMessage(err, 'Unable to add item to bag'));
@@ -131,7 +135,7 @@ export function useOptimisticCartMutation({
   const removeItem = useCallback(
     (id) => {
       runProtectedAction(async () => {
-        await queryClient.cancelQueries({ queryKey: ['cart'] });
+        await queryClient.cancelQueries({ queryKey: ['cart', cartKey], exact: true });
         const previousCart = queryClient.getQueryData(['cart', cartKey]);
         let rollbackCart = previousCart;
 
@@ -168,7 +172,11 @@ export function useOptimisticCartMutation({
         }
 
         try {
-          await removeFromCart({ productId: id });
+          const serverResponse = await removeFromCart({ productId: id });
+
+          if (serverResponse) {
+            queryClient.setQueryData(['cart', cartKey], serverResponse);
+          }
         } catch (err) {
           logger.error('Failed to remove item from database cart:', err);
           toast.error(getErrorMessage(err, 'Unable to remove item from bag'));
@@ -190,7 +198,7 @@ export function useOptimisticCartMutation({
       }
 
       runProtectedAction(async () => {
-        await queryClient.cancelQueries({ queryKey: ['cart'] });
+        await queryClient.cancelQueries({ queryKey: ['cart', cartKey], exact: true });
         const previousCart = queryClient.getQueryData(['cart', cartKey]);
         if (previousCart) {
           let targetCartKey =
@@ -249,7 +257,11 @@ export function useOptimisticCartMutation({
             };
           });
           try {
-            await syncCart({ cartItems: payload });
+            const serverResponse = await syncCart({ cartItems: payload });
+
+            if (serverResponse) {
+              queryClient.setQueryData(['cart', cartKey], serverResponse);
+            }
           } catch (err) {
             logger.error('Failed to update cart quantity in database:', err);
             toast.error(getErrorMessage(err, 'Unable to update quantity'));
@@ -263,7 +275,7 @@ export function useOptimisticCartMutation({
   const clearCart = useCallback(async () => {
     runProtectedAction(async () => {
       try {
-        await queryClient.cancelQueries({ queryKey: ['cart'] });
+        await queryClient.cancelQueries({ queryKey: ['cart', cartKey], exact: true });
         const currentCart = queryClient.getQueryData(['cart', cartKey]);
         const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart'; // Note: skipping custom for this quick merge since custom uses its own mode
         const otherItems = currentCart?.[otherCartKey]?.items || [];
@@ -276,7 +288,11 @@ export function useOptimisticCartMutation({
             deposit: item.deposit,
           };
         });
-        await syncCart({ cartItems: payload });
+        const serverResponse = await syncCart({ cartItems: payload });
+
+        if (serverResponse) {
+          queryClient.setQueryData(['cart', cartKey], serverResponse);
+        }
       } catch (err) {
         logger.error('Failed to clear database cart:', err);
         toast.error(getErrorMessage(err, 'Failed to clear bag'));
