@@ -111,6 +111,7 @@ export function BestSellers({ previewContent }) {
                   id={product.id || product._id}
                   imageSrc={product.imageSrc || product.image || product.thumbnail}
                   price={product.price || product.basePrice}
+                  oldPrice={product.strikingPrice || product.oldPrice || product.mrp}
                   badges={customBadges}
                 />
               </div>
