@@ -391,7 +391,7 @@ export class PaymentReconciliationService {
                   rzpPaymentId = successfulPayment.id;
                 }
               }
-            } catch (e) {
+            } catch (_e) {
               logger.warn(`Could not fetch payments for order ${entity.razorpayOrderId}`);
             }
 

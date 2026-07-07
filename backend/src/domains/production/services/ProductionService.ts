@@ -43,7 +43,7 @@ export class ProductionService {
   /**
    * Triggers a manufacturing batch to restock inventory
    */
-  static async triggerRestockBatch(productId: string, quantity: number, adminId?: string) {
+  static async triggerRestockBatch(productId: string, quantity: number, _adminId?: string) {
     const product = await Product.findById(productId);
     if (!product) throw new Error('Product not found');
 

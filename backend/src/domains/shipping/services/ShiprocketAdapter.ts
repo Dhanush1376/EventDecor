@@ -30,7 +30,7 @@ export class ShiprocketAdapter implements ICourierAdapter {
     originPincode: string,
     destPincode: string,
     weightKg: number,
-    dimensions: any,
+    _dimensions: any,
   ): Promise<CourierQuote[]> {
     await this.authenticate();
     // Simplified mock implementation since actual Shiprocket API requires fully formed order payload to get accurate courier serviceability
@@ -53,7 +53,7 @@ export class ShiprocketAdapter implements ICourierAdapter {
   }
 
   async createShipment(
-    shipmentData: any,
+    _shipmentData: any,
   ): Promise<{ trackingNumber: string; labelUrl?: string; additionalData?: any }> {
     await this.authenticate();
     // Mock implementation
@@ -64,7 +64,7 @@ export class ShiprocketAdapter implements ICourierAdapter {
     };
   }
 
-  async cancelShipment(trackingNumber: string): Promise<boolean> {
+  async cancelShipment(_trackingNumber: string): Promise<boolean> {
     await this.authenticate();
     // Mock implementation
     return true;

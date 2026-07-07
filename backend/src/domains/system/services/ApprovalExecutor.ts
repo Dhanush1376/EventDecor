@@ -22,7 +22,7 @@ export class ApprovalExecutor {
    * Execute the consequence for an approved request.
    * Ensures idempotency and uses a transaction to ensure atomic updates.
    */
-  static async executeConsequence(approvalId: string, actorId: string): Promise<IApprovalRequest> {
+  static async executeConsequence(approvalId: string, _actorId: string): Promise<IApprovalRequest> {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -69,11 +69,11 @@ export class ApprovalExecutor {
 // Register Built-in Handlers
 // ============================================================================
 
-ApprovalExecutor.registerHandler('High-Value Refund', async (approval, session) => {
+ApprovalExecutor.registerHandler('High-Value Refund', async (approval, _session) => {
   logger.info(`Executing High-Value Refund consequence for amount ${approval.amount}`);
 });
 
-ApprovalExecutor.registerHandler('Discount Override', async (approval, session) => {
+ApprovalExecutor.registerHandler('Discount Override', async (approval, _session) => {
   logger.info(`Executing Discount Override consequence for amount ${approval.amount}`);
 });
 

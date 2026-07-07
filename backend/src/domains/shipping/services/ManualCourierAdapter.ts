@@ -2,10 +2,10 @@ import { ICourierAdapter, CourierQuote, TrackingInfo } from './CourierAdapter';
 
 export class ManualCourierAdapter implements ICourierAdapter {
   async getQuotes(
-    originPincode: string,
-    destPincode: string,
-    weightKg: number,
-    dimensions: any,
+    _originPincode: string,
+    _destPincode: string,
+    _weightKg: number,
+    _dimensions: any,
   ): Promise<CourierQuote[]> {
     return [
       {
@@ -19,7 +19,7 @@ export class ManualCourierAdapter implements ICourierAdapter {
   }
 
   async createShipment(
-    shipmentData: any,
+    _shipmentData: any,
   ): Promise<{ trackingNumber: string; labelUrl?: string; additionalData?: any }> {
     // Generate a local tracking ID
     const trackingNumber = `LOCAL-${Date.now().toString().slice(-6)}`;
@@ -28,7 +28,7 @@ export class ManualCourierAdapter implements ICourierAdapter {
     };
   }
 
-  async cancelShipment(trackingNumber: string): Promise<boolean> {
+  async cancelShipment(_trackingNumber: string): Promise<boolean> {
     return true;
   }
 

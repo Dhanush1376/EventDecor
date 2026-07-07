@@ -3,8 +3,6 @@ import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
 import Category from '../../models/Category';
-import Product from '../../models/Product';
-import ShowcaseCollection from '../../models/ShowcaseCollection';
 import logger from '../../config/logger';
 
 export const analyzeShowcaseImage = asyncHandler(async (req: Request, res: Response) => {

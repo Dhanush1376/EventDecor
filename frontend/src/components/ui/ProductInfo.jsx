@@ -8,6 +8,7 @@ import { ProductNoteCard } from './ProductNoteCard';
 import { useQuery } from '@tanstack/react-query';
 import { couponService } from '../../services/domainServices';
 import { MandalaArtDecor } from './MandalaArtDecor';
+import { ProductCoupons } from './ProductCoupons';
 
 export function ProductInfo({
   product,
@@ -397,6 +398,15 @@ export function ProductInfo({
           </div>
         </div>
       )}
+
+      {/* Mobile Coupons */}
+      <div className="block lg:hidden py-4 border-b border-outline-variant/10">
+        <ProductCoupons
+          product={product}
+          localAppliedCoupon={localAppliedCoupon}
+          setLocalAppliedCoupon={setLocalAppliedCoupon}
+        />
+      </div>
 
       {/* Description Section */}
       <div className="space-y-2 mt-2 md:hidden">

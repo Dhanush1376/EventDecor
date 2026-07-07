@@ -88,9 +88,7 @@ export function ProductDetails() {
       try {
         const res = await showcaseService.getAll({ limit: 5 });
         if (res.success) {
-          const list = Array.isArray(res.data)
-            ? res.data
-            : res.data?.docs || res.data?.items || [];
+          const list = Array.isArray(res.data) ? res.data : res.data?.docs || res.data?.items || [];
           setRelatedShowcases(list.filter((s) => s._id !== id && s.id !== id).slice(0, 4));
         }
       } catch (err) {
@@ -193,7 +191,7 @@ export function ProductDetails() {
           <div className="flex flex-col gap-6 lg:gap-10">
             <ProductGallery images={galleryImages} product={product} />
 
-            <div className="flex flex-col gap-6 lg:gap-8">
+            <div className="hidden lg:flex flex-col gap-6 lg:gap-8">
               <ProductCoupons
                 product={product}
                 localAppliedCoupon={localAppliedCoupon}

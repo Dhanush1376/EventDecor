@@ -16,7 +16,7 @@ const defaultCart = { purchaseCart: emptyCart, rentalCart: emptyCart };
 export function useCartQuery() {
   const { user } = useAuth();
   const isAuth = checkAuthLocal();
-  const cartKey = isAuth ? (user?._id || user?.id || 'authenticated') : 'guest';
+  const cartKey = isAuth ? user?._id || user?.id || 'authenticated' : 'guest';
 
   return useQuery({
     queryKey: ['cart', cartKey],
@@ -33,7 +33,7 @@ export function useCartMutations() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const isAuth = checkAuthLocal();
-  const cartKey = isAuth ? (user?._id || user?.id || 'authenticated') : 'guest';
+  const cartKey = isAuth ? user?._id || user?.id || 'authenticated' : 'guest';
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ productId, quantity, type, rentalInfo }) => {
@@ -42,9 +42,6 @@ export function useCartMutations() {
     },
     onSuccess: (data) => {
       if (data) queryClient.setQueryData(['cart', cartKey], data);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
   });
 
@@ -55,9 +52,6 @@ export function useCartMutations() {
     },
     onSuccess: (data) => {
       if (data) queryClient.setQueryData(['cart', cartKey], data);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
   });
 
@@ -71,9 +65,6 @@ export function useCartMutations() {
     },
     onSuccess: (data) => {
       if (data) queryClient.setQueryData(['cart', cartKey], data);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
   });
 

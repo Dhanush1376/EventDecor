@@ -257,7 +257,7 @@ export class StorageManager {
         try {
           const files = await p.list('');
           usedBytes = files.reduce((acc, f) => acc + f.sizeBytes, 0);
-        } catch (e) {
+        } catch (_e) {
           // Ignore errors during heatmap generation
         }
         return {
