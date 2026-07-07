@@ -35,7 +35,7 @@ function App() {
     const unsubscribe = subscribeToQueryCache(queryClient);
 
     const handleResize = debounce(() => {
-      setToastPosition(window.innerWidth < 768 ? 'top-center' : 'bottom-right');
+      setToastPosition(window.innerWidth < 1024 ? 'top-center' : 'bottom-right');
     }, 250);
     handleResize();
     window.addEventListener('resize', handleResize);

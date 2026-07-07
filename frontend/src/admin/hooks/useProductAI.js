@@ -46,12 +46,34 @@ export function useProductAI({
       }
 
       let finalImageSrc = typeof imageToAnalyze === 'string' ? imageToAnalyze : null;
-      if (imageToAnalyze instanceof File || imageToAnalyze instanceof Blob) {
-        finalImageSrc = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(imageToAnalyze);
-        });
+
+      const isFileLike =
+        imageToAnalyze instanceof File ||
+        imageToAnalyze instanceof Blob ||
+        (imageToAnalyze &&
+          typeof imageToAnalyze === 'object' &&
+          'size' in imageToAnalyze &&
+          'type' in imageToAnalyze);
+
+      if (isFileLike) {
+        try {
+          const blobToRead =
+            imageToAnalyze instanceof File || imageToAnalyze instanceof Blob
+              ? imageToAnalyze
+              : new Blob([imageToAnalyze], { type: imageToAnalyze.type || 'image/jpeg' });
+
+          finalImageSrc = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              if (reader.result) resolve(reader.result);
+              else resolve(null);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blobToRead);
+          });
+        } catch (e) {
+          logger.error('Failed to read imageToAnalyze as Data URL', e);
+        }
       }
 
       const categoryList = categoriesList;

@@ -27,158 +27,84 @@ export function useOptimisticCartMutation({
       const itemKey = product._id || product.id;
       const itemType = product.type || 'purchase';
 
-      if (isAuthenticated && itemType !== 'custom') {
-        const action = async () => {
-          setIsCartOpen(true);
-          await queryClient.cancelQueries({ queryKey: ['cart'] });
-          const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
-          let rollbackCart = previousCart;
+      runProtectedAction(async () => {
+        setIsCartOpen(true);
+        await queryClient.cancelQueries({ queryKey: ['cart'] });
+        const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
+        let rollbackCart = previousCart;
 
-          if (previousCart) {
-            let targetCartKey =
-              itemType === 'purchase'
-                ? 'purchaseCart'
-                : itemType === 'rental'
-                  ? 'rentalCart'
-                  : 'customCart';
-            const prevItems = previousCart[targetCartKey]?.items || [];
+        if (previousCart) {
+          let targetCartKey =
+            itemType === 'purchase'
+              ? 'purchaseCart'
+              : itemType === 'rental'
+                ? 'rentalCart'
+                : 'customCart';
+          const prevItems = previousCart[targetCartKey]?.items || [];
 
-            const existingIndex = prevItems.findIndex(
-              (item) => (item.product?._id || item.product?.id || item._id || item.id) === itemKey,
-            );
-            let updatedItems;
+          const existingIndex = prevItems.findIndex(
+            (item) => (item.product?._id || item.product?.id || item._id || item.id) === itemKey,
+          );
+          let updatedItems;
 
-            if (existingIndex >= 0) {
-              updatedItems = [...prevItems];
-              updatedItems[existingIndex] = {
-                ...updatedItems[existingIndex],
-                quantity: updatedItems[existingIndex].quantity + qty,
-              };
-            } else {
-              updatedItems = [
-                ...prevItems,
-                {
-                  id: itemKey,
-                  _id: itemKey,
-                  quantity: qty,
-                  type: itemType,
-                  product: product,
-                  rentalInfo: cleanRentalInfo(product.rentalInfo),
-                  deposit: product.deposit || 0,
-                },
-              ];
-            }
-
-            const { subtotal, depositTotal, total } = calculateCartSummary(
-              updatedItems,
-              itemType,
-              previousCart[targetCartKey]?.summary?.shippingFee || 0,
-            );
-
-            queryClient.setQueryData(['cart', 'authenticated'], {
-              ...previousCart,
-              [targetCartKey]: {
-                ...previousCart[targetCartKey],
-                items: updatedItems,
-                summary: {
-                  ...(previousCart[targetCartKey]?.summary || emptySummary),
-                  subtotal,
-                  depositTotal,
-                  total,
-                },
-              },
-            });
-          }
-
-          try {
-            await addToCart({
-              productId: itemKey,
-              quantity: qty,
-              type: itemType,
-              rentalInfo: cleanRentalInfo(product.rentalInfo),
-              productInfo: product,
-            });
-          } catch (err) {
-            logger.error('Failed to add item to database cart:', err);
-            toast.error(getErrorMessage(err, 'Unable to add item to bag'));
-            if (rollbackCart) queryClient.setQueryData(['cart', 'authenticated'], rollbackCart);
-          }
-        };
-        runProtectedAction(action);
-      } else {
-        const setTargetCart =
-          itemType === 'purchase'
-            ? setGuestPurchaseCart
-            : itemType === 'rental'
-              ? setGuestRentalCart
-              : setGuestCustomCart;
-
-        setTargetCart((prev) => {
-          const prevItems = prev.items || [];
-          const existingIndex = prevItems.findIndex((item) => item.id === itemKey);
-          let newItems;
           if (existingIndex >= 0) {
-            newItems = [...prevItems];
-            newItems[existingIndex] = {
-              ...newItems[existingIndex],
-              quantity: newItems[existingIndex].quantity + qty,
+            updatedItems = [...prevItems];
+            updatedItems[existingIndex] = {
+              ...updatedItems[existingIndex],
+              quantity: updatedItems[existingIndex].quantity + qty,
             };
           } else {
-            newItems = [
+            updatedItems = [
               ...prevItems,
               {
                 id: itemKey,
                 _id: itemKey,
-                title: product.title,
-                price: product.price,
-                oldPrice: product.oldPrice || product.price,
-                stock: product.stock || 10,
-                seller: product.seller || 'Assured Craft Teams',
-                rating: product.rating || 4.5,
-                imageSrc: product.imageSrc,
-                category: product.category,
                 quantity: qty,
-                variant: 'Default',
                 type: itemType,
-                deposit: product.deposit || 0,
-                rentalInfo: cleanRentalInfo(product.rentalInfo),
-                isNonRefundable: product.isNonRefundable || false,
-                customizationConfig: product.customizationConfig,
                 product: product,
+                rentalInfo: cleanRentalInfo(product.rentalInfo),
+                deposit: product.deposit || 0,
               },
             ];
           }
 
           const { subtotal, depositTotal, total } = calculateCartSummary(
-            newItems,
+            updatedItems,
             itemType,
-            prev.summary?.shippingFee || 0,
+            previousCart[targetCartKey]?.summary?.shippingFee || 0,
           );
 
-          return {
-            items: newItems,
-            summary: {
-              ...prev.summary,
-              subtotal,
-              total,
-              depositTotal,
+          queryClient.setQueryData(['cart', 'authenticated'], {
+            ...previousCart,
+            [targetCartKey]: {
+              ...previousCart[targetCartKey],
+              items: updatedItems,
+              summary: {
+                ...(previousCart[targetCartKey]?.summary || emptySummary),
+                subtotal,
+                depositTotal,
+                total,
+              },
             },
-          };
-        });
-        setIsCartOpen(true);
-      }
+          });
+        }
+
+        try {
+          await addToCart({
+            productId: itemKey,
+            quantity: qty,
+            type: itemType,
+            rentalInfo: cleanRentalInfo(product.rentalInfo),
+            productInfo: product,
+          });
+        } catch (err) {
+          logger.error('Failed to add item to database cart:', err);
+          toast.error(getErrorMessage(err, 'Unable to add item to bag'));
+          if (rollbackCart) queryClient.setQueryData(['cart', 'authenticated'], rollbackCart);
+        }
+      });
     },
-    [
-      runProtectedAction,
-      isAuthenticated,
-      addToCart,
-      queryClient,
-      emptySummary,
-      setGuestPurchaseCart,
-      setGuestRentalCart,
-      setGuestCustomCart,
-      setIsCartOpen,
-    ],
+    [runProtectedAction, addToCart, queryClient, emptySummary, setIsCartOpen],
   );
 
   const attemptAddToCart = useCallback(
@@ -199,95 +125,54 @@ export function useOptimisticCartMutation({
   );
 
   const removeItem = useCallback(
-    async (id, variant = null) => {
-      // For removals we don't have itemType easily, but we know activeCartMode
-      if (isAuthenticated && activeCartMode !== 'custom') {
-        const action = async () => {
-          await queryClient.cancelQueries({ queryKey: ['cart'] });
-          const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
-          let rollbackCart = previousCart;
+    (id) => {
+      runProtectedAction(async () => {
+        await queryClient.cancelQueries({ queryKey: ['cart'] });
+        const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
+        let rollbackCart = previousCart;
 
-          if (previousCart) {
-            let targetCartKey =
-              activeCartMode === 'purchase'
-                ? 'purchaseCart'
-                : activeCartMode === 'rental'
-                  ? 'rentalCart'
-                  : 'customCart';
-            const prevItems = previousCart[targetCartKey]?.items || [];
-            const updatedItems = prevItems.filter(
-              (item) => (item.product?._id || item.product?.id || item._id || item.id) !== id,
-            );
-
-            const { subtotal, depositTotal, total } = calculateCartSummary(
-              updatedItems,
-              activeCartMode,
-              previousCart[targetCartKey]?.summary?.shippingFee || 0,
-            );
-
-            queryClient.setQueryData(['cart', 'authenticated'], {
-              ...previousCart,
-              [targetCartKey]: {
-                ...previousCart[targetCartKey],
-                items: updatedItems,
-                summary: {
-                  ...(previousCart[targetCartKey]?.summary || emptySummary),
-                  subtotal,
-                  depositTotal,
-                  total,
-                },
-              },
-            });
-          }
-
-          try {
-            await removeFromCart({ productId: id });
-          } catch (err) {
-            logger.error('Failed to remove item from database cart:', err);
-            toast.error(getErrorMessage(err, 'Unable to remove item from bag'));
-            if (rollbackCart) queryClient.setQueryData(['cart', 'authenticated'], rollbackCart);
-          }
-        };
-        runProtectedAction(action);
-      } else {
-        const setTargetCart =
-          activeCartMode === 'purchase'
-            ? setGuestPurchaseCart
-            : activeCartMode === 'rental'
-              ? setGuestRentalCart
-              : setGuestCustomCart;
-
-        setTargetCart((prev) => {
-          const newItems = prev.items.filter((item) => item.id !== id);
-          const { subtotal, depositTotal, total } = calculateCartSummary(
-            newItems,
-            activeCartMode,
-            prev.summary?.shippingFee || 0,
+        if (previousCart) {
+          let targetCartKey =
+            activeCartMode === 'purchase'
+              ? 'purchaseCart'
+              : activeCartMode === 'rental'
+                ? 'rentalCart'
+                : 'customCart';
+          const updatedItems = previousCart[targetCartKey].items.filter(
+            (item) => (item.product?._id || item.product?.id || item._id || item.id) !== id,
           );
 
-          return {
-            items: newItems,
-            summary: {
-              ...prev.summary,
-              subtotal,
-              total,
-              depositTotal,
+          const { subtotal, depositTotal, total } = calculateCartSummary(
+            updatedItems,
+            activeCartMode,
+            previousCart[targetCartKey]?.summary?.shippingFee || 0,
+          );
+
+          queryClient.setQueryData(['cart', 'authenticated'], {
+            ...previousCart,
+            [targetCartKey]: {
+              ...previousCart[targetCartKey],
+              items: updatedItems,
+              summary: {
+                ...(previousCart[targetCartKey]?.summary || emptySummary),
+                subtotal,
+                depositTotal,
+                total,
+              },
             },
-          };
-        });
-      }
+          });
+        }
+
+        try {
+          await removeFromCart({ productId: id });
+        } catch (err) {
+          logger.error('Failed to remove item from database cart:', err);
+          toast.error(getErrorMessage(err, 'Unable to remove item from bag'));
+          if (rollbackCart) queryClient.setQueryData(['cart', 'authenticated'], rollbackCart);
+        }
+      });
     },
-    [
-      runProtectedAction,
-      isAuthenticated,
-      removeFromCart,
-      activeCartMode,
-      queryClient,
-      emptySummary,
-      setGuestPurchaseCart,
-      setGuestRentalCart,
-      setGuestCustomCart,
-    ],
+    [runProtectedAction, removeFromCart, activeCartMode, queryClient, emptySummary],
   );
 
   const updateQuantity = useCallback(
@@ -300,105 +185,73 @@ export function useOptimisticCartMutation({
         return;
       }
 
-      if (isAuthenticated && activeCartMode !== 'custom') {
-        const action = async () => {
-          await queryClient.cancelQueries({ queryKey: ['cart'] });
-          const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
-          if (previousCart) {
-            let targetCartKey =
-              activeCartMode === 'purchase'
-                ? 'purchaseCart'
-                : activeCartMode === 'rental'
-                  ? 'rentalCart'
-                  : 'customCart';
-            const updatedItems = previousCart[targetCartKey].items.map((item) => {
-              const itemId = item.product?._id || item.product?.id;
-              if (itemId === id) {
-                return { ...item, quantity: numericQuantity };
-              }
-              return item;
-            });
-
-            const { subtotal, depositTotal, total } = calculateCartSummary(
-              updatedItems,
-              activeCartMode,
-              previousCart[targetCartKey].summary?.shippingFee || 0,
-            );
-
-            queryClient.setQueryData(['cart', 'authenticated'], {
-              ...previousCart,
-              [targetCartKey]: {
-                ...previousCart[targetCartKey],
-                items: updatedItems,
-                summary: {
-                  ...previousCart[targetCartKey].summary,
-                  subtotal,
-                  depositTotal,
-                  total,
-                },
-              },
-            });
-          }
-
-          if (syncTimeoutRef.current) {
-            clearTimeout(syncTimeoutRef.current);
-          }
-
-          syncTimeoutRef.current = setTimeout(async () => {
-            const currentCart = queryClient.getQueryData(['cart', 'authenticated']);
-            const allItems = [
-              ...(currentCart?.purchaseCart?.items || []),
-              ...(currentCart?.rentalCart?.items || []),
-            ];
-
-            const payload = allItems.map((item) => {
-              return {
-                product:
-                  item.product?._id || item.product?.id || item._id || item.id || item.product,
-                quantity: item.quantity,
-                type: item.type || 'purchase',
-                rentalInfo: cleanRentalInfo(item.rentalInfo),
-                deposit: item.deposit,
-              };
-            });
-            try {
-              await syncCart({ cartItems: payload });
-            } catch (err) {
-              logger.error('Failed to update cart quantity in database:', err);
-              toast.error(getErrorMessage(err, 'Unable to update quantity'));
+      runProtectedAction(async () => {
+        await queryClient.cancelQueries({ queryKey: ['cart'] });
+        const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
+        if (previousCart) {
+          let targetCartKey =
+            activeCartMode === 'purchase'
+              ? 'purchaseCart'
+              : activeCartMode === 'rental'
+                ? 'rentalCart'
+                : 'customCart';
+          const updatedItems = previousCart[targetCartKey].items.map((item) => {
+            const itemId = item.product?._id || item.product?.id;
+            if (itemId === id) {
+              return { ...item, quantity: numericQuantity };
             }
-          }, 500);
-        };
-        runProtectedAction(action);
-      } else {
-        const setTargetCart =
-          activeCartMode === 'purchase'
-            ? setGuestPurchaseCart
-            : activeCartMode === 'rental'
-              ? setGuestRentalCart
-              : setGuestCustomCart;
+            return item;
+          });
 
-        setTargetCart((prev) => {
-          const newItems = prev.items.map((item) =>
-            item.id === id ? { ...item, quantity: numericQuantity } : item,
-          );
           const { subtotal, depositTotal, total } = calculateCartSummary(
-            newItems,
+            updatedItems,
             activeCartMode,
-            prev.summary?.shippingFee || 0,
+            previousCart[targetCartKey].summary?.shippingFee || 0,
           );
 
-          return {
-            items: newItems,
-            summary: {
-              ...prev.summary,
-              subtotal,
-              total,
-              depositTotal,
+          queryClient.setQueryData(['cart', 'authenticated'], {
+            ...previousCart,
+            [targetCartKey]: {
+              ...previousCart[targetCartKey],
+              items: updatedItems,
+              summary: {
+                ...previousCart[targetCartKey].summary,
+                subtotal,
+                depositTotal,
+                total,
+              },
             },
-          };
-        });
-      }
+          });
+        }
+
+        if (syncTimeoutRef.current) {
+          clearTimeout(syncTimeoutRef.current);
+        }
+
+        syncTimeoutRef.current = setTimeout(async () => {
+          const currentCart = queryClient.getQueryData(['cart', 'authenticated']);
+          const allItems = [
+            ...(currentCart?.purchaseCart?.items || []),
+            ...(currentCart?.rentalCart?.items || []),
+          ];
+
+          const payload = allItems.map((item) => {
+            return {
+              product: item.product?._id || item.product?.id || item._id || item.id || item.product,
+              quantity: item.quantity,
+              type: item.type || 'purchase',
+              rentalInfo: cleanRentalInfo(item.rentalInfo),
+              deposit: item.deposit,
+            };
+          });
+          try {
+            await syncCart({ cartItems: payload });
+          } catch (err) {
+            logger.error('Failed to update cart quantity in database:', err);
+            toast.error(getErrorMessage(err, 'Unable to update quantity'));
+          }
+        }, 500);
+      });
     },
     [
       removeItem,
@@ -414,49 +267,28 @@ export function useOptimisticCartMutation({
   );
 
   const clearCart = useCallback(async () => {
-    const action = async () => {
-      if (isAuthenticated && activeCartMode !== 'custom') {
-        try {
-          await queryClient.cancelQueries({ queryKey: ['cart'] });
-          const currentCart = queryClient.getQueryData(['cart', 'authenticated']);
-          const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart'; // Note: skipping custom for this quick merge since custom uses its own mode
-          const otherItems = currentCart?.[otherCartKey]?.items || [];
-          const payload = otherItems.map((item) => {
-            return {
-              product: item.product?._id || item.product?.id || item._id || item.id || item.product,
-              quantity: item.quantity,
-              type: item.type || 'purchase',
-              rentalInfo: cleanRentalInfo(item.rentalInfo),
-              deposit: item.deposit,
-            };
-          });
-          await syncCart({ cartItems: payload });
-        } catch (err) {
-          logger.error('Failed to clear database cart:', err);
-          toast.error(getErrorMessage(err, 'Failed to clear bag'));
-        }
-      } else {
-        const setTargetCart =
-          activeCartMode === 'purchase'
-            ? setGuestPurchaseCart
-            : activeCartMode === 'rental'
-              ? setGuestRentalCart
-              : setGuestCustomCart;
-        setTargetCart({ items: [], summary: { ...emptySummary, depositTotal: 0 } });
+    runProtectedAction(async () => {
+      try {
+        await queryClient.cancelQueries({ queryKey: ['cart'] });
+        const currentCart = queryClient.getQueryData(['cart', 'authenticated']);
+        const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart'; // Note: skipping custom for this quick merge since custom uses its own mode
+        const otherItems = currentCart?.[otherCartKey]?.items || [];
+        const payload = otherItems.map((item) => {
+          return {
+            product: item.product?._id || item.product?.id || item._id || item.id || item.product,
+            quantity: item.quantity,
+            type: item.type || 'purchase',
+            rentalInfo: cleanRentalInfo(item.rentalInfo),
+            deposit: item.deposit,
+          };
+        });
+        await syncCart({ cartItems: payload });
+      } catch (err) {
+        logger.error('Failed to clear database cart:', err);
+        toast.error(getErrorMessage(err, 'Failed to clear bag'));
       }
-    };
-
-    action();
-  }, [
-    isAuthenticated,
-    syncCart,
-    queryClient,
-    activeCartMode,
-    emptySummary,
-    setGuestPurchaseCart,
-    setGuestRentalCart,
-    setGuestCustomCart,
-  ]);
+    });
+  }, [runProtectedAction, syncCart, queryClient, activeCartMode]);
 
   return { addItem, attemptAddToCart, removeItem, updateQuantity, clearCart };
 }

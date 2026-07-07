@@ -1,14 +1,13 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { CartStateContext, CartDispatchContext } from './CartContext';
-import { useCartQuery, useCartMutations } from '../hooks/useCartQueries';
+import { useCartQuery } from '../hooks/useCartQueries';
 import { useOptimisticCartMutation } from '../hooks/useOptimisticCartMutation';
 import { transformDbCart } from '../utils/ecommerce/cartCalculations';
 import { persistentStorage } from '../utils/storage/persistentStorage';
-import { useCartMerge } from '../hooks/useCartMerge';
+
 export function CartProvider({ children }) {
   const { isAuthenticated, runProtectedAction } = useAuth();
-  const { syncCart } = useCartMutations();
 
   const [activeCartMode, setActiveCartMode] = useState(() => {
     return persistentStorage.getItem('siri_cart_mode', { fallback: 'purchase' });
@@ -23,25 +22,10 @@ export function CartProvider({ children }) {
     [],
   );
 
-  const getInitialCartState = () => {
-    return persistentStorage.getItem('siri_cart_cache', {
-      fallback: {
-        purchaseCart: { items: [], summary: { ...emptySummary } },
-        rentalCart: { items: [], summary: { ...emptySummary, depositTotal: 0 } },
-        customCart: { items: [], summary: { ...emptySummary } },
-      },
-    });
-  };
-
-  const initialCache = getInitialCartState();
-  const [guestPurchaseCart, setGuestPurchaseCart] = useState(
-    () => initialCache.purchaseCart || { items: [], summary: emptySummary },
-  );
-  const [guestRentalCart, setGuestRentalCart] = useState(
-    () => initialCache.rentalCart || { items: [], summary: { ...emptySummary, depositTotal: 0 } },
-  );
-  const [guestCustomCart, setGuestCustomCart] = useState(
-    () => initialCache.customCart || { items: [], summary: emptySummary },
+  const emptyCart = useMemo(() => ({ items: [], summary: emptySummary }), [emptySummary]);
+  const emptyRentalCart = useMemo(
+    () => ({ items: [], summary: { ...emptySummary, depositTotal: 0 } }),
+    [emptySummary],
   );
 
   const [claimedCoupon, setClaimedCouponState] = useState(() => {
@@ -65,8 +49,8 @@ export function CartProvider({ children }) {
         summary: cartData.purchaseCart.summary,
       };
     }
-    return guestPurchaseCart;
-  }, [isAuthenticated, cartData, guestPurchaseCart]);
+    return emptyCart;
+  }, [isAuthenticated, cartData, emptyCart]);
 
   const rentalCart = useMemo(() => {
     if (isAuthenticated && cartData?.rentalCart) {
@@ -75,10 +59,10 @@ export function CartProvider({ children }) {
         summary: cartData.rentalCart.summary,
       };
     }
-    return guestRentalCart;
-  }, [isAuthenticated, cartData, guestRentalCart]);
+    return emptyRentalCart;
+  }, [isAuthenticated, cartData, emptyRentalCart]);
 
-  const customCart = guestCustomCart;
+  const customCart = emptyCart;
 
   const items =
     activeCartMode === 'purchase'
@@ -93,15 +77,6 @@ export function CartProvider({ children }) {
         ? rentalCart.summary
         : customCart.summary;
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      persistentStorage.setItem('siri_cart_cache', { purchaseCart, rentalCart, customCart });
-    } else {
-      // Clear purchase/rental cache when authenticated to prevent merging, but KEEP customCart
-      persistentStorage.setItem('siri_cart_cache', { customCart });
-    }
-  }, [purchaseCart, rentalCart, customCart, isAuthenticated]);
-
   const { addItem, attemptAddToCart, removeItem, updateQuantity, clearCart } =
     useOptimisticCartMutation({
       isAuthenticated,
@@ -110,19 +85,7 @@ export function CartProvider({ children }) {
       runProtectedAction,
       setIsCartOpen,
       emptySummary,
-      setGuestPurchaseCart,
-      setGuestRentalCart,
-      setGuestCustomCart,
     });
-
-  useCartMerge({
-    isAuthenticated,
-    syncCart,
-    emptySummary,
-    setGuestPurchaseCart,
-    setGuestRentalCart,
-    setGuestCustomCart,
-  });
 
   const cartCount = useMemo(() => items.reduce((acc, item) => acc + item.quantity, 0), [items]);
 
