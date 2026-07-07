@@ -20,7 +20,7 @@ export function useOptimisticCartMutation({
 }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const cartKey = isAuthenticated ? (user?._id || user?.id || 'authenticated') : 'guest';
+  const cartKey = isAuthenticated ? user?._id || user?.id || 'authenticated' : 'guest';
   const { addToCart, removeFromCart, syncCart } = useCartMutations();
   const syncTimeoutRef = useRef(null);
 
@@ -31,7 +31,6 @@ export function useOptimisticCartMutation({
       const itemType = product.type || 'purchase';
 
       runProtectedAction(async () => {
-        setIsCartOpen(true);
         await queryClient.cancelQueries({ queryKey: ['cart'] });
         const previousCart = queryClient.getQueryData(['cart', cartKey]);
         let rollbackCart = previousCart;
@@ -91,6 +90,8 @@ export function useOptimisticCartMutation({
             },
           });
         }
+
+        setIsCartOpen(true);
 
         try {
           await addToCart({
@@ -256,14 +257,7 @@ export function useOptimisticCartMutation({
         }, 500);
       });
     },
-    [
-      removeItem,
-      runProtectedAction,
-      syncCart,
-      queryClient,
-      activeCartMode,
-      cartKey,
-    ],
+    [removeItem, runProtectedAction, syncCart, queryClient, activeCartMode, cartKey],
   );
 
   const clearCart = useCallback(async () => {

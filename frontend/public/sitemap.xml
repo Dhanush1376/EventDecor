@@ -413,7 +413,7 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1782767385/siri-arts-crafts/products/eposyswutxwdhpcrs2kc.jpg</image:loc>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1782767387/siri-arts-crafts/products/usuqtg53csitjmij4w9l.jpg</image:loc>
       <image:title>Pooja Thali Arrangement</image:title>
     </image:image>
   </url>
@@ -445,6 +445,16 @@
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783282624/products/wzozgoaaoyja02s4ni3u.webp</image:loc>
       <image:title>Pink Floral Ring Tray</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/product/6a4d1aa3e9699048ef3e7661</loc>
+    <lastmod>2026-07-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783437984/products/cbrwmijytasjr2hkpsks.jpg</image:loc>
+      <image:title>Dry Fruit Gift Basket</image:title>
     </image:image>
   </url>
   <url>
@@ -763,7 +773,7 @@
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1782767385/siri-arts-crafts/products/eposyswutxwdhpcrs2kc.jpg</image:loc>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1782767387/siri-arts-crafts/products/usuqtg53csitjmij4w9l.jpg</image:loc>
       <image:title>Pooja Thali Arrangement</image:title>
     </image:image>
   </url>
@@ -795,6 +805,16 @@
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783282624/products/wzozgoaaoyja02s4ni3u.webp</image:loc>
       <image:title>Pink Floral Ring Tray</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a4d1aa5e9699048ef3e7665</loc>
+    <lastmod>2026-07-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783437984/products/cbrwmijytasjr2hkpsks.jpg</image:loc>
+      <image:title>Dry Fruit Gift Basket</image:title>
     </image:image>
   </url>
 </urlset>
