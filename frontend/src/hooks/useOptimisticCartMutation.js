@@ -1,11 +1,12 @@
 import { useCallback, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import logger from '../utils/core/logger';
-import { getErrorMessage } from '../utils/core/errorHelpers';
 import { useCartMutations } from './useCartQueries';
 import { cleanRentalInfo, calculateCartSummary } from '../utils/ecommerce/cartCalculations';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { hasSessionMarker } from '../utils/auth/authStorage';
+
+const checkAuthLocal = () => hasSessionMarker();
 
 export function useOptimisticCartMutation({
   isAuthenticated,
@@ -14,114 +15,41 @@ export function useOptimisticCartMutation({
   runProtectedAction,
   setIsCartOpen,
   emptySummary,
-  setGuestPurchaseCart,
-  setGuestRentalCart,
-  setGuestCustomCart,
 }) {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const cartKey = isAuthenticated ? user?._id || user?.id || 'authenticated' : 'guest';
   const { addToCart, removeFromCart, syncCart } = useCartMutations();
   const syncTimeoutRef = useRef(null);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isAuth = checkAuthLocal();
+  const cartKey = isAuth ? user?._id || user?.id || 'authenticated' : 'guest';
 
   const addItem = useCallback(
-    async (product) => {
-      const qty = product.quantity || 1;
-      const itemKey = product._id || product.id;
-      const itemType = product.type || 'purchase';
-
-      runProtectedAction(async () => {
-        await queryClient.cancelQueries({ queryKey: ['cart', cartKey], exact: true });
-        const previousCart = queryClient.getQueryData(['cart', cartKey]);
-        let rollbackCart = previousCart;
-
-        if (previousCart) {
-          let targetCartKey =
-            itemType === 'purchase'
-              ? 'purchaseCart'
-              : itemType === 'rental'
-                ? 'rentalCart'
-                : 'customCart';
-          const prevItems = previousCart[targetCartKey]?.items || [];
-
-          const existingIndex = prevItems.findIndex(
-            (item) => (item.product?._id || item.product?.id || item._id || item.id) === itemKey,
-          );
-          let updatedItems;
-
-          if (existingIndex >= 0) {
-            updatedItems = [...prevItems];
-            updatedItems[existingIndex] = {
-              ...updatedItems[existingIndex],
-              quantity: updatedItems[existingIndex].quantity + qty,
-            };
-          } else {
-            updatedItems = [
-              ...prevItems,
-              {
-                id: itemKey,
-                _id: itemKey,
-                quantity: qty,
-                type: itemType,
-                product: product,
-                rentalInfo: cleanRentalInfo(product.rentalInfo),
-                deposit: product.deposit || 0,
-              },
-            ];
-          }
-
-          const { subtotal, depositTotal, total } = calculateCartSummary(
-            updatedItems,
-            itemType,
-            previousCart[targetCartKey]?.summary?.shippingFee || 0,
-          );
-
-          queryClient.setQueryData(['cart', cartKey], {
-            ...previousCart,
-            [targetCartKey]: {
-              ...previousCart[targetCartKey],
-              items: updatedItems,
-              summary: {
-                ...(previousCart[targetCartKey]?.summary || emptySummary),
-                subtotal,
-                depositTotal,
-                total,
-              },
-            },
-          });
-        }
-
+    (product) => {
+      runProtectedAction(() => {
         setIsCartOpen(true);
+        const qty = product.quantity || 1;
+        const itemType = product.type || 'purchase';
 
-        try {
-          const serverResponse = await addToCart({
-            productId: itemKey,
-            quantity: qty,
-            type: itemType,
-            rentalInfo: cleanRentalInfo(product.rentalInfo),
-          });
-
-          if (serverResponse) {
-            queryClient.setQueryData(['cart', cartKey], serverResponse);
-          }
-        } catch (err) {
-          logger.error('Failed to add item to database cart:', err);
-          toast.error(getErrorMessage(err, 'Unable to add item to bag'));
-          if (rollbackCart) queryClient.setQueryData(['cart', cartKey], rollbackCart);
-        }
+        // React Query useCartMutations handles the optimistic UI and rollback natively now!
+        addToCart({
+          product,
+          productId: product._id || product.id,
+          quantity: qty,
+          type: itemType,
+          rentalInfo: cleanRentalInfo(product.rentalInfo),
+        });
       });
     },
-    [runProtectedAction, addToCart, queryClient, emptySummary, setIsCartOpen, cartKey],
+    [runProtectedAction, addToCart, setIsCartOpen],
   );
 
   const attemptAddToCart = useCallback(
-    async (product) => {
+    (product) => {
       const itemType = product.type || 'purchase';
 
       if (itemType !== activeCartMode) {
         toast(
           `Switched to ${itemType === 'rental' ? 'Rental' : itemType === 'custom' ? 'Custom' : 'Purchase'} Cart to add this item`,
-          // Removed icon
         );
         setActiveCartMode(itemType);
       }
@@ -133,57 +61,12 @@ export function useOptimisticCartMutation({
 
   const removeItem = useCallback(
     (id) => {
-      runProtectedAction(async () => {
-        await queryClient.cancelQueries({ queryKey: ['cart', cartKey], exact: true });
-        const previousCart = queryClient.getQueryData(['cart', cartKey]);
-        let rollbackCart = previousCart;
-
-        if (previousCart) {
-          let targetCartKey =
-            activeCartMode === 'purchase'
-              ? 'purchaseCart'
-              : activeCartMode === 'rental'
-                ? 'rentalCart'
-                : 'customCart';
-          const updatedItems = previousCart[targetCartKey].items.filter(
-            (item) => (item.product?._id || item.product?.id || item._id || item.id) !== id,
-          );
-
-          const { subtotal, depositTotal, total } = calculateCartSummary(
-            updatedItems,
-            activeCartMode,
-            previousCart[targetCartKey]?.summary?.shippingFee || 0,
-          );
-
-          queryClient.setQueryData(['cart', cartKey], {
-            ...previousCart,
-            [targetCartKey]: {
-              ...previousCart[targetCartKey],
-              items: updatedItems,
-              summary: {
-                ...(previousCart[targetCartKey]?.summary || emptySummary),
-                subtotal,
-                depositTotal,
-                total,
-              },
-            },
-          });
-        }
-
-        try {
-          const serverResponse = await removeFromCart({ productId: id });
-
-          if (serverResponse) {
-            queryClient.setQueryData(['cart', cartKey], serverResponse);
-          }
-        } catch (err) {
-          logger.error('Failed to remove item from database cart:', err);
-          toast.error(getErrorMessage(err, 'Unable to remove item from bag'));
-          if (rollbackCart) queryClient.setQueryData(['cart', cartKey], rollbackCart);
-        }
+      runProtectedAction(() => {
+        // React Query useCartMutations handles the optimistic UI and rollback natively now!
+        removeFromCart({ productId: id, type: activeCartMode });
       });
     },
-    [runProtectedAction, removeFromCart, activeCartMode, queryClient, emptySummary, cartKey],
+    [runProtectedAction, removeFromCart, activeCartMode],
   );
 
   const updateQuantity = useCallback(
@@ -196,11 +79,11 @@ export function useOptimisticCartMutation({
         return;
       }
 
-      runProtectedAction(async () => {
-        await queryClient.cancelQueries({ queryKey: ['cart', cartKey], exact: true });
+      runProtectedAction(() => {
+        // 1. Manually update cache instantly for the UI slider responsiveness
         const previousCart = queryClient.getQueryData(['cart', cartKey]);
         if (previousCart) {
-          let targetCartKey =
+          const targetCartKey =
             activeCartMode === 'purchase'
               ? 'purchaseCart'
               : activeCartMode === 'rental'
@@ -226,7 +109,7 @@ export function useOptimisticCartMutation({
               ...previousCart[targetCartKey],
               items: updatedItems,
               summary: {
-                ...previousCart[targetCartKey].summary,
+                ...(previousCart[targetCartKey].summary || emptySummary),
                 subtotal,
                 depositTotal,
                 total,
@@ -235,11 +118,12 @@ export function useOptimisticCartMutation({
           });
         }
 
+        // 2. Debounce the actual API call
         if (syncTimeoutRef.current) {
           clearTimeout(syncTimeoutRef.current);
         }
 
-        syncTimeoutRef.current = setTimeout(async () => {
+        syncTimeoutRef.current = setTimeout(() => {
           const currentCart = queryClient.getQueryData(['cart', cartKey]);
           const allItems = [
             ...(currentCart?.purchaseCart?.items || []),
@@ -255,47 +139,31 @@ export function useOptimisticCartMutation({
               deposit: item.deposit,
             };
           });
-          try {
-            const serverResponse = await syncCart({ cartItems: payload });
 
-            if (serverResponse) {
-              queryClient.setQueryData(['cart', cartKey], serverResponse);
-            }
-          } catch (err) {
-            logger.error('Failed to update cart quantity in database:', err);
-            toast.error(getErrorMessage(err, 'Unable to update quantity'));
-          }
+          // React Query useCartMutations handles the network request and onSettled invalidation
+          syncCart({ cartItems: payload });
         }, 500);
       });
     },
-    [removeItem, runProtectedAction, syncCart, queryClient, activeCartMode, cartKey],
+    [removeItem, runProtectedAction, syncCart, queryClient, activeCartMode, cartKey, emptySummary],
   );
 
-  const clearCart = useCallback(async () => {
-    runProtectedAction(async () => {
-      try {
-        await queryClient.cancelQueries({ queryKey: ['cart', cartKey], exact: true });
-        const currentCart = queryClient.getQueryData(['cart', cartKey]);
-        const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart'; // Note: skipping custom for this quick merge since custom uses its own mode
-        const otherItems = currentCart?.[otherCartKey]?.items || [];
-        const payload = otherItems.map((item) => {
-          return {
-            product: item.product?._id || item.product?.id || item._id || item.id || item.product,
-            quantity: item.quantity,
-            type: item.type || 'purchase',
-            rentalInfo: cleanRentalInfo(item.rentalInfo),
-            deposit: item.deposit,
-          };
-        });
-        const serverResponse = await syncCart({ cartItems: payload });
+  const clearCart = useCallback(() => {
+    runProtectedAction(() => {
+      const currentCart = queryClient.getQueryData(['cart', cartKey]);
+      const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart';
+      const otherItems = currentCart?.[otherCartKey]?.items || [];
+      const payload = otherItems.map((item) => {
+        return {
+          product: item.product?._id || item.product?.id || item._id || item.id || item.product,
+          quantity: item.quantity,
+          type: item.type || 'purchase',
+          rentalInfo: cleanRentalInfo(item.rentalInfo),
+          deposit: item.deposit,
+        };
+      });
 
-        if (serverResponse) {
-          queryClient.setQueryData(['cart', cartKey], serverResponse);
-        }
-      } catch (err) {
-        logger.error('Failed to clear database cart:', err);
-        toast.error(getErrorMessage(err, 'Failed to clear bag'));
-      }
+      syncCart({ cartItems: payload });
     });
   }, [runProtectedAction, syncCart, queryClient, activeCartMode, cartKey]);
 
