@@ -10,7 +10,8 @@
     "build": "tsc",
     "check-env": "ts-node --transpile-only scripts/validate_env.ts",
     "create-indexes": "ts-node --transpile-only scripts/create_indexes.ts",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [],
   "author": "",
