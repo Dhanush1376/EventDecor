@@ -48,6 +48,10 @@ export const xssSanitize = (obj: any): any => {
   if (obj === null || obj === undefined) return obj;
 
   if (typeof obj === 'string') {
+    // Skip base64 data URIs as they are huge and not HTML, causing memory exhaustion
+    if (obj.startsWith('data:image/')) {
+      return obj;
+    }
     return sanitizeString(obj);
   }
 

@@ -49,6 +49,27 @@ export const navSections = [
     ],
   },
   {
+    label: 'Promotions',
+    subtitle: 'Manage discounts and marketing campaigns',
+    roles: ['owner', 'manager', 'support', 'website_manager'],
+    items: [
+      {
+        label: 'Discount Coupons',
+        icon: 'local_offer',
+        path: '/admin/coupons',
+        keywords: 'promo, discount, sale, coupon',
+        domain: 'orders',
+      },
+      {
+        label: 'Campaigns',
+        icon: 'campaign',
+        path: '/admin/campaigns',
+        keywords: 'marketing, ads, promo, email',
+        domain: 'storefront',
+      },
+    ],
+  },
+  {
     label: 'Rentals',
     subtitle: 'Track rental inventory and returns',
     roles: ['owner', 'manager', 'support'],

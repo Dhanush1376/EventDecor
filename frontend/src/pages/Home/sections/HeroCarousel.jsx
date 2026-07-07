@@ -7,16 +7,17 @@ import { useProducts } from '../../../hooks/useProductQueries';
 /**
  * Full-width hero displaying top products and auto-scrolling.
  */
-export function HeroCarousel() {
+export function HeroCarousel({ previewContent }) {
   const cms = useWebsiteContent({ includeDefaults: false });
-  const cmsLoading = cms?.loading;
-  const heroConfig = cms?.hero;
-  const selectedProductIds = heroConfig?.selectedProductIds || [];
+  const activeCms = previewContent || cms;
+  const heroConfig = activeCms?.hero;
+  const productIds = heroConfig?.productIds || [];
+  const cmsLoading = activeCms?.loading;
 
   // Fetch only specifically selected products
   const { data: productData, isPending: productsLoading } = useProducts(
-    { ids: selectedProductIds.join(','), limit: 10 },
-    { enabled: selectedProductIds.length > 0 },
+    { ids: productIds.join(','), limit: 10 },
+    { enabled: productIds.length > 0 },
   );
 
   const fetchedProducts =
@@ -148,7 +149,7 @@ export function HeroCarousel() {
     return () => clearInterval(timer);
   }, [slides.length, isPaused]);
 
-  if ((productsLoading && selectedProductIds.length > 0) || showcasesLoading || cmsLoading) {
+  if ((productsLoading && productIds.length > 0) || showcasesLoading || cmsLoading) {
     return (
       <div className="w-full h-[70vh] bg-surface-container-high relative animate-pulse">
         <div className="absolute bottom-16 left-8 lg:left-16 flex flex-col gap-6 w-full max-w-2xl z-10">

@@ -91,11 +91,11 @@ export function AdminProducts() {
 
   // ─── Products Helpers ───
   const getIsHeroProduct = (productId) => {
-    return (websiteContent?.hero?.selectedProductIds || []).includes(productId);
+    return (websiteContent?.hero?.productIds || []).includes(productId);
   };
 
   const toggleHeroProduct = (productId) => {
-    const currentHeroIds = websiteContent?.hero?.selectedProductIds || [];
+    const currentHeroIds = websiteContent?.hero?.productIds || [];
     let newIds;
     if (currentHeroIds.includes(productId)) {
       newIds = currentHeroIds.filter((id) => id !== productId);
@@ -106,7 +106,7 @@ export function AdminProducts() {
     }
     const updatedHero = {
       ...(websiteContent?.hero || {}),
-      selectedProductIds: newIds,
+      productIds: newIds,
     };
     updateContent('hero', updatedHero);
     publishContent('hero', updatedHero);

@@ -11,9 +11,11 @@ import { HomeSectionState } from '../../../components/homepage/HomeSectionState'
  * Shop By Occasion / Event Types using real digital studio event types.
  * Styled as a swipable stacked card carousel.
  */
-export function ShopByOccasion() {
+export function ShopByOccasion({ previewContent }) {
   const cms = useWebsiteContent({ includeDefaults: false });
-  const loading = cms?.loading;
+  const activeCms = previewContent || cms;
+  const config = activeCms?.shopByOccasion || {};
+  const loading = !previewContent && cms?.loading;
   const [activeIndex, setActiveIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -33,7 +35,6 @@ export function ShopByOccasion() {
     });
   }, []);
 
-  const config = cms?.shopByOccasion || {};
   const selectedShowcaseIds = config.selectedShowcaseIds || [];
 
   if (loading || showcasesLoading) {

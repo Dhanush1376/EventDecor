@@ -3,7 +3,7 @@ import dns from 'dns/promises';
 import path from 'path';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
-
+import mongoose from 'mongoose';
 export class ProductAiService {
   /**
    * AI Autofill Product - Extract object, materials, and generate customer-friendly details
@@ -239,33 +239,56 @@ export class ProductAiService {
     const groqController = new AbortController();
     const groqTimeout = setTimeout(() => groqController.abort(), 15000);
 
+    const modelsToTry = base64Image ? [
+      'meta-llama/llama-4-scout-17b-16e-instruct',
+      'qwen/qwen3.6-27b'
+    ] : [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant'
+    ];
+
     let groqResponse;
+    let lastErrorText = '';
+
     try {
-      groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        signal: groqController.signal,
-        body: JSON.stringify({
-          model: 'llama-3.2-11b-vision-preview',
-          messages,
-          temperature: 0.2,
-        }),
-      });
+      for (const model of modelsToTry) {
+        groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          signal: groqController.signal,
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: 0.2,
+          }),
+        });
+
+        if (groqResponse.ok) {
+          break; // Successfully got a response!
+        } else {
+          lastErrorText = await groqResponse.text();
+          logger.warn(`Groq Vision Model ${model} failed:`, lastErrorText);
+          // If it's a 429 Too Many Requests, break out since it's a rate limit, not a model issue
+          if (groqResponse.status === 429) {
+             break;
+          }
+        }
+      }
     } catch (error: unknown) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new ApiError(504, 'Groq API timeout. The request took too long.');
       }
+      logger.error('Groq fetch error:', error);
       throw new ApiError(500, 'Failed to connect to Groq AI API.');
     } finally {
       clearTimeout(groqTimeout);
     }
 
-    if (!groqResponse.ok) {
-      const errorText = await groqResponse.text();
-      logger.error('Groq API Error:', errorText);
+    if (!groqResponse || !groqResponse.ok) {
+      logger.error('Groq API Error:', lastErrorText);
       throw new ApiError(500, 'Failed to generate product details from Groq AI API.');
     }
 
@@ -284,8 +307,8 @@ export class ProductAiService {
       const parsedData = JSON.parse(extractedJson[0]);
 
       // Ensure uniqueness against DB for title and slug across both Product and Showcase
-      const Product = (await import('../models/Product.js')).default as any;
-      const ShowcaseCollection = (await import('../models/ShowcaseCollection.js')).default as any;
+      const ProductModel = mongoose.model('Product');
+      const ShowcaseModel = mongoose.model('ShowcaseCollection');
       const baseSlug = parsedData.slug;
       const baseTitle = parsedData.english_title;
 
@@ -296,11 +319,11 @@ export class ProductAiService {
 
       while (!isUnique) {
         // Check if either slug or title already exists in the database
-        const existingProduct = await Product.exists({
+        const existingProduct = await ProductModel.exists({
           $or: [{ slug: currentSlug }, { title: currentTitle }],
         });
 
-        const existingShowcase = await ShowcaseCollection.exists({ title: currentTitle });
+        const existingShowcase = await ShowcaseModel.exists({ title: currentTitle });
 
         if (existingProduct || existingShowcase) {
           // If exists, append a counter to make it unique

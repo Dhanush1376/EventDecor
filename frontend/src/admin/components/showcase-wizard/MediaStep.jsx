@@ -1,18 +1,37 @@
 import React from 'react';
-import toast from 'react-hot-toast';
 import { compressImage, formatBytes } from '../../../utils/media/imageCompressor';
+import toast from 'react-hot-toast';
 
 export function MediaStep({
   formData,
   setFormData,
+  isCompressing,
   setIsCompressing,
+  compressionProgress,
   setCompressionProgress,
+  compressionStats,
   setCompressionStats,
 }) {
+  const images = [formData.image, ...(formData.galleryImages || [])].filter(Boolean);
+
+  const updateImagesState = (newImages, pendingUploads = null) => {
+    setFormData((prev) => {
+      const updates = {
+        ...prev,
+        image: newImages[0] || '',
+        galleryImages: newImages.slice(1),
+      };
+      if (pendingUploads !== null) {
+        updates.pendingUploads = pendingUploads;
+      }
+      return updates;
+    });
+  };
+
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Product Media</h2>
+        <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Showcase Media</h2>
         <p className="text-[11px] text-[var(--admin-text-secondary)]">
           Upload images or paste URLs. The first image acts as the primary cover.
         </p>
@@ -27,45 +46,33 @@ export function MediaStep({
           <div className="flex gap-2">
             <input
               type="text"
-              id="showcaseDirectUrlInput"
+              id="directUrlInput"
               placeholder="Image URL"
               className="flex-1 min-w-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-lg px-3 py-2 text-[11px] outline-none focus:border-[var(--admin-accent)]/40"
             />
             <button
               type="button"
-              onClick={async () => {
-                const input = document.getElementById('showcaseDirectUrlInput');
+              onClick={() => {
+                const input = document.getElementById('directUrlInput');
                 if (input.value) {
                   const inputUrl = input.value.trim();
 
-                  setFormData((prev) => {
-                    const updates = { ...prev };
+                  const combinedImages = [...images, inputUrl];
+                  const limitedImages = combinedImages.slice(0, 4);
 
-                    // Add to pendingUploads as a remote URL string
-                    const pendingUrlObj = {
-                      localUrl: inputUrl,
-                      file: inputUrl,
-                    };
-                    updates.pendingUploads = [...(prev.pendingUploads || []), pendingUrlObj];
+                  if (combinedImages.length > 4) {
+                    toast.error('Maximum 4 images allowed. Only the first 4 were kept.');
+                  }
 
-                    // Set preview logic
-                    if (!updates.image) {
-                      updates.image = inputUrl;
-                    } else {
-                      const newGallery = [...(updates.galleryImages || ['', ''])];
-                      const emptySlot = newGallery.findIndex((url) => !url);
-                      if (emptySlot !== -1) {
-                        newGallery[emptySlot] = inputUrl;
-                      } else {
-                        newGallery.push(inputUrl);
-                      }
-                      updates.galleryImages = newGallery;
-                    }
+                  const pendingUrlObj = {
+                    localUrl: inputUrl,
+                    file: inputUrl, // String, distinguished from File object
+                  };
 
-                    return updates;
-                  });
-
-                  toast.success('Image URL added! Will upload on publish.');
+                  const previousPending = formData.pendingUploads || [];
+                  updateImagesState(limitedImages, [...previousPending, pendingUrlObj]);
+                  
+                  toast.success('Image URL added locally! Will upload on publish.');
                   input.value = '';
                 }
               }}
@@ -80,11 +87,16 @@ export function MediaStep({
         <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-widest flex justify-between items-center">
             <span>Upload Files</span>
+            {isCompressing && (
+              <span className="text-[var(--admin-accent)] text-[11px] animate-pulse">
+                Uploading...
+              </span>
+            )}
           </label>
           <input
             type="file"
             multiple
-            accept="image/*"
+            accept="image/*,.heic,.heif"
             onChange={async (e) => {
               const rawFiles = Array.from(e.target.files);
               if (rawFiles.length === 0) return;
@@ -94,10 +106,11 @@ export function MediaStep({
               try {
                 const newStats = [];
                 const localImages = [];
-                const newPending = [];
+                const newPendingUploads = [];
 
                 for (let i = 0; i < rawFiles.length; i++) {
                   const file = rawFiles[i];
+                  // Compress image first to get the optimized File object
                   const optimizedFile = await compressImage(file);
 
                   newStats.push({
@@ -108,44 +121,43 @@ export function MediaStep({
                       file.size > 0 ? ((1 - optimizedFile.size / file.size) * 100).toFixed(1) : 0,
                   });
 
-                  // Create local preview URL
+                  // Generate a local blob URL for preview instead of uploading immediately
                   const localUrl = URL.createObjectURL(optimizedFile);
                   localImages.push(localUrl);
-                  newPending.push({ file: optimizedFile, localUrl });
+
+                  // Store the file to be uploaded later
+                  newPendingUploads.push({
+                    localUrl,
+                    file: optimizedFile,
+                  });
                 }
 
                 setCompressionStats(newStats);
+                setCompressionProgress(100);
 
-                setFormData((prev) => {
-                  const updates = { ...prev };
-                  updates.pendingUploads = [...(prev.pendingUploads || []), ...newPending];
+                const combinedImages = [...images, ...localImages];
+                const limitedImages = combinedImages.slice(0, 4);
 
-                  let imgIdx = 0;
-                  if (!updates.image) {
-                    updates.image = localImages[imgIdx++];
-                  }
-                  const newGallery = [...(updates.galleryImages || ['', ''])];
-                  while (imgIdx < localImages.length) {
-                    const emptySlot = newGallery.findIndex((url) => !url);
-                    if (emptySlot !== -1) {
-                      newGallery[emptySlot] = localImages[imgIdx];
-                    } else {
-                      newGallery.push(localImages[imgIdx]); // append if full
-                    }
-                    imgIdx++;
-                  }
-                  updates.galleryImages = newGallery;
-                  return updates;
-                });
-                toast.success(`Media preview added locally. Will upload on publish.`);
+                if (combinedImages.length > 4) {
+                  toast.error('Maximum 4 images allowed. Only the first 4 were kept.');
+                }
+
+                // Keep track of which pending uploads are actually in the limited images
+                const validPendingUploads = newPendingUploads.filter((p) =>
+                  limitedImages.includes(p.localUrl),
+                );
+                const previousPending = formData.pendingUploads || [];
+
+                updateImagesState(limitedImages, [...previousPending, ...validPendingUploads]);
+                toast.success(`Photos selected and ready to upload!`);
               } catch (err) {
-                toast.error('Failed to process image locally.');
+                toast.error('Failed to process images: ' + err.message);
               } finally {
                 setTimeout(() => {
                   setIsCompressing(false);
                   setCompressionProgress(0);
                   setCompressionStats([]);
-                }, 1500);
+                }, 1000);
               }
             }}
             className="w-full text-[11px] text-[var(--admin-text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:uppercase file:tracking-wider file:bg-[var(--admin-accent)] file:text-white hover:file:bg-[var(--admin-accent-hover)] cursor-pointer shadow-sm border border-[var(--admin-border)] rounded-xl p-2 bg-[var(--admin-surface)] focus:border-[var(--admin-accent)] focus:outline-none transition-all"
@@ -153,79 +165,75 @@ export function MediaStep({
         </div>
 
         {/* Gallery Grid */}
-        {(formData.image || (formData.galleryImages && formData.galleryImages.some(Boolean))) && (
+        {images.length > 0 && (
           <div className="pt-2">
             <h4 className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] uppercase tracking-widest mb-3">
-              Media Gallery
+              Media Gallery ({images.length}/4)
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {/* Primary Image */}
-              {formData.image && (
-                <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-[var(--admin-accent)] group">
-                  <img
-                    src={formData.image}
-                    className="w-full h-full object-cover"
-                    alt="Primary Gallery"
-                  />
-                  <div className="absolute top-1 left-1 bg-[var(--admin-accent)] text-white text-[11px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm z-10 pointer-events-none">
-                    Primary
-                  </div>
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+              {images.map((img, idx) => (
+                <div
+                  key={idx}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', idx.toString());
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                    const toIdx = idx;
+                    if (fromIdx === toIdx || isNaN(fromIdx)) return;
+                    
+                    const newImages = [...images];
+                    const [movedItem] = newImages.splice(fromIdx, 1);
+                    newImages.splice(toIdx, 0, movedItem);
+                    updateImagesState(newImages);
+                    toast.success('Images reordered');
+                  }}
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 cursor-grab active:cursor-grabbing ${idx === 0 ? 'border-[var(--admin-accent)]' : 'border-[var(--admin-border)]'} group`}
+                >
+                  <img src={img} className="w-full h-full object-cover" alt="Gallery" />
+                  {idx === 0 && (
+                    <div className="absolute top-1 left-1 bg-[var(--admin-accent)] text-white text-[11px] sm:text-[11px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm z-10 pointer-events-none">
+                      Primary
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    {idx !== 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newImages = [...images];
+                          const [movedItem] = newImages.splice(idx, 1);
+                          newImages.unshift(movedItem);
+                          updateImagesState(newImages);
+                          toast.success('Updated primary cover image');
+                        }}
+                        className="!w-10 !h-10 !p-0 !min-w-0 !min-h-0 shrink-0 aspect-square bg-[var(--admin-surface)] text-[var(--admin-accent)] rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                        title="Make Primary"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">star</span>
+                      </button>
+                    )}
                     <button
                       type="button"
-                      onClick={() => setFormData((prev) => ({ ...prev, image: '' }))}
-                      className="w-8 h-8 rounded-full bg-[var(--admin-error)] text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
-                      title="Delete Primary Image"
+                      onClick={() => {
+                        const newImages = images.filter((_, i) => i !== idx);
+                        updateImagesState(newImages);
+                      }}
+                      className="!w-10 !h-10 !p-0 !min-w-0 !min-h-0 shrink-0 aspect-square bg-[var(--admin-error)] text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
+                      title="Delete"
                     >
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
                     </button>
                   </div>
                 </div>
-              )}
-              {/* Gallery Images */}
-              {formData.galleryImages &&
-                formData.galleryImages.map((img, idx) =>
-                  img ? (
-                    <div
-                      key={`gallery-${idx}`}
-                      className="relative aspect-square rounded-xl overflow-hidden border-2 border-[var(--admin-border)] group"
-                    >
-                      <img src={img} className="w-full h-full object-cover" alt="Gallery" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFormData((prev) => {
-                              const newImage = img;
-                              const oldImage = prev.image;
-                              const newGallery = [...prev.galleryImages];
-                              newGallery[idx] = oldImage || ''; // swap or just push down
-                              return { ...prev, image: newImage, galleryImages: newGallery };
-                            });
-                          }}
-                          className="w-8 h-8 rounded-full bg-[var(--admin-surface)] text-[var(--admin-accent)] flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
-                          title="Make Primary"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">star</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFormData((prev) => {
-                              const newGallery = [...prev.galleryImages];
-                              newGallery[idx] = ''; // clear it
-                              return { ...prev, galleryImages: newGallery };
-                            });
-                          }}
-                          className="w-8 h-8 rounded-full bg-[var(--admin-error)] text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform cursor-pointer"
-                          title="Delete Image"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">delete</span>
-                        </button>
-                      </div>
-                    </div>
-                  ) : null,
-                )}
+              ))}
             </div>
           </div>
         )}

@@ -40,8 +40,10 @@ const calculateRentalPricing = (price, category) => {
   };
 };
 
+const EMPTY_ARRAY = [];
+
 export function useProductForm({ id, isEditMode }) {
-  const { data: dbCategories = [] } = useCategories();
+  const { data: dbCategories = EMPTY_ARRAY } = useCategories();
   const [categoriesList, setCategoriesList] = useState([]);
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

@@ -37,7 +37,7 @@ export function AdminCreateCoupon() {
 
   if (loading) {
     return (
-      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 p-6">
+      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 p-4 sm:p-6 md:p-8">
         <SkeletonDashboard />
       </div>
     );
@@ -70,7 +70,7 @@ export function AdminCreateCoupon() {
             }
           }}
           variants={fadeUp}
-          className="p-6 md:p-8 space-y-8 min-h-[450px]"
+          className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 min-h-[450px]"
         >
           {currentStep === 0 && (
             <MetadataStep formData={formData} setFormData={setFormData} isEdit={isEdit} />
@@ -150,7 +150,7 @@ export function AdminCreateCoupon() {
         </div>
       </div>
 
-      <div className="lg:hidden flex bg-[var(--admin-surface)] rounded-full p-1 border border-[var(--admin-border)] sticky top-20 z-30 shadow-sm mx-4 sm:mx-0">
+      <div className="lg:hidden flex bg-[var(--admin-surface)] rounded-full p-1 border border-[var(--admin-border)] sticky top-20 z-30 shadow-sm mx-0">
         <button
           onClick={() => setMobileTab('form')}
           className={`flex-1 py-2 text-[12px] font-bold rounded-full transition-all ${

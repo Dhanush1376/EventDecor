@@ -54,16 +54,14 @@ export function UserSocketProvider({ children }) {
         });
 
         socket.on('product_update', () => {
-          logger.dev('[WEBSOCKET] Product update received, invalidating cart and wishlist');
-          queryClient.invalidateQueries({ queryKey: ['cart'] });
+          logger.dev('[WEBSOCKET] Product update received, invalidating wishlist and products');
           queryClient.invalidateQueries({ queryKey: ['wishlist'] });
           queryClient.invalidateQueries({ queryKey: ['products'] });
           queryClient.invalidateQueries({ queryKey: ['product'] });
         });
 
         socket.on('stock_update', () => {
-          logger.dev('[WEBSOCKET] Stock update received, invalidating cart and wishlist');
-          queryClient.invalidateQueries({ queryKey: ['cart'] });
+          logger.dev('[WEBSOCKET] Stock update received, invalidating wishlist and products');
           queryClient.invalidateQueries({ queryKey: ['wishlist'] });
           queryClient.invalidateQueries({ queryKey: ['products'] });
           queryClient.invalidateQueries({ queryKey: ['product'] });

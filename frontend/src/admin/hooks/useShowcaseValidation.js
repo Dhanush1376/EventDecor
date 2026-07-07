@@ -19,13 +19,14 @@ export function useShowcaseValidation({
     }
     if (currentStep === 1) {
       if (!formData.title.trim()) errors.title = 'Showcase title is required';
+      if (!formData.category) errors.category = 'Theme category is required';
     }
     if (currentStep === 2) {
       if (formData.rentalPrice === '' || Number(formData.rentalPrice) <= 0)
         errors.rentalPrice = 'A valid rental price is required';
     }
     if (currentStep === 3) {
-      if (!formData.description.trim())
+      if (!formData.description?.trim())
         errors.description = 'Atmospheric narrative description is required';
     }
     return errors;

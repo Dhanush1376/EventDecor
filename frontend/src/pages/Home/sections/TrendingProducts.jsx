@@ -13,10 +13,11 @@ import React from 'react';
 /**
  * Trending products using real recommendation API.
  */
-export const TrendingProducts = React.memo(function TrendingProducts() {
+export const TrendingProducts = React.memo(function TrendingProducts({ previewContent }) {
   const cms = useWebsiteContent({ includeDefaults: false });
-  const loading = cms?.loading;
-  const config = cms?.trendingProducts || {};
+  const activeCms = previewContent || cms;
+  const loading = !previewContent && cms?.loading;
+  const config = activeCms?.trendingProducts || {};
   const _productIds = config.productIds || [];
   const isManualMode = config.useAutoFeed === false && _productIds.length > 0;
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { productService, uploadService } from '../../services/domainServices';
+import { productService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import logger from '../../utils/core/logger';
 

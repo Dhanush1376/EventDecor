@@ -8,9 +8,10 @@ import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
 /**
  * A slim, elegant promotional banner that highlights an offer or campaign.
  */
-export function PromoBanner() {
+export function PromoBanner({ previewContent }) {
   const cms = useWebsiteContent({ includeDefaults: false });
-  const loading = cms?.loading;
+  const activeCms = previewContent || cms;
+  const promo = activeCms?.promoBanner;
   const navigate = useNavigate();
 
   // Safely get cart context (might not be available in some admin views, so default to empty object)
@@ -18,11 +19,11 @@ export function PromoBanner() {
 
   const { data: activeCoupons = [] } = useActiveCoupons();
 
+  const loading = !previewContent && cms?.loading;
+
   if (loading) return null;
 
   const bannerCoupon = activeCoupons.find((c) => c.displayLocations?.includes('banner'));
-
-  const promo = cms?.promoBanner;
 
   let promoText = '';
   let promoLink = '/coupons';

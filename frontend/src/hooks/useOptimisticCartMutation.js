@@ -5,6 +5,7 @@ import logger from '../utils/core/logger';
 import { getErrorMessage } from '../utils/core/errorHelpers';
 import { useCartMutations } from './useCartQueries';
 import { cleanRentalInfo, calculateCartSummary } from '../utils/ecommerce/cartCalculations';
+import { useAuth } from '../context/AuthContext';
 
 export function useOptimisticCartMutation({
   isAuthenticated,
@@ -18,6 +19,8 @@ export function useOptimisticCartMutation({
   setGuestCustomCart,
 }) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const cartKey = isAuthenticated ? (user?._id || user?.id || 'authenticated') : 'guest';
   const { addToCart, removeFromCart, syncCart } = useCartMutations();
   const syncTimeoutRef = useRef(null);
 
@@ -30,7 +33,7 @@ export function useOptimisticCartMutation({
       runProtectedAction(async () => {
         setIsCartOpen(true);
         await queryClient.cancelQueries({ queryKey: ['cart'] });
-        const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
+        const previousCart = queryClient.getQueryData(['cart', cartKey]);
         let rollbackCart = previousCart;
 
         if (previousCart) {
@@ -74,7 +77,7 @@ export function useOptimisticCartMutation({
             previousCart[targetCartKey]?.summary?.shippingFee || 0,
           );
 
-          queryClient.setQueryData(['cart', 'authenticated'], {
+          queryClient.setQueryData(['cart', cartKey], {
             ...previousCart,
             [targetCartKey]: {
               ...previousCart[targetCartKey],
@@ -100,11 +103,11 @@ export function useOptimisticCartMutation({
         } catch (err) {
           logger.error('Failed to add item to database cart:', err);
           toast.error(getErrorMessage(err, 'Unable to add item to bag'));
-          if (rollbackCart) queryClient.setQueryData(['cart', 'authenticated'], rollbackCart);
+          if (rollbackCart) queryClient.setQueryData(['cart', cartKey], rollbackCart);
         }
       });
     },
-    [runProtectedAction, addToCart, queryClient, emptySummary, setIsCartOpen],
+    [runProtectedAction, addToCart, queryClient, emptySummary, setIsCartOpen, cartKey],
   );
 
   const attemptAddToCart = useCallback(
@@ -128,7 +131,7 @@ export function useOptimisticCartMutation({
     (id) => {
       runProtectedAction(async () => {
         await queryClient.cancelQueries({ queryKey: ['cart'] });
-        const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
+        const previousCart = queryClient.getQueryData(['cart', cartKey]);
         let rollbackCart = previousCart;
 
         if (previousCart) {
@@ -148,7 +151,7 @@ export function useOptimisticCartMutation({
             previousCart[targetCartKey]?.summary?.shippingFee || 0,
           );
 
-          queryClient.setQueryData(['cart', 'authenticated'], {
+          queryClient.setQueryData(['cart', cartKey], {
             ...previousCart,
             [targetCartKey]: {
               ...previousCart[targetCartKey],
@@ -168,11 +171,11 @@ export function useOptimisticCartMutation({
         } catch (err) {
           logger.error('Failed to remove item from database cart:', err);
           toast.error(getErrorMessage(err, 'Unable to remove item from bag'));
-          if (rollbackCart) queryClient.setQueryData(['cart', 'authenticated'], rollbackCart);
+          if (rollbackCart) queryClient.setQueryData(['cart', cartKey], rollbackCart);
         }
       });
     },
-    [runProtectedAction, removeFromCart, activeCartMode, queryClient, emptySummary],
+    [runProtectedAction, removeFromCart, activeCartMode, queryClient, emptySummary, cartKey],
   );
 
   const updateQuantity = useCallback(
@@ -187,7 +190,7 @@ export function useOptimisticCartMutation({
 
       runProtectedAction(async () => {
         await queryClient.cancelQueries({ queryKey: ['cart'] });
-        const previousCart = queryClient.getQueryData(['cart', 'authenticated']);
+        const previousCart = queryClient.getQueryData(['cart', cartKey]);
         if (previousCart) {
           let targetCartKey =
             activeCartMode === 'purchase'
@@ -209,7 +212,7 @@ export function useOptimisticCartMutation({
             previousCart[targetCartKey].summary?.shippingFee || 0,
           );
 
-          queryClient.setQueryData(['cart', 'authenticated'], {
+          queryClient.setQueryData(['cart', cartKey], {
             ...previousCart,
             [targetCartKey]: {
               ...previousCart[targetCartKey],
@@ -229,7 +232,7 @@ export function useOptimisticCartMutation({
         }
 
         syncTimeoutRef.current = setTimeout(async () => {
-          const currentCart = queryClient.getQueryData(['cart', 'authenticated']);
+          const currentCart = queryClient.getQueryData(['cart', cartKey]);
           const allItems = [
             ...(currentCart?.purchaseCart?.items || []),
             ...(currentCart?.rentalCart?.items || []),
@@ -256,13 +259,10 @@ export function useOptimisticCartMutation({
     [
       removeItem,
       runProtectedAction,
-      isAuthenticated,
       syncCart,
       queryClient,
       activeCartMode,
-      setGuestPurchaseCart,
-      setGuestRentalCart,
-      setGuestCustomCart,
+      cartKey,
     ],
   );
 
@@ -270,7 +270,7 @@ export function useOptimisticCartMutation({
     runProtectedAction(async () => {
       try {
         await queryClient.cancelQueries({ queryKey: ['cart'] });
-        const currentCart = queryClient.getQueryData(['cart', 'authenticated']);
+        const currentCart = queryClient.getQueryData(['cart', cartKey]);
         const otherCartKey = activeCartMode === 'purchase' ? 'rentalCart' : 'purchaseCart'; // Note: skipping custom for this quick merge since custom uses its own mode
         const otherItems = currentCart?.[otherCartKey]?.items || [];
         const payload = otherItems.map((item) => {
@@ -288,7 +288,7 @@ export function useOptimisticCartMutation({
         toast.error(getErrorMessage(err, 'Failed to clear bag'));
       }
     });
-  }, [runProtectedAction, syncCart, queryClient, activeCartMode]);
+  }, [runProtectedAction, syncCart, queryClient, activeCartMode, cartKey]);
 
   return { addItem, attemptAddToCart, removeItem, updateQuantity, clearCart };
 }

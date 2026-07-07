@@ -235,17 +235,23 @@ export function HomePageControllerEditor({ content, onUpdate }) {
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-[var(--admin-border-subtle)] scrollbar-hide">
         {[
           'Layout',
-          'Hero',
-          'Promo',
-          'Categories',
-          'Trending',
-          'Occasions',
-          'Featured',
-          'Recommended',
-          'Gallery',
-        ].map((tab) => (
+          ...homepageSections.map((sec) => {
+            const baseId = sec.id.split('_')[0];
+            switch (baseId) {
+              case 'hero': return 'Hero';
+              case 'promoBanner': return 'Promo';
+              case 'categoryGrid': return 'Categories';
+              case 'trendingProducts': return 'Trending';
+              case 'shopByOccasion': return 'Occasions';
+              case 'featuredProducts': return 'Featured';
+              case 'recommendedProducts': return 'Recommended';
+              case 'galleryInspiration': return 'Gallery';
+              default: return baseId;
+            }
+          })
+        ].map((tab, idx) => (
           <button
-            key={tab}
+            key={`${tab}-${idx}`}
             onClick={() => setActiveTab(tab.toLowerCase())}
             className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
               activeTab === tab.toLowerCase()
@@ -318,7 +324,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                   : 'bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)]'
               }`}
             >
-              Hero Products ({products ? products.length : '0'})
+              Hero Products ({content.hero?.productIds?.length || 0}/{products ? products.length : '0'})
             </button>
             <button
               onClick={() => setHeroSubTab('showcases')}
@@ -328,7 +334,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                   : 'bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)]'
               }`}
             >
-              Hero Showcases ({showcases ? showcases.length : '0'})
+              Hero Showcases ({showcases?.filter(s => s.featured).length || 0}/{showcases ? showcases.length : '0'})
             </button>
           </div>
 
@@ -344,20 +350,24 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                     the API failed.
                   </div>
                 ) : (
-                  products.map((prd) => {
-                    const isSelected = (content.hero?.selectedProductIds || []).includes(prd.id);
+                  [...products].sort((a, b) => {
+                    const aSelected = (content.hero?.productIds || []).includes(a.id || a._id);
+                    const bSelected = (content.hero?.productIds || []).includes(b.id || b._id);
+                    return (bSelected ? 1 : 0) - (aSelected ? 1 : 0);
+                  }).map((prd) => {
+                    const isSelected = (content.hero?.productIds || []).includes(prd.id || prd._id);
                     return (
                       <div
                         key={prd.id}
                         onClick={() => {
-                          const currentIds = content.hero?.selectedProductIds || [];
+                          const currentIds = content.hero?.productIds || [];
                           let newIds;
                           if (isSelected) {
                             newIds = currentIds.filter((id) => id !== prd.id);
                           } else {
                             newIds = [...currentIds, prd.id];
                           }
-                          updateSectionState('hero', 'selectedProductIds', newIds);
+                          updateSectionState('hero', 'productIds', newIds);
                         }}
                         className={`relative p-3 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
                           isSelected
@@ -413,7 +423,11 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                     No showcases available. Check if they exist or API failed.
                   </div>
                 ) : (
-                  showcases.map((sc) => {
+                  [...showcases].sort((a, b) => {
+                    const aSelected = a.featured === true;
+                    const bSelected = b.featured === true;
+                    return (bSelected ? 1 : 0) - (aSelected ? 1 : 0);
+                  }).map((sc) => {
                     const scId = sc._id || sc.id;
                     const isSelected = sc.featured === true;
                     return (
@@ -996,20 +1010,20 @@ export function HomePageControllerEditor({ content, onUpdate }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AdminField label="Section Title">
               <AdminInput
-                value={content.galleryPreview?.sectionTitle || 'Inspiration Gallery'}
+                value={content.galleryInspiration?.sectionTitle || 'Inspiration Gallery'}
                 onChange={(e) =>
-                  updateSectionState('galleryPreview', 'sectionTitle', e.target.value)
+                  updateSectionState('galleryInspiration', 'sectionTitle', e.target.value)
                 }
               />
             </AdminField>
             <AdminField label="Section Subtitle">
               <AdminInput
                 value={
-                  content.galleryPreview?.sectionSubtitle ||
+                  content.galleryInspiration?.sectionSubtitle ||
                   'A visual journey through our finest installations'
                 }
                 onChange={(e) =>
-                  updateSectionState('galleryPreview', 'sectionSubtitle', e.target.value)
+                  updateSectionState('galleryInspiration', 'sectionSubtitle', e.target.value)
                 }
               />
             </AdminField>
@@ -1031,7 +1045,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
               ) : (
                 galleryItems.map((gi, index) => {
                   const giId = gi._id || gi.id;
-                  const currentIds = content.galleryPreview?.galleryIds || [];
+                  const currentIds = content.galleryInspiration?.galleryIds || [];
 
                   // The storefront only respects IDs that actually exist, otherwise falls back
                   const validIds = currentIds.filter((id) =>
@@ -1061,7 +1075,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                             newIds = [...validIds, giId];
                           }
                         }
-                        updateSectionState('galleryPreview', 'galleryIds', newIds);
+                        updateSectionState('galleryInspiration', 'galleryIds', newIds);
                       }}
                       className={`relative p-3 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
                         isSelected

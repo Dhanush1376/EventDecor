@@ -12,10 +12,6 @@ export class FilterService {
     // 3. Construct MongoDB $facet pipeline to compute all dynamic attributes simultaneously
     const facetPipeline: any = {
       categories: [{ $sortByCount: '$category' }],
-      materials: [
-        { $match: { material: { $exists: true, $ne: '' } } },
-        { $sortByCount: '$material' },
-      ],
       tags: [{ $unwind: '$tags' }, { $sortByCount: '$tags' }],
       priceRanges: [
         {
@@ -87,19 +83,7 @@ export class FilterService {
       }
     }
 
-    // Process Materials
-    if (result.materials?.length > 1) {
-      filterGroups.push({
-        id: 'material',
-        label: 'Material',
-        type: 'checkbox',
-        options: result.materials.map((m: any) => ({
-          value: m._id,
-          label: m._id,
-          count: m.count,
-        })),
-      });
-    }
+
 
     // Process Dynamic Variants (e.g., Color, Size)
     if (result.variants?.length > 0) {

@@ -93,7 +93,9 @@ export class UserService {
         item.quantity = 50;
         cartChanged = true;
       }
-      const availableStock = item.product.stock ?? 10;
+      const availableStock = item.type === 'rental' 
+        ? (item.product.rentalStock ?? 10) 
+        : (item.product.stock ?? 10);
       if (item.quantity > availableStock) {
         item.quantity = availableStock;
         cartChanged = true;

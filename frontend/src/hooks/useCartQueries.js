@@ -3,6 +3,7 @@ import { userService } from '../services/domainServices';
 import { hasSessionMarker } from '../utils/auth/authStorage';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../utils/core/errorHelpers';
+import { useAuth } from '../context/AuthContext';
 
 const checkAuthLocal = () => hasSessionMarker();
 
@@ -13,21 +14,26 @@ const emptyCart = {
 const defaultCart = { purchaseCart: emptyCart, rentalCart: emptyCart };
 
 export function useCartQuery() {
+  const { user } = useAuth();
   const isAuth = checkAuthLocal();
+  const cartKey = isAuth ? (user?._id || user?.id || 'authenticated') : 'guest';
+
   return useQuery({
-    queryKey: ['cart', isAuth ? 'authenticated' : 'guest'],
+    queryKey: ['cart', cartKey],
     queryFn: async ({ signal }) => {
       const res = await userService.getCart({ signal });
       return res.success ? res.data : res;
     },
     enabled: checkAuthLocal(),
-    staleTime: 3 * 60 * 1000, // 3 minutes stale time
     gcTime: 30 * 60 * 1000,
   });
 }
 
 export function useCartMutations() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isAuth = checkAuthLocal();
+  const cartKey = isAuth ? (user?._id || user?.id || 'authenticated') : 'guest';
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ productId, quantity, type, rentalInfo }) => {
@@ -35,7 +41,7 @@ export function useCartMutations() {
       return res.success ? res.data : res;
     },
     onSuccess: (data) => {
-      if (data) queryClient.setQueryData(['cart', 'authenticated'], data);
+      if (data) queryClient.setQueryData(['cart', cartKey], data);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -48,7 +54,7 @@ export function useCartMutations() {
       return res.success ? res.data : res;
     },
     onSuccess: (data) => {
-      if (data) queryClient.setQueryData(['cart', 'authenticated'], data);
+      if (data) queryClient.setQueryData(['cart', cartKey], data);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
@@ -64,7 +70,7 @@ export function useCartMutations() {
       toast.error(getErrorMessage(err, 'Unable to sync bag'));
     },
     onSuccess: (data) => {
-      if (data) queryClient.setQueryData(['cart', 'authenticated'], data);
+      if (data) queryClient.setQueryData(['cart', cartKey], data);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });

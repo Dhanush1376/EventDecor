@@ -201,11 +201,19 @@ export function useAdminCMS({
       setWebsiteContent((prev) => {
         const newContent = structuredClone(prev);
         const keys = path.split('.');
-        let obj = newContent[section];
+        let current = newContent[section];
         for (let i = 0; i < keys.length - 1; i++) {
-          obj = obj[keys[i]];
+          const key = keys[i];
+          if (!current[key]) current[key] = {};
+          
+          if (Array.isArray(current[key])) {
+            current[key] = [...current[key]];
+          } else {
+            current[key] = { ...current[key] };
+          }
+          current = current[key];
         }
-        obj[keys[keys.length - 1]] = value;
+        current[keys[keys.length - 1]] = value;
         newContent[section].status = 'modified';
         setHasUnsavedContent(true);
         return newContent;

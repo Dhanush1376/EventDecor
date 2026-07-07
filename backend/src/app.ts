@@ -120,7 +120,8 @@ app.use((req: Request, res: Response, next) => {
   if (
     req.path.includes('/upload') ||
     req.path.includes('/webhook') ||
-    req.path.includes('/visual-search')
+    req.path.includes('/visual-search') ||
+    req.path.includes('/ai-autofill')
   ) {
     return next();
   }
@@ -133,9 +134,9 @@ app.use((req: Request, res: Response, next) => {
   next();
 });
 
-// 50kb is the max parsed size limit internally, but our 10kb guard catches oversized bodies first
-app.use(express.json({ limit: '50kb' }));
-app.use(express.urlencoded({ extended: true, limit: '50kb', parameterLimit: 50 }));
+// 10mb is the max parsed size limit internally, but our 50kb guard catches oversized bodies for standard routes
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb', parameterLimit: 50 }));
 app.use(cookieParser());
 
 // CSRF double-submit cookie (required for cookie-credentialed mutating requests)

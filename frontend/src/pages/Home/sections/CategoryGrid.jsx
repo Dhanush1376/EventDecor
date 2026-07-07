@@ -10,9 +10,10 @@ import React from 'react';
 /**
  * Category grid strictly driven by CMS config. No fallbacks.
  */
-export const CategoryGrid = React.memo(function CategoryGrid() {
+export const CategoryGrid = React.memo(function CategoryGrid({ previewContent }) {
   const cms = useWebsiteContent({ includeDefaults: false });
-  const config = cms?.categoryGrid || {};
+  const activeCms = previewContent || cms;
+  const config = activeCms?.categoryGrid || {};
 
   if (cms.loading) {
     return (

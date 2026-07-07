@@ -2,7 +2,13 @@ import api from '../api';
 
 export const cmsService = {
   getPublished: async () => {
-    const response = await api.get('/cms');
+    // Force revalidation to bypass stale-while-revalidate traps on hard-refresh
+    const response = await api.get('/cms', {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
     return response.data;
   },
   getSection: async (key) => {

@@ -89,6 +89,18 @@ export function useWebsiteContent() {
 
     listeners.add(handleUpdate);
 
+    // Cross-tab synchronization so the Storefront instantly reflects Admin Publish
+    const handleStorageChange = (e) => {
+      if (e.key === LOCAL_STORAGE_KEY && e.newValue) {
+        try {
+          const newContent = JSON.parse(e.newValue);
+          globalCache = newContent; // Update global singleton
+          handleUpdate(newContent); // Update local component state
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
     const fetchContent = async (force = false) => {
       const age = Date.now() - lastFetchedTime;
       if (!force && lastFetchedTime > 0 && age < CACHE_TTL) {
@@ -160,6 +172,7 @@ export function useWebsiteContent() {
 
     return () => {
       listeners.delete(handleUpdate);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, [isPrerender]);
 

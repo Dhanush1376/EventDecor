@@ -10,7 +10,6 @@
     "build:report": "vite build && node scripts/report-chunk-sizes.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run --coverage --passWithNoTests",
     "check-env": "node scripts/check-env.ci.mjs",
     "guard:performance": "node scripts/performance-guards.mjs"
   },
@@ -43,23 +42,17 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.2",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
-    "@vitest/coverage-v8": "^4.1.9",
     "axe-core": "^4.12.1",
     "eslint": "^10.6.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.7.0",
-    "jsdom": "^29.1.1",
     "rollup-plugin-visualizer": "^7.0.1",
     "vite": "^8.1.3",
-    "vite-plugin-compression": "^0.5.1",
-    "vitest": "^4.1.9"
+    "vite-plugin-compression": "^0.5.1"
   }
 }

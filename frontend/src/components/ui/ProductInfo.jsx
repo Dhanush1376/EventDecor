@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
-import { ProductCoupons } from './ProductCoupons';
 import { ProductNoteCard } from './ProductNoteCard';
 import { useQuery } from '@tanstack/react-query';
 import { couponService } from '../../services/domainServices';

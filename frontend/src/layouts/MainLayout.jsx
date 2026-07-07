@@ -28,6 +28,9 @@ const FloatingOfferCard = lazy(() =>
     default: m.FloatingOfferCard,
   })),
 );
+const AdminInviteModal = lazy(() =>
+  import('../components/auth/AdminInviteModal').then((m) => ({ default: m.AdminInviteModal })),
+);
 
 export function MainLayout() {
   const { pathname } = useLocation();
@@ -117,6 +120,9 @@ export function MainLayout() {
       </div>
       <Suspense fallback={null}>
         <ConsentPopup />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AdminInviteModal />
       </Suspense>
     </div>
   );

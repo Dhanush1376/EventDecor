@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { showcaseService, uploadService } from '../../services/domainServices';
+import { showcaseService } from '../../services/domainServices';
 
 export function useShowcaseSubmission({
   isEditMode,
@@ -57,69 +57,41 @@ export function useShowcaseSubmission({
 
         if (activeLocalUrls.length > 0) {
           const uploadData = new FormData();
-          const remoteUrlUploadData = new FormData();
-
           const localUrlMap = {};
-          const remoteUrlMap = {};
-
           let uploadIndex = 0;
-          let remoteUploadIndex = 0;
 
           for (const url of activeLocalUrls) {
             const pending = formData.pendingUploads.find((p) => p.localUrl === url);
             if (pending) {
-              if (typeof pending.file === 'string' && remoteUrlMap[url] === undefined) {
-                // Remote URL
-                remoteUrlUploadData.append('urls', pending.file);
-                remoteUrlMap[url] = remoteUploadIndex++;
-              } else if (typeof pending.file !== 'string' && localUrlMap[url] === undefined) {
-                // Local File
-                uploadData.append('images', pending.file);
+              if (localUrlMap[url] === undefined) {
+                uploadData.append('file', pending.file);
                 localUrlMap[url] = uploadIndex++;
               }
             }
           }
 
           try {
-            // Upload local files
-            let uploadedLocalImages = [];
+            // Upload all pending files and remote URLs directly to Cloudinary (bypassing backend limits)
+            let uploadedImages = [];
             if (uploadIndex > 0) {
-              const res = await uploadService.uploadImages(uploadData, 'events');
-              if (res.success && res.images) {
-                uploadedLocalImages = res.images;
-              } else {
-                throw new Error('Failed to upload local images');
-              }
-            }
-
-            // Upload remote URLs
-            let uploadedRemoteImages = [];
-            if (remoteUploadIndex > 0) {
               const { uploadDirectToCloudinary } = await import('../../services/api/_shared');
-              const res = await uploadDirectToCloudinary(remoteUrlUploadData, false, 'events');
+              const res = await uploadDirectToCloudinary(uploadData, false, 'events');
+
               if (res.success && res.images) {
-                uploadedRemoteImages = res.images;
+                uploadedImages = res.images;
               } else {
-                throw new Error('Failed to upload remote URLs');
+                throw new Error('Failed to upload images');
               }
             }
 
             // Replace local blob URLs and pending remote URLs with uploaded Cloudinary URLs
-            if (finalImage) {
-              if (localUrlMap[finalImage] !== undefined) {
-                finalImage = uploadedLocalImages[localUrlMap[finalImage]];
-              } else if (remoteUrlMap[finalImage] !== undefined) {
-                finalImage = uploadedRemoteImages[remoteUrlMap[finalImage]];
-              }
+            if (finalImage && localUrlMap[finalImage] !== undefined) {
+              finalImage = uploadedImages[localUrlMap[finalImage]];
             }
 
             for (let i = 0; i < finalGallery.length; i++) {
-              if (finalGallery[i]) {
-                if (localUrlMap[finalGallery[i]] !== undefined) {
-                  finalGallery[i] = uploadedLocalImages[localUrlMap[finalGallery[i]]];
-                } else if (remoteUrlMap[finalGallery[i]] !== undefined) {
-                  finalGallery[i] = uploadedRemoteImages[remoteUrlMap[finalGallery[i]]];
-                }
+              if (finalGallery[i] && localUrlMap[finalGallery[i]] !== undefined) {
+                finalGallery[i] = uploadedImages[localUrlMap[finalGallery[i]]];
               }
             }
           } catch (uploadErr) {
@@ -133,7 +105,7 @@ export function useShowcaseSubmission({
       const incList =
         formData.inclusions && formData.inclusions.length > 0
           ? formData.inclusions.map((i) => ({
-              name: i.name.trim(),
+              name: i?.name?.trim() || 'Item',
               defaultQty: Number(i.defaultQty) || 1,
               condition: i.condition || 'excellent',
             }))
@@ -196,10 +168,11 @@ export function useShowcaseSubmission({
         }
       }
     } catch (err) {
+      const backendError = err?.response?.data?.message || err?.message;
       const msg =
         err?.response?.status === 401
           ? 'Save failed: Please log in again or refresh the page'
-          : 'Failed to save showcase design.';
+          : backendError || 'Failed to save showcase design.';
       toast.error(msg);
     } finally {
       setIsSaving(false);

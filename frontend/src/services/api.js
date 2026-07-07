@@ -96,7 +96,7 @@ export const refreshAccessToken = async (retryCount = 0) => {
   if (!hasLocalAuthMarker()) {
     return null;
   }
-  if (retryCount > 3) {
+  if (retryCount >= 3) {
     logger.error('[API] Max refresh retry attempts reached (409 conflict loops).');
     dispatchUnauthorized();
     throw new Error('Max refresh retry attempts reached');
@@ -111,7 +111,7 @@ export const refreshAccessToken = async (retryCount = 0) => {
       .catch(async (err) => {
         if (err.response?.status === 409) {
           logger.warn(
-            `[API] Concurrent refresh detected (409). Retrying (attempt ${retryCount + 1}/3) in 1s to pick up new tokens from other tab.`,
+            `[API] Concurrent refresh detected (409). Retrying (attempt ${retryCount + 1}/1) in 1s to pick up new tokens from other tab.`,
           );
           await new Promise((r) => setTimeout(r, 1000));
           refreshPromise = null;

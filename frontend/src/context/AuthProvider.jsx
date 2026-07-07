@@ -21,6 +21,7 @@ import {
   setFallbackRefreshToken,
 } from '../utils/auth/authStorage';
 import { AuthContext } from './AuthContext';
+import { CACHE_KEY } from '../utils/performance/queryPersister';
 import logger from '../utils/core/logger';
 import { ADMIN_ROLES } from '../constants/roles';
 
@@ -63,7 +64,7 @@ export function AuthProvider({ children }) {
       // Clear React Query cache on logout to prevent state leakage/desynchronization
       queryClient.clear();
       try {
-        localStorage.removeItem('siri_query_cache_v1');
+        localStorage.removeItem(CACHE_KEY);
       } catch (__) {}
 
       setAccessToken(null);

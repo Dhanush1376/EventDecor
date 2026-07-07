@@ -97,7 +97,7 @@ export function AdminInviteModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', duration: 0.5 }}
-            className="relative w-full max-w-[480px] bg-white/90 dark:bg-[#121824]/90 backdrop-blur-2xl border border-outline-variant/30 dark:border-slate-800 rounded-[2.5rem] shadow-Luxury p-8 overflow-hidden font-body text-on-surface"
+            className="relative w-full max-w-[480px] bg-white/90 dark:bg-[#121824]/90 backdrop-blur-2xl border border-outline-variant/30 dark:border-slate-800 rounded-[2.5rem] shadow-Luxury p-5 sm:p-8 overflow-hidden font-body text-on-surface"
           >
             {/* Elegant Background Glow */}
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-[80px] pointer-events-none" />

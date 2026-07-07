@@ -86,8 +86,9 @@ export function AdminMobileBottomNav({ isFabOpen, setIsFabOpen, fabActions }) {
                   {isFabOpen && (
                     <>
                       {fabActions.map((action, i) => {
-                        const x = (i - Math.floor(fabActions.length / 2)) * 65;
-                        const y = -80;
+                        // Stack vertically: bottom to top
+                        const x = 0;
+                        const y = -65 - (i * 55);
 
                         return (
                           <motion.button
@@ -108,11 +109,11 @@ export function AdminMobileBottomNav({ isFabOpen, setIsFabOpen, fabActions }) {
                               {action.icon}
                             </span>
                             <span
-                              className="absolute -bottom-6 text-[9px] font-semibold whitespace-nowrap opacity-90 shadow-sm"
+                              className="absolute left-[50px] top-1/2 -translate-y-1/2 text-[11px] font-bold whitespace-nowrap opacity-100 shadow-[var(--admin-shadow-sm)] text-[var(--admin-text-primary)]"
                               style={{
                                 background: 'var(--admin-surface)',
-                                padding: '2px 6px',
-                                borderRadius: '12px',
+                                padding: '4px 10px',
+                                borderRadius: '16px',
                                 border: '1px solid var(--admin-border-subtle)',
                               }}
                             >

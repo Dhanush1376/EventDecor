@@ -30,13 +30,14 @@ const GalleryInspiration = lazy(() =>
 import './home.css';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 
-export function Home() {
+export function Home({ previewContent }) {
   const cms = useWebsiteContent({ includeDefaults: false });
-  const loading = cms.loading;
+  const activeCms = previewContent || cms;
+  const loading = !previewContent && cms.loading;
 
   const isSectionVisible = useCallback(
     (id) => {
-      const orderSection = cms?.homepageSections?.find((s) => s.id === id);
+      const orderSection = activeCms?.homepageSections?.find((s) => s.id === id);
       if (orderSection && orderSection.isVisible !== undefined) {
         return orderSection.isVisible;
       }
@@ -45,14 +46,14 @@ export function Home() {
       }
       return true;
     },
-    [cms],
+    [cms, activeCms],
   );
 
   if (loading) {
     return <HomeSkeleton />;
   }
 
-  const sections = cms?.homepageSections || [];
+  const sections = activeCms?.homepageSections || [];
 
   return (
     <>
@@ -76,14 +77,14 @@ export function Home() {
               case 'hero':
                 return (
                   <div key={section.id}>
-                    <HeroCarousel />
+                    <HeroCarousel previewContent={activeCms} />
                   </div>
                 );
               case 'promoBanner':
                 return (
                   <RevealSection key={section.id}>
                     <Suspense fallback={<SectionFallback />}>
-                      <PromoBanner />
+                      <PromoBanner previewContent={activeCms} />
                     </Suspense>
                   </RevealSection>
                 );
@@ -91,7 +92,7 @@ export function Home() {
                 return (
                   <RevealSection key={section.id}>
                     <Suspense fallback={<SectionFallback />}>
-                      <CategoryGrid />
+                      <CategoryGrid previewContent={activeCms} />
                     </Suspense>
                   </RevealSection>
                 );
@@ -99,7 +100,7 @@ export function Home() {
                 return (
                   <LazySection key={section.id} fallback={<SectionFallback />}>
                     <RevealSection>
-                      <TrendingProducts />
+                      <TrendingProducts previewContent={activeCms} />
                     </RevealSection>
                   </LazySection>
                 );
@@ -107,7 +108,7 @@ export function Home() {
                 return (
                   <LazySection key={section.id} fallback={<SectionFallback />}>
                     <RevealSection>
-                      <ShopByOccasion />
+                      <ShopByOccasion previewContent={activeCms} />
                     </RevealSection>
                   </LazySection>
                 );
@@ -115,7 +116,7 @@ export function Home() {
                 return (
                   <LazySection key={section.id} fallback={<SectionFallback />}>
                     <RevealSection>
-                      <BestSellers />
+                      <BestSellers previewContent={activeCms} />
                     </RevealSection>
                   </LazySection>
                 );
@@ -123,7 +124,7 @@ export function Home() {
                 return (
                   <LazySection key={section.id} fallback={<SectionFallback />}>
                     <RevealSection>
-                      <RecommendedGrid />
+                      <RecommendedGrid previewContent={activeCms} />
                     </RevealSection>
                   </LazySection>
                 );
@@ -131,7 +132,7 @@ export function Home() {
                 return (
                   <LazySection key={section.id} fallback={<SectionFallback />}>
                     <RevealSection>
-                      <GalleryInspiration />
+                      <GalleryInspiration previewContent={activeCms} />
                     </RevealSection>
                   </LazySection>
                 );

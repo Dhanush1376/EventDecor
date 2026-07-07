@@ -3,6 +3,8 @@ import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
 import Category from '../../models/Category';
+import Product from '../../models/Product';
+import ShowcaseCollection from '../../models/ShowcaseCollection';
 import logger from '../../config/logger';
 
 export const analyzeShowcaseImage = asyncHandler(async (req: Request, res: Response) => {
@@ -99,39 +101,12 @@ Do NOT include any extra text before or after the JSON.`;
       if (!extractedJson) throw new Error('No JSON object found in response');
       parsedPayload = JSON.parse(extractedJson[0]);
 
-      // Ensure uniqueness against DB for title and slug across both Product and Showcase
-      const ShowcaseCollection = (await import('../../models/ShowcaseCollection.js'))
-        .default as any;
-      const ProductCollection = (await import('../../models/Product.js')).default as any;
-
       const baseTitle = parsedPayload.title;
-      const baseSlug = baseTitle
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      let isUnique = false;
-      let counter = 1;
-      let currentTitle = baseTitle;
-      let currentSlug = baseSlug;
-
-      while (!isUnique) {
-        const existingShowcase = await ShowcaseCollection.exists({ title: currentTitle });
-        const existingProduct = await ProductCollection.exists({
-          $or: [{ title: currentTitle }, { slug: currentSlug }],
-        });
-
-        if (existingShowcase || existingProduct) {
-          currentTitle = `${baseTitle} ${counter}`;
-          currentSlug = `${baseSlug}-${counter}`;
-          counter++;
-        } else {
-          isUnique = true;
-        }
-      }
-      parsedPayload.title = currentTitle;
-    } catch {
-      logger.error('Failed to parse Groq response: ' + generatedText);
-      throw new ApiError(500, 'AI returned malformed JSON');
+      parsedPayload.title = baseTitle;
+    } catch (e) {
+      logger.error('Failed to parse Groq response or check uniqueness: ' + String(e));
+      logger.error('Actual Groq Text: ' + generatedText);
+      throw new ApiError(500, 'AI returned malformed JSON or DB error');
     }
 
     // Category handling

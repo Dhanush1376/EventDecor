@@ -40,7 +40,11 @@ export const isPathProtected = (path, method = 'get') => {
 
   const m = method.toLowerCase();
   if (MUTATING_METHODS.has(m)) {
-    if (path.includes('/products') || path.includes('/gallery') || path.includes('/events')) {
+    if (
+      path.includes('/products') || 
+      path.includes('/gallery') || 
+      (path.includes('/events') && !path.includes('/analytics/events'))
+    ) {
       return true;
     }
   }

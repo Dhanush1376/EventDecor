@@ -1,6 +1,7 @@
 import ApiError from '../../utils/ApiError';
 import User from '../../models/User';
 import Product from '../../models/Product';
+import mongoose from 'mongoose';
 
 export class UserCartService {
   static async addToCart(
@@ -18,9 +19,11 @@ export class UserCartService {
 
     const itemType = type || 'purchase';
 
+    const objectId = new mongoose.Types.ObjectId(productId);
+
     const userHasItem = await User.findOne({
       _id: userId,
-      'cart.product': productId,
+      'cart.product': objectId,
       'cart.type': itemType,
     } as any);
 
@@ -28,7 +31,7 @@ export class UserCartService {
     if (userHasItem) {
       if (itemType === 'rental') {
         updatedUser = await User.findOneAndUpdate(
-          { _id: userId, 'cart.product': productId, 'cart.type': itemType } as any,
+          { _id: userId, 'cart.product': objectId, 'cart.type': itemType } as any,
           {
             $inc: { 'cart.$.quantity': qty },
             $set: { 'cart.$.rentalInfo': rentalInfo },
@@ -37,7 +40,7 @@ export class UserCartService {
         );
       } else {
         updatedUser = await User.findOneAndUpdate(
-          { _id: userId, 'cart.product': productId, 'cart.type': itemType } as any,
+          { _id: userId, 'cart.product': objectId, 'cart.type': itemType } as any,
           { $inc: { 'cart.$.quantity': qty } },
           { new: true },
         );
@@ -52,7 +55,7 @@ export class UserCartService {
         {
           $push: {
             cart: {
-              product: productId,
+              product: objectId,
               quantity: qty,
               variant: 'Default',
               type: itemType,
@@ -95,7 +98,7 @@ export class UserCartService {
   static async removeFromCart(userId: string, productId: string) {
     const user = await User.findOneAndUpdate(
       { _id: userId },
-      { $pull: { cart: { product: productId } } },
+      { $pull: { cart: { product: new mongoose.Types.ObjectId(productId) } } },
       { new: true },
     );
 

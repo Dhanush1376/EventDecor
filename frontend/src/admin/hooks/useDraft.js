@@ -44,6 +44,16 @@ export function useDraft({
   const isFirstRender = useRef(true);
   const hasUnsavedChanges = useRef(false);
 
+  const initialDataString = JSON.stringify(initialData);
+  
+  // Sync formData when initialData changes, assuming no unsaved changes are in progress
+  useEffect(() => {
+    if (!hasUnsavedChanges.current) {
+      setFormDataInternal(initialData);
+      formDataRef.current = initialData;
+    }
+  }, [initialDataString]);
+
   // Check for existing draft on mount
   useEffect(() => {
     if (!enabled) return;
@@ -59,15 +69,7 @@ export function useDraft({
     checkDraft();
   }, [draftKey, enabled]);
 
-  // Sync with initialData changes (e.g. after async fetch)
-  useEffect(() => {
-    if (enabled && initialData && !hasDraft) {
-      if (JSON.stringify(initialData) !== JSON.stringify(formDataRef.current)) {
-        setFormDataInternal(initialData);
-        formDataRef.current = initialData;
-      }
-    }
-  }, [initialData, enabled, hasDraft]);
+
 
   // The debounced save function
   const debouncedSave = useMemo(
@@ -166,6 +168,7 @@ export function useDraft({
   // Actions
   const restoreDraft = useCallback(() => {
     if (draftInfo) {
+      hasUnsavedChanges.current = true; // Protect restored draft from being overwritten
       formDataRef.current = draftInfo.formData;
       pageStateRef.current = draftInfo.pageState || initialPageState;
 

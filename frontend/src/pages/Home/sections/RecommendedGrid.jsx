@@ -4,14 +4,16 @@ import { MandalaElement } from '../../../components/ui/MandalaElement';
 import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 import { useProducts } from '../../../hooks/useProductQueries';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
+import React from 'react';
 
 /**
  * Recommended grid using real personalized feed API or manual curation.
  */
-export function RecommendedGrid() {
+export function RecommendedGrid({ previewContent }) {
   const cms = useWebsiteContent({ includeDefaults: false });
-  const loading = cms?.loading;
-  const config = cms?.recommendedProducts || {};
+  const activeCms = previewContent || cms;
+  const loading = !previewContent && cms?.loading;
+  const config = activeCms?.recommendedProducts || {};
 
   const productIds = config.productIds || [];
   const isManualMode = config.useAutoFeed === false && productIds.length > 0;

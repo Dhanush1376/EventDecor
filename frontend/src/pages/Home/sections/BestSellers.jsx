@@ -9,10 +9,11 @@ import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 /**
  * Best sellers using real API data.
  */
-export function BestSellers() {
+export function BestSellers({ previewContent }) {
   const cms = useWebsiteContent({ includeDefaults: false });
-  const loading = cms?.loading;
-  const config = cms?.featuredProducts || {};
+  const activeCms = previewContent || cms;
+  const loading = !previewContent && cms?.loading;
+  const config = activeCms?.featuredProducts || {};
   const productIds = config.productIds || [];
 
   const { data, isPending, isError, refetch } = useProducts(

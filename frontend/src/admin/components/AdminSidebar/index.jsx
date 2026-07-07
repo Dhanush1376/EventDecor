@@ -30,14 +30,14 @@ export function AdminSidebar() {
       { label: 'New Return', icon: 'assignment_return', path: '/admin/returns/new' },
     ];
   } else {
-    fabActions = [
-      { label: 'Coupon', icon: 'sell', path: '/admin/coupons/add' },
-      { label: 'Showcase', icon: 'view_carousel', path: '/admin/events/showcases/add' },
-      { label: 'Product', icon: 'inventory_2', path: '/admin/products/add' },
-      { label: 'Category', icon: 'category', path: '/admin/categories/add' },
-      { label: 'Campaign', icon: 'campaign', path: '/admin/campaigns/add' },
-    ];
-  }
+      fabActions = [
+        { label: 'Invite', icon: 'person_add', path: '/admin/team?invite=true' },
+        { label: 'Coupon', icon: 'sell', path: '/admin/coupons/add' },
+        { label: 'Showcase', icon: 'view_carousel', path: '/admin/events/showcases/add' },
+        { label: 'Product', icon: 'inventory_2', path: '/admin/products/add' },
+        { label: 'Category', icon: 'category', path: '/admin/categories/add' },
+      ];
+    }
 
   const toggleSection = (si) => {
     setCollapsedSections((prev) => ({ ...prev, [si]: !prev[si] }));

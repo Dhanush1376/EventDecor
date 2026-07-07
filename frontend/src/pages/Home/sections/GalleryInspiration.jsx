@@ -12,8 +12,11 @@ import { galleryService } from '../../../services/domainServices';
 /**
  * Fashion Inspiration section using real gallery data and Admin-managed copy.
  */
-export function GalleryInspiration() {
-  const { galleryPreview, loading: cmsLoading } = useWebsiteContent({ includeDefaults: false });
+export function GalleryInspiration({ previewContent }) {
+  const cms = useWebsiteContent({ includeDefaults: false });
+  const activeCms = previewContent || cms;
+  const galleryPreview = useMemo(() => activeCms?.galleryInspiration || {}, [activeCms]);
+  const cmsLoading = !previewContent && cms.loading;
 
   const {
     data: rawGalleryItems = [],

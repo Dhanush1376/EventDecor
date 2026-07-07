@@ -1,5 +1,6 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { adminInviteService } from '../../services/domainServices';
 import api from '../../services/api';
@@ -39,10 +40,21 @@ export function AdminTeam({ hideHeader }) {
   const [activeTab, setActiveTab] = useState('roster'); // roster, pending, history
 
   // Modal Invitation Drawer
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [locationParam] = useState(() => new URLSearchParams(window.location.search).get('invite') === 'true');
+  const [isInviteOpen, setIsInviteOpen] = useState(locationParam);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('admin');
   const [invitePermissions, setInvitePermissions] = useState('Access Admin Portal & Dashboard');
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('invite') === 'true') {
+      setIsInviteOpen(true);
+      // Remove query param to clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [location.search]);
   const [submitting, setSubmitting] = useState(false);
 
   // Pagination states

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { returnService } from '../../services/api/returnService';
-import { OptimizedImage, OrdersListSkeleton, StatusPill, FilterTabs } from '../../components/ui';
+import { OptimizedImage, OrdersListSkeleton, StatusPill } from '../../components/ui';
 import { useDashboard } from '../../context/DashboardContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUserSocket } from '../../context/UserSocketProvider';

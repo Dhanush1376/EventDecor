@@ -25,15 +25,34 @@ const stripSensitiveFromSectionData = (key: string, data: any) => {
 };
 
 export const sanitizeArray = (val: any): any => {
-  if (val && typeof val === 'object' && !Array.isArray(val)) {
-    if ('0' in val) {
+  if (val === null || val === undefined) return val;
+  if (val instanceof Date) return val;
+
+  if (typeof val === 'object') {
+    if (Array.isArray(val)) {
+      return val.map((v) => sanitizeArray(v));
+    }
+
+    const keys = Object.keys(val);
+    const isArrayLike =
+      keys.length > 0 &&
+      keys.includes('0') &&
+      keys.every((k) => !isNaN(Number(k)) && Number.isInteger(Number(k)));
+
+    if (isArrayLike) {
       const arr: any[] = [];
       let i = 0;
       while (i.toString() in val) {
-        arr.push(val[i.toString()]);
+        arr.push(sanitizeArray(val[i.toString()]));
         i++;
       }
       return arr;
+    } else {
+      const obj: any = {};
+      for (const k of keys) {
+        obj[k] = sanitizeArray(val[k]);
+      }
+      return obj;
     }
   }
   return val;
