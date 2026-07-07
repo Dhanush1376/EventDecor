@@ -7,12 +7,13 @@ import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { StickyMobileATC } from '../components/ui/StickyMobileATC';
 import React, { useEffect, useMemo, useRef, Suspense, useState } from 'react';
-import { userService } from '../services/domainServices';
+import { userService, showcaseService } from '../services/domainServices';
 import { useProduct } from '../hooks/useProductQueries';
 import { useAuth } from '../context/AuthContext';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
 import { useQueryClient } from '@tanstack/react-query';
 import recommendationService from '../services/api/recommendationService';
+import { ProductCard } from '../components/shared/ProductCard';
 import logger from '../utils/core/logger';
 
 const RecommendationSystem = React.lazy(() =>
@@ -33,6 +34,7 @@ export function ProductDetails() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [localAppliedCoupon, setLocalAppliedCoupon] = useState(null);
+  const [relatedShowcases, setRelatedShowcases] = useState([]);
 
   const { data: product, isLoading: loading, error } = useProduct(id);
 
@@ -79,6 +81,24 @@ export function ProductDetails() {
       });
     }
   }, [product, user, id]);
+
+  // Fetch related showcases
+  useEffect(() => {
+    const fetchShowcases = async () => {
+      try {
+        const res = await showcaseService.getAll({ limit: 5 });
+        if (res.success) {
+          const list = Array.isArray(res.data)
+            ? res.data
+            : res.data?.docs || res.data?.items || [];
+          setRelatedShowcases(list.filter((s) => s._id !== id && s.id !== id).slice(0, 4));
+        }
+      } catch (err) {
+        logger.error('Failed to fetch related showcases for product page:', err);
+      }
+    };
+    fetchShowcases();
+  }, [id]);
 
   useEffect(() => {
     // Immediate scroll to top on mount and ID change
@@ -213,6 +233,46 @@ export function ProductDetails() {
           productTitle={product.title}
         />
       </Suspense>
+
+      {/* Explore More Showcases */}
+      {relatedShowcases && relatedShowcases.length > 0 && (
+        <section className="bg-surface py-8 lg:py-12">
+          <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
+            <h2 className="font-display text-xl lg:text-2xl text-black mb-6 lg:mb-8 text-left lg:text-left">
+              Explore More Showcases
+            </h2>
+            <div className="flex overflow-x-auto gap-4 lg:gap-6 no-scrollbar pb-6 snap-x snap-mandatory">
+              {relatedShowcases.map((showcase) => (
+                <div
+                  key={showcase._id || showcase.id}
+                  className="w-[200px] lg:w-[280px] shrink-0 snap-start"
+                >
+                  <ProductCard
+                    id={showcase._id || showcase.id}
+                    _id={showcase._id || showcase.id}
+                    itemType="event"
+                    title={showcase.title}
+                    imageSrc={showcase.image || showcase.images?.[0]}
+                    images={showcase.images}
+                    category={
+                      showcase.category?.name ||
+                      (typeof showcase.category === 'string' && showcase.category.length === 24
+                        ? showcase.eventType
+                        : showcase.category) ||
+                      'Showcase'
+                    }
+                    price={showcase.basePrice || showcase.rentalPrice}
+                    originalPrice={showcase.originalPrice}
+                    rating={showcase.rating}
+                    reviewCount={showcase.reviewCount}
+                    tags={showcase.tags}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <React.Suspense
         fallback={
