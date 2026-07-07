@@ -99,7 +99,6 @@ export function useOptimisticCartMutation({
             quantity: qty,
             type: itemType,
             rentalInfo: cleanRentalInfo(product.rentalInfo),
-            productInfo: product,
           });
 
           if (serverResponse) {
