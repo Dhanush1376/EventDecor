@@ -1,5 +1,6 @@
 import axios from 'axios';
 import logger from '../utils/core/logger';
+import { logCartTrace } from '../utils/forensic/cartTrace';
 import { getCachedGet, setCachedGet, clearApiCache } from '../utils/api/apiCache';
 import {
   hasSessionMarker,
@@ -169,13 +170,51 @@ api.interceptors.response.use(onResponse, onError);
 const originalGet = api.get;
 const pendingGetRequests = new Map();
 
+let cartGetSequenceCounter = 0;
+
 const clearPendingGets = () => {
+  const pendingCartRequestCountBefore = pendingGetRequests.size;
+  const pendingCartRequestSeq = Array.from(pendingGetRequests.keys()).find((k) =>
+    k.includes('/users/cart'),
+  )
+    ? 'unknown'
+    : null; // we don't store seq in map keys right now, just noting it
+
+  const hasCartPending = Array.from(pendingGetRequests.keys()).some((k) =>
+    k.includes('/users/cart'),
+  );
+
   pendingGetRequests.clear();
   clearApiCache();
+
+  if (hasCartPending || pendingCartRequestCountBefore > 0) {
+    logCartTrace('PENDING_GETS_CLEAR', {
+      cartRequestWasPending: hasCartPending,
+      pendingCartRequestSeq,
+      pendingRequestCountBefore: pendingCartRequestCountBefore,
+      pendingRequestCountAfter: pendingGetRequests.size,
+      source: 'clearPendingGets',
+    });
+  }
 };
 
 api.get = function (url, config) {
   const requestKey = `${url}?${JSON.stringify(config?.params || {})}`;
+  const isCart = url.includes('/users/cart');
+  let currentSeq = null;
+
+  if (isCart) {
+    cartGetSequenceCounter++;
+    currentSeq = cartGetSequenceCounter;
+    logCartTrace('API_GET_ENTER', {
+      cartGetSeq: currentSeq,
+      requestKey,
+      url,
+      hasSignal: !!config?.signal,
+      signalAborted: config?.signal?.aborted,
+      source: 'api.get',
+    });
+  }
 
   const cached = getCachedGet(url, config);
   if (cached && !cached.stale) {
@@ -190,7 +229,22 @@ api.get = function (url, config) {
   }
 
   if (pendingGetRequests.has(requestKey)) {
+    if (isCart) {
+      logCartTrace('API_GET_DEDUP_HIT', {
+        cartGetSeq: currentSeq,
+        requestKey,
+        source: 'api.get',
+      });
+    }
     return pendingGetRequests.get(requestKey);
+  }
+
+  if (isCart) {
+    logCartTrace('API_GET_NETWORK_START', {
+      cartGetSeq: currentSeq,
+      requestKey,
+      source: 'api.get',
+    });
   }
 
   const promise = originalGet
@@ -200,10 +254,30 @@ api.get = function (url, config) {
       if (response?.data !== undefined) {
         setCachedGet(url, config, response.data);
       }
+
+      if (isCart) {
+        logCartTrace('API_GET_NETWORK_RESOLVE', {
+          cartGetSeq: currentSeq,
+          requestKey,
+          cartData: response.data?.data || response.data,
+          source: 'api.get',
+        });
+      }
       return response;
     })
     .catch((error) => {
       pendingGetRequests.delete(requestKey);
+
+      if (isCart) {
+        logCartTrace('API_GET_NETWORK_REJECT', {
+          cartGetSeq: currentSeq,
+          requestKey,
+          error: error?.message,
+          isCancel: axios.isCancel(error),
+          source: 'api.get',
+        });
+      }
+
       if (cached?.data) {
         return {
           data: cached.data,

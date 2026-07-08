@@ -1,3 +1,5 @@
+import { logCartTrace, forensicHashId } from '../forensic/cartTrace';
+
 export function cleanRentalInfo(rentalInfo) {
   if (!rentalInfo) return undefined;
   const { startDate, endDate } = rentalInfo;
@@ -65,7 +67,19 @@ export function calculateCartSummary(items, cartType, shippingFee = 0) {
 export function transformDbCart(dbCartItems) {
   if (!dbCartItems || !Array.isArray(dbCartItems)) return [];
   return dbCartItems
-    .filter((item) => item.product)
+    .filter((item) => {
+      const isValid = !!item.product;
+      if (!isValid) {
+        logCartTrace('TRANSFORM_ITEM_REJECTED', {
+          productHash: forensicHashId(
+            item?.product?._id || item?.product?.id || item?._id || item?.id,
+          ),
+          reason: 'MISSING_PRODUCT',
+          source: 'transformDbCart',
+        });
+      }
+      return isValid;
+    })
     .map((item) => ({
       id: item.product._id || item.product.id,
       _id: item.product._id || item.product.id,

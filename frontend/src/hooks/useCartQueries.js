@@ -5,7 +5,8 @@ import toast from 'react-hot-toast';
 import { getErrorMessage } from '../utils/core/errorHelpers';
 import { useAuth } from '../context/AuthContext';
 import { cleanRentalInfo, calculateCartSummary } from '../utils/ecommerce/cartCalculations';
-
+import { logCartTrace, forensicHashId } from '../utils/forensic/cartTrace';
+import { useEffect, useRef } from 'react';
 const checkAuthLocal = () => hasSessionMarker();
 
 const emptyCart = {
@@ -19,11 +20,45 @@ export function useCartQuery() {
   const isAuth = checkAuthLocal();
   const cartKey = isAuth ? user?._id || user?.id || 'authenticated' : 'guest';
 
+  const prevCartKey = useRef(cartKey);
+  useEffect(() => {
+    if (prevCartKey.current !== cartKey) {
+      logCartTrace('CART_KEY_CHANGE', {
+        previousCartKey: prevCartKey.current,
+        nextCartKey: cartKey,
+        isAuth,
+        hasUserId: !!(user?._id || user?.id),
+        hashedUserId: forensicHashId(user?._id || user?.id),
+      });
+      prevCartKey.current = cartKey;
+    }
+  }, [cartKey, isAuth, user]);
+
   return useQuery({
     queryKey: ['cart', cartKey],
     queryFn: async ({ signal }) => {
+      logCartTrace('GET_START', {
+        queryKey: `cart,${cartKey}`,
+        cartKey,
+        source: 'useCartQueries.queryFn',
+      });
       const res = await userService.getCart({ signal });
-      return res.success ? res.data : res;
+      const responseShape = typeof res === 'object' ? Object.keys(res).join(',') : typeof res;
+      logCartTrace('GET_RESPONSE', {
+        queryKey: `cart,${cartKey}`,
+        cartKey,
+        cartData: res.success ? res.data : res,
+        responseShape,
+        source: 'useCartQueries.queryFn',
+      });
+      const dataToReturn = res.success ? res.data : res;
+      logCartTrace('QUERY_FN_RETURN', {
+        queryKey: `cart,${cartKey}`,
+        cartKey,
+        cartData: dataToReturn,
+        source: 'useCartQueries.queryFn',
+      });
+      return dataToReturn;
     },
     enabled: checkAuthLocal(),
     gcTime: 30 * 60 * 1000,
@@ -40,9 +75,15 @@ export function useCartMutations() {
   const addToCartMutation = useMutation({
     mutationFn: async ({ productId, quantity, type, rentalInfo }) => {
       const res = await userService.addToCart(productId, quantity, type, rentalInfo);
+      logCartTrace('POST_RESPONSE', {
+        cartKey,
+        cartData: res.success ? res.data : res,
+        source: 'addToCartMutation.mutationFn',
+      });
       return res.success ? res.data : res;
     },
     onMutate: async ({ product, quantity, type, rentalInfo }) => {
+      logCartTrace('ON_MUTATE_START', { cartKey, source: 'addToCartMutation.onMutate' });
       await queryClient.cancelQueries({ queryKey: ['cart', cartKey] });
       const previousCart = queryClient.getQueryData(['cart', cartKey]);
 
@@ -90,7 +131,7 @@ export function useCartMutations() {
           previousCart[targetCartKey]?.summary?.shippingFee || 0,
         );
 
-        queryClient.setQueryData(['cart', cartKey], {
+        const optimisticData = {
           ...previousCart,
           [targetCartKey]: {
             ...previousCart[targetCartKey],
@@ -102,19 +143,43 @@ export function useCartMutations() {
               total,
             },
           },
+        };
+
+        queryClient.setQueryData(['cart', cartKey], optimisticData);
+        logCartTrace('OPTIMISTIC_WRITE', {
+          cartKey,
+          cartData: optimisticData,
+          source: 'addToCartMutation.onMutate',
         });
       }
 
       return { previousCart };
     },
+    onSuccess: (data) => {
+      logCartTrace('ON_SUCCESS', {
+        cartKey,
+        cartData: data,
+        source: 'addToCartMutation.onSuccess',
+      });
+    },
     onError: (err, variables, context) => {
+      logCartTrace('ON_ERROR', {
+        cartKey,
+        error: err?.message,
+        source: 'addToCartMutation.onError',
+      });
       if (context?.previousCart) {
         queryClient.setQueryData(['cart', cartKey], context.previousCart);
       }
       toast.error(getErrorMessage(err, 'Unable to add item to bag'));
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart', cartKey] });
+    onSettled: async () => {
+      logCartTrace('ON_SETTLED_INVALIDATE', { cartKey, source: 'addToCartMutation.onSettled' });
+      await queryClient.invalidateQueries({ queryKey: ['cart', cartKey] });
+      logCartTrace('ON_SETTLED_INVALIDATE_COMPLETE', {
+        cartKey,
+        source: 'addToCartMutation.onSettled',
+      });
     },
   });
 

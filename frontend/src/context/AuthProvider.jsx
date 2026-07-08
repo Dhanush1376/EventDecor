@@ -24,6 +24,7 @@ import { AuthContext } from './AuthContext';
 import { CACHE_KEY } from '../utils/performance/queryPersister';
 import logger from '../utils/core/logger';
 import { ADMIN_ROLES } from '../constants/roles';
+import { logCartTrace, forensicHashId } from '../utils/forensic/cartTrace';
 
 export function AuthProvider({ children }) {
   const queryClient = useQueryClient();
@@ -50,6 +51,16 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(cachedProfile);
   const [loading, setLoading] = useState(hasStoredSession && !cachedProfile);
   const [isAuthenticated, setIsAuthenticated] = useState(!!cachedProfile || hasStoredSession);
+
+  // FORENSIC LOGGING
+  useEffect(() => {
+    logCartTrace('AUTH_STATE_CHANGE', {
+      isAuthenticated,
+      hasUser: !!user,
+      hashedUserId: forensicHashId(user?._id || user?.id),
+      source: 'AuthProvider',
+    });
+  }, [isAuthenticated, user]);
   const [isAuthInitialized, setIsAuthInitialized] = useState(
     !!cachedProfile || (!hasStoredSession && !cachedProfile),
   );
@@ -62,8 +73,10 @@ export function AuthProvider({ children }) {
   const logout = useCallback(
     async (silent = false) => {
       // Clear React Query cache on logout to prevent state leakage/desynchronization
+      logCartTrace('QUERY_CLIENT_CLEAR', { source: 'AuthProvider.logout' });
       queryClient.clear();
       try {
+        logCartTrace('CACHE_REMOVE', { source: 'AuthProvider.logout' });
         localStorage.removeItem(CACHE_KEY);
       } catch (__) {}
 

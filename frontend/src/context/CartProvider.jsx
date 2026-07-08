@@ -5,6 +5,7 @@ import { useCartQuery } from '../hooks/useCartQueries';
 import { useOptimisticCartMutation } from '../hooks/useOptimisticCartMutation';
 import { transformDbCart } from '../utils/ecommerce/cartCalculations';
 import { persistentStorage } from '../utils/storage/persistentStorage';
+import { logCartTrace, forensicHashId } from '../utils/forensic/cartTrace';
 
 export function CartProvider({ children }) {
   const { isAuthenticated, runProtectedAction } = useAuth();
@@ -44,8 +45,37 @@ export function CartProvider({ children }) {
 
   const purchaseCart = useMemo(() => {
     if (isAuthenticated && cartData?.purchaseCart) {
+      const rawItems = cartData.purchaseCart.items || [];
+      const rawProductHashes = rawItems.map((i) =>
+        forensicHashId(i?.product?._id || i?.product?.id || i?._id || i?.id),
+      );
+
+      logCartTrace('CART_PROVIDER_RAW', {
+        cartType: 'purchase',
+        rawItemCount: rawItems.length,
+        rawProductHashes,
+        source: 'CartProvider.purchaseCart',
+      });
+
+      const transformed = transformDbCart(rawItems);
+      const transformedProductHashes = transformed.map((i) =>
+        forensicHashId(i?.product?._id || i?.product?.id || i?._id || i?.id),
+      );
+
+      const removedProductHashes = rawProductHashes.filter(
+        (h) => !transformedProductHashes.includes(h),
+      );
+
+      logCartTrace('CART_PROVIDER_TRANSFORMED', {
+        cartType: 'purchase',
+        transformedItemCount: transformed.length,
+        transformedProductHashes,
+        removedProductHashes,
+        source: 'CartProvider.purchaseCart',
+      });
+
       return {
-        items: transformDbCart(cartData.purchaseCart.items),
+        items: transformed,
         summary: cartData.purchaseCart.summary,
       };
     }
@@ -54,8 +84,37 @@ export function CartProvider({ children }) {
 
   const rentalCart = useMemo(() => {
     if (isAuthenticated && cartData?.rentalCart) {
+      const rawItems = cartData.rentalCart.items || [];
+      const rawProductHashes = rawItems.map((i) =>
+        forensicHashId(i?.product?._id || i?.product?.id || i?._id || i?.id),
+      );
+
+      logCartTrace('CART_PROVIDER_RAW', {
+        cartType: 'rental',
+        rawItemCount: rawItems.length,
+        rawProductHashes,
+        source: 'CartProvider.rentalCart',
+      });
+
+      const transformed = transformDbCart(rawItems);
+      const transformedProductHashes = transformed.map((i) =>
+        forensicHashId(i?.product?._id || i?.product?.id || i?._id || i?.id),
+      );
+
+      const removedProductHashes = rawProductHashes.filter(
+        (h) => !transformedProductHashes.includes(h),
+      );
+
+      logCartTrace('CART_PROVIDER_TRANSFORMED', {
+        cartType: 'rental',
+        transformedItemCount: transformed.length,
+        transformedProductHashes,
+        removedProductHashes,
+        source: 'CartProvider.rentalCart',
+      });
+
       return {
-        items: transformDbCart(cartData.rentalCart.items),
+        items: transformed,
         summary: cartData.rentalCart.summary,
       };
     }

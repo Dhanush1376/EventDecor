@@ -70,3 +70,23 @@ queryClient.setQueryDefaults(['recommendations'], {
   gcTime: 1000 * 60 * 30,
   refetchOnMount: false,
 });
+
+// FORENSIC EXPERIMENT: Global Cache Instrumentation
+import { logCartTrace } from '../utils/forensic/cartTrace';
+
+queryClient.getQueryCache().subscribe((event) => {
+  if (!event || !event.query || !event.query.queryKey) return;
+  const queryKey = event.query.queryKey;
+
+  if (Array.isArray(queryKey) && queryKey[0] === 'cart') {
+    const data = event.query.state.data;
+    logCartTrace('QUERY_CACHE_EVENT', {
+      eventType: event.type,
+      queryKey: queryKey.join(','),
+      queryStateStatus: event.query.state.status,
+      fetchStatus: event.query.state.fetchStatus,
+      dataUpdatedAt: event.query.state.dataUpdatedAt,
+      cartData: data,
+    });
+  }
+});

@@ -1,5 +1,6 @@
 import { dehydrate, hydrate } from '@tanstack/react-query';
 import logger from '../core/logger';
+import { logCartTrace } from '../forensic/cartTrace';
 
 export const CACHE_KEY = 'siri_query_cache_v3';
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours expiration
@@ -45,6 +46,18 @@ export const hydrateQueryClientCache = (queryClient) => {
 
     // Hydrate state
     hydrate(queryClient, state);
+
+    // Log cart states specifically
+    state.queries.forEach((q) => {
+      if (Array.isArray(q.queryKey) && q.queryKey[0] === 'cart') {
+        logCartTrace('PERSISTER_HYDRATE', {
+          queryKey: q.queryKey.join(','),
+          cartData: q.state.data,
+          source: 'hydrateQueryClientCache',
+        });
+      }
+    });
+
     logger.info('[QueryPersister] Cache hydrated successfully.');
   } catch (error) {
     logger.error('[QueryPersister] Hydration failed due to corruption or error:', error);
@@ -68,6 +81,17 @@ export const subscribeToQueryCache = (queryClient) => {
     try {
       const state = dehydrate(queryClient, {
         shouldDehydrateQuery: shouldPersistQuery,
+      });
+
+      // Log cart states specifically
+      state.queries.forEach((q) => {
+        if (Array.isArray(q.queryKey) && q.queryKey[0] === 'cart') {
+          logCartTrace('PERSISTER_WRITE', {
+            queryKey: q.queryKey.join(','),
+            cartData: q.state.data,
+            source: 'saveCache',
+          });
+        }
       });
 
       const payload = {
@@ -127,6 +151,18 @@ export const subscribeToQueryCache = (queryClient) => {
         const parsed = JSON.parse(e.newValue);
         if (parsed && parsed.state) {
           hydrate(queryClient, parsed.state);
+
+          parsed.state.queries.forEach((q) => {
+            if (Array.isArray(q.queryKey) && q.queryKey[0] === 'cart') {
+              logCartTrace('PERSISTER_RESTORE', {
+                queryKey: q.queryKey.join(','),
+                cartData: q.state.data,
+                source: 'handleStorageChange',
+              });
+            }
+          });
+
+          logCartTrace('PERSISTER_STORAGE_EVENT', { source: 'handleStorageChange' });
           logger.info('[QueryPersister] Cache synchronized from another tab.');
         }
       } catch (err) {
