@@ -7,12 +7,7 @@ import ApiError from '../../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../../utils/pagination';
 import Product from '../../models/Product';
 import { setPaginationHeaders } from '../../utils/paginationHeaders';
-import {
-  cacheCart,
-  getCachedSessionJson,
-  invalidateUserSessionCaches,
-  sessionKeys,
-} from '../../utils/cache/userSessionCache';
+import { cacheCart, invalidateUserSessionCaches } from '../../utils/cache/userSessionCache';
 import { UserService } from '../../services/users/userService';
 import { UserAddressService } from '../../services/users/UserAddressService';
 import { UserWishlistService } from '../../services/users/UserWishlistService';
