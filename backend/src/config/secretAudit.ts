@@ -44,12 +44,11 @@ export const secretLeakInterceptor = (req: Request, res: Response, next: NextFun
   const originalJson = res.json;
 
   res.json = function (body: any) {
-    // Only scan if body is an object or string
     if (body) {
       try {
         const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
+        const isCartRoute = req.originalUrl.includes('/api/v1/users/cart');
 
-        // Patterns to look for in response payload
         const suspiciousPatterns = [
           /mongodb(\+srv)?:\/\//i, // MongoDB URI
           /rzp_live_[a-zA-Z0-9]+/i, // Razorpay Live Key
@@ -57,8 +56,6 @@ export const secretLeakInterceptor = (req: Request, res: Response, next: NextFun
           /eyJhbGci[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/, // Strict JWT matching '{"alg":'
         ];
 
-        // We allow JWTs on auth routes, order routes, and product/warehouse routes
-        // (which return QR code JWT tracking tokens)
         const isJwtAllowedRoute =
           req.originalUrl.includes('/api/auth') ||
           req.originalUrl.includes('/api/v1/auth') ||
@@ -69,7 +66,6 @@ export const secretLeakInterceptor = (req: Request, res: Response, next: NextFun
           req.originalUrl.includes('/api/v1/shipping');
 
         for (const pattern of suspiciousPatterns) {
-          // If it's a JWT pattern and we are on an allowed route, skip
           if (isJwtAllowedRoute && pattern.source.includes('eyJ')) {
             continue;
           }
@@ -79,9 +75,22 @@ export const secretLeakInterceptor = (req: Request, res: Response, next: NextFun
               `[SECURITY AUDIT] 🚨 POTENTIAL SECRET LEAK PREVENTED on ${req.method} ${req.originalUrl}`,
             );
 
-            // Redact the response to prevent leak
+            if (isCartRoute) {
+              logger.info('[CART_RESPONSE_TRACE][SECURITY_INTERCEPT]', {
+                requestId: res.locals.forensicRequestId || 'unknown',
+                matchedRule: pattern.source,
+                actionTaken: 'REDACTED_RESPONSE_500',
+                originalStatusCode: res.statusCode,
+                finalStatusCode: 500,
+                route: req.originalUrl,
+                method: req.method,
+              });
+            }
+
+            res.status(500);
             return originalJson.call(this, {
               success: false,
+              errorCode: 'RESPONSE_SECURITY_BLOCKED',
               message: 'Internal server error (Response redacted by security interceptor)',
             });
           }
@@ -89,6 +98,18 @@ export const secretLeakInterceptor = (req: Request, res: Response, next: NextFun
       } catch {
         // Ignore JSON stringify errors
       }
+    }
+
+    if (req.originalUrl.includes('/api/v1/users/cart')) {
+      logger.info('[CART_RESPONSE_TRACE][FINAL_BODY]', {
+        requestId: res.locals.forensicRequestId || 'unknown',
+        purchaseItemCount: body?.data?.purchaseCart?.items?.length ?? 0,
+        rentalItemCount: body?.data?.rentalCart?.items?.length ?? 0,
+        topLevelKeys: Object.keys(body || {}),
+        dataKeys: body?.data ? Object.keys(body.data) : [],
+        route: req.originalUrl,
+        method: req.method,
+      });
     }
 
     return originalJson.call(this, body);

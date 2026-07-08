@@ -56,7 +56,6 @@ export class UserService {
 
     const validatedCart = [];
     let cartChanged = false;
-    let rejectedItemCount = 0;
     const rejectionReasons: Record<string, string> = {};
     const rejectedProductHashes: string[] = [];
     const includedProductHashes: string[] = [];
@@ -76,6 +75,7 @@ export class UserService {
             }
           : item.product;
 
+      // eslint-disable-next-line no-console
       console.log(`[CART_COMPUTE_TRACE][RAW_ITEM]`, {
         requestId,
         hashedUserId,
@@ -89,6 +89,7 @@ export class UserService {
         timestamp: ts,
       });
 
+      // eslint-disable-next-line no-console
       console.log(`[CART_COMPUTE_TRACE][PRODUCT_ID_NORMALIZATION]`, {
         productHash: hashId(item.product),
         rawProductType: typeof item.product,
@@ -104,6 +105,7 @@ export class UserService {
       new Set<string>(rawCart.map((item: any) => String(item.product)).filter(Boolean)),
     );
 
+    // eslint-disable-next-line no-console
     console.log(`[CART_COMPUTE_TRACE][PRODUCT_QUERY_INPUT]`, {
       requestedProductCount: productIds.length,
       requestedProductIdHashes: productIds.map(hashId),
@@ -111,6 +113,7 @@ export class UserService {
 
     const products = await Product.find({ _id: { $in: productIds } });
 
+    // eslint-disable-next-line no-console
     console.log(`[CART_COMPUTE_TRACE][PRODUCT_QUERY_RESULT]`, {
       requestedProductCount: productIds.length,
       foundProductCount: products.length,
@@ -129,6 +132,7 @@ export class UserService {
           const existsWithProductionQuery = await Product.findOne({ _id: pid })
             .then((doc: any) => !!doc)
             .catch(() => false);
+          // eslint-disable-next-line no-console
           console.log(`[CART_COMPUTE_TRACE][ENVIRONMENT_CHECK]`, {
             productHash: hashId(pid),
             databaseName: Product.db.name,
@@ -136,7 +140,7 @@ export class UserService {
             existsById,
             existsWithProductionQuery,
           });
-        } catch (e) {
+        } catch (_e) {
           // ignore parsing errors for non-objectids
         }
       }
@@ -149,25 +153,13 @@ export class UserService {
     for (const item of rawCart) {
       const pH = hashId(item.product);
       if (!item.product) {
-        console.log(`[CART_COMPUTE_TRACE][ITEM_REJECTED]`, {
-          productHash: pH,
-          reason: '!item.product',
-          timestamp: Date.now(),
-        });
-        rejectedItemCount++;
         rejectionReasons[pH] = '!item.product';
         rejectedProductHashes.push(pH);
         continue;
       }
       const product = productsById.get(String(item.product));
       if (!product || !product.isActive) {
-        console.log(`[CART_COMPUTE_TRACE][ITEM_REJECTED]`, {
-          productHash: pH,
-          reason: '!product || !product.isActive',
-          timestamp: Date.now(),
-        });
         cartChanged = true;
-        rejectedItemCount++;
         rejectionReasons[pH] = '!product || !product.isActive';
         rejectedProductHashes.push(pH);
         continue;
@@ -177,13 +169,7 @@ export class UserService {
       const quantity = Number(item.quantity) || 0;
 
       if (quantity <= 0) {
-        console.log(`[CART_COMPUTE_TRACE][ITEM_REJECTED]`, {
-          productHash: pH,
-          reason: 'quantity <= 0',
-          timestamp: Date.now(),
-        });
         cartChanged = true;
-        rejectedItemCount++;
         rejectionReasons[pH] = 'quantity <= 0';
         rejectedProductHashes.push(pH);
         continue;
@@ -223,22 +209,13 @@ export class UserService {
         validatedCart.push(item);
         includedProductHashes.push(pH);
       } else {
-        console.log(`[CART_COMPUTE_TRACE][ITEM_REJECTED]`, {
-          productHash: pH,
-          reason: 'item.quantity <= 0 after stock adjustment',
-          timestamp: Date.now(),
-        });
         cartChanged = true;
-        rejectedItemCount++;
         rejectionReasons[pH] = 'item.quantity <= 0 after stock adjustment';
         rejectedProductHashes.push(pH);
       }
     }
 
     if (cartChanged) {
-      console.log(`[CART_COMPUTE_TRACE][DB_CART_CLEANUP_START]`, {
-        beforeRawCount: rawCart.length,
-      });
       user.cart = validatedCart.map((item) => ({
         product: item.product._id,
         quantity: item.quantity,
@@ -247,10 +224,6 @@ export class UserService {
         rentalInfo: item.rentalInfo,
       }));
       await User.findOneAndUpdate({ _id: user._id }, { $set: { cart: user.cart } });
-      console.log(`[CART_COMPUTE_TRACE][DB_CART_CLEANUP_RESULT]`, {
-        afterRawCount: user.cart.length,
-        removedProductHashes: rejectedProductHashes,
-      });
     }
 
     const settings = await storeSettingsService.getSettings();
@@ -304,24 +277,46 @@ export class UserService {
     const purchaseItems = validatedCart.filter((item) => item.type === 'purchase');
     const rentalItems = validatedCart.filter((item) => item.type === 'rental');
 
-    console.log(`[CART_COMPUTE_TRACE][COMPUTE_RESULT]`, {
-      rawItemCount: rawCart.length,
-      purchaseItemCount: purchaseItems.length,
-      rentalItemCount: rentalItems.length,
-      rejectedItemCount,
-      rejectionReasons,
-      includedProductHashes,
-      rejectedProductHashes,
-      timestamp: Date.now(),
-    });
+    const mapSafeCartItem = (item: any) => {
+      const p = item.product;
+      const safeProduct = {
+        _id: p._id,
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        price: p.price,
+        imageSrc: p.imageSrc,
+        stock: p.stock,
+        rentalStock: p.rentalStock,
+        isActive: p.isActive,
+        rentalPricing: p.rentalPricing,
+        securityDeposit: p.securityDeposit,
+        isDepositRefundable: p.isDepositRefundable,
+        rentalMinDays: p.rentalMinDays,
+        rentalMaxDays: p.rentalMaxDays,
+        customizationConfig: p.customizationConfig,
+        returnSettings: p.returnSettings,
+        availabilityMode: p.availabilityMode,
+        rentalEnabled: p.rentalEnabled,
+      };
+
+      return {
+        product: safeProduct,
+        quantity: item.quantity,
+        variant: item.variant,
+        type: item.type,
+        rentalInfo: item.rentalInfo,
+        customizationNote: item.customizationNote,
+      };
+    };
 
     return {
       purchaseCart: {
-        items: purchaseItems,
+        items: purchaseItems.map(mapSafeCartItem),
         summary: computeSummary(purchaseItems, false),
       },
       rentalCart: {
-        items: rentalItems,
+        items: rentalItems.map(mapSafeCartItem),
         summary: computeSummary(rentalItems, true),
       },
     };

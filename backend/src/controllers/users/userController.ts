@@ -212,6 +212,15 @@ export const getCart = asyncHandler(async (req: any, res: Response) => {
   // Do NOT read from Redis. Do NOT write back to Redis cart cache.
   res.setHeader('X-Session-Cache', 'BYPASS');
   res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
+
+  res.locals.forensicRequestId = requestId;
+  logger.info('[CART_RESPONSE_TRACE][CONTROLLER_OUTPUT]', {
+    requestId,
+    purchaseItemCount: cartDetails.purchaseCart?.items?.length ?? 0,
+    rentalItemCount: cartDetails.rentalCart?.items?.length ?? 0,
+    responseDataKeys: Object.keys(cartDetails || {}),
+  });
+
   res.status(200).json(new ApiResponse(true, 'Cart fetched', cartDetails));
 });
 
@@ -242,6 +251,15 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
   const cartDetails = await UserService.computeAndValidateCart(updatedUser);
   await cacheCart(String(req.user.id), cartDetails, requestId);
   res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
+
+  res.locals.forensicRequestId = requestId;
+  logger.info('[CART_RESPONSE_TRACE][CONTROLLER_OUTPUT]', {
+    requestId,
+    purchaseItemCount: cartDetails.purchaseCart?.items?.length ?? 0,
+    rentalItemCount: cartDetails.rentalCart?.items?.length ?? 0,
+    responseDataKeys: Object.keys(cartDetails || {}),
+  });
+
   res.status(200).json(new ApiResponse(true, 'Cart updated', cartDetails));
 });
 
