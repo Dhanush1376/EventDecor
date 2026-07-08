@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import User from '../../models/User';
 import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
@@ -17,6 +18,11 @@ import { UserAddressService } from '../../services/users/UserAddressService';
 import { UserWishlistService } from '../../services/users/UserWishlistService';
 import { UserCartService } from '../../services/users/UserCartService';
 import { TeamInviteService } from '../../services/users/TeamInviteService';
+import logger from '../../config/logger';
+
+/** @internal Forensic experiment helper — hash identifiers for safe logging */
+const forensicHashId = (id: string) =>
+  crypto.createHash('sha256').update(id).digest('hex').slice(0, 12);
 
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
@@ -186,25 +192,38 @@ export const toggleWishlist = asyncHandler(async (req: any, res: Response) => {
 
 export const getCart = asyncHandler(async (req: any, res: Response) => {
   const userId = String(req.user.id);
-  const cacheKey = sessionKeys.cart(userId);
-  const cached = await getCachedSessionJson<any>(cacheKey);
-  if (cached) {
-    res.setHeader('X-Session-Cache', 'HIT');
-    res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
-    return res.status(200).json(new ApiResponse(true, 'Cart fetched', cached));
-  }
+  const requestId = crypto.randomBytes(4).toString('hex');
+
+  // ========== CART FORENSIC EXPERIMENT ==========
+  // Bypass Redis cart cache entirely — read directly from MongoDB.
+  // This isolates whether the Redis cache path is the root cause of
+  // the production-only cart vanishing bug.
+  // ===============================================
 
   const user = await User.findById(req.user.id);
   if (!user) throw new ApiError(404, 'User not found');
   const cartDetails = await UserService.computeAndValidateCart(user);
-  await cacheCart(userId, cartDetails);
-  res.setHeader('X-Session-Cache', 'MISS');
+
+  logger.info('[CART_FORENSIC][DB_READ]', {
+    requestId,
+    hashedUserId: forensicHashId(userId),
+    mongoUserDocumentIdHash: forensicHashId(String(user._id)),
+    rawCartItemCount: Array.isArray(user.cart) ? user.cart.length : 0,
+    computedPurchaseItemCount: cartDetails.purchaseCart?.items?.length ?? 0,
+    computedRentalItemCount: cartDetails.rentalCart?.items?.length ?? 0,
+    timestamp: Date.now(),
+  });
+
+  // Do NOT read from Redis. Do NOT write back to Redis cart cache.
+  res.setHeader('X-Session-Cache', 'BYPASS');
   res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Cart fetched', cartDetails));
 });
 
 export const addToCart = asyncHandler(async (req: any, res: Response) => {
   const { productId, quantity, type, rentalInfo } = req.body;
+  const requestId = crypto.randomBytes(4).toString('hex');
+
   const updatedUser = await UserCartService.addToCart(
     req.user.id,
     productId,
@@ -212,9 +231,21 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
     type,
     rentalInfo,
   );
-  await invalidateUserSessionCaches(String(req.user.id));
+
+  // Forensic DB write logging
+  logger.info('[CART_FORENSIC][DB_WRITE]', {
+    requestId,
+    hashedUserId: forensicHashId(String(req.user.id)),
+    mongoUserDocumentIdHash: forensicHashId(String(updatedUser._id)),
+    rawCartItemCount: Array.isArray(updatedUser.cart) ? updatedUser.cart.length : 0,
+    addedProductIdHash: forensicHashId(productId),
+    timestamp: Date.now(),
+  });
+
+  // Redis invalidation and caching with forensic requestId for internal logging
+  await invalidateUserSessionCaches(String(req.user.id), requestId);
   const cartDetails = await UserService.computeAndValidateCart(updatedUser);
-  await cacheCart(String(req.user.id), cartDetails);
+  await cacheCart(String(req.user.id), cartDetails, requestId);
   res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
   res.status(200).json(new ApiResponse(true, 'Cart updated', cartDetails));
 });
