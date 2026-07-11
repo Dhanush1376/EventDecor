@@ -14,6 +14,7 @@ import PaymentAttempt from '../../models/PaymentAttempt';
 import { LogisticsService } from '../../services/logisticsService';
 import { OrderIdempotencyManager } from './OrderIdempotencyManager';
 import OutboxEvent from '../../models/OutboxEvent';
+import { computeOrderTotals } from './orderTotals';
 import { InventoryService } from '../InventoryService';
 import { getFrontendUrl } from '../../utils/getFrontendUrl';
 
@@ -196,28 +197,22 @@ export class OrderCheckoutService {
         }
       }
 
-      let codFee = 0;
-      if (isCod) {
-        codFee = settings.payments.codFee;
-      }
-
-      const shippingFee =
-        subtotal > settings.shipping.freeShippingThreshold ? 0 : settings.shipping.deliveryCharge;
       const user = await User.findById(userId).session(session);
-      const preliminaryTotal = Math.max(
-        0,
-        subtotal + shippingFee + codFee + depositTotal - discount,
-      );
+      const totals = computeOrderTotals({
+        subtotal,
+        discount,
+        depositTotal,
+        isCod,
+        codFee: settings.payments.codFee,
+        freeShippingThreshold: settings.shipping.freeShippingThreshold,
+        deliveryCharge: settings.shipping.deliveryCharge,
+        useWallet: Boolean(useWallet && user),
+        walletBalance: user?.walletBalance || 0,
+      });
 
-      if (useWallet && user) {
-        const potentialWalletDeduction = Math.min(preliminaryTotal, user.walletBalance || 0);
-        if (potentialWalletDeduction > 0) {
-          walletDeduction = potentialWalletDeduction;
-          walletDeducted = true;
-        }
-      }
-
-      const total = preliminaryTotal - walletDeduction;
+      const { shippingFee, codFee, total } = totals;
+      walletDeduction = totals.walletDeduction;
+      if (walletDeduction > 0) walletDeducted = true;
 
       const randomSeq = crypto.randomBytes(3).toString('hex').toUpperCase();
       const invoiceNumber = `INV-${new Date().getFullYear()}-${randomSeq}`;

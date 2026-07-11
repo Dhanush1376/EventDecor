@@ -4,9 +4,11 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
-    // Keep unit tests hermetic: no DB/Redis connections should be opened.
-    // Integration tests that need infrastructure belong in tests/integration
-    // behind an explicit script.
-    testTimeout: 10000,
+    setupFiles: ['tests/integration/env.setup.ts'],
+    // Integration specs boot an in-memory Mongo replica set and share a single
+    // Mongoose connection, so specs must not run against it in parallel.
+    fileParallelism: false,
+    testTimeout: 30000,
+    hookTimeout: 120000,
   },
 });

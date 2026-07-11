@@ -189,11 +189,34 @@ export class PaymentVerificationService {
           }
         }
 
+        // Persist the failed-payment audit event INSIDE the transaction so it
+        // is durably recorded before the session is committed/ended. (Writing
+        // it after commit would run against a closed session and throw,
+        // masking the 400 below and losing the audit trail.)
+        await PaymentEvent.create(
+          [
+            {
+              eventId: generateUuid(),
+              orderId: attempt.orderData.pendingOrderId,
+              orderType: attempt.type,
+              eventType: 'failed',
+              amount: expectedAmount / 100,
+              currency: 'INR',
+              razorpayOrderId: razorpay_order_id,
+              razorpayPaymentId: razorpay_payment_id,
+              performedBy: 'system',
+              gatewayResponse: fetchedPayment,
+            },
+          ],
+          { session },
+        );
+
         if (!externalSession) {
           await session.commitTransaction();
           session.endSession();
         }
 
+        // External side-effects run only after the transaction has committed.
         if (fetchedPayment && fetchedPayment.status === 'captured') {
           try {
             await RazorpayGateway.initiateRefund(razorpay_payment_id, {
@@ -214,24 +237,6 @@ export class PaymentVerificationService {
           tags: { critical: 'checkout_failure' },
           extra: { attemptId: attempt._id, razorpay_order_id, razorpay_payment_id },
         });
-
-        await PaymentEvent.create(
-          [
-            {
-              eventId: generateUuid(),
-              orderId: attempt.orderData.pendingOrderId,
-              orderType: attempt.type,
-              eventType: 'failed',
-              amount: expectedAmount / 100,
-              currency: 'INR',
-              razorpayOrderId: razorpay_order_id,
-              razorpayPaymentId: razorpay_payment_id,
-              performedBy: 'system',
-              gatewayResponse: fetchedPayment,
-            },
-          ],
-          { session },
-        );
 
         throw new ApiError(400, 'Invalid payment details. Payment untrusted.');
       }
