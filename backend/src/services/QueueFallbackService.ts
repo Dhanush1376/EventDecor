@@ -261,6 +261,13 @@ export class QueueFallbackService {
           await createAdminNotification(data);
           break;
         }
+        case 'whatsapp-retry': {
+          const {
+            WhatsAppRetryService,
+          } = require('../domains/notifications/whatsapp/WhatsAppRetryService');
+          await WhatsAppRetryService.processRetry({ id: jobName, data } as any);
+          break;
+        }
         case 'recommendationQueue':
           logger.warn(
             `[QUEUE FALLBACK] Ignoring recommendation task ${jobName} since it is heavy for memory queue`,

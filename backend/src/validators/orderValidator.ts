@@ -1,41 +1,20 @@
 import { body } from 'express-validator';
 
 export const createOrderValidator = [
-  body('items')
-    .isArray({ min: 1 })
-    .withMessage('Order must contain at least one item'),
-  body('items.*.productId')
-    .isMongoId()
-    .withMessage('Invalid product ID'),
-  body('items.*.quantity')
-    .isInt({ min: 1 })
-    .withMessage('Quantity must be at least 1'),
-  body('shippingAddress.name')
-    .notEmpty()
-    .withMessage('Name is required'),
-  body('shippingAddress.phone')
-    .notEmpty()
-    .withMessage('Mobile number is required'),
-  body('shippingAddress.email')
-    .isEmail()
-    .withMessage('Please provide a valid email address'),
+  body('items').isArray({ min: 1 }).withMessage('Order must contain at least one item'),
+  body('items.*.productId').isMongoId().withMessage('Invalid product ID'),
+  body('items.*.quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
+  body('shippingAddress.name').notEmpty().withMessage('Name is required'),
+  body('shippingAddress.phone').notEmpty().withMessage('Mobile number is required'),
+  body('shippingAddress.email').isEmail().withMessage('Please provide a valid email address'),
   body('shippingAddress.pincode')
     .isLength({ min: 6, max: 6 })
     .withMessage('Pincode must be 6 digits'),
-  body('shippingAddress.address')
-    .notEmpty()
-    .withMessage('Address is required'),
-  body('shippingAddress.landmark')
-    .optional({ checkFalsy: true }),
-  body('shippingAddress.city')
-    .notEmpty()
-    .withMessage('City is required'),
-  body('shippingAddress.state')
-    .notEmpty()
-    .withMessage('State is required'),
-  body('shippingAddress.country')
-    .notEmpty()
-    .withMessage('Country is required'),
+  body('shippingAddress.address').notEmpty().withMessage('Address is required'),
+  body('shippingAddress.landmark').optional({ checkFalsy: true }),
+  body('shippingAddress.city').notEmpty().withMessage('City is required'),
+  body('shippingAddress.state').notEmpty().withMessage('State is required'),
+  body('shippingAddress.country').notEmpty().withMessage('Country is required'),
 ];
 
 export const verifyPaymentValidator = [
@@ -57,19 +36,12 @@ export const verifyPaymentValidator = [
 ];
 
 export const validateTotalsValidator = [
-  body('items')
-    .isArray({ min: 1 })
-    .withMessage('Items array is required'),
-  body('items.*.productId')
-    .isMongoId()
-    .withMessage('Invalid product ID'),
+  body('items').isArray({ min: 1 }).withMessage('Items array is required'),
+  body('items.*.productId').isMongoId().withMessage('Invalid product ID'),
   body('items.*.quantity')
     .isInt({ min: 1, max: 99 })
     .withMessage('Quantity must be between 1 and 99'),
-  body('couponCode')
-    .optional({ values: 'falsy' })
-    .trim()
-    .isLength({ max: 50 }),
+  body('couponCode').optional({ values: 'falsy' }).trim().isLength({ max: 50 }),
 ];
 
 export const codOtpEmailValidator = [
@@ -85,12 +57,12 @@ export const codOtpEmailValidator = [
 export const codOtpVerifyValidator = [
   ...codOtpEmailValidator,
   body('otp')
-    .customSanitizer(val => String(val))
+    .customSanitizer((val) => String(val))
     .trim()
     .notEmpty()
     .withMessage('OTP is required')
-    .isLength({ min: 4, max: 4 })
-    .withMessage('OTP must be exactly 4 digits. Check if your input was cut short.')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('OTP must be exactly 6 digits. Check if your input was cut short.')
     .isNumeric()
     .withMessage('OTP must contain only numbers'),
 ];
@@ -123,7 +95,7 @@ export const updateStatusValidator = [
       'shipped',
       'delivered',
       'cancelled',
-      'settled'
+      'settled',
     ])
     .withMessage('Invalid order status'),
 ];

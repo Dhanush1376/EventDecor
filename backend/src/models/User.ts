@@ -114,7 +114,6 @@ const UserSchema: Schema = new Schema(
     siriCoins: { type: Number, default: 0 },
     loyaltyTier: {
       type: String,
-      enum: ['Bronze', 'Silver', 'Gold', 'Platinum'],
       default: 'Bronze',
     },
     referralCode: { type: String, unique: true, sparse: true },

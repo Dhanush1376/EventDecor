@@ -102,13 +102,15 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const refreshSession = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = String(
-    req.body?.refreshToken ||
-      req.cookies?.[CUSTOMER_REFRESH_COOKIE] ||
-      req.cookies?.[ADMIN_REFRESH_COOKIE] ||
-      req.headers['x-refresh-token'] ||
-      '',
+  // Prefer the HttpOnly cookie (authoritative, rotated server-side) over any
+  // client-persisted fallback token. This avoids false-positive replay
+  // detection when a stale localStorage fallback is sent alongside a fresh
+  // cookie, which would otherwise revoke the whole session family.
+  const cookieToken = String(
+    req.cookies?.[CUSTOMER_REFRESH_COOKIE] || req.cookies?.[ADMIN_REFRESH_COOKIE] || '',
   ).trim();
+  const bodyToken = String(req.body?.refreshToken || req.headers['x-refresh-token'] || '').trim();
+  const refreshToken = cookieToken || bodyToken;
 
   if (!refreshToken) {
     logger.warn('[AUTH] Refresh attempted without refresh token cookie/body');
@@ -124,11 +126,16 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
     setCustomerRefreshCookie(res, result.refreshToken);
   }
 
+  // Only echo the rotated refresh token in the JSON body for clients that
+  // demonstrably cannot use cookies (e.g. Safari ITP blocking third-party
+  // cookies). Cookie-capable clients rotate via Set-Cookie alone, so the
+  // long-lived credential never becomes readable by page JavaScript.
+  const usedCookie = Boolean(cookieToken);
   res.status(200).json(
     new ApiResponse(true, 'Session refreshed', {
       user: result.user,
       accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
+      ...(usedCookie ? {} : { refreshToken: result.refreshToken }),
     }),
   );
 });

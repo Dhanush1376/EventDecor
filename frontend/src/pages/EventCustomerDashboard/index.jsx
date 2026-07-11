@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { SEO } from '../../components/seo/SEO';
 import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
 import { DashboardSkeleton } from '../../components/ui/Skeleton';
@@ -125,14 +126,26 @@ export function EventCustomerDashboard({
             <DashboardSkeleton />
           )
         ) : bookings.length === 0 ? (
-          <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[40vh]">
-            <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
-              <span className="material-symbols-outlined text-[20px]">event_busy</span>
-            </div>
-            <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
+          <div className="bg-surface-bright rounded-lg p-8 text-center shadow-sm flex flex-col items-center justify-center min-h-[35vh] relative overflow-hidden border border-black/5">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#8c7335]/5 rounded-full blur-3xl pointer-events-none" />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="w-16 h-16 rounded-full bg-[#8c7335]/5 text-[#8c7335] flex items-center justify-center mb-5 relative"
+            >
+              <div
+                className="absolute inset-0 rounded-full border border-[#8c7335]/20 animate-ping"
+                style={{ animationDuration: '3s' }}
+              />
+              <span className="material-symbols-outlined text-[24px] relative z-10">
+                event_busy
+              </span>
+            </motion.div>
+            <h3 className="font-display font-medium text-[18px] lg:text-[20px] text-black mb-2">
               No Active Events
             </h3>
-            <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px] mb-6">
+            <p className="text-[11px] text-black/40 max-w-[280px] mb-6 leading-normal">
               You have no active event setups. Explore our collections today.
             </p>
             <div className="flex justify-center mt-6">

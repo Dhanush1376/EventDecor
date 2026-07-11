@@ -85,7 +85,7 @@ export const invalidateUserSessionCaches = async (
           await redisClient!.del(key);
           // Forensic logging at the actual Redis DEL boundary — cart key only
           if (forensicRequestId && key === cartKey) {
-            logger.info('[CART_FORENSIC][REDIS_DEL_SUCCESS]', {
+            logger.debug('[CART_FORENSIC][REDIS_DEL_SUCCESS]', {
               requestId: forensicRequestId,
               hashedUserId: forensicHashId(userId),
               cartCacheKey: key,
@@ -143,7 +143,7 @@ export const cacheCart = async (
     // Forensic logging at the actual Redis SET boundary
     if (forensicRequestId) {
       const cartData = data as any;
-      logger.info('[CART_FORENSIC][REDIS_SET_SUCCESS]', {
+      logger.debug('[CART_FORENSIC][REDIS_SET_SUCCESS]', {
         requestId: forensicRequestId,
         hashedUserId: forensicHashId(userId),
         cartCacheKey: key,

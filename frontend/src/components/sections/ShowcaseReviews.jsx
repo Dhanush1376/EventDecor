@@ -3,9 +3,11 @@ import { OptimizedImage } from '../ui/OptimizedImage';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { reviewService, uploadService } from '../../services/domainServices';
+import { reviewService } from '../../services/domainServices';
+import { uploadService } from '../../services/api/uploadService';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import imageCompression from 'browser-image-compression';
 
 // ─── Star Component ─────────────────────────────────────────────────────────
 function StarRating({ value = 0, max = 5, interactive = false, size = 20, onChange }) {
@@ -46,48 +48,7 @@ function StarRating({ value = 0, max = 5, interactive = false, size = 20, onChan
 
 // ─── Review Name Helper ──────────────────────────────────────────────────────
 export function getPremiumReviewerName(review) {
-  const rawName = review.customer?.name || review.customerName || 'Customer';
-  const lowerRaw = rawName.toLowerCase();
-
-  const isTest =
-    lowerRaw.includes('test') ||
-    lowerRaw.includes('anonymous') ||
-    lowerRaw.includes('customer') ||
-    lowerRaw.includes('dhanush1376') ||
-    lowerRaw.includes('sakhisoaps') ||
-    lowerRaw.includes('praneethperumalla') ||
-    /^\d+$/.test(rawName) ||
-    !rawName.includes(' ') ||
-    rawName.includes('.');
-
-  if (!isTest) {
-    return rawName;
-  }
-
-  const seedString = review._id || review.id || String(rawName);
-  const premiumNames = [
-    'Aditi Rao',
-    'Vikram Malhotra',
-    'Meera Singhania',
-    'Radha Krishnan',
-    'Ananya Varma',
-    'Arjun Mehta',
-    'Priya Sen',
-    'Rohan Joshi',
-    'Kavya Iyer',
-    'Devraj Singhania',
-    'Siddharth Roy',
-    'Aarti Patel',
-    'Rajesh Kumar',
-    'Sunita Reddy',
-  ];
-
-  let hash = 0;
-  for (let i = 0; i < seedString.length; i++) {
-    hash = seedString.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % premiumNames.length;
-  return premiumNames[index];
+  return review.customer?.name || review.customerName || 'Anonymous Customer';
 }
 
 // ─── Review Card ─────────────────────────────────────────────────────────────
@@ -112,48 +73,48 @@ function ReviewCard({ review, showcaseId }) {
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-[24px] border border-black/5 p-5 lg:p-6 shadow-sm hover:shadow-luxury hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-h-[220px]"
+      className="bg-[#FAFAF9] rounded-[24px] border border-black/5 p-5 shadow-sm hover:shadow-luxury hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full"
     >
       <div>
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2.5">
             {/* Avatar */}
-            <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-              <span className="font-display text-primary text-sm font-bold">{initials}</span>
+            <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+              <span className="font-display text-primary text-xs font-bold">{initials}</span>
             </div>
             <div>
-              <p className="font-body text-sm font-semibold text-black leading-tight">
+              <p className="font-body text-xs font-semibold text-black leading-tight">
                 {customerName}
               </p>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-1.5 mt-0.5">
                 {review.verified && (
-                  <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-green-100">
-                    <span className="material-symbols-outlined text-[10px]">verified</span>
+                  <span className="inline-flex items-center gap-0.5 bg-green-50 text-green-700 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border border-green-100">
+                    <span className="material-symbols-outlined text-[9px]">verified</span>
                     Verified Purchase
                   </span>
                 )}
               </div>
             </div>
           </div>
-          <span className="font-label text-[10px] text-black/30 font-medium shrink-0">{date}</span>
+          <span className="font-label text-[9px] text-black/30 font-medium shrink-0">{date}</span>
         </div>
 
-        <StarRating value={review.rating} size={14} />
+        <StarRating value={review.rating} size={12} />
 
         {review.comment && (
-          <p className="font-body text-[13px] text-black/70 leading-relaxed mt-3 line-clamp-3">
+          <p className="font-body text-xs text-black/70 leading-relaxed mt-2.5 line-clamp-3">
             {review.comment}
           </p>
         )}
       </div>
 
       {review.images && review.images.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-black/5">
+        <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-black/5">
           {review.images.slice(0, 3).map((imgUrl, idx) => (
             <Link
               key={idx}
               to={`/events/#reviews/images`}
-              className="w-12 h-12 rounded-xl overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs cursor-pointer relative group flex-shrink-0"
+              className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs cursor-pointer relative group flex-shrink-0"
             >
               <OptimizedImage
                 src={imgUrl}
@@ -167,7 +128,7 @@ function ReviewCard({ review, showcaseId }) {
           {review.images.length > 3 && (
             <Link
               to={`/events/#reviews/images`}
-              className="w-12 h-12 rounded-xl overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[10px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[9px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
             >
               +{review.images.length - 3}
             </Link>
@@ -217,12 +178,27 @@ export function WriteReviewModal({ showcaseId, showcaseTitle, onClose, onSuccess
     try {
       let imageUrls = [];
       if (selectedFiles.length > 0) {
-        toast.loading('Uploading review images...', { id: 'review-upload' });
+        toast.loading('Compressing and uploading review images...', { id: 'review-upload' });
         const formData = new FormData();
-        selectedFiles.forEach((file) => {
-          formData.append('images', file);
-        });
-        const uploadRes = await uploadService.uploadImages(formData);
+
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1280,
+          useWebWorker: true,
+        };
+
+        for (const file of selectedFiles) {
+          try {
+            const compressedFile = await imageCompression(file, options);
+            formData.append('images', compressedFile, file.name);
+          } catch (error) {
+            console.error('Compression error:', error);
+            // Fallback to original file
+            formData.append('images', file);
+          }
+        }
+
+        const uploadRes = await uploadService.uploadReviewImages(formData);
         imageUrls = uploadRes.images || [];
         toast.dismiss('review-upload');
       }
@@ -581,17 +557,10 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
       className="relative z-10 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-12 lg:py-16 overflow-hidden"
     >
       {/* Section Header */}
-      <div className="flex flex-row items-center justify-between gap-4 mb-8 lg:mb-10">
-        <div>
-          <span className="font-label text-[10px] uppercase tracking-[0.35em] text-primary font-bold block mb-1">
-            Customer Reviews
-          </span>
-          <h2 className="font-display text-2xl lg:text-3xl text-black font-bold tracking-tight">
-            What Buyers Say
-          </h2>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 lg:mb-8">
+        <h2 className="font-display text-xl lg:text-2xl text-black text-left">What Buyers Say</h2>
 
-        <div className="flex flex-col items-end gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-4">
           {renderCTA()}
           {reviews.length > 0 && (
             <div className="flex items-center gap-3">
@@ -682,7 +651,7 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="skeleton-box bg-white rounded-[24px] border border-black/5 p-5 space-y-3 shrink-0 w-[290px] xs:w-[320px] sm:w-[360px] lg:w-[400px] h-[220px]"
+              className="skeleton-box bg-white rounded-[24px] border border-black/5 p-5 space-y-3 shrink-0 w-[240px] xs:w-[280px] sm:w-[300px] lg:w-[320px] h-[160px]"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-neutral-100/50 animate-pulse" />
@@ -715,7 +684,7 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
           {reviews.map((review) => (
             <div
               key={review._id || review.id}
-              className="snap-start shrink-0 w-[290px] xs:w-[320px] sm:w-[360px] lg:w-[400px] h-auto self-stretch"
+              className="snap-start shrink-0 w-[240px] xs:w-[280px] sm:w-[300px] lg:w-[320px] h-auto self-stretch"
             >
               <ReviewCard review={review} showcaseId={showcaseId} />
             </div>

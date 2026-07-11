@@ -197,7 +197,6 @@ app.get('/', noCacheMiddleware, (req: Request, res: Response) => {
     success: true,
     message: 'Welcome to Siri Arts & Crafts API Gateway. Systems are fully functional.',
     timestamp: new Date().toISOString(),
-    documentation: 'https://github.com/Dhanush1376/EventDecor',
   });
 });
 

@@ -3,9 +3,10 @@ import { m as motion } from 'framer-motion';
 import { SectionHeader } from '../../../components/shared/SectionHeader';
 import { MandalaElement } from '../../../components/ui/MandalaElement';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
+import { useShowcases } from '../../../hooks/useShowcaseQueries';
 
 /**
  * Shop By Occasion / Event Types using real digital studio event types.
@@ -19,21 +20,8 @@ export function ShopByOccasion({ previewContent }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
-  const [showcases, setShowcases] = useState([]);
-  const [showcasesLoading, setShowcasesLoading] = useState(true);
-
-  useEffect(() => {
-    import('../../../services/domainServices').then(({ showcaseService }) => {
-      showcaseService
-        .getAll()
-        .then((res) => {
-          const list = res?.data || [];
-          setShowcases(Array.isArray(list) ? list : []);
-        })
-        .catch(() => setShowcases([]))
-        .finally(() => setShowcasesLoading(false));
-    });
-  }, []);
+  const { data: showcasesData, isPending: showcasesLoading } = useShowcases();
+  const showcases = showcasesData || [];
 
   const selectedShowcaseIds = config.selectedShowcaseIds || [];
 
@@ -258,12 +246,12 @@ export function ShopByOccasion({ previewContent }) {
               />
             )}
             {/* Base dark gradient, becomes slightly darker on hover for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-60 group-hover:opacity-80 transition-all duration-700"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-all duration-700 rounded-b-[32px]"></div>
 
             <div className="absolute inset-0 flex flex-col justify-end p-8">
-              {/* Vertical Text (Visible when contracted) */}
-              <div className="absolute inset-0 flex flex-col justify-end items-center pb-12 pointer-events-none group-hover:opacity-0 transition-opacity duration-300">
-                <span className="text-white font-serif tracking-widest text-lg xl:text-xl uppercase -rotate-90 origin-bottom-left absolute left-1/2 -ml-3 bottom-12 whitespace-nowrap opacity-80 max-w-[450px] truncate">
+              {/* Contracted Horizontal Text (Visible when contracted) */}
+              <div className="absolute inset-0 flex flex-col justify-end items-center p-6 pb-12 pointer-events-none group-hover:opacity-0 transition-opacity duration-300 z-10">
+                <span className="text-white/95 font-serif text-center text-sm lg:text-base xl:text-lg uppercase tracking-[0.15em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] line-clamp-3 leading-relaxed max-w-[90%]">
                   {occasion.label}
                 </span>
               </div>

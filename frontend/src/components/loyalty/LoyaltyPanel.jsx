@@ -11,8 +11,7 @@ import logger from '../../utils/core/logger';
 export function LoyaltyPanel() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
-  const [referralInput, setReferralInput] = useState('');
-  const [submittingReferral, setSubmittingReferral] = useState(false);
+
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
 
   const { data: settings } = useQuery({
@@ -20,9 +19,6 @@ export function LoyaltyPanel() {
     queryFn: () => storeSettingsService.getPublicSettings(),
     staleTime: 10 * 60 * 1000,
   });
-
-  const referrerReward = settings?.loyalty?.referrerReward || 150;
-  const refereeReward = settings?.loyalty?.refereeReward || 50;
 
   const fetchLoyaltyData = async () => {
     setLoading(true);
@@ -56,32 +52,6 @@ export function LoyaltyPanel() {
       document.body.style.overflow = '';
     };
   }, [isCouponModalOpen]);
-
-  const handleApplyReferral = async (e) => {
-    e.preventDefault();
-    if (!referralInput.trim()) {
-      toast.error('Please enter a valid referral code');
-      return;
-    }
-
-    setSubmittingReferral(true);
-    const toastId = toast.loading('Verifying referral code...');
-    try {
-      const res = await loyaltyService.applyReferral(referralInput);
-      if (res.success) {
-        toast.success(res.message, { id: toastId, duration: 5000 });
-        setReferralInput('');
-        fetchLoyaltyData(); // reload statistics
-      } else {
-        toast.error(res.message || 'Verification failed', { id: toastId });
-      }
-    } catch (err) {
-      const errMsg = err.response?.data?.message || 'Invalid referral code or self-referral.';
-      toast.error(errMsg, { id: toastId });
-    } finally {
-      setSubmittingReferral(false);
-    }
-  };
 
   const copyToClipboard = (text, message = 'Copied to clipboard!') => {
     navigator.clipboard.writeText(text);
@@ -224,9 +194,6 @@ export function LoyaltyPanel() {
                 return `• Earn ${percent}% Cashback & ${settings?.loyalty?.earnRatePoints || 1} Coin per ₹${settings?.loyalty?.earnRateAmount || 10} spent`;
               })()}
             </div>
-            <span className="font-mono text-[9px] text-white/50 tracking-wider bg-black/20 px-2 py-1 rounded self-start sm:self-auto">
-              SIRI-PASS-{data.referralCode?.split('-')[2] || '9999'}
-            </span>
           </div>
         </div>
 
@@ -279,10 +246,6 @@ export function LoyaltyPanel() {
               <strong className="text-on-surface font-semibold">
                 ₹{data.lifetimeSpend.toLocaleString('en-IN')}
               </strong>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Current Referral Count:</span>
-              <strong className="text-on-surface font-semibold">{data.referralsCount}</strong>
             </div>
           </div>
         </div>

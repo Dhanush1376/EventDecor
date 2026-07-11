@@ -1,6 +1,6 @@
 import ApiError from '../../utils/ApiError';
 
-export type EventBookingStatus =
+export type EventJobStatus =
   | 'draft'
   | 'consultation_scheduled'
   | 'quote_sent'
@@ -21,7 +21,7 @@ export type EventBookingStatus =
 
 export type BookingWorkflowType = 'standard' | 'custom';
 
-const standardWorkflowTransitions: Record<EventBookingStatus, EventBookingStatus[]> = {
+const standardWorkflowTransitions: Record<EventJobStatus, EventJobStatus[]> = {
   draft: ['pending_payment', 'cancelled'],
   consultation_scheduled: [], // N/A
   quote_sent: [], // N/A
@@ -41,7 +41,7 @@ const standardWorkflowTransitions: Record<EventBookingStatus, EventBookingStatus
   failed: ['pending_payment', 'cancelled'],
 };
 
-const customWorkflowTransitions: Record<EventBookingStatus, EventBookingStatus[]> = {
+const customWorkflowTransitions: Record<EventJobStatus, EventJobStatus[]> = {
   draft: ['consultation_scheduled', 'cancelled'],
   consultation_scheduled: ['quote_sent', 'cancelled'],
   quote_sent: ['contract_signed', 'cancelled'],
@@ -61,7 +61,7 @@ const customWorkflowTransitions: Record<EventBookingStatus, EventBookingStatus[]
   failed: ['pending_payment', 'cancelled'],
 };
 
-export class EventBookingStateMachine {
+export class EventJobStateMachine {
   /**
    * Determine the workflow type.
    */
@@ -74,8 +74,8 @@ export class EventBookingStateMachine {
   /**
    * Check if a transition is valid.
    */
-  static canTransition(booking: any, newStatus: EventBookingStatus): boolean {
-    const currentStatus = booking.status as EventBookingStatus;
+  static canTransition(booking: any, newStatus: EventJobStatus): boolean {
+    const currentStatus = booking.status as EventJobStatus;
     if (currentStatus === newStatus) return true;
 
     const workflow = this.determineWorkflow(booking);
@@ -87,7 +87,7 @@ export class EventBookingStateMachine {
   /**
    * Transition the booking's status.
    */
-  static transition(booking: any, newStatus: EventBookingStatus, note: string, updatedBy?: string) {
+  static transition(booking: any, newStatus: EventJobStatus, note: string, updatedBy?: string) {
     if (!this.canTransition(booking, newStatus)) {
       const workflow = this.determineWorkflow(booking);
       throw new ApiError(

@@ -61,37 +61,6 @@ export function LoyaltySkeleton() {
         </div>
       </div>
 
-      {/* 2. REFERRAL & REWARD PROGRAM */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-outline-variant/30">
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-3.5 w-32" />
-              <Skeleton className="h-3 w-3/4" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-2.5 w-24" />
-            <Skeleton className="h-10 w-full rounded-lg" />
-          </div>
-        </div>
-
-        <div className="space-y-4 lg:border-l border-outline-variant/30 lg:pl-8">
-          <div className="flex items-start gap-3">
-            <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-3.5 w-32" />
-              <Skeleton className="h-3 w-3/4" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-2.5 w-24" />
-            <Skeleton className="h-10 w-full rounded-lg" />
-          </div>
-        </div>
-      </div>
-
       {/* 3. COUPONS CENTER */}
       <div className="space-y-4 pt-2 border-t border-outline-variant/30">
         <div className="flex justify-between items-center pb-2">

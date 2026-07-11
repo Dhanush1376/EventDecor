@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
-  submitEventBooking,
-  getMyEventBookings,
-  getSingleEventBooking,
+  submitEventJob,
+  getMyEventJobs,
+  getSingleEventJob,
   customerApproveQuote,
   customerSubmitPayment,
   postChatMessage,
@@ -20,7 +20,7 @@ import { validate } from '../../middleware/validateMiddleware';
 import { validateRequest } from '../../middleware/zodValidationMiddleware';
 import { initializeCheckoutSchema } from '../../validators/eventBookingSchemas';
 import {
-  submitEventBookingValidator,
+  submitEventJobValidator,
   eventBookingIdParam,
   adminUpdateBookingStatusValidator,
   adminUpdateQuotationValidator,
@@ -87,12 +87,12 @@ router.post(
   '/',
   requireAuth,
   bookingSubmitLimiter,
-  submitEventBookingValidator,
+  submitEventJobValidator,
   validate,
-  submitEventBooking,
+  submitEventJob,
 );
-router.get('/my-bookings', requireAuth, getMyEventBookings);
-router.get('/:id', requireAuth, ...eventBookingIdParam, validate, getSingleEventBooking);
+router.get('/my-bookings', requireAuth, getMyEventJobs);
+router.get('/:id', requireAuth, ...eventBookingIdParam, validate, getSingleEventJob);
 router.post(
   '/:id/respond-quote',
   requireAuth,

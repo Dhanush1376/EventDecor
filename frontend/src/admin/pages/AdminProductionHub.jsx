@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { PageHeader, fadeUp, stagger } from '../components/AdminUIKit';
+import { PageHeader, fadeUp, stagger, SkeletonCard } from '../components/AdminUIKit';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -150,7 +150,7 @@ function KanbanView() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/v1/production/orders/active');
+      const res = await api.get('/production/orders/active');
       if (res.data?.success) {
         const orders = res.data.data || [];
         const newStages = JSON.parse(JSON.stringify(INITIAL_STAGES));
@@ -198,7 +198,7 @@ function KanbanView() {
 
     try {
       setLoading(true);
-      const res = await api.post('/api/v1/production/transitions', {
+      const res = await api.post('/production/transitions', {
         productionOrderId,
         sku,
         nextStage: nextStageId,
@@ -340,7 +340,7 @@ function StageView({ stageId, title, icon, desc, color, bg }) {
   const fetchStageOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/v1/production/orders/active');
+      const res = await api.get('/production/orders/active');
       if (res.data?.success) {
         const orders = res.data.data || [];
         const stageTasks = [];
@@ -383,7 +383,7 @@ function StageView({ stageId, title, icon, desc, color, bg }) {
           ? INITIAL_STAGES[stageIndex + 1].id
           : 'handover_complete';
 
-      const res = await api.post('/api/v1/production/transitions', {
+      const res = await api.post('/production/transitions', {
         productionOrderId: taskId,
         sku,
         nextStage: nextStageId,
@@ -419,8 +419,10 @@ function StageView({ stageId, title, icon, desc, color, bg }) {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center flex-1">
-          <span className="w-8 h-8 border-4 border-[var(--admin-accent)] border-t-transparent rounded-full animate-spin"></span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       ) : tasks.length === 0 ? (
         <div className="admin-card p-12 flex flex-col items-center justify-center text-center flex-1">

@@ -23,7 +23,7 @@ const RestoreWizard = () => {
       const time = await backupService.fetchRestoreTimeline(selectedBackup);
       setSimulation(sim);
       setTimeline(time);
-      setStep(4); // Skip to step 4 for mock demo
+      setStep(4);
     } catch (err) {
       alert('Simulation failed: ' + err.message);
     }
@@ -34,19 +34,12 @@ const RestoreWizard = () => {
       setIsRestoring(true);
       setStep(7); // Progress step
 
-      // Mock progress
-      let p = 0;
-      const interval = setInterval(() => {
-        p += 10;
-        setRestoreProgress(p);
-        if (p >= 100) {
-          clearInterval(interval);
-          setStep(8); // Results step
-          setIsRestoring(false);
-        }
-      }, 500);
-
+      setRestoreProgress(10); // Start progress
       await backupService.executeRestore(selectedBackup);
+      setRestoreProgress(100);
+
+      setStep(8); // Results step
+      setIsRestoring(false);
     } catch (err) {
       setIsRestoring(false);
       alert('Restore failed: ' + err.message);

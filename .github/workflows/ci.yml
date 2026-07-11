@@ -44,7 +44,6 @@ env:
   VITE_RAZORPAY_KEY_ID: rzptest_ci_placeholder
   VITE_SITE_NAME: Siri Arts & Crafts
   VITE_CONTACT_PHONE: "+91-9866006648"
-  VITE_MARBLE_TEXTURE_URL: https://dummyimage.com/1920x1080/ccc/000.webp&text=ci_placeholder_texture
 
 jobs:
   build:
@@ -150,9 +149,24 @@ jobs:
           fi
           curl -s -X POST "${{ secrets.RAILWAY_WEBHOOK_URL }}"
 
-      - name: Wait for Zero-Downtime Deployment
-        run: sleep 60
-      - name: Automated Rollback on Failure
-        run: echo "Rollback logic here if needed"
+      - name: Wait for deployment to become healthy
+        run: |
+          echo "Polling backend readiness (up to 5 minutes)..."
+          for i in $(seq 1 30); do
+            if curl -sSf --max-time 10 https://eventdecor-production-1647.up.railway.app/api/readiness > /dev/null 2>&1; then
+              echo "Backend is ready after ~$((i * 10))s."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Backend did not become ready within 5 minutes — investigate the Railway deployment." >&2
+          exit 1
+
       - name: Post-Deploy Smoke Tests
-        run: curl -sSf https://eventdecor-production-1647.up.railway.app/api/readiness || exit 1
+        run: |
+          set -e
+          base="https://eventdecor-production-1647.up.railway.app"
+          curl -sSf --max-time 10 "$base/api/readiness" > /dev/null
+          curl -sSf --max-time 10 "$base/health" > /dev/null
+          curl -sSf --max-time 10 "$base/api/version" > /dev/null
+          echo "All smoke tests passed."

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import EventBooking from '../../models/EventBooking';
+import EventJob from '../../domains/event_operations/models/EventJob';
 import { createAdminNotification } from '../../services/notificationService';
 import BookingMessage from '../../models/BookingMessage';
 import logger from '../../config/logger';
@@ -9,13 +9,13 @@ import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../../utils/pagination';
 import { ADMIN_ROLES } from '../../config/adminConfig';
-import { EventBookingService } from '../../services/eventBookingService';
-import { EventBookingCheckoutService } from '../../services/eventBooking/EventBookingCheckoutService';
+import { EventJobService } from '../../services/eventJobService';
+import { EventJobCheckoutService } from '../../services/eventBooking/EventJobCheckoutService';
 
 // 1. Submit Event Booking Inquiry (Customer)
-export const submitEventBooking = asyncHandler(async (req: Request, res: Response) => {
+export const submitEventJob = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
-  const { booking } = await EventBookingService.createBooking(userId as string, req.body);
+  const { booking } = await EventJobService.createBooking(userId as string, req.body);
   res
     .status(201)
     .json(new ApiResponse(true, 'Your luxury event design has been submitted!', booking));
@@ -26,7 +26,7 @@ export const initializeBookingCheckout = asyncHandler(async (req: Request, res: 
   const userId = (req as any).user?.id;
   if (!userId) throw new ApiError(401, 'Authentication credentials missing.');
 
-  const result = await EventBookingCheckoutService.initializeBookingCheckout(userId, req.body);
+  const result = await EventJobCheckoutService.initializeBookingCheckout(userId, req.body);
   res.status(200).json(new ApiResponse(true, 'Booking checkout initialized', result));
 });
 
@@ -35,7 +35,7 @@ export const verifyBookingCheckout = asyncHandler(async (req: Request, res: Resp
   const userId = (req as any).user?.id;
   if (!userId) throw new ApiError(401, 'Authentication credentials missing.');
 
-  const booking = await EventBookingCheckoutService.verifyBookingCheckout(userId, req.body);
+  const booking = await EventJobCheckoutService.verifyBookingCheckout(userId, req.body);
 
   // Send Notifications asynchronously outside transaction
   const eventDateStr = new Date(booking.date).toLocaleDateString('en-IN', {
@@ -55,8 +55,8 @@ export const verifyBookingCheckout = asyncHandler(async (req: Request, res: Resp
   res.status(200).json(new ApiResponse(true, 'Payment successful. Booking confirmed!', booking));
 });
 
-export const getMyEventBookings = asyncHandler(async (req: Request, res: Response) => {
-  const bookings = await EventBooking.find({ user: (req as any).user?.id })
+export const getMyEventJobs = asyncHandler(async (req: Request, res: Response) => {
+  const bookings = await EventJob.find({ user: (req as any).user?.id })
     .populate('eventPackage', 'title image') // only get necessary package fields
     .select(
       'bookingId title eventType date status pricing.totalPrice pricing.paymentStatus createdAt venue timing eventPackage inspirationImages',
@@ -150,8 +150,8 @@ export const getMyEventBookings = asyncHandler(async (req: Request, res: Respons
 });
 
 // 3. Get Single Event Booking (Client or Admin)
-export const getSingleEventBooking = asyncHandler(async (req: Request, res: Response) => {
-  const booking = await EventBooking.findById(req.params.id)
+export const getSingleEventJob = asyncHandler(async (req: Request, res: Response) => {
+  const booking = await EventJob.findById(req.params.id)
     .populate('user', 'name email phone')
     .populate('eventPackage', 'title basePrice image')
     .lean();
@@ -204,7 +204,7 @@ export const getSingleEventBooking = asyncHandler(async (req: Request, res: Resp
 // 4. Client Responds / Approves Quotation
 export const customerApproveQuote = asyncHandler(async (req: Request, res: Response) => {
   const { approved } = req.body;
-  const booking = await EventBooking.findById(req.params.id);
+  const booking = await EventJob.findById(req.params.id);
 
   if (!booking) {
     throw new ApiError(404, 'Booking not found');
@@ -249,7 +249,7 @@ export const customerSubmitPayment = asyncHandler(async (req: Request, res: Resp
     throw new ApiError(401, 'Authentication credentials missing.');
   }
 
-  const booking = await EventBookingService.customerSubmitPayment(
+  const booking = await EventJobService.customerSubmitPayment(
     req.params.id as string,
     userId,
     amount,
@@ -263,7 +263,7 @@ export const customerSubmitPayment = asyncHandler(async (req: Request, res: Resp
 // 6. Post Real-Time Studio Chat Message
 export const postChatMessage = asyncHandler(async (req: Request, res: Response) => {
   const { message, attachments } = req.body;
-  const booking = await EventBooking.findById(req.params.id);
+  const booking = await EventJob.findById(req.params.id);
 
   if (!booking) {
     throw new ApiError(404, 'Workspace not found');
@@ -290,7 +290,7 @@ export const postChatMessage = asyncHandler(async (req: Request, res: Response) 
     attachments: attachments || [],
   });
 
-  const updatedBooking = await EventBooking.findById(booking._id).populate('user').lean();
+  const updatedBooking = await EventJob.findById(booking._id).populate('user').lean();
   const messages = await BookingMessage.find({ bookingId: booking._id })
     .sort({ timestamp: 1 })
     .lean();
@@ -318,14 +318,14 @@ export const adminGetAllBookings = asyncHandler(async (req: Request, res: Respon
   const { page, limit, skip } = getPaginationOptions(req.query);
 
   const [bookings, totalCount] = await Promise.all([
-    EventBooking.find(filterQuery)
+    EventJob.find(filterQuery)
       .populate('user', 'name email phone')
       .populate('eventPackage', 'title basePrice image')
       .sort({ date: 1 })
       .skip(skip)
       .limit(limit)
       .lean(),
-    EventBooking.countDocuments(filterQuery),
+    EventJob.countDocuments(filterQuery),
   ]);
 
   res
@@ -344,18 +344,14 @@ export const adminUpdateStatus = asyncHandler(async (req: Request, res: Response
   const { status } = req.body;
   const adminId = (req as any).user.id;
 
-  const booking = await EventBookingService.adminUpdateStatus(
-    req.params.id as string,
-    status,
-    adminId,
-  );
+  const booking = await EventJobService.adminUpdateStatus(req.params.id as string, status, adminId);
 
   res.status(200).json(new ApiResponse(true, 'Timeline status updated', booking));
 });
 
 // 9. Admin Refines Quotation Estimates
 export const adminUpdateQuotation = asyncHandler(async (req: Request, res: Response) => {
-  const booking = await EventBookingService.adminUpdateQuotation(req.params.id as string, req.body);
+  const booking = await EventJobService.adminUpdateQuotation(req.params.id as string, req.body);
 
   res
     .status(200)
@@ -365,7 +361,7 @@ export const adminUpdateQuotation = asyncHandler(async (req: Request, res: Respo
 // 10. Admin Manages Logistics & Setup/Pickup Schedules
 export const adminUpdateLogistics = asyncHandler(async (req: Request, res: Response) => {
   const { setupTiming, pickupTiming, assignedTeam, rentedInventory, adminNotes, venue } = req.body;
-  const booking = await EventBooking.findById(req.params.id);
+  const booking = await EventJob.findById(req.params.id);
 
   if (!booking) {
     throw new ApiError(404, 'Booking not found');
@@ -398,7 +394,7 @@ export const adminUpdateLogistics = asyncHandler(async (req: Request, res: Respo
 // 11. Admin Internal Notes Logger
 export const adminUpdateNotes = asyncHandler(async (req: Request, res: Response) => {
   const { adminNotes } = req.body;
-  const booking = await EventBooking.findByIdAndUpdate(
+  const booking = await EventJob.findByIdAndUpdate(
     req.params.id,
     { adminNotes },
     { returnDocument: 'after' },

@@ -431,5 +431,9 @@ export const initJobs = () => {
   // 23. S3 Disaster Recovery Sync
   startDocumentBackupJob();
 
+  // 24. WhatsApp Automation Cron Jobs
+  const { startWhatsAppCronJobs } = require('./whatsappCronJobs');
+  startWhatsAppCronJobs();
+
   logger.info('⏰ Background jobs initialized (distributed locks active when REDIS_URL is set)');
 };

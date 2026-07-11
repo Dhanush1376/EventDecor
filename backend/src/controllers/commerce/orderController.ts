@@ -154,14 +154,14 @@ export const handleRazorpayWebhook = asyncHandler(async (req: Request, res: Resp
   const rawBody = (req as any).rawBody as Buffer | undefined;
   if (!rawBody) {
     logger.error(
-      'ðŸ¥ [SECURITY CRITICAL] [WEBHOOK_ERROR] Webhook received without raw body â€” middleware misconfiguration!',
+      '[SECURITY CRITICAL][WEBHOOK_ERROR] Webhook received without raw body - middleware misconfiguration!',
     );
     throw new ApiError(500, 'Webhook processing error');
   }
 
   if (!PaymentWebhookService.verifyWebhookSignature(signature, rawBody, webhookSecret)) {
     logger.error(
-      'ðŸ¥ [SECURITY CRITICAL] [WEBHOOK_ERROR] Invalid Razorpay webhook signature detected!',
+      '[SECURITY CRITICAL][WEBHOOK_ERROR] Invalid Razorpay webhook signature detected!',
       { ip: req.ip },
     );
     throw new ApiError(400, 'Invalid webhook signature');

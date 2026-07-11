@@ -76,7 +76,7 @@ export const secretLeakInterceptor = (req: Request, res: Response, next: NextFun
             );
 
             if (isCartRoute) {
-              logger.info('[CART_RESPONSE_TRACE][SECURITY_INTERCEPT]', {
+              logger.debug('[CART_RESPONSE_TRACE][SECURITY_INTERCEPT]', {
                 requestId: res.locals.forensicRequestId || 'unknown',
                 matchedRule: pattern.source,
                 actionTaken: 'REDACTED_RESPONSE_500',
@@ -101,7 +101,7 @@ export const secretLeakInterceptor = (req: Request, res: Response, next: NextFun
     }
 
     if (req.originalUrl.includes('/api/v1/users/cart')) {
-      logger.info('[CART_RESPONSE_TRACE][FINAL_BODY]', {
+      logger.debug('[CART_RESPONSE_TRACE][FINAL_BODY]', {
         requestId: res.locals.forensicRequestId || 'unknown',
         purchaseItemCount: body?.data?.purchaseCart?.items?.length ?? 0,
         rentalItemCount: body?.data?.rentalCart?.items?.length ?? 0,

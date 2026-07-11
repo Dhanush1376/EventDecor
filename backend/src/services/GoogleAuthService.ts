@@ -181,10 +181,10 @@ class GoogleAuthService {
     // ── Post-login: New user onboarding (same as OTP flow) ──
     if (isNewUser) {
       try {
-        const { LoyaltyService } = require('./loyaltyService');
-        await LoyaltyService.setupNewUserRewards(user._id.toString());
-      } catch (loyaltyErr) {
-        logger.error('Failed to setup loyalty onboarding rewards:', loyaltyErr);
+        const { RuleEngine } = require('./RuleEngine');
+        await RuleEngine.evaluateTrigger('on_signup', { user });
+      } catch (ruleErr) {
+        logger.error('Failed to evaluate signup rules:', ruleErr);
       }
 
       try {

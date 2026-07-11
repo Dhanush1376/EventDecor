@@ -25,7 +25,7 @@ export interface IInventoryLog extends Document {
     | 'rental_placed'
     | 'booking_placed';
   orderId?: mongoose.Types.ObjectId;
-  referenceType?: 'Order' | 'RentalOrder' | 'EventBooking';
+  referenceType?: 'Order' | 'RentalOrder' | 'EventJob';
   performedBy?: string;
   note?: string;
   createdAt: Date;
@@ -53,7 +53,7 @@ const InventoryLogSchema: Schema = new Schema(
       ],
     },
     orderId: { type: Schema.Types.ObjectId }, // Flexible ref based on referenceType
-    referenceType: { type: String, enum: ['Order', 'RentalOrder', 'EventBooking'] },
+    referenceType: { type: String, enum: ['Order', 'RentalOrder', 'EventJob'] },
     performedBy: { type: String }, // userId or 'system' for automated jobs
     note: { type: String },
   },

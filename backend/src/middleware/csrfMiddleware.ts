@@ -12,19 +12,26 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 /** Paths that must not require CSRF (webhooks, external providers). */
 const CSRF_EXEMPT_PATHS = new Set(['/api/orders/webhook']);
 
-/** Auth routes that must work on cold load before CSRF cookie is established. */
-const CSRF_EXEMPT_SUFFIXES = [
+/**
+ * Auth routes that must work on cold load before the CSRF cookie is established.
+ * Matched as exact pathnames (under both /api and /api/v1) — never by suffix —
+ * so unrelated routes can't accidentally inherit the exemption.
+ */
+const CSRF_EXEMPT_ROUTES = [
   '/auth/refresh',
-  '/auth/login',
-  '/auth/register',
   '/auth/send-otp',
   '/auth/verify-otp',
   '/auth/google',
+  '/admin/auth/login',
   '/tracking/session',
   '/tracking/event',
   '/tracking/batch',
   '/analytics/events',
 ];
+
+const CSRF_EXEMPT_EXACT = new Set(
+  CSRF_EXEMPT_ROUTES.flatMap((route) => [`/api${route}`, `/api/v1${route}`]),
+);
 
 const generateToken = (): string => crypto.randomBytes(32).toString('hex');
 
@@ -64,8 +71,8 @@ export const validateCsrf = (req: Request, res: Response, next: NextFunction): v
     return next();
   }
 
-  const original = req.originalUrl || req.path;
-  if (CSRF_EXEMPT_SUFFIXES.some((suffix) => original.split('?')[0].endsWith(suffix))) {
+  const original = (req.originalUrl || req.path).split('?')[0];
+  if (CSRF_EXEMPT_EXACT.has(original)) {
     return next();
   }
 

@@ -1,6 +1,6 @@
 import logger from '../config/logger';
 import Order from '../models/Order';
-import EventBooking from '../models/EventBooking';
+import EventJob from '../domains/event_operations/models/EventJob';
 import RentalOrder from '../models/RentalOrder';
 import * as Sentry from '@sentry/node';
 
@@ -26,14 +26,14 @@ export class MetricsService {
       const orderFailureRate = newOrders > 0 ? (failedOrders / newOrders) * 100 : 0;
 
       // Bookings
-      const newBookings = await EventBooking.countDocuments({ createdAt: { $gte: oneHourAgo } });
-      const failedBookings = await EventBooking.countDocuments({
+      const newBookings = await EventJob.countDocuments({ createdAt: { $gte: oneHourAgo } });
+      const failedBookings = await EventJob.countDocuments({
         createdAt: { $gte: oneHourAgo },
         status: 'failed',
       });
       const bookingFailureRate = newBookings > 0 ? (failedBookings / newBookings) * 100 : 0;
 
-      const bookingConflicts = await EventBooking.countDocuments({
+      const bookingConflicts = await EventJob.countDocuments({
         createdAt: { $gte: oneHourAgo },
         'statusHistory.note': { $regex: /date fully booked/i },
       });

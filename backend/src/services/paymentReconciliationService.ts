@@ -1,5 +1,5 @@
 import Order from '../models/Order';
-import EventBooking from '../models/EventBooking';
+import EventJob from '../domains/event_operations/models/EventJob';
 import RentalOrder from '../models/RentalOrder';
 import logger from '../config/logger';
 import * as Sentry from '@sentry/node';
@@ -221,7 +221,7 @@ export class PaymentReconciliationService {
     }
 
     // --- EVENT BOOKING RECONCILIATION ---
-    const paidMissingPaymentIdBookings = await EventBooking.find({
+    const paidMissingPaymentIdBookings = await EventJob.find({
       'pricing.paymentStatus': { $in: ['partial', 'paid'] },
       $or: [
         { razorpayPaymentId: { $exists: false } },
@@ -246,7 +246,7 @@ export class PaymentReconciliationService {
       });
     }
 
-    const pendingWithRazorpayStaleBookings = await EventBooking.find({
+    const pendingWithRazorpayStaleBookings = await EventJob.find({
       status: { $in: ['pending_payment', 'payment_processing'] },
       razorpayOrderId: { $exists: true, $ne: '' },
       createdAt: { $lt: oneHourAgo },
@@ -475,7 +475,7 @@ export class PaymentReconciliationService {
     }
 
     // Event Bookings
-    const abandonedBookings = await EventBooking.find({
+    const abandonedBookings = await EventJob.find({
       status: { $in: ['pending_payment', 'payment_processing'] },
       razorpayOrderId: { $exists: true, $ne: '' },
       createdAt: { $lt: twoHoursAgo },
@@ -484,11 +484,11 @@ export class PaymentReconciliationService {
       .lean();
 
     for (const booking of abandonedBookings) {
-      await processAbandoned(booking, 'EventBooking', async (id, status) => {
-        const b = await EventBooking.findById(id);
+      await processAbandoned(booking, 'EventJob', async (id, status) => {
+        const b = await EventJob.findById(id);
         if (b) {
-          const { EventBookingStateMachine } = require('./eventBooking/EventBookingStateMachine');
-          EventBookingStateMachine.transition(
+          const { EventJobStateMachine } = require('./eventBooking/EventJobStateMachine');
+          EventJobStateMachine.transition(
             b,
             'cancelled',
             `Auto-cancelled due to payment abandonment timeout (> 2 hours). Razorpay Status: ${status}`,

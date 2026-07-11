@@ -97,31 +97,30 @@ export const MyReturns = () => {
 
       <AnimatePresence mode="popLayout">
         {returns.length === 0 ? (
-          <div className="bg-surface-bright rounded-3xl p-12 text-center shadow-sm flex flex-col items-center justify-center min-h-[50vh] relative overflow-hidden border border-black/5">
+          <div className="bg-surface-bright rounded-lg p-8 text-center shadow-sm flex flex-col items-center justify-center min-h-[35vh] relative overflow-hidden border border-black/5">
             {/* Decorative background blur */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#8c7335]/5 rounded-full blur-3xl pointer-events-none" />
 
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="w-24 h-24 rounded-full bg-primary/5 text-primary flex items-center justify-center mb-8 relative"
+              className="w-16 h-16 rounded-full bg-[#8c7335]/5 text-[#8c7335] flex items-center justify-center mb-5 relative"
             >
               <div
-                className="absolute inset-0 rounded-full border border-primary/20 animate-ping"
+                className="absolute inset-0 rounded-full border border-[#8c7335]/20 animate-ping"
                 style={{ animationDuration: '3s' }}
               />
-              <span className="material-symbols-outlined text-[32px] relative z-10">
+              <span className="material-symbols-outlined text-[24px] relative z-10">
                 assignment_return
               </span>
             </motion.div>
 
-            <h3 className="font-display font-light text-[24px] lg:text-[28px] text-black mb-3">
-              No Returns or Exchanges
+            <h3 className="font-display font-medium text-[18px] lg:text-[20px] text-black mb-2">
+              No Return Requests
             </h3>
-            <p className="text-[13px] text-black/50 max-w-[320px] mb-8 leading-relaxed">
-              You don't have any active return or exchange requests. Need to send something back?
-              Check your order history to initiate a return.
+            <p className="text-[11px] text-black/40 max-w-[280px] mb-6 leading-normal">
+              You have no active return requests. Check your order history to initiate a return.
             </p>
 
             <div className="flex justify-center mt-6">

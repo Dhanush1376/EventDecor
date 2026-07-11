@@ -10,7 +10,7 @@ import {
   PageHeader,
   StatCard,
   StatusBadge,
-  SkeletonDashboard,
+  SkeletonTable,
   fadeUp,
   stagger,
 } from '../components/AdminUIKit';
@@ -73,7 +73,7 @@ export function AdminInventory() {
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       {dataLoading ? (
-        <SkeletonDashboard />
+        <SkeletonTable rows={8} cols={6} />
       ) : (
         <>
           <PageHeader

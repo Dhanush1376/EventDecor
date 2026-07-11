@@ -237,6 +237,17 @@ class BackupService {
   }
 
   /**
+   * Download the Audit Trail CSV
+   */
+  async downloadAuditTrail(params) {
+    const response = await api.get('/admin/backup/audit', {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  }
+
+  /**
    * Rotate encryption key
    */
   async rotateKey() {

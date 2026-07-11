@@ -115,8 +115,8 @@ export const codOtpVerifySchema = z.object({
       otp: z
         .union([z.string(), z.number()])
         .transform((val) => String(val).trim())
-        .refine((val) => val.length === 4, {
-          message: 'OTP must be exactly 4 digits. Check if your input was cut short.',
+        .refine((val) => val.length === 6, {
+          message: 'OTP must be exactly 6 digits. Check if your input was cut short.',
         })
         .refine((val) => /^\d+$/.test(val), {
           message: 'OTP must contain only numbers',

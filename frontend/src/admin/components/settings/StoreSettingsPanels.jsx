@@ -273,27 +273,6 @@ export const LoyaltySettingsPanel = ({
       </FormGroup>
 
       <div className="md:col-span-2 mt-4">
-        <h4 className="font-bold text-[var(--admin-text-primary)] mb-1">Referrals</h4>
-        <hr className="border-[var(--admin-border-subtle)] mb-4" />
-      </div>
-      <FormGroup label="Bonus for Referrer (₹)">
-        <Input
-          type="number"
-          name="referralBonusReferrer"
-          value={formData.referralBonusReferrer}
-          onChange={handleChange}
-        />
-      </FormGroup>
-      <FormGroup label="Bonus for Referee (₹)">
-        <Input
-          type="number"
-          name="referralBonusReferee"
-          value={formData.referralBonusReferee}
-          onChange={handleChange}
-        />
-      </FormGroup>
-
-      <div className="md:col-span-2 mt-4">
         <h4 className="font-bold text-[var(--admin-text-primary)] mb-1">Review Rewards</h4>
         <hr className="border-[var(--admin-border-subtle)] mb-4" />
       </div>

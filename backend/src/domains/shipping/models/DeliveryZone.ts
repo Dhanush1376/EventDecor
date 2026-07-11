@@ -1,8 +1,9 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { SoftDeleteModel } from '../../../utils/SoftDeletePlugin';
 import ForensicAuditPlugin from '../../../utils/ForensicAuditPlugin';
+import { BaseEntityPlugin, IBaseEntity } from '../../../utils/BaseEntityPlugin';
 
-export interface IDeliveryZone extends Document {
+export interface IDeliveryZone extends IBaseEntity {
   pincodeStart: string;
   pincodeEnd: string;
   zoneName: string;
@@ -31,6 +32,7 @@ DeliveryZoneSchema.index({ pincodeStart: 1, pincodeEnd: 1 });
 
 DeliveryZoneSchema.plugin(SoftDeletePlugin);
 DeliveryZoneSchema.plugin(ForensicAuditPlugin);
+DeliveryZoneSchema.plugin(BaseEntityPlugin);
 
 const DeliveryZone = mongoose.model<IDeliveryZone, SoftDeleteModel<IDeliveryZone>>(
   'DeliveryZone',

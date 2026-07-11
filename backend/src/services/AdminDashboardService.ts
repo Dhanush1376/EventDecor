@@ -1,5 +1,5 @@
 import Order from '../models/Order';
-import EventBooking from '../models/EventBooking';
+import EventJob from '../domains/event_operations/models/EventJob';
 import RentalOrder from '../models/RentalOrder';
 import RefundRecord from '../models/RefundRecord';
 import User from '../models/User';
@@ -61,7 +61,7 @@ export class AdminDashboardService {
       ]);
 
       // 3. Event Booking Metrics
-      const bookingStats = await EventBooking.aggregate([
+      const bookingStats = await EventJob.aggregate([
         { $match: queryDateFilter },
         {
           $group: {

@@ -15,7 +15,8 @@ export const getLoyaltyTiers = asyncHandler(async (req: Request, res: Response) 
 
 export const getLoyaltyDashboard = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
-  const dashboardData = await LoyaltyService.getDashboardData(userId);
+  const { limit, skip } = getPaginationOptions(req.query);
+  const dashboardData = await LoyaltyService.getDashboardData(userId, skip, limit);
   res
     .status(200)
     .json(
@@ -37,12 +38,16 @@ export const applyReferralCode = asyncHandler(async (req: Request, res: Response
 
   const result = await LoyaltyService.applyReferralCode(userId, referralCode);
 
+  const settings = await storeSettingsService.getSettings();
+  const refereeBonus = settings.loyalty.referralBonusReferee;
+  const referrerBonus = settings.loyalty.referralBonusReferrer;
+
   res
     .status(200)
     .json(
       new ApiResponse(
         true,
-        `Referral code successfully registered! Welcomed with ₹50 wallet cash. Referrer will receive ₹150 upon your first purchase.`,
+        `Referral code successfully registered! Welcomed with ₹${refereeBonus} wallet cash. Referrer will receive ₹${referrerBonus} upon your first purchase.`,
         result,
       ),
     );
@@ -104,27 +109,22 @@ export const moderateReview = asyncHandler(async (req: Request, res: Response) =
       await updateProductRating(review.product);
     }
 
-    // Reward Reviewer instantly based on review quality (Text: ₹10, Photo: ₹25, Video: ₹50)
-    const hasPhoto = review.images && review.images.length > 0;
-    const hasVideo = false; // Video features simulated
+    const { RuleEngine } = require('../../services/RuleEngine');
+    const userForRule = await require('../../models/User').default.findById(review.customer).lean();
 
-    await LoyaltyService.processReviewRewards(
-      review.customer.toString(),
-      review.rating,
-      hasPhoto,
-      hasVideo,
-      review._id.toString(),
+    try {
+      await RuleEngine.evaluateTrigger('on_review', { user: userForRule, review });
+    } catch (ruleErr) {
+      require('../../config/logger').default.error('Failed to evaluate review rules:', ruleErr);
+    }
+
+    const message = 'Review successfully approved! Dynamic rules evaluated.';
+
+    res.status(200).json(
+      new ApiResponse(true, message, {
+        review,
+      }),
     );
-
-    res
-      .status(200)
-      .json(
-        new ApiResponse(
-          true,
-          'Review successfully approved and rewards dispatched to reviewer wallet!',
-          review,
-        ),
-      );
   } else {
     review.status = 'rejected';
     await review.save();
@@ -136,6 +136,37 @@ export const moderateReview = asyncHandler(async (req: Request, res: Response) =
 
     res
       .status(200)
-      .json(new ApiResponse(true, 'Review has been rejected. No rewards were credited.', review));
+      .json(
+        new ApiResponse(true, 'Review has been rejected. No rewards were credited.', { review }),
+      );
   }
+});
+
+export const adjustWalletBalance = asyncHandler(async (req: Request, res: Response) => {
+  const adminId = (req as any).user.id;
+  const { userId, type, amount, description } = req.body;
+  const ipAddress = req.ip || req.socket.remoteAddress || '';
+
+  if (!userId || !type || !amount || !description) {
+    throw new ApiError(400, 'userId, type (credit/debit), amount, and description are required');
+  }
+
+  const transaction = await LoyaltyService.adjustWalletBalance(
+    adminId,
+    userId,
+    type,
+    Number(amount),
+    description,
+    ipAddress,
+  );
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        true,
+        `Successfully ${type === 'credit' ? 'credited' : 'debited'} wallet`,
+        transaction,
+      ),
+    );
 });

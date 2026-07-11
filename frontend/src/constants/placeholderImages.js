@@ -28,19 +28,3 @@ export const PLACEHOLDER_IMAGES = {
     600,
   ),
 };
-
-export const REVIEW_SAMPLE_IMAGES = [
-  { url: PLACEHOLDER_IMAGES.heroBackground, label: 'Wedding Archway' },
-  { url: PLACEHOLDER_IMAGES.mandalaHero, label: 'Floral Stage Setup' },
-  { url: PLACEHOLDER_IMAGES.collectionWedding, label: 'Banquet Props' },
-  { url: PLACEHOLDER_IMAGES.mandalaArt2, label: 'Traditional Trays' },
-];
-
-export const DEFAULT_SPECIALIZATIONS = [
-  { title: 'Traditional Decor', img: PLACEHOLDER_IMAGES.collectionWedding },
-  { title: 'Floral Mastery', img: PLACEHOLDER_IMAGES.mandalaHero },
-  { title: 'Engagement Trays', img: PLACEHOLDER_IMAGES.mandalaArt3 },
-  { title: 'Pooja Artistry', img: PLACEHOLDER_IMAGES.mandalaArt4 },
-  { title: 'Harathi Plates', img: PLACEHOLDER_IMAGES.mandalaArt2 },
-  { title: 'Bespoke Baskets', img: PLACEHOLDER_IMAGES.emptyCart },
-];

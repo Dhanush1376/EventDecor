@@ -24,5 +24,17 @@ export const createReviewSchema = z.object({
   eventType: z.string().trim().max(100).optional(),
   favoriteElement: z.string().trim().max(100).optional(),
   category: z.enum(['showcase', 'event', 'product']).optional(),
-  verified: z.boolean().optional(),
+});
+
+export const updateReviewSchema = z.object({
+  rating: z.number().min(1, 'Rating must be at least 1').max(5, 'Rating cannot exceed 5'),
+  comment: z
+    .string()
+    .trim()
+    .min(5, 'Review comment must be at least 5 characters')
+    .max(2000, 'Comment is too long'),
+  images: z
+    .array(z.string().url('Invalid image URL format'))
+    .max(5, 'Maximum 5 images allowed')
+    .optional(),
 });

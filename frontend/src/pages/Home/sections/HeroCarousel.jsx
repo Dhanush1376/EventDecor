@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { useProducts } from '../../../hooks/useProductQueries';
+import { useShowcases } from '../../../hooks/useShowcaseQueries';
 
 /**
  * Full-width hero displaying top products and auto-scrolling.
@@ -26,21 +27,8 @@ export function HeroCarousel({ previewContent }) {
     productData?.items ||
     (Array.isArray(productData) ? productData : []);
 
-  const [featuredShowcases, setFeaturedShowcases] = useState([]);
-  const [showcasesLoading, setShowcasesLoading] = useState(true);
-
-  useEffect(() => {
-    import('../../../services/domainServices').then(({ showcaseService }) => {
-      showcaseService
-        .getAll()
-        .then((res) => {
-          const list = res?.data || [];
-          setFeaturedShowcases((Array.isArray(list) ? list : []).filter((sc) => sc.featured));
-        })
-        .catch(() => setFeaturedShowcases([]))
-        .finally(() => setShowcasesLoading(false));
-    });
-  }, []);
+  const { data: showcasesData, isPending: showcasesLoading } = useShowcases();
+  const featuredShowcases = (showcasesData || []).filter((sc) => sc.featured);
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);

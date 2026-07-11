@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import Order from '../models/Order';
-import EventBooking from '../models/EventBooking';
+import EventJob from '../domains/event_operations/models/EventJob';
 import RentalOrder from '../models/RentalOrder';
 import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import logger from '../config/logger';
@@ -40,7 +40,7 @@ export const runPaymentReconciliation = async () => {
           const orderId = rp.order_id;
 
           let dbEntity: any = null;
-          let entityType: 'Order' | 'EventBooking' | 'Rental' | null = null;
+          let entityType: 'Order' | 'EventJob' | 'Rental' | null = null;
 
           if (orderId) {
             dbEntity = await Order.findOne({ razorpayOrderId: orderId }).lean();
@@ -48,8 +48,8 @@ export const runPaymentReconciliation = async () => {
           }
 
           if (!dbEntity) {
-            dbEntity = await EventBooking.findOne({ 'payments.transactionId': rp.id }).lean();
-            if (dbEntity) entityType = 'EventBooking';
+            dbEntity = await EventJob.findOne({ 'payments.transactionId': rp.id }).lean();
+            if (dbEntity) entityType = 'EventJob';
           }
 
           if (!dbEntity) {
@@ -101,27 +101,25 @@ export const runPaymentReconciliation = async () => {
                 );
               }
             }
-          } else if (entityType === 'EventBooking') {
-            // EventBooking status mismatch handling
+          } else if (entityType === 'EventJob') {
+            // EventJob status mismatch handling
             const payment = dbEntity.payments.find((p: any) => p.transactionId === rp.id);
             if (!payment || payment.status !== 'success') {
               mismatches.push(
-                `Status Mismatch: EventBooking ${dbEntity._id} payment is '${payment?.status || 'Missing'}' in DB, but '${rp.status}' in Razorpay.`,
+                `Status Mismatch: EventJob ${dbEntity._id} payment is '${payment?.status || 'Missing'}' in DB, but '${rp.status}' in Razorpay.`,
               );
               try {
                 await PaymentRefundService.initiateAsyncRefund({
                   amount: Number(rp.amount) / 100,
                   currency: rp.currency,
                   originalTransactionId: rp.id,
-                  entityType: 'EventBooking',
+                  entityType: 'EventJob',
                   entityId: dbEntity._id,
                 });
-                healed.push(
-                  `Auto-refunded failed EventBooking payment ${rp.id} for ${dbEntity._id}`,
-                );
+                healed.push(`Auto-refunded failed EventJob payment ${rp.id} for ${dbEntity._id}`);
               } catch (err: any) {
                 mismatches.push(
-                  `Failed to auto-refund failed EventBooking payment ${rp.id}: ${err.message}`,
+                  `Failed to auto-refund failed EventJob payment ${rp.id}: ${err.message}`,
                 );
               }
             }

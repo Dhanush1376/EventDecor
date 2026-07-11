@@ -3,17 +3,19 @@ import {
   getProductReviews,
   createReview,
   getAllReviews,
-  updateReviewStatus,
   deleteReview,
   getPublicReviews,
   incrementHelpful,
   canReview,
   getShowcaseReviews,
   canReviewShowcase,
+  getReviewStats,
+  getMyReview,
+  updateOwnReview,
 } from '../../controllers/products/reviewController';
 import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import { validateRequest } from '../../middleware/zodValidationMiddleware';
-import { createReviewSchema } from '../../validators/reviewValidator';
+import { createReviewSchema, updateReviewSchema } from '../../validators/reviewValidator';
 
 const router = Router();
 
@@ -27,10 +29,12 @@ router.post('/:id/helpful', requireAuth, incrementHelpful);
 router.post('/', requireAuth, validateRequest(createReviewSchema), createReview);
 router.get('/can-review/:productId', requireAuth, canReview);
 router.get('/can-review-showcase/:showcaseId', requireAuth, canReviewShowcase);
+router.get('/my/:productId', requireAuth, getMyReview);
+router.put('/:id', requireAuth, validateRequest(updateReviewSchema), updateOwnReview);
 
 // Admin Routes
+router.get('/stats', requireAuth, requireAdmin, getReviewStats);
 router.get('/', requireAuth, requireAdmin, getAllReviews);
-router.patch('/:id/status', requireAuth, requireAdmin, updateReviewStatus);
 router.delete('/:id', requireAuth, requireAdmin, deleteReview);
 
 export default router;

@@ -61,10 +61,17 @@ export const navSections = [
         domain: 'orders',
       },
       {
-        label: 'Campaigns',
+        label: 'Marketing Campaigns',
         icon: 'campaign',
         path: '/admin/campaigns',
         keywords: 'marketing, ads, promo, email',
+        domain: 'storefront',
+      },
+      {
+        label: 'Reward Campaigns',
+        icon: 'stars',
+        path: '/admin/reward-campaigns',
+        keywords: 'loyalty, rewards, cashback, rules, triggers',
         domain: 'storefront',
       },
     ],
@@ -186,6 +193,13 @@ export const navSections = [
         keywords: 'users, crm, segments, vip',
         domain: 'users',
       },
+      {
+        label: 'Reviews',
+        icon: 'rate_review',
+        path: '/admin/reviews',
+        keywords: 'reviews, ratings, testimonials, feedback, stars',
+        domain: 'users',
+      },
     ],
   },
   {
@@ -299,6 +313,17 @@ export const navSections = [
         path: '/admin/system/notifications',
         keywords: 'alerts, rules, emails',
         domain: 'settings',
+      },
+      {
+        label: 'Taxes',
+        icon: 'receipt_long',
+        path: '/admin/settings?tab=taxes',
+      },
+      {
+        label: 'WhatsApp Automations',
+        icon: 'chat',
+        path: '/admin/whatsapp-automations',
+        badge: 'NEW',
       },
       {
         label: 'Settings',

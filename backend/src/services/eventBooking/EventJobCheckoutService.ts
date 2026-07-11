@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import EventBooking from '../../models/EventBooking';
+import EventJob from '../../domains/event_operations/models/EventJob';
 import Event from '../../models/Event';
 import User from '../../models/User';
 import ApiError from '../../utils/ApiError';
@@ -11,11 +11,11 @@ import BookingMessage from '../../models/BookingMessage';
 import { PaymentRefundService } from '../PaymentRefundService';
 import OutboxEvent from '../../models/OutboxEvent';
 import PaymentAudit from '../../models/PaymentAudit';
-import { EventBookingStateMachine } from './EventBookingStateMachine';
+import { EventJobStateMachine } from './EventJobStateMachine';
 import { EventResourcePlanningService } from './EventResourcePlanningService';
 import PaymentAttempt from '../../models/PaymentAttempt';
 
-export class EventBookingCheckoutService {
+export class EventJobCheckoutService {
   static async initializeBookingCheckout(userId: string, data: any) {
     const {
       eventPackageId,
@@ -77,7 +77,7 @@ export class EventBookingCheckoutService {
       const endOfDay = new Date(bDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      const slotsUsed = await EventBooking.countDocuments({
+      const slotsUsed = await EventJob.countDocuments({
         date: { $gte: startOfDay, $lte: endOfDay },
         status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] },
       }).session(session);
@@ -89,9 +89,7 @@ export class EventBookingCheckoutService {
 
       // Idempotency check: If an unexpired booking already exists for this key, return it.
       if (idempotencyKey) {
-        const existing = await EventBooking.findOne({ idempotencyKey, user: userId }).session(
-          session,
-        );
+        const existing = await EventJob.findOne({ idempotencyKey, user: userId }).session(session);
         if (existing) {
           if (existing.status !== 'pending_payment' && existing.status !== 'payment_processing') {
             throw new ApiError(
@@ -128,7 +126,7 @@ export class EventBookingCheckoutService {
         }
       }
 
-      const bookings = await EventBooking.create(
+      const bookings = await EventJob.create(
         [
           {
             _id: new mongoose.Types.ObjectId(),
@@ -252,7 +250,7 @@ export class EventBookingCheckoutService {
 
     let booking: any;
     try {
-      booking = await EventBooking.findOneAndUpdate(
+      booking = await EventJob.findOneAndUpdate(
         {
           _id: bookingId,
           status: { $in: ['pending_payment', 'failed'] },
@@ -262,7 +260,7 @@ export class EventBookingCheckoutService {
       ).populate('user');
 
       if (!booking) {
-        const existingBooking = await EventBooking.findById(bookingId).session(session);
+        const existingBooking = await EventJob.findById(bookingId).session(session);
         if (
           existingBooking &&
           (existingBooking.status === 'confirmed' ||
@@ -280,7 +278,7 @@ export class EventBookingCheckoutService {
           // Poll for up to 5 seconds
           for (let i = 0; i < 10; i++) {
             await new Promise((res) => setTimeout(res, 500));
-            const checkBooking = await EventBooking.findById(bookingId).populate('user');
+            const checkBooking = await EventJob.findById(bookingId).populate('user');
             if (
               checkBooking &&
               (checkBooking.status === 'confirmed' ||
@@ -362,7 +360,7 @@ export class EventBookingCheckoutService {
         ]);
 
         try {
-          EventBookingStateMachine.transition(
+          EventJobStateMachine.transition(
             booking,
             'failed',
             'Payment signature verification failed',
@@ -383,7 +381,7 @@ export class EventBookingCheckoutService {
             [
               {
                 aggregateId: booking._id.toString(),
-                aggregateType: 'EventBooking',
+                aggregateType: 'EventJob',
                 eventType: 'PaymentFailed',
                 payload: { bookingId: booking._id.toString() },
               },
@@ -411,7 +409,7 @@ export class EventBookingCheckoutService {
       } catch (err: any) {
         if (err.statusCode === 409) {
           // Max events per day reached concurrently. Need to refund.
-          await EventBooking.findByIdAndUpdate(
+          await EventJob.findByIdAndUpdate(
             booking._id,
             {
               status: 'failed',
@@ -433,7 +431,7 @@ export class EventBookingCheckoutService {
             amount: booking.pricing.depositAmount,
             currency: 'INR',
             originalTransactionId: razorpayPaymentId,
-            entityType: 'EventBooking',
+            entityType: 'EventJob',
             entityId: booking._id,
           }).catch((refundErr: any) =>
             logger.error(
@@ -469,7 +467,7 @@ export class EventBookingCheckoutService {
         );
 
         if (hasTimeOverlap) {
-          await EventBooking.findByIdAndUpdate(
+          await EventJob.findByIdAndUpdate(
             booking._id,
             {
               status: 'failed',
@@ -491,7 +489,7 @@ export class EventBookingCheckoutService {
             amount: booking.pricing.depositAmount,
             currency: 'INR',
             originalTransactionId: razorpayPaymentId,
-            entityType: 'EventBooking',
+            entityType: 'EventJob',
             entityId: booking._id,
           }).catch((err: any) =>
             logger.error(
@@ -530,7 +528,7 @@ export class EventBookingCheckoutService {
         { session },
       );
 
-      EventBookingStateMachine.transition(
+      EventJobStateMachine.transition(
         booking,
         'confirmed',
         'Payment verified and booking confirmed',
@@ -569,7 +567,7 @@ export class EventBookingCheckoutService {
         [
           {
             aggregateId: booking._id.toString(),
-            aggregateType: 'EventBooking',
+            aggregateType: 'EventJob',
             eventType: 'BookingConfirmed',
             payload: { bookingId: booking._id.toString(), userId },
           },

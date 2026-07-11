@@ -117,7 +117,7 @@ export class AdminAuditService {
     await this.logAction({
       actorId,
       actorEmail,
-      entityType: 'EventBooking',
+      entityType: 'EventJob',
       entityId: bookingId,
       action: 'status_update',
       previousValue: { status: previousStatus },

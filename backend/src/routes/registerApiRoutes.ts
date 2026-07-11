@@ -44,6 +44,7 @@ export const registerApiRoutes = (
   apiRouter.use('/orders', noCacheMiddleware, lazyRouter('./commerce/orderRoutes'));
   apiRouter.use('/cms', lazyRouter('./cms/cmsRoutes'));
   apiRouter.use('/marketing', lazyRouter('./cms/marketingRoutes'));
+  apiRouter.use('/campaigns', lazyRouter('./marketing/campaignRoutes'));
   apiRouter.use('/analytics', noCacheMiddleware, lazyRouter('./system/analyticsRoutes'));
   apiRouter.use('/gallery', lazyRouter('./cms/galleryRoutes'));
   apiRouter.use('/reviews', lazyRouter('./products/reviewRoutes'));
@@ -51,6 +52,11 @@ export const registerApiRoutes = (
   apiRouter.use('/users', noCacheMiddleware, lazyRouter('./users/userRoutes'));
   apiRouter.use('/inquiries', lazyRouter('./customer/inquiryRoutes'));
   apiRouter.use('/notifications', lazyRouter('./notifications/notificationRoutes'));
+  apiRouter.use(
+    '/notifications/whatsapp',
+    noCacheMiddleware,
+    lazyRouter('./notifications/whatsappAutomationRoutes'),
+  );
   apiRouter.use('/notification-center', lazyRouter('./notifications/notificationCenterRoutes'));
   apiRouter.use('/policies', lazyRouter('./customer/policyRoutes'));
   apiRouter.use('/custom-orders', lazyRouter('./commerce/customOrderRoutes'));

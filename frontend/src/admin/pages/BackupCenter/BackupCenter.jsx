@@ -82,7 +82,7 @@ const BackupCenter = () => {
         </div>
         <div className="flex items-center gap-4">
           <div className="relative w-20 h-20">
-            {/* Circular Gauge Mock */}
+            {/* Circular Gauge */}
             <svg viewBox="0 0 36 36" className="w-full h-full text-emerald-500">
               <path
                 className="text-gray-700"

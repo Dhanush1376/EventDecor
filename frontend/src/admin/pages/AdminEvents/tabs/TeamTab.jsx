@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import { SkeletonDashboard, StatusBadge, fadeUp } from '../../../components/AdminUIKit';
+import { SkeletonCard, StatusBadge, fadeUp } from '../../../components/AdminUIKit';
 
 export function TeamTab({ teamMembers, operationsLoading }) {
   return (
@@ -15,7 +15,7 @@ export function TeamTab({ teamMembers, operationsLoading }) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {operationsLoading ? (
-            <SkeletonDashboard />
+            [...Array(3)].map((_, i) => <SkeletonCard key={i} />)
           ) : teamMembers.length > 0 ? (
             teamMembers.map((team, idx) => (
               <div

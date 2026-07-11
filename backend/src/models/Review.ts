@@ -59,6 +59,12 @@ ReviewSchema.index({ category: 1, status: 1, createdAt: -1 });
 // Product review page compound index (prevents full scan + in-memory sort)
 ReviewSchema.index({ product: 1, status: 1, rating: -1, createdAt: -1 });
 
+// Duplicate protection: maximum 1 review per customer per product
+ReviewSchema.index(
+  { customer: 1, product: 1 },
+  { unique: true, partialFilterExpression: { product: { $type: 'objectId' } } },
+);
+
 ReviewSchema.plugin(SoftDeletePlugin);
 
 const Review = mongoose.model<IReview, SoftDeleteModel<IReview>>('Review', ReviewSchema);

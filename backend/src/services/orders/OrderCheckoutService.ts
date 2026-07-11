@@ -376,6 +376,14 @@ export class OrderCheckoutService {
           { session },
         );
 
+        try {
+          const { RuleEngine } = require('../RuleEngine');
+          const userForRule = await User.findById(userId).lean().session(session);
+          await RuleEngine.evaluateTrigger('on_checkout', { user: userForRule, order });
+        } catch (ruleErr) {
+          logger.error('Failed to evaluate checkout rules (COD):', ruleErr);
+        }
+
         await session.commitTransaction();
 
         try {
@@ -391,6 +399,17 @@ export class OrderCheckoutService {
           idempotencyKey,
           resultCod,
         );
+
+        // Fire WhatsApp Notification for COD Order
+        try {
+          const {
+            WhatsAppTriggers,
+          } = require('../../domains/notifications/whatsapp/whatsappTriggerHooks');
+          await WhatsAppTriggers.onOrderCreated(order);
+        } catch (e) {
+          logger.error('Failed to trigger WhatsApp COD notification', e);
+        }
+
         return resultCod;
       } else {
         // FOR RAZORPAY: Do NOT save the Order, do NOT increment coupon usage, do NOT deduct wallet.

@@ -27,9 +27,8 @@ const AuditTrail = () => {
 
   const handleExport = async () => {
     try {
-      const blob = await backupService.exportAuditTrail();
-      // Handle file download (mocked for this component)
-      const url = window.URL.createObjectURL(new Blob([blob || 'mock csv data']));
+      const blob = await backupService.downloadAuditTrail();
+      const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'backup-audit-log.csv');

@@ -4,6 +4,7 @@ import {
   reviewService,
   eventService,
   notificationService,
+  loyaltyService,
 } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { io as socketIO } from 'socket.io-client';
@@ -197,7 +198,7 @@ export function AdminProvider({ children }) {
         return;
       }
       try {
-        const res = await reviewService.updateStatus(reviewId, 'approved');
+        const res = await loyaltyService.adminModerateReview(reviewId, 'approve');
         if (res.success) {
           setReviews((prev) =>
             prev.map((r) => ((r._id || r.id) === reviewId ? { ...r, status: 'approved' } : r)),

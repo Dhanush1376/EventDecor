@@ -1,7 +1,7 @@
 import { m as motion } from 'framer-motion';
-import { PageHeader, SkeletonDashboard, FilterBar } from '../components/AdminUIKit';
+import { PageHeader, SkeletonCard, FilterBar } from '../components/AdminUIKit';
 import { useState, useEffect } from 'react';
-import { loyaltyService } from '../../services/domainServices';
+import { loyaltyService, reviewService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
 
@@ -55,11 +55,29 @@ export function AdminReviews() {
     }
   };
 
+  const handleDelete = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) return;
+
+    const toastId = toast.loading('Deleting review...');
+    try {
+      const res = await reviewService.delete(reviewId);
+      if (res.success) {
+        toast.success('Review deleted successfully', { id: toastId });
+        fetchReviews();
+      } else {
+        toast.error('Failed to delete review', { id: toastId });
+      }
+    } catch (err) {
+      logger.error('Error deleting review:', err);
+      toast.error('Error deleting review', { id: toastId });
+    }
+  };
+
   const filtered = reviews.filter((r) => {
     const statusVal = r.status || 'pending';
     const matchesFilter = filter === 'all' || statusVal === filter;
 
-    const customer = r.user?.name || 'Bespoke Customer';
+    const customer = r.customerName || r.customer?.name || 'Bespoke Customer';
     const product = r.product?.title || 'Handcrafted Product';
     const comment = r.comment || '';
 
@@ -108,7 +126,11 @@ export function AdminReviews() {
       {/* Reviews feed */}
       <motion.div variants={fadeUp} className="space-y-4">
         {loading ? (
-          <SkeletonDashboard />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center admin-card flex flex-col items-center justify-center p-6 shadow-sm">
             <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-secondary)]/40 mb-2 block">
@@ -123,7 +145,7 @@ export function AdminReviews() {
           </div>
         ) : (
           filtered.map((r) => {
-            const customer = r.user?.name || 'Bespoke Customer';
+            const customer = r.customerName || r.customer?.name || 'Bespoke Customer';
             const product = r.product?.title || 'Handcrafted Product';
             const comment = r.comment || '';
             const rating = r.rating || 5;
@@ -152,7 +174,7 @@ export function AdminReviews() {
                           {customer}
                         </p>
                         <span className="text-[11px] sm:text-[11px] sm:text-[11px] text-secondary font-mono">
-                          ({r.user?.email})
+                          ({r.customer?.email || 'N/A'})
                         </span>
                       </div>
                       <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-tertiary)]">
@@ -219,17 +241,35 @@ export function AdminReviews() {
                   )}
 
                   {r.status === 'approved' && (
-                    <span className="text-[11px] text-[var(--admin-success)] font-bold flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[11px]">verified</span>
-                      Approved and cash disbursed
-                    </span>
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-[11px] text-[var(--admin-success)] font-bold flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[11px]">verified</span>
+                        Approved and cash disbursed
+                      </span>
+                      <button
+                        onClick={() => handleDelete(r._id)}
+                        className="admin-btn admin-btn-ghost admin-btn-sm !text-[var(--admin-text-tertiary)] hover:!text-[var(--admin-error)] !py-1 !px-2 flex items-center gap-1"
+                        title="Delete Review"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">delete</span>
+                      </button>
+                    </div>
                   )}
 
                   {r.status === 'rejected' && (
-                    <span className="text-[11px] text-[var(--admin-error)] font-bold flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[11px]">block</span>
-                      Review rejected from listing feed
-                    </span>
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-[11px] text-[var(--admin-error)] font-bold flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[11px]">block</span>
+                        Review rejected from listing feed
+                      </span>
+                      <button
+                        onClick={() => handleDelete(r._id)}
+                        className="admin-btn admin-btn-ghost admin-btn-sm !text-[var(--admin-text-tertiary)] hover:!text-[var(--admin-error)] !py-1 !px-2 flex items-center gap-1"
+                        title="Delete Review"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">delete</span>
+                      </button>
+                    </div>
                   )}
                 </div>
               </motion.div>

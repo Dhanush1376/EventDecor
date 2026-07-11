@@ -19,9 +19,7 @@ const RetentionManager = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Typically we'd send to backend, but these are env vars in our setup
-      // We'll mock the success for the demo
-      await new Promise((r) => setTimeout(r, 1000));
+      await backupService.updateRetentionPolicy(retention);
       alert('Retention policies updated successfully.');
     } catch (err) {
       alert('Failed to update policies');

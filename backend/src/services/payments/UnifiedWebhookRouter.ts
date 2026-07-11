@@ -1,8 +1,8 @@
 import Order from '../../models/Order';
-import EventBooking from '../../models/EventBooking';
+import EventJob from '../../domains/event_operations/models/EventJob';
 import RentalOrder from '../../models/RentalOrder';
 import logger from '../../config/logger';
-import { EventBookingWebhookHandler } from './EventBookingWebhookHandler';
+import { EventJobWebhookHandler } from './EventJobWebhookHandler';
 import { RentalWebhookHandler } from './RentalWebhookHandler';
 
 import PaymentWebhookEvent from '../../models/PaymentWebhookEvent';
@@ -21,13 +21,13 @@ export const setOrderWebhookHandler = (handler: typeof processOrderWebhookHandle
  * UnifiedWebhookRouter â€” Routes Razorpay webhook events to the correct entity handler.
  *
  * PROBLEM SOLVED: Previously, PaymentWebhookService only handled Order entities.
- * EventBooking and RentalOrder payments that arrived via webhook (browser close,
+ * EventJob and RentalOrder payments that arrived via webhook (browser close,
  * delayed capture, etc.) were silently ignored, causing revenue loss.
  *
  * FLOW:
  * 1. Extract razorpay_order_id from webhook payload
  * 2. Look up which collection owns that razorpay_order_id
- * 3. Route to the correct handler: Order, EventBooking, or RentalOrder
+ * 3. Route to the correct handler: Order, EventJob, or RentalOrder
  */
 export class UnifiedWebhookRouter {
   /**
@@ -35,7 +35,7 @@ export class UnifiedWebhookRouter {
    * Uses indexed lookups on all three collections.
    */
   static async identifyEntity(razorpayOrderId: string): Promise<{
-    entityType: 'Order' | 'EventBooking' | 'RentalOrder' | 'PaymentAttempt' | null;
+    entityType: 'Order' | 'EventJob' | 'RentalOrder' | 'PaymentAttempt' | null;
     entityId: string | null;
   }> {
     // Check PaymentAttempt first (for new uncreated orders)
@@ -50,10 +50,10 @@ export class UnifiedWebhookRouter {
       return { entityType: 'Order', entityId: order._id.toString() };
     }
 
-    // Check EventBooking
-    const booking = await EventBooking.findOne({ razorpayOrderId }).select('_id').lean();
+    // Check EventJob
+    const booking = await EventJob.findOne({ razorpayOrderId }).select('_id').lean();
     if (booking) {
-      return { entityType: 'EventBooking', entityId: booking._id.toString() };
+      return { entityType: 'EventJob', entityId: booking._id.toString() };
     }
 
     // Check RentalOrder
@@ -138,8 +138,8 @@ export class UnifiedWebhookRouter {
         case 'Order':
           result = await processOrderWebhookHandler(event, body, signature, eventId);
           break;
-        case 'EventBooking':
-          result = await EventBookingWebhookHandler.handleWebhookEvent(
+        case 'EventJob':
+          result = await EventJobWebhookHandler.handleWebhookEvent(
             event,
             body,
             signature,

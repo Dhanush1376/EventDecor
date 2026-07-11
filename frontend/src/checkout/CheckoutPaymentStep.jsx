@@ -43,9 +43,9 @@ export default function CheckoutPaymentStep() {
   const codMaxOrder = settings?.payments?.codMaxOrder ?? 50000;
   const isCodEnabled = settings?.payments?.enableCOD ?? true;
 
-  // References and state for 4-digit OTP grid
-  const otpRefs = [React.useRef(null), React.useRef(null), React.useRef(null), React.useRef(null)];
-  const [otpDigits, setOtpDigits] = React.useState(['', '', '', '']);
+  // References and state for 6-digit OTP grid
+  const otpRefs = Array.from({ length: 6 }, () => React.createRef());
+  const [otpDigits, setOtpDigits] = React.useState(['', '', '', '', '', '']);
   const [codOtpInput, setCodOtpInput] = React.useState('');
 
   // Sync internal digits state with global codOtpInput context state
@@ -79,12 +79,12 @@ export default function CheckoutPaymentStep() {
     setCodOtpInput(code);
 
     // Auto-focus next field
-    if (cleanedVal !== '' && index < 3) {
+    if (cleanedVal !== '' && index < 5) {
       otpRefs[index + 1].current?.focus();
     }
 
     // Auto-verify if fully entered
-    if (code.length === 4) {
+    if (code.length === 6) {
       await handleVerifyCodOtp(code);
     }
   };
@@ -158,8 +158,8 @@ export default function CheckoutPaymentStep() {
       if (!codOtpSent) {
         handleSendCodOtp();
       } else if (!codVerified) {
-        if (!codOtpInput.trim() || codOtpInput.length < 4) {
-          toast.error('Please enter the 4-digit verification code');
+        if (!codOtpInput.trim() || codOtpInput.length < 6) {
+          toast.error('Please enter the 6-digit verification code');
           return;
         }
         handleVerifyCodOtp(codOtpInput);
@@ -178,7 +178,7 @@ export default function CheckoutPaymentStep() {
       (!isCodEnabled || backendTotals.total < codMinOrder || backendTotals.total > codMaxOrder)
     )
       return true;
-    if (paymentOption === 'cod' && !codVerified && codOtpInput.length < 4) return true;
+    if (paymentOption === 'cod' && !codVerified && codOtpInput.length < 6) return true;
     return false;
   };
 
@@ -389,7 +389,7 @@ export default function CheckoutPaymentStep() {
                             </span>
                             <div className="flex-1">
                               <p className="text-[11px] text-secondary leading-relaxed font-light">
-                                To secure your order, we will send a 4-digit verification code to
+                                To secure your order, we will send a 6-digit verification code to
                                 your email:
                               </p>
                               <strong className="text-on-surface font-semibold block mt-1 text-[11px] tracking-wide">
@@ -408,14 +408,14 @@ export default function CheckoutPaymentStep() {
                         ) : (
                           <div className="space-y-2.5 bg-primary/5 border border-primary/15 p-4 rounded-md">
                             <p className="text-[12px] text-secondary leading-normal">
-                              We sent a 4-digit code to{' '}
+                              We sent a 6-digit code to{' '}
                               <strong className="text-on-surface font-semibold">
                                 {activeSelectedAddress?.email || user?.email}
                               </strong>
                               . Please check your inbox or spam folder:
                             </p>
 
-                            {/* Gorgeous 4-digit input grid */}
+                            {/* Gorgeous 6-digit input grid */}
                             <div className="flex justify-center gap-3 py-2">
                               {otpDigits.map((digit, idx) => (
                                 <input

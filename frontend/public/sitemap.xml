@@ -3,108 +3,118 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://siriartsandcrafts.com</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/collections</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/wedding-decorations-hyderabad</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/event-decorators-telangana</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/event-decorators-secunderabad</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/event-decorators-ongole</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/about</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/contact</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/gallery</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/custom-orders</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/events</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/showcases</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/shipping</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/returns</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/privacy</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/terms</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/product/6a0c74fa9b8633afb920de7b</loc>
+    <loc>https://siriartsandcrafts.com/product/6a0d5c8ec725a13dd9a95618</loc>
     <lastmod>2026-07-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024546/eventdecor_migration/dakfqhkzlgqw5vjkfg6v.jpg</image:loc>
-      <image:title>Floral Jewelry Tray</image:title>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024554/eventdecor_migration/z9ae90bxj0n3bflsiqod.jpg</image:loc>
+      <image:title>Floral Ring Tray</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/product/6a19cb169875c9a89386d920</loc>
+    <lastmod>2026-07-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024558/eventdecor_migration/hgvuv234fqdoa2b05mul.jpg</image:loc>
+      <image:title>Wooden Wedding Ring Tray</image:title>
     </image:image>
   </url>
   <url>
@@ -118,13 +128,33 @@
     </image:image>
   </url>
   <url>
+    <loc>https://siriartsandcrafts.com/product/6a0c74fa9b8633afb920de7b</loc>
+    <lastmod>2026-07-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024546/eventdecor_migration/dakfqhkzlgqw5vjkfg6v.jpg</image:loc>
+      <image:title>Floral Jewelry Tray</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://siriartsandcrafts.com/product/6a0c764b9b8633afb920deb4</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024549/eventdecor_migration/os7ab4jtrh8y5vikq3z2.jpg</image:loc>
       <image:title>Green Coconut Decor</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/product/6a1982f6594e9ef6fa074f28</loc>
+    <lastmod>2026-07-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024557/eventdecor_migration/jo53gy9svsag2yieuimb.jpg</image:loc>
+      <image:title>Pearl Engagement Tray</image:title>
     </image:image>
   </url>
   <url>
@@ -148,48 +178,8 @@
     </image:image>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/product/6a0d5c8ec725a13dd9a95618</loc>
-    <lastmod>2026-07-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024554/eventdecor_migration/z9ae90bxj0n3bflsiqod.jpg</image:loc>
-      <image:title>Floral Ring Tray</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://siriartsandcrafts.com/product/6a11579708fa7569dfc015a0</loc>
-    <lastmod>2026-07-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024555/eventdecor_migration/sxglj11lgi99fwxij9bp.jpg</image:loc>
-      <image:title>Beaded Coconut Decor</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://siriartsandcrafts.com/product/6a1982f6594e9ef6fa074f28</loc>
-    <lastmod>2026-07-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024557/eventdecor_migration/jo53gy9svsag2yieuimb.jpg</image:loc>
-      <image:title>Pearl Engagement Tray</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://siriartsandcrafts.com/product/6a19cb169875c9a89386d920</loc>
-    <lastmod>2026-07-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024558/eventdecor_migration/hgvuv234fqdoa2b05mul.jpg</image:loc>
-      <image:title>Wooden Wedding Ring Tray</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://siriartsandcrafts.com/product/6a1c3fd6d5e8db93a79944bc</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -198,8 +188,18 @@
     </image:image>
   </url>
   <url>
+    <loc>https://siriartsandcrafts.com/product/6a11579708fa7569dfc015a0</loc>
+    <lastmod>2026-07-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024555/eventdecor_migration/sxglj11lgi99fwxij9bp.jpg</image:loc>
+      <image:title>Beaded Coconut Decor</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://siriartsandcrafts.com/product/6a272dcf1dd5c8cd06962659</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -259,7 +259,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a3c31738d7a02cb71a1f5ae</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -269,7 +269,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a3c31b78d7a02cb71a1f5b3</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -309,7 +309,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a41a43d14ed694d37335f7b</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -329,7 +329,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a41a8ccc091bcebec0d6e91</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -409,7 +409,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a42df9df2886846ac840216</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -419,7 +419,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a47e4df9245d19e4fa46ed6</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -429,7 +429,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a4ab9792659631790f45060</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -439,7 +439,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a4abbc32659631790f4513c</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -449,7 +449,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a4d1aa3e9699048ef3e7661</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -458,43 +458,23 @@
     </image:image>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/gallery/6a0c74fa9b8633afb920de7c</loc>
-    <lastmod>2026-07-07</lastmod>
+    <loc>https://siriartsandcrafts.com/product/6a4d694e302c16a664d6b654</loc>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
     <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024560/eventdecor_migration/pj9xauftda9hbmcjsaun.jpg</image:loc>
-      <image:title>Floral Jewelry Tray</image:title>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783458123/products/kwktieqkknheqfuaspte.jpg</image:loc>
+      <image:title>Pink Floral Gift Hampers</image:title>
     </image:image>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/gallery/6a0c75da9b8633afb920dea1</loc>
-    <lastmod>2026-07-07</lastmod>
+    <loc>https://siriartsandcrafts.com/product/6a4e65955217aa04070d5ee0</loc>
+    <lastmod>2026-07-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
     <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024561/eventdecor_migration/bqtn2xzugmcew8ubmqmn.jpg</image:loc>
-      <image:title>Bangle Ceremony Tray</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://siriartsandcrafts.com/gallery/6a0c764b9b8633afb920deb5</loc>
-    <lastmod>2026-07-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024549/eventdecor_migration/os7ab4jtrh8y5vikq3z2.jpg</image:loc>
-      <image:title>Green Coconut Decor</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://siriartsandcrafts.com/gallery/6a0c76cc9b8633afb920dec9</loc>
-    <lastmod>2026-07-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024551/eventdecor_migration/s51hknxfe1h65exg9osn.jpg</image:loc>
-      <image:title>Jute Jewellery Cart</image:title>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783522707/products/nkqic6ywdcdcd4k6plen.jpg</image:loc>
+      <image:title>Ferrero Rocher Gift Cones</image:title>
     </image:image>
   </url>
   <url>
@@ -508,16 +488,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/gallery/6a0d5c8fc725a13dd9a95619</loc>
-    <lastmod>2026-07-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024568/eventdecor_migration/wyc02bsejz1jaoflvjwx.jpg</image:loc>
-      <image:title>Floral Ring Tray</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://siriartsandcrafts.com/gallery/6a11579708fa7569dfc015a1</loc>
     <lastmod>2026-07-07</lastmod>
     <changefreq>weekly</changefreq>
@@ -528,8 +498,48 @@
     </image:image>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/gallery/6a1982f7594e9ef6fa074f29</loc>
+    <loc>https://siriartsandcrafts.com/gallery/6a1c68ff83548216e3abca79</loc>
     <lastmod>2026-07-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1780962210/siri-arts-crafts/products/cum5wuqalp5hq5ia0kuc.jpg</image:loc>
+      <image:title>Beaded Heart Coconut</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a0c764b9b8633afb920deb5</loc>
+    <lastmod>2026-07-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024549/eventdecor_migration/os7ab4jtrh8y5vikq3z2.jpg</image:loc>
+      <image:title>Green Coconut Decor</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a0c74fa9b8633afb920de7c</loc>
+    <lastmod>2026-07-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024560/eventdecor_migration/pj9xauftda9hbmcjsaun.jpg</image:loc>
+      <image:title>Floral Jewelry Tray</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a0d5c8fc725a13dd9a95619</loc>
+    <lastmod>2026-07-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024568/eventdecor_migration/wyc02bsejz1jaoflvjwx.jpg</image:loc>
+      <image:title>Floral Ring Tray</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a1982f7594e9ef6fa074f29</loc>
+    <lastmod>2026-07-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
@@ -538,13 +548,23 @@
     </image:image>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/gallery/6a1c68ff83548216e3abca79</loc>
+    <loc>https://siriartsandcrafts.com/gallery/6a0c75da9b8633afb920dea1</loc>
+    <lastmod>2026-07-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024561/eventdecor_migration/bqtn2xzugmcew8ubmqmn.jpg</image:loc>
+      <image:title>Bangle Ceremony Tray</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a0c76cc9b8633afb920dec9</loc>
     <lastmod>2026-07-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1780962210/siri-arts-crafts/products/cum5wuqalp5hq5ia0kuc.jpg</image:loc>
-      <image:title>Beaded Heart Coconut</image:title>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1781024551/eventdecor_migration/s51hknxfe1h65exg9osn.jpg</image:loc>
+      <image:title>Jute Jewellery Cart</image:title>
     </image:image>
   </url>
   <url>
@@ -669,7 +689,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/gallery/6a41a43e14ed694d37335f7d</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
@@ -779,7 +799,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/gallery/6a47e4e19245d19e4fa46ed8</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
@@ -815,6 +835,26 @@
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783437984/products/cbrwmijytasjr2hkpsks.jpg</image:loc>
       <image:title>Dry Fruit Gift Basket</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a4d6950302c16a664d6b658</loc>
+    <lastmod>2026-07-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783458123/products/kwktieqkknheqfuaspte.jpg</image:loc>
+      <image:title>Pink Floral Gift Hampers</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a4e65985217aa04070d5ee2</loc>
+    <lastmod>2026-07-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783522707/products/nkqic6ywdcdcd4k6plen.jpg</image:loc>
+      <image:title>Ferrero Rocher Gift Cones</image:title>
     </image:image>
   </url>
 </urlset>

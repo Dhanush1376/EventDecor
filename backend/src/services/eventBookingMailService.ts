@@ -4,7 +4,7 @@ import { getAdminEmails } from '../config/adminConfig';
 
 import { getFrontendUrl } from '../utils/getFrontendUrl';
 
-export class EventBookingMailService {
+export class EventJobMailService {
   /**
    * Send submission confirmation email to customer & detailed notifications to admins
    */

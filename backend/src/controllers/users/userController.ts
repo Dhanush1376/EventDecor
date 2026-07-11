@@ -7,7 +7,12 @@ import ApiError from '../../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../../utils/pagination';
 import Product from '../../models/Product';
 import { setPaginationHeaders } from '../../utils/paginationHeaders';
-import { cacheCart, invalidateUserSessionCaches } from '../../utils/cache/userSessionCache';
+import {
+  cacheCart,
+  invalidateUserSessionCaches,
+  getCachedSessionJson,
+  sessionKeys,
+} from '../../utils/cache/userSessionCache';
 import { UserService } from '../../services/users/userService';
 import { UserAddressService } from '../../services/users/UserAddressService';
 import { UserWishlistService } from '../../services/users/UserWishlistService';
@@ -189,38 +194,37 @@ export const getCart = asyncHandler(async (req: any, res: Response) => {
   const userId = String(req.user.id);
   const requestId = crypto.randomBytes(4).toString('hex');
 
-  // ========== CART FORENSIC EXPERIMENT ==========
-  // Bypass Redis cart cache entirely — read directly from MongoDB.
-  // This isolates whether the Redis cache path is the root cause of
-  // the production-only cart vanishing bug.
-  // ===============================================
+  // CART_CACHE_BYPASS=true re-enables the direct-to-MongoDB diagnostic path
+  // used while investigating cache-related cart inconsistencies.
+  const bypassCache = process.env.CART_CACHE_BYPASS === 'true';
+
+  if (!bypassCache) {
+    const cached = await getCachedSessionJson<any>(sessionKeys.cart(userId));
+    if (cached) {
+      res.setHeader('X-Session-Cache', 'HIT');
+      res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
+      return res.status(200).json(new ApiResponse(true, 'Cart fetched', cached));
+    }
+  }
 
   const user = await User.findById(req.user.id);
   if (!user) throw new ApiError(404, 'User not found');
   const cartDetails = await UserService.computeAndValidateCart(user);
 
-  logger.info('[CART_FORENSIC][DB_READ]', {
+  if (!bypassCache) {
+    await cacheCart(userId, cartDetails);
+  }
+
+  logger.debug('[CART_FORENSIC][DB_READ]', {
     requestId,
     hashedUserId: forensicHashId(userId),
-    mongoUserDocumentIdHash: forensicHashId(String(user._id)),
     rawCartItemCount: Array.isArray(user.cart) ? user.cart.length : 0,
     computedPurchaseItemCount: cartDetails.purchaseCart?.items?.length ?? 0,
     computedRentalItemCount: cartDetails.rentalCart?.items?.length ?? 0,
-    timestamp: Date.now(),
   });
 
-  // Do NOT read from Redis. Do NOT write back to Redis cart cache.
-  res.setHeader('X-Session-Cache', 'BYPASS');
+  res.setHeader('X-Session-Cache', bypassCache ? 'BYPASS' : 'MISS');
   res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
-
-  res.locals.forensicRequestId = requestId;
-  logger.info('[CART_RESPONSE_TRACE][CONTROLLER_OUTPUT]', {
-    requestId,
-    purchaseItemCount: cartDetails.purchaseCart?.items?.length ?? 0,
-    rentalItemCount: cartDetails.rentalCart?.items?.length ?? 0,
-    responseDataKeys: Object.keys(cartDetails || {}),
-  });
-
   res.status(200).json(new ApiResponse(true, 'Cart fetched', cartDetails));
 });
 
@@ -237,7 +241,7 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
   );
 
   // Forensic DB write logging
-  logger.info('[CART_FORENSIC][DB_WRITE]', {
+  logger.debug('[CART_FORENSIC][DB_WRITE]', {
     requestId,
     hashedUserId: forensicHashId(String(req.user.id)),
     mongoUserDocumentIdHash: forensicHashId(String(updatedUser._id)),
@@ -253,7 +257,7 @@ export const addToCart = asyncHandler(async (req: any, res: Response) => {
   res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
 
   res.locals.forensicRequestId = requestId;
-  logger.info('[CART_RESPONSE_TRACE][CONTROLLER_OUTPUT]', {
+  logger.debug('[CART_RESPONSE_TRACE][CONTROLLER_OUTPUT]', {
     requestId,
     purchaseItemCount: cartDetails.purchaseCart?.items?.length ?? 0,
     rentalItemCount: cartDetails.rentalCart?.items?.length ?? 0,

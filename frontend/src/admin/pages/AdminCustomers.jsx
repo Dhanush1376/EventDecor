@@ -11,6 +11,7 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
+  SkeletonCard,
 } from '../components/AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { io as socketIO } from 'socket.io-client';
@@ -223,7 +224,7 @@ export function AdminCustomers() {
             className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
           >
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="admin-skeleton admin-card h-[280px]" />
+              <SkeletonCard key={i} className="h-[280px]" />
             ))}
           </motion.div>
         ) : customers.length === 0 ? (

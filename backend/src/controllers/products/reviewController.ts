@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import Review from '../../models/Review';
 import Product from '../../models/Product';
 import Order from '../../models/Order';
-import EventBooking from '../../models/EventBooking';
+import EventJob from '../../domains/event_operations/models/EventJob';
 import ShowcaseCollection from '../../models/ShowcaseCollection';
 import User from '../../models/User';
 import asyncHandler from '../../utils/asyncHandler';
@@ -72,8 +72,9 @@ export const updateShowcaseRating = async (showcaseId: string | mongoose.Types.O
 };
 
 export const getProductReviews = asyncHandler(async (req: Request, res: Response) => {
+  const { productId } = req.params;
   const { page, limit, skip } = getPaginationOptions(req.query);
-  const filter: any = { product: req.params.productId, status: 'approved', isMock: { $ne: true } };
+  const filter: any = { product: productId, status: 'approved', isMock: { $ne: true } };
 
   const [reviews, totalCount] = await Promise.all([
     Review.find(filter)
@@ -136,7 +137,6 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
     eventType,
     favoriteElement,
     category,
-    verified,
   } = req.body;
 
   if (!productId && !showcaseId) {
@@ -172,7 +172,7 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
     if (!showcase) throw new ApiError(404, 'Showcase not found');
 
     // --- PURCHASER GATE: Only customers who completed this showcase booking can review ---
-    const completedBooking = await EventBooking.findOne({
+    const completedBooking = await EventJob.findOne({
       user: req.user!.id,
       status: 'completed',
       eventPackage: showcaseId,
@@ -207,7 +207,7 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
     eventType: eventType || undefined,
     favoriteElement: favoriteElement || undefined,
     category: category || undefined,
-    verified: verified !== undefined ? verified : true,
+    verified: true, // Always true - derived from backend purchase gate
   });
 
   await review.save();
@@ -243,15 +243,43 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
 
 export const getAllReviews = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
-  const { status } = req.query;
+  const { status, rating, verified, search, sort } = req.query;
   const filter: any = {};
+
   if (status) filter.status = status;
+  if (rating) filter.rating = Number(rating);
+  if (verified !== undefined) filter.verified = verified === 'true';
+
+  // Cross-collection search logic
+  if (search) {
+    const searchRegex = new RegExp(search as string, 'i');
+
+    // Find matching customers
+    const User = require('../../models/User').default;
+    const users = await User.find({ $or: [{ name: searchRegex }, { email: searchRegex }] })
+      .select('_id')
+      .lean();
+    const customerIds = users.map((u: any) => u._id.toString());
+
+    // Find matching products
+    const Product = require('../../models/Product').default;
+    const products = await Product.find({ title: searchRegex }).select('_id').lean();
+    const productIds = products.map((p: any) => p._id.toString());
+
+    filter.$or = [
+      { comment: searchRegex },
+      ...(customerIds.length > 0 ? [{ customer: { $in: customerIds } }] : []),
+      ...(productIds.length > 0 ? [{ product: { $in: productIds } }] : []),
+    ];
+  }
+
+  const sortOrder = sort === 'oldest' ? { createdAt: 1 } : { createdAt: -1 };
 
   const [reviews, totalCount] = await Promise.all([
     Review.find(filter)
       .populate('product', 'title imageSrc')
       .populate('customer', 'name email')
-      .sort({ createdAt: -1 })
+      .sort(sortOrder as any)
       .skip(skip)
       .limit(limit)
       .lean(),
@@ -269,41 +297,118 @@ export const getAllReviews = asyncHandler(async (req: Request, res: Response) =>
     );
 });
 
-export const updateReviewStatus = asyncHandler(async (req: Request, res: Response) => {
-  const { status } = req.body;
-  if (!['approved', 'rejected', 'pending'].includes(status)) {
-    throw new ApiError(400, 'Invalid review status');
+export const getReviewStats = asyncHandler(async (req: Request, res: Response) => {
+  const stats = await Review.aggregate([
+    {
+      $facet: {
+        totals: [
+          {
+            $group: {
+              _id: null,
+              totalReviews: { $sum: 1 },
+              avgRating: { $avg: '$rating' },
+              pendingCount: {
+                $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] },
+              },
+              approvedCount: {
+                $sum: { $cond: [{ $eq: ['$status', 'approved'] }, 1, 0] },
+              },
+              lowRatingCount: {
+                $sum: { $cond: [{ $lte: ['$rating', 2] }, 1, 0] },
+              },
+              verifiedCount: {
+                $sum: { $cond: [{ $eq: ['$verified', true] }, 1, 0] },
+              },
+            },
+          },
+        ],
+        thisMonth: [
+          {
+            $match: {
+              createdAt: {
+                $gte: new Date(new Date().setDate(1)),
+              },
+            },
+          },
+          { $count: 'count' },
+        ],
+        ratingDistribution: [
+          { $group: { _id: '$rating', count: { $sum: 1 } } },
+          { $sort: { _id: -1 } },
+        ],
+      },
+    },
+  ]);
+
+  const result = stats[0];
+  const totals = result.totals[0] || {
+    totalReviews: 0,
+    avgRating: 0,
+    pendingCount: 0,
+    approvedCount: 0,
+    lowRatingCount: 0,
+    verifiedCount: 0,
+  };
+
+  res.status(200).json(
+    new ApiResponse(true, 'Review stats fetched', {
+      ...totals,
+      reviewsThisMonth: result.thisMonth[0]?.count || 0,
+      ratingDistribution: result.ratingDistribution,
+    }),
+  );
+});
+
+export const getMyReview = asyncHandler(async (req: Request, res: Response) => {
+  const { productId } = req.params;
+  const review = await Review.findOne({ product: productId, customer: req.user!.id })
+    .populate('product', 'title imageSrc')
+    .lean();
+
+  if (!review) {
+    return res.status(200).json(new ApiResponse(true, 'No review found', null));
   }
 
-  const review = await Review.findByIdAndUpdate(
-    req.params.id,
-    { status },
-    { returnDocument: 'after' },
-  );
-  if (!review) throw new ApiError(404, 'Review not found');
+  res.status(200).json(new ApiResponse(true, 'User review fetched', review));
+});
 
-  // Recalculate product rating atomically using MongoDB aggregation pipeline directly in database
+export const updateOwnReview = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { rating, comment, images } = req.body;
+
+  const review = await Review.findOne({ _id: id, customer: req.user!.id });
+  if (!review) throw new ApiError(404, 'Review not found or unauthorized');
+
+  review.rating = rating;
+  review.comment = comment;
+  if (images) review.images = images;
+
+  // If editing an approved review, it must be re-moderated
+  if (review.status === 'approved') {
+    review.status = 'pending';
+  }
+
+  await review.save();
+
   if (review.product) {
     await updateProductRating(review.product);
   }
-  if (review.showcase) {
-    await updateShowcaseRating(review.showcase);
-  }
 
-  try {
-    const { emitAdminEvent } = require('../../socket');
-    emitAdminEvent('review_update', { reviewId: review._id });
-  } catch (e) {
-    const logger = require('../../config/logger').default || require('../../config/logger');
-    logger.debug('Failed to emit review_update event', e);
-  }
-
-  res.status(200).json(new ApiResponse(true, 'Review status updated', review));
+  res.status(200).json(new ApiResponse(true, 'Review updated successfully', review));
 });
 
 export const deleteReview = asyncHandler(async (req: Request, res: Response) => {
-  const review = await Review.findByIdAndDelete(req.params.id);
+  const review = (await Review.findById(req.params.id)) as any;
   if (!review) throw new ApiError(404, 'Review not found');
+
+  if (typeof review.softDelete === 'function') {
+    await review.softDelete(req.user, 'Admin deletion');
+  } else {
+    // Fallback if plugin is missing on the model interface during TS compilation edge cases
+    review.isDeleted = true;
+    review.deletedAt = new Date();
+    await review.save();
+  }
 
   // Clean up any uploaded review images from Cloudinary to prevent orphan costs
   if (Array.isArray(review.images) && review.images.length > 0) {
@@ -443,7 +548,7 @@ export const canReviewShowcase = asyncHandler(async (req: Request, res: Response
     );
   }
 
-  const completedBooking = await EventBooking.findOne({
+  const completedBooking = await EventJob.findOne({
     user: userId,
     status: 'completed',
     eventPackage: showcaseId,

@@ -7,7 +7,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 import { connectDB } from '../src/config/db';
 import Order from '../src/models/Order';
 import RentalOrder from '../src/models/RentalOrder';
-import EventBooking from '../src/models/EventBooking';
+import EventJob from '../src/domains/event_operations/models/EventJob';
 import CustomOrder from '../src/models/CustomOrder';
 import Transaction from '../src/models/Transaction';
 import { TransactionService } from '../src/services/TransactionService';
@@ -75,8 +75,8 @@ async function migrateTransactions() {
   }
 
   // Sync Events
-  console.log('\n--- Syncing Event Bookings ---');
-  const events = await EventBooking.find({ user: { $exists: true } }).lean();
+  console.log('\\n--- Syncing Event Bookings ---');
+  const events = await EventJob.find({ user: { $exists: true } }).lean();
   for (const event of events) {
     try {
       await TransactionService.syncTransaction(

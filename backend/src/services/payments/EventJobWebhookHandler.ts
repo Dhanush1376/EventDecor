@@ -1,24 +1,24 @@
-﻿import mongoose from 'mongoose';
-import EventBooking from '../../models/EventBooking';
+import mongoose from 'mongoose';
+import EventJob from '../../domains/event_operations/models/EventJob';
 import PaymentAudit from '../../models/PaymentAudit';
 import OutboxEvent from '../../models/OutboxEvent';
 import BookingMessage from '../../models/BookingMessage';
-import { EventBookingStateMachine } from '../eventBooking/EventBookingStateMachine';
+import { EventJobStateMachine } from '../eventBooking/EventJobStateMachine';
 import { PaymentRefundService } from '../PaymentRefundService';
 import logger from '../../config/logger';
 import * as Sentry from '@sentry/node';
 
 /**
- * EventBookingWebhookHandler â€” Handles Razorpay webhook events for EventBooking entities.
+ * EventJobWebhookHandler â€” Handles Razorpay webhook events for EventJob entities.
  *
  * PROBLEM SOLVED: If a customer's browser closes after Razorpay captures the deposit payment
  * but before the frontend calls verifyBookingCheckout, this webhook handler ensures the
  * booking is still confirmed and the customer is notified.
  *
- * This mirrors the logic in EventBookingCheckoutService.verifyBookingCheckout() but is
+ * This mirrors the logic in EventJobCheckoutService.verifyBookingCheckout() but is
  * triggered by the webhook path instead of the frontend verification path.
  */
-export class EventBookingWebhookHandler {
+export class EventJobWebhookHandler {
   static async handleWebhookEvent(
     event: string,
     body: any,
@@ -36,7 +36,7 @@ export class EventBookingWebhookHandler {
       }
 
       // Idempotency check: already confirmed?
-      const existingBooking = await EventBooking.findById(entityId).lean();
+      const existingBooking = await EventJob.findById(entityId).lean();
       if (!existingBooking) {
         return { status: 200, message: 'Skipped: Event booking not found' };
       }
@@ -62,14 +62,14 @@ export class EventBookingWebhookHandler {
       session.startTransaction();
 
       try {
-        const booking = await EventBooking.findOneAndUpdate(
+        const booking = await EventJob.findOneAndUpdate(
           {
             _id: entityId,
             razorpayOrderId: razorpay_order_id,
             status: { $in: ['pending_payment', 'payment_processing', 'failed'] },
           },
           { $set: { status: 'payment_processing' } },
-          { returnDocument: 'after', session },
+          { new: true, session },
         );
 
         if (!booking) {
@@ -125,7 +125,7 @@ export class EventBookingWebhookHandler {
             [
               {
                 aggregateId: booking._id.toString(),
-                aggregateType: 'EventBooking',
+                aggregateType: 'EventJob',
                 eventType: 'PaymentFailed',
                 payload: { bookingId: booking._id.toString() },
               },
@@ -150,7 +150,7 @@ export class EventBookingWebhookHandler {
                 amount: paymentEntity.amount / 100,
                 currency: 'INR',
                 originalTransactionId: razorpay_payment_id,
-                entityType: 'EventBooking',
+                entityType: 'EventJob',
                 entityId: booking._id,
               });
             } catch (refundErr) {
@@ -171,7 +171,7 @@ export class EventBookingWebhookHandler {
         const endOfDay = new Date(bDate);
         endOfDay.setHours(23, 59, 59, 999);
 
-        const slotsUsed = await EventBooking.countDocuments({
+        const slotsUsed = await EventJob.countDocuments({
           _id: { $ne: booking._id },
           date: { $gte: startOfDay, $lte: endOfDay },
           status: {
@@ -211,7 +211,7 @@ export class EventBookingWebhookHandler {
             amount: booking.pricing.depositAmount,
             currency: 'INR',
             originalTransactionId: razorpay_payment_id,
-            entityType: 'EventBooking',
+            entityType: 'EventJob',
             entityId: booking._id,
           }).catch((err: any) =>
             logger.error(
@@ -224,7 +224,7 @@ export class EventBookingWebhookHandler {
         }
 
         // SUCCESS: Confirm the booking
-        EventBookingStateMachine.transition(
+        EventJobStateMachine.transition(
           booking,
           'confirmed',
           'Payment confirmed via Razorpay webhook',
@@ -263,7 +263,7 @@ export class EventBookingWebhookHandler {
           [
             {
               aggregateId: booking._id.toString(),
-              aggregateType: 'EventBooking',
+              aggregateType: 'EventJob',
               eventType: 'BookingConfirmed',
               payload: { bookingId: booking._id.toString(), userId: booking.user.toString() },
             },
@@ -298,14 +298,14 @@ export class EventBookingWebhookHandler {
       const session = await mongoose.startSession();
       session.startTransaction();
       try {
-        const booking = await EventBooking.findOneAndUpdate(
+        const booking = await EventJob.findOneAndUpdate(
           {
             _id: entityId,
             razorpayOrderId: razorpay_order_id,
             status: { $in: ['pending_payment', 'payment_processing'] },
           },
           { $set: { status: 'failed' } },
-          { returnDocument: 'after', session },
+          { new: true, session },
         );
 
         if (booking) {
@@ -328,7 +328,7 @@ export class EventBookingWebhookHandler {
             [
               {
                 aggregateId: booking._id.toString(),
-                aggregateType: 'EventBooking',
+                aggregateType: 'EventJob',
                 eventType: 'PaymentFailed',
                 payload: { bookingId: booking._id.toString() },
               },

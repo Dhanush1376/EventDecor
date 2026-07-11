@@ -133,12 +133,12 @@ export class OrderValidationService {
 
     // Fetch user details first (for tier validation and wallet checking)
     let availableWallet = 0;
-    let loyaltyTier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum' = 'Bronze';
+    let loyaltyTier: string = settings.loyalty.tiers?.[0]?.name || 'Bronze';
     if (userId) {
       const user = await User.findById(userId);
       if (user) {
         availableWallet = user.walletBalance || 0;
-        loyaltyTier = user.loyaltyTier || 'Bronze';
+        loyaltyTier = user.loyaltyTier || settings.loyalty.tiers?.[0]?.name || 'Bronze';
       }
     }
 

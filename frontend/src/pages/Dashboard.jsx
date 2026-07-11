@@ -11,6 +11,7 @@ import { WalletSection } from './Dashboard/WalletSection';
 import { MyReturns } from './returns/MyReturns';
 import { ReturnRequestPage } from './returns/ReturnRequestPage';
 import { ExchangeRequestPage } from './returns/ExchangeRequestPage';
+import { MyCustomOrders } from './MyCustomOrders';
 
 function DashboardIndex() {
   const [searchParams] = useSearchParams();
@@ -55,6 +56,7 @@ export function Dashboard() {
           <Route path="wallet" element={<WalletSection />} />
           <Route path="returns" element={<MyReturns />} />
           <Route path="returns/new" element={<ReturnRequestPage />} />
+          <Route path="custom-orders" element={<MyCustomOrders />} />
 
           <Route path="returns/exchanges/new" element={<ExchangeRequestPage />} />
           <Route path="*" element={<Navigate to="profile" replace />} />

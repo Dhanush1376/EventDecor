@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import { uploadLimiter, signedUrlLimiter } from '../../middleware/rateLimiter';
-import { uploadProducts, uploadGallery, uploadCMS } from '../../middleware/upload';
+import { uploadProducts, uploadGallery, uploadCMS, uploadReviews } from '../../middleware/upload';
 import getCloudinary from '../../config/cloudinary';
 import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
@@ -33,6 +33,8 @@ const ALLOWED_UPLOAD_FOLDERS = new Set([
   'event_decor_ecommerce/gallery',
   'products',
   'events',
+  'reviews',
+  'siri-arts-crafts/reviews',
 ]);
 
 /**
@@ -159,6 +161,19 @@ router.post(
   requireAdmin,
   checkContentLength,
   ...uploadProducts.array('images', 4),
+  (req, res) => {
+    const files = req.files as Express.Multer.File[];
+    const imageUrls = files.map((file: any) => file.path);
+    res.status(200).json({ success: true, images: imageUrls });
+  },
+);
+
+router.post(
+  '/reviews',
+  uploadLimiter,
+  requireAuth,
+  checkContentLength,
+  ...uploadReviews.array('images', 5),
   (req, res) => {
     const files = req.files as Express.Multer.File[];
     const imageUrls = files.map((file: any) => file.path);

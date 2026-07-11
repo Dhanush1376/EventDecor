@@ -178,6 +178,21 @@ export function Sidebar() {
 
           <motion.button
             role="tab"
+            aria-selected={activeTab === 'custom'}
+            whileHover={{ x: 3 }}
+            onClick={() => handleTabClick('custom', '/dashboard/custom-orders')}
+            className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
+              activeTab === 'custom'
+                ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                : 'text-on-surface hover:bg-surface-container-low'
+            }`}
+          >
+            <span>My Custom Orders</span>
+            <span className="material-symbols-outlined text-xs text-secondary">architecture</span>
+          </motion.button>
+
+          <motion.button
+            role="tab"
             aria-selected={activeTab === 'returns'}
             whileHover={{ x: 3 }}
             onClick={() => handleTabClick('returns', '/dashboard/returns')}
@@ -191,21 +206,6 @@ export function Sidebar() {
             <span className="material-symbols-outlined text-xs text-secondary">
               assignment_return
             </span>
-          </motion.button>
-
-          <motion.button
-            role="tab"
-            aria-selected={activeTab === 'custom'}
-            whileHover={{ x: 3 }}
-            onClick={() => handleTabClick('custom', '/my-custom-orders')}
-            className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-              activeTab === 'custom'
-                ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
-                : 'text-on-surface hover:bg-surface-container-low'
-            }`}
-          >
-            <span>My Custom Orders</span>
-            <span className="material-symbols-outlined text-xs text-secondary">architecture</span>
           </motion.button>
         </div>
 

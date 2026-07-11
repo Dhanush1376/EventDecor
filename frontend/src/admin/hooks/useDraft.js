@@ -45,14 +45,14 @@ export function useDraft({
   const hasUnsavedChanges = useRef(false);
 
   const initialDataString = JSON.stringify(initialData);
-  
+
   // Sync formData when initialData changes, assuming no unsaved changes are in progress
   useEffect(() => {
     if (!hasUnsavedChanges.current) {
       setFormDataInternal(initialData);
       formDataRef.current = initialData;
     }
-  }, [initialDataString]);
+  }, [initialDataString, initialData]);
 
   // Check for existing draft on mount
   useEffect(() => {
@@ -68,8 +68,6 @@ export function useDraft({
     };
     checkDraft();
   }, [draftKey, enabled]);
-
-
 
   // The debounced save function
   const debouncedSave = useMemo(

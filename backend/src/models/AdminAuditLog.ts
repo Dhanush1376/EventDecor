@@ -11,7 +11,7 @@ export interface IAdminAuditLog extends Document {
   ip?: string;
   userAgent?: string;
   // Enterprise entity tracking
-  entityType?: string; // e.g. 'Order', 'RentalOrder', 'EventBooking', 'Product'
+  entityType?: string; // e.g. 'Order', 'RentalOrder', 'EventJob', 'Product'
   entityId?: string;
   action?: string; // e.g. 'status_update', 'refund_initiated', 'team_assigned'
   changes?: Record<string, { previous: any; new: any }>;

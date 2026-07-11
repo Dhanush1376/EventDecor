@@ -8,6 +8,7 @@ import {
   clearAuthStorage,
   getFallbackRefreshToken,
   setFallbackRefreshToken,
+  clearFallbackRefreshToken,
 } from '../utils/auth/authStorage';
 import { clearCachedProfile } from '../utils/auth/authSessionCache';
 import { createRequestInterceptor } from './interceptors/requestInterceptor';
@@ -69,7 +70,13 @@ const applyRefreshPayload = (payload) => {
     setAccessToken(token);
     setSessionMarker();
     if (refreshToken) {
+      // Server only echoes a refresh token when the request was not
+      // authenticated via the HttpOnly cookie (cookie-blocked browsers).
       setFallbackRefreshToken(refreshToken);
+    } else {
+      // Cookie-based rotation succeeded — cookies demonstrably work, so drop
+      // the JS-readable fallback credential to shrink the XSS attack surface.
+      clearFallbackRefreshToken();
     }
   }
   return token;
@@ -85,6 +92,10 @@ const hasLocalAuthMarker = () => hasSessionMarker();
 const dispatchUnauthorized = () => {
   if (authBootstrapActive) {
     logger.dev('[API] Suppressed auth-unauthorized during session bootstrap');
+    return;
+  }
+  if (!hasLocalAuthMarker()) {
+    // Already unauthorized, avoid infinite loop of queryClient.clear() triggers
     return;
   }
   setAccessToken(null);
@@ -166,40 +177,12 @@ const [onResponse, onError] = createResponseInterceptor({
 
 api.interceptors.response.use(onResponse, onError);
 
-// High-performance GET request de-duplication wrapper to block parallel duplicate fetches
+// Custom GET wrapper to handle cart tracing and API response caching
 const originalGet = api.get;
-const pendingGetRequests = new Map();
 
 let cartGetSequenceCounter = 0;
 
-const clearPendingGets = () => {
-  const pendingCartRequestCountBefore = pendingGetRequests.size;
-  const pendingCartRequestSeq = Array.from(pendingGetRequests.keys()).find((k) =>
-    k.includes('/users/cart'),
-  )
-    ? 'unknown'
-    : null; // we don't store seq in map keys right now, just noting it
-
-  const hasCartPending = Array.from(pendingGetRequests.keys()).some((k) =>
-    k.includes('/users/cart'),
-  );
-
-  pendingGetRequests.clear();
-  clearApiCache();
-
-  if (hasCartPending || pendingCartRequestCountBefore > 0) {
-    logCartTrace('PENDING_GETS_CLEAR', {
-      cartRequestWasPending: hasCartPending,
-      pendingCartRequestSeq,
-      pendingRequestCountBefore: pendingCartRequestCountBefore,
-      pendingRequestCountAfter: pendingGetRequests.size,
-      source: 'clearPendingGets',
-    });
-  }
-};
-
 api.get = function (url, config) {
-  const requestKey = `${url}?${JSON.stringify(config?.params || {})}`;
   const isCart = url.includes('/users/cart');
   let currentSeq = null;
 
@@ -208,7 +191,6 @@ api.get = function (url, config) {
     currentSeq = cartGetSequenceCounter;
     logCartTrace('API_GET_ENTER', {
       cartGetSeq: currentSeq,
-      requestKey,
       url,
       hasSignal: !!config?.signal,
       signalAborted: config?.signal?.aborted,
@@ -228,29 +210,16 @@ api.get = function (url, config) {
     });
   }
 
-  if (pendingGetRequests.has(requestKey)) {
-    if (isCart) {
-      logCartTrace('API_GET_DEDUP_HIT', {
-        cartGetSeq: currentSeq,
-        requestKey,
-        source: 'api.get',
-      });
-    }
-    return pendingGetRequests.get(requestKey);
-  }
-
   if (isCart) {
     logCartTrace('API_GET_NETWORK_START', {
       cartGetSeq: currentSeq,
-      requestKey,
       source: 'api.get',
     });
   }
 
-  const promise = originalGet
+  return originalGet
     .call(this, url, config)
     .then((response) => {
-      pendingGetRequests.delete(requestKey);
       if (response?.data !== undefined) {
         setCachedGet(url, config, response.data);
       }
@@ -258,7 +227,6 @@ api.get = function (url, config) {
       if (isCart) {
         logCartTrace('API_GET_NETWORK_RESOLVE', {
           cartGetSeq: currentSeq,
-          requestKey,
           cartData: response.data?.data || response.data,
           source: 'api.get',
         });
@@ -266,12 +234,9 @@ api.get = function (url, config) {
       return response;
     })
     .catch((error) => {
-      pendingGetRequests.delete(requestKey);
-
       if (isCart) {
         logCartTrace('API_GET_NETWORK_REJECT', {
           cartGetSeq: currentSeq,
-          requestKey,
           error: error?.message,
           isCancel: axios.isCancel(error),
           source: 'api.get',
@@ -291,15 +256,12 @@ api.get = function (url, config) {
       }
       throw error;
     });
-
-  pendingGetRequests.set(requestKey, promise);
-  return promise;
 };
 
 // High-performance POST request de-duplication wrapper for token refresh to avoid concurrent replay race conditions
 const originalPost = api.post;
 api.post = function (url, data, config) {
-  clearPendingGets();
+  clearApiCache();
   if (url === '/auth/refresh' || url?.includes('/auth/refresh')) {
     const body = data && Object.keys(data).length ? data : buildRefreshBody();
     if (!refreshPostPromise) {
@@ -314,19 +276,19 @@ api.post = function (url, data, config) {
 
 const originalPut = api.put;
 api.put = function (url, data, config) {
-  clearPendingGets();
+  clearApiCache();
   return originalPut.call(this, url, data, config);
 };
 
 const originalPatch = api.patch;
 api.patch = function (url, data, config) {
-  clearPendingGets();
+  clearApiCache();
   return originalPatch.call(this, url, data, config);
 };
 
 const originalDelete = api.delete;
 api.delete = function (url, config) {
-  clearPendingGets();
+  clearApiCache();
   return originalDelete.call(this, url, config);
 };
 

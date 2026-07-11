@@ -374,10 +374,10 @@ class OtpAuthService {
 
     if (isNewUser) {
       try {
-        const { LoyaltyService } = require('./loyaltyService');
-        await LoyaltyService.setupNewUserRewards(user._id.toString());
-      } catch (loyaltyErr) {
-        logger.error('Failed to setup loyalty onboarding rewards:', loyaltyErr);
+        const { RuleEngine } = require('./RuleEngine');
+        await RuleEngine.evaluateTrigger('on_signup', { user });
+      } catch (ruleErr) {
+        logger.error('Failed to evaluate signup rules:', ruleErr);
       }
 
       try {
@@ -459,7 +459,7 @@ class OtpAuthService {
 
     const cleanEmail = canonicalizeEmail(email);
 
-    const otp = crypto.randomInt(1000, 9999).toString();
+    const otp = crypto.randomInt(100000, 999999).toString();
     const salt = await bcrypt.genSalt(12);
     const otpHash = await bcrypt.hash(otp, salt);
 

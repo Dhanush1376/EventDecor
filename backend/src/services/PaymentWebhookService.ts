@@ -9,7 +9,7 @@ import OutboxEvent from '../models/OutboxEvent';
 import { webhookQueue } from '../jobs/queues';
 import { bumpAdminAnalyticsCacheVersion } from '../utils/cache/cacheVersion';
 import AnalyticsService from './analyticsService';
-import crypto from 'crypto';
+import { verifyRazorpayWebhookSignature } from '../utils/security/webhookSignature';
 import { UnifiedWebhookRouter } from './payments/UnifiedWebhookRouter';
 
 export class PaymentWebhookService {
@@ -21,12 +21,7 @@ export class PaymentWebhookService {
     rawBody: Buffer,
     webhookSecret: string,
   ): boolean {
-    const shasum = crypto.createHmac('sha256', webhookSecret);
-    shasum.update(rawBody);
-    const digest = shasum.digest('hex');
-    const expected = Buffer.from(digest, 'utf8');
-    const received = Buffer.from(signature || '', 'utf8');
-    return expected.length === received.length && crypto.timingSafeEqual(expected, received);
+    return verifyRazorpayWebhookSignature(signature, rawBody, webhookSecret);
   }
   static async processRazorpayWebhook(
     event: string,

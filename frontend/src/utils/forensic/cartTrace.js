@@ -1,4 +1,19 @@
-const crypto = require('crypto');
+// Cart forensic tracing is opt-in only. Enable by setting VITE_CART_TRACE=true at
+// build time, or localStorage 'siri_cart_trace'='true' in a browser session.
+// When disabled (the default), logCartTrace is a no-op so production carts pay no
+// stack-capture or console cost.
+const isTraceEnabled = () => {
+  try {
+    if (import.meta.env?.VITE_CART_TRACE === 'true') return true;
+    return (
+      typeof window !== 'undefined' && window.localStorage?.getItem('siri_cart_trace') === 'true'
+    );
+  } catch {
+    return false;
+  }
+};
+
+const TRACE_ENABLED = isTraceEnabled();
 
 export const forensicHashId = (id) => {
   if (!id) return 'null';
@@ -26,6 +41,7 @@ export const forensicHashId = (id) => {
 };
 
 export const logCartTrace = (event, data = {}) => {
+  if (!TRACE_ENABLED) return;
   const ts = typeof performance !== 'undefined' ? performance.now() : Date.now();
   const wc = Date.now();
 

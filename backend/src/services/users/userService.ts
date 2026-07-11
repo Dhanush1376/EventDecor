@@ -1,4 +1,5 @@
 import User from '../../models/User';
+import logger from '../../config/logger';
 import Product from '../../models/Product';
 import TeamInvite from '../../models/TeamInvite';
 import ApiError from '../../utils/ApiError';
@@ -75,8 +76,7 @@ export class UserService {
             }
           : item.product;
 
-      // eslint-disable-next-line no-console
-      console.log(`[CART_COMPUTE_TRACE][RAW_ITEM]`, {
+      logger.debug(`[CART_COMPUTE_TRACE][RAW_ITEM]`, {
         requestId,
         hashedUserId,
         productHash: hashId(item.product),
@@ -89,8 +89,7 @@ export class UserService {
         timestamp: ts,
       });
 
-      // eslint-disable-next-line no-console
-      console.log(`[CART_COMPUTE_TRACE][PRODUCT_ID_NORMALIZATION]`, {
+      logger.debug(`[CART_COMPUTE_TRACE][PRODUCT_ID_NORMALIZATION]`, {
         productHash: hashId(item.product),
         rawProductType: typeof item.product,
         rawConstructor: item.product?.constructor?.name,
@@ -105,16 +104,14 @@ export class UserService {
       new Set<string>(rawCart.map((item: any) => String(item.product)).filter(Boolean)),
     );
 
-    // eslint-disable-next-line no-console
-    console.log(`[CART_COMPUTE_TRACE][PRODUCT_QUERY_INPUT]`, {
+    logger.debug(`[CART_COMPUTE_TRACE][PRODUCT_QUERY_INPUT]`, {
       requestedProductCount: productIds.length,
       requestedProductIdHashes: productIds.map(hashId),
     });
 
     const products = await Product.find({ _id: { $in: productIds } });
 
-    // eslint-disable-next-line no-console
-    console.log(`[CART_COMPUTE_TRACE][PRODUCT_QUERY_RESULT]`, {
+    logger.debug(`[CART_COMPUTE_TRACE][PRODUCT_QUERY_RESULT]`, {
       requestedProductCount: productIds.length,
       foundProductCount: products.length,
       requestedProductIdHashes: productIds.map(hashId),
@@ -132,8 +129,8 @@ export class UserService {
           const existsWithProductionQuery = await Product.findOne({ _id: pid })
             .then((doc: any) => !!doc)
             .catch(() => false);
-          // eslint-disable-next-line no-console
-          console.log(`[CART_COMPUTE_TRACE][ENVIRONMENT_CHECK]`, {
+
+          logger.debug(`[CART_COMPUTE_TRACE][ENVIRONMENT_CHECK]`, {
             productHash: hashId(pid),
             databaseName: Product.db.name,
             collectionName: Product.collection.name,

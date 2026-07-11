@@ -1,6 +1,7 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SkeletonList } from '../components/AdminUIKit';
 import rentalService from '../../services/api/rentalService';
 import toast from 'react-hot-toast';
 
@@ -161,8 +162,8 @@ export default function AdminServiceAreas() {
 
       {/* Service Areas List */}
       {loading ? (
-        <div className="admin-card p-12 text-center border border-[var(--admin-border)] rounded-2xl">
-          <div className="skeleton-box w-8 h-8 rounded-lg inline-block" />
+        <div className="admin-card p-6 border border-[var(--admin-border)] rounded-2xl">
+          <SkeletonList items={3} />
         </div>
       ) : areas.length === 0 ? (
         <div className="admin-card p-12 text-center border border-[var(--admin-border)] rounded-2xl">

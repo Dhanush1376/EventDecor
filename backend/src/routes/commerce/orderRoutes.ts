@@ -32,6 +32,7 @@ import {
   orderNotesSchema,
 } from '../../validators/orderSchema';
 import { validateRequest } from '../../middleware/zodValidationMiddleware';
+import { idempotencyGuard } from '../../middleware/idempotencyMiddleware';
 import { createRateLimiter, accountKeyGenerator } from '../../middleware/rateLimiter';
 
 const router = Router();
@@ -73,6 +74,7 @@ router.post(
   '/',
   requireAuth,
   orderCreationLimiter,
+  idempotencyGuard(),
   validateRequest(createOrderSchema),
   createOrder,
 );
@@ -80,6 +82,7 @@ router.post(
   '/verify-payment',
   requireAuth,
   paymentVerifyLimiter,
+  idempotencyGuard(),
   validateRequest(verifyPaymentSchema),
   verifyPayment,
 );

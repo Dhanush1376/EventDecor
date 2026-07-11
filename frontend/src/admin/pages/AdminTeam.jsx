@@ -1,6 +1,6 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { adminInviteService } from '../../services/domainServices';
 import api from '../../services/api';
@@ -40,7 +40,9 @@ export function AdminTeam({ hideHeader }) {
   const [activeTab, setActiveTab] = useState('roster'); // roster, pending, history
 
   // Modal Invitation Drawer
-  const [locationParam] = useState(() => new URLSearchParams(window.location.search).get('invite') === 'true');
+  const [locationParam] = useState(
+    () => new URLSearchParams(window.location.search).get('invite') === 'true',
+  );
   const [isInviteOpen, setIsInviteOpen] = useState(locationParam);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('admin');

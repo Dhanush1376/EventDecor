@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ShippingService } from '../../domains/shipping/services/ShippingService';
-import { DeliveryEstimationEngine } from '../../domains/shipping/services/DeliveryEstimationEngine';
+import { DeliveryEstimationEngine } from '../../domains/shipping/services/ETAEngine';
 import logger from '../../config/logger';
 
 export const dispatchPackages = async (req: Request, res: Response) => {

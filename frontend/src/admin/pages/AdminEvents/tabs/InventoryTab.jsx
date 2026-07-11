@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import { SkeletonDashboard, StatusBadge, fadeUp } from '../../../components/AdminUIKit';
+import { SkeletonCard, StatusBadge, fadeUp } from '../../../components/AdminUIKit';
 
 export function InventoryTab({ inventoryItems, operationsLoading }) {
   return (
@@ -21,7 +21,7 @@ export function InventoryTab({ inventoryItems, operationsLoading }) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {operationsLoading ? (
-            <SkeletonDashboard />
+            [...Array(3)].map((_, i) => <SkeletonCard key={i} />)
           ) : inventoryItems.length > 0 ? (
             inventoryItems.map((prop, idx) => (
               <div

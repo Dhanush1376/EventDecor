@@ -275,7 +275,7 @@ export class InventoryService {
     quantity: number,
     reason: 'order_cancelled' | 'return' | 'stale_release',
     orderId?: string,
-    referenceType?: 'Order' | 'RentalOrder' | 'EventBooking',
+    referenceType?: 'Order' | 'RentalOrder' | 'EventJob',
     performedBy?: string,
     session?: mongoose.ClientSession,
   ) {
@@ -315,7 +315,7 @@ export class InventoryService {
     quantity: number,
     reason: 'order_cancelled' | 'stale_release',
     orderId?: string,
-    referenceType?: 'Order' | 'RentalOrder' | 'EventBooking',
+    referenceType?: 'Order' | 'RentalOrder' | 'EventJob',
     performedBy?: string,
     session?: mongoose.ClientSession,
   ) {

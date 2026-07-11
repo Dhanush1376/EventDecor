@@ -58,45 +58,43 @@ function FullPageReviewCard({ review, productId }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-[24px] border border-[#EBE6DD] p-6 shadow-sm hover:shadow-luxury hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+      className="bg-white rounded-[24px] border border-[#EBE6DD] p-5 shadow-sm hover:shadow-luxury hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
     >
       <div>
         {/* Reviewer Info */}
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2.5">
             {/* Initials Circle */}
-            <div className="w-11 h-11 rounded-full bg-[#FAF9F6] border border-[#E2DACB] flex items-center justify-center shrink-0 shadow-2xs">
-              <span className="font-serif text-[#8C7000] text-sm font-bold">{initials}</span>
+            <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#E2DACB] flex items-center justify-center shrink-0 shadow-2xs">
+              <span className="font-serif text-[#8C7000] text-xs font-bold">{initials}</span>
             </div>
             <div>
-              <p className="font-display font-semibold uppercase tracking-[0.1em] text-[#2d2b29] text-[11px] leading-tight">
+              <p className="font-display font-semibold uppercase tracking-[0.1em] text-[#2d2b29] text-[10px] leading-tight">
                 {customerName}
               </p>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-1.5 mt-0.5">
                 {review.verified && (
-                  <span className="inline-flex items-center gap-1 text-[8px] font-bold text-emerald-800 uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100/60">
-                    <span className="material-symbols-outlined text-[10px] font-bold">
-                      verified
-                    </span>
+                  <span className="inline-flex items-center gap-0.5 text-[7px] font-bold text-emerald-800 uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100/60">
+                    <span className="material-symbols-outlined text-[9px] font-bold">verified</span>
                     Verified Purchase
                   </span>
                 )}
               </div>
             </div>
           </div>
-          <span className="font-label text-[9px] text-[#685c57]/50 font-bold uppercase tracking-wider shrink-0 mt-0.5">
+          <span className="font-label text-[8px] text-[#685c57]/50 font-bold uppercase tracking-wider shrink-0 mt-0.5">
             {date}
           </span>
         </div>
 
         {/* Stars */}
-        <div className="mb-3">
-          <StarRating value={review.rating} size={13} />
+        <div className="mb-2.5">
+          <StarRating value={review.rating} size={12} />
         </div>
 
         {/* Text */}
         {review.comment && (
-          <p className="font-body text-[13px] text-[#4A453F] leading-relaxed whitespace-pre-line font-light">
+          <p className="font-body text-xs text-[#4A453F] leading-relaxed whitespace-pre-line font-light line-clamp-4">
             "{review.comment}"
           </p>
         )}
@@ -104,12 +102,12 @@ function FullPageReviewCard({ review, productId }) {
 
       {/* Review Images */}
       {review.images && review.images.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-5 pt-4 border-t border-[#F3EFE7]">
+        <div className="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-[#F3EFE7]">
           {review.images.map((imgUrl, idx) => (
             <Link
               key={idx}
               to={`/product/${productId}/reviews/images`}
-              className="w-14 h-14 rounded-xl overflow-hidden border border-[#E2DACB] bg-[#FAF9F6] shadow-3xs cursor-pointer relative group flex-shrink-0"
+              className="w-10 h-10 rounded-xl overflow-hidden border border-[#E2DACB] bg-[#FAF9F6] shadow-3xs cursor-pointer relative group flex-shrink-0"
             >
               <OptimizedImage
                 src={imgUrl}
@@ -204,26 +202,21 @@ export function ProductAllReviews() {
   }, [reviews]);
 
   const renderCTA = () => {
+    const buttonClass =
+      'text-[#8C7000] hover:text-[#D4AF37] transition-all cursor-pointer flex items-center justify-center shrink-0 p-1 -mt-0.5';
+
     if (!isAuthenticated) {
       return (
-        <button
-          onClick={openAuthModal}
-          className="w-full sm:w-auto px-8 py-3.5 bg-black text-white rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-[#1C1A17] active:scale-95 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-[16px]">rate_review</span>
-          Write a Review
+        <button onClick={openAuthModal} title="Write a Review" className={buttonClass}>
+          <span className="material-symbols-outlined text-[14px]">edit_square</span>
         </button>
       );
     }
 
     if (eligibility?.canReview) {
       return (
-        <button
-          onClick={() => setShowModal(true)}
-          className="w-full sm:w-auto px-8 py-3.5 bg-black text-white rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-[#1C1A17] active:scale-95 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-[16px]">rate_review</span>
-          Write a Review
+        <button onClick={() => setShowModal(true)} title="Write a Review" className={buttonClass}>
+          <span className="material-symbols-outlined text-[14px]">edit_square</span>
         </button>
       );
     }
@@ -260,30 +253,30 @@ export function ProductAllReviews() {
         className="bottom-20 -right-20 pointer-events-none"
       />
 
-      <div className="max-w-[1280px] mx-auto px-margin-mobile lg:px-margin-desktop space-y-10 relative z-10">
+      <div className="max-w-[1280px] mx-auto px-margin-mobile lg:px-margin-desktop space-y-6 relative z-10">
         {/* Navigation Breadcrumb Header */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           <Link
             to={`/product/${id}`}
-            className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold text-[#685c57] hover:text-[#8C7000] transition-colors self-start group"
+            className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.2em] font-bold text-[#685c57] hover:text-[#8C7000] transition-colors self-start group"
           >
-            <span className="material-symbols-outlined text-[14px] group-hover:-translate-x-1 transition-transform">
+            <span className="material-symbols-outlined text-[12px] group-hover:-translate-x-1 transition-transform">
               arrow_back
             </span>
             Back to Masterpiece
           </Link>
-          <h1 className="font-display text-3xl lg:text-4xl text-[#2D2B29] font-light tracking-tight mt-1">
+          <h1 className="font-display text-2xl lg:text-3xl text-[#2D2B29] font-light tracking-tight mt-0.5">
             Customer Testimonials
           </h1>
-          <div className="w-12 h-[1px] bg-[#D4AF37]/40" />
+          <div className="w-10 h-[1px] bg-[#D4AF37]/40" />
         </div>
 
         {/* Unified Top Dashboard */}
-        <div className="bg-white rounded-[32px] border border-[#EBE6DD] p-6 lg:p-10 shadow-sm flex flex-col lg:flex-row gap-8 lg:gap-12 items-stretch">
+        <div className="bg-white rounded-[24px] border border-[#EBE6DD] p-5 lg:p-6 shadow-sm flex flex-col lg:flex-row gap-6 lg:gap-8 items-stretch">
           {/* Column 1: Masterpiece Reference */}
           {product && (
-            <div className="flex-1 flex flex-row gap-5 items-start border-b lg:border-b-0 lg:border-r border-[#F3EFE7] pb-8 lg:pb-0 lg:pr-10 shrink-0 lg:max-w-[360px] w-full">
-              <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl overflow-hidden shrink-0 bg-neutral-50 shadow-2xs border border-[#E2DACB]">
+            <div className="flex-1 flex flex-row gap-4 items-center border-b lg:border-b-0 lg:border-r border-[#F3EFE7] pb-6 lg:pb-0 lg:pr-6 shrink-0 lg:max-w-[320px] w-full">
+              <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-[12px] overflow-hidden shrink-0 bg-neutral-50 shadow-2xs border border-[#E2DACB]">
                 <OptimizedImage
                   src={product.imageSrc}
                   alt={product.title}
@@ -291,54 +284,54 @@ export function ProductAllReviews() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="flex-1 text-left min-w-0 space-y-2">
-                <span className="font-label text-[9px] uppercase tracking-widest text-[#8C7000] font-bold block">
+              <div className="flex-1 text-left min-w-0 space-y-1.5 flex flex-col items-start">
+                <span className="font-label text-[8px] uppercase tracking-widest text-[#8C7000] font-bold block">
                   {product.category || 'Heritage Piece'}
                 </span>
-                <h2 className="font-display text-base lg:text-lg text-[#2D2B29] font-medium leading-tight line-clamp-2">
+                <h2 className="font-display text-sm lg:text-base text-[#2D2B29] font-medium leading-tight line-clamp-2">
                   {product.title}
                 </h2>
-                <div className="flex items-center gap-2 pt-0.5">
-                  <StarRating value={avgRating} size={13} />
-                  <span className="font-label text-[10px] font-bold text-[#685c57]/60 uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <StarRating value={avgRating} size={11} />
+                  <span className="font-label text-[9px] font-bold text-[#685c57]/60 uppercase tracking-wider flex items-center gap-1">
                     {reviews.length} Stories
+                    {renderCTA()}
                   </span>
                 </div>
-                <div className="pt-2">{renderCTA()}</div>
               </div>
             </div>
           )}
 
           {/* Column 2: Score Card */}
-          <div className="flex-1 flex flex-col sm:flex-row items-center sm:items-stretch gap-6 lg:gap-8 justify-center">
+          <div className="flex-1 flex flex-col sm:flex-row items-center sm:items-stretch gap-5 lg:gap-6 justify-center">
             {/* Big Score */}
-            <div className="flex flex-col items-center justify-center p-6 bg-[#FAF9F6] border border-[#EBE6DD]/60 rounded-2xl text-center w-full sm:w-44 shrink-0 shadow-inner">
-              <span className="font-display text-6xl font-light text-[#2D2B29] leading-none mb-2">
+            <div className="flex flex-col items-center justify-center p-4 bg-[#FAF9F6] border border-[#EBE6DD]/60 rounded-[16px] text-center w-full sm:w-32 shrink-0 shadow-inner">
+              <span className="font-display text-4xl lg:text-5xl font-light text-[#2D2B29] leading-none mb-2">
                 {avgRating.toFixed(1)}
               </span>
-              <StarRating value={avgRating} size={15} />
-              <p className="font-label text-[9px] uppercase tracking-widest text-[#685c57]/50 font-bold mt-2">
+              <StarRating value={avgRating} size={13} />
+              <p className="font-label text-[8px] uppercase tracking-widest text-[#685c57]/50 font-bold mt-1.5">
                 Average Rating
               </p>
             </div>
 
             {/* Progress Bars */}
-            <div className="flex-1 w-full space-y-3 justify-center flex flex-col">
+            <div className="flex-1 w-full space-y-2 justify-center flex flex-col">
               {ratingCounts.map(({ star, count }) => {
                 const pct = reviews.length ? Math.round((count / reviews.length) * 100) : 0;
                 return (
-                  <div key={star} className="flex items-center gap-3">
-                    <span className="font-label text-[11px] font-bold text-[#2D2B29]/60 w-4 shrink-0 text-center">
+                  <div key={star} className="flex items-center gap-2">
+                    <span className="font-label text-[10px] font-bold text-[#2D2B29]/60 w-3 shrink-0 text-center">
                       {star}
                     </span>
-                    <Star className="w-3.5 h-3.5 fill-current text-[#D4AF37] shrink-0" />
+                    <Star className="w-3 h-3 fill-current text-[#D4AF37] shrink-0" />
                     <div className="flex-1 h-1 bg-[#F3EFE7] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-[#D4AF37] rounded-full"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <span className="font-label text-[10px] text-[#685c57]/50 font-bold w-8 text-right">
+                    <span className="font-label text-[9px] text-[#685c57]/50 font-bold w-6 text-right">
                       {pct}%
                     </span>
                   </div>
@@ -391,17 +384,17 @@ export function ProductAllReviews() {
 
         {/* Results Showcase Grid */}
         {filteredReviews.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-[2.5rem] border border-[#EBE6DD] shadow-sm p-10">
-            <span className="material-symbols-outlined text-5xl text-[#D4AF37]/35 mb-4 block">
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-[24px] border border-[#EBE6DD] shadow-sm p-8">
+            <span className="material-symbols-outlined text-4xl text-[#D4AF37]/35 mb-3 block">
               rate_review
             </span>
-            <h4 className="text-lg font-display font-medium text-[#2d2b29]">No Matches Found</h4>
-            <p className="text-xs text-[#685c57]/60 max-w-xs mx-auto mt-2 leading-relaxed font-body">
+            <h4 className="text-base font-display font-medium text-[#2d2b29]">No Matches Found</h4>
+            <p className="text-xs text-[#685c57]/60 max-w-xs mx-auto mt-1.5 leading-relaxed font-body">
               There are no celebration reviews matching your star filter or search text.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredReviews.map((review) => (
               <FullPageReviewCard key={review._id || review.id} review={review} productId={id} />
             ))}

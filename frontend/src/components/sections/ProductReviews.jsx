@@ -3,9 +3,11 @@ import { OptimizedImage } from '../ui/OptimizedImage';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { reviewService, uploadService } from '../../services/domainServices';
+import { reviewService } from '../../services/domainServices';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import imageCompression from 'browser-image-compression';
+import { uploadService } from '../../services/api/uploadService';
 
 // ─── Star Component ─────────────────────────────────────────────────────────
 function StarRating({ value = 0, max = 5, interactive = false, size = 20, onChange }) {
@@ -46,48 +48,7 @@ function StarRating({ value = 0, max = 5, interactive = false, size = 20, onChan
 
 // ─── Review Name Helper ──────────────────────────────────────────────────────
 export function getPremiumReviewerName(review) {
-  const rawName = review.customer?.name || review.customerName || 'Customer';
-  const lowerRaw = rawName.toLowerCase();
-
-  const isTest =
-    lowerRaw.includes('test') ||
-    lowerRaw.includes('anonymous') ||
-    lowerRaw.includes('customer') ||
-    lowerRaw.includes('dhanush1376') ||
-    lowerRaw.includes('sakhisoaps') ||
-    lowerRaw.includes('praneethperumalla') ||
-    /^\d+$/.test(rawName) ||
-    !rawName.includes(' ') ||
-    rawName.includes('.');
-
-  if (!isTest) {
-    return rawName;
-  }
-
-  const seedString = review._id || review.id || String(rawName);
-  const premiumNames = [
-    'Aditi Rao',
-    'Vikram Malhotra',
-    'Meera Singhania',
-    'Radha Krishnan',
-    'Ananya Varma',
-    'Arjun Mehta',
-    'Priya Sen',
-    'Rohan Joshi',
-    'Kavya Iyer',
-    'Devraj Singhania',
-    'Siddharth Roy',
-    'Aarti Patel',
-    'Rajesh Kumar',
-    'Sunita Reddy',
-  ];
-
-  let hash = 0;
-  for (let i = 0; i < seedString.length; i++) {
-    hash = seedString.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % premiumNames.length;
-  return premiumNames[index];
+  return review.customer?.name || review.customerName || 'Anonymous Customer';
 }
 
 // ─── Review Card ─────────────────────────────────────────────────────────────
@@ -109,51 +70,47 @@ function ReviewCard({ review, productId }) {
     : '';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-[24px] border border-black/5 p-5 lg:p-6 shadow-sm hover:shadow-luxury hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full min-h-[220px]"
-    >
+    <div className="bg-[#FAFAF9] rounded-[24px] p-5 flex flex-col justify-between h-full">
       <div>
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2.5">
             {/* Avatar */}
-            <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-              <span className="font-display text-primary text-sm font-bold">{initials}</span>
+            <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+              <span className="font-display text-primary text-xs font-bold">{initials}</span>
             </div>
             <div>
-              <p className="font-body text-sm font-semibold text-black leading-tight">
+              <p className="font-body text-xs font-semibold text-black leading-tight">
                 {customerName}
               </p>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-1.5 mt-0.5">
                 {review.verified && (
-                  <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-green-100">
-                    <span className="material-symbols-outlined text-[10px]">verified</span>
+                  <span className="inline-flex items-center gap-0.5 bg-green-50 text-green-700 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border border-green-100">
+                    <span className="material-symbols-outlined text-[9px]">verified</span>
                     Verified Purchase
                   </span>
                 )}
               </div>
             </div>
           </div>
-          <span className="font-label text-[10px] text-black/30 font-medium shrink-0">{date}</span>
+          <span className="font-label text-[9px] text-black/30 font-medium shrink-0">{date}</span>
         </div>
 
-        <StarRating value={review.rating} size={14} />
+        <StarRating value={review.rating} size={12} />
 
         {review.comment && (
-          <p className="font-body text-[13px] text-black/70 leading-relaxed mt-3 line-clamp-3">
+          <p className="font-body text-xs text-black/70 leading-relaxed mt-2.5 line-clamp-3">
             {review.comment}
           </p>
         )}
       </div>
 
       {review.images && review.images.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-black/5">
+        <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-black/5">
           {review.images.slice(0, 3).map((imgUrl, idx) => (
             <Link
               key={idx}
               to={`/product/${productId}/reviews/images`}
-              className="w-12 h-12 rounded-xl overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs cursor-pointer relative group flex-shrink-0"
+              className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs cursor-pointer relative group flex-shrink-0"
             >
               <OptimizedImage
                 src={imgUrl}
@@ -166,25 +123,25 @@ function ReviewCard({ review, productId }) {
           {review.images.length > 3 && (
             <Link
               to={`/product/${productId}/reviews/images`}
-              className="w-12 h-12 rounded-xl overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[10px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[9px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
             >
               +{review.images.length - 3}
             </Link>
           )}
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
 
 // ─── Write Review Drawer ───────────────────────────────────────────────────────
-export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }) {
+export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, existingReview }) {
   const { user } = useAuth();
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
+  const [rating, setRating] = useState(existingReview?.rating || 0);
+  const [comment, setComment] = useState(existingReview?.comment || '');
   const [submitting, setSubmitting] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [previews, setPreviews] = useState([]);
+  const [previews, setPreviews] = useState(existingReview?.images || []);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const userInitials = (user?.name || 'Customer')
@@ -216,23 +173,51 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
     try {
       let imageUrls = [];
       if (selectedFiles.length > 0) {
-        toast.loading('Uploading review images...', { id: 'review-upload' });
+        toast.loading('Compressing and uploading review images...', { id: 'review-upload' });
         const formData = new FormData();
-        selectedFiles.forEach((file) => {
-          formData.append('images', file);
-        });
-        const uploadRes = await uploadService.uploadImages(formData);
+
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1280,
+          useWebWorker: true,
+        };
+
+        for (const file of selectedFiles) {
+          try {
+            const compressedFile = await imageCompression(file, options);
+            formData.append('images', compressedFile, file.name);
+          } catch (error) {
+            console.error('Compression error:', error);
+            // Fallback to original file
+            formData.append('images', file);
+          }
+        }
+
+        const uploadRes = await uploadService.uploadReviewImages(formData);
         imageUrls = uploadRes.images || [];
         toast.dismiss('review-upload');
       }
 
-      await reviewService.create({
-        productId,
-        rating,
-        comment: comment.trim(),
-        images: imageUrls,
-      });
-      toast.success('Your review has been submitted for approval!');
+      // Keep existing remote image urls, add new uploaded ones
+      const existingImages = previews.filter((url) => !url.startsWith('blob:'));
+      const finalImages = [...existingImages, ...imageUrls];
+
+      if (existingReview) {
+        await reviewService.update(existingReview._id, {
+          rating,
+          comment: comment.trim(),
+          images: finalImages,
+        });
+        toast.success('Your review has been updated and is pending approval.');
+      } else {
+        await reviewService.create({
+          productId,
+          rating,
+          comment: comment.trim(),
+          images: finalImages,
+        });
+        toast.success('Your review has been submitted for approval!');
+      }
       onSuccess?.();
       onClose();
     } catch (err) {
@@ -286,7 +271,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
           <div>
             <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[14px]">edit_note</span>
-              Write a Review
+              {existingReview ? 'Edit Your Review' : 'Write a Review'}
             </h2>
             <p className="font-body text-[11px] text-on-surface mt-1 font-bold line-clamp-1">
               {productTitle}
@@ -420,7 +405,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess }
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-[14px]">send</span>
-                    Submit Review
+                    {existingReview ? 'Update Review' : 'Submit Review'}
                   </>
                 )}
               </button>
@@ -441,6 +426,7 @@ export function ProductReviews({ productId, productTitle }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [eligibility, setEligibility] = useState(null); // { canReview, alreadyReviewed, reason }
+  const [myReview, setMyReview] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [_page, setPage] = useState(1);
   const [_totalPages, setTotalPages] = useState(1);
@@ -474,7 +460,13 @@ export function ProductReviews({ productId, productTitle }) {
     if (!isAuthenticated || !productId) return;
     try {
       const res = await reviewService.canReview(productId);
-      if (res.success) setEligibility(res.data);
+      if (res.success) {
+        setEligibility(res.data);
+        if (res.data.alreadyReviewed) {
+          const myRes = await reviewService.getMyReview(productId);
+          if (myRes.success && myRes.data) setMyReview(myRes.data);
+        }
+      }
     } catch {
       // ignore auth errors silently
     }
@@ -517,6 +509,11 @@ export function ProductReviews({ productId, productTitle }) {
 
   // ── CTA button logic ──────────────────────────────────────────────────────
   const renderCTA = () => {
+    const buttonClass =
+      'w-10 h-10 rounded-full flex items-center justify-center bg-[#8a7337]/10 text-[#8a7337] hover:bg-[#8a7337] hover:text-white transition-all cursor-pointer shrink-0';
+    const disabledClass =
+      'w-10 h-10 flex items-center justify-center bg-neutral-100 text-black/40 rounded-full border border-black/5 shrink-0';
+
     if (!isAuthenticated) {
       return (
         <motion.button
@@ -524,7 +521,7 @@ export function ProductReviews({ productId, productTitle }) {
           whileTap={{ scale: 0.95 }}
           onClick={openAuthModal}
           title="Write a Review"
-          className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer animate-fade-in shrink-0"
+          className={buttonClass}
         >
           <span className="material-symbols-outlined text-[20px]">edit</span>
         </motion.button>
@@ -533,7 +530,7 @@ export function ProductReviews({ productId, productTitle }) {
 
     if (!eligibility) {
       return (
-        <div className="w-10 h-10 flex items-center justify-center bg-stone-100 rounded-full border border-black/5 opacity-75 animate-fade-in shrink-0">
+        <div className={disabledClass + ' opacity-75'}>
           <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
         </div>
       );
@@ -541,12 +538,15 @@ export function ProductReviews({ productId, productTitle }) {
 
     if (eligibility.alreadyReviewed) {
       return (
-        <div
-          title="You've reviewed this product"
-          className="w-10 h-10 flex items-center justify-center bg-green-50 text-green-700 rounded-full border border-green-100 animate-fade-in shrink-0"
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowModal(true)}
+          title="Edit Your Review"
+          className={buttonClass}
         >
-          <span className="material-symbols-outlined text-[18px]">check</span>
-        </div>
+          <span className="material-symbols-outlined text-[20px]">edit</span>
+        </motion.button>
       );
     }
 
@@ -557,7 +557,7 @@ export function ProductReviews({ productId, productTitle }) {
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowModal(true)}
           title="Write a Review"
-          className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer animate-fade-in shrink-0"
+          className={buttonClass}
         >
           <span className="material-symbols-outlined text-[20px]">edit</span>
         </motion.button>
@@ -565,10 +565,7 @@ export function ProductReviews({ productId, productTitle }) {
     }
 
     return (
-      <div
-        title="Purchase to review"
-        className="w-10 h-10 flex items-center justify-center bg-neutral-100 text-black/40 rounded-full border border-black/5 animate-fade-in shrink-0"
-      >
+      <div title="Purchase to review" className={disabledClass}>
         <span className="material-symbols-outlined text-[18px]">lock</span>
       </div>
     );
@@ -581,32 +578,24 @@ export function ProductReviews({ productId, productTitle }) {
   return (
     <section
       id="reviews-section"
-      className="relative z-10 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-12 lg:py-16 overflow-hidden"
+      className="relative z-10 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-8 lg:py-12 overflow-hidden"
     >
       {/* Section Header */}
-      <div className="flex flex-row items-center justify-between gap-4 mb-8 lg:mb-10">
-        <div>
-          <span className="font-label text-[10px] uppercase tracking-[0.35em] text-primary font-bold block mb-1">
-            Customer Reviews
-          </span>
-          <h2 className="font-display text-2xl lg:text-3xl text-black font-bold tracking-tight">
-            What Buyers Say
-          </h2>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 lg:mb-6">
+        <h2 className="font-display text-xl lg:text-2xl text-black text-left">What Buyers Say</h2>
 
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          {renderCTA()}
+        <div className="flex flex-wrap items-center gap-4">
           {reviews.length > 0 && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 sm:border-r border-black/10 sm:pr-4">
               <Link
                 to={`/product/${productId}/reviews`}
-                className="font-label text-[11px] uppercase tracking-widest font-bold text-primary hover:text-primary-dark mr-2 transition-colors inline-flex items-center gap-1.5"
+                title={`View all ${reviews.length} reviews`}
+                className="w-10 h-10 rounded-full flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 border border-black/5 text-[#8a7337] transition-all cursor-pointer shrink-0"
               >
-                View All ({reviews.length})
-                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
               </Link>
               {reviews.length > 1 && (
-                <div className="flex items-center gap-1.5">
+                <div className="hidden sm:flex items-center gap-1.5 ml-2">
                   <button
                     onClick={() => handleScroll('left')}
                     className="w-8 h-8 rounded-full border border-black/15 flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition-all text-black/60 cursor-pointer"
@@ -625,39 +614,46 @@ export function ProductReviews({ productId, productTitle }) {
               )}
             </div>
           )}
+          {renderCTA()}
         </div>
       </div>
 
       {/* Stats Row */}
       {reviews.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-6 mb-8 p-6 bg-white rounded-[24px] border border-black/5 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-10 mb-6 py-6 border-y border-black/5">
           {/* Big Average */}
-          <div className="flex flex-col items-center justify-center sm:border-r border-black/5 sm:pr-8 sm:mr-2 gap-1 shrink-0">
-            <span className="font-display text-5xl font-bold text-black leading-none">
-              {avgRating.toFixed(1)}
-            </span>
-            <StarRating value={avgRating} size={16} />
-            <span className="font-label text-[10px] uppercase tracking-wider text-black/40 font-bold">
-              {reviews.length} review{reviews.length !== 1 ? 's' : ''}
-            </span>
+          <div className="flex flex-col items-center justify-center sm:border-r border-black/5 sm:pr-10 w-[140px] shrink-0 gap-3">
+            <div className="flex flex-col items-center gap-2">
+              <span className="font-display text-5xl sm:text-6xl font-normal text-black leading-none tracking-tighter">
+                {avgRating.toFixed(1)}
+              </span>
+              <div className="w-12 h-[1px] bg-primary"></div>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <StarRating value={avgRating} size={15} />
+              <span className="font-label text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-black/40 font-bold">
+                {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+              </span>
+            </div>
           </div>
 
           {/* Bar Breakdown */}
-          <div className="flex-1 space-y-2">
+          <div className="flex-1 space-y-2 w-full max-w-md">
             {ratingCounts.map(({ star, count }) => {
               const pct = reviews.length ? Math.round((count / reviews.length) * 100) : 0;
               return (
-                <div key={star} className="flex items-center gap-3">
-                  <span className="font-label text-[11px] font-bold text-black/50 w-4 shrink-0">
+                <div key={star} className="flex items-center gap-2.5">
+                  <span className="font-label text-[11px] font-bold text-black/70 w-3 shrink-0">
                     {star}
                   </span>
                   <svg
-                    width="12"
-                    height="12"
+                    width="10"
+                    height="10"
                     viewBox="0 0 24 24"
                     fill="#D4A853"
                     stroke="#D4A853"
                     strokeWidth="1.5"
+                    className="shrink-0"
                   >
                     <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
                   </svg>
@@ -669,7 +665,7 @@ export function ProductReviews({ productId, productTitle }) {
                       className="h-full bg-[#D4A853] rounded-full"
                     />
                   </div>
-                  <span className="font-label text-[10px] text-black/30 w-8 text-right">
+                  <span className="font-label text-[11px] text-black/40 w-8 text-right font-semibold">
                     {pct}%
                   </span>
                 </div>
@@ -681,11 +677,11 @@ export function ProductReviews({ productId, productTitle }) {
 
       {/* Reviews Horizontal scroll */}
       {loading && reviews.length === 0 ? (
-        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-6 px-1">
+        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 px-1">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="skeleton-box bg-white rounded-[24px] border border-black/5 p-5 space-y-3 shrink-0 w-[290px] xs:w-[320px] sm:w-[360px] lg:w-[400px] h-[220px]"
+              className="skeleton-box bg-white rounded-[24px] border border-black/5 p-5 space-y-3 shrink-0 w-[240px] xs:w-[280px] sm:w-[300px] lg:w-[320px] h-[160px]"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-neutral-100/50 animate-pulse" />
@@ -713,12 +709,12 @@ export function ProductReviews({ productId, productTitle }) {
       ) : (
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar pb-6 px-1"
+          className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar pb-4 px-1"
         >
           {reviews.map((review) => (
             <div
               key={review._id || review.id}
-              className="snap-start shrink-0 w-[290px] xs:w-[320px] sm:w-[360px] lg:w-[400px] h-auto self-stretch"
+              className="snap-start shrink-0 w-[240px] xs:w-[280px] sm:w-[300px] lg:w-[320px] h-auto self-stretch"
             >
               <ReviewCard review={review} productId={productId} />
             </div>
@@ -765,6 +761,7 @@ export function ProductReviews({ productId, productTitle }) {
           <WriteReviewModal
             productId={productId}
             productTitle={productTitle}
+            existingReview={myReview}
             onClose={() => setShowModal(false)}
             onSuccess={() => {
               fetchReviews(1);

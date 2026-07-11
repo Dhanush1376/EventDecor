@@ -21,8 +21,16 @@ export const reviewService = {
     const response = await api.get('/reviews', { params });
     return response.data;
   },
-  updateStatus: async (id, status) => {
-    const response = await api.patch(`/reviews/${id}/status`, { status });
+  getStats: async () => {
+    const response = await api.get('/reviews/stats');
+    return response.data;
+  },
+  getMyReview: async (productId) => {
+    const response = await api.get(`/reviews/my/${productId}`);
+    return response.data;
+  },
+  update: async (id, data) => {
+    const response = await api.put(`/reviews/${id}`, data);
     return response.data;
   },
   delete: async (id) => {

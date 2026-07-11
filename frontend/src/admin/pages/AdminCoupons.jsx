@@ -1,4 +1,3 @@
-const SkeletonCard = () => <div className="animate-pulse bg-gray-200 h-32 rounded-md"></div>;
 import { m as motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +11,7 @@ import {
   EmptyState,
   fadeUp,
   stagger,
+  SkeletonCard,
 } from '../components/AdminUIKit';
 
 export function AdminCoupons() {
@@ -87,7 +87,7 @@ export function AdminCoupons() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <SkeletonCard key={i} className="h-56" />
+            <SkeletonCard key={i} />
           ))}
         </div>
       ) : coupons.length === 0 ? (

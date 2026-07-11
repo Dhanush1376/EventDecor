@@ -48,7 +48,8 @@ export interface IBookingStatusHistory {
   updatedBy?: string;
 }
 
-export interface IEventBooking extends Document {
+export interface IEventJob extends Document {
+  project?: mongoose.Types.ObjectId; // Reference to parent Project
   bookingId?: string;
   user: mongoose.Types.ObjectId;
   eventPackage?: mongoose.Types.ObjectId;
@@ -92,23 +93,25 @@ export interface IEventBooking extends Document {
   };
   payments?: IBookingPayment[];
   status:
-    | 'draft'
-    | 'consultation_scheduled'
-    | 'quote_sent'
-    | 'contract_signed'
-    | 'pending_payment'
-    | 'payment_processing'
+    | 'inquiry'
+    | 'booking'
+    | 'advance_payment'
+    | 'material_planning'
+    | 'production'
+    | 'packing'
+    | 'dispatch'
+    | 'execution'
+    | 'final_settlement'
+    | 'completed'
+    | 'failed'
+    | 'refunded'
+    | 'cancelled'
     | 'confirmed'
-    | 'design_approved'
-    | 'vendor_procurement'
     | 'team_assigned'
     | 'setup_in_progress'
-    | 'execution'
-    | 'completed'
-    | 'post_event_review'
-    | 'cancelled'
-    | 'refunded'
-    | 'failed';
+    | 'payment_processing'
+    | 'pending_payment'
+    | 'draft';
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   razorpaySignature?: string;
@@ -157,8 +160,9 @@ const RentedInventorySchema = new Schema({
   notes: { type: String },
 });
 
-const EventBookingSchema: Schema = new Schema(
+const EventJobSchema: Schema = new Schema(
   {
+    project: { type: Schema.Types.ObjectId, ref: 'Project', index: true },
     bookingId: { type: String, unique: true, sparse: true },
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     eventPackage: { type: Schema.Types.ObjectId, ref: 'Event' },
@@ -215,25 +219,27 @@ const EventBookingSchema: Schema = new Schema(
     status: {
       type: String,
       enum: [
-        'draft',
-        'consultation_scheduled',
-        'quote_sent',
-        'contract_signed',
-        'pending_payment',
-        'payment_processing',
+        'inquiry',
+        'booking',
+        'advance_payment',
+        'material_planning',
+        'production',
+        'packing',
+        'dispatch',
+        'execution',
+        'final_settlement',
+        'completed',
+        'failed',
+        'refunded',
+        'cancelled',
         'confirmed',
-        'design_approved',
-        'vendor_procurement',
         'team_assigned',
         'setup_in_progress',
-        'execution',
-        'completed',
-        'post_event_review',
-        'cancelled',
-        'refunded',
-        'failed',
+        'payment_processing',
+        'pending_payment',
+        'draft',
       ],
-      default: 'draft',
+      default: 'inquiry',
     },
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
@@ -256,13 +262,13 @@ const EventBookingSchema: Schema = new Schema(
   { timestamps: true },
 );
 
-EventBookingSchema.index({ user: 1 });
-EventBookingSchema.index({ date: 1 });
-EventBookingSchema.index({ status: 1 });
-EventBookingSchema.index({ razorpayOrderId: 1 }); // CRITICAL: Fixes O(N) Webhook Scan
+EventJobSchema.index({ user: 1 });
+EventJobSchema.index({ date: 1 });
+EventJobSchema.index({ status: 1 });
+EventJobSchema.index({ razorpayOrderId: 1 }); // CRITICAL: Fixes O(N) Webhook Scan
 
 // Double Booking Prevention
-EventBookingSchema.index(
+EventJobSchema.index(
   { bookingDateStr: 1, normalizedVenueAddress: 1 },
   {
     unique: true,
@@ -270,19 +276,22 @@ EventBookingSchema.index(
     partialFilterExpression: {
       status: {
         $in: [
-          'confirmed',
-          'payment_processing',
-          'pending_payment',
-          'setup_in_progress',
-          'team_assigned',
+          'booking',
+          'advance_payment',
+          'material_planning',
+          'production',
+          'packing',
+          'dispatch',
+          'installation',
+          'event_day',
         ],
       },
     },
   },
 );
 
-EventBookingSchema.pre('save', function () {
-  const doc = this as unknown as IEventBooking;
+EventJobSchema.pre('save', function () {
+  const doc = this as unknown as IEventJob;
   if (doc.isModified('date') || !doc.bookingDateStr) {
     if (doc.date) {
       doc.bookingDateStr = new Date(doc.date).toISOString().split('T')[0];
@@ -298,19 +307,23 @@ EventBookingSchema.pre('save', function () {
 });
 
 // High-Performance Production Compound Indexes for User and Admin Paginated Pipelines
-EventBookingSchema.index({ user: 1, createdAt: -1 });
-EventBookingSchema.index({ status: 1, createdAt: -1 });
-EventBookingSchema.index({ user: 1, status: 1 });
-EventBookingSchema.index({ user: 1, date: 1 });
-EventBookingSchema.index({ date: 1, status: 1 });
+EventJobSchema.index({ user: 1, createdAt: -1 });
+EventJobSchema.index({ status: 1, createdAt: -1 });
+EventJobSchema.index({ user: 1, status: 1 });
+EventJobSchema.index({ user: 1, date: 1 });
+EventJobSchema.index({ date: 1, status: 1 });
 
-import TransactionSyncPlugin from '../utils/TransactionSyncPlugin';
-EventBookingSchema.plugin(TransactionSyncPlugin, {
+import TransactionSyncPlugin from '../../../utils/TransactionSyncPlugin';
+import { BaseEntityPlugin } from '../../../utils/BaseEntityPlugin';
+
+EventJobSchema.plugin(TransactionSyncPlugin, {
   domain: 'event',
   statusField: 'status',
   totalField: 'pricing.totalPrice',
   paymentStatusField: 'pricing.paymentStatus',
 });
 
-const EventBooking = mongoose.model<IEventBooking>('EventBooking', EventBookingSchema);
-export default EventBooking;
+EventJobSchema.plugin(BaseEntityPlugin);
+
+const EventJob = mongoose.model<IEventJob>('EventJob', EventJobSchema);
+export default EventJob;

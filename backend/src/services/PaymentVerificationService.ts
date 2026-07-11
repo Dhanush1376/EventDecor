@@ -19,7 +19,7 @@ import WalletTransaction from '../models/WalletTransaction';
 import { debitWalletBalance } from '../utils/payment/walletMutations';
 import RentalOrder from '../models/RentalOrder';
 import { RentalAvailabilityService } from './rentals/RentalAvailabilityService';
-import EventBooking from '../models/EventBooking';
+import EventJob from '../domains/event_operations/models/EventJob';
 import { EventResourcePlanningService } from './eventBooking/EventResourcePlanningService';
 import BookingMessage from '../models/BookingMessage';
 import { PaymentRefundService } from './PaymentRefundService';
@@ -104,9 +104,9 @@ export class PaymentVerificationService {
               existingAttempt.orderData.pendingOrderId,
             ).session(session);
           } else if (existingAttempt.type === 'event_booking') {
-            existingDoc = await EventBooking.findById(
-              existingAttempt.orderData.pendingOrderId,
-            ).session(session);
+            existingDoc = await EventJob.findById(existingAttempt.orderData.pendingOrderId).session(
+              session,
+            );
           }
 
           if (!externalSession) {
@@ -479,7 +479,7 @@ export class PaymentVerificationService {
               amount: orderData.depositAmount,
               currency: 'INR',
               originalTransactionId: razorpay_payment_id,
-              entityType: 'EventBooking',
+              entityType: 'EventJob',
               entityId: orderData.pendingOrderId,
             }).catch((refundErr: any) =>
               logger.error(
@@ -495,7 +495,7 @@ export class PaymentVerificationService {
           throw err;
         }
 
-        finalOrder = await EventBooking.create(
+        finalOrder = await EventJob.create(
           [
             {
               _id: orderData.pendingOrderId,
@@ -567,7 +567,7 @@ export class PaymentVerificationService {
           [
             {
               aggregateId: finalOrder._id.toString(),
-              aggregateType: 'EventBooking',
+              aggregateType: 'EventJob',
               eventType: 'BookingConfirmed',
               payload: { bookingId: finalOrder._id.toString(), userId },
             },
@@ -578,6 +578,14 @@ export class PaymentVerificationService {
 
       attempt.status = 'success';
       await attempt.save({ session });
+
+      try {
+        const { RuleEngine } = require('./RuleEngine');
+        const userForRule = await User.findById(userId).lean().session(session);
+        await RuleEngine.evaluateTrigger('on_checkout', { user: userForRule, order: finalOrder });
+      } catch (ruleErr) {
+        logger.error('Failed to evaluate checkout rules (online):', ruleErr);
+      }
 
       if (!externalSession) await session.commitTransaction();
     } catch (error) {
@@ -596,13 +604,19 @@ export class PaymentVerificationService {
       const { emitAdminEvent } = require('../socket');
       if (attempt.type === 'purchase') {
         emitAdminEvent('order_update', { orderId: finalOrder._id });
+
+        // Fire WhatsApp Notification for Online Order
+        const {
+          WhatsAppTriggers,
+        } = require('../domains/notifications/whatsapp/whatsappTriggerHooks');
+        await WhatsAppTriggers.onOrderCreated(finalOrder);
       } else if (attempt.type === 'event_booking') {
         emitAdminEvent('booking_update', { bookingId: finalOrder._id });
       } else if (attempt.type === 'rental') {
         emitAdminEvent('rental_update', { rentalId: finalOrder._id });
       }
     } catch (e) {
-      logger.warn('Failed to emit admin event for verified payment', e);
+      logger.warn('Failed to emit admin event or send WhatsApp for verified payment', e);
     }
 
     return finalOrder;

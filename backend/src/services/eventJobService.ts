@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import EventBooking from '../models/EventBooking';
+import EventJob from '../domains/event_operations/models/EventJob';
 import Event from '../models/Event';
 import User from '../models/User';
 import ApiError from '../utils/ApiError';
@@ -7,7 +7,7 @@ import { generateUniqueBookingId } from '../utils/bookingId';
 import { DistributedLock } from '../utils/DistributedLock';
 import OutboxEvent from '../models/OutboxEvent';
 
-export class EventBookingService {
+export class EventJobService {
   /**
    * Encapsulates the business logic for creating a new booking inquiry.
    */
@@ -93,7 +93,7 @@ export class EventBookingService {
           const endOfDay = new Date(bDate);
           endOfDay.setHours(23, 59, 59, 999);
 
-          const duplicate = await EventBooking.findOne({
+          const duplicate = await EventJob.findOne({
             date: { $gte: startOfDay, $lte: endOfDay },
             normalizedVenueAddress: normalizedVenue,
             status: { $in: ['confirmed', 'payment_processing', 'setup_in_progress'] },
@@ -105,7 +105,7 @@ export class EventBookingService {
           }
         }
 
-        const bookings = await EventBooking.create(
+        const bookings = await EventJob.create(
           [
             {
               bookingId,
@@ -160,7 +160,7 @@ export class EventBookingService {
           [
             {
               aggregateId: newBooking._id.toString(),
-              aggregateType: 'EventBooking',
+              aggregateType: 'EventJob',
               eventType: 'BookingInquirySubmitted',
               payload: { bookingId: newBooking._id.toString(), userId },
             },
@@ -199,7 +199,7 @@ export class EventBookingService {
     transactionId: string,
     note?: string,
   ) {
-    const booking = await EventBooking.findById(bookingId);
+    const booking = await EventJob.findById(bookingId);
     if (!booking) throw new ApiError(404, 'Booking not found');
     if (String(booking.user) !== String(userId))
       throw new ApiError(403, 'Unauthorized transaction action.');
@@ -272,14 +272,12 @@ export class EventBookingService {
   }
 
   static async adminUpdateStatus(bookingId: string, status: string, adminId: string) {
-    const booking = await EventBooking.findById(bookingId).populate('user');
+    const booking = await EventJob.findById(bookingId).populate('user');
     if (!booking) throw new ApiError(404, 'Booking not found');
 
     const oldStatus = booking.status;
-    const {
-      EventBookingStateMachine,
-    } = require('../services/eventBooking/EventBookingStateMachine');
-    EventBookingStateMachine.transition(
+    const { EventJobStateMachine } = require('../services/eventBooking/EventJobStateMachine');
+    EventJobStateMachine.transition(
       booking,
       status as any,
       'Status manually updated by admin',
@@ -312,7 +310,7 @@ export class EventBookingService {
             booking.venue.address.trim() &&
             booking.venue.address.toUpperCase() !== 'TBD'
           ) {
-            const duplicate = await EventBooking.findOne({
+            const duplicate = await EventJob.findOne({
               _id: { $ne: booking._id },
               date: { $gte: startOfDay, $lte: endOfDay },
               'venue.address': {
@@ -332,7 +330,7 @@ export class EventBookingService {
             }
           }
 
-          const slotsUsed = await EventBooking.countDocuments({
+          const slotsUsed = await EventJob.countDocuments({
             _id: { $ne: booking._id },
             date: { $gte: startOfDay, $lte: endOfDay },
             status: { $in: ['confirmed', 'setup_in_progress', 'payment_processing'] },
@@ -371,7 +369,7 @@ export class EventBookingService {
             amount: totalPaid,
             currency: 'INR',
             originalTransactionId: latestPayment.transactionId,
-            entityType: 'EventBooking',
+            entityType: 'EventJob',
             entityId: booking._id,
           }).catch((err: any) => {
             const logger = require('../config/logger').default;
@@ -411,8 +409,8 @@ export class EventBookingService {
       logger.debug('Could not emit booking status socket event:', socketErr);
     }
 
-    const { EventBookingMailService } = require('../services/eventBookingMailService');
-    EventBookingMailService.sendStatusUpdateEmail(booking, oldStatus, status).catch((err: any) => {
+    const { EventJobMailService } = require('../services/eventBookingMailService');
+    EventJobMailService.sendStatusUpdateEmail(booking, oldStatus, status).catch((err: any) => {
       const logger = require('../config/logger').default;
       logger.error('Failed to dispatch status update email to customer:', err);
     });
@@ -423,7 +421,7 @@ export class EventBookingService {
   static async adminUpdateQuotation(bookingId: string, updateData: any) {
     const { eventPackageId, selectedAddons, rentalDurationDays, depositAmountOverride } =
       updateData;
-    const booking = await EventBooking.findById(bookingId);
+    const booking = await EventJob.findById(bookingId);
     if (!booking) throw new ApiError(404, 'Booking not found');
 
     if (eventPackageId !== undefined) booking.eventPackage = eventPackageId;

@@ -22,8 +22,8 @@ export const issueManualRefund = [
     const entityId = String(req.params.entityId);
     const { amount, reason, isPartial } = req.body;
 
-    if (!['Order', 'RentalOrder', 'EventBooking'].includes(entityType)) {
-      throw new ApiError(400, 'Invalid entity type. Must be Order, RentalOrder, or EventBooking.');
+    if (!['Order', 'RentalOrder', 'EventJob'].includes(entityType)) {
+      throw new ApiError(400, 'Invalid entity type. Must be Order, RentalOrder, or EventJob.');
     }
 
     // In a real scenario, we need to verify the originalTransactionId.
@@ -44,9 +44,9 @@ export const issueManualRefund = [
       if (!rental.razorpayPaymentId)
         throw new ApiError(400, 'Rental Order does not have a captured Razorpay payment');
       originalTransactionId = rental.razorpayPaymentId;
-    } else if (entityType === 'EventBooking') {
-      const EventBooking = require('../../models/EventBooking').default;
-      const booking = await EventBooking.findById(entityId).select('razorpayPaymentId').lean();
+    } else if (entityType === 'EventJob') {
+      const EventJob = require('../../domains/event_operations/models/EventJob').default;
+      const booking = await EventJob.findById(entityId).select('razorpayPaymentId').lean();
       if (!booking) throw new ApiError(404, 'Event Booking not found');
       if (!booking.razorpayPaymentId)
         throw new ApiError(400, 'Event Booking does not have a captured Razorpay payment');
@@ -94,7 +94,7 @@ export const getRefundStatus = asyncHandler(async (req: Request, res: Response) 
   const entityType = String(req.params.entityType);
   const entityId = String(req.params.entityId);
 
-  if (!['Order', 'RentalOrder', 'EventBooking'].includes(entityType)) {
+  if (!['Order', 'RentalOrder', 'EventJob'].includes(entityType)) {
     throw new ApiError(400, 'Invalid entity type');
   }
 
@@ -111,9 +111,9 @@ export const getRefundStatus = asyncHandler(async (req: Request, res: Response) 
       const RentalOrder = require('../../models/RentalOrder').default;
       const rental = await RentalOrder.findById(entityId).select('user').lean();
       if (rental && String(rental.user) === String(req.user?.id)) isAuthorized = true;
-    } else if (entityType === 'EventBooking') {
-      const EventBooking = require('../../models/EventBooking').default;
-      const booking = await EventBooking.findById(entityId).select('user').lean();
+    } else if (entityType === 'EventJob') {
+      const EventJob = require('../../domains/event_operations/models/EventJob').default;
+      const booking = await EventJob.findById(entityId).select('user').lean();
       if (booking && String(booking.user) === String(req.user?.id)) isAuthorized = true;
     }
   }

@@ -11,7 +11,7 @@
     "check-env": "ts-node --transpile-only scripts/validate_env.ts",
     "create-indexes": "ts-node --transpile-only scripts/create_indexes.ts",
     "lint": "eslint src",
-    "test": "echo \"No tests specified\" && exit 0"
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
@@ -91,6 +91,7 @@
     "socket.io-client": "^4.8.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.62.1"
+    "typescript-eslint": "^8.62.1",
+    "vitest": "^4.1.10"
   }
 }

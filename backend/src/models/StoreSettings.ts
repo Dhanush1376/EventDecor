@@ -62,6 +62,10 @@ export interface IStoreSettings extends Document {
     taxInclusive: boolean;
   };
   loyalty: {
+    walletEnabled: boolean;
+    referralProgramEnabled: boolean;
+    reviewRewardsEnabled: boolean;
+    welcomeBonusEnabled: boolean;
     pointsPerRupee: number;
     coinsPerRupee: number;
     welcomeBonus: number;
@@ -74,6 +78,7 @@ export interface IStoreSettings extends Document {
     welcomeCouponDiscount: number;
     welcomeCouponMinOrder: number;
     welcomeCouponMaxDiscount: number;
+    welcomeCouponExpiryDays: number;
     tiers: Array<{
       name: string;
       minSpend: number;
@@ -186,6 +191,10 @@ const StoreSettingsSchema: Schema = new Schema(
       taxInclusive: { type: Boolean, default: true },
     },
     loyalty: {
+      walletEnabled: { type: Boolean, default: true },
+      referralProgramEnabled: { type: Boolean, default: true },
+      reviewRewardsEnabled: { type: Boolean, default: true },
+      welcomeBonusEnabled: { type: Boolean, default: true },
       pointsPerRupee: { type: Number, default: 0 },
       coinsPerRupee: { type: Number, default: 0.1 }, // 1 coin per 10 rupees
       welcomeBonus: { type: Number, default: 100 },
@@ -198,6 +207,7 @@ const StoreSettingsSchema: Schema = new Schema(
       welcomeCouponDiscount: { type: Number, default: 10 },
       welcomeCouponMinOrder: { type: Number, default: 499 },
       welcomeCouponMaxDiscount: { type: Number, default: 200 },
+      welcomeCouponExpiryDays: { type: Number, default: 30 },
       tiers: [
         {
           name: { type: String, required: true },

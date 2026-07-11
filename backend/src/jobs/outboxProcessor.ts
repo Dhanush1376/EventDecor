@@ -4,12 +4,12 @@ import { withCronLock } from '../utils/cronLock';
 import { getAdminEmails } from '../config/adminConfig';
 import Order from '../models/Order';
 import User from '../models/User';
-import EventBooking from '../models/EventBooking';
+import EventJob from '../domains/event_operations/models/EventJob';
 import RentalOrder from '../models/RentalOrder';
 import * as Sentry from '@sentry/node';
 import { LoyaltyService } from '../services/loyaltyService';
 import { notificationQueue } from '../jobs/queues';
-import { EventBookingMailService } from '../services/eventBookingMailService';
+import { EventJobMailService } from '../services/eventBookingMailService';
 import { CustomOrderMailService } from '../services/customOrderMailService';
 import storeSettingsService from '../services/StoreSettingsService';
 
@@ -206,8 +206,8 @@ async function processEvent(event: any): Promise<void> {
     }
 
     // ─── EVENT BOOKING EVENTS ───────────────────────────────────────
-    case 'EventBooking:BookingInquirySubmitted': {
-      const booking = await EventBooking.findById(event.aggregateId).populate('user').lean();
+    case 'EventJob:BookingInquirySubmitted': {
+      const booking = await EventJob.findById(event.aggregateId).populate('user').lean();
       if (booking) {
         const user = booking.user as any;
         const eventDateStr = new Date(booking.date).toLocaleDateString('en-IN', {
@@ -225,13 +225,13 @@ async function processEvent(event: any): Promise<void> {
         });
 
         // Use the elegant mail service instead of basic HTML
-        await EventBookingMailService.sendSubmissionEmails(booking, user);
+        await EventJobMailService.sendSubmissionEmails(booking, user);
       }
       break;
     }
 
-    case 'EventBooking:BookingConfirmed': {
-      const booking = await EventBooking.findById(event.aggregateId).populate('user').lean();
+    case 'EventJob:BookingConfirmed': {
+      const booking = await EventJob.findById(event.aggregateId).populate('user').lean();
       if (booking) {
         const user = booking.user as any;
         if (user?.email) {
@@ -259,8 +259,8 @@ async function processEvent(event: any): Promise<void> {
       break;
     }
 
-    case 'EventBooking:PaymentFailed': {
-      const booking = await EventBooking.findById(event.aggregateId).populate('user').lean();
+    case 'EventJob:PaymentFailed': {
+      const booking = await EventJob.findById(event.aggregateId).populate('user').lean();
       if (booking) {
         const user = booking.user as any;
         if (user?.email) {
@@ -276,8 +276,8 @@ async function processEvent(event: any): Promise<void> {
       break;
     }
 
-    case 'EventBooking:BookingCancelled': {
-      const booking = await EventBooking.findById(event.aggregateId).populate('user').lean();
+    case 'EventJob:BookingCancelled': {
+      const booking = await EventJob.findById(event.aggregateId).populate('user').lean();
       if (booking) {
         const user = booking.user as any;
         if (user?.email) {

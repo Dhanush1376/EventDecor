@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { PageHeader, fadeUp, stagger } from '../components/AdminUIKit';
+import { PageHeader, fadeUp, stagger, SkeletonList } from '../components/AdminUIKit';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -66,15 +66,19 @@ export default function AdminWarehouseHub() {
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
+          initial="hidden"
+          animate="show"
+          exit="exit"
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            show: { opacity: 1, y: 0, transition: { staggerChildren: 0.1, duration: 0.2 } },
+            exit: { opacity: 0, y: -10, transition: { duration: 0.2 } },
+          }}
         >
           {activeTab === 'scan' && <ScannerView />}
           {activeTab === 'receive' && (
             <GenericTaskView
-              endpoint="/api/v1/warehouse/dispatch/tasks"
+              endpoint="/warehouse/dispatch/tasks"
               title="Receive Items"
               icon="move_to_inbox"
               emptyMessage="No inbound shipments to receive."
@@ -86,7 +90,7 @@ export default function AdminWarehouseHub() {
           {activeTab === 'pick' && <PickView />}
           {activeTab === 'pack' && (
             <GenericTaskView
-              endpoint="/api/v1/warehouse/packages/active"
+              endpoint="/warehouse/packages/active"
               title="Pack Orders"
               icon="inventory"
               emptyMessage="No items waiting to be packed."
@@ -96,7 +100,7 @@ export default function AdminWarehouseHub() {
           )}
           {activeTab === 'dispatch' && (
             <GenericTaskView
-              endpoint="/api/v1/warehouse/dispatch/tasks"
+              endpoint="/warehouse/dispatch/tasks"
               title="Dispatch"
               icon="local_shipping"
               emptyMessage="No packed orders ready for dispatch."
@@ -106,7 +110,7 @@ export default function AdminWarehouseHub() {
           )}
           {activeTab === 'count' && (
             <GenericTaskView
-              endpoint="/api/v1/warehouse/inventory/count"
+              endpoint="/warehouse/inventory/count"
               title="Stock Count"
               icon="calculate"
               emptyMessage="No cycle counts assigned today."
@@ -135,7 +139,7 @@ function ScannerView() {
   const fetchScans = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/v1/warehouse/scans/recent');
+      const res = await api.get('/warehouse/scans/recent');
       if (res.data?.success) {
         setActivities(
           res.data.data.map((scan) => ({
@@ -160,7 +164,7 @@ function ScannerView() {
     if (!scanValue.trim()) return;
 
     try {
-      const res = await api.post('/api/v1/warehouse/scan', { rawPayload: scanValue.trim() });
+      const res = await api.post('/warehouse/scan', { rawPayload: scanValue.trim() });
       if (res.data?.success) {
         toast.success(`Scan processed successfully`);
         setActivities((prev) =>
@@ -248,9 +252,7 @@ function ScannerView() {
           </div>
           <div className="p-5 space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar bg-[var(--admin-surface)]">
             {loading ? (
-              <div className="py-10 flex items-center justify-center">
-                <span className="w-6 h-6 border-2 border-[var(--admin-accent)] border-t-transparent rounded-full animate-spin"></span>
-              </div>
+              <SkeletonList items={3} />
             ) : activities.length === 0 ? (
               <div className="py-10 text-center text-[var(--admin-text-tertiary)] flex flex-col items-center justify-center">
                 <span className="material-symbols-outlined text-[32px] mb-2 opacity-50">
@@ -297,7 +299,7 @@ function PickView() {
   const fetchPicklists = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/v1/warehouse/picklists/active');
+      const res = await api.get('/warehouse/picklists/active');
       if (res.data?.success) {
         setPicklists(res.data.data || []);
       }
@@ -349,17 +351,15 @@ function PickView() {
           </thead>
           <tbody className="divide-y divide-[var(--admin-border-subtle)] text-[13px] text-[var(--admin-text-primary)]">
             {loading ? (
-              <tr>
-                <td
-                  colSpan="5"
-                  className="p-12 text-center text-[var(--admin-text-tertiary)] font-medium"
-                >
-                  <div className="flex flex-col items-center justify-center gap-3">
-                    <span className="w-6 h-6 border-2 border-[var(--admin-accent)] border-t-transparent rounded-full animate-spin"></span>
-                    Loading active picklists...
-                  </div>
-                </td>
-              </tr>
+              [...Array(5)].map((_, i) => (
+                <tr key={i}>
+                  {[...Array(5)].map((_, j) => (
+                    <td key={j} className="p-4">
+                      <div className="admin-skeleton h-5 w-full rounded" />
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : picklists.length === 0 ? (
               <tr>
                 <td
@@ -452,7 +452,7 @@ function GenericTaskView({
   const handleAction = async (task) => {
     try {
       const payload = isCount ? task.sku : task.packageId || task._id;
-      const res = await api.post('/api/v1/warehouse/scan', { rawPayload: payload });
+      const res = await api.post('/warehouse/scan', { rawPayload: payload });
       if (res.data?.success) {
         toast.success(`Successfully processed ${payload}`);
         setTasks((prev) => prev.filter((t) => t._id !== task._id));
@@ -484,8 +484,8 @@ function GenericTaskView({
       </div>
       <div className="overflow-x-auto bg-[var(--admin-surface)] min-h-[300px]">
         {loading ? (
-          <div className="flex items-center justify-center h-[300px]">
-            <span className="w-8 h-8 border-4 border-[var(--admin-accent)] border-t-transparent rounded-full animate-spin"></span>
+          <div className="p-5">
+            <SkeletonList items={5} />
           </div>
         ) : tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[300px] text-[var(--admin-text-tertiary)]">

@@ -1,7 +1,7 @@
 import { ITransaction } from '../types/transaction';
 import Order from '../models/Order';
 import RentalOrder from '../models/RentalOrder';
-import EventBooking from '../models/EventBooking';
+import EventJob from '../domains/event_operations/models/EventJob';
 import CustomOrder from '../models/CustomOrder';
 import { InvoiceService } from '../services/InvoiceService';
 import { IInvoiceLineItem } from '../models/Invoice';
@@ -64,7 +64,7 @@ export class TransactionToInvoiceMapper {
           break;
         }
         case 'event': {
-          const event = await EventBooking.findById(transaction.referenceId);
+          const event = await EventJob.findById(transaction.referenceId);
           if (event) {
             lineItems = [
               {

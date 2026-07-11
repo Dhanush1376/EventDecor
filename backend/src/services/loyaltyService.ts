@@ -12,7 +12,7 @@ export class LoyaltyService {
   /**
    * Computes all loyalty dashboard metrics including aggregations
    */
-  static async getDashboardData(userId: string) {
+  static async getDashboardData(userId: string, skip: number = 0, limit: number = 20) {
     const user = await User.findById(userId).lean();
     if (!user) {
       throw new ApiError(404, 'User not found');
@@ -22,10 +22,15 @@ export class LoyaltyService {
       user.referralCode = await saveUniqueReferralCode(user._id, user.name);
     }
 
-    const transactions = await WalletTransaction.find({ userId })
-      .populate('orderId', 'invoiceNumber total')
-      .sort({ createdAt: -1 })
-      .lean();
+    const [transactions, totalTransactions] = await Promise.all([
+      WalletTransaction.find({ userId })
+        .populate('orderId', 'invoiceNumber total')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      WalletTransaction.countDocuments({ userId }),
+    ]);
 
     const activeCoupons = await Coupon.find({
       isActive: true,
@@ -66,7 +71,7 @@ export class LoyaltyService {
     return {
       walletBalance: user.walletBalance || 0,
       siriCoins: user.siriCoins || 0,
-      loyaltyTier: user.loyaltyTier || 'Bronze',
+      loyaltyTier: user.loyaltyTier || settings.loyalty.tiers?.[0]?.name || 'Bronze',
       referralCode: user.referralCode,
       referralsCount: user.referralsCount || 0,
       lifetimeSpend,
@@ -74,6 +79,7 @@ export class LoyaltyService {
       spendRequired,
       progressPercentage,
       transactions,
+      totalTransactions,
       coupons: activeCoupons,
     };
   }
@@ -91,34 +97,43 @@ export class LoyaltyService {
       }
 
       const settings = await storeSettingsService.getSettings();
-      const welcomeCash = settings.loyalty.welcomeBonus;
-      const updateQuery: Record<string, unknown> = {
-        $inc: { walletBalance: welcomeCash },
-      };
+
+      const welcomeCash = settings.loyalty.welcomeBonusEnabled ? settings.loyalty.welcomeBonus : 0;
+      const updateQuery: Record<string, unknown> = {};
+      if (welcomeCash > 0) {
+        updateQuery.$inc = { walletBalance: welcomeCash };
+      }
+
       const setFields: Record<string, string> = {};
       if (!user.referralCode) {
         setFields.referralCode = await saveUniqueReferralCode(user._id, user.name, session);
       }
-      if (!user.loyaltyTier) setFields.loyaltyTier = 'Bronze';
+      if (!user.loyaltyTier) {
+        setFields.loyaltyTier = settings.loyalty.tiers?.[0]?.name || 'Bronze';
+      }
       if (Object.keys(setFields).length > 0) {
         updateQuery.$set = setFields;
       }
 
-      await User.findByIdAndUpdate(userId, updateQuery, { session });
+      if (Object.keys(updateQuery).length > 0) {
+        await User.findByIdAndUpdate(userId, updateQuery, { session });
+      }
 
-      await WalletTransaction.create(
-        [
-          {
-            userId,
-            type: 'credit',
-            amount: welcomeCash,
-            source: 'onboarding',
-            description: 'Welcome Bonus: ₹100 Siri Cash credited to your loyalty wallet!',
-            status: 'active',
-          },
-        ],
-        { session },
-      );
+      if (welcomeCash > 0) {
+        await WalletTransaction.create(
+          [
+            {
+              userId,
+              type: 'credit',
+              amount: welcomeCash,
+              source: 'onboarding',
+              description: `Welcome Bonus: ₹${welcomeCash} Siri Cash credited to your loyalty wallet!`,
+              status: 'active',
+            },
+          ],
+          { session },
+        );
+      }
 
       const crypto = require('crypto');
       const code = `WELCOME-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
@@ -131,7 +146,9 @@ export class LoyaltyService {
             minOrderAmount: settings.loyalty.welcomeCouponMinOrder,
             maxDiscount: settings.loyalty.welcomeCouponMaxDiscount,
             startDate: new Date(),
-            expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            expiryDate: new Date(
+              Date.now() + (settings.loyalty.welcomeCouponExpiryDays || 30) * 24 * 60 * 60 * 1000,
+            ),
             usageLimit: 1,
             usedCount: 0,
             isActive: true,
@@ -176,6 +193,11 @@ export class LoyaltyService {
     session.startTransaction();
     try {
       const settings = await storeSettingsService.getSettings();
+
+      if (!settings.loyalty.referralProgramEnabled) {
+        throw new ApiError(400, 'Referral program is currently disabled');
+      }
+
       const refereeBonus = settings.loyalty.referralBonusReferee;
 
       await User.findByIdAndUpdate(
@@ -333,30 +355,6 @@ export class LoyaltyService {
         { session },
       );
 
-      // Credit Referee as welcome wallet cash atomically
-      const refereeBonus = settings.loyalty.referralBonusReferee;
-      await User.findByIdAndUpdate(
-        refereeId,
-        {
-          $inc: { walletBalance: refereeBonus },
-        },
-        { session },
-      );
-
-      await WalletTransaction.create(
-        [
-          {
-            userId: refereeId,
-            type: 'credit',
-            amount: refereeBonus,
-            source: 'referral_bonus',
-            description: 'Referral Bonus: Welcome cash for joining via referral link!',
-            status: 'active',
-          },
-        ],
-        { session },
-      );
-
       await session.commitTransaction();
       logger.info(
         `Referral bonus successfully applied between referrer: ${referrerId} and referee: ${refereeId}`,
@@ -413,16 +411,28 @@ export class LoyaltyService {
     rating: number,
     hasPhoto: boolean,
     hasVideo: boolean,
-    _reviewId: string,
+    reviewId: string,
   ) {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
+      // 1. Check existing reward to avoid duplicate processing
+      const existingReward = await WalletTransaction.findOne({
+        source: 'review_reward',
+        reviewId,
+      }).session(session);
+
+      if (existingReward) {
+        await session.abortTransaction();
+        session.endSession();
+        return { alreadyRewarded: true, rewardIssued: false };
+      }
+
       const user = await User.findById(userId).session(session);
       if (!user) {
         await session.abortTransaction();
         session.endSession();
-        return;
+        return { alreadyRewarded: false, rewardIssued: false };
       }
 
       const settings = await storeSettingsService.getSettings();
@@ -438,7 +448,23 @@ export class LoyaltyService {
         description = 'Photo Review Silver Credit';
       }
 
-      // Atomically reward the user without read-modify-write saves
+      // 2. CREATE unique transaction claim first (Concurrency protection)
+      await WalletTransaction.create(
+        [
+          {
+            userId,
+            type: 'credit',
+            amount: rewardAmount,
+            source: 'review_reward',
+            description: `Review Bonus: Earned ₹${rewardAmount} siri cash for submitting ${description}`,
+            reviewId,
+            status: 'active',
+          },
+        ],
+        { session },
+      );
+
+      // 3. CREDIT WALLET
       await User.findByIdAndUpdate(
         userId,
         {
@@ -450,25 +476,25 @@ export class LoyaltyService {
         { session },
       );
 
-      await WalletTransaction.create(
-        [
-          {
-            userId,
-            type: 'credit',
-            amount: rewardAmount,
-            source: 'review_reward',
-            description: `Review Bonus: Earned ₹${rewardAmount} siri cash for submitting ${description}`,
-            status: 'active',
-          },
-        ],
-        { session },
-      );
-
       await session.commitTransaction();
       logger.info(`Instantly rewarded user ${userId} with ₹${rewardAmount} review cash.`);
-    } catch (err) {
+      return { alreadyRewarded: false, rewardIssued: true, amount: rewardAmount };
+    } catch (err: any) {
       await session.abortTransaction();
+
+      // Explicitly check for duplicate key error on the review_reward partial unique index
+      if (
+        err.code === 11000 &&
+        err.keyPattern &&
+        err.keyPattern.source &&
+        err.keyPattern.reviewId
+      ) {
+        logger.info(`Duplicate review reward prevented via E11000 for review ${reviewId}`);
+        return { alreadyRewarded: true, rewardIssued: false };
+      }
+
       logger.error('Failed to reward review writing:', err);
+      throw err;
     } finally {
       session.endSession();
     }
@@ -567,6 +593,75 @@ export class LoyaltyService {
       if (providedSession) throw err;
     } finally {
       if (!providedSession) session.endSession();
+    }
+  }
+
+  /**
+   * Admin manual adjustment of a user's wallet balance
+   */
+  static async adjustWalletBalance(
+    adminId: string,
+    userId: string,
+    type: 'credit' | 'debit',
+    amount: number,
+    description: string,
+    ipAddress?: string,
+  ) {
+    if (amount <= 0) throw new ApiError(400, 'Amount must be greater than 0');
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const user = await User.findById(userId).session(session);
+      if (!user) {
+        throw new ApiError(404, 'User not found');
+      }
+
+      const balanceBefore = user.walletBalance || 0;
+      let balanceAfter = balanceBefore;
+
+      if (type === 'credit') {
+        balanceAfter = balanceBefore + amount;
+      } else {
+        if (balanceBefore < amount) {
+          throw new ApiError(
+            400,
+            `Insufficient wallet balance. Current balance is ₹${balanceBefore}`,
+          );
+        }
+        balanceAfter = balanceBefore - amount;
+      }
+
+      await User.findByIdAndUpdate(userId, { walletBalance: balanceAfter }, { session });
+
+      const transaction = await WalletTransaction.create(
+        [
+          {
+            userId,
+            type,
+            amount,
+            source: 'admin_adjustment',
+            description,
+            status: 'active',
+            balanceBefore,
+            balanceAfter,
+            adminId,
+            ipAddress,
+          },
+        ],
+        { session },
+      );
+
+      await session.commitTransaction();
+      logger.info(
+        `Admin ${adminId} ${type}ed ₹${amount} for user ${userId}. Reason: ${description}`,
+      );
+      return transaction[0];
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
     }
   }
 }

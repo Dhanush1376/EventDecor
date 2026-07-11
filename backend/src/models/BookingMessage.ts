@@ -12,13 +12,13 @@ export interface IBookingMessage extends Document {
 
 const BookingMessageSchema: Schema = new Schema(
   {
-    bookingId: { type: Schema.Types.ObjectId, ref: 'EventBooking', required: true },
+    bookingId: { type: Schema.Types.ObjectId, ref: 'EventJob', required: true },
     sender: { type: String, enum: ['client', 'admin'], required: true },
     message: { type: String, required: true },
     timestamp: { type: Date, default: Date.now },
     attachments: [{ type: String }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 BookingMessageSchema.index({ bookingId: 1, timestamp: 1 });

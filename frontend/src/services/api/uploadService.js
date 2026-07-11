@@ -31,6 +31,12 @@ export const uploadService = {
       return { success: true, images: results };
     }, formData);
   },
+  uploadReviewImages: async (formData) => {
+    return uploadWithRetry(async (fd) => {
+      const response = await api.post('/upload/reviews', fd);
+      return response.data;
+    }, formData);
+  },
   uploadCMS: async (formData) => {
     return uploadWithRetry(async (fd) => {
       const file = fd.get('images') || fd.get('file');

@@ -12,7 +12,10 @@ const inFlightRequests = new MemoryCache({
 
 export const idempotencyGuard = () => {
   return asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const idempotencyKey = req.headers['x-idempotency-key'] as string;
+    // Accept both header spellings: the SPA sends `Idempotency-Key` (IETF draft
+    // convention); `X-Idempotency-Key` is kept for backward compatibility.
+    const idempotencyKey = (req.headers['idempotency-key'] ||
+      req.headers['x-idempotency-key']) as string;
     if (!idempotencyKey) return next(); // No key = no protection (backward compatible)
 
     const userId = (req as any).user?.id || 'anon';

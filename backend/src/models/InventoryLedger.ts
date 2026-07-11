@@ -18,7 +18,7 @@ import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 export interface IInventoryLedger extends ISoftDeleted {
   product: mongoose.Types.ObjectId;
   referenceId: string; // OrderId or ReservationId
-  referenceType: 'Order' | 'RentalOrder' | 'EventBooking' | 'Manual';
+  referenceType: 'Order' | 'RentalOrder' | 'EventJob' | 'Manual';
   type: 'reservation' | 'confirmation' | 'cancellation' | 'restock' | 'shrinkage' | 'refund';
   quantity: number;
   fromAccount: 'AVAILABLE' | 'RESERVED' | 'SOLD' | 'SUPPLIER' | 'SHRINKAGE';

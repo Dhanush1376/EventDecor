@@ -4,7 +4,7 @@ export interface IRefundRecord extends Document {
   amount: number;
   currency: string;
   originalTransactionId: string;
-  entityType: 'Order' | 'Rental' | 'EventBooking';
+  entityType: 'Order' | 'Rental' | 'EventJob';
   entityId: mongoose.Types.ObjectId;
   status: 'pending_approval' | 'pending' | 'processing' | 'completed' | 'failed';
   razorpayRefundId?: string;
@@ -42,7 +42,7 @@ const RefundRecordSchema: Schema = new Schema(
     amount: { type: Number, required: true },
     currency: { type: String, default: 'INR' },
     originalTransactionId: { type: String, required: true },
-    entityType: { type: String, enum: ['Order', 'Rental', 'EventBooking'], required: true },
+    entityType: { type: String, enum: ['Order', 'Rental', 'EventJob'], required: true },
     entityId: { type: Schema.Types.ObjectId, required: true },
     status: {
       type: String,

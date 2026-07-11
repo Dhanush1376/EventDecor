@@ -155,6 +155,12 @@ const AdminCustomers = lazy(() =>
 const AdminWarehouseHub = lazy(() => import('../admin/pages/AdminWarehouseHub'));
 const AdminProductionHub = lazy(() => import('../admin/pages/AdminProductionHub'));
 const AdminBusinessRules = lazy(() => import('../admin/pages/AdminBusinessRules'));
+
+const AdminWhatsAppAutomations = lazy(() =>
+  import('../admin/pages/AdminWhatsAppAutomations').then((m) => ({
+    default: m.AdminWhatsAppAutomations,
+  })),
+);
 const AdminApprovalsQueue = lazy(() => import('../admin/pages/AdminApprovalsQueue'));
 
 const AdminExecutiveDashboard = lazy(() => import('../admin/pages/ExecutiveDashboard'));
@@ -207,6 +213,8 @@ const AdminNotifications = lazy(() =>
 const AdminCampaigns = lazy(() =>
   import('../admin/pages/AdminCampaigns').then((m) => ({ default: m.AdminCampaigns })),
 );
+const CampaignManager = lazy(() => import('../admin/pages/Loyalty/CampaignManager'));
+const RuleBuilder = lazy(() => import('../admin/pages/Loyalty/RuleBuilder'));
 const AdminContent = lazy(() =>
   import('../admin/pages/AdminContent').then((m) => ({ default: m.AdminContent })),
 );
@@ -289,11 +297,7 @@ export function AppRoutes() {
                 <Route path="/customize/:productId" element={<RedirectToCustomOrder />} />
                 <Route
                   path="/my-custom-orders"
-                  element={
-                    <ProtectedRoute>
-                      <MyCustomOrders />
-                    </ProtectedRoute>
-                  }
+                  element={<Navigate to="/dashboard/custom-orders" replace />}
                 />
                 <Route path="/gallery" element={<Gallery />} />
                 <Route path="/gallery/:id" element={<GalleryDetail />} />
@@ -401,7 +405,12 @@ export function AppRoutes() {
               <Route path="search" element={<AdminEnterpriseSearch />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="analytics/operations" element={<AdminRecommendationAnalytics />} />
-              <Route path="inventory" element={<AdminInventory />} />
+              <Route
+                path="maintenance"
+                element={<Navigate to="/admin/maintenance-console" replace />}
+              />
+              <Route path="backup" element={<Navigate to="/admin/backup-center" replace />} />
+              <Route path="whatsapp-automations" element={<AdminWhatsAppAutomations />} />
               <Route path="coupons" element={<AdminCoupons />} />
               <Route path="coupons/create" element={<AdminCreateCoupon />} />
               <Route path="coupons/edit/:id" element={<AdminCreateCoupon />} />
@@ -409,6 +418,8 @@ export function AppRoutes() {
 
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="campaigns" element={<AdminCampaigns />} />
+              <Route path="reward-campaigns" element={<CampaignManager />} />
+              <Route path="reward-campaigns/:campaignId/rules" element={<RuleBuilder />} />
               <Route path="campaigns/add" element={<AdminCampaignCreate />} />
               <Route path="campaigns/templates/add" element={<AdminTemplateCreate />} />
               <Route path="campaigns/templates/edit/:id" element={<AdminTemplateCreate />} />

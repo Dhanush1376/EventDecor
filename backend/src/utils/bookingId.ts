@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import EventBooking from '../models/EventBooking';
+import EventJob from '../domains/event_operations/models/EventJob';
 
 const MAX_ATTEMPTS = 8;
 
@@ -13,7 +13,7 @@ export async function generateUniqueBookingId(): Promise<string> {
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const suffix = crypto.randomBytes(3).toString('hex').toUpperCase();
     const bookingId = `SR-BK-${year}-${suffix}`;
-    const exists = await EventBooking.exists({ bookingId });
+    const exists = await EventJob.exists({ bookingId });
     if (!exists) return bookingId;
   }
 

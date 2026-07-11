@@ -1,4 +1,5 @@
 import multer from 'multer';
+import { verifyImageSignature } from '../utils/security/fileSignature';
 import { Request, Response, NextFunction } from 'express';
 import ApiError from '../utils/ApiError';
 import { MediaService } from '../services/media/MediaService';
@@ -21,31 +22,6 @@ const allowedMimeTypes = new Set([
 ]);
 
 const videoMimeTypes = new Set(['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime']);
-
-export const verifyImageSignature = (buffer: Buffer): string | null => {
-  if (buffer.length < 4) return null;
-  const hex = buffer.toString('hex', 0, 4).toUpperCase();
-
-  if (hex === '89504E47') return 'image/png';
-  if (hex === '4F676753') return 'video/ogg';
-  if (hex.startsWith('FFD8FF')) return 'image/jpeg';
-  if (hex === '47494638') return 'image/gif';
-  if (hex.startsWith('424D')) return 'image/bmp';
-  if (hex === '49492A00' || hex === '4D4D002A') return 'image/tiff';
-  if (hex === '52494646') {
-    const webpHex = buffer.toString('hex', 8, 12).toUpperCase();
-    if (webpHex === '57454250') return 'image/webp';
-  }
-
-  const ftyp = buffer.toString('hex', 4, 8).toUpperCase();
-  if (ftyp === '66747970') {
-    const brand = buffer.toString('hex', 8, 12).toUpperCase();
-    if (brand.startsWith('6D7034') || brand === '69736F6D') return 'video/mp4';
-    if (brand === '61766966') return 'image/avif';
-  }
-
-  return null;
-};
 
 const createFileFilter =
   (allowVideo: boolean) => (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
@@ -77,6 +53,11 @@ const multerCMS = multer({
 const multerAvatar = multer({
   storage: memoryStorage,
   limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: createFileFilter(false),
+});
+const multerReviews = multer({
+  storage: memoryStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: createFileFilter(false),
 });
 
@@ -192,4 +173,13 @@ export const uploadAvatar = {
   ],
 };
 
+export const uploadReviews = {
+  array: (fieldName: string, maxCount?: number) => [
+    multerReviews.array(fieldName, maxCount),
+    handleStorageUpload('reviews', true, false),
+  ],
+};
+
 export const upload = uploadProducts;
+
+export { verifyImageSignature };

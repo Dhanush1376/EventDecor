@@ -120,7 +120,7 @@ export class EventResourcePlanningService {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const EventBooking = require('../../models/EventBooking').default;
+    const EventJob = require('../../domains/event_operations/models/EventJob').default;
 
     // Normalize venue string for robust matching: alphanumeric only
     const normalizedVenue = venueAddress.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -134,7 +134,7 @@ export class EventResourcePlanningService {
       query._id = { $ne: new mongoose.Types.ObjectId(excludeBookingId) };
     }
 
-    const sameDayBookings = await EventBooking.find(query)
+    const sameDayBookings = await EventJob.find(query)
       .session(session || null)
       .lean();
 

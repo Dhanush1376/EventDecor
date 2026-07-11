@@ -41,9 +41,10 @@ export default function CheckoutSidebar() {
   const checkoutCoupons = activeCoupons.filter((c) => c.displayLocations?.includes('checkout'));
 
   const siriCoinEarnRate = (settings?.loyalty?.coinsPerRupee || 0.1) * 100;
-  const cashbackRate = settings?.loyalty?.tiers?.[0]?.cashbackRate
-    ? settings.loyalty.tiers[0].cashbackRate * 100
-    : 4;
+  const userTier = user?.loyaltyTier || settings?.loyalty?.tiers?.[0]?.name;
+  const currentTier =
+    settings?.loyalty?.tiers?.find((t) => t.name === userTier) || settings?.loyalty?.tiers?.[0];
+  const cashbackRate = currentTier?.cashbackRate ? currentTier.cashbackRate * 100 : 0;
 
   const activeTotal =
     orderType === 'rental' ? rentalCostBreakdown?.totalAmount || 0 : backendTotals?.total || 0;
