@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ShippingService } from '../../domains/shipping/services/ShippingService';
 import { DeliveryEstimationEngine } from '../../domains/shipping/services/ETAEngine';
+import storeSettingsService from '../../services/StoreSettingsService';
 import logger from '../../config/logger';
 
 export const dispatchPackages = async (req: Request, res: Response) => {
@@ -41,8 +42,9 @@ export const estimateDelivery = async (req: Request, res: Response) => {
         .json({ success: false, message: 'destinationPincode and weight are required' });
     }
 
-    // We mock origin pincode as it would typically be configured in settings
-    const originPincode = '500001';
+    // Origin is the store's configured warehouse dispatch pincode.
+    const settings = await storeSettingsService.getSettings();
+    const originPincode = settings.shipping?.originPincode || '523001';
 
     const estimate = await DeliveryEstimationEngine.estimateDelivery(
       originPincode,

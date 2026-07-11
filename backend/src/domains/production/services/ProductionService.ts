@@ -49,18 +49,12 @@ export class ProductionService {
 
     const batchNumber = `BATCH-${product.primaryCategory ? product.primaryCategory.toString().substring(0, 3).toUpperCase() : 'PRD'}-${Date.now().toString().slice(-6)}`;
 
-    // Create a dummy order reference or we can make orderId optional for batches.
-    // In ProductionOrder schema, orderId is required. We should use a systemic Order ID or modify schema to allow null.
-    // For now, let's assume we have a "System Restock" order ID, or we modify the schema.
-    // Wait, ProductionOrder has `orderId: { type: Schema.Types.ObjectId, ref: 'Order', required: true }`.
-    // I should probably remove `required: true` if it's a batch restock. Or we can just use the product ID as a mock if needed.
-    // Let's modify the schema later if needed, or pass a dummy ID.
-    const dummyOrderId = new mongoose.Types.ObjectId();
-
+    // Internal restock batches are not tied to a customer order — leave orderId
+    // unset (it is optional in the schema) rather than fabricating an ObjectId
+    // that references no real Order.
     const prodOrder = new ProductionOrder({
       productionOrderId: `PROD-BATCH-${Date.now().toString().slice(-6)}`,
-      orderId: dummyOrderId,
-      orderType: 'purchase', // internal restock
+      orderType: 'restock',
       items: [
         {
           productId: product._id,

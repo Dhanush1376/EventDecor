@@ -8,17 +8,13 @@ export class SmsAdapter {
         return { success: false, reason: 'missing_phone' };
       }
 
-      logger.info(`[SMS ADAPTER] Dispatching SMS to ${recipient.phone}`);
-
-      // Stub: Integration with Twilio/AWS SNS/Msg91
-      // const twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
-      // await twilio.messages.create({
-      //   body: payload.shortText,
-      //   from: process.env.TWILIO_PHONE_NUMBER,
-      //   to: recipient.phone
-      // });
-
-      return { success: true, timestamp: new Date() };
+      // No SMS provider (Twilio/AWS SNS/Msg91) is integrated yet. Report an
+      // explicit not-configured result instead of falsely claiming delivery —
+      // a fake success would make the system record SMS that were never sent.
+      logger.warn(
+        `[SMS ADAPTER] SMS provider not configured; cannot deliver to ${recipient.phone}.`,
+      );
+      return { success: false, reason: 'sms_provider_not_configured' };
     } catch (error) {
       logger.error(`[SMS ADAPTER] Failed to dispatch SMS to ${recipient.phone}:`, error);
       throw error;

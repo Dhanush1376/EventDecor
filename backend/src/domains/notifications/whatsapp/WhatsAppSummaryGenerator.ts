@@ -1,23 +1,86 @@
-export class WhatsAppSummaryGenerator {
-  static async generateDailySummary(): Promise<string> {
-    return `📊 *DAILY SUMMARY — ${new Date().toLocaleDateString()}*
+import Order from '../../../models/Order';
+import Review from '../../../models/Review';
+import User from '../../../models/User';
+import Product from '../../../models/Product';
+import ReturnRequest from '../../../models/ReturnRequest';
+
+const PAID_STATUSES = ['captured', 'paid', 'COD Collected'] as const;
+const COD_PENDING_STATUSES = ['Pending COD'] as const;
+
+/** Aggregate real business metrics for the given [start, end) window. */
+async function buildSummary(start: Date, end: Date, heading: string): Promise<string> {
+  const range = { $gte: start, $lt: end };
+
+  const [
+    newOrders,
+    shippedOrders,
+    deliveredOrders,
+    revenueAgg,
+    paidCount,
+    codPendingCount,
+    lowStockCount,
+    reviewAgg,
+    newCustomers,
+    returnsRequested,
+  ] = await Promise.all([
+    Order.countDocuments({ createdAt: range }),
+    Order.countDocuments({ orderStatus: 'Shipped', updatedAt: range }),
+    Order.countDocuments({ orderStatus: 'Delivered', updatedAt: range }),
+    Order.aggregate([
+      { $match: { createdAt: range, paymentStatus: { $in: PAID_STATUSES } } },
+      { $group: { _id: null, total: { $sum: '$total' } } },
+    ]),
+    Order.countDocuments({ createdAt: range, paymentStatus: { $in: PAID_STATUSES } }),
+    Order.countDocuments({ createdAt: range, paymentStatus: { $in: COD_PENDING_STATUSES } }),
+    Product.countDocuments({
+      isActive: true,
+      $expr: { $lte: [{ $subtract: ['$stock', '$reservedStock'] }, '$lowStockThreshold'] },
+    }),
+    Review.aggregate([
+      { $match: { createdAt: range, isMock: { $ne: true } } },
+      { $group: { _id: null, count: { $sum: 1 }, avg: { $avg: '$rating' } } },
+    ]),
+    User.countDocuments({ createdAt: range, role: { $in: ['user', 'customer'] } }),
+    ReturnRequest.countDocuments({ createdAt: range }),
+  ]);
+
+  const revenue = revenueAgg[0]?.total || 0;
+  const reviewCount = reviewAgg[0]?.count || 0;
+  const reviewAvg = reviewAgg[0]?.avg ? reviewAgg[0].avg.toFixed(1) : '—';
+
+  return `📊 *${heading}*
 ━━━━━━━━━━━━━━━━━━━━━
-📦 Orders: 12 New | 8 Shipped | 3 Delivered
-💰 Revenue: ₹45,230
-💳 Payments: 10 Paid | 2 COD Pending
-📦 Inventory: 3 Low Stock Alerts
-⭐ Reviews: 2 New (Avg: 4.5★)
-👥 Customers: 5 New Registrations
-🔄 Returns: 1 Requested
+📦 Orders: ${newOrders} New | ${shippedOrders} Shipped | ${deliveredOrders} Delivered
+💰 Revenue: ₹${revenue.toLocaleString('en-IN')}
+💳 Payments: ${paidCount} Paid | ${codPendingCount} COD Pending
+📦 Inventory: ${lowStockCount} Low Stock Alerts
+⭐ Reviews: ${reviewCount} New (Avg: ${reviewAvg}★)
+👥 Customers: ${newCustomers} New Registrations
+🔄 Returns: ${returnsRequested} Requested
 ━━━━━━━━━━━━━━━━━━━━━
 Siri Arts & Crafts • Auto-generated`;
+}
+
+export class WhatsAppSummaryGenerator {
+  static async generateDailySummary(): Promise<string> {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 1);
+    return buildSummary(start, end, `DAILY SUMMARY — ${start.toLocaleDateString('en-IN')}`);
   }
 
   static async generateWeeklySummary(): Promise<string> {
-    return `📊 *WEEKLY SUMMARY* ...`; // Stub
+    const end = new Date();
+    const start = new Date(end);
+    start.setDate(end.getDate() - 7);
+    return buildSummary(start, end, 'WEEKLY SUMMARY (last 7 days)');
   }
 
   static async generateMonthlySummary(): Promise<string> {
-    return `📊 *MONTHLY SUMMARY* ...`; // Stub
+    const end = new Date();
+    const start = new Date(end);
+    start.setDate(end.getDate() - 30);
+    return buildSummary(start, end, 'MONTHLY SUMMARY (last 30 days)');
   }
 }

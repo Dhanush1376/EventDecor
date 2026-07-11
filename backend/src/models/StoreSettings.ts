@@ -20,6 +20,7 @@ export interface IStoreSettings extends Document {
     estimatedDeliveryDays: string;
     maxShippingDistance: number;
     enableLocalDelivery: boolean;
+    originPincode: string;
   };
   payments: {
     enableCOD: boolean;
@@ -149,6 +150,9 @@ const StoreSettingsSchema: Schema = new Schema(
       estimatedDeliveryDays: { type: String, default: '5-7' },
       maxShippingDistance: { type: Number, default: 0 },
       enableLocalDelivery: { type: Boolean, default: false },
+      // Warehouse dispatch origin — used as the source pincode for delivery
+      // estimation. Defaults to the store's registered Ongole location.
+      originPincode: { type: String, default: '523001' },
     },
     payments: {
       enableCOD: { type: Boolean, default: true },

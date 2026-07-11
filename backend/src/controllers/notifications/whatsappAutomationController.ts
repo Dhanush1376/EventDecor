@@ -27,24 +27,68 @@ export const whatsappAutomationController = {
 
   getAnalytics: async (req: Request, res: Response) => {
     try {
-      // Stub implementation for Recharts
-      const data = {
-        dailyTrends: [
-          { date: 'Mon', sent: 120, failed: 5 },
-          { date: 'Tue', sent: 150, failed: 2 },
-          { date: 'Wed', sent: 180, failed: 8 },
-          { date: 'Thu', sent: 190, failed: 3 },
-          { date: 'Fri', sent: 210, failed: 1 },
-          { date: 'Sat', sent: 250, failed: 10 },
-          { date: 'Sun', sent: 220, failed: 4 },
-        ],
-        statusDistribution: [
-          { name: 'Sent', value: 1200 },
-          { name: 'Failed', value: 45 },
-          { name: 'Pending', value: 12 },
-        ],
-      };
-      res.status(200).json({ success: true, data });
+      const days = Math.min(Math.max(parseInt(req.query.days as string) || 7, 1), 90);
+      const since = new Date();
+      since.setHours(0, 0, 0, 0);
+      since.setDate(since.getDate() - (days - 1));
+
+      const DELIVERED = ['sent', 'delivered', 'read'];
+      const PENDING = ['queued', 'dispatched'];
+
+      // Per-day delivered vs failed counts over the window.
+      const trendAgg = await WhatsAppMessageLog.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            sent: {
+              $sum: { $cond: [{ $in: ['$deliveryStatus', DELIVERED] }, 1, 0] },
+            },
+            failed: {
+              $sum: { $cond: [{ $eq: ['$deliveryStatus', 'failed'] }, 1, 0] },
+            },
+          },
+        },
+      ]);
+
+      const trendByDay = new Map<string, { sent: number; failed: number }>(
+        trendAgg.map((t: any) => [t._id, { sent: t.sent, failed: t.failed }]),
+      );
+
+      // Materialize every day in the range (including zero-activity days) so the
+      // chart has a continuous X axis.
+      const dailyTrends = [];
+      for (let i = 0; i < days; i++) {
+        const d = new Date(since);
+        d.setDate(since.getDate() + i);
+        const key = d.toISOString().slice(0, 10);
+        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const entry = trendByDay.get(key) || { sent: 0, failed: 0 };
+        dailyTrends.push({ date: label, sent: entry.sent, failed: entry.failed });
+      }
+
+      // Status distribution across the same window, bucketed for readability.
+      const statusAgg = await WhatsAppMessageLog.aggregate([
+        { $match: { createdAt: { $gte: since } } },
+        { $group: { _id: '$deliveryStatus', count: { $sum: 1 } } },
+      ]);
+
+      let sentCount = 0;
+      let failedCount = 0;
+      let pendingCount = 0;
+      for (const s of statusAgg as Array<{ _id: string; count: number }>) {
+        if (DELIVERED.includes(s._id)) sentCount += s.count;
+        else if (s._id === 'failed') failedCount += s.count;
+        else if (PENDING.includes(s._id)) pendingCount += s.count;
+      }
+
+      const statusDistribution = [
+        { name: 'Sent', value: sentCount },
+        { name: 'Failed', value: failedCount },
+        { name: 'Pending', value: pendingCount },
+      ];
+
+      res.status(200).json({ success: true, data: { dailyTrends, statusDistribution } });
     } catch (err: any) {
       res.status(500).json({ success: false, message: err.message });
     }
@@ -239,10 +283,38 @@ export const whatsappAutomationController = {
 
   sendTest: async (req: Request, res: Response) => {
     try {
-      // Simulate test send
-      res.status(200).json({ success: true, message: 'Test message queued' });
+      const phone = String(req.body.phone || '').trim();
+      const message = String(req.body.message || '').trim();
+
+      if (!phone || !/^\+?\d{8,15}$/.test(phone.replace(/[\s-]/g, ''))) {
+        return res
+          .status(400)
+          .json({ success: false, message: 'A valid recipient phone number is required' });
+      }
+      if (!message) {
+        return res.status(400).json({ success: false, message: 'Message text is required' });
+      }
+
+      const provider = WhatsAppProviderFactory.getProvider();
+      const result = await provider.sendTextMessage(phone, message);
+
+      if (!result.success) {
+        return res
+          .status(502)
+          .json({ success: false, message: 'Provider rejected the test message', data: result });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Test message sent',
+        data: { provider: provider.name, messageId: result.messageId },
+      });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      // Surface the real provider/configuration error instead of a fake success.
+      res.status(502).json({
+        success: false,
+        message: error.message || 'Failed to send test message',
+      });
     }
   },
 

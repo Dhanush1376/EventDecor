@@ -6,6 +6,7 @@ import Eye from 'lucide-react/dist/esm/icons/eye';
 import Search from 'lucide-react/dist/esm/icons/search';
 import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
 import { customerIntelligenceService } from '../../../services/domainServices';
+import logger from '../../../utils/core/logger';
 
 export default function JourneyTab({ customerId }) {
   const [events, setEvents] = useState([]);
@@ -14,12 +15,10 @@ export default function JourneyTab({ customerId }) {
   useEffect(() => {
     const fetchJourney = async () => {
       try {
-        // Will be implemented in Phase 4/Backend if not already available
-        // For now, mock or fetch from intelligence service
         const data = await customerIntelligenceService.getCustomerJourney(customerId);
         setEvents(data || []);
       } catch (err) {
-        console.error(err);
+        logger.error('Failed to load customer journey', err);
       } finally {
         setLoading(false);
       }

@@ -5,7 +5,11 @@ const ProductionOrderSchema = new Schema<IProductionOrder>(
   {
     productionOrderId: { type: String, required: true, unique: true },
     orderId: { type: Schema.Types.ObjectId, ref: 'Order' },
-    orderType: { type: String, enum: ['purchase', 'rental', 'custom'], required: true },
+    orderType: {
+      type: String,
+      enum: ['purchase', 'rental', 'custom', 'restock'],
+      required: true,
+    },
     items: [
       {
         productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },

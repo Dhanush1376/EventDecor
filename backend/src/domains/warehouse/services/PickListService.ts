@@ -20,21 +20,25 @@ export class PickListService {
       order.items.map(async (item: any) => {
         const product = await Product.findById(item.productId).session(session || null);
 
-        // In a real WMS, the location would be fetched from a dynamic Inventory/Bin model
-        // Here we mock the location mapping
-        const mockLocation = {
-          zone: 'A',
-          aisle: '12',
-          shelf: 'B',
-          bin: '4',
-        };
+        // Resolve the real bin location from the product's warehouse mapping.
+        // Products that have not been slotted yet report an empty location so
+        // the picker knows to look it up rather than being sent to a fake bin.
+        const primaryLocation = product?.warehouseLocations?.[0];
+        const location = primaryLocation
+          ? {
+              zone: primaryLocation.zoneId || '',
+              aisle: primaryLocation.aisleId || '',
+              shelf: primaryLocation.shelfId || '',
+              bin: primaryLocation.binId || '',
+            }
+          : { zone: '', aisle: '', shelf: '', bin: '' };
 
         return {
           productId: item.productId,
           sku: product?.sku || `SKU-${item.productId}`,
           quantity: item.quantity,
           pickedQuantity: 0,
-          location: mockLocation,
+          location,
           orderId: order._id,
           status: 'pending',
         };

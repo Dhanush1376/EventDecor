@@ -7,6 +7,7 @@ import BackupAuditLog from '../../models/BackupAuditLog';
 import EncryptionKeyHistory from '../../models/EncryptionKeyHistory';
 import { BackupPlanner } from '../../services/backup/BackupPlanner';
 import { VerificationService } from '../../services/backup/VerificationService';
+import storageManager from '../../services/backup/StorageManager';
 
 export const getDashboard = async (req: Request, res: Response) => {
   try {
@@ -15,7 +16,7 @@ export const getDashboard = async (req: Request, res: Response) => {
 
     // Quick overview stats
     const totalBackups = await BackupRecord.countDocuments({ status: 'completed' });
-    const activeProvidersCount = 2; // Mock
+    const activeProvidersCount = storageManager.getProviders().length;
 
     res.json({
       health,

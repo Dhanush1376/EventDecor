@@ -76,6 +76,10 @@ export class ScannerService {
         // We'll need a generic lookup for this. For now, we leave transactionId undefined and resolve in pipeline
       }
 
+      // Resolve the real scanning user so the audit trail records who scanned.
+      const User = require('../../../models/User').default;
+      const scannerUser = await User.findById(scannedBy).select('name role').lean();
+
       const scanEvent = new ScanEvent({
         scanId: `SCN-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`,
         scanType: decodedPayload ? 'qr' : 'barcode',
@@ -87,8 +91,8 @@ export class ScannerService {
         action: 'receive', // Default action to allow saving without error. The pipeline will determine the real action based on context.
         scannedBy: {
           userId: new mongoose.Types.ObjectId(scannedBy),
-          name: 'Worker', // mock
-          role: 'worker',
+          name: scannerUser?.name || 'Unknown',
+          role: scannerUser?.role || 'worker',
         },
         deviceType: 'camera',
         location,

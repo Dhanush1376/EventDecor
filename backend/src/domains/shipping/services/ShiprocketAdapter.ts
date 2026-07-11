@@ -3,22 +3,47 @@ import axios from 'axios';
 import logger from '../../../config/logger';
 import ApiError from '../../../utils/ApiError';
 
+/**
+ * Shiprocket courier adapter.
+ *
+ * The live Shiprocket serviceability/shipment API is not yet integrated. Rather
+ * than fabricate quotes, AWB numbers, and tracking events (which would surface
+ * fake shipping prices and fake tracking to customers), every method fails
+ * explicitly until the real API is wired. Callers already degrade gracefully:
+ *  - ETAEngine catches the error and falls back to zone-based SLA data.
+ *  - CourierEngine/ShippingService should use the ManualCourierAdapter
+ *    (in-house delivery) for the flat-rate model this business runs today.
+ *
+ * To go live with Shiprocket, implement the real API calls below (auth is
+ * already wired) and remove the NOT_IMPLEMENTED guards.
+ */
 export class ShiprocketAdapter implements ICourierAdapter {
   private baseUrl = 'https://apiv2.shiprocket.in/v1/external';
   private token: string | null = null;
 
+  private get isConfigured(): boolean {
+    return Boolean(process.env.SHIPROCKET_EMAIL && process.env.SHIPROCKET_PASSWORD);
+  }
+
+  private notImplemented(operation: string): never {
+    throw new ApiError(
+      501,
+      `Shiprocket ${operation} is not configured. Use manual/in-house dispatch, ` +
+        `or complete the Shiprocket API integration before enabling this courier.`,
+    );
+  }
+
   private async authenticate() {
     if (this.token) return;
+    if (!this.isConfigured) {
+      logger.warn('Shiprocket credentials not found in environment');
+      this.notImplemented('authentication');
+    }
     try {
-      const email = process.env.SHIPROCKET_EMAIL;
-      const password = process.env.SHIPROCKET_PASSWORD;
-
-      if (!email || !password) {
-        logger.warn('Shiprocket credentials not found in environment');
-        return;
-      }
-
-      const res = await axios.post(`${this.baseUrl}/auth/login`, { email, password });
+      const res = await axios.post(`${this.baseUrl}/auth/login`, {
+        email: process.env.SHIPROCKET_EMAIL,
+        password: process.env.SHIPROCKET_PASSWORD,
+      });
       this.token = res.data.token;
     } catch (error) {
       logger.error('Shiprocket authentication failed', error);
@@ -27,65 +52,26 @@ export class ShiprocketAdapter implements ICourierAdapter {
   }
 
   async getQuotes(
-    originPincode: string,
-    destPincode: string,
-    weightKg: number,
+    _originPincode: string,
+    _destPincode: string,
+    _weightKg: number,
     _dimensions: any,
   ): Promise<CourierQuote[]> {
-    await this.authenticate();
-    // Simplified mock implementation since actual Shiprocket API requires fully formed order payload to get accurate courier serviceability
-    return [
-      {
-        courierName: 'Delhivery Surface',
-        serviceType: 'Surface',
-        estimatedCharge: weightKg * 45,
-        estimatedDeliveryDays: 5,
-        trackingProvided: true,
-      },
-      {
-        courierName: 'Xpressbees Air',
-        serviceType: 'Express',
-        estimatedCharge: weightKg * 110,
-        estimatedDeliveryDays: 2,
-        trackingProvided: true,
-      },
-    ];
+    // Real serviceability call goes here once integrated.
+    return this.notImplemented('rate quoting');
   }
 
   async createShipment(
     _shipmentData: any,
   ): Promise<{ trackingNumber: string; labelUrl?: string; additionalData?: any }> {
-    await this.authenticate();
-    // Mock implementation
-    const awb = `SR-${Date.now().toString().slice(-8)}`;
-    return {
-      trackingNumber: awb,
-      labelUrl: `https://labels.shiprocket.in/${awb}.pdf`,
-    };
+    return this.notImplemented('shipment creation');
   }
 
   async cancelShipment(_trackingNumber: string): Promise<boolean> {
-    await this.authenticate();
-    // Mock implementation
-    return true;
+    return this.notImplemented('shipment cancellation');
   }
 
-  async trackShipment(trackingNumber: string): Promise<TrackingInfo> {
-    await this.authenticate();
-    // Mock implementation
-    return {
-      trackingNumber,
-      status: 'In Transit',
-      location: 'Hub, Bangalore',
-      updatedAt: new Date(),
-      events: [
-        {
-          status: 'Picked Up',
-          timestamp: new Date(Date.now() - 86400000),
-          location: 'Warehouse, Ongole',
-        },
-        { status: 'In Transit', timestamp: new Date(), location: 'Hub, Bangalore' },
-      ],
-    };
+  async trackShipment(_trackingNumber: string): Promise<TrackingInfo> {
+    return this.notImplemented('shipment tracking');
   }
 }

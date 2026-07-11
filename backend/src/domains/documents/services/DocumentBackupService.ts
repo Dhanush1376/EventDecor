@@ -1,7 +1,11 @@
 import OrderDocument from '../models/OrderDocument';
 import logger from '../../../config/logger';
-// Mock S3 DR client assuming a different AWS profile or region
+// Secondary (disaster-recovery) S3 client — a separate region/profile.
 import { S3Client, CopyObjectCommand } from '@aws-sdk/client-s3';
+
+const isDrConfigured = Boolean(
+  process.env.DR_AWS_ACCESS_KEY_ID && process.env.DR_AWS_SECRET_ACCESS_KEY,
+);
 
 const drS3Client = new S3Client({
   region: process.env.DR_AWS_REGION || 'ap-south-2',
@@ -17,6 +21,15 @@ export class DocumentBackupService {
    * This would typically be called by a cron job or an SQS queue worker.
    */
   static async syncToDisasterRecovery() {
+    // Never mark documents as backed up unless a real DR copy can be performed —
+    // a false "backed up" flag would hide gaps in disaster recovery coverage.
+    if (!isDrConfigured) {
+      logger.warn(
+        '[DocumentBackupService] DR S3 credentials are not configured. Skipping disaster-recovery sync; documents remain flagged un-backed-up.',
+      );
+      return 0;
+    }
+
     const batchSize = 100;
     const documents = await OrderDocument.find({ isBackedUp: false }).limit(batchSize);
 
@@ -35,10 +48,7 @@ export class DocumentBackupService {
           Key: doc.s3Key,
         });
 
-        // Only run if credentials exist, otherwise mock success for local testing
-        if (process.env.DR_AWS_ACCESS_KEY_ID) {
-          await drS3Client.send(command);
-        }
+        await drS3Client.send(command);
 
         doc.isBackedUp = true;
         await doc.save();

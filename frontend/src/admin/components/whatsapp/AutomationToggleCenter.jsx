@@ -93,21 +93,14 @@ const AutomationToggleCenter = () => {
                   </div>
 
                   <div className="flex justify-between items-center pt-3 border-t border-[var(--admin-border-subtle)]">
-                    <div className="flex -space-x-2">
-                      {/* Mock avatars for recipients */}
-                      <div
-                        className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] text-blue-600 border border-white z-10"
-                        title="Owner"
-                      >
-                        O
-                      </div>
-                      <div
-                        className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-[10px] text-green-600 border border-white z-0"
-                        title="Warehouse"
-                      >
-                        W
-                      </div>
-                    </div>
+                    <span className="text-[11px] text-[var(--admin-text-secondary)]">
+                      {(() => {
+                        const count = (auto.recipientRoles || []).filter(
+                          (r) => r.enabled !== false,
+                        ).length;
+                        return count === 1 ? '1 recipient' : `${count} recipients`;
+                      })()}
+                    </span>
                     <button
                       className="text-[var(--admin-accent)] hover:underline text-[12px] font-medium"
                       onClick={() => setSelectedAutomation(auto)}

@@ -14,7 +14,7 @@ export type ProductionStage =
 export interface IProductionOrder extends mongoose.Document {
   productionOrderId: string;
   orderId: mongoose.Types.ObjectId;
-  orderType: 'purchase' | 'rental' | 'custom';
+  orderType: 'purchase' | 'rental' | 'custom' | 'restock';
   items: {
     productId: mongoose.Types.ObjectId;
     sku: string;
