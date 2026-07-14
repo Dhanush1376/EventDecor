@@ -16,7 +16,6 @@ import {
 } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { SortableSectionItem } from './SortableSectionItem';
-import { toast } from 'react-hot-toast';
 
 const SectionBuilder = ({ sections: initialSections = [], onChange }) => {
   const [sections, setSections] = useState(initialSections);

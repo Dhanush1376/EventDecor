@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth, requireAdmin, requireRole } from '../../middleware/authMiddleware';
+import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import { requestTimeout } from '../../middleware/queryTimeout';
 import * as ciController from '../../controllers/system/customerIntelligenceController';
 

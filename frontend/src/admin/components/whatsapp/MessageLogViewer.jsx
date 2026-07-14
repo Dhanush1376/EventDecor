@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import whatsappAutomationService from '../../services/whatsappAutomationService';
 import { toast } from 'react-hot-toast';
 
@@ -9,7 +9,7 @@ const MessageLogViewer = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     try {
       setLoading(true);
       const params = { limit: 50 };
@@ -24,11 +24,11 @@ const MessageLogViewer = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchLogs();
-  }, [statusFilter]);
+  }, [fetchLogs]);
 
   const handleExport = () => {
     if (logs.length === 0) return toast.error('No data to export');

@@ -228,7 +228,6 @@ export class WhatsAppAutomationEngine {
     const Order = require('../../../models/Order').default || require('../../../models/Order');
     const Product =
       require('../../../models/Product').default || require('../../../models/Product');
-    const User = require('../../../models/User').default || require('../../../models/User');
 
     let order = null;
     let products = [];

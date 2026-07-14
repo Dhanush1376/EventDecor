@@ -5,7 +5,7 @@ export class WhatsAppDashboardService {
   static async incrementStats(
     status: 'sent' | 'failed',
     automationKey: string,
-    latencyMs: number,
+    _latencyMs: number,
   ): Promise<void> {
     const today = new Date().toISOString().split('T')[0];
 

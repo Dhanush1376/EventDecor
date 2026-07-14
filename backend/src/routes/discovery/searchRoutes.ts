@@ -10,7 +10,7 @@ import {
 } from '../../controllers/discovery/searchController';
 import { searchLimiter } from '../../middleware/rateLimiter';
 import { dynamicResponseCache } from '../../middleware/dynamicCacheMiddleware';
-import { requireAuth, authorize, requireAdmin } from '../../middleware/authMiddleware';
+import { requireAdmin } from '../../middleware/authMiddleware';
 
 const router = Router();
 
