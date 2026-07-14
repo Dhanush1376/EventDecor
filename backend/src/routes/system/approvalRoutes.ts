@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { requireAuth, requireRole } from '../../middleware/authMiddleware';
+import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import * as approvalController from '../../controllers/system/approvalController';
 
 const router = Router();
 
-// Only admin/super_admin can manage approvals
+// Allow all authorized staff roles
 router.use(requireAuth);
-router.use(requireRole(['admin', 'super_admin']));
+router.use(requireAdmin);
 
 router.get('/', approvalController.getPendingApprovals);
 router.get('/stats', approvalController.getApprovalStats);

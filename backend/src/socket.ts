@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import logger from './config/logger';
 import User from './models/User';
 import { isOriginAllowed } from './config/corsConfig';
-import { ADMIN_ROLES } from './config/adminConfig';
+import { STAFF_ROLES } from './config/adminConfig';
 import { setSocketAdapterMode } from './config/socketState';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { pubClient, subClient } from './utils/cache/redis';
@@ -150,7 +150,7 @@ const registerNamespace = (namespace: Namespace, options: { adminOnly?: boolean 
   if (options.adminOnly) {
     namespace.use((socket: Socket, next) => {
       const user = (socket as Socket & { user: SocketUser }).user;
-      if (!ADMIN_ROLES.includes(user.role as (typeof ADMIN_ROLES)[number])) {
+      if (!STAFF_ROLES.includes(user.role as (typeof STAFF_ROLES)[number])) {
         return next(new Error('Authentication error: Admin access required'));
       }
       next();

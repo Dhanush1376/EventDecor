@@ -27,7 +27,7 @@ export default function AdminBusinessRules() {
   const fetchRules = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/v1/admin/rules');
+      const res = await api.get('/admin/rules');
       if (res.data?.success) {
         setRules(res.data.data);
       }
@@ -43,7 +43,7 @@ export default function AdminBusinessRules() {
     try {
       // Optimistic update
       setRules(rules.map((r) => (r._id === id ? { ...r, active: !r.active } : r)));
-      await api.patch(`/api/v1/admin/rules/${id}/toggle`);
+      await api.patch(`/admin/rules/${id}/toggle`);
       toast.success('Rule status updated');
     } catch (error) {
       console.error('Failed to toggle rule:', error);
@@ -61,7 +61,7 @@ export default function AdminBusinessRules() {
 
     try {
       setIsSubmitting(true);
-      const res = await api.post('/api/v1/admin/rules', newRule);
+      const res = await api.post('/admin/rules', newRule);
       if (res.data?.success) {
         setRules([res.data.data, ...rules]);
         toast.success('Rule created successfully');
@@ -160,7 +160,7 @@ export default function AdminBusinessRules() {
                             {rule.category}
                           </span>
                         </div>
-                        <div className="bg-[var(--admin-bg-subtle)] rounded-xl p-4 border border-[var(--admin-border-strong)] text-[13px] flex flex-col mt-4 max-w-4xl gap-3">
+                        <div className="bg-[var(--admin-bg-subtle)] rounded-xl p-3 sm:p-4 border border-[var(--admin-border-strong)] text-[12px] sm:text-[13px] flex flex-col mt-4 max-w-4xl gap-3 w-full break-words">
                           <div className="flex items-start gap-3">
                             <span className="font-bold text-[var(--admin-text-inverse)] px-2 py-0.5 bg-[var(--admin-text-primary)] rounded text-[10px] tracking-wider shrink-0 mt-0.5 uppercase">
                               IF
@@ -181,7 +181,7 @@ export default function AdminBusinessRules() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-8 border-t lg:border-t-0 border-[var(--admin-border-subtle)] pt-6 lg:pt-0 pl-[4.5rem] lg:pl-0">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8 border-t lg:border-t-0 border-[var(--admin-border-subtle)] pt-6 lg:pt-0 pl-[4.5rem] lg:pl-0 mt-4 lg:mt-0 w-full lg:w-auto">
                       <div className="flex items-center min-w-[120px]">
                         <AdminToggle
                           label=""
@@ -199,18 +199,20 @@ export default function AdminBusinessRules() {
 
                       <div className="w-px h-8 bg-[var(--admin-border-strong)] hidden lg:block"></div>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 w-full sm:w-auto mt-4 sm:mt-0">
                         <button
-                          className="admin-btn admin-btn-sm admin-btn-outline"
+                          className="admin-btn admin-btn-sm admin-btn-outline flex-1 sm:flex-none"
                           title="Edit Rule"
                         >
                           <span className="material-symbols-outlined text-[16px]">edit</span>
+                          <span className="sm:hidden ml-2">Edit</span>
                         </button>
                         <button
-                          className="admin-btn admin-btn-sm admin-btn-outline !text-[var(--admin-error)] hover:!bg-[var(--admin-error)]/10 !border-[var(--admin-error)]/30"
+                          className="admin-btn admin-btn-sm admin-btn-outline !text-[var(--admin-error)] hover:!bg-[var(--admin-error)]/10 !border-[var(--admin-error)]/30 flex-1 sm:flex-none"
                           title="Delete Rule"
                         >
                           <span className="material-symbols-outlined text-[16px]">delete</span>
+                          <span className="sm:hidden ml-2">Delete</span>
                         </button>
                       </div>
                     </div>

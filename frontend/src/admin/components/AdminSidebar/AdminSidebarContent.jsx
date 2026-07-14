@@ -123,14 +123,14 @@ export function AdminSidebarContent({
               {sidebarOpen && (
                 <button
                   onClick={() => toggleSection(si)}
-                  className="w-full flex items-center justify-between px-3 py-1.5 mb-0.5 group min-h-0 text-left outline-none cursor-pointer hover:bg-[var(--admin-surface-hover)] rounded-[var(--admin-radius-md)] transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2.5 lg:py-1.5 mb-1 lg:mb-0.5 group min-h-[44px] lg:min-h-0 text-left outline-none cursor-pointer hover:bg-[var(--admin-surface-hover)] rounded-[var(--admin-radius-md)] transition-colors"
                 >
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-text-primary)] transition-colors">
+                    <span className="text-[11px] lg:text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] group-hover:text-[var(--admin-text-primary)] transition-colors">
                       {section.label}
                     </span>
                     {section.subtitle && (
-                      <span className="text-[9px] text-[var(--admin-text-tertiary)] group-hover:text-[var(--admin-text-secondary)] mt-0.5">
+                      <span className="text-[10px] lg:text-[9px] text-[var(--admin-text-tertiary)] group-hover:text-[var(--admin-text-secondary)] mt-0.5">
                         {section.subtitle}
                       </span>
                     )}
@@ -175,7 +175,7 @@ export function AdminSidebarContent({
                             end={item.path === '/admin'}
                             onClick={() => setSidebarMobileOpen(false)}
                             title={!sidebarOpen ? item.label : ''}
-                            className={`flex items-center gap-2.5 px-3 py-2 rounded-[var(--admin-radius-md)] text-[13px] font-medium transition-all duration-150 group relative min-h-[36px] ${
+                            className={`flex items-center gap-3 lg:gap-2.5 px-3 py-2.5 lg:py-2 rounded-[var(--admin-radius-md)] text-[14px] lg:text-[13px] font-medium transition-all duration-150 group relative min-h-[44px] lg:min-h-[36px] ${
                               isActive
                                 ? 'text-[var(--admin-accent-text)] font-semibold'
                                 : 'text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)]'
@@ -195,7 +195,7 @@ export function AdminSidebarContent({
                             )}
 
                             <span
-                              className={`material-symbols-outlined text-[18px] relative z-10 transition-colors ${
+                              className={`material-symbols-outlined text-[20px] lg:text-[18px] relative z-10 transition-colors ${
                                 isActive
                                   ? ''
                                   : 'text-[var(--admin-text-tertiary)] group-hover:text-[var(--admin-text-secondary)]'

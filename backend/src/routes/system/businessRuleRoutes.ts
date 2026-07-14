@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { requireAuth, requireRole } from '../../middleware/authMiddleware';
+import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import * as businessRuleController from '../../controllers/system/businessRuleController';
 
 const router = Router();
 
-// Only admin/super_admin can manage business rules
+// Allow all authorized staff roles
 router.use(requireAuth);
-router.use(requireRole(['admin', 'super_admin']));
+router.use(requireAdmin);
 
 router.get('/', businessRuleController.getRules);
 router.post('/', businessRuleController.createRule);

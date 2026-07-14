@@ -30,7 +30,7 @@ export default function AdminEnterpriseSearch() {
     const delayDebounceFn = setTimeout(async () => {
       try {
         setLoading(true);
-        const res = await api.get(`/api/v1/search/enterprise?q=${encodeURIComponent(query)}`);
+        const res = await api.get(`/search/enterprise?q=${encodeURIComponent(query)}`);
         if (res.data && res.data.success) {
           setResults(res.data.data || { products: [], orders: [], users: [], shipments: [] });
         }
@@ -44,17 +44,10 @@ export default function AdminEnterpriseSearch() {
     return () => clearTimeout(delayDebounceFn);
   }, [query, activeTab]);
 
-  // --- Analytics Effect ---
-  useEffect(() => {
-    if (activeTab === 'analytics' && !stats) {
-      fetchStats();
-    }
-  }, [activeTab, stats, fetchStats]);
-
   const fetchStats = useCallback(async () => {
     try {
       setStatsLoading(true);
-      const res = await api.get('/api/v1/search/analytics/dashboard?days=30');
+      const res = await api.get('/search/analytics/dashboard?days=30');
       if (res.data?.success) {
         setStats(res.data.data);
       }
@@ -65,10 +58,17 @@ export default function AdminEnterpriseSearch() {
     }
   }, []);
 
+  // --- Analytics Effect ---
+  useEffect(() => {
+    if (activeTab === 'analytics' && !stats) {
+      fetchStats();
+    }
+  }, [activeTab, stats, fetchStats]);
+
   const handleReindex = async () => {
     try {
       toast.loading('Starting reindex...', { id: 'reindex' });
-      await api.post('/api/v1/search/reindex');
+      await api.post('/search/reindex');
       toast.success('Search reindex triggered successfully', { id: 'reindex' });
     } catch (err) {
       toast.error('Failed to trigger reindex', { id: 'reindex' });
@@ -139,7 +139,7 @@ export default function AdminEnterpriseSearch() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Scan barcode, type Order ID, Phone, Customer Name..."
-                    className={`w-full pl-16 pr-6 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-strong)] rounded-[var(--admin-radius-xl)] text-[var(--admin-text-primary)] focus:ring-4 focus:ring-[var(--admin-accent)]/20 focus:border-[var(--admin-accent)] outline-none transition-all font-medium ${query ? 'py-4 text-[15px]' : 'py-5 text-[16px] shadow-inner'}`}
+                    className={`w-full pl-12 sm:pl-16 pr-6 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-strong)] rounded-[var(--admin-radius-xl)] text-[var(--admin-text-primary)] focus:ring-4 focus:ring-[var(--admin-accent)]/20 focus:border-[var(--admin-accent)] outline-none transition-all font-medium ${query ? 'py-3 sm:py-4 text-[14px] sm:text-[15px]' : 'py-4 sm:py-5 text-[15px] sm:text-[16px] shadow-inner'}`}
                     autoFocus
                   />
                   {loading && (
@@ -161,7 +161,7 @@ export default function AdminEnterpriseSearch() {
                 {/* Orders */}
                 <motion.div
                   variants={fadeUp}
-                  className="admin-card p-0 h-[400px] flex flex-col bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] shadow-sm"
+                  className="admin-card p-0 h-[300px] xl:h-[400px] flex flex-col bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] shadow-sm"
                 >
                   <h3 className="font-bold text-[var(--admin-text-primary)] p-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between tracking-tight">
                     <div className="flex items-center gap-3">
@@ -203,7 +203,7 @@ export default function AdminEnterpriseSearch() {
                 {/* Products */}
                 <motion.div
                   variants={fadeUp}
-                  className="admin-card p-0 h-[400px] flex flex-col bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] shadow-sm"
+                  className="admin-card p-0 h-[300px] xl:h-[400px] flex flex-col bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] shadow-sm"
                 >
                   <h3 className="font-bold text-[var(--admin-text-primary)] p-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between tracking-tight">
                     <div className="flex items-center gap-3">
@@ -245,7 +245,7 @@ export default function AdminEnterpriseSearch() {
                 {/* Users */}
                 <motion.div
                   variants={fadeUp}
-                  className="admin-card p-0 h-[400px] flex flex-col bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] shadow-sm"
+                  className="admin-card p-0 h-[300px] xl:h-[400px] flex flex-col bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] shadow-sm"
                 >
                   <h3 className="font-bold text-[var(--admin-text-primary)] p-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between tracking-tight">
                     <div className="flex items-center gap-3">
@@ -290,7 +290,7 @@ export default function AdminEnterpriseSearch() {
                 {/* Shipments */}
                 <motion.div
                   variants={fadeUp}
-                  className="admin-card p-0 h-[400px] flex flex-col bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] shadow-sm"
+                  className="admin-card p-0 h-[300px] xl:h-[400px] flex flex-col bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] shadow-sm"
                 >
                   <h3 className="font-bold text-[var(--admin-text-primary)] p-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between tracking-tight">
                     <div className="flex items-center gap-3">
@@ -335,36 +335,46 @@ export default function AdminEnterpriseSearch() {
           </motion.div>
         ) : (
           <motion.div key="analytics" variants={fadeUp} className="space-y-8 mt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex border-b border-stone-200 overflow-x-auto no-scrollbar">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+              <div className="flex border-b border-stone-200 overflow-x-auto custom-scrollbar pb-1">
                 {[
-                  { id: 'dashboard', label: 'Analytics Dashboard', icon: 'monitoring' },
-                  { id: 'synonyms', label: 'Synonyms & Vocabulary', icon: 'translate' },
-                  { id: 'pins', label: 'Pinned Results', icon: 'push_pin' },
-                  { id: 'zero', label: 'Zero Results Analysis', icon: 'find_replace' },
+                  { id: 'dashboard', label: 'Dashboard', icon: 'monitoring' },
+                  { id: 'synonyms', label: 'Synonyms', icon: 'translate' },
+                  { id: 'pins', label: 'Pins', icon: 'push_pin' },
+                  { id: 'zero', label: 'Zero Results', icon: 'find_replace' },
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setAnalyticsSubTab(tab.id)}
-                    className={`flex items-center gap-2 px-6 py-3 font-semibold text-sm border-b-2 transition-colors whitespace-nowrap ${
+                    className={`flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-3 font-semibold text-[13px] sm:text-sm border-b-2 transition-colors whitespace-nowrap ${
                       analyticsSubTab === tab.id
                         ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]'
                         : 'border-transparent text-stone-500 hover:text-stone-800 hover:border-stone-300'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+                    <span className="material-symbols-outlined text-[16px] sm:text-[18px]">
+                      {tab.icon}
+                    </span>
                     {tab.label}
                   </button>
                 ))}
               </div>
-              <div className="flex gap-3">
-                <button onClick={handleReindex} className="admin-btn admin-btn-primary px-4 py-2">
+              <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+                <button
+                  onClick={handleReindex}
+                  className="admin-btn admin-btn-primary px-3 sm:px-4 py-2 flex-1 sm:flex-none justify-center"
+                >
                   <span className="material-symbols-outlined text-[18px]">sync</span>
-                  Rebuild Index
+                  <span className="hidden sm:inline">Rebuild Index</span>
+                  <span className="sm:hidden">Rebuild</span>
                 </button>
-                <button onClick={fetchStats} className="admin-btn admin-btn-outline px-4 py-2">
+                <button
+                  onClick={fetchStats}
+                  className="admin-btn admin-btn-outline px-3 sm:px-4 py-2 flex-1 sm:flex-none justify-center"
+                >
                   <span className="material-symbols-outlined text-[18px]">refresh</span>
-                  Refresh
+                  <span className="hidden sm:inline">Refresh</span>
+                  <span className="sm:hidden">Refresh</span>
                 </button>
               </div>
             </div>

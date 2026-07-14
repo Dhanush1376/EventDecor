@@ -12,7 +12,7 @@ export default function OrderTimeline({ orderId }) {
       try {
         setLoading(true);
         // We need an endpoint in the backend for this: /api/v1/orders/:id/timeline
-        const res = await api.get(`/api/v1/orders/${orderId}/timeline`);
+        const res = await api.get(`/orders/${orderId}/timeline`);
         if (res.data.success) {
           setTimeline(res.data.data);
         }

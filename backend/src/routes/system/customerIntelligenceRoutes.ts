@@ -1,13 +1,13 @@
 import { Router } from 'express';
-import { requireAuth, requireRole } from '../../middleware/authMiddleware';
+import { requireAuth, requireAdmin, requireRole } from '../../middleware/authMiddleware';
 import { requestTimeout } from '../../middleware/queryTimeout';
 import * as ciController from '../../controllers/system/customerIntelligenceController';
 
 const router = Router();
 
-// Apply auth and role requirements to all routes in this file
+// Apply auth and staff requirements to all routes in this file
 router.use(requireAuth);
-router.use(requireRole(['super_admin', 'main_admin', 'admin']));
+router.use(requireAdmin);
 
 // Increase timeout for heavy aggregation queries
 const heavyQuery = requestTimeout(25000);

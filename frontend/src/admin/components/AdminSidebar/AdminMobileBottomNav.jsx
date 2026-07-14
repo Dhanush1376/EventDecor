@@ -29,7 +29,7 @@ export function AdminMobileBottomNav({ isFabOpen, setIsFabOpen, fabActions }) {
       { label: 'Ready', icon: 'box', path: '/admin/production/ready' },
       { label: 'Products', icon: 'inventory_2', path: '/admin/products' },
     ];
-  } else if (effectiveRole === 'support') {
+  } else if (effectiveRole === 'support' || effectiveRole === 'support_admin') {
     navItems = [
       { label: 'Dashboard', icon: 'dashboard', path: '/admin' },
       { label: 'Orders', icon: 'shopping_bag', path: '/admin/orders' },
@@ -88,7 +88,7 @@ export function AdminMobileBottomNav({ isFabOpen, setIsFabOpen, fabActions }) {
                       {fabActions.map((action, i) => {
                         // Stack vertically: bottom to top
                         const x = 0;
-                        const y = -65 - (i * 55);
+                        const y = -65 - i * 55;
 
                         return (
                           <motion.button

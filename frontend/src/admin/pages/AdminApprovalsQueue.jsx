@@ -17,8 +17,8 @@ export default function AdminApprovalsQueue() {
     try {
       setLoading(true);
       const [res, statsRes] = await Promise.all([
-        api.get('/api/v1/admin/approvals'),
-        api.get('/api/v1/admin/approvals/stats'),
+        api.get('/admin/approvals'),
+        api.get('/admin/approvals/stats'),
       ]);
 
       if (res.data?.success) {
@@ -44,11 +44,11 @@ export default function AdminApprovalsQueue() {
 
     try {
       if (action === 'approve') {
-        await api.post(`/api/v1/admin/approvals/${id}/approve`);
+        await api.post(`/admin/approvals/${id}/approve`);
         toast.success('Request approved successfully');
         setStats((s) => ({ ...s, approvedToday: s.approvedToday + 1 }));
       } else {
-        await api.post(`/api/v1/admin/approvals/${id}/reject`);
+        await api.post(`/admin/approvals/${id}/reject`);
         toast.success('Request rejected');
         setStats((s) => ({ ...s, rejectedToday: s.rejectedToday + 1 }));
       }
@@ -162,7 +162,7 @@ export default function AdminApprovalsQueue() {
                             {req.details}
                           </p>
 
-                          <div className="flex flex-wrap items-center gap-6 text-[13px] font-bold text-[var(--admin-text-secondary)] bg-[var(--admin-bg-subtle)] px-4 py-3 rounded-xl border border-[var(--admin-border-strong)] w-fit shadow-inner">
+                          <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-[13px] font-bold text-[var(--admin-text-secondary)] bg-[var(--admin-bg-subtle)] px-4 py-3 rounded-xl border border-[var(--admin-border-strong)] w-full sm:w-fit shadow-inner">
                             <div className="flex items-center gap-2">
                               <div className="w-6 h-6 rounded-full bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] shadow-sm flex items-center justify-center text-[10px]">
                                 <span className="material-symbols-outlined text-[14px]">
@@ -173,14 +173,14 @@ export default function AdminApprovalsQueue() {
                                 {req.requesterName || req.requesterId || 'System'}
                               </span>
                             </div>
-                            <div className="w-px h-4 bg-[var(--admin-border-strong)]"></div>
+                            <div className="hidden sm:block w-px h-4 bg-[var(--admin-border-strong)]"></div>
                             <div className="flex items-center gap-2">
                               <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-tertiary)]">
                                 schedule
                               </span>
                               {new Date(req.createdAt).toLocaleDateString()}
                             </div>
-                            <div className="w-px h-4 bg-[var(--admin-border-strong)]"></div>
+                            <div className="hidden sm:block w-px h-4 bg-[var(--admin-border-strong)]"></div>
                             <div className="flex items-center gap-2 text-[var(--admin-success)]">
                               <span className="material-symbols-outlined text-[18px]">
                                 payments
@@ -191,7 +191,7 @@ export default function AdminApprovalsQueue() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-4 border-t xl:border-t-0 border-[var(--admin-border-subtle)] pt-6 xl:pt-0 pl-[4.5rem] sm:pl-0 xl:w-[320px]">
+                      <div className="flex flex-col gap-4 border-t xl:border-t-0 border-[var(--admin-border-subtle)] pt-6 xl:pt-0 pl-[4.5rem] sm:pl-0 xl:w-[320px] w-full mt-4 xl:mt-0">
                         <div className="flex flex-col gap-2">
                           <button
                             onClick={() => handleAction(req._id, 'approve')}

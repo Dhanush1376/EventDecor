@@ -63,7 +63,7 @@ const EvidenceUploader = ({
 
     try {
       setIsUploading(true);
-      const res = await api.post('/api/v1/upload/inspirations', formData, {
+      const res = await api.post('/upload/inspirations', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 

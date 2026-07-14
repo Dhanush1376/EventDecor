@@ -8,8 +8,8 @@
     "start": "node dist/server.js",
     "start:pm2": "pm2-runtime start ecosystem.config.js",
     "build": "tsc",
-    "check-env": "ts-node --transpile-only scripts/validate_env.ts",
-    "create-indexes": "ts-node --transpile-only scripts/create_indexes.ts",
+    "check-env": "tsx scripts/validate_env.ts",
+    "create-indexes": "tsx scripts/create_indexes.ts",
     "lint": "eslint src",
     "test": "vitest run"
   },
@@ -91,6 +91,7 @@
     "mongodb-memory-server": "^11.2.0",
     "socket.io-client": "^4.8.1",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.23.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.1",
     "vitest": "^4.1.10"

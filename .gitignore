@@ -1,21 +1,79 @@
-# Logs
-logs
+# ==========================================
+# ENTERPRISE REPOSITORY GITIGNORE
+# ==========================================
+
+# ------------------------------------------
+# 1. Dependencies & Package Managers
+# ------------------------------------------
+node_modules/
+.npm/
+.pnpm-store/
+bun.lockb
+.turbo/
+
+# ------------------------------------------
+# 2. Build Outputs & Compilation
+# ------------------------------------------
+dist/
+dist-ssr/
+build/
+.vite/
+.parcel-cache/
+.rollup.cache/
+.esbuild/
+*.tsbuildinfo
+
+# ------------------------------------------
+# 3. Cache & Temporary Directories
+# ------------------------------------------
+.cache/
+tmp/
+temp/
+backend/cache/
+backend/src/cache/*
+!backend/src/cache/.gitkeep
+storybook-static/
+
+# ------------------------------------------
+# 4. Logs & Profiling
+# ------------------------------------------
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+prof*.txt
+*.prof
+*.cpuprofile
+.heapprofile
 
-# Directories
-node_modules/
-dist/
-dist-ssr/
-build/
-.cache/
+# ------------------------------------------
+# 5. Environment Variables & Secrets
+# ------------------------------------------
+.env
+.env.*
+!.env.example
+*.secret
+.env.backup
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ------------------------------------------
+# 6. Testing & Coverage
+# ------------------------------------------
 coverage/
+playwright-report/
+test-results/
+cypress/videos/
+cypress/screenshots/
+backend/test-*.ts
 
-# OS Files
+# ------------------------------------------
+# 7. Operating System & IDE Files
+# ------------------------------------------
 .DS_Store
 .DS_Store?
 ._*
@@ -23,8 +81,10 @@ coverage/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Editor directories and files
+desktop.ini
+.AppleDouble
+.LSOverride
+.directory
 .vscode/*
 !.vscode/extensions.json
 .idea/
@@ -33,169 +93,87 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+.history/
+.cursor/
 
-# Environment Variables
-.env
-.env.*
-!.env.example
-*.secret
-.env.backup
+# ------------------------------------------
+# 8. Agent & IDE Artifacts
+# ------------------------------------------
+.agents/
+brain/
+CODEBASE_TREE.md
+my-mailmap
+generate_metrics.py
+reference_check.py
+audit_temp.json
+*.patch
+diff.txt
 
-# Documents
+# ------------------------------------------
+# 9. Operational Archives & Backups
+# ------------------------------------------
+backups/
+/backend/backups/
+/backup/
+ops/archive/
+
+# ------------------------------------------
+# 10. Documents & Media (Runtime generated)
+# ------------------------------------------
 *.docx
 *.pdf
 *.pptx
 
-# Audit Artifacts & Temp Scripts
-scripts/extract_arch.js
-backend/test-mongoose.js
-
-# Recovery & Diagnostics
-backend/recovery/
-backend/cache/
-backend/recovered_products_preview.json
-backend/old_seed_data_temp.txt
-backend/test-*.ts
-*.avif
-tmp/
-
-# Forensic Cleanup Ignored Artifacts
-certification_*.json
-certification_*.md
+# ------------------------------------------
+# 11. Specific Generated Artifacts & Reports
+# ------------------------------------------
+stats.html
+stats.json
+frontend/stats.html
+frontend/stats.json
+network-data.json
+temp*.json
 *-results.json
 *_baseline.json
-backend/src/cache/*
-!backend/src/cache/.gitkeep
+backend/knip-report.json
+frontend/knip-report.json
+migration_report*.md
+codebase_report*.txt
+*-audit-report*.json
+audit_performance.*
+runtime-audit*
+.audit-history/
+frontend/eslint-results.json
+frontend/lint-errors.log
+frontend/errors.txt
+load_tests/
+load-tests.yml
+filters*.json
+explain_output.json
+certification_*.json
+certification_*.md
+backend/recovered_products_preview.json
+backend/old_seed_data_temp.txt
+build_output.log
 
-# Temp Scripts & Audits
+# ------------------------------------------
+# 12. Run-Time PIDs
+# ------------------------------------------
+*.pid
+*.seed
+*.tmp
+*.temp
+
+# ------------------------------------------
+# 13. Excluded Scripts
+# ------------------------------------------
+scripts/extract_arch.js
+backend/test-mongoose.js
 patch_frontend.py
 backend/fix-image.js
 backend/fix-all-images.js
 frontend/replaceImports.cjs
-migration_report.md
-backend/knip-report.json
-frontend/knip-report.json
-frontend/stats.html
-frontend/stats.json
-stats.json
-backend/migration_report_full.md
-
-# Agent directories
-brain/
-
-# Profiling & debug
-prof*.txt
-*.prof
-# Load test results
-load_tests/
-load-tests.yml
-# Audit artifacts
-*-audit-report*.json
-audit_performance.*
-runtime-audit*
-# Cached media
-backend/cache/
-# Filter debug
-filters*.json
-explain_output.json
-
-# Hardened Generated Artifacts Phase
-codebase_report.txt
-codebase_tree_report.txt
-temp.json
-audit_report_raw.json
-.audit-history/
-
-# Temp Dev Artifacts
-frontend/eslint-results.json
-frontend/lint-errors.log
-frontend/errors.txt
- 
-# Backups & Temp
-/backups/
-/backend/backups/
-/backup/
-temp/
-reports/
-
-# Vite
-.vite/
-
-# Turborepo
-.turbo/
-
-# Parcel
-.parcel-cache/
-
-# Rollup
-.rollup.cache/
-
-# ESBuild
-.esbuild/
-
-# TypeScript
-*.tsbuildinfo
-
-# npm cache
-.npm/
-
-# pnpm
-.pnpm-store/
-
-# Bun
-bun.lockb
-
-# IDE
-.history/
-.cursor/
-.agents/
-
-# macOS
-.AppleDouble
-.LSOverride
-
-# Windows
-desktop.ini
-
-# Linux
-.directory
-
-# Environment overrides
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Runtime
-*.pid
-*.seed
-
-# Temporary
-*.tmp
-*.temp
-
-# Profiling
-*.cpuprofile
-.heapprofile
-
-# Storybook
-storybook-static/
-
-# Playwright
-playwright-report/
-test-results/
-
-# Cypress
-cypress/videos/
-cypress/screenshots/
-
-# Vite bundle analyzer
-stats.html
-# Hardened Generated Artifacts
-*.log
-build_output.log
-network-data.json
-stats.html
-temp_*.json
-*.patch
-diff.txt
-
+generate_tree.py
+rewrite_commits.py
+rewrite_dependabot.py
+filter-commits.sh

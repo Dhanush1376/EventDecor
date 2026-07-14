@@ -13,6 +13,7 @@ import {
   stagger,
   SkeletonCard,
 } from '../components/AdminUIKit';
+import { formatDistanceToNow } from 'date-fns';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { getAccessToken } from '../../services/api';
 import { getApiRootUrl } from '../../config/apiConfig';
@@ -300,6 +301,12 @@ export function AdminCustomers() {
                       <p className="text-[11px] text-[var(--admin-text-tertiary)] font-medium uppercase tracking-wider mt-0.5">
                         {c.city || 'Unknown'}
                       </p>
+                      {c.lastLogin && (
+                        <p className="text-[10px] text-[var(--admin-text-secondary)] mt-1 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[12px]">schedule</span>
+                          Active {formatDistanceToNow(new Date(c.lastLogin), { addSuffix: true })}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">

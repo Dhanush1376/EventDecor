@@ -10,7 +10,7 @@ import {
 } from '../../controllers/discovery/searchController';
 import { searchLimiter } from '../../middleware/rateLimiter';
 import { dynamicResponseCache } from '../../middleware/dynamicCacheMiddleware';
-import { requireAuth, authorize } from '../../middleware/authMiddleware';
+import { requireAuth, authorize, requireAdmin } from '../../middleware/authMiddleware';
 
 const router = Router();
 
@@ -30,15 +30,9 @@ router.get('/discovery', searchLimiter, dynamicResponseCache(300, 'public'), dis
 router.get('/related', searchLimiter, relatedSearches);
 
 // Enterprise global search (Admin only)
-router.get(
-  '/enterprise',
-  requireAuth,
-  authorize('admin', 'superadmin', 'manager'),
-  searchLimiter,
-  enterpriseSearch,
-);
+router.get('/enterprise', requireAdmin, searchLimiter, enterpriseSearch);
 
 // Trigger reindex (Admin only)
-router.post('/reindex', requireAuth, authorize('admin', 'superadmin'), reindexSearch);
+router.post('/reindex', requireAdmin, reindexSearch);
 
 export default router;

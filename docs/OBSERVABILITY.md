@@ -1,3 +1,0 @@
-# Observability & Monitoring
-
-This document details logging, tracing, and metrics collection strategies for EventDecor...
