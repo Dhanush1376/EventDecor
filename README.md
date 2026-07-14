@@ -162,7 +162,7 @@ Copy `backend/.env.example` to `backend/.env` and set **`BREVO_API_KEY`** (recom
 - `ensureIndexes()` runs in the **background** after boot so HTTP binds immediately; run `npm run create-indexes` in CI/CD before first production deploy.
 - Stale pending-order cleanup uses a **MongoDB cursor + bulkWrite** (batched, memory-safe).
 - Cron jobs use **Redis SETNX locks** when `REDIS_URL` is set so horizontal scaling does not double-run stock release, email DLQ, or CMS cleanup.
-- Marble texture is loaded from **Cloudinary CDN** (`VITE_MARBLE_TEXTURE_URL`), not the 520KB bundled PNG.
+
 - Run `cd frontend && npm run build:report` to audit JS chunk sizes after changes.
 
 ### 9. Security

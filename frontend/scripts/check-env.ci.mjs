@@ -5,7 +5,6 @@ const required = [
   'VITE_API_URL',
   'VITE_SITE_URL',
   'VITE_RAZORPAY_KEY_ID',
-  'VITE_MARBLE_TEXTURE_URL',
 ];
 
 const recommended = [
