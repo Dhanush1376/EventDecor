@@ -29,7 +29,7 @@ const getDynamicOrigins = (): Set<string> => {
   // Explicit hardcoded production domains as backup
   origins.add('https://siriartsandcrafts.com');
   origins.add('https://www.siriartsandcrafts.com');
-  origins.add('https://eventdecor-production-1647.up.railway.app');
+  origins.add('https://api.siriartsandcrafts.com');
 
   return origins;
 };

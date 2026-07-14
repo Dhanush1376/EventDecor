@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 import storeSettingsService from '../services/api/storeSettingsService';
 // socket.io is imported dynamically inside the useEffect to keep it out of the initial bundle
-import { getApiRootUrl } from '../config/apiConfig';
+import { getWebSocketUrl } from '../config/apiConfig';
 import logger from '../utils/core/logger';
 
 const ConfigContext = createContext(null);
@@ -42,13 +42,9 @@ export const ConfigProvider = ({ children }) => {
     // Visitor sockets are intentionally opt-in; the public config fetch remains the canonical source.
     if (import.meta.env.VITE_ENABLE_VISITOR_SOCKET !== 'true') return;
 
-    // Setup Socket for live maintenance toggles
-    let socketServerUrl = getApiRootUrl();
-    if (socketServerUrl.endsWith('/api/v1')) {
-      socketServerUrl = socketServerUrl.slice(0, -7);
-    } else if (socketServerUrl.endsWith('/api')) {
-      socketServerUrl = socketServerUrl.slice(0, -4);
-    }
+    // Setup Socket for live maintenance toggles.
+    // Direct backend origin so the transport can upgrade to a real WebSocket.
+    const socketServerUrl = getWebSocketUrl();
     let socketRef = null;
 
     import('socket.io-client')
@@ -56,6 +52,7 @@ export const ConfigProvider = ({ children }) => {
         const socket = io(`${socketServerUrl}/visitor`, {
           transports: ['websocket', 'polling'],
           reconnectionAttempts: 5,
+          reconnectionDelay: 5000,
         });
         socketRef = socket;
 

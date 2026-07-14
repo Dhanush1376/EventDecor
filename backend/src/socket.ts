@@ -213,13 +213,19 @@ export const startBroadcastInterval = () => {
       }
     }
 
-    // Push aggregated state to admins
+    // Push aggregated state to admins. Cap the per-tick payload: admins only need
+    // the live count plus a bounded sample of visitors, not an unbounded array that
+    // grows with traffic and is re-broadcast every 5s to every admin socket.
     if (visitorsArray.length > 0) {
-      ioServer.of('/admin').to('admin-alerts').emit('live:visitor_sync', {
-        activeCount: visitorsArray.length,
-        visitors: visitorsArray,
-        timestamp: now,
-      });
+      const MAX_VISITORS_IN_PAYLOAD = 100;
+      ioServer
+        .of('/admin')
+        .to('admin-alerts')
+        .emit('live:visitor_sync', {
+          activeCount: visitorsArray.length,
+          visitors: visitorsArray.slice(0, MAX_VISITORS_IN_PAYLOAD),
+          timestamp: now,
+        });
     }
   }, 5000);
 };

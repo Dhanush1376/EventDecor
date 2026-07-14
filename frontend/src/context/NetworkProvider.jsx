@@ -78,11 +78,15 @@ export function NetworkProvider({ children }) {
     const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
       const readinessUrl = `${getApiRootUrl()}/readiness`;
-      const response = await fetch(`${readinessUrl}?t=${Date.now()}`, {
+      // The readiness endpoint is already no-store server-side, so use the fetch
+      // cache directive instead of a `?t=` cache-buster (the query param defeated
+      // any edge caching and made every ping a guaranteed origin round-trip).
+      const response = await fetch(readinessUrl, {
         method: 'GET',
         headers: {
           Accept: 'application/json',
         },
+        cache: 'no-store',
         signal: controller.signal,
       });
 
@@ -147,10 +151,11 @@ export function NetworkProvider({ children }) {
     }
 
     // Dynamic delay using exponential backoff:
-    // Online -> 45s.
+    // Online -> 120s (steady-state heartbeat; real API traffic already exercises
+    //           the backend, and navigator online/offline events cover hard drops).
     // Offline/Reconnecting -> starts at 4s, doubles each time (4s -> 8s -> 16s -> 32s), capped at 45s
     const getIntervalTime = () => {
-      if (networkState === 'online') return 45000;
+      if (networkState === 'online') return 120000;
       const count = failedPingsRef.current || 0;
       return Math.min(Math.pow(2, count) * 4000, 45000);
     };

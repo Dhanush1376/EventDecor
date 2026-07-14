@@ -10,11 +10,11 @@
     },
     {
       "source": "/api/:path*",
-      "destination": "https://eventdecor-production-1647.up.railway.app/api/:path*"
+      "destination": "https://api.siriartsandcrafts.com/api/:path*"
     },
     {
       "source": "/socket.io/:path*",
-      "destination": "https://eventdecor-production-1647.up.railway.app/socket.io/:path*"
+      "destination": "https://api.siriartsandcrafts.com/socket.io/:path*"
     },
     {
       "source": "/:path*",
@@ -25,10 +25,6 @@
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, no-cache, must-revalidate"
-        },
         {
           "key": "X-Frame-Options",
           "value": "DENY"
@@ -48,7 +44,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://cdn.razorpay.com https://unpkg.com https://static.cloudflareinsights.com https://cdn.logr-in.com https://*.logrocket.io https://accounts.google.com/gsi/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://accounts.google.com/gsi/style; img-src 'self' data: blob: https://res.cloudinary.com https://flagcdn.com https://images.unsplash.com https://lh3.googleusercontent.com https://eventdecor-production-1647.up.railway.app https://*.pinimg.com https://*.tile.openstreetmap.org; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.cloudinary.com https://eventdecor-production-1647.up.railway.app wss://eventdecor-production-1647.up.railway.app https://api.razorpay.com https://*.sentry.io https://*.logrocket.io https://*.cloudflareinsights.com https://accounts.google.com; worker-src 'self' blob:; frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://cdn.razorpay.com https://unpkg.com https://static.cloudflareinsights.com https://cdn.logr-in.com https://*.logrocket.io https://accounts.google.com/gsi/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://accounts.google.com/gsi/style; img-src 'self' data: blob: https://res.cloudinary.com https://flagcdn.com https://images.unsplash.com https://lh3.googleusercontent.com https://api.siriartsandcrafts.com https://*.pinimg.com https://*.tile.openstreetmap.org; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.cloudinary.com https://api.siriartsandcrafts.com wss://api.siriartsandcrafts.com https://api.razorpay.com https://*.sentry.io https://*.logrocket.io https://*.cloudflareinsights.com https://accounts.google.com; worker-src 'self' blob:; frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
         },
         {
           "key": "Permissions-Policy",
@@ -57,7 +53,25 @@
       ]
     },
     {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/((?!api/|socket.io/|assets/|.*\\.).*)",
       "headers": [
         {
           "key": "Cache-Control",

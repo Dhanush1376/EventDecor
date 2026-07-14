@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { optimizeImageController } from '../../controllers/media/mediaController';
 import * as mediaLibraryController from '../../controllers/media/mediaLibraryController';
 import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import multer from 'multer';
@@ -9,11 +8,10 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const router = Router();
 
-/**
- * GET /api/v1/media/optimize
- * Public endpoint to optimize, resize, compress, and transcode local public assets.
- */
-router.get('/optimize', optimizeImageController);
+// NOTE: The public GET /optimize proxy was removed. It fetched arbitrary remote
+// URLs and served the transcoded bytes from backend egress (SSRF + unbounded
+// bandwidth). Image optimization is handled entirely by Cloudinary transforms on
+// the frontend (see frontend/src/utils/media/imageUtils.js).
 
 // Media Library Routes
 router.post(

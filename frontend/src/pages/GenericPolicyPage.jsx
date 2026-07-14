@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { policyService } from '../services/domainServices';
 import { createSafeHtml } from '../utils/security/sanitize';
 import { useEffect } from 'react';
-import { getApiRootUrl } from '../config/apiConfig';
+import { getWebSocketUrl } from '../config/apiConfig';
 import logger from '../utils/core/logger';
 import { MandalaElement } from '../components/ui/MandalaElement';
 
@@ -29,13 +29,14 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
 
   useEffect(() => {
     if (!slug) return;
-    const rawApiUrl = getApiRootUrl();
-    let socketServerUrl = rawApiUrl;
-    if (socketServerUrl.endsWith('/api/v1')) {
-      socketServerUrl = socketServerUrl.slice(0, -7);
-    } else if (socketServerUrl.endsWith('/api')) {
-      socketServerUrl = socketServerUrl.slice(0, -4);
-    }
+    // Live policy sync rides the public /visitor socket. It is opt-in: when the
+    // visitor socket is disabled we rely on the 5-minute query staleTime instead
+    // of holding an idle socket open (which long-polls when it can't upgrade).
+    if (import.meta.env.VITE_ENABLE_VISITOR_SOCKET !== 'true') return;
+
+    // Connect directly to the backend origin (not the same-origin proxy) so the
+    // transport can upgrade to a real WebSocket instead of looping on HTTP polling.
+    const socketServerUrl = getWebSocketUrl();
 
     let socket;
 
@@ -43,6 +44,8 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
       .then(({ io }) => {
         socket = io(`${socketServerUrl}/visitor`, {
           transports: ['websocket', 'polling'],
+          reconnectionAttempts: 5,
+          reconnectionDelay: 5000,
         });
 
         socket.on('policy-updated', (data) => {

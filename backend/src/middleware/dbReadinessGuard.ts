@@ -2,15 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import logger from '../config/logger';
 
-const skipEndpoints = [
-  '/',
-  '/api/health',
-  '/api/readiness',
-  '/api/version',
-  '/favicon.ico',
-  '/api/v1/media/optimize',
-  '/api/media/optimize',
-];
+const skipEndpoints = ['/', '/api/health', '/api/readiness', '/api/version', '/favicon.ico'];
 
 export const dbReadinessGuard = (req: Request, res: Response, next: NextFunction) => {
   const path = (req.originalUrl || req.url || '').split('?')[0];

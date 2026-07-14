@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useRecommendationTracker } from '../../hooks/useRecommendationTracker';
 import { trackEvent } from '../../utils/core/analyticsCollector';
 // socket.io is imported dynamically inside the useEffect
-import { getApiRootUrl } from '../../config/apiConfig';
+import { getWebSocketUrl } from '../../config/apiConfig';
 
 let socket = null;
 
@@ -49,16 +49,14 @@ export function GlobalTracker() {
     if (!socket) {
       import('socket.io-client')
         .then(({ io }) => {
-          let socketServerUrl = getApiRootUrl();
-          if (socketServerUrl.endsWith('/api/v1')) {
-            socketServerUrl = socketServerUrl.slice(0, -7);
-          } else if (socketServerUrl.endsWith('/api')) {
-            socketServerUrl = socketServerUrl.slice(0, -4);
-          }
+          // Direct backend origin so the transport can upgrade to a real WebSocket.
+          const socketServerUrl = getWebSocketUrl();
 
           socket = io(`${socketServerUrl}/visitor`, {
             withCredentials: true,
             transports: ['websocket', 'polling'],
+            reconnectionAttempts: 5,
+            reconnectionDelay: 5000,
           });
           interval = setInterval(beat, 120000); // 2 minutes
         })

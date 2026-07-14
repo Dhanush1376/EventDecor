@@ -44,7 +44,7 @@ The CSP is deployed via two methods to ensure coverage across hosting environmen
 - **Scripts (`script-src`)**: 'self', 'unsafe-inline', `checkout.razorpay.com`
 - **Styles (`style-src`)**: 'self', 'unsafe-inline', `fonts.googleapis.com`
 - **Images (`img-src`)**: 'self', `data:`, `blob:`, `res.cloudinary.com`, `flagcdn.com`
-- **Connect/API (`connect-src`)**: 'self', `eventdecor-production-1647.up.railway.app` (REST and WSS), `api.razorpay.com`
+- **Connect/API (`connect-src`)**: 'self', `api.siriartsandcrafts.com` (REST and WSS), `api.razorpay.com`
 - **Iframes (`frame-src`)**: 'self', `checkout.razorpay.com`
 
 _Note: If integrating a new third-party service (e.g., a chat widget or analytics tool), the CSP headers in `vercel.json` and `nginx.example.conf` MUST be updated to whitelist the specific domains._

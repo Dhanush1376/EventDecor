@@ -14,9 +14,9 @@ import {
   SkeletonCard,
 } from '../components/AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
-import { io as socketIO } from 'socket.io-client';
 import { getAccessToken } from '../../services/api';
 import { getApiRootUrl } from '../../config/apiConfig';
+import { acquireAdminSocket, releaseAdminSocket } from '../services/adminSocket';
 import CustomerProfile360 from './CustomerProfile360';
 
 const StatCard = ({ title, value, icon, color }) => (
@@ -95,27 +95,25 @@ export function AdminCustomers() {
     const token = getAccessToken();
     if (!token) return;
 
-    const rawApiUrl = getApiRootUrl();
-    let socketServerUrl = rawApiUrl;
-    if (socketServerUrl.endsWith('/api/v1')) socketServerUrl = socketServerUrl.slice(0, -7);
-    else if (socketServerUrl.endsWith('/api')) socketServerUrl = socketServerUrl.slice(0, -4);
+    const socket = acquireAdminSocket();
 
-    const socket = socketIO(`${socketServerUrl}/admin`, {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-    });
-
-    socket.on('customer_updated', () => {
+    const onCustomerUpdated = () => {
       fetchCustomers();
       fetchKpis();
-    });
-
-    socket.on('order_update', () => {
+    };
+    const onOrderUpdate = () => {
       fetchCustomers();
       fetchKpis();
-    });
+    };
 
-    return () => socket.disconnect();
+    socket.on('customer_updated', onCustomerUpdated);
+    socket.on('order_update', onOrderUpdate);
+
+    return () => {
+      socket.off('customer_updated', onCustomerUpdated);
+      socket.off('order_update', onOrderUpdate);
+      releaseAdminSocket();
+    };
   }, [fetchCustomers, fetchKpis]);
 
   const handleExport = async () => {

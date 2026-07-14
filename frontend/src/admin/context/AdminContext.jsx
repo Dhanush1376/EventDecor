@@ -7,9 +7,9 @@ import {
   loyaltyService,
 } from '../../services/domainServices';
 import toast from 'react-hot-toast';
-import { io as socketIO } from 'socket.io-client';
+import debounce from 'lodash.debounce';
 import { getAccessToken } from '../../services/api';
-import { getWebSocketUrl } from '../../config/apiConfig';
+import { acquireAdminSocket, releaseAdminSocket } from '../services/adminSocket';
 import logger from '../../utils/core/logger';
 
 import { useAdminSecurity } from '../hooks/useAdminSecurity';
@@ -266,23 +266,26 @@ export function AdminProvider({ children }) {
     }
   }, []);
 
-  // Real-time WebSocket alerts
+  // Real-time WebSocket alerts (shared singleton /admin socket)
   useEffect(() => {
     const token = getAccessToken();
     if (!token) return;
 
-    const socketServerUrl = getWebSocketUrl();
-
-    const socket = socketIO(`${socketServerUrl}/admin`, {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 15,
-      reconnectionDelay: 5000,
-    });
+    const socket = acquireAdminSocket();
 
     const seenNotificationIds = new Set();
 
-    socket.on('new_notification', (data) => {
+    // Coalesce bursty realtime events so a flurry of socket messages triggers at
+    // most one refetch every few seconds instead of a storm of API refreshes.
+    const debouncedDashboard = debounce(() => refreshDashboard(), 3000, { maxWait: 8000 });
+    const debouncedOrders = debounce(() => ordersHook.refreshOrders(), 3000, { maxWait: 8000 });
+    const debouncedEvents = debounce(() => refreshEvents(), 3000, { maxWait: 8000 });
+    const debouncedReviews = debounce(() => refreshReviews(), 3000, { maxWait: 8000 });
+    const debouncedProducts = debounce(() => productsHook.refreshProducts(), 3000, {
+      maxWait: 8000,
+    });
+
+    const onNewNotification = (data) => {
       const mapped = mapDbNotificationToFrontend(data);
       if (seenNotificationIds.has(mapped.id)) return;
       seenNotificationIds.add(mapped.id);
@@ -313,45 +316,61 @@ export function AdminProvider({ children }) {
       );
       setNotifications((prev) => [mapped, ...prev]);
       window.dispatchEvent(new CustomEvent('admin_notification', { detail: data }));
-    });
+    };
 
-    socket.on('order_update', () => {
-      ordersHook.refreshOrders();
-      refreshDashboard();
-    });
+    const onOrderUpdate = () => {
+      debouncedOrders();
+      debouncedDashboard();
+    };
+    const onStockUpdate = () => {
+      debouncedProducts();
+    };
+    const onBookingUpdate = () => {
+      debouncedEvents();
+      debouncedDashboard();
+    };
+    const onTimelineUpdate = () => {
+      debouncedOrders();
+      debouncedDashboard();
+    };
+    const onCustomOrderUpdate = () => {
+      // No dedicated custom-order refresh in this context; refresh the events and
+      // dashboard, which surface related data.
+      debouncedEvents();
+      debouncedDashboard();
+    };
+    const onRentalUpdate = () => {
+      debouncedDashboard();
+    };
+    const onReviewUpdate = () => {
+      debouncedReviews();
+      debouncedDashboard();
+    };
 
-    socket.on('stock_update', () => {
-      productsHook.refreshProducts();
-    });
-
-    socket.on('booking_update', () => {
-      refreshEvents();
-      refreshDashboard();
-    });
-
-    socket.on('timeline_update', () => {
-      ordersHook.refreshOrders();
-      refreshDashboard();
-    });
-
-    socket.on('custom_order_update', () => {
-      // In the absence of a dedicated custom order refresh in this context,
-      // refresh events and dashboard which may contain related data.
-      refreshEvents();
-      refreshDashboard();
-    });
-
-    socket.on('rental_update', () => {
-      refreshDashboard();
-    });
-
-    socket.on('review_update', () => {
-      refreshReviews();
-      refreshDashboard();
-    });
+    socket.on('new_notification', onNewNotification);
+    socket.on('order_update', onOrderUpdate);
+    socket.on('stock_update', onStockUpdate);
+    socket.on('booking_update', onBookingUpdate);
+    socket.on('timeline_update', onTimelineUpdate);
+    socket.on('custom_order_update', onCustomOrderUpdate);
+    socket.on('rental_update', onRentalUpdate);
+    socket.on('review_update', onReviewUpdate);
 
     return () => {
-      socket.disconnect();
+      socket.off('new_notification', onNewNotification);
+      socket.off('order_update', onOrderUpdate);
+      socket.off('stock_update', onStockUpdate);
+      socket.off('booking_update', onBookingUpdate);
+      socket.off('timeline_update', onTimelineUpdate);
+      socket.off('custom_order_update', onCustomOrderUpdate);
+      socket.off('rental_update', onRentalUpdate);
+      socket.off('review_update', onReviewUpdate);
+      debouncedDashboard.cancel();
+      debouncedOrders.cancel();
+      debouncedEvents.cancel();
+      debouncedReviews.cancel();
+      debouncedProducts.cancel();
+      releaseAdminSocket();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshDashboard]);

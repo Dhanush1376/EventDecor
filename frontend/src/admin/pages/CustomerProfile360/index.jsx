@@ -8,9 +8,8 @@ import Phone from 'lucide-react/dist/esm/icons/phone';
 import MapPin from 'lucide-react/dist/esm/icons/map-pin';
 import Award from 'lucide-react/dist/esm/icons/award';
 import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
-import { io as socketIO } from 'socket.io-client';
 import { getAccessToken } from '../../../services/api';
-import { getApiRootUrl } from '../../../config/apiConfig';
+import { acquireAdminSocket, releaseAdminSocket } from '../../services/adminSocket';
 
 import OverviewTab from './OverviewTab';
 import JourneyTab from './JourneyTab';
@@ -59,26 +58,24 @@ export default function CustomerProfile360({ customerId: propCustomerId, onClose
 
     const token = getAccessToken();
     if (!token) return;
-    const rawApiUrl = getApiRootUrl();
-    let socketServerUrl = rawApiUrl;
-    if (socketServerUrl.endsWith('/api/v1')) socketServerUrl = socketServerUrl.slice(0, -7);
-    else if (socketServerUrl.endsWith('/api')) socketServerUrl = socketServerUrl.slice(0, -4);
 
-    const socket = socketIO(`${socketServerUrl}/admin`, {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-    });
+    const socket = acquireAdminSocket();
 
-    socket.on('customer_updated', (data) => {
-      if (data?.customerId === customerId) fetchProfile();
-      else fetchProfile(); // Fallback update
-    });
-
-    socket.on('order_update', () => {
+    const onCustomerUpdated = () => {
       fetchProfile();
-    });
+    };
+    const onOrderUpdate = () => {
+      fetchProfile();
+    };
 
-    return () => socket.disconnect();
+    socket.on('customer_updated', onCustomerUpdated);
+    socket.on('order_update', onOrderUpdate);
+
+    return () => {
+      socket.off('customer_updated', onCustomerUpdated);
+      socket.off('order_update', onOrderUpdate);
+      releaseAdminSocket();
+    };
   }, [customerId]);
 
   if (loading) {

@@ -153,7 +153,7 @@ jobs:
         run: |
           echo "Polling backend readiness (up to 5 minutes)..."
           for i in $(seq 1 30); do
-            if curl -sSf --max-time 10 https://eventdecor-production-1647.up.railway.app/api/readiness > /dev/null 2>&1; then
+            if curl -sSf --max-time 10 https://api.siriartsandcrafts.com/api/readiness > /dev/null 2>&1; then
               echo "Backend is ready after ~$((i * 10))s."
               exit 0
             fi
@@ -165,7 +165,7 @@ jobs:
       - name: Post-Deploy Smoke Tests
         run: |
           set -e
-          base="https://eventdecor-production-1647.up.railway.app"
+          base="https://api.siriartsandcrafts.com"
           curl -sSf --max-time 10 "$base/api/readiness" > /dev/null
           curl -sSf --max-time 10 "$base/health" > /dev/null
           curl -sSf --max-time 10 "$base/api/version" > /dev/null

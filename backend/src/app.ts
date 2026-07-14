@@ -63,7 +63,9 @@ app.use(cacheHeadersMiddleware);
 if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
-    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.2 : 1.0,
+    // Performance traces are shipped off-box (counts as egress). 5% in production
+    // is plenty for trend visibility; errors are still captured at 100%.
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.05 : 1.0,
   });
 }
 
@@ -208,16 +210,44 @@ app.head('/health', noCacheMiddleware, (req: Request, res: Response) => {
 app.use(['/health', '/api/health', '/api/v1/health'], noCacheMiddleware, healthRoutes);
 app.use(['/api/business-metrics', '/api/v1/business-metrics'], noCacheMiddleware, metricsRoutes);
 
-// Prometheus metrics endpoint for SRE monitoring
-app.get('/metrics', async (req: Request, res: Response) => {
-  try {
-    res.set('Content-Type', PrometheusService.getContentType());
-    const metrics = await PrometheusService.getMetrics();
-    res.send(metrics);
-  } catch {
-    res.status(500).send('Error gathering metrics');
+// Lightweight limiter for public endpoints that live outside the /api mount
+// (the global/flooding limiters below only attach to /api/*). Honors the same
+// DISABLE_RATE_LIMITER escape hatch used for tests.
+const publicEndpointLimiter =
+  process.env.DISABLE_RATE_LIMITER === 'true'
+    ? (_req: Request, _res: Response, next: express.NextFunction) => next()
+    : apiFloodingLimiter;
+
+// Prometheus metrics endpoint for SRE monitoring.
+// In production this is token-gated and hidden (404) when the caller is not
+// authorized — it exposes infrastructure internals and is otherwise free
+// bandwidth for anonymous scrapers. Set METRICS_TOKEN and have the scraper send
+// `Authorization: Bearer <token>`.
+const metricsAccessGuard = (req: Request, res: Response, next: express.NextFunction) => {
+  if (process.env.NODE_ENV === 'production') {
+    const token = process.env.METRICS_TOKEN;
+    const provided = String(req.headers['authorization'] || '').replace(/^Bearer\s+/i, '');
+    if (!token || provided !== token) {
+      return res.status(404).end();
+    }
   }
-});
+  next();
+};
+
+app.get(
+  '/metrics',
+  publicEndpointLimiter,
+  metricsAccessGuard,
+  async (req: Request, res: Response) => {
+    try {
+      res.set('Content-Type', PrometheusService.getContentType());
+      const metrics = await PrometheusService.getMetrics();
+      res.send(metrics);
+    } catch {
+      res.status(500).send('Error gathering metrics');
+    }
+  },
+);
 
 // Readiness Probe (Tracks HTTP readiness, not DB readiness to prevent orchestrator crash loops)
 app.get(['/api/readiness', '/api/v1/readiness'], noCacheMiddleware, HealthController.readiness);
@@ -226,7 +256,7 @@ app.get(['/api/readiness', '/api/v1/readiness'], noCacheMiddleware, HealthContro
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // Dynamic sitemap.xml endpoint for SEO bots
-app.get('/sitemap.xml', async (req: Request, res: Response) => {
+app.get('/sitemap.xml', publicEndpointLimiter, async (req: Request, res: Response) => {
   try {
     const xml = await generateSitemap();
     res.setHeader('Content-Type', 'application/xml');

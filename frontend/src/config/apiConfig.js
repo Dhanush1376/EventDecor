@@ -4,7 +4,7 @@
  */
 
 export const PRODUCTION_API_ORIGIN =
-  import.meta.env.VITE_PRODUCTION_API_ORIGIN || 'https://eventdecor-production-1647.up.railway.app';
+  import.meta.env.VITE_PRODUCTION_API_ORIGIN || 'https://api.siriartsandcrafts.com';
 
 const normalizeApiBase = (url) => {
   let trimmed = String(url || '')
@@ -94,3 +94,4 @@ export const getWebSocketUrl = () => {
   }
   return socketServerUrl;
 };
+// touch
