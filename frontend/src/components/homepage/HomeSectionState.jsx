@@ -7,7 +7,7 @@ export function HomeSectionState({
 }) {
   return (
     <div className="h1-container py-12">
-      <div className="min-h-[220px] rounded-2xl border border-outline-variant/30 bg-surface/80 flex flex-col items-center justify-center text-center px-6">
+      <div className="min-h-[220px] rounded-2xl border border-outline-variant/30 bg-surface/80 flex flex-col items-center justify-center text-center px-6 py-10">
         <span className="material-symbols-outlined text-[36px] text-on-surface-variant/50 mb-4">
           {icon}
         </span>

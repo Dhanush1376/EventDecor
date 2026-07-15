@@ -50,7 +50,10 @@ const AutomationToggleCenter = () => {
         <h2 className="text-[18px] font-semibold text-[var(--admin-text-primary)]">
           Automation Triggers
         </h2>
-        <button className="admin-btn-secondary" onClick={() => toast.error('Config drawer stub')}>
+        <button
+          className="admin-btn admin-btn-primary"
+          onClick={() => toast.error('Config drawer stub')}
+        >
           <span className="material-symbols-outlined text-[18px]">settings</span> Global Settings
         </button>
       </div>

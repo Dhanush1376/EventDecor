@@ -29,4 +29,5 @@ const ApprovalRequestSchema: Schema = new Schema(
   { timestamps: true },
 );
 
-export default mongoose.model<IApprovalRequest>('ApprovalRequest', ApprovalRequestSchema);
+export default mongoose.models.SystemApprovalRequest ||
+  mongoose.model<IApprovalRequest>('SystemApprovalRequest', ApprovalRequestSchema);

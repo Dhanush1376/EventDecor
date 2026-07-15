@@ -122,6 +122,9 @@ export const registerApiRoutes = (
   // Maintenance System Routes
   apiRouter.use('/maintenance', noCacheMiddleware, lazyRouter('./system/maintenanceRoutes'));
 
+  // Enterprise Recycle Bin Routes
+  apiRouter.use('/admin/recycle-bin', noCacheMiddleware, lazyRouter('./admin/recycleBinRoutes'));
+
   // Enterprise Backup & DR Routes
   apiRouter.use('/admin/backup', noCacheMiddleware, lazyRouter('./system/backupRoutes'));
 

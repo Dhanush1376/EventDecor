@@ -139,7 +139,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a0c764b9b8633afb920deb4</loc>
-    <lastmod>2026-07-13</lastmod>
+    <lastmod>2026-07-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -309,7 +309,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a41a43d14ed694d37335f7b</loc>
-    <lastmod>2026-07-13</lastmod>
+    <lastmod>2026-07-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -399,7 +399,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a42dc1cf2886846ac840107</loc>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-07-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -409,7 +409,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a42df9df2886846ac840216</loc>
-    <lastmod>2026-07-10</lastmod>
+    <lastmod>2026-07-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -428,33 +428,13 @@
     </image:image>
   </url>
   <url>
-    <loc>https://siriartsandcrafts.com/product/6a4ab9792659631790f45060</loc>
-    <lastmod>2026-07-13</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783281950/products/rz05saqpg9j1o9rdofk8.webp</image:loc>
-      <image:title>Floral Square Trays</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://siriartsandcrafts.com/product/6a4abbc32659631790f4513c</loc>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-07-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783282624/products/wzozgoaaoyja02s4ni3u.webp</image:loc>
       <image:title>Pink Floral Ring Tray</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://siriartsandcrafts.com/product/6a4d1aa3e9699048ef3e7661</loc>
-    <lastmod>2026-07-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783437984/products/cbrwmijytasjr2hkpsks.jpg</image:loc>
-      <image:title>Dry Fruit Gift Basket</image:title>
     </image:image>
   </url>
   <url>
@@ -469,12 +449,22 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a4e65955217aa04070d5ee0</loc>
-    <lastmod>2026-07-08</lastmod>
+    <lastmod>2026-07-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783522707/products/nkqic6ywdcdcd4k6plen.jpg</image:loc>
       <image:title>Ferrero Rocher Gift Cones</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/product/6a573836a641924d24225cda</loc>
+    <lastmod>2026-07-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1784100911/products/konjqpweejokm81pfxfc.jpg</image:loc>
+      <image:title>Gold Floral Trays</image:title>
     </image:image>
   </url>
   <url>
@@ -809,7 +799,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/gallery/6a4ab97a2659631790f45064</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
@@ -829,7 +819,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/gallery/6a4d1aa5e9699048ef3e7665</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
@@ -855,6 +845,16 @@
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1783522707/products/nkqic6ywdcdcd4k6plen.jpg</image:loc>
       <image:title>Ferrero Rocher Gift Cones</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a573839a641924d24225cdc</loc>
+    <lastmod>2026-07-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1784100911/products/konjqpweejokm81pfxfc.jpg</image:loc>
+      <image:title>Gold Floral Trays</image:title>
     </image:image>
   </url>
 </urlset>

@@ -7,9 +7,9 @@ const mapDbProductToFrontend = (p) => {
   if (p.id && p.name && p.image) return p;
 
   let fStatus = 'active';
-  if (p.stock === 0) fStatus = 'out_of_stock';
+  if (p.isActive === false) fStatus = 'inactive';
+  else if (p.stock === 0) fStatus = 'out_of_stock';
   else if (p.stock <= 5) fStatus = 'low_stock';
-  else if (!p.isActive) fStatus = 'draft';
 
   return {
     id: p._id || p.id || 'PRD-UNKNOWN',
@@ -33,7 +33,7 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
   const [products, setProducts] = useState([]);
   const [productsError, setProductsError] = useState(null);
 
-  const deleteProduct = useCallback(
+  const softDeleteProduct = useCallback(
     async (productId) => {
       if (activeRole === 'viewer') {
         toast.error('Viewer Role: Write operations are restricted!');
@@ -58,11 +58,104 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
           queryClient?.invalidateQueries({ queryKey: ['product_categories'] });
           queryClient?.invalidateQueries({ queryKey: ['gallery'] });
 
-          logAdminAction('DELETE_PRODUCT', `Deactivated product ID: ${productId}`);
-          toast.success('Product deactivated');
+          logAdminAction('SOFT_DELETE_PRODUCT', `Moved product to recycle bin ID: ${productId}`);
+          toast.success('Product moved to recycle bin');
         }
       } catch (_err) {
-        toast.error('Failed to delete product');
+        toast.error('Failed to move product to recycle bin');
+      }
+    },
+    [activeRole, safetyLock, logAdminAction, queryClient],
+  );
+
+  const updateProductStatus = useCallback(
+    async (productId, status) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return false;
+      }
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return false;
+      }
+
+      // Optimistic update
+      setProducts((prev) =>
+        prev.map((p) => {
+          if ((p._id || p.id) === productId) {
+            const isNowActive = status === 'active';
+            let newStatus = 'active';
+            if (!isNowActive) newStatus = 'inactive';
+            else if (p.stock === 0) newStatus = 'out_of_stock';
+            else if (p.stock <= 5) newStatus = 'low_stock';
+
+            return {
+              ...p,
+              status: newStatus,
+              rawProduct: { ...p.rawProduct, isActive: isNowActive },
+            };
+          }
+          return p;
+        }),
+      );
+
+      try {
+        const res = await productService.updateStatus(productId, status);
+        if (res.success) {
+          queryClient?.invalidateQueries({ queryKey: ['products'] });
+          queryClient?.invalidateQueries({ queryKey: ['product', productId] });
+          queryClient?.invalidateQueries({ queryKey: ['product_categories'] });
+          queryClient?.invalidateQueries({ queryKey: ['gallery'] });
+
+          logAdminAction('UPDATE_PRODUCT_STATUS', `Set product ${productId} to ${status}`);
+          toast.success(`Product is now ${status}`);
+          return true;
+        }
+        return false;
+      } catch (_err) {
+        toast.error(`Failed to update product status`);
+        // We'd ideally rollback the optimistic update here, but for simplicity we'll just refetch or rely on next poll
+        return false;
+      }
+    },
+    [activeRole, safetyLock, logAdminAction, queryClient],
+  );
+
+  const permanentlyDeleteProduct = useCallback(
+    async (productId) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return false;
+      }
+      if (activeRole === 'editor') {
+        toast.error('Editor Role: Deleting catalog items is restricted!');
+        return false;
+      }
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return false;
+      }
+      try {
+        const res = await productService.permanentDelete(productId);
+        if (res.success) {
+          setProducts((prev) => prev.filter((p) => (p._id || p.id) !== productId));
+
+          queryClient?.invalidateQueries({ queryKey: ['products'] });
+          queryClient?.invalidateQueries({ queryKey: ['product', productId] });
+          queryClient?.invalidateQueries({ queryKey: ['product_categories'] });
+          queryClient?.invalidateQueries({ queryKey: ['gallery'] });
+
+          logAdminAction(
+            'PERMANENT_DELETE_PRODUCT',
+            `Permanently deleted product ID: ${productId}`,
+          );
+          toast.success('Product permanently deleted');
+          return true;
+        }
+        return false;
+      } catch (_err) {
+        toast.error('Failed to permanently delete product');
+        return false;
       }
     },
     [activeRole, safetyLock, logAdminAction, queryClient],
@@ -142,7 +235,9 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
     setProducts,
     productsError,
     setProductsError,
-    deleteProduct,
+    softDeleteProduct,
+    updateProductStatus,
+    permanentlyDeleteProduct,
     toggleProductFeatured,
     updateProductStock,
     refreshProducts,

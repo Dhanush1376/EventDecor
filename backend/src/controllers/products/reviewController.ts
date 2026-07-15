@@ -133,6 +133,7 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
     rating,
     comment,
     images,
+    reviewImages,
     location,
     eventType,
     favoriteElement,
@@ -202,7 +203,8 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
     customerName: reviewerName,
     rating,
     comment,
-    images: images || [],
+    images: images || (reviewImages ? reviewImages.map((img: any) => img.secureUrl) : []),
+    reviewImages: reviewImages || undefined,
     location: location || undefined,
     eventType: eventType || undefined,
     favoriteElement: favoriteElement || undefined,
@@ -374,14 +376,34 @@ export const getMyReview = asyncHandler(async (req: Request, res: Response) => {
 
 export const updateOwnReview = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { rating, comment, images } = req.body;
+  const { rating, comment, images, reviewImages } = req.body;
 
   const review = await Review.findOne({ _id: id, customer: req.user!.id });
   if (!review) throw new ApiError(404, 'Review not found or unauthorized');
 
   review.rating = rating;
   review.comment = comment;
-  if (images) review.images = images;
+
+  if (reviewImages) {
+    const oldPublicIds = (review.reviewImages || []).map((img) => img.publicId).filter(Boolean);
+    const newPublicIds = reviewImages.map((img: any) => img.publicId).filter(Boolean);
+    const removedPublicIds = oldPublicIds.filter((id) => !newPublicIds.includes(id));
+
+    if (removedPublicIds.length > 0) {
+      const { CloudinaryAdapter } = require('../../services/media/CloudinaryAdapter');
+      const logger = require('../../config/logger').default || require('../../config/logger');
+      try {
+        await CloudinaryAdapter.deleteMultiple(removedPublicIds);
+      } catch (err) {
+        logger.error(`Failed to delete removed review images from Cloudinary: ${err}`);
+      }
+    }
+
+    review.reviewImages = reviewImages;
+    review.images = reviewImages.map((img: any) => img.secureUrl);
+  } else if (images) {
+    review.images = images;
+  }
 
   // If editing an approved review, it must be re-moderated
   if (review.status === 'approved') {
@@ -411,7 +433,18 @@ export const deleteReview = asyncHandler(async (req: Request, res: Response) => 
   }
 
   // Clean up any uploaded review images from Cloudinary to prevent orphan costs
-  if (Array.isArray(review.images) && review.images.length > 0) {
+  if (review.reviewImages && review.reviewImages.length > 0) {
+    const publicIds = review.reviewImages.map((img: any) => img.publicId).filter(Boolean);
+    if (publicIds.length > 0) {
+      const { CloudinaryAdapter } = require('../../services/media/CloudinaryAdapter');
+      const logger = require('../../config/logger').default || require('../../config/logger');
+      try {
+        await CloudinaryAdapter.deleteMultiple(publicIds);
+      } catch (err: any) {
+        logger.error(`Failed to delete review images from Cloudinary: ${err}`);
+      }
+    }
+  } else if (Array.isArray(review.images) && review.images.length > 0) {
     const { MediaService } = require('../../services/media/MediaService');
     const logger = require('../../config/logger').default || require('../../config/logger');
     try {

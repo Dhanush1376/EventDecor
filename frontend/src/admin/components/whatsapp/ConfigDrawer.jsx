@@ -1,9 +1,59 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import SectionBuilder from './SectionBuilder';
 import TemplateEditor from './TemplateEditor';
+import whatsappAutomationService from '../../services/whatsappAutomationService';
+import toast from 'react-hot-toast';
 
 const ConfigDrawer = ({ isOpen, onClose, automation }) => {
+  const [template, setTemplate] = useState(null);
+  const [loadingTemplate, setLoadingTemplate] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && automation) {
+      setLoadingTemplate(true);
+      whatsappAutomationService
+        .getTemplates({ automationKey: automation.automationKey })
+        .then((res) => {
+          if (res.data?.data?.length > 0) {
+            setTemplate(res.data.data[0]);
+          } else {
+            setTemplate(null);
+          }
+        })
+        .catch(() => toast.error('Failed to load template for this automation'))
+        .finally(() => setLoadingTemplate(false));
+    } else {
+      setTemplate(null);
+    }
+  }, [isOpen, automation]);
+
+  const handleSaveTemplate = async (newText) => {
+    if (!template) {
+      try {
+        const res = await whatsappAutomationService.createTemplate({
+          name: `${automation.displayName} Default Template`,
+          automationKey: automation.automationKey,
+          bodyTemplate: newText,
+          isActive: true,
+        });
+        if (res.data?.success) {
+          setTemplate(res.data.data);
+          toast.success('New template saved successfully!');
+        }
+      } catch (err) {
+        toast.error('Failed to create new template');
+      }
+    } else {
+      try {
+        await whatsappAutomationService.updateTemplate(template._id, {
+          bodyTemplate: newText,
+        });
+        toast.success('Template updated successfully!');
+      } catch (err) {
+        toast.error('Failed to update template');
+      }
+    }
+  };
   if (!automation) return null;
 
   return (
@@ -47,19 +97,6 @@ const ConfigDrawer = ({ isOpen, onClose, automation }) => {
 
             {/* Scrollable Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar bg-[var(--admin-bg-subtle)]">
-              {/* Section Builder Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-[var(--admin-border-subtle)] p-6">
-                <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
-                  <span className="material-symbols-outlined text-[var(--admin-accent)]">
-                    view_list
-                  </span>
-                  <h3 className="text-[16px] font-bold text-[var(--admin-text-primary)]">
-                    Layout Sections
-                  </h3>
-                </div>
-                <SectionBuilder sections={automation.sections || []} />
-              </div>
-
               {/* Template Editor Card */}
               <div className="bg-white rounded-xl shadow-sm border border-[var(--admin-border-subtle)] p-6">
                 <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
@@ -70,7 +107,16 @@ const ConfigDrawer = ({ isOpen, onClose, automation }) => {
                     Message Template
                   </h3>
                 </div>
-                <TemplateEditor />
+                {loadingTemplate ? (
+                  <div className="text-[13px] text-gray-500 py-10 text-center">
+                    Loading template...
+                  </div>
+                ) : (
+                  <TemplateEditor
+                    initialText={template?.bodyTemplate || ''}
+                    onSave={handleSaveTemplate}
+                  />
+                )}
               </div>
 
               {/* Provider Template Mapping */}
@@ -125,7 +171,7 @@ const ConfigDrawer = ({ isOpen, onClose, automation }) => {
 
             {/* Footer */}
             <div className="p-4 border-t border-[var(--admin-border-subtle)] bg-white flex justify-end gap-3 shrink-0">
-              <button onClick={onClose} className="admin-btn-secondary px-6">
+              <button onClick={onClose} className="admin-btn admin-btn-primary px-6">
                 Cancel
               </button>
               <button onClick={onClose} className="admin-btn px-6">

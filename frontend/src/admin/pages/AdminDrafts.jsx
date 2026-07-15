@@ -133,16 +133,14 @@ export function AdminDrafts() {
       {/* Filters */}
       <div className="admin-card p-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              search
-            </span>
+          <div className="admin-search-wrapper flex-1">
+            <span className="material-symbols-outlined admin-search-icon">search</span>
             <input
               type="text"
               placeholder="Search drafts by title..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="admin-input pl-10"
+              className="admin-input w-full"
             />
           </div>
           <div className="sm:w-64">

@@ -8,11 +8,15 @@ export class WhatsAppTemplateEngine {
     new Map();
 
   static initialize() {
-    this.register('order_number', (ctx) => ctx.order?.orderNumber || ctx.order?._id, {
-      description: 'The unique order identifier',
-      example: '#SAC-2026-1847',
-      group: 'order',
-    });
+    this.register(
+      'order_number',
+      (ctx) => `https://siriartsandcrafts.com/order/${ctx.order?._id}`,
+      {
+        description: 'Link to the order tracking page',
+        example: 'https://siriartsandcrafts.com/order/60b8d295...',
+        group: 'order',
+      },
+    );
     this.register(
       'customer_name',
       (ctx) => ctx.order?.shippingAddress?.name || ctx.order?.user?.name || 'Customer',
@@ -40,7 +44,14 @@ export class WhatsAppTemplateEngine {
       'products',
       (ctx) => {
         if (!ctx.order?.items) return '';
-        return ctx.order.items.map((i: any) => `- ${i.quantity}x ${i.title}`).join('\n');
+        return ctx.order.items
+          .map((i: any) => {
+            const product = ctx.products?.find((p: any) => String(p._id) === String(i.productId));
+            const slug = product?.slug ? product.slug : i.productId;
+            const link = `https://siriartsandcrafts.com/product/${slug}`;
+            return `- ${i.quantity}x ${i.title}\n  🔗 ${link}`;
+          })
+          .join('\n\n');
       },
       {
         description: 'List of ordered products and quantities',

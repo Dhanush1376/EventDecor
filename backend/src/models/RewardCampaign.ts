@@ -1,6 +1,7 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface IRewardCampaign extends Document {
+export interface IRewardCampaign extends ISoftDeleted {
   name: string;
   description: string;
   type: 'seasonal' | 'flash_sale' | 'welcome' | 'reactivation' | 'custom';
@@ -55,4 +56,9 @@ RewardCampaignSchema.index({ status: 1 });
 RewardCampaignSchema.index({ startDate: 1, endDate: 1 });
 RewardCampaignSchema.index({ priority: -1 });
 
-export default mongoose.model<IRewardCampaign>('RewardCampaign', RewardCampaignSchema);
+RewardCampaignSchema.plugin(SoftDeletePlugin);
+
+export default mongoose.model<IRewardCampaign, SoftDeleteModel<IRewardCampaign>>(
+  'RewardCampaign',
+  RewardCampaignSchema,
+);

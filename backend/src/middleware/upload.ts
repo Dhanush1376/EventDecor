@@ -102,6 +102,11 @@ const handleStorageUpload = (folder: string, isArray: boolean, allowVideo: boole
             mimetype: file.mimetype,
             size: result.bytes,
             mediaId: result._id,
+            publicId: result.publicId,
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            uploadedAt: result.createdAt,
           });
         }
         req.files = uploadedFiles as any;
@@ -131,6 +136,11 @@ const handleStorageUpload = (folder: string, isArray: boolean, allowVideo: boole
           mimetype: file.mimetype,
           size: result.bytes,
           mediaId: result._id,
+          publicId: result.publicId,
+          width: result.width,
+          height: result.height,
+          format: result.format,
+          uploadedAt: result.createdAt,
         };
       }
 

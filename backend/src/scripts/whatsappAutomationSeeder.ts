@@ -177,6 +177,43 @@ const seedWhatsAppAutomations = async () => {
       { upsert: true, new: true },
     );
 
+    const getDetailedTemplate = (key: string, name: string, category: string) => {
+      switch (key) {
+        case 'new_order':
+        case 'cod_order':
+          return `*NEW ORDER ALERT* 🚨\nA new order has just been placed!\n\n*Order Details:*\n🆔 ID: {{order_number}}\n💰 Total: {{grand_total}}\n\n*Customer Info:*\n👤 {{customer_name}}\n📞 {{customer_phone}}\n\n*Items Ordered:*\n{{products}}\n\nPlease check the dashboard to begin processing.`;
+
+        case 'payment_failed':
+          return `*PAYMENT FAILED* ⚠️\nA payment attempt failed during checkout.\n\n*Order Details:*\n🆔 ID: {{order_number}}\n💰 Amount Pending: {{grand_total}}\n\n*Customer Info:*\n👤 {{customer_name}}\n📞 {{customer_phone}}\n\nAction Required: Reach out to the customer to assist with payment recovery.`;
+
+        case 'paid_order':
+          return `*PAYMENT RECEIVED* 💸\nPayment successful for Order {{order_number}}!\n\n*Customer:* {{customer_name}}\n*Amount Collected:* {{grand_total}}\n\nThe order is now ready for fulfillment.`;
+
+        case 'order_cancelled':
+          return `*ORDER CANCELLED* ❌\nOrder {{order_number}} has been cancelled.\n\n*Customer:* {{customer_name}}\n*Value:* {{grand_total}}\n\nIf payment was already captured, please initiate a refund.`;
+
+        case 'low_inventory':
+        case 'product_out_of_stock':
+          return `*INVENTORY ALERT* 📉\nItems are running dangerously low or are out of stock!\n\n*Affected Products:*\n{{products}}\n\nPlease restock immediately to prevent lost sales.`;
+
+        case 'return_requested':
+          return `*RETURN REQUESTED* 🔄\nA customer has requested a return.\n\n*Order:* {{order_number}}\n*Customer:* {{customer_name}}\n📞 {{customer_phone}}\n\nPlease review the request in the admin panel and schedule a pickup if approved.`;
+
+        case 'high_value_order':
+        case 'vip_customer_order':
+          return `*⭐ HIGH PRIORITY ORDER ⭐*\nA VIP or High Value order has been received!\n\n*Order:* {{order_number}}\n*Total Value:* {{grand_total}}\n*Customer:* {{customer_name}} (📞 {{customer_phone}})\n\n*Items:*\n{{products}}\n\nPlease ensure white-glove fulfillment for this order.`;
+
+        case 'daily_summary':
+          return `*DAILY BUSINESS SUMMARY* 📊\nHere is your store performance for today:\n\n*Pending Orders:* {{order_number}}\n*Revenue Today:* {{grand_total}}\n\nCheck the operations center for detailed metrics.`;
+
+        default:
+          if (category === 'order' || category === 'payment') {
+            return `*UPDATE: ${name.toUpperCase()}* 📦\nStatus update for Order {{order_number}}.\n\n*Customer:* {{customer_name}}\n*Total:* {{grand_total}}\n\n*Items:*\n{{products}}`;
+          }
+          return `*SYSTEM ALERT: ${name}* 🔔\n\nThis is an automated notification from EventDecor operations.\nReference: {{order_number}}\n\nPlease check the admin dashboard for details.`;
+      }
+    };
+
     // 2. Loop through and create automations
     for (const auto of automations) {
       // 2.1 Create default template for automation
@@ -187,7 +224,7 @@ const seedWhatsAppAutomations = async () => {
           name: `Default ${auto.name}`,
           targetAudience: 'all',
           layout: 'detailed',
-          bodyTemplate: `Notification for ${auto.name} - {{order_number}}`,
+          bodyTemplate: getDetailedTemplate(auto.key, auto.name, auto.category),
           isDefault: true,
           isActive: true,
         },

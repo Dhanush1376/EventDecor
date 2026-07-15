@@ -79,16 +79,14 @@ export function AdminAuditHistory({ hideHeader }) {
         {/* Toolbar */}
         <div className="p-4 sm:p-6 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <div className="relative w-full sm:w-[300px]">
-              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] absolute left-3 top-2.5">
-                search
-              </span>
+            <div className="admin-search-wrapper w-full sm:w-[300px]">
+              <span className="material-symbols-outlined admin-search-icon">search</span>
               <input
                 type="text"
                 placeholder="Search audit trail logs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="admin-input pl-10 h-10 w-full"
+                className="admin-input w-full"
               />
             </div>
             <select

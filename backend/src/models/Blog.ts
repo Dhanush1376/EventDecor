@@ -1,6 +1,7 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface IBlog extends Document {
+export interface IBlog extends ISoftDeleted {
   id: string; // for compatibility with legacy json
   slug: string;
   title: string;
@@ -65,4 +66,6 @@ const BlogSchema: Schema = new Schema(
   },
 );
 
-export default mongoose.model<IBlog>('Blog', BlogSchema);
+BlogSchema.plugin(SoftDeletePlugin);
+
+export default mongoose.model<IBlog, SoftDeleteModel<IBlog>>('Blog', BlogSchema);

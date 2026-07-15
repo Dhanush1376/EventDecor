@@ -175,9 +175,18 @@ router.post(
   checkContentLength,
   ...uploadReviews.array('images', 5),
   (req, res) => {
-    const files = req.files as Express.Multer.File[];
+    const files = req.files as any[];
     const imageUrls = files.map((file: any) => file.path);
-    res.status(200).json({ success: true, images: imageUrls });
+    const reviewImages = files.map((file: any) => ({
+      secureUrl: file.secure_url,
+      publicId: file.publicId,
+      width: file.width,
+      height: file.height,
+      bytes: file.size,
+      format: file.format,
+      uploadedAt: file.uploadedAt,
+    }));
+    res.status(200).json({ success: true, images: imageUrls, reviewImages });
   },
 );
 

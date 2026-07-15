@@ -2,6 +2,7 @@ import React from 'react';
 import { m as motion } from 'framer-motion';
 import { GoogleSignInButton } from './GoogleSignInButton';
 import { useGoogleIdentity } from '../../hooks/useGoogleIdentity';
+import { LoadingButton } from '../ui/LoadingButton';
 
 export function EmailInputForm({
   email,
@@ -58,21 +59,15 @@ export function EmailInputForm({
             onBlur={() => setIsFocused(false)}
           />
         </div>
-        <button
-          disabled={!email || isLoading}
-          className="w-full h-12 bg-primary text-surface rounded-full flex items-center justify-center gap-2.5 font-label-sm text-[10px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-md shadow-primary/10 cursor-pointer"
+        <LoadingButton
+          type="submit"
+          loading={isLoading}
+          disabled={!email}
+          fullWidth
+          icon="arrow_forward"
         >
-          {isLoading ? (
-            <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
-          ) : (
-            <>
-              <span>Send Verification Code</span>
-              <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-                arrow_forward
-              </span>
-            </>
-          )}
-        </button>
+          Send Verification Code
+        </LoadingButton>
       </form>
 
       {/* ── OR Divider ── */}
@@ -119,13 +114,15 @@ export function TwoFactorForm({ totpCode, setTotpCode, verify2FA, isLoading, res
         className="form-field !text-center !font-display !text-[20px] !tracking-[0.3em] !font-bold !py-3"
         placeholder="000000"
       />
-      <button
+      <LoadingButton
         type="submit"
-        disabled={totpCode.length < 6 || isLoading}
-        className="w-full h-12 bg-primary text-surface rounded-full flex items-center justify-center gap-2.5 font-label-sm text-[10px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-md shadow-primary/10 cursor-pointer"
+        loading={isLoading}
+        disabled={totpCode.length < 6}
+        fullWidth
+        loadingText="Verifying…"
       >
-        {isLoading ? 'Verifying…' : 'Verify Authenticator'}
-      </button>
+        Verify Authenticator
+      </LoadingButton>
       <button
         type="button"
         onClick={resetState}
@@ -198,16 +195,14 @@ export function OtpVerificationForm({
       </div>
 
       <div className="space-y-4 pt-1">
-        <button
-          disabled={otp.join('').length < 6 || isLoading}
-          className="w-full h-12 bg-primary text-surface rounded-full flex items-center justify-center gap-2.5 font-label-sm text-[10px] uppercase tracking-widest font-bold hover:bg-on-surface-variant hover:text-surface transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed group relative overflow-hidden shadow-md shadow-primary/10 cursor-pointer"
+        <LoadingButton
+          type="submit"
+          loading={isLoading}
+          disabled={otp.join('').length < 6}
+          fullWidth
         >
-          {isLoading ? (
-            <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
-          ) : (
-            <span>Verify and Login</span>
-          )}
-        </button>
+          Verify and Login
+        </LoadingButton>
 
         <div className="text-center">
           {timer > 0 ? (

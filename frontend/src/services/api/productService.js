@@ -29,6 +29,14 @@ export const productService = {
     const response = await api.delete(`/products/${id}`, config);
     return response.data;
   },
+  permanentDelete: async (id, config = {}) => {
+    const response = await api.delete(`/products/${id}/permanent`, config);
+    return response.data;
+  },
+  updateStatus: async (id, status, config = {}) => {
+    const response = await api.patch(`/products/${id}/status`, { status }, config);
+    return response.data;
+  },
   toggleFeatured: async (id) => {
     const response = await api.patch(`/products/${id}/toggle-featured`);
     return response.data;

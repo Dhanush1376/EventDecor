@@ -7,6 +7,8 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  updateProductStatus,
+  permanentlyDeleteProduct,
   toggleFeatured,
   getCategories,
   aiAutofillProduct,
@@ -53,6 +55,14 @@ router.put(
   updateProduct,
 );
 router.delete('/:id', requireAuth, requireAdmin, idempotencyGuard(), deleteProduct);
+router.patch('/:id/status', requireAuth, requireAdmin, idempotencyGuard(), updateProductStatus);
+router.delete(
+  '/:id/permanent',
+  requireAuth,
+  requireAdmin,
+  idempotencyGuard(),
+  permanentlyDeleteProduct,
+);
 router.patch('/:id/toggle-featured', requireAuth, requireAdmin, toggleFeatured);
 router.post('/ai-autofill', requireAuth, requireAdmin, aiAutofillProduct);
 router.post('/ai-refine', requireAuth, requireAdmin, refineAiProduct);

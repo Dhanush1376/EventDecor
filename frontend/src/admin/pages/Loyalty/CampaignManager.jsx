@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Settings2, Trash2, Edit3, Calendar } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../../services/api';
 import toast from 'react-hot-toast';
-import { SkeletonList } from '../../components/AdminUIKit';
+import { m as motion } from 'framer-motion';
+import {
+  PageHeader,
+  SkeletonList,
+  StatusBadge,
+  stagger,
+  fadeUp,
+} from '../../components/AdminUIKit';
 
 export default function CampaignManager() {
   const [campaigns, setCampaigns] = useState([]);
@@ -63,70 +69,74 @@ export default function CampaignManager() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reward Campaigns</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage dynamic loyalty & reward campaigns</p>
-        </div>
-        <button
-          onClick={handleCreateCampaign}
-          className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded-md hover:bg-gray-800"
-        >
-          <Plus className="w-4 h-4" />
+    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6 pb-20">
+      <PageHeader
+        title="Reward Campaigns"
+        subtitle="Manage dynamic loyalty & reward campaigns"
+        icon="stars"
+        iconColor="promotions"
+      >
+        <button onClick={handleCreateCampaign} className="admin-btn admin-btn-primary h-9">
+          <span className="material-symbols-outlined text-[18px]">add</span>
           Create Campaign
         </button>
-      </div>
+      </PageHeader>
 
       {loading ? (
-        <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] p-4 border border-[var(--admin-border)] shadow-sm">
+        <div className="admin-card p-4">
           <SkeletonList items={3} />
         </div>
       ) : campaigns.length === 0 ? (
-        <div className="text-center py-20 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-          <Settings2 className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-gray-900">No campaigns yet</h3>
-          <p className="text-gray-500 mb-4">
+        <motion.div
+          variants={fadeUp}
+          className="text-center py-20 bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border-strong)]"
+        >
+          <span className="material-symbols-outlined text-[40px] text-[var(--admin-text-tertiary)] mx-auto mb-3 block">
+            tune
+          </span>
+          <h3 className="text-[16px] font-bold text-[var(--admin-text-primary)] mb-1">
+            No campaigns yet
+          </h3>
+          <p className="text-[var(--admin-text-secondary)] text-[13px] mb-4">
             Create your first reward campaign to start defining rules.
           </p>
           <button
             onClick={handleCreateCampaign}
-            className="text-primary font-medium hover:underline"
+            className="text-[var(--admin-accent)] font-semibold hover:underline text-[13px]"
           >
             Create Campaign
           </button>
-        </div>
+        </motion.div>
       ) : (
-        <div className="grid gap-4">
+        <motion.div variants={fadeUp} className="grid gap-4">
           {campaigns.map((c) => (
             <div
               key={c._id}
-              className="bg-white border rounded-lg p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4"
+              className="admin-card p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-all hover:border-[var(--admin-border-strong)]"
             >
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <h3 className="font-bold text-gray-900 text-lg">{c.name}</h3>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                      c.status === 'active'
-                        ? 'bg-green-100 text-green-700'
-                        : c.status === 'draft'
-                          ? 'bg-gray-100 text-gray-600'
-                          : 'bg-yellow-100 text-yellow-700'
-                    }`}
-                  >
-                    {c.status.toUpperCase()}
-                  </span>
+                  <h3 className="font-bold text-[var(--admin-text-primary)] text-[16px]">
+                    {c.name}
+                  </h3>
+                  <StatusBadge status={c.status} />
                 </div>
-                <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
+                <div className="flex items-center gap-4 text-[13px] text-[var(--admin-text-secondary)] font-medium mt-2">
                   <span className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4" /> v{c.version}
+                    <span className="material-symbols-outlined text-[16px]">calendar_today</span> v
+                    {c.version}
                   </span>
                   <span>
-                    Type: <strong className="capitalize">{c.type.replace('_', ' ')}</strong>
+                    Type:{' '}
+                    <strong className="capitalize text-[var(--admin-text-primary)]">
+                      {c.type.replace('_', ' ')}
+                    </strong>
                   </span>
                   <span>
-                    Rules: <strong>{c.rules?.length || 0}</strong>
+                    Rules:{' '}
+                    <strong className="text-[var(--admin-text-primary)]">
+                      {c.rules?.length || 0}
+                    </strong>
                   </span>
                 </div>
               </div>
@@ -134,21 +144,23 @@ export default function CampaignManager() {
               <div className="flex gap-2">
                 <Link
                   to={`/admin/reward-campaigns/${c._id}/rules`}
-                  className="p-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded inline-flex"
+                  className="w-8 h-8 flex items-center justify-center rounded-[var(--admin-radius-sm)] text-[var(--admin-text-tertiary)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)] transition-colors"
+                  title="Edit Rules"
                 >
-                  <Edit3 className="w-4 h-4" />
+                  <span className="material-symbols-outlined text-[18px]">edit</span>
                 </Link>
                 <button
                   onClick={() => handleDelete(c._id)}
-                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                  className="w-8 h-8 flex items-center justify-center rounded-[var(--admin-radius-sm)] text-[var(--admin-text-tertiary)] hover:bg-[var(--admin-error-bg)] hover:text-[var(--admin-error)] transition-colors"
+                  title="Delete Campaign"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <span className="material-symbols-outlined text-[18px]">delete</span>
                 </button>
               </div>
             </div>
           ))}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -282,6 +282,7 @@ export class UserService {
         title: p.title,
         slug: p.slug,
         price: p.price,
+        oldPrice: p.oldPrice,
         imageSrc: p.imageSrc,
         stock: p.stock,
         rentalStock: p.rentalStock,

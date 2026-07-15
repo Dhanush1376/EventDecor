@@ -1,6 +1,6 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { useAdminEventsData } from './useAdminEventsData';
 import { PageHeader, stagger } from '../../components/AdminUIKit';
@@ -19,7 +19,11 @@ export function AdminEvents() {
   const { customCategories, addCustomCategory, updateCustomCategory, deleteCustomCategory } =
     useAdmin();
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
+  const setActiveTab = (id) => {
+    setSearchParams({ tab: id });
+  };
   const {
     events,
     loadingPortfolio,

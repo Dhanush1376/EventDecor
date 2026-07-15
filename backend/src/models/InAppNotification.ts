@@ -1,7 +1,8 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 import { NotificationEvent } from '../services/notifications/types';
 
-export interface IInAppNotification extends Document {
+export interface IInAppNotification extends ISoftDeleted {
   user: mongoose.Types.ObjectId;
   event: NotificationEvent;
   title: string;
@@ -52,4 +53,9 @@ const InAppNotificationSchema = new Schema(
 InAppNotificationSchema.index({ user: 1, createdAt: -1 });
 InAppNotificationSchema.index({ user: 1, read: 1, createdAt: -1 });
 
-export default mongoose.model<IInAppNotification>('InAppNotification', InAppNotificationSchema);
+InAppNotificationSchema.plugin(SoftDeletePlugin);
+
+export default mongoose.model<IInAppNotification, SoftDeleteModel<IInAppNotification>>(
+  'InAppNotification',
+  InAppNotificationSchema,
+);

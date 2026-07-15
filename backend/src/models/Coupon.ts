@@ -1,6 +1,7 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface ICoupon extends Document {
+export interface ICoupon extends ISoftDeleted {
   code: string;
   discountType: 'percentage' | 'fixed';
   discountValue: number;
@@ -65,6 +66,8 @@ CouponSchema.index({ isActive: 1 });
 CouponSchema.index({ expiryDate: 1 });
 CouponSchema.index({ isActive: 1, code: 1, expiryDate: 1 }); // CRITICAL: High-performance cart validation
 
-const Coupon = mongoose.model<ICoupon>('Coupon', CouponSchema);
+CouponSchema.plugin(SoftDeletePlugin);
+
+const Coupon = mongoose.model<ICoupon, SoftDeleteModel<ICoupon>>('Coupon', CouponSchema);
 
 export default Coupon;

@@ -692,6 +692,93 @@ class ProductService {
     }
   }
 
+  static async updateStatus(id: string, status: 'active' | 'inactive', actor?: any) {
+    const product = await Product.findById(id);
+    if (!product) return null;
+
+    const isActive = status === 'active';
+    if (product.isActive === isActive) return product;
+
+    product.isActive = isActive;
+    await product.save();
+
+    // Sync to gallery if needed (gallery item should be deactivated if product is)
+    try {
+      const galleryItem = await Gallery.findOne({ linkedProducts: product._id });
+      if (galleryItem) {
+        galleryItem.isActive = isActive;
+        await galleryItem.save();
+      }
+    } catch (err) {
+      logger.error('Error syncing product status to gallery:', err);
+    }
+
+    // Invalidate caches
+    logger.info('[CATEGORY CACHE] Purging distinct categories cache due to status update');
+    categoryCache.delete('product:distinct_categories');
+    productCountCache.clear();
+    await bumpPublicCacheVersion();
+
+    // Emit events
+    try {
+      emitAdminEvent('product_update', { productId: product._id });
+      emitGlobalUserEvent('product_update', { productId: product._id });
+    } catch (e) {
+      logger.warn('Failed to emit product update event', e);
+    }
+
+    return product;
+  }
+
+  static async permanentlyDelete(id: string, actor?: any) {
+    const product = await Product.findById(id);
+    if (!product) return null;
+
+    try {
+      // Find the corresponding recycle bin entry
+      const RecycleBin = mongoose.models.RecycleBin || require('../models/RecycleBin').default;
+      const entry = await RecycleBin.findOne({
+        entityType: 'Product',
+        entityId: id,
+        status: 'deleted',
+      });
+
+      if (entry) {
+        // Delegate to centralized RecycleBinService
+        const { RecycleBinService } = require('./recycleBinService');
+        const result = await RecycleBinService.permanentDelete(entry._id.toString(), actor);
+
+        if (!result.success) {
+          throw new Error(result.errors.join(', '));
+        }
+
+        // Return a mock report matching the old format for backwards compatibility
+        const deletedAssets =
+          result.report.find((r: any) => r.step === 'Cloudinary Assets Deleted')?.count || 0;
+        const failedAssets = result.errors.filter((e: string) => e.includes('Cloudinary')).length;
+        const deletedReviews =
+          result.report.find((r: any) => r.step === 'Reviews Deleted')?.count || 0;
+
+        return {
+          productId: id,
+          deletedAssets,
+          failedAssets,
+          deletedReviews,
+        };
+      } else {
+        // If no recycle bin entry exists (e.g. it was purged or never soft-deleted),
+        // we can either error or just create a temporary entry and purge it.
+        // For safety, we reject hard deletions that don't go through the recycle bin process.
+        throw new Error(
+          'Product must be soft-deleted (moved to recycle bin) before it can be permanently deleted.',
+        );
+      }
+    } catch (err) {
+      logger.error(`Error in ProductService.permanentlyDelete for product ${id}:`, err);
+      throw err;
+    }
+  }
+
   static async syncToGallery(product: any, _actor?: any) {
     try {
       let galleryItem = await Gallery.findOne({ linkedProducts: product._id });

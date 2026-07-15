@@ -110,7 +110,7 @@ const MessageLogViewer = () => {
             <option value="failed">Failed</option>
           </select>
         </div>
-        <button className="admin-btn-secondary" onClick={handleExport}>
+        <button className="admin-btn admin-btn-primary" onClick={handleExport}>
           <span className="material-symbols-outlined text-[18px]">download</span> Export
         </button>
       </div>

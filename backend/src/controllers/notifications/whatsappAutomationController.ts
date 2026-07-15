@@ -29,8 +29,8 @@ export const whatsappAutomationController = {
     try {
       const days = Math.min(Math.max(parseInt(req.query.days as string) || 7, 1), 90);
       const since = new Date();
-      since.setHours(0, 0, 0, 0);
-      since.setDate(since.getDate() - (days - 1));
+      since.setUTCHours(0, 0, 0, 0);
+      since.setUTCDate(since.getUTCDate() - (days - 1));
 
       const DELIVERED = ['sent', 'delivered', 'read'];
       const PENDING = ['queued', 'dispatched'];
@@ -60,9 +60,13 @@ export const whatsappAutomationController = {
       const dailyTrends = [];
       for (let i = 0; i < days; i++) {
         const d = new Date(since);
-        d.setDate(since.getDate() + i);
+        d.setUTCDate(since.getUTCDate() + i);
         const key = d.toISOString().slice(0, 10);
-        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const label = d.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          timeZone: 'UTC',
+        });
         const entry = trendByDay.get(key) || { sent: 0, failed: 0 };
         dailyTrends.push({ date: label, sent: entry.sent, failed: entry.failed });
       }

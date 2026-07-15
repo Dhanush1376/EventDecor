@@ -8,7 +8,7 @@ export function PeriodSelector({ periods = ['weekly', 'monthly', 'yearly'], valu
         <button
           key={p}
           onClick={() => onChange(p)}
-          className={`flex-1 text-center px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold capitalize cursor-pointer transition-all min-h-0 ${
+          className={`flex-1 text-center px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold capitalize cursor-pointer transition-all min-h-0 whitespace-nowrap ${
             value === p
               ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
               : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'

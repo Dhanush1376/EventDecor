@@ -263,6 +263,10 @@ const MaintenanceConsole = lazy(() =>
   import('../admin/pages/MaintenanceConsole').then((m) => ({ default: m.MaintenanceConsole })),
 );
 
+const AdminRecycleBin = lazy(() =>
+  import('../admin/pages/AdminRecycleBin').then((m) => ({ default: m.default })),
+);
+
 export function AppRoutes() {
   return (
     <>
@@ -373,6 +377,7 @@ export function AppRoutes() {
               <Route path="drafts" element={<AdminDrafts />} />
               <Route path="homepage" element={<AdminContent />} />
               <Route path="products" element={<AdminProducts />} />
+              <Route path="inventory" element={<AdminInventory />} />
               <Route path="settings" element={<AdminSettings />} />
 
               <Route path="policies" element={<AdminPolicies />} />
@@ -452,6 +457,8 @@ export function AppRoutes() {
               <Route path="system/notifications" element={<AdminSystemHub />} />
               <Route path="system/settings" element={<AdminSystemHub />} />
               <Route path="system/audit" element={<AdminSystemHub />} />
+
+              <Route path="recycle-bin" element={<AdminRecycleBin />} />
 
               <Route path="returns" element={<AdminReturnsHub />} />
               <Route path="returns/requests/:id" element={<AdminReturnDetail />} />

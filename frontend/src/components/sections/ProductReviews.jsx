@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
 import { uploadService } from '../../services/api/uploadService';
+import { LoadingButton } from '../ui/LoadingButton';
 
 // ─── Star Component ─────────────────────────────────────────────────────────
 function StarRating({ value = 0, max = 5, interactive = false, size = 20, onChange }) {
@@ -120,13 +121,23 @@ function ReviewCard({ review, productId }) {
               />
             </Link>
           ))}
-          {review.images.length > 3 && (
+          {review.reviewImages && review.reviewImages.length > 3 ? (
             <Link
               to={`/product/${productId}/reviews/images`}
               className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[9px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
             >
-              +{review.images.length - 3}
+              +{review.reviewImages.length - 3}
             </Link>
+          ) : (
+            review.images &&
+            review.images.length > 3 && (
+              <Link
+                to={`/product/${productId}/reviews/images`}
+                className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[9px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
+              >
+                +{review.images.length - 3}
+              </Link>
+            )
           )}
         </div>
       )}
@@ -141,7 +152,12 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
   const [comment, setComment] = useState(existingReview?.comment || '');
   const [submitting, setSubmitting] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [previews, setPreviews] = useState(existingReview?.images || []);
+  const [remoteImages, setRemoteImages] = useState(
+    existingReview?.reviewImages ||
+      (existingReview?.images ? existingReview.images.map((url) => ({ secureUrl: url })) : []),
+  );
+  const [localPreviews, setLocalPreviews] = useState([]);
+  const combinedPreviews = [...remoteImages.map((img) => img.secureUrl), ...localPreviews];
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const userInitials = (user?.name || 'Customer')
@@ -171,7 +187,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
 
     setSubmitting(true);
     try {
-      let imageUrls = [];
+      let newReviewImages = [];
       if (selectedFiles.length > 0) {
         toast.loading('Compressing and uploading review images...', { id: 'review-upload' });
         const formData = new FormData();
@@ -188,25 +204,25 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
             formData.append('images', compressedFile, file.name);
           } catch (error) {
             console.error('Compression error:', error);
-            // Fallback to original file
             formData.append('images', file);
           }
         }
 
         const uploadRes = await uploadService.uploadReviewImages(formData);
-        imageUrls = uploadRes.images || [];
+        newReviewImages =
+          uploadRes.reviewImages ||
+          (uploadRes.images ? uploadRes.images.map((url) => ({ secureUrl: url })) : []);
         toast.dismiss('review-upload');
       }
 
-      // Keep existing remote image urls, add new uploaded ones
-      const existingImages = previews.filter((url) => !url.startsWith('blob:'));
-      const finalImages = [...existingImages, ...imageUrls];
+      const finalReviewImages = [...remoteImages, ...newReviewImages];
 
       if (existingReview) {
         await reviewService.update(existingReview._id, {
           rating,
           comment: comment.trim(),
-          images: finalImages,
+          reviewImages: finalReviewImages,
+          images: finalReviewImages.map((img) => img.secureUrl),
         });
         toast.success('Your review has been updated and is pending approval.');
       } else {
@@ -214,7 +230,8 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
           productId,
           rating,
           comment: comment.trim(),
-          images: finalImages,
+          reviewImages: finalReviewImages,
+          images: finalReviewImages.map((img) => img.secureUrl),
         });
         toast.success('Your review has been submitted for approval!');
       }
@@ -348,7 +365,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
                 Add Photos (Max 5)
               </label>
               <div className="flex flex-wrap gap-2.5">
-                {previews.map((preview, idx) => (
+                {combinedPreviews.map((preview, idx) => (
                   <div
                     key={idx}
                     className="relative w-14 h-14 rounded-lg overflow-hidden border border-outline-variant/30 bg-surface-container shadow-sm group flex-shrink-0"
@@ -362,8 +379,13 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
                     <button
                       type="button"
                       onClick={() => {
-                        setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
-                        setPreviews((prev) => prev.filter((_, i) => i !== idx));
+                        if (idx < remoteImages.length) {
+                          setRemoteImages((prev) => prev.filter((_, i) => i !== idx));
+                        } else {
+                          const localIdx = idx - remoteImages.length;
+                          setSelectedFiles((prev) => prev.filter((_, i) => i !== localIdx));
+                          setLocalPreviews((prev) => prev.filter((_, i) => i !== localIdx));
+                        }
                       }}
                       className="absolute top-1 right-1 w-4 h-4 rounded bg-black/70 hover:bg-black text-white flex items-center justify-center cursor-pointer transition-all opacity-0 group-hover:opacity-100"
                     >
@@ -381,11 +403,15 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
                       accept="image/*"
                       onChange={(e) => {
                         const files = Array.from(e.target.files || []);
-                        const newFiles = [...selectedFiles, ...files].slice(0, 5);
+                        const currentTotal = remoteImages.length + selectedFiles.length;
+                        const allowedRemaining = 5 - currentTotal;
+                        const filesToAdd = files.slice(0, Math.max(0, allowedRemaining));
+
+                        const newFiles = [...selectedFiles, ...filesToAdd];
                         setSelectedFiles(newFiles);
 
-                        const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
-                        setPreviews(newPreviews);
+                        const newPreviews = filesToAdd.map((file) => URL.createObjectURL(file));
+                        setLocalPreviews((prev) => [...prev, ...newPreviews]);
                       }}
                       className="hidden"
                     />
@@ -395,20 +421,15 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
             </div>
 
             <div className="pt-2">
-              <button
+              <LoadingButton
                 type="submit"
-                disabled={submitting || rating === 0}
-                className="w-full px-6 py-3 bg-black hover:bg-gray-900 text-white font-bold uppercase tracking-widest text-[9px] rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed border-0"
+                loading={submitting}
+                disabled={rating === 0}
+                fullWidth
+                icon="send"
               >
-                {submitting ? (
-                  <div className="w-16 h-16 border-[1px] border-white/30 border-t-white rounded-full animate-spin duration-1000 ease-linear" />
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-[14px]">send</span>
-                    {existingReview ? 'Update Review' : 'Submit Review'}
-                  </>
-                )}
-              </button>
+                {existingReview ? 'Update Review' : 'Submit Review'}
+              </LoadingButton>
             </div>
           </form>
         </div>

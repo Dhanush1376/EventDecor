@@ -20,6 +20,20 @@ export const createReviewSchema = z.object({
     .array(z.string().url('Invalid image URL format'))
     .max(5, 'Maximum 5 images allowed')
     .optional(),
+  reviewImages: z
+    .array(
+      z.object({
+        secureUrl: z.string().url('Invalid image URL format'),
+        publicId: z.string(),
+        width: z.number().optional(),
+        height: z.number().optional(),
+        bytes: z.number().optional(),
+        format: z.string().optional(),
+        uploadedAt: z.string().datetime().optional(),
+      }),
+    )
+    .max(5, 'Maximum 5 images allowed')
+    .optional(),
   location: z.string().trim().max(100).optional(),
   eventType: z.string().trim().max(100).optional(),
   favoriteElement: z.string().trim().max(100).optional(),
@@ -35,6 +49,20 @@ export const updateReviewSchema = z.object({
     .max(2000, 'Comment is too long'),
   images: z
     .array(z.string().url('Invalid image URL format'))
+    .max(5, 'Maximum 5 images allowed')
+    .optional(),
+  reviewImages: z
+    .array(
+      z.object({
+        secureUrl: z.string().url('Invalid image URL format'),
+        publicId: z.string(),
+        width: z.number().optional(),
+        height: z.number().optional(),
+        bytes: z.number().optional(),
+        format: z.string().optional(),
+        uploadedAt: z.string().datetime().optional(),
+      }),
+    )
     .max(5, 'Maximum 5 images allowed')
     .optional(),
 });

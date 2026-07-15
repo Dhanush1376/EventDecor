@@ -1,26 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import whatsappAutomationService from '../../services/whatsappAutomationService';
 import { toast } from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const RecipientManager = () => {
   const [recipients, setRecipients] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchRecipients = async () => {
-      try {
-        const res = await whatsappAutomationService.getRecipients();
-        if (res.data?.data) {
-          setRecipients(res.data.data);
-        }
-      } catch (err) {
-        toast.error('Failed to load recipients');
-      } finally {
-        setLoading(false);
+  // Form State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({ name: '', phone: '', role: 'owner', isActive: true });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const fetchRecipients = async () => {
+    try {
+      const res = await whatsappAutomationService.getRecipients();
+      if (res.data?.data) {
+        setRecipients(res.data.data);
       }
-    };
+    } catch (err) {
+      toast.error('Failed to load recipients');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchRecipients();
   }, []);
+
+  const handleOpenAdd = () => {
+    setFormData({ name: '', phone: '', role: 'owner', isActive: true });
+    setEditingId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (rec) => {
+    setFormData({ name: rec.name, phone: rec.phone, role: rec.role, isActive: rec.isActive });
+    setEditingId(rec._id);
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      if (editingId) {
+        await whatsappAutomationService.updateRecipient(editingId, formData);
+        toast.success('Recipient updated');
+      } else {
+        await whatsappAutomationService.createRecipient(formData);
+        toast.success('Recipient created');
+      }
+      setIsModalOpen(false);
+      fetchRecipients();
+    } catch (err) {
+      toast.error('Failed to save recipient');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this recipient?')) {
+      try {
+        await whatsappAutomationService.deleteRecipient(id);
+        toast.success('Recipient deleted');
+        fetchRecipients();
+      } catch (err) {
+        toast.error('Failed to delete recipient');
+      }
+    }
+  };
 
   if (loading)
     return (
@@ -35,7 +87,7 @@ const RecipientManager = () => {
         <h2 className="text-[18px] font-semibold text-[var(--admin-text-primary)]">
           Recipient Management
         </h2>
-        <button className="admin-btn" onClick={() => toast.error('Stub')}>
+        <button className="admin-btn admin-btn-primary" onClick={handleOpenAdd}>
           <span className="material-symbols-outlined text-[18px] mr-1">person_add</span> Add
           Recipient
         </button>
@@ -80,12 +132,14 @@ const RecipientManager = () => {
                   <button
                     className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"
                     title="Edit"
+                    onClick={() => handleOpenEdit(rec)}
                   >
                     <span className="material-symbols-outlined text-[20px]">edit</span>
                   </button>
                   <button
                     className="p-1.5 text-gray-400 hover:text-red-500 transition-colors ml-1"
                     title="Delete"
+                    onClick={() => handleDelete(rec._id)}
                   >
                     <span className="material-symbols-outlined text-[20px]">delete</span>
                   </button>
@@ -102,6 +156,118 @@ const RecipientManager = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
+              onClick={() => setIsModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-xl shadow-2xl z-50 overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 className="font-bold text-[16px] text-[var(--admin-text-primary)]">
+                  {editingId ? 'Edit Recipient' : 'Add Recipient'}
+                </h3>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-1.5 rounded-full hover:bg-gray-200 text-gray-500 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleSave} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-[12px] font-semibold text-gray-500 uppercase mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="admin-input w-full"
+                    placeholder="e.g. John Doe"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[12px] font-semibold text-gray-500 uppercase mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="admin-input w-full"
+                    placeholder="e.g. +919876543210"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[12px] font-semibold text-gray-500 uppercase mb-1">
+                      Role
+                    </label>
+                    <select
+                      className="admin-input w-full"
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    >
+                      <option value="owner">Owner</option>
+                      <option value="warehouse">Warehouse</option>
+                      <option value="packing">Packing</option>
+                      <option value="accounts">Accounts</option>
+                      <option value="driver">Driver</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[12px] font-semibold text-gray-500 uppercase mb-1">
+                      Status
+                    </label>
+                    <select
+                      className="admin-input w-full"
+                      value={formData.isActive}
+                      onChange={(e) =>
+                        setFormData({ ...formData, isActive: e.target.value === 'true' })
+                      }
+                    >
+                      <option value="true">Active</option>
+                      <option value="false">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-4 mt-6 border-t border-gray-100 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="admin-btn admin-btn-secondary px-5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="admin-btn admin-btn-primary px-5"
+                  >
+                    {isSaving ? 'Saving...' : 'Save Recipient'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

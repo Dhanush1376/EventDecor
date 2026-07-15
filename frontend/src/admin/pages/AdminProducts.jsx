@@ -18,20 +18,23 @@ import {
   fadeUp,
   stagger,
 } from '../components/AdminUIKit';
+import { DeleteConfirmModal } from '../components/ui/DeleteConfirmModal';
+import { PermanentDeleteModal } from '../components/ui/PermanentDeleteModal';
 
 export function AdminProducts() {
   const navigate = useNavigate();
   const {
     products,
     dataLoading,
-    deleteProduct,
-    toggleProductFeatured,
     updateProductStock,
     searchQuery,
     setSearchQuery,
     websiteContent,
     updateContent,
     publishContent,
+    softDeleteProduct,
+    updateProductStatus,
+    permanentlyDeleteProduct,
   } = useAdmin();
 
   const { data: productCategories = [] } = useCategories();
@@ -44,6 +47,9 @@ export function AdminProducts() {
   const [viewMode, setViewMode] = useState('table');
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, type: 'soft', product: null });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Category states
   const [categories, setCategories] = useState([]);
@@ -113,12 +119,41 @@ export function AdminProducts() {
   };
 
   const handleBulkDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to move ${selectedProducts.length} products to the recycle bin?`,
+      )
+    ) {
       for (const id of selectedProducts) {
-        await deleteProduct(id);
+        if (softDeleteProduct) await softDeleteProduct(id);
       }
       setSelectedProducts([]);
-      toast.success(`${selectedProducts.length} products deleted`);
+      toast.success(`${selectedProducts.length} products moved to recycle bin`);
+    }
+  };
+
+  const openDeleteModal = (product, type = 'soft') => {
+    setDeleteModal({ isOpen: true, type, product });
+  };
+
+  const closeDeleteModal = () => {
+    if (!isDeleting) {
+      setDeleteModal({ isOpen: false, type: 'soft', product: null });
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.product) return;
+    setIsDeleting(true);
+    try {
+      if (deleteModal.type === 'soft') {
+        if (softDeleteProduct) await softDeleteProduct(deleteModal.product.id);
+      } else {
+        if (permanentlyDeleteProduct) await permanentlyDeleteProduct(deleteModal.product.id);
+      }
+      closeDeleteModal();
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -161,6 +196,7 @@ export function AdminProducts() {
     low_stock: 'Low Stock',
     out_of_stock: 'Out of Stock',
     draft: 'Draft',
+    inactive: 'Inactive',
   };
 
   return (
@@ -607,7 +643,21 @@ export function AdminProducts() {
                             </td>
                           )}
                           <td className="hidden lg:table-cell">
-                            <StatusBadge status={statusLabels[p.status] || p.status} />
+                            <div className="flex items-center gap-3">
+                              <StatusBadge status={statusLabels[p.status] || p.status} />
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <AdminToggle
+                                  checked={p.status !== 'inactive' && p.status !== 'draft'}
+                                  onChange={() => {
+                                    const newStatus =
+                                      p.status === 'inactive' || p.status === 'draft'
+                                        ? 'active'
+                                        : 'inactive';
+                                    if (updateProductStatus) updateProductStatus(p.id, newStatus);
+                                  }}
+                                />
+                              </div>
+                            </div>
                           </td>
                           <td onClick={(e) => activeTab === 'inventory' && e.stopPropagation()}>
                             {activeTab === 'inventory' ? (
@@ -704,14 +754,24 @@ export function AdminProducts() {
                                   </span>
                                 </button>
                                 <button
-                                  onClick={() => deleteProduct(p.id)}
+                                  onClick={() => openDeleteModal(p, 'soft')}
                                   className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)]"
-                                  title="Delete"
+                                  title="Move to Recycle Bin"
                                 >
                                   <span className="material-symbols-outlined text-[16px]">
                                     delete
                                   </span>
                                 </button>
+                                {/* Uncomment below to add permanent delete directly to table */}
+                                {/* <button
+                                  onClick={() => openDeleteModal(p, 'permanent')}
+                                  className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)]"
+                                  title="Permanently Delete"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]">
+                                    delete_forever
+                                  </span>
+                                </button> */}
                               </div>
                             </td>
                           )}
@@ -805,16 +865,14 @@ export function AdminProducts() {
                 <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
                   Search
                 </label>
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-[var(--admin-text-tertiary)]">
-                    search
-                  </span>
+                <div className="admin-search-wrapper w-full">
+                  <span className="material-symbols-outlined admin-search-icon">search</span>
                   <input
                     type="text"
                     placeholder="Search products by name or ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="admin-input pl-10"
+                    className="admin-input w-full"
                   />
                 </div>
               </div>
@@ -872,6 +930,22 @@ export function AdminProducts() {
           </MobileFilterDrawer>
         </>
       )}
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen && deleteModal.type === 'soft'}
+        onClose={closeDeleteModal}
+        onConfirm={handleConfirmDelete}
+        productTitle={deleteModal.product?.name || ''}
+        isDeleting={isDeleting}
+      />
+
+      <PermanentDeleteModal
+        isOpen={deleteModal.isOpen && deleteModal.type === 'permanent'}
+        onClose={closeDeleteModal}
+        onConfirm={handleConfirmDelete}
+        productTitle={deleteModal.product?.name || ''}
+        isDeleting={isDeleting}
+      />
     </motion.div>
   );
 }

@@ -1,4 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
 /**
  * ServiceArea — Delivery/rental service radius configuration.
@@ -9,7 +10,7 @@ import mongoose, { Schema, Document } from 'mongoose';
  * distance calculations at the service layer.
  */
 
-export interface IServiceArea extends Document {
+export interface IServiceArea extends ISoftDeleted {
   name: string;
   center: {
     lat: number;
@@ -39,5 +40,10 @@ const ServiceAreaSchema: Schema = new Schema(
 ServiceAreaSchema.index({ isActive: 1 });
 ServiceAreaSchema.index({ 'center.lat': 1, 'center.lng': 1 });
 
-const ServiceArea = mongoose.model<IServiceArea>('ServiceArea', ServiceAreaSchema);
+ServiceAreaSchema.plugin(SoftDeletePlugin);
+
+const ServiceArea = mongoose.model<IServiceArea, SoftDeleteModel<IServiceArea>>(
+  'ServiceArea',
+  ServiceAreaSchema,
+);
 export default ServiceArea;

@@ -1,11 +1,12 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
 export interface IContentRevision {
   previousData: any;
   modifiedAt: Date;
 }
 
-export interface IContentSection extends Document {
+export interface IContentSection extends ISoftDeleted {
   sectionKey: string;
   data: any;
   status: 'draft' | 'published';
@@ -30,10 +31,14 @@ const ContentSectionSchema: Schema = new Schema(
     ],
     lastModified: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 ContentSectionSchema.index({ status: 1 });
 
-const ContentSection = mongoose.model<IContentSection>('ContentSection', ContentSectionSchema);
-export default ContentSection;
+ContentSectionSchema.plugin(SoftDeletePlugin);
+
+export default mongoose.model<IContentSection, SoftDeleteModel<IContentSection>>(
+  'ContentSection',
+  ContentSectionSchema,
+);

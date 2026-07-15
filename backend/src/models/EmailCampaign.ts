@@ -1,6 +1,7 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface IEmailCampaign extends Document {
+export interface IEmailCampaign extends ISoftDeleted {
   title: string;
   subject: string;
   templateId?: mongoose.Types.ObjectId;
@@ -29,17 +30,17 @@ const EmailCampaignSchema: Schema = new Schema(
     templateId: { type: Schema.Types.ObjectId, ref: 'EmailTemplate' },
     customHtml: { type: String },
     targetAudience: {
-      role: { 
-        type: String, 
-        enum: ['user', 'customer', 'admin', 'manager', 'coordinator', 'all'], 
-        default: 'all' 
+      role: {
+        type: String,
+        enum: ['user', 'customer', 'admin', 'manager', 'coordinator', 'all'],
+        default: 'all',
       },
-      consentedOnly: { type: Boolean, default: true }
+      consentedOnly: { type: Boolean, default: true },
     },
-    status: { 
-      type: String, 
-      enum: ['draft', 'scheduled', 'sending', 'sent', 'failed'], 
-      default: 'draft' 
+    status: {
+      type: String,
+      enum: ['draft', 'scheduled', 'sending', 'sent', 'failed'],
+      default: 'draft',
     },
     scheduledAt: { type: Date },
     sentAt: { type: Date },
@@ -47,16 +48,21 @@ const EmailCampaignSchema: Schema = new Schema(
       sentCount: { type: Number, default: 0 },
       openCount: { type: Number, default: 0 },
       clickCount: { type: Number, default: 0 },
-      unsubscribeCount: { type: Number, default: 0 }
-    }
+      unsubscribeCount: { type: Number, default: 0 },
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 EmailCampaignSchema.index({ status: 1 });
 EmailCampaignSchema.index({ scheduledAt: 1 }, { sparse: true });
 EmailCampaignSchema.index({ createdAt: -1 });
 
-const EmailCampaign = mongoose.model<IEmailCampaign>('EmailCampaign', EmailCampaignSchema);
+EmailCampaignSchema.plugin(SoftDeletePlugin);
+
+const EmailCampaign = mongoose.model<IEmailCampaign, SoftDeleteModel<IEmailCampaign>>(
+  'EmailCampaign',
+  EmailCampaignSchema,
+);
 
 export default EmailCampaign;

@@ -77,6 +77,24 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
   res.status(200).json(new ApiResponse(true, 'Product moved to recycle bin successfully', product));
 });
 
+export const updateProductStatus = asyncHandler(async (req: Request, res: Response) => {
+  const { status } = req.body;
+  if (status !== 'active' && status !== 'inactive') {
+    throw new ApiError(400, 'Invalid status. Must be "active" or "inactive".');
+  }
+
+  const product = await ProductService.updateStatus(req.params.id as string, status, req.user);
+  if (!product) {
+    throw new ApiError(404, 'Product not found');
+  }
+  res.status(200).json(new ApiResponse(true, `Product status updated to ${status}`, product));
+});
+
+export const permanentlyDeleteProduct = asyncHandler(async (req: Request, res: Response) => {
+  const report = await ProductService.permanentlyDelete(req.params.id as string, req.user);
+  res.status(200).json(new ApiResponse(true, 'Product permanently deleted', report));
+});
+
 export const toggleFeatured = asyncHandler(async (req: Request, res: Response) => {
   const product = await ProductService.toggleFeatured(req.params.id as string);
   if (!product) {

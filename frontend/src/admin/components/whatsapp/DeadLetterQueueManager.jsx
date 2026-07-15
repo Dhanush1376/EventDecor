@@ -98,7 +98,7 @@ const DeadLetterQueueManager = () => {
                 <td className="p-4 text-right">
                   <button
                     onClick={() => handleRetry(msg._id)}
-                    className="admin-btn-secondary py-1 px-3 text-[12px]"
+                    className="admin-btn admin-btn-primary py-1 px-3 text-[12px]"
                   >
                     <span className="material-symbols-outlined text-[14px] mr-1">replay</span> Retry
                   </button>

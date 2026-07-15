@@ -5,7 +5,6 @@ import WhatsAppDashboard from '../components/whatsapp/WhatsAppDashboard';
 import AutomationToggleCenter from '../components/whatsapp/AutomationToggleCenter';
 import TemplateEditor from '../components/whatsapp/TemplateEditor';
 import RecipientManager from '../components/whatsapp/RecipientManager';
-import SectionBuilder from '../components/whatsapp/SectionBuilder';
 import MessageLogViewer from '../components/whatsapp/MessageLogViewer';
 import AnalyticsDashboard from '../components/whatsapp/AnalyticsDashboard';
 import DeadLetterQueueManager from '../components/whatsapp/DeadLetterQueueManager';
@@ -22,9 +21,7 @@ export const AdminWhatsAppAutomations = () => {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'automations', label: 'Automations', icon: 'toggle_on' },
-    { id: 'templates', label: 'Templates', icon: 'format_paint' },
     { id: 'recipients', label: 'Recipients', icon: 'group' },
-    { id: 'section-builder', label: 'Section Builder', icon: 'view_list' },
     { id: 'logs', label: 'Logs', icon: 'history' },
     { id: 'analytics', label: 'Analytics', icon: 'insights' },
     { id: 'dlq', label: 'DLQ Manager', icon: 'warning' },
@@ -32,11 +29,7 @@ export const AdminWhatsAppAutomations = () => {
 
   return (
     <div className="admin-page-container">
-      <PageHeader
-        title="WhatsApp Automation Center"
-        subtitle="Manage end-to-end WhatsApp notifications, templates, and dynamic triggers."
-        icon="chat"
-      />
+      <PageHeader title="WhatsApp Automation Center" icon="chat" />
 
       {/* Tabs */}
       <div className="flex border-b border-[var(--admin-border)] mb-6 overflow-x-auto custom-scrollbar">
@@ -68,9 +61,7 @@ export const AdminWhatsAppAutomations = () => {
           >
             {activeTab === 'dashboard' && <WhatsAppDashboard />}
             {activeTab === 'automations' && <AutomationToggleCenter />}
-            {activeTab === 'templates' && <TemplateEditor />}
             {activeTab === 'recipients' && <RecipientManager />}
-            {activeTab === 'section-builder' && <SectionBuilder />}
             {activeTab === 'logs' && <MessageLogViewer />}
             {activeTab === 'analytics' && <AnalyticsDashboard />}
             {activeTab === 'dlq' && <DeadLetterQueueManager />}

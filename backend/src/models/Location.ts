@@ -1,6 +1,7 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
-export interface ILocation extends Document {
+export interface ILocation extends ISoftDeleted {
   slug: string;
   city: string;
   title: string;
@@ -37,4 +38,6 @@ const LocationSchema: Schema = new Schema(
   },
 );
 
-export default mongoose.model<ILocation>('Location', LocationSchema);
+LocationSchema.plugin(SoftDeletePlugin);
+
+export default mongoose.model<ILocation, SoftDeleteModel<ILocation>>('Location', LocationSchema);

@@ -9,6 +9,15 @@ export interface IReview extends ISoftDeleted {
   rating: number;
   comment: string;
   images: string[];
+  reviewImages?: {
+    secureUrl: string;
+    publicId: string;
+    width?: number;
+    height?: number;
+    bytes?: number;
+    format?: string;
+    uploadedAt?: Date;
+  }[];
   status: 'pending' | 'approved' | 'rejected';
   location?: string;
   eventType?: string;
@@ -30,6 +39,17 @@ const ReviewSchema: Schema = new Schema(
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true },
     images: [{ type: String }],
+    reviewImages: [
+      {
+        secureUrl: { type: String, required: true },
+        publicId: { type: String, required: true },
+        width: { type: Number },
+        height: { type: Number },
+        bytes: { type: Number },
+        format: { type: String },
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],
@@ -58,6 +78,9 @@ ReviewSchema.index({ customer: 1 });
 ReviewSchema.index({ category: 1, status: 1, createdAt: -1 });
 // Product review page compound index (prevents full scan + in-memory sort)
 ReviewSchema.index({ product: 1, status: 1, rating: -1, createdAt: -1 });
+
+// Index for fast lookup when deleting from Cloudinary
+ReviewSchema.index({ 'reviewImages.publicId': 1 });
 
 // Duplicate protection: maximum 1 review per customer per product
 ReviewSchema.index(
