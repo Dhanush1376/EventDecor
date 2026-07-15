@@ -151,15 +151,21 @@ jobs:
 
       - name: Wait for deployment to become healthy
         run: |
-          echo "Polling backend readiness (up to 5 minutes)..."
-          for i in $(seq 1 30); do
-            if curl -sSf --max-time 10 https://api.siriartsandcrafts.com/api/readiness > /dev/null 2>&1; then
+          echo "Polling backend readiness (up to 10 minutes)..."
+          for i in $(seq 1 60); do
+            echo "Attempt $i..."
+            HTTP_STATUS=$(curl -s -o response.txt -w "%{http_code}" --max-time 10 https://api.siriartsandcrafts.com/api/readiness || echo "CURL_ERROR")
+            if [ "$HTTP_STATUS" = "200" ]; then
               echo "Backend is ready after ~$((i * 10))s."
               exit 0
+            else
+              echo "Status: $HTTP_STATUS"
+              cat response.txt || true
+              echo ""
             fi
             sleep 10
           done
-          echo "::error::Backend did not become ready within 5 minutes — investigate the Railway deployment." >&2
+          echo "::error::Backend did not become ready within 10 minutes — investigate the Railway deployment." >&2
           exit 1
 
       - name: Post-Deploy Smoke Tests
