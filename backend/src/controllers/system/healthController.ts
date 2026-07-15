@@ -34,7 +34,7 @@ export class HealthController {
       const mongoState = mongoose.connection.readyState;
       if (mongoState === 1 && mongoose.connection.db) {
         const pingResult = await Promise.race([
-          mongoose.connection.db.admin().ping(),
+          mongoose.connection.db.command({ ping: 1 }),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Ping timeout')), 15000)),
         ]);
         if (pingResult && (pingResult as any).ok === 1) {
@@ -96,7 +96,7 @@ export class HealthController {
       const mongoStart = Date.now();
       const mongoState = mongoose.connection.readyState;
       if (mongoState === 1) {
-        await mongoose.connection.db!.admin().ping();
+        await mongoose.connection.db!.command({ ping: 1 });
         const stats = await mongoose.connection.db!.stats();
         checks.mongodb = {
           status: 'connected',
