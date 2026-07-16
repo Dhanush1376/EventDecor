@@ -41,7 +41,7 @@ export function EmailInputForm({
             className={`absolute transition-all duration-300 pointer-events-none font-bold ${
               isFocused || email
                 ? 'text-[9px] -top-2 left-4 bg-[#faf9f6] px-1.5 text-primary tracking-[0.2em] uppercase z-10'
-                : 'text-[12px] top-1/2 -translate-y-1/2 left-10 text-on-surface-variant/40 tracking-[0.15em] uppercase'
+                : 'text-[12px] top-1/2 -translate-y-1/2 left-12 text-on-surface-variant/40 tracking-[0.15em] uppercase'
             }`}
           >
             Email Address
@@ -51,7 +51,7 @@ export function EmailInputForm({
             id="auth-email-input"
             type="email"
             required
-            className="form-field !pl-11 !text-[12px]"
+            className="form-field !pl-12 !text-[12px]"
             placeholder={isFocused ? 'e.g. creative@siriartsandcrafts.com' : ''}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -111,7 +111,7 @@ export function TwoFactorForm({ totpCode, setTotpCode, verify2FA, isLoading, res
         autoComplete="one-time-code"
         value={totpCode}
         onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-        className="form-field !text-center !font-display !text-[20px] !tracking-[0.3em] !font-bold !py-3"
+        className="form-field !text-center !font-mono !text-[20px] !tracking-[0.3em] !font-bold !py-3"
         placeholder="000000"
       />
       <LoadingButton
@@ -176,7 +176,7 @@ export function OtpVerificationForm({
             onKeyDown={(e) => handleKeyDown(e, idx)}
             onPaste={handlePaste}
             aria-label={`Digit ${idx + 1} of verification code`}
-            className={`w-8 h-11 xs:w-9 xs:h-12 text-center font-display text-[16px] xs:text-[18px] bg-transparent border-b-2 outline-none transition-all ${
+            className={`w-8 h-11 xs:w-9 xs:h-12 text-center font-mono text-[16px] xs:text-[18px] bg-transparent border-b-2 outline-none transition-all ${
               error
                 ? 'border-error text-error'
                 : digit
@@ -228,56 +228,73 @@ export function AuthSuccessScreen({ MandalaElement }) {
   return (
     <motion.div
       key="success-screen"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="text-center space-y-8 py-6 relative"
+      className="text-center py-12 relative flex flex-col items-center justify-center min-h-[260px] overflow-hidden"
     >
-      <div className="relative inline-block">
+      {/* Background Mandala */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
         <MandalaElement
-          size={200}
-          duration={35}
-          variant={4}
-          opacity={0.08}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary"
+          size={320}
+          duration={80}
+          variant={2}
+          opacity={0.07}
+          className="text-primary"
         />
+      </div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-10 flex flex-col items-center w-full"
+      >
+        {/* Floating Sparkle Icon */}
         <motion.div
-          initial={{ scale: 0, rotate: -45 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: 'spring', damping: 14, delay: 0.1 }}
-          className="w-20 h-20 bg-gradient-to-br from-primary to-primary-container text-surface rounded-full flex items-center justify-center shadow-lg relative z-10"
+          initial={{ scale: 0.4, opacity: 0, y: 10 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          transition={{ type: 'spring', damping: 15, delay: 0.2 }}
+          className="mb-6 relative"
         >
-          <span className="material-symbols-outlined text-[36px] font-bold">check</span>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+          >
+            <span className="material-symbols-outlined text-[42px] text-primary font-light drop-shadow-sm">
+              auto_awesome
+            </span>
+          </motion.div>
         </motion.div>
 
-        <motion.div
-          animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0, 0.2] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
-          className="absolute inset-0 bg-primary/30 rounded-full blur-lg"
-        />
-      </div>
+        <div className="space-y-3">
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="font-label text-[10px] text-on-surface-variant/50 uppercase tracking-[0.3em] font-semibold block"
+          >
+            Verification Complete
+          </motion.span>
 
-      <div className="space-y-2">
-        <span className="font-label-sm text-[9px] text-primary uppercase tracking-[0.4em] font-bold block">
-          Verification Successful
-        </span>
-        <h2 className="font-display text-[30px] leading-tight text-on-surface-variant font-light">
-          Welcome to the <br />
-          <span className="italic font-light text-primary">Studio.</span>
-        </h2>
-      </div>
-
-      <div className="pt-2 flex justify-center">
-        <div className="w-12 h-[1px] bg-outline-variant/30 relative overflow-hidden">
-          <motion.div
-            initial={{ x: '-100%' }}
-            animate={{ x: '100%' }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute inset-0 bg-primary w-1/2"
-          />
+          <motion.h2
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="font-display text-[32px] sm:text-[38px] leading-tight text-on-surface font-light tracking-wide"
+          >
+            Welcome Back
+          </motion.h2>
         </div>
-      </div>
+
+        {/* Elegant divider */}
+        <motion.div
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: 40, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
+          className="h-px bg-primary/40 mt-8"
+        />
+      </motion.div>
     </motion.div>
   );
 }

@@ -41,6 +41,7 @@ export function CartView({ isEmbedded = false }) {
     summary,
     totalMRP,
     loading,
+    claimedCoupon,
     setClaimedCoupon,
     appliedCoupon,
     setAppliedCoupon,
@@ -175,11 +176,20 @@ export function CartView({ isEmbedded = false }) {
         setIsCouponModalOpen(false);
       } else {
         setCouponError(res.message || 'Invalid coupon code.');
+        if (codeParam) setClaimedCoupon('');
       }
     } catch (err) {
       setCouponError(err.response?.data?.message || 'Failed to apply coupon.');
+      if (codeParam) setClaimedCoupon('');
     }
   };
+
+  useEffect(() => {
+    if (claimedCoupon && !appliedCoupon && actualSubtotal > 0) {
+      handleApplyCoupon(null, claimedCoupon);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claimedCoupon, appliedCoupon, actualSubtotal]);
 
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
