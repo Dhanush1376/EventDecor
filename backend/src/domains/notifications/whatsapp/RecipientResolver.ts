@@ -14,10 +14,34 @@ export class RecipientResolver {
       const recipient = await WhatsAppRecipient.findById(roleConfig.recipientId);
       if (!recipient || !recipient.isActive) continue;
 
-      // Handle quiet hours (skipped for 24x7 realtime policy if not explicitly enabled)
-      if (recipient.quietHours?.enabled) {
-        // Time logic would go here
-        // For now, assume it's disabled globally as requested
+      // Handle quiet hours
+      if (recipient.quietHours?.enabled && recipient.quietHours.start && recipient.quietHours.end) {
+        // Need timezone logic, default to UTC or Indian Standard Time based on server config
+        // Simplified approach: check UTC hours against quiet hours assuming they are stored in UTC or a known TZ.
+        const now = new Date();
+        const currentHour = now.getUTCHours();
+        const currentMinute = now.getUTCMinutes();
+        const currentTimeInt = currentHour * 100 + currentMinute;
+
+        const parseTime = (timeStr: string) => parseInt(timeStr.replace(':', ''), 10);
+
+        const startTime = parseTime(recipient.quietHours.start);
+        const endTime = parseTime(recipient.quietHours.end);
+
+        let inQuietHours;
+        if (startTime < endTime) {
+          inQuietHours = currentTimeInt >= startTime && currentTimeInt <= endTime;
+        } else {
+          // Crosses midnight
+          inQuietHours = currentTimeInt >= startTime || currentTimeInt <= endTime;
+        }
+
+        if (inQuietHours) {
+          logger.info(
+            `[RecipientResolver] Skipping ${recipient.name} due to quiet hours (${recipient.quietHours.start}-${recipient.quietHours.end})`,
+          );
+          continue;
+        }
       }
 
       if (!seenPhones.has(recipient.phone)) {

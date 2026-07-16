@@ -38,6 +38,28 @@ export const notificationService = {
     const response = await api.get('/notifications/admin/analytics');
     return response.data;
   },
+  getExecutiveAnalytics: async () => {
+    const response = await api.get('/notifications/admin/executive-analytics');
+    return response.data;
+  },
+  getWorkflowFunnel: async (id) => {
+    const response = await api.get(`/notifications/admin/analytics/funnel/${id}`);
+    return response.data;
+  },
+  getExperimentAnalytics: async (automationId, experimentNodeId) => {
+    const response = await api.get(
+      `/notifications/admin/analytics/experiment/${automationId}/${experimentNodeId}`,
+    );
+    return response.data;
+  },
+  runAssessment: async () => {
+    const response = await api.post('/notifications/admin/assessment/run');
+    return response.data;
+  },
+  getAssessmentHistory: async () => {
+    const response = await api.get('/notifications/admin/assessment/history');
+    return response.data;
+  },
   testSmtp: async (toEmail) => {
     const response = await api.get('/notifications/test-smtp-live', {
       params: { to: toEmail },

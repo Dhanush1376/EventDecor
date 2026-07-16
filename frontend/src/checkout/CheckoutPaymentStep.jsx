@@ -365,7 +365,7 @@ export default function CheckoutPaymentStep() {
                   className="mt-4 pt-4 border-t border-primary/10 space-y-3 overflow-hidden text-xs"
                 >
                   <>
-                    {/* Delhivery check */}
+                    {/* Courier check */}
                     <div className="flex items-center gap-2 text-[10px] font-semibold text-green-700 bg-green-50/50 border border-green-200/50 p-2.5 rounded-md mb-2">
                       <span className="material-symbols-outlined text-[14px] text-green-700 font-extrabold">
                         verified
@@ -375,7 +375,7 @@ export default function CheckoutPaymentStep() {
                         <span className="font-extrabold">
                           {activeSelectedAddress?.pincode || 'your pincode'}
                         </span>{' '}
-                        by Delhivery
+                        by Standard Courier
                       </span>
                     </div>
 

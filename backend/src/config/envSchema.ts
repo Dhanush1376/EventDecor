@@ -74,6 +74,33 @@ const envSchema = z
 
     // Google OAuth
     GOOGLE_CLIENT_ID: z.string().optional(),
+
+    // WhatsApp Automation
+    WA_PHONE_ID: z.string().optional(),
+    WA_TOKEN: z.string().optional(),
+    WA_WEBHOOK_VERIFY_TOKEN: z.string().optional(),
+    WA_APP_SECRET: z.string().optional(),
+    WA_API_VERSION: z.string().default('v21.0'),
+    WHATSAPP_PROVIDER: z
+      .enum(['meta_cloud', 'twilio', 'gupshup', 'messagebird'])
+      .default('meta_cloud'),
+    WHATSAPP_INLINE_EXECUTION: z.string().default('false'),
+    WA_DISPATCH_CONCURRENCY: z.coerce.number().int().default(5),
+    WA_RETRY_CONCURRENCY: z.coerce.number().int().default(2),
+    WA_MEDIA_CONCURRENCY: z.coerce.number().int().default(3),
+    WA_RATE_LIMIT_PER_SECOND: z.coerce.number().int().default(80),
+    WA_SANDBOX_MODE: z.string().default('false'),
+
+    // Third Party Providers
+    TWILIO_ACCOUNT_SID: z.string().optional(),
+    TWILIO_AUTH_TOKEN: z.string().optional(),
+    TWILIO_WHATSAPP_NUMBER: z.string().optional(),
+    GUPSHUP_API_KEY: z.string().optional(),
+    GUPSHUP_APP_NAME: z.string().optional(),
+    GUPSHUP_SOURCE_NUMBER: z.string().optional(),
+    MESSAGEBIRD_API_KEY: z.string().optional(),
+    MESSAGEBIRD_CHANNEL_ID: z.string().optional(),
+    MESSAGEBIRD_TEMPLATE_NAMESPACE: z.string().optional(),
   })
   .refine(
     (data) => {

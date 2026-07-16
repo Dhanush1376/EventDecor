@@ -8,6 +8,7 @@ export class CloudinaryStorageProvider implements StorageProvider {
   async uploadBuffer(buffer: Buffer, options: UploadOptions): Promise<UploadResult> {
     return new Promise((resolve, reject) => {
       const { folder, originalname, isVideo } = options;
+      const isPdf = originalname.toLowerCase().endsWith('.pdf');
 
       const hash = crypto.createHash('sha256');
       hash.update(originalname + Date.now() + crypto.randomBytes(8).toString('hex'));
@@ -18,10 +19,10 @@ export class CloudinaryStorageProvider implements StorageProvider {
       const uploadParams: any = {
         folder: `siri-arts-crafts/${folder}`,
         public_id: securePublicId,
-        resource_type: isVideo ? 'video' : 'image',
+        resource_type: isVideo ? 'video' : isPdf ? 'raw' : 'image',
       };
 
-      if (!isVideo) {
+      if (!isVideo && !isPdf) {
         // Strip metadata, resize to max width 1920px, convert to WebP, aggressive quality
         uploadParams.transformation = [
           { width: 1920, crop: 'limit', fetch_format: 'webp', quality: 'auto:good' },

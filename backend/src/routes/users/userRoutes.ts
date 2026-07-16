@@ -16,6 +16,7 @@ import {
   getCart,
   addToCart,
   syncCart,
+  mergeCart,
   removeFromCart,
   getRecentlyViewed,
   trackRecentlyViewed,
@@ -28,10 +29,7 @@ import {
   respondToInvite,
 } from '../../controllers/users/userController';
 import { exportMyData, eraseMyAccount } from '../../controllers/customer/privacyController';
-import {
-  requireAuth,
-  requireAdmin,
-} from '../../middleware/authMiddleware';
+import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import { validateRequest } from '../../middleware/zodValidationMiddleware';
 import {
   updateProfileSchema,
@@ -70,6 +68,7 @@ router.post('/wishlist/toggle', requireAuth, validateRequest(toggleWishlistSchem
 router.get('/cart', requireAuth, getCart);
 router.post('/cart', requireAuth, validateRequest(addToCartSchema), addToCart);
 router.put('/cart', requireAuth, validateRequest(syncCartSchema), syncCart);
+router.post('/cart/merge', requireAuth, validateRequest(syncCartSchema), mergeCart);
 router.delete('/cart/:productId', requireAuth, removeFromCart);
 
 router.get('/recently-viewed', requireAuth, getRecentlyViewed);

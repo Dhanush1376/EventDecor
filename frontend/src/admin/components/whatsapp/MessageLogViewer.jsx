@@ -74,6 +74,7 @@ const MessageLogViewer = () => {
       failed: 'bg-red-100 text-red-700',
       queued: 'bg-gray-100 text-gray-600',
       dispatched: 'bg-purple-100 text-purple-700',
+      simulated: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
     };
     return (
       <span
@@ -122,6 +123,7 @@ const MessageLogViewer = () => {
               <th className="p-4 font-semibold">Date / Time</th>
               <th className="p-4 font-semibold">Recipient</th>
               <th className="p-4 font-semibold">Automation</th>
+              <th className="p-4 font-semibold">Provider & Cost</th>
               <th className="p-4 font-semibold">Status</th>
               <th className="p-4 font-semibold text-right">Actions</th>
             </tr>
@@ -142,6 +144,22 @@ const MessageLogViewer = () => {
                   </span>
                 </td>
                 <td className="p-4 text-[var(--admin-text-secondary)]">{log.automationName}</td>
+                <td className="p-4">
+                  {log.apiProvider ? (
+                    <div>
+                      <span className="block text-[13px] font-semibold text-[var(--admin-text-primary)] capitalize">
+                        {log.apiProvider.replace('_', ' ')}
+                      </span>
+                      {log.costAmount !== undefined && (
+                        <span className="text-[12px] text-green-600 font-medium">
+                          {log.costAmount} {log.costCurrency}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-[12px] text-gray-400">N/A</span>
+                  )}
+                </td>
                 <td className="p-4">{getStatusBadge(log.deliveryStatus)}</td>
                 <td className="p-4 text-right">
                   <button className="text-[var(--admin-accent)] hover:underline text-[13px] font-medium">
@@ -152,7 +170,7 @@ const MessageLogViewer = () => {
             ))}
             {filteredLogs.length === 0 && (
               <tr>
-                <td colSpan="5" className="p-8 text-center text-[var(--admin-text-tertiary)]">
+                <td colSpan="6" className="p-8 text-center text-[var(--admin-text-tertiary)]">
                   No logs found.
                 </td>
               </tr>

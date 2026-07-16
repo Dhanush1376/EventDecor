@@ -3,6 +3,7 @@ import { SkeletonDashboard } from '../components/AdminUIKit';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/domainServices';
+import whatsappAutomationService from '../services/whatsappAutomationService';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
 import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check';
@@ -29,12 +30,13 @@ export function AdminCampaigns() {
       const [campRes, tempRes, polyRes] = await Promise.all([
         notificationService.getCampaigns(),
         notificationService.getTemplates(),
-        notificationService.getAnalytics(),
+        whatsappAutomationService.getExecutiveAnalytics(),
       ]);
 
       if (campRes.success) setCampaigns(campRes.data || []);
       if (tempRes.success) setTemplates(tempRes.data || []);
-      if (polyRes.success) setAnalytics(polyRes.data || null);
+      if (polyRes?.data?.success && polyRes.data.data) setAnalytics(polyRes.data.data);
+      else setAnalytics(null);
     } catch (err) {
       logger.error('Failed to load campaign dataset', err);
       toast.error(getErrorMessage(err, 'Failed to fetch notification system information'));
@@ -85,8 +87,8 @@ export function AdminCampaigns() {
             Marketing Campaigns & Curation
           </h2>
           <p className="text-[12px] sm:text-[13px] text-[var(--admin-text-tertiary)] mt-1 font-medium leading-normal">
-            Administer customer email dispatches, draft holiday newsletters, and track live
-            link-click open rates
+            Administer customer broadcast dispatches, draft holiday campaigns, and track WhatsApp
+            delivery rates
           </p>
         </div>
 
@@ -139,28 +141,28 @@ export function AdminCampaigns() {
         <motion.div variants={fadeUp} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[
             {
-              label: 'Total Emails Sent',
-              value: analytics.overview.totalDispatched,
+              label: 'Total Messages Sent',
+              value: analytics.totalExecutions || 0,
               sub: 'All transactional + marketing',
-              icon: 'mail',
+              icon: 'forum',
             },
             {
-              label: 'Unique Opens',
-              value: analytics.overview.totalOpened,
-              sub: `Open rate of ${analytics.overview.openRate}`,
-              icon: 'drafts',
+              label: 'Delivered',
+              value: analytics.completedExecutions || 0,
+              sub: `Success rate of ${analytics.completionRate || 0}%`,
+              icon: 'mark_chat_read',
             },
             {
-              label: 'Click Tracking',
-              value: analytics.overview.totalClicks,
-              sub: 'Secure tracker redirects',
-              icon: 'ads_click',
+              label: 'Failed Messages',
+              value: analytics.failedExecutions || 0,
+              sub: 'Failed delivery',
+              icon: 'error',
             },
             {
-              label: 'Opted-in Profiles',
-              value: analytics.overview.newsletterSubscribers,
-              sub: `Across ${analytics.overview.visitorConsentProfiles} keys`,
-              icon: 'mark_email_read',
+              label: 'Average Delivery Time',
+              value: `${((analytics.avgLatencyMs || 0) / 1000).toFixed(1)}s`,
+              sub: `Fastest latency`,
+              icon: 'speed',
             },
           ].map((item, idx) => (
             <div

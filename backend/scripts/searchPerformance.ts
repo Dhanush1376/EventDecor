@@ -37,7 +37,7 @@ async function runBenchmark() {
     }
 
     // Measure Autocomplete
-    let acTimes = [];
+    const acTimes = [];
     for (let i = 0; i < 5; i++) {
       acTimes.push(
         await measureTime(`${API_BASE}/autocomplete?q=${encodeURIComponent(q)}&limit=5`),
@@ -46,7 +46,7 @@ async function runBenchmark() {
     results.autocomplete.push(acTimes.reduce((a, b) => a + b, 0) / acTimes.length);
 
     // Measure Full Search
-    let fullTimes = [];
+    const fullTimes = [];
     for (let i = 0; i < 5; i++) {
       fullTimes.push(
         await measureTime(`${API_BASE}/results?q=${encodeURIComponent(q)}&limit=10&page=1`),

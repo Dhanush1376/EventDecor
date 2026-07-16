@@ -21,6 +21,7 @@ export interface IStoreSettings extends Document {
     maxShippingDistance: number;
     enableLocalDelivery: boolean;
     originPincode: string;
+    defaultCourierPartner: string;
   };
   payments: {
     enableCOD: boolean;
@@ -120,6 +121,14 @@ export interface IStoreSettings extends Document {
     seoTitle: string;
     seoDescription: string;
   };
+  retentionPolicies?: {
+    analyticsEventsDays: number;
+    userInteractionsDays: number;
+    notificationLogsDays: number;
+    adminAuditLogsDays: number;
+    fallbackJobsProcessedDays: number;
+    fallbackJobsFailedDays: number;
+  };
   version: number;
   lastModifiedBy?: mongoose.Types.ObjectId;
   auditLog: Array<{
@@ -153,6 +162,7 @@ const StoreSettingsSchema: Schema = new Schema(
       // Warehouse dispatch origin — used as the source pincode for delivery
       // estimation. Defaults to the store's registered Ongole location.
       originPincode: { type: String, default: '523001' },
+      defaultCourierPartner: { type: String, default: 'Delhivery Logistics' },
     },
     payments: {
       enableCOD: { type: Boolean, default: true },
@@ -256,6 +266,14 @@ const StoreSettingsSchema: Schema = new Schema(
     storefront: {
       seoTitle: { type: String, default: 'Siri Arts & Crafts' },
       seoDescription: { type: String, default: 'Premium Handicrafts and Studio' },
+    },
+    retentionPolicies: {
+      analyticsEventsDays: { type: Number, default: 30 },
+      userInteractionsDays: { type: Number, default: 30 },
+      notificationLogsDays: { type: Number, default: 14 },
+      adminAuditLogsDays: { type: Number, default: 180 },
+      fallbackJobsProcessedDays: { type: Number, default: 7 },
+      fallbackJobsFailedDays: { type: Number, default: 30 },
     },
     version: { type: Number, default: 1 },
     lastModifiedBy: { type: Schema.Types.ObjectId, ref: 'User' },

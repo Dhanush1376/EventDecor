@@ -709,14 +709,13 @@ export const ProductCard = React.memo(function ProductCard({
                 </span>
               )}
             </span>
-            {((itemType !== 'event' && !isRental && canPurchase) || itemType === 'event') &&
-              numericOldPrice > numericPrice && (
-                <span
-                  className={`font-display lining-nums text-black/40 line-through ${compact ? 'text-[9px] lg:text-[10px]' : 'text-[10px] lg:text-[11px]'}`}
-                >
-                  Rs. {formatPrice(numericOldPrice)}
-                </span>
-              )}
+            {numericOldPrice > numericPrice && (
+              <span
+                className={`font-display lining-nums text-black/40 line-through ${compact ? 'text-[9px] lg:text-[10px]' : 'text-[10px] lg:text-[11px]'}`}
+              >
+                Rs. {formatPrice(numericOldPrice)}
+              </span>
+            )}
           </div>
           {itemType !== 'event' && isRental && (
             <span

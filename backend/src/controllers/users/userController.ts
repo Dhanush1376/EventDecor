@@ -277,6 +277,12 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
   res.status(200).json(new ApiResponse(true, 'Cart synced successfully', cartDetails));
 });
 
+export const mergeCart = asyncHandler(async (req: any, res: Response) => {
+  const { cartItems } = req.body;
+  const { cart, droppedItems } = await UserCartService.mergeCart(req.user.id, cartItems);
+  res.json({ success: true, data: { cart, droppedItems } });
+});
+
 export const removeFromCart = asyncHandler(async (req: any, res: Response) => {
   const { productId } = req.params;
   const user = await UserCartService.removeFromCart(req.user.id, productId);

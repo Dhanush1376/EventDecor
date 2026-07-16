@@ -23,6 +23,25 @@ export interface IWhatsAppTemplate extends Document {
 
   isDefault: boolean;
   isActive: boolean;
+
+  version: number;
+  status: 'draft' | 'pending_review' | 'approved' | 'published' | 'archived';
+  approvalHistory: Array<{
+    status: string;
+    changedBy?: mongoose.Types.ObjectId;
+    changedAt: Date;
+    comment?: string;
+  }>;
+  previousVersionId?: mongoose.Types.ObjectId;
+  publishedAt?: Date;
+  publishedBy?: mongoose.Types.ObjectId;
+  archivedAt?: Date;
+  changeDescription?: string;
+
+  translations?: Map<string, any>;
+  defaultLanguage?: string;
+  supportedLanguages?: string[];
+
   createdBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -66,6 +85,31 @@ const WhatsAppTemplateSchema = new Schema(
 
     isDefault: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
+
+    version: { type: Number, default: 1 },
+    status: {
+      type: String,
+      enum: ['draft', 'pending_review', 'approved', 'published', 'archived'],
+      default: 'draft',
+    },
+    approvalHistory: [
+      {
+        status: { type: String, required: true },
+        changedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+        changedAt: { type: Date, default: Date.now },
+        comment: { type: String },
+      },
+    ],
+    previousVersionId: { type: Schema.Types.ObjectId, ref: 'WhatsAppTemplate' },
+    publishedAt: { type: Date },
+    publishedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    archivedAt: { type: Date },
+    changeDescription: { type: String },
+
+    translations: { type: Map, of: Schema.Types.Mixed, default: {} },
+    defaultLanguage: { type: String, default: 'en_US' },
+    supportedLanguages: [{ type: String }],
+
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true },

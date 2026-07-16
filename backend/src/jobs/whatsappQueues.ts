@@ -20,3 +20,13 @@ export const whatsappRetryQueue = new Queue('whatsapp-retry', {
 export const whatsappMediaQueue = new Queue('whatsapp-media', {
   connection: redisConnection as any,
 });
+
+// Queue for delayed escalation checks
+export const whatsappEscalationQueue = new Queue('whatsapp-escalation', {
+  connection: redisConnection as any,
+});
+
+// Queue for Campaign Batches (Cursor-based pagination)
+export const whatsappCampaignBatchQueue = new Queue('whatsapp-campaign-batch', {
+  connection: redisConnection as any,
+});

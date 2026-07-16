@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-
+import storeSettingsService from '../services/StoreSettingsService';
 export interface INotificationLog extends Document {
   userId?: mongoose.Types.ObjectId;
   recipientEmail: string;
@@ -29,6 +29,7 @@ export interface INotificationLog extends Document {
   sendTime?: Date;
   createdAt: Date;
   updatedAt: Date;
+  expiresAt?: Date;
 }
 
 const NotificationLogSchema: Schema = new Schema(
@@ -77,6 +78,7 @@ const NotificationLogSchema: Schema = new Schema(
       default: 'normal',
     },
     sendTime: { type: Date },
+    expiresAt: { type: Date },
   },
   { timestamps: true },
 );
@@ -90,8 +92,40 @@ NotificationLogSchema.index({ createdAt: -1 });
 NotificationLogSchema.index({ userId: 1, createdAt: -1 }, { sparse: true });
 NotificationLogSchema.index({ status: 1, type: 1, createdAt: -1 });
 
-// TTL: Auto-cleanup notification logs older than 90 days
-NotificationLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+// TTL: Auto-cleanup notification logs dynamically
+NotificationLogSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+NotificationLogSchema.pre('save', async function () {
+  if (this.isNew || this.isModified('status')) {
+    try {
+      const settings = await storeSettingsService.getSettings();
+      const defaultDays = settings.retentionPolicies?.notificationLogsDays || 14;
+      const days = this.status === 'failed' ? 30 : defaultDays;
+      this.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    } catch (err) {
+      this.expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    }
+  }
+});
+
+NotificationLogSchema.pre('findOneAndUpdate', async function () {
+  const update: any = this.getUpdate();
+  const status = update?.status || update?.$set?.status;
+
+  if (status) {
+    try {
+      const settings = await storeSettingsService.getSettings();
+      const defaultDays = settings.retentionPolicies?.notificationLogsDays || 14;
+      const days = status === 'failed' ? 30 : defaultDays;
+
+      if (update.$set) {
+        update.$set.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      } else {
+        update.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      }
+    } catch (err) {}
+  }
+});
 
 const NotificationLog = mongoose.model<INotificationLog>('NotificationLog', NotificationLogSchema);
 

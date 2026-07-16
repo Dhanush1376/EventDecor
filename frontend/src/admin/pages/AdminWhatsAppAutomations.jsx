@@ -6,8 +6,14 @@ import AutomationToggleCenter from '../components/whatsapp/AutomationToggleCente
 import TemplateEditor from '../components/whatsapp/TemplateEditor';
 import RecipientManager from '../components/whatsapp/RecipientManager';
 import MessageLogViewer from '../components/whatsapp/MessageLogViewer';
-import AnalyticsDashboard from '../components/whatsapp/AnalyticsDashboard';
+import WhatsAppCampaigns from '../components/whatsapp/WhatsAppCampaigns';
 import DeadLetterQueueManager from '../components/whatsapp/DeadLetterQueueManager';
+import AuditAndVersions from '../components/whatsapp/AuditAndVersions';
+import WhatsAppRolesAndApprovals from '../components/whatsapp/WhatsAppRolesAndApprovals';
+import WhatsAppWorkflowStudio from '../components/whatsapp/WhatsAppWorkflowStudio';
+import WhatsAppExecutiveDashboard from '../components/whatsapp/WhatsAppExecutiveDashboard';
+import WhatsAppReadinessDashboard from '../components/whatsapp/WhatsAppReadinessDashboard';
+import WhatsAppSettings from '../components/whatsapp/WhatsAppSettings';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 15 },
@@ -16,16 +22,28 @@ const fadeUp = {
 
 export const AdminWhatsAppAutomations = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [loading, setLoading] = useState(false);
+  const [advancedMode, setAdvancedMode] = useState(false);
 
-  const tabs = [
+  const baseTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'automations', label: 'Automations', icon: 'toggle_on' },
+    { id: 'automations', label: 'Notifications', icon: 'notifications' },
+    { id: 'templates', label: 'Templates', icon: 'edit_document' },
     { id: 'recipients', label: 'Recipients', icon: 'group' },
     { id: 'logs', label: 'Logs', icon: 'history' },
     { id: 'analytics', label: 'Analytics', icon: 'insights' },
-    { id: 'dlq', label: 'DLQ Manager', icon: 'warning' },
+    { id: 'settings', label: 'Settings', icon: 'settings' },
   ];
+
+  const advancedTabs = [
+    { id: 'campaigns', label: 'Campaigns', icon: 'campaign' },
+    { id: 'queues', label: 'Live Queues', icon: 'monitor_heart' },
+    { id: 'versions', label: 'Audit & Versions', icon: 'history_edu' },
+    { id: 'rbac', label: 'Security & RBAC', icon: 'shield_person' },
+    { id: 'studio', label: 'Workflow Studio', icon: 'schema' },
+    { id: 'certification', label: 'Certification', icon: 'verified' },
+  ];
+
+  const tabs = advancedMode ? [...baseTabs, ...advancedTabs] : baseTabs;
 
   return (
     <div className="admin-page-container">
@@ -61,10 +79,24 @@ export const AdminWhatsAppAutomations = () => {
           >
             {activeTab === 'dashboard' && <WhatsAppDashboard />}
             {activeTab === 'automations' && <AutomationToggleCenter />}
+            {activeTab === 'templates' && <TemplateEditor />}
             {activeTab === 'recipients' && <RecipientManager />}
             {activeTab === 'logs' && <MessageLogViewer />}
-            {activeTab === 'analytics' && <AnalyticsDashboard />}
-            {activeTab === 'dlq' && <DeadLetterQueueManager />}
+            {activeTab === 'analytics' && <WhatsAppExecutiveDashboard />}
+            {activeTab === 'settings' && (
+              <WhatsAppSettings advancedMode={advancedMode} setAdvancedMode={setAdvancedMode} />
+            )}
+
+            {advancedMode && (
+              <>
+                {activeTab === 'campaigns' && <WhatsAppCampaigns />}
+                {activeTab === 'queues' && <DeadLetterQueueManager />}
+                {activeTab === 'versions' && <AuditAndVersions />}
+                {activeTab === 'rbac' && <WhatsAppRolesAndApprovals />}
+                {activeTab === 'studio' && <WhatsAppWorkflowStudio />}
+                {activeTab === 'certification' && <WhatsAppReadinessDashboard />}
+              </>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

@@ -91,7 +91,7 @@ const handleStorageUpload = (folder: string, isArray: boolean, allowVideo: boole
           const result = await MediaService.uploadSingle(file.buffer, detectedMime, {
             module: folder,
             filename: file.originalname,
-            uploadedBy: userId !== 'anonymous' ? userId : undefined,
+            uploadedBy: (req as any).user?._id || undefined,
           });
 
           uploadedFiles.push({
@@ -125,7 +125,7 @@ const handleStorageUpload = (folder: string, isArray: boolean, allowVideo: boole
         const result = await MediaService.uploadSingle(file.buffer, detectedMime, {
           module: folder,
           filename: file.originalname,
-          uploadedBy: userId !== 'anonymous' ? userId : undefined,
+          uploadedBy: (req as any).user?._id || undefined,
         });
 
         (req as any).file = {

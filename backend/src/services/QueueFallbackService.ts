@@ -1,5 +1,6 @@
 import logger from '../config/logger';
 import mongoose from 'mongoose';
+import storeSettingsService from './StoreSettingsService';
 
 type FallbackHandler = (jobName: string, data: any) => Promise<void>;
 
@@ -28,9 +29,47 @@ const FallbackJobSchema = new mongoose.Schema({
   errorMessage: { type: String },
   createdAt: { type: Date, default: Date.now, index: true },
   processedAt: { type: Date },
+  expiresAt: { type: Date },
 });
 
 FallbackJobSchema.index({ queueName: 1, status: 1, createdAt: 1 });
+FallbackJobSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+FallbackJobSchema.pre('save', async function () {
+  if (this.isNew || this.isModified('status')) {
+    try {
+      const settings = await storeSettingsService.getSettings();
+      const days =
+        this.status === 'dead_letter'
+          ? settings.retentionPolicies?.fallbackJobsFailedDays || 30
+          : settings.retentionPolicies?.fallbackJobsProcessedDays || 7;
+      this.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    } catch (err) {
+      this.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    }
+  }
+});
+
+FallbackJobSchema.pre('findOneAndUpdate', async function () {
+  const update: any = this.getUpdate();
+  const status = update?.status || update?.$set?.status;
+
+  if (status) {
+    try {
+      const settings = await storeSettingsService.getSettings();
+      const days =
+        status === 'dead_letter'
+          ? settings.retentionPolicies?.fallbackJobsFailedDays || 30
+          : settings.retentionPolicies?.fallbackJobsProcessedDays || 7;
+
+      if (update.$set) {
+        update.$set.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      } else {
+        update.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      }
+    } catch (err) {}
+  }
+});
 
 const FallbackJob = mongoose.models.FallbackJob || mongoose.model('FallbackJob', FallbackJobSchema);
 

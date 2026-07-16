@@ -154,7 +154,7 @@ jobs:
           echo "Polling backend readiness (up to 10 minutes)..."
           for i in $(seq 1 60); do
             echo "Attempt $i..."
-            HTTP_STATUS=$(curl -s -o response.txt -w "%{http_code}" --max-time 10 https://api.siriartsandcrafts.com/api/readiness || echo "CURL_ERROR")
+            HTTP_STATUS=$(curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -s -o response.txt -w "%{http_code}" --max-time 10 https://api.siriartsandcrafts.com/api/readiness || echo "CURL_ERROR")
             if [ "$HTTP_STATUS" = "200" ]; then
               echo "Backend is ready after ~$((i * 10))s."
               exit 0
@@ -172,7 +172,7 @@ jobs:
         run: |
           set -e
           base="https://api.siriartsandcrafts.com"
-          curl -sSf --max-time 10 "$base/api/readiness" > /dev/null
-          curl -sSf --max-time 10 "$base/health" > /dev/null
-          curl -sSf --max-time 10 "$base/api/version" > /dev/null
+          curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -sSf --max-time 10 "$base/api/readiness" > /dev/null
+          curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -sSf --max-time 10 "$base/health" > /dev/null
+          curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -sSf --max-time 10 "$base/api/version" > /dev/null
           echo "All smoke tests passed."

@@ -95,7 +95,7 @@ export function OrderTrackingPublic() {
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 text-primary rounded-full text-[10px] font-bold uppercase tracking-wider mb-4">
             <span className="material-symbols-outlined text-xs">local_shipping</span>
-            <span>{order.courierPartner || 'Delhivery Logistics'} Feed</span>
+            <span>{order.courierPartner || 'Standard Courier'} Feed</span>
           </div>
 
           <h2 className="font-body text-2xl font-bold text-on-surface mb-2">

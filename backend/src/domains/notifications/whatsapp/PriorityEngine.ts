@@ -1,16 +1,26 @@
 import { AutomationContext, PriorityResult, Badge } from './types';
+import WhatsAppPriorityConfig from '../../../models/WhatsAppPriorityConfig';
 
 export class PriorityEngine {
-  static evaluate(context: AutomationContext): PriorityResult {
+  static async evaluate(context: AutomationContext): Promise<PriorityResult> {
+    const config = (await WhatsAppPriorityConfig.findOne().lean()) || {
+      highValueOrderThreshold: 20000,
+      vipSpendThreshold: 50000,
+      expressDeliveryThreshold: 24,
+      lowInventoryThreshold: 10,
+    };
     const badges: Badge[] = [];
     let priority: 'critical' | 'high' | 'normal' | 'low' = 'normal';
 
-    if (context.order?.total > 20000) {
+    if (context.order?.total > config.highValueOrderThreshold) {
       badges.push({ emoji: '🚨', label: 'HIGH VALUE ORDER', color: 'red' });
       priority = 'high';
     }
 
-    if (context.customerStats?.totalSpent > 50000 || context.customerStats?.totalOrders >= 10) {
+    if (
+      context.customerStats?.totalSpent > config.vipSpendThreshold ||
+      context.customerStats?.totalOrders >= 10
+    ) {
       badges.push({ emoji: '⭐', label: 'VIP CUSTOMER', color: 'gold' });
       priority = 'high';
     }
@@ -30,13 +40,13 @@ export class PriorityEngine {
 
     if (context.order?.needByDate) {
       const hoursUntil = (new Date(context.order.needByDate).getTime() - Date.now()) / 3600000;
-      if (hoursUntil <= 24 && hoursUntil > 0) {
+      if (hoursUntil <= config.expressDeliveryThreshold && hoursUntil > 0) {
         badges.push({ emoji: '🔴', label: 'EVENT TOMORROW — URGENT', color: 'red' });
         priority = 'critical';
       }
     }
 
-    if (context.inventoryData?.some((inv) => inv.remainingStock < 10)) {
+    if (context.inventoryData?.some((inv) => inv.remainingStock < config.lowInventoryThreshold)) {
       badges.push({ emoji: '📦', label: 'LOW STOCK ALERT', color: 'orange' });
     }
 

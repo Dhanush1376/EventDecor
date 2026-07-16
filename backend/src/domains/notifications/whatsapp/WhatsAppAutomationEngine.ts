@@ -3,15 +3,10 @@ import logger from '../../../config/logger';
 import { whatsappDispatchQueue } from '../../../jobs/whatsappQueues';
 import { AutomationPayload, AutomationContext } from './types';
 import WhatsAppAutomation from '../../../models/WhatsAppAutomation';
-import WhatsAppMessageLog from '../../../models/WhatsAppMessageLog';
 import { RecipientResolver } from './RecipientResolver';
 import { WhatsAppTemplateEngine } from './WhatsAppTemplateEngine';
 import { PriorityEngine } from './PriorityEngine';
-import { WhatsAppConditionEvaluator } from './WhatsAppConditionEvaluator';
-import { MediaAttachmentService } from './MediaAttachmentService';
-import { WhatsAppProviderFactory } from './providers/WhatsAppProviderFactory';
-import { WhatsAppDashboardService } from './WhatsAppDashboardService';
-import { randomUUID as uuidv4 } from 'crypto';
+import { FeatureFlagService } from '../../../services/FeatureFlagService';
 
 export class WhatsAppAutomationEngine {
   /**
@@ -20,6 +15,14 @@ export class WhatsAppAutomationEngine {
    */
   static async trigger(automationKey: string, payload: AutomationPayload): Promise<void> {
     try {
+      const isEngineEnabled = await FeatureFlagService.isEnabled('whatsapp_engine', true);
+      if (!isEngineEnabled) {
+        logger.debug(
+          `[WhatsAppAutomationEngine] Engine disabled via feature flag. Ignoring ${automationKey}`,
+        );
+        return;
+      }
+
       logger.info(`[WhatsAppAutomationEngine] Triggering ${automationKey}`, { payload });
 
       // Enqueue to BullMQ for immediate processing
@@ -40,79 +43,36 @@ export class WhatsAppAutomationEngine {
   }
 
   /**
-   * Called by the BullMQ worker.
+   * Synchronous dry-run for API testing.
    */
-  static async process(job: Job): Promise<void> {
-    const workerStart = Date.now();
-    const { automationKey, payload, triggerTimestamp } = job.data;
+  static async dryRun(automationKey: string, payload: AutomationPayload): Promise<any> {
+    const automation = await WhatsAppAutomation.findOne({ automationKey }).populate(
+      'recipientRoles.recipientId',
+    );
+    if (!automation) throw new Error('Automation not found');
 
-    try {
-      // 1. Load full automation config
-      const automation = await WhatsAppAutomation.findOne({ automationKey }).populate(
-        'recipientRoles.recipientId',
-      );
+    const recipients = await RecipientResolver.resolve(automation);
+    const context = await this.enrichContext(payload);
 
-      if (!automation || !automation.enabled) {
-        logger.debug(
-          `[WhatsAppAutomationEngine] Automation ${automationKey} is disabled or not found.`,
-        );
-        return;
-      }
+    const priorityResult = await PriorityEngine.evaluate(context);
+    const allBadges = [...priorityResult.badges.map((b) => `${b.emoji} ${b.label}`)];
 
-      // 2. Resolve recipients
-      const recipients = await RecipientResolver.resolve(automation);
-      if (recipients.length === 0) {
-        logger.debug(`[WhatsAppAutomationEngine] No active recipients for ${automationKey}.`);
-        return;
-      }
+    const { SmartRouter } = require('./SmartRouter');
+    const provider = await SmartRouter.getRoute(automation.category || 'utility');
 
-      // 3. Enrich payload
-      const context = await this.enrichContext(payload);
+    const results = [];
+    // Extract action nodes
+    const actionNodes = (automation.nodes || []).filter(
+      (n) => n.type === 'action_whatsapp' || n.id.startsWith('action'),
+    );
 
-      // 4. Evaluate conditions & Priority
-      const triggeredBadges = await WhatsAppConditionEvaluator.evaluate(
-        automation.conditions,
-        context,
-      );
-      const priorityResult = PriorityEngine.evaluate(context);
+    for (const recipient of recipients) {
+      for (const node of actionNodes) {
+        const templateId = node.data?.templateId;
+        if (!templateId) continue;
 
-      const allBadges = [
-        ...priorityResult.badges.map((b) => `${b.emoji} ${b.label}`),
-        ...triggeredBadges,
-      ];
-
-      // 5. Setup Provider
-      const provider = WhatsAppProviderFactory.getProvider();
-
-      // 6. Process for each recipient
-      for (const recipient of recipients) {
-        const idempotencyKey =
-          (payload as any).idempotencyKey ||
-          `wa:${automationKey}:${payload.orderId || triggerTimestamp}:${recipient.phone}`;
-
-        // --- IDEMPOTENCY CHECK ---
-        const existingLog = await WhatsAppMessageLog.findOne({
-          idempotencyKey,
-          deliveryStatus: { $in: ['sent', 'delivered', 'read'] },
-        });
-
-        if (existingLog) {
-          logger.info(
-            `[WhatsAppAutomationEngine] Idempotency hit: Skipping duplicate message for ${idempotencyKey}`,
-          );
-          continue;
-        }
-
-        // Render Message
-        const template = await WhatsAppTemplateEngine.getTemplate(
-          automation.activeTemplateId?.toString(),
-        );
-        if (!template) {
-          logger.error(
-            `[WhatsAppAutomationEngine] Template not found for recipient ${recipient.phone}`,
-          );
-          continue;
-        }
+        const template = await WhatsAppTemplateEngine.getTemplate(templateId.toString());
+        if (!template) continue;
 
         const renderedMessage = await WhatsAppTemplateEngine.render(
           template,
@@ -121,106 +81,46 @@ export class WhatsAppAutomationEngine {
           automation.sections,
         );
 
-        // Generate Media if needed
-        let mediaUrl = null;
-        if (automation.mediaAttachments?.sendInvoice && context.order) {
-          mediaUrl = await MediaAttachmentService.generateInvoice(context.order._id);
-        }
-
-        // Dispatch via Provider Mapping Layer
-        const dispatchStart = Date.now();
-        const providerCallStart = Date.now();
-        let response;
-        try {
-          if (template.templateCategory === 'utility') {
-            const components =
-              template.providerMapping?.map((mapping) => {
-                return {
-                  type: mapping.metaComponentType,
-                  parameters: mapping.variables.map((variableKey) => {
-                    const registry = (WhatsAppTemplateEngine as any).variableRegistry.get(
-                      variableKey,
-                    );
-                    const val = registry ? registry.resolver(context) : '';
-                    return { type: 'text', text: String(val) };
-                  }),
-                };
-              }) || [];
-
-            response = await provider.sendTemplateMessage(
-              recipient.phone,
-              template.metaTemplateName,
-              template.metaTemplateLanguage,
-              components,
-            );
-          } else {
-            response = mediaUrl
-              ? await provider.sendMediaMessage(recipient.phone, mediaUrl, renderedMessage)
-              : await provider.sendTextMessage(recipient.phone, renderedMessage);
-          }
-        } catch (err: any) {
-          logger.error(`[WhatsAppAutomationEngine] Provider error for ${recipient.phone}`, err);
-          response = { success: false, raw: { error: err.message }, messageId: 'failed' };
-        }
-
-        const providerCallEnd = Date.now();
-        const latencyMs = Date.now() - triggerTimestamp;
-
-        // Log to DB
-        const createdLog = await WhatsAppMessageLog.create({
-          messageId: uuidv4(),
-          automationKey,
-          automationName: automation.displayName,
-          recipientPhone: recipient.phone,
-          recipientName: recipient.name,
-          recipientRole: recipient.role,
-          templateId: template._id,
-          templateName: template.name,
-          templateLayout: template.layout,
-          renderedMessage,
-          messageType: mediaUrl ? 'media' : 'template',
-          attachments: mediaUrl
-            ? [{ type: 'invoice', url: mediaUrl, filename: 'invoice.pdf' }]
-            : [],
-          deliveryStatus: response.success ? 'sent' : 'failed',
-          failureReason: response.success ? undefined : response.raw?.error,
-          sentAt: response.success ? new Date() : undefined,
-          apiProvider: provider.name,
-          apiResponse: response.raw,
-          apiMessageId: response.messageId,
-          relatedEntityType: payload.orderId ? 'order' : undefined,
-          relatedEntityId: payload.orderId,
-          idempotencyKey, // Re-using the key generated above
-          priority: priorityResult.priority,
-          triggeredBadges: allBadges,
-          triggerTimestamp: new Date(triggerTimestamp),
-          dispatchTimestamp: new Date(dispatchStart),
-          latencyMs,
-          timings: {
-            triggeredAt: new Date(triggerTimestamp),
-            queuedAt: new Date(triggerTimestamp),
-            workerStartedAt: new Date(workerStart),
-            providerCalledAt: new Date(providerCallStart),
-            providerRespondedAt: new Date(providerCallEnd),
-          },
-        });
-
-        // Trigger Retry Service if failed
-        if (!response.success) {
-          const { WhatsAppRetryService } = require('./WhatsAppRetryService');
-          await WhatsAppRetryService.scheduleRetry(createdLog._id.toString());
-        }
-
-        // Update Dashboard Cache
-        await WhatsAppDashboardService.incrementStats(
-          response.success ? 'sent' : 'failed',
-          automationKey,
-          latencyMs,
+        const { WhatsAppCostEngine } = require('./WhatsAppCostEngine');
+        const costInfo = await WhatsAppCostEngine.calculateCost(
+          provider.name,
+          template.templateCategory || 'utility',
+          recipient.phone,
         );
+
+        results.push({
+          recipient: recipient.phone,
+          provider: provider.name,
+          templateName: template.name,
+          renderedMessage,
+          costInfo,
+          badges: allBadges,
+          priority: priorityResult.priority,
+        });
       }
+    }
+
+    return results;
+  }
+
+  /**
+   * Called by the BullMQ worker.
+   */
+  static async process(job: Job): Promise<void> {
+    const { automationKey, payload, currentNodeId } = job.data;
+    try {
+      const automation = await WhatsAppAutomation.findOne({ automationKey }).lean();
+      if (!automation) return;
+
+      const { WorkflowExecutionEngine } = require('./WorkflowExecutionEngine');
+      await WorkflowExecutionEngine.executeWorkflow(
+        automation._id.toString(),
+        payload,
+        currentNodeId,
+      );
     } catch (error) {
       logger.error(`[WhatsAppAutomationEngine] Error processing job ${job.id}`, error);
-      throw error; // Let BullMQ handle retry via whatsapp-retry queue (to be implemented)
+      throw error;
     }
   }
 
@@ -229,6 +129,9 @@ export class WhatsAppAutomationEngine {
     const Product =
       require('../../../models/Product').default || require('../../../models/Product');
 
+    const StoreSettings =
+      require('../../../models/StoreSettings').default || require('../../../models/StoreSettings');
+    const storeSettings = (await StoreSettings.findOne().lean()) || {};
     let order = null;
     let products = [];
     let customerStats = {};
@@ -254,6 +157,7 @@ export class WhatsAppAutomationEngine {
       customerStats,
       products,
       inventoryData: [],
+      storeSettings,
     };
   }
 }

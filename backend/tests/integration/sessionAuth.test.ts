@@ -1,6 +1,5 @@
 import './setup';
 import { describe, it, expect } from 'vitest';
-import mongoose from 'mongoose';
 
 import SessionAuthService from '../../src/services/SessionAuthService';
 import RefreshToken from '../../src/models/RefreshToken';

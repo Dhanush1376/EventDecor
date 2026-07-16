@@ -35,7 +35,7 @@ export function TrackingOperatorPanel({
             Logistics Scanner Terminal
           </h3>
           <p className="text-[10px] text-secondary font-light mt-0.5">
-            For Delhivery agents and warehouse managers scanning package labels.
+            For courier agents and warehouse managers scanning package labels.
           </p>
         </div>
         <button

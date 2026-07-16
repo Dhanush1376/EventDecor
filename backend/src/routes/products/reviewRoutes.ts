@@ -12,10 +12,16 @@ import {
   getReviewStats,
   getMyReview,
   updateOwnReview,
+  updateReviewStatus,
+  bulkUpdateReviewStatus,
 } from '../../controllers/products/reviewController';
 import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import { validateRequest } from '../../middleware/zodValidationMiddleware';
-import { createReviewSchema, updateReviewSchema } from '../../validators/reviewValidator';
+import {
+  createReviewSchema,
+  updateReviewSchema,
+  updateReviewStatusSchema,
+} from '../../validators/reviewValidator';
 
 const router = Router();
 
@@ -35,6 +41,14 @@ router.put('/:id', requireAuth, validateRequest(updateReviewSchema), updateOwnRe
 // Admin Routes
 router.get('/stats', requireAuth, requireAdmin, getReviewStats);
 router.get('/', requireAuth, requireAdmin, getAllReviews);
+router.put(
+  '/:id/status',
+  requireAuth,
+  requireAdmin,
+  validateRequest(updateReviewStatusSchema),
+  updateReviewStatus,
+);
+router.put('/bulk/status', requireAuth, requireAdmin, bulkUpdateReviewStatus);
 router.delete('/:id', requireAuth, requireAdmin, deleteReview);
 
 export default router;

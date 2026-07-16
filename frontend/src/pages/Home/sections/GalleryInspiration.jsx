@@ -49,7 +49,7 @@ export function GalleryInspiration({ previewContent }) {
     return items.slice(0, 5);
   }, [rawGalleryItems, galleryPreview]);
 
-  if (!galleryPreview?.isVisible) return null;
+  if (galleryPreview?.isVisible === false) return null;
   if (!galleryLoading && !cmsLoading && !isError && galleryItems.length === 0) return null;
   if (cmsLoading || galleryLoading) {
     return (

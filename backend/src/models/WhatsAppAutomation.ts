@@ -23,14 +23,12 @@ export interface IWhatsAppAutomation extends Document {
     showDivider: boolean;
   }>;
 
-  conditions: Array<{
-    field: string;
-    operator: 'gt' | 'lt' | 'eq' | 'gte' | 'lte' | 'contains' | 'exists' | 'is_true';
-    value: any;
-    badge: string;
-    emoji: string;
-    enabled: boolean;
-  }>;
+  nodes: any[];
+  edges: any[];
+  executionState?: {
+    allowParallelBranching: boolean;
+    maxExecutionTimeMs: number;
+  };
 
   priority: 'critical' | 'high' | 'normal' | 'low';
   retryPolicy: {
@@ -52,6 +50,11 @@ export interface IWhatsAppAutomation extends Document {
     timeoutMinutes: number;
     escalateToRoles: string[];
     reminderMessage: string;
+  };
+
+  sandbox?: {
+    enabled: boolean;
+    overridePhoneNumber: string;
   };
 
   createdBy?: mongoose.Types.ObjectId;
@@ -93,20 +96,12 @@ const WhatsAppAutomationSchema = new Schema(
       },
     ],
 
-    conditions: [
-      {
-        field: { type: String, required: true },
-        operator: {
-          type: String,
-          enum: ['gt', 'lt', 'eq', 'gte', 'lte', 'contains', 'exists', 'is_true'],
-          required: true,
-        },
-        value: { type: Schema.Types.Mixed },
-        badge: { type: String, required: true },
-        emoji: { type: String },
-        enabled: { type: Boolean, default: true },
-      },
-    ],
+    nodes: { type: [Schema.Types.Mixed], default: [] },
+    edges: { type: [Schema.Types.Mixed], default: [] },
+    executionState: {
+      allowParallelBranching: { type: Boolean, default: true },
+      maxExecutionTimeMs: { type: Number, default: 86400000 }, // 24 hours max wait by default
+    },
 
     priority: {
       type: String,
@@ -138,6 +133,11 @@ const WhatsAppAutomationSchema = new Schema(
         default:
           '⏰ ORDER {{order_number}} has been pending for {{timeout}} minutes. Please process immediately.',
       },
+    },
+
+    sandbox: {
+      enabled: { type: Boolean, default: false },
+      overridePhoneNumber: { type: String, default: '' },
     },
 
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },

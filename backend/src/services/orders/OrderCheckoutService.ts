@@ -217,7 +217,7 @@ export class OrderCheckoutService {
       const randomSeq = crypto.randomBytes(3).toString('hex').toUpperCase();
       const invoiceNumber = `INV-${new Date().getFullYear()}-${randomSeq}`;
       const trackingNumber = `TRK${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-      const courierPartner = 'Delhivery';
+      const courierPartner = settings.shipping.defaultCourierPartner || 'Standard Courier';
       const barcodeData = invoiceNumber;
       const frontendUrl = getFrontendUrl();
       const publicTrackingToken = LogisticsService.generateTrackingToken(pendingOrderId.toString());

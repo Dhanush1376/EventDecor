@@ -22,7 +22,32 @@ export interface IWhatsAppMessageLog extends Document {
     filename: string;
   }>;
 
-  deliveryStatus: 'queued' | 'dispatched' | 'sent' | 'delivered' | 'read' | 'failed';
+  deliveryStatus:
+    | 'pending'
+    | 'queued'
+    | 'processing'
+    | 'sent'
+    | 'delivered'
+    | 'read'
+    | 'failed'
+    | 'expired'
+    | 'cancelled'
+    | 'simulated';
+  statusHistory: Array<{
+    status: string;
+    timestamp: Date;
+    metadata?: any;
+    reason?: string;
+  }>;
+  expiresAt?: Date;
+  cancelledAt?: Date;
+  cancelledBy?: string;
+  cancellationReason?: string;
+
+  costAmount?: number;
+  costCurrency?: string;
+  countryCode?: string;
+
   sentAt?: Date;
   deliveredAt?: Date;
   readAt?: Date;
@@ -95,9 +120,37 @@ const WhatsAppMessageLogSchema = new Schema(
 
     deliveryStatus: {
       type: String,
-      enum: ['queued', 'dispatched', 'sent', 'delivered', 'read', 'failed'],
-      default: 'queued',
+      enum: [
+        'pending',
+        'queued',
+        'processing',
+        'sent',
+        'delivered',
+        'read',
+        'failed',
+        'expired',
+        'cancelled',
+        'simulated',
+      ],
+      default: 'pending',
     },
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+        metadata: { type: Schema.Types.Mixed },
+        reason: { type: String },
+      },
+    ],
+    expiresAt: { type: Date },
+    cancelledAt: { type: Date },
+    cancelledBy: { type: String },
+    cancellationReason: { type: String },
+
+    costAmount: { type: Number },
+    costCurrency: { type: String, default: 'INR' },
+    countryCode: { type: String, default: 'IN' },
+
     sentAt: { type: Date },
     deliveredAt: { type: Date },
     readAt: { type: Date },
@@ -139,6 +192,7 @@ const WhatsAppMessageLogSchema = new Schema(
 
 WhatsAppMessageLogSchema.index({ automationKey: 1, createdAt: -1 });
 WhatsAppMessageLogSchema.index({ deliveryStatus: 1, createdAt: -1 });
+WhatsAppMessageLogSchema.index({ deliveryStatus: 1, expiresAt: 1 });
 WhatsAppMessageLogSchema.index({ recipientPhone: 1, createdAt: -1 });
 WhatsAppMessageLogSchema.index({ relatedEntityId: 1, relatedEntityType: 1 });
 WhatsAppMessageLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 180 * 24 * 60 * 60 }); // 180 days TTL

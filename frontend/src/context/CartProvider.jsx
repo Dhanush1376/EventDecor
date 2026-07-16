@@ -1,4 +1,6 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import { CartStateContext, CartDispatchContext } from './CartContext';
 import { useCartQuery } from '../hooks/useCartQueries';
@@ -6,9 +8,12 @@ import { useOptimisticCartMutation } from '../hooks/useOptimisticCartMutation';
 import { transformDbCart } from '../utils/ecommerce/cartCalculations';
 import { persistentStorage } from '../utils/storage/persistentStorage';
 import { logCartTrace, forensicHashId } from '../utils/forensic/cartTrace';
+import { GuestCartService } from '../services/GuestCartService';
+import { userService } from '../services/api/userService';
 
 export function CartProvider({ children }) {
   const { isAuthenticated, runProtectedAction } = useAuth();
+  const queryClient = useQueryClient();
 
   const [activeCartMode, setActiveCartMode] = useState(() => {
     return persistentStorage.getItem('siri_cart_mode', { fallback: 'purchase' });
@@ -41,85 +46,92 @@ export function CartProvider({ children }) {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
+  // Guest Cart Local State
+  const [guestCart, setGuestCart] = useState(() => GuestCartService.getCart());
+
+  // Merge Guest Cart on Login
+  const prevAuth = useRef(isAuthenticated);
+  const [isMerging, setIsMerging] = useState(false);
+
+  useEffect(() => {
+    const handleLoginSync = async () => {
+      if (!prevAuth.current && isAuthenticated) {
+        if (GuestCartService.hasItems()) {
+          const guestItems = GuestCartService.getCartItemsForSync();
+          setIsMerging(true);
+          try {
+            const { data } = await userService.mergeGuestCart(guestItems);
+
+            // Validate returned cart format to prevent query cache corruption
+            if (data?.cart) {
+              // Invalidate query to fetch the newly merged cart
+              await queryClient.invalidateQueries({ queryKey: ['cart', 'authenticated'] });
+            }
+
+            GuestCartService.clearCart();
+            setGuestCart(GuestCartService.getCart()); // Reset local state
+
+            if (data?.droppedItems?.length > 0) {
+              const count = data.droppedItems.length;
+              toast.error(`${count} item(s) were removed because they are no longer available.`);
+            }
+            toast.success('Your guest cart has been merged successfully.');
+            setIsCartOpen(true);
+          } catch (err) {
+            console.error('Failed to merge guest cart', err);
+            toast.error('Failed to sync guest cart. Please check your bag.');
+          } finally {
+            setIsMerging(false);
+          }
+        }
+      }
+      prevAuth.current = isAuthenticated;
+    };
+
+    handleLoginSync();
+  }, [isAuthenticated, queryClient]);
+
   const { data: cartData, isLoading: cartLoading } = useCartQuery();
 
   const purchaseCart = useMemo(() => {
-    if (isAuthenticated && cartData?.purchaseCart) {
-      const rawItems = cartData.purchaseCart.items || [];
-      const rawProductHashes = rawItems.map((i) =>
-        forensicHashId(i?.product?._id || i?.product?.id || i?._id || i?.id),
-      );
-
-      logCartTrace('CART_PROVIDER_RAW', {
-        cartType: 'purchase',
-        rawItemCount: rawItems.length,
-        rawProductHashes,
-        source: 'CartProvider.purchaseCart',
-      });
-
-      const transformed = transformDbCart(rawItems);
-      const transformedProductHashes = transformed.map((i) =>
-        forensicHashId(i?.product?._id || i?.product?.id || i?._id || i?.id),
-      );
-
-      const removedProductHashes = rawProductHashes.filter(
-        (h) => !transformedProductHashes.includes(h),
-      );
-
-      logCartTrace('CART_PROVIDER_TRANSFORMED', {
-        cartType: 'purchase',
-        transformedItemCount: transformed.length,
-        transformedProductHashes,
-        removedProductHashes,
-        source: 'CartProvider.purchaseCart',
-      });
-
-      return {
-        items: transformed,
-        summary: cartData.purchaseCart.summary,
-      };
+    if (isAuthenticated) {
+      if (cartData?.purchaseCart) {
+        const rawItems = cartData.purchaseCart.items || [];
+        const transformed = transformDbCart(rawItems);
+        return {
+          items: transformed,
+          summary: cartData.purchaseCart.summary,
+        };
+      }
+      return emptyCart;
     }
-    return emptyCart;
-  }, [isAuthenticated, cartData, emptyCart]);
+    // Return Guest Cart
+    const guestItems = guestCart.purchaseCart?.items || [];
+    return {
+      items: transformDbCart(guestItems),
+      summary: guestCart.purchaseCart?.summary || emptyCart.summary,
+    };
+  }, [isAuthenticated, cartData, guestCart, emptyCart]);
 
   const rentalCart = useMemo(() => {
-    if (isAuthenticated && cartData?.rentalCart) {
-      const rawItems = cartData.rentalCart.items || [];
-      const rawProductHashes = rawItems.map((i) =>
-        forensicHashId(i?.product?._id || i?.product?.id || i?._id || i?.id),
-      );
-
-      logCartTrace('CART_PROVIDER_RAW', {
-        cartType: 'rental',
-        rawItemCount: rawItems.length,
-        rawProductHashes,
-        source: 'CartProvider.rentalCart',
-      });
-
-      const transformed = transformDbCart(rawItems);
-      const transformedProductHashes = transformed.map((i) =>
-        forensicHashId(i?.product?._id || i?.product?.id || i?._id || i?.id),
-      );
-
-      const removedProductHashes = rawProductHashes.filter(
-        (h) => !transformedProductHashes.includes(h),
-      );
-
-      logCartTrace('CART_PROVIDER_TRANSFORMED', {
-        cartType: 'rental',
-        transformedItemCount: transformed.length,
-        transformedProductHashes,
-        removedProductHashes,
-        source: 'CartProvider.rentalCart',
-      });
-
-      return {
-        items: transformed,
-        summary: cartData.rentalCart.summary,
-      };
+    if (isAuthenticated) {
+      if (cartData?.rentalCart) {
+        const rawItems = cartData.rentalCart.items || [];
+        const transformed = transformDbCart(rawItems);
+        return {
+          items: transformed,
+          summary: cartData.rentalCart.summary,
+        };
+      }
+      return emptyRentalCart;
     }
-    return emptyRentalCart;
-  }, [isAuthenticated, cartData, emptyRentalCart]);
+    // Return Guest Cart
+    const guestItems = guestCart.rentalCart?.items || [];
+    return {
+      items: transformDbCart(guestItems),
+      summary: guestCart.rentalCart?.summary || emptyRentalCart.summary,
+    };
+  }, [isAuthenticated, cartData, guestCart, emptyRentalCart]);
 
   const customCart = emptyCart;
 
@@ -129,6 +141,7 @@ export function CartProvider({ children }) {
       : activeCartMode === 'rental'
         ? rentalCart.items
         : customCart.items;
+
   const summary =
     activeCartMode === 'purchase'
       ? purchaseCart.summary
@@ -136,15 +149,86 @@ export function CartProvider({ children }) {
         ? rentalCart.summary
         : customCart.summary;
 
-  const { addItem, attemptAddToCart, removeItem, updateQuantity, clearCart } =
-    useOptimisticCartMutation({
-      isAuthenticated,
-      activeCartMode,
-      setActiveCartMode,
-      runProtectedAction,
-      setIsCartOpen,
-      emptySummary,
-    });
+  const {
+    addItem: optAddItem,
+    removeItem: optRemoveItem,
+    updateQuantity: optUpdateQuantity,
+    clearCart: optClearCart,
+  } = useOptimisticCartMutation({
+    isAuthenticated,
+    activeCartMode,
+    setActiveCartMode,
+    runProtectedAction, // Note: we'll bypass this in useOptimisticCartMutation shortly
+    setIsCartOpen,
+    emptySummary,
+  });
+
+  // Abstracted Cart Actions
+  const addItem = useCallback(
+    (product) => {
+      setIsCartOpen(true);
+      if (isAuthenticated) {
+        optAddItem(product);
+      } else {
+        GuestCartService.addToCart(
+          product,
+          product.quantity || 1,
+          product.type || 'purchase',
+          product.rentalInfo,
+        );
+        setGuestCart(GuestCartService.getCart());
+      }
+    },
+    [isAuthenticated, optAddItem],
+  );
+
+  const attemptAddToCart = useCallback(
+    (product) => {
+      const itemType = product.type || 'purchase';
+      if (itemType !== activeCartMode) {
+        toast(
+          `Switched to ${itemType === 'rental' ? 'Rental' : itemType === 'custom' ? 'Custom' : 'Purchase'} Cart to add this item`,
+        );
+        setActiveCartMode(itemType);
+      }
+      addItem(product);
+    },
+    [activeCartMode, addItem],
+  );
+
+  const removeItem = useCallback(
+    (id) => {
+      if (isAuthenticated) {
+        optRemoveItem(id);
+      } else {
+        GuestCartService.removeFromCart(id, activeCartMode);
+        setGuestCart(GuestCartService.getCart());
+      }
+    },
+    [isAuthenticated, optRemoveItem, activeCartMode],
+  );
+
+  const updateQuantity = useCallback(
+    (id, variantOrQuantity, maybeQuantity) => {
+      if (isAuthenticated) {
+        optUpdateQuantity(id, variantOrQuantity, maybeQuantity);
+      } else {
+        const quantity = maybeQuantity !== undefined ? maybeQuantity : variantOrQuantity;
+        GuestCartService.updateQuantity(id, quantity, activeCartMode);
+        setGuestCart(GuestCartService.getCart());
+      }
+    },
+    [isAuthenticated, optUpdateQuantity, activeCartMode],
+  );
+
+  const clearCart = useCallback(() => {
+    if (isAuthenticated) {
+      optClearCart();
+    } else {
+      GuestCartService.clearCart();
+      setGuestCart(GuestCartService.getCart());
+    }
+  }, [isAuthenticated, optClearCart]);
 
   const cartCount = useMemo(() => items.reduce((acc, item) => acc + item.quantity, 0), [items]);
 
@@ -161,7 +245,7 @@ export function CartProvider({ children }) {
     [customCart.items],
   );
 
-  const subtotal = summary.subtotal;
+  const subtotal = summary?.subtotal || 0;
 
   const totalMRP = useMemo(
     () => items.reduce((acc, item) => acc + (item.oldPrice || item.price) * item.quantity, 0),
@@ -194,9 +278,9 @@ export function CartProvider({ children }) {
       activeCartMode,
       subtotal,
       totalMRP,
-      summary,
+      summary: summary || emptySummary,
       isCartOpen,
-      loading: isAuthenticated ? cartLoading : false,
+      loading: (isAuthenticated ? cartLoading : false) || isMerging,
       claimedCoupon,
       appliedCoupon,
       isInCart,
@@ -214,8 +298,10 @@ export function CartProvider({ children }) {
       subtotal,
       totalMRP,
       summary,
+      emptySummary,
       isCartOpen,
       cartLoading,
+      isMerging,
       claimedCoupon,
       appliedCoupon,
       isInCart,

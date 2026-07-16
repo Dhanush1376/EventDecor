@@ -3,6 +3,7 @@ import Review from '../../../models/Review';
 import User from '../../../models/User';
 import Product from '../../../models/Product';
 import ReturnRequest from '../../../models/ReturnRequest';
+import StoreSettings from '../../../models/StoreSettings';
 
 const PAID_STATUSES = ['captured', 'paid', 'COD Collected'] as const;
 const COD_PENDING_STATUSES = ['Pending COD'] as const;
@@ -44,6 +45,10 @@ async function buildSummary(start: Date, end: Date, heading: string): Promise<st
     ReturnRequest.countDocuments({ createdAt: range }),
   ]);
 
+  const storeSettings = (await StoreSettings.findOne().lean()) as any;
+  const storeName = storeSettings?.general?.storeName || 'Our Store';
+  const currency = storeSettings?.general?.currency || 'INR';
+
   const revenue = revenueAgg[0]?.total || 0;
   const reviewCount = reviewAgg[0]?.count || 0;
   const reviewAvg = reviewAgg[0]?.avg ? reviewAgg[0].avg.toFixed(1) : '—';
@@ -51,14 +56,14 @@ async function buildSummary(start: Date, end: Date, heading: string): Promise<st
   return `📊 *${heading}*
 ━━━━━━━━━━━━━━━━━━━━━
 📦 Orders: ${newOrders} New | ${shippedOrders} Shipped | ${deliveredOrders} Delivered
-💰 Revenue: ₹${revenue.toLocaleString('en-IN')}
+💰 Revenue: ${currency}${revenue.toLocaleString('en-IN')}
 💳 Payments: ${paidCount} Paid | ${codPendingCount} COD Pending
 📦 Inventory: ${lowStockCount} Low Stock Alerts
 ⭐ Reviews: ${reviewCount} New (Avg: ${reviewAvg}★)
 👥 Customers: ${newCustomers} New Registrations
 🔄 Returns: ${returnsRequested} Requested
 ━━━━━━━━━━━━━━━━━━━━━
-Siri Arts & Crafts • Auto-generated`;
+${storeName} • Auto-generated`;
 }
 
 export class WhatsAppSummaryGenerator {

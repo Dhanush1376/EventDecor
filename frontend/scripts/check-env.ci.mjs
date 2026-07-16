@@ -1,6 +1,24 @@
+import fs from 'fs';
+import path from 'path';
+
 /**
  * Validates VITE_* variables required for production builds (run in CI before vite build).
  */
+
+const envPath = path.resolve(process.cwd(), '.env');
+if (fs.existsSync(envPath)) {
+  const envFile = fs.readFileSync(envPath, 'utf8');
+  envFile.split('\n').forEach(line => {
+    const match = line.match(/^([^=]+)=(.*)$/);
+    if (match) {
+      const key = match[1].trim();
+      if (!process.env[key]) {
+        process.env[key] = match[2].trim();
+      }
+    }
+  });
+}
+
 const required = [
   'VITE_API_URL',
   'VITE_SITE_URL',

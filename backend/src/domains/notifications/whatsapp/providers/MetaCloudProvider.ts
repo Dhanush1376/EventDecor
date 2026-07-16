@@ -7,7 +7,8 @@ export class MetaCloudProvider implements IMessagingProvider {
 
   private get baseUrl() {
     const phoneId = process.env.WA_PHONE_ID;
-    return `https://graph.facebook.com/v18.0/${phoneId}/messages`;
+    const apiVersion = process.env.WA_API_VERSION || 'v21.0';
+    return `https://graph.facebook.com/${apiVersion}/${phoneId}/messages`;
   }
 
   private get headers() {
@@ -32,10 +33,14 @@ export class MetaCloudProvider implements IMessagingProvider {
         { headers: this.headers, timeout: 5000 },
       );
 
+      const rateLimitInfo = response.headers['x-business-use-case-usage']
+        ? JSON.parse(response.headers['x-business-use-case-usage'])
+        : undefined;
+
       return {
         success: true,
         messageId: response.data.messages?.[0]?.id || `wam-${Date.now()}`,
-        raw: response.data,
+        raw: { ...response.data, rateLimitInfo },
       };
     } catch (err: any) {
       logger.error(`[MetaCloudProvider] Text message failed`, err.response?.data || err.message);
@@ -67,10 +72,14 @@ export class MetaCloudProvider implements IMessagingProvider {
         { headers: this.headers, timeout: 5000 },
       );
 
+      const rateLimitInfo = response.headers['x-business-use-case-usage']
+        ? JSON.parse(response.headers['x-business-use-case-usage'])
+        : undefined;
+
       return {
         success: true,
         messageId: response.data.messages?.[0]?.id || `wam-${Date.now()}`,
-        raw: response.data,
+        raw: { ...response.data, rateLimitInfo },
       };
     } catch (err: any) {
       logger.error(
@@ -101,10 +110,14 @@ export class MetaCloudProvider implements IMessagingProvider {
         { headers: this.headers, timeout: 8000 },
       );
 
+      const rateLimitInfo = response.headers['x-business-use-case-usage']
+        ? JSON.parse(response.headers['x-business-use-case-usage'])
+        : undefined;
+
       return {
         success: true,
         messageId: response.data.messages?.[0]?.id || `wam-${Date.now()}`,
-        raw: response.data,
+        raw: { ...response.data, rateLimitInfo },
       };
     } catch (err: any) {
       logger.error(`[MetaCloudProvider] Media message failed`, err.response?.data || err.message);
@@ -116,6 +129,17 @@ export class MetaCloudProvider implements IMessagingProvider {
     if (!process.env.WA_PHONE_ID || !process.env.WA_TOKEN) {
       return { status: 'down', lastChecked: new Date(), error: 'Missing Credentials' };
     }
-    return { status: 'healthy', lastChecked: new Date() }; // In production, we'd ping graph.facebook.com
+    try {
+      const apiVersion = process.env.WA_API_VERSION || 'v21.0';
+      const phoneId = process.env.WA_PHONE_ID;
+      await axios.get(`https://graph.facebook.com/${apiVersion}/${phoneId}`, {
+        headers: this.headers,
+        timeout: 5000,
+      });
+      return { status: 'healthy', lastChecked: new Date() };
+    } catch (error: any) {
+      logger.error(`[MetaCloudProvider] Health check failed`, error.message);
+      return { status: 'down', lastChecked: new Date(), error: error.message };
+    }
   }
 }

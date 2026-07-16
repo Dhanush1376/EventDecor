@@ -409,10 +409,8 @@ export function ProductInfo({
       </div>
 
       {/* Description Section */}
-      <div className="space-y-2 mt-2 md:hidden">
-        <h3 className="font-label-sm text-[10px] text-on-surface/35 uppercase tracking-[0.25em] font-medium">
-          About this Item
-        </h3>
+      <div className="space-y-1 mt-0 pt-1 md:hidden">
+        <h3 className="font-bold text-[14px] text-on-surface/90">About this Item</h3>
         <p className="font-body-md text-on-surface/80 font-normal leading-relaxed text-[14px] sm:text-[15px]">
           {product.description ||
             'A beautiful handmade item that mixes traditional Indian design with modern style.'}

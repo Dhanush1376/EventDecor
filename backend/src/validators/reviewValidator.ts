@@ -24,12 +24,12 @@ export const createReviewSchema = z.object({
     .array(
       z.object({
         secureUrl: z.string().url('Invalid image URL format'),
-        publicId: z.string(),
+        publicId: z.string().optional(),
         width: z.number().optional(),
         height: z.number().optional(),
         bytes: z.number().optional(),
         format: z.string().optional(),
-        uploadedAt: z.string().datetime().optional(),
+        uploadedAt: z.any().optional(),
       }),
     )
     .max(5, 'Maximum 5 images allowed')
@@ -55,14 +55,20 @@ export const updateReviewSchema = z.object({
     .array(
       z.object({
         secureUrl: z.string().url('Invalid image URL format'),
-        publicId: z.string(),
+        publicId: z.string().optional(),
         width: z.number().optional(),
         height: z.number().optional(),
         bytes: z.number().optional(),
         format: z.string().optional(),
-        uploadedAt: z.string().datetime().optional(),
+        uploadedAt: z.any().optional(),
       }),
     )
     .max(5, 'Maximum 5 images allowed')
     .optional(),
+});
+
+export const updateReviewStatusSchema = z.object({
+  status: z.enum(['approved', 'rejected', 'pending']),
+  moderationReason: z.string().max(500, 'Reason too long').optional(),
+  internalNotes: z.string().max(1000, 'Notes too long').optional(),
 });

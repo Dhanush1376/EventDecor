@@ -10,7 +10,13 @@ const RecipientManager = () => {
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ name: '', phone: '', role: 'owner', isActive: true });
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    role: 'owner',
+    isActive: true,
+    quietHours: { enabled: false, start: '22:00', end: '08:00' },
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   const fetchRecipients = async () => {
@@ -31,13 +37,25 @@ const RecipientManager = () => {
   }, []);
 
   const handleOpenAdd = () => {
-    setFormData({ name: '', phone: '', role: 'owner', isActive: true });
+    setFormData({
+      name: '',
+      phone: '',
+      role: 'owner',
+      isActive: true,
+      quietHours: { enabled: false, start: '22:00', end: '08:00' },
+    });
     setEditingId(null);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (rec) => {
-    setFormData({ name: rec.name, phone: rec.phone, role: rec.role, isActive: rec.isActive });
+    setFormData({
+      name: rec.name,
+      phone: rec.phone,
+      role: rec.role,
+      isActive: rec.isActive,
+      quietHours: rec.quietHours || { enabled: false, start: '22:00', end: '08:00' },
+    });
     setEditingId(rec._id);
     setIsModalOpen(true);
   };
@@ -100,6 +118,7 @@ const RecipientManager = () => {
               <th className="p-4 font-semibold">Name</th>
               <th className="p-4 font-semibold">Phone Number</th>
               <th className="p-4 font-semibold">Role</th>
+              <th className="p-4 font-semibold">Quiet Hours</th>
               <th className="p-4 font-semibold text-center">Status</th>
               <th className="p-4 font-semibold text-right">Actions</th>
             </tr>
@@ -116,6 +135,16 @@ const RecipientManager = () => {
                   <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-[12px] font-medium capitalize">
                     {rec.role}
                   </span>
+                </td>
+                <td className="p-4">
+                  {rec.quietHours?.enabled ? (
+                    <span className="text-[12px] text-[var(--admin-text-secondary)] flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">bedtime</span>
+                      {rec.quietHours.start} - {rec.quietHours.end}
+                    </span>
+                  ) : (
+                    <span className="text-[12px] text-gray-400">Disabled</span>
+                  )}
                 </td>
                 <td className="p-4 text-center">
                   {rec.isActive ? (
@@ -148,7 +177,7 @@ const RecipientManager = () => {
             ))}
             {recipients.length === 0 && (
               <tr>
-                <td colSpan="5" className="p-8 text-center text-[var(--admin-text-tertiary)]">
+                <td colSpan="6" className="p-8 text-center text-[var(--admin-text-tertiary)]">
                   No recipients found.
                 </td>
               </tr>
@@ -245,6 +274,69 @@ const RecipientManager = () => {
                       <option value="false">Inactive</option>
                     </select>
                   </div>
+                </div>
+
+                {/* Quiet Hours */}
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="block text-[13px] font-bold text-[var(--admin-text-primary)]">
+                      Quiet Hours
+                    </label>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={formData.quietHours.enabled}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            quietHours: { ...formData.quietHours, enabled: e.target.checked },
+                          })
+                        }
+                      />
+                      <div className="w-8 h-4 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-500"></div>
+                    </label>
+                  </div>
+                  {formData.quietHours.enabled && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">
+                          Start Time
+                        </label>
+                        <input
+                          type="time"
+                          className="admin-input w-full text-[13px]"
+                          value={formData.quietHours.start}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              quietHours: { ...formData.quietHours, start: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">
+                          End Time
+                        </label>
+                        <input
+                          type="time"
+                          className="admin-input w-full text-[13px]"
+                          value={formData.quietHours.end}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              quietHours: { ...formData.quietHours, end: e.target.value },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-[11px] text-gray-400 mt-2 leading-snug">
+                    When enabled, non-critical notifications will not be sent to this recipient
+                    between these hours.
+                  </p>
                 </div>
 
                 <div className="pt-4 mt-6 border-t border-gray-100 flex justify-end gap-3">

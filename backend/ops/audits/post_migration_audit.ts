@@ -26,7 +26,7 @@ async function runPostMigrationAudit() {
   let cloudinaryImages = 0;
   let legacyImages = 0;
   let renderUploads = 0;
-  let eagerVariantsVerified = true; // Based on Cloudinary URL structure
+  const eagerVariantsVerified = true; // Based on Cloudinary URL structure
 
   for (const { name, model, imageFields } of models) {
     const docs = await model.find({}).lean();

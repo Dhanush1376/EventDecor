@@ -15,5 +15,15 @@ export const WhatsAppTriggers = {
 
   onDailySummary: () => WhatsAppAutomationEngine.trigger('daily_summary', {}),
 
-  // More triggers as needed
+  onAbandonedCart: (cartId: string, userId: string) =>
+    WhatsAppAutomationEngine.trigger('abandoned_cart', { cartId, userId }),
+
+  onOutForDelivery: (orderId: string) =>
+    WhatsAppAutomationEngine.trigger('out_for_delivery', { orderId }),
+
+  onOrderDelivered: (orderId: string) =>
+    WhatsAppAutomationEngine.trigger('order_delivered', { orderId }),
+
+  onReviewRequest: (orderId: string) =>
+    WhatsAppAutomationEngine.trigger('review_request', { orderId }),
 };

@@ -1,6 +1,5 @@
 import '../src/config/loadEnv'; // Ensures all environment variables load properly
 import mongoose from 'mongoose';
-import path from 'path';
 import { randomUUID as uuidv4 } from 'crypto';
 import { WhatsAppAutomationEngine } from '../src/domains/notifications/whatsapp/WhatsAppAutomationEngine';
 import WhatsAppMessageLog from '../src/models/WhatsAppMessageLog';

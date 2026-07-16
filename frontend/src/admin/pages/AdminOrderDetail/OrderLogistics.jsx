@@ -13,7 +13,7 @@ export function OrderLogistics({ order, trackingQR }) {
       <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-5 flex items-center justify-between">
         <span>Enterprise Logistics</span>
         <span className="text-[10px] bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] px-2 py-0.5 rounded-[var(--admin-radius-sm)] font-bold uppercase tracking-wider border border-[var(--admin-border-subtle)]">
-          {order.courierPartner || 'Delhivery'}
+          {order.courierPartner || 'Standard Courier'}
         </span>
       </h2>
 

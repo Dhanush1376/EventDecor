@@ -4,7 +4,6 @@ import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
 import X from 'lucide-react/dist/esm/icons/x';
 import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
 import Info from 'lucide-react/dist/esm/icons/info';
-import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import { useRecycleBin } from '../hooks/useRecycleBin';
 import { useAdminSecurity } from '../hooks/useAdminSecurity';
 import { recycleBinApi } from '../services/recycleBinService';

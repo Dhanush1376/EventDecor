@@ -72,6 +72,10 @@ export const userService = {
     const response = await api.put('/users/cart', { cartItems });
     return response.data;
   },
+  mergeGuestCart: async (guestCartItems) => {
+    const response = await api.post('/users/cart/merge', { cartItems: guestCartItems });
+    return response.data;
+  },
   removeFromCart: async (productId) => {
     const response = await api.delete(`/users/cart/${productId}`);
     return response.data;

@@ -3,11 +3,17 @@ import whatsappAutomationService from '../../services/whatsappAutomationService'
 import { toast } from 'react-hot-toast';
 import AutomationCategoryGroup from './AutomationCategoryGroup';
 import ConfigDrawer from './ConfigDrawer';
+import DryRunModal from './DryRunModal';
+import VisualAutomationBuilder from './VisualAutomationBuilder';
+import GlobalSettingsDrawer from './GlobalSettingsDrawer';
 
 const AutomationToggleCenter = () => {
   const [automations, setAutomations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAutomation, setSelectedAutomation] = useState(null);
+  const [dryRunAutomation, setDryRunAutomation] = useState(null);
+  const [visualBuilderAutomation, setVisualBuilderAutomation] = useState(null);
+  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState(false);
 
   useEffect(() => {
     const fetchAutomations = async () => {
@@ -51,8 +57,8 @@ const AutomationToggleCenter = () => {
           Automation Triggers
         </h2>
         <button
-          className="admin-btn admin-btn-primary"
-          onClick={() => toast.error('Config drawer stub')}
+          className="admin-btn admin-btn-primary flex items-center gap-2"
+          onClick={() => setIsGlobalSettingsOpen(true)}
         >
           <span className="material-symbols-outlined text-[18px]">settings</span> Global Settings
         </button>
@@ -95,8 +101,8 @@ const AutomationToggleCenter = () => {
                     </p>
                   </div>
 
-                  <div className="flex justify-between items-center pt-3 border-t border-[var(--admin-border-subtle)]">
-                    <span className="text-[11px] text-[var(--admin-text-secondary)]">
+                  <div className="pt-3 border-t border-[var(--admin-border-subtle)] space-y-3">
+                    <span className="text-[11px] text-[var(--admin-text-secondary)] block">
                       {(() => {
                         const count = (auto.recipientRoles || []).filter(
                           (r) => r.enabled !== false,
@@ -104,12 +110,22 @@ const AutomationToggleCenter = () => {
                         return count === 1 ? '1 recipient' : `${count} recipients`;
                       })()}
                     </span>
-                    <button
-                      className="text-[var(--admin-accent)] hover:underline text-[12px] font-medium"
-                      onClick={() => setSelectedAutomation(auto)}
-                    >
-                      Configure →
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSelectedAutomation(auto)}
+                        className="flex-1 py-1.5 text-[11px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded transition-colors flex items-center justify-center gap-1 border border-blue-200"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">edit_document</span>
+                        Edit Template
+                      </button>
+                      <button
+                        onClick={() => setSelectedAutomation(auto)}
+                        className="flex-1 py-1.5 text-[11px] font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 rounded transition-colors border border-gray-200 flex items-center justify-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">group</span>
+                        Recipients
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -121,6 +137,25 @@ const AutomationToggleCenter = () => {
         isOpen={!!selectedAutomation}
         onClose={() => setSelectedAutomation(null)}
         automation={selectedAutomation}
+      />
+
+      <DryRunModal
+        isOpen={!!dryRunAutomation}
+        onClose={() => setDryRunAutomation(null)}
+        automation={dryRunAutomation}
+      />
+
+      {visualBuilderAutomation && (
+        <VisualAutomationBuilder
+          automation={visualBuilderAutomation}
+          onCancel={() => setVisualBuilderAutomation(null)}
+          onSave={() => setVisualBuilderAutomation(null)}
+        />
+      )}
+
+      <GlobalSettingsDrawer
+        isOpen={isGlobalSettingsOpen}
+        onClose={() => setIsGlobalSettingsOpen(false)}
       />
     </div>
   );

@@ -214,20 +214,6 @@ export const navSections = [
         keywords: 'promo, discount, sale, coupon',
         domain: 'orders',
       },
-      {
-        label: 'Marketing Campaigns',
-        icon: 'campaign',
-        path: '/admin/campaigns',
-        keywords: 'marketing, ads, promo, email',
-        domain: 'storefront',
-      },
-      {
-        label: 'Reward Campaigns',
-        icon: 'stars',
-        path: '/admin/reward-campaigns',
-        keywords: 'loyalty, rewards, cashback, rules, triggers',
-        domain: 'storefront',
-      },
     ],
   },
 
@@ -252,36 +238,7 @@ export const navSections = [
       },
     ],
   },
-  {
-    label: 'Operations',
-    subtitle: 'Admin tools and approvals',
-    roles: ['owner', 'manager', 'support'],
-    items: [
-      {
-        label: 'Find Anything',
-        icon: 'manage_search',
-        path: '/admin/search',
-        keywords: 'search, global, oms, enterprise',
-        domain: 'settings',
-      },
-      {
-        label: 'Needs Approval',
-        icon: 'verified_user',
-        path: '/admin/approvals',
-        keywords: 'approval, admin, override, refund',
-        domain: 'danger',
-        roles: ['owner', 'manager'],
-      },
-      {
-        label: 'Automation Rules',
-        icon: 'rule_folder',
-        path: '/admin/rules',
-        keywords: 'rules, engine, logic, automation',
-        domain: 'settings',
-        roles: ['owner', 'manager'],
-      },
-    ],
-  },
+
   {
     label: 'Insights',
     subtitle: 'Business analytics and reports',

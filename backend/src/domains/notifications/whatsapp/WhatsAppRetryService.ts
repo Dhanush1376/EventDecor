@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import logger from '../../../config/logger';
 import WhatsAppMessageLog from '../../../models/WhatsAppMessageLog';
 import { whatsappRetryQueue } from '../../../jobs/whatsappQueues';
-import { WhatsAppProviderFactory } from './providers/WhatsAppProviderFactory';
 
 export class WhatsAppRetryService {
   static async scheduleRetry(messageLogId: string): Promise<void> {
@@ -18,8 +17,15 @@ export class WhatsAppRetryService {
       return;
     }
 
-    // Default intervals: [60, 300, 900, 1800]
-    const defaultIntervals = [60, 300, 900, 1800];
+    // Read intervals from environment config or fallback to defaults
+    let defaultIntervals = [60, 300, 900, 1800];
+    if (process.env.WA_RETRY_INTERVALS) {
+      try {
+        defaultIntervals = JSON.parse(process.env.WA_RETRY_INTERVALS);
+      } catch (e) {
+        logger.warn('Failed to parse WA_RETRY_INTERVALS. Using defaults.');
+      }
+    }
     const delaySeconds = defaultIntervals[log.retryCount] || 3600;
 
     log.nextRetryAt = new Date(Date.now() + delaySeconds * 1000);
@@ -86,7 +92,8 @@ export class WhatsAppRetryService {
     if (log.deliveryStatus === 'sent' || log.deliveryStatus === 'delivered') return; // Already successful
 
     try {
-      const provider = WhatsAppProviderFactory.getProvider();
+      const { SmartRouter } = require('./SmartRouter');
+      const provider = await SmartRouter.getRoute('utility');
 
       let response;
       if (log.messageType === 'media' && log.attachments?.[0]?.url) {

@@ -14,7 +14,10 @@ import { getPaginationOptions, formatPaginationResponse } from '../../utils/pagi
 /**
  * Computes product reviews average and total count atomically using MongoDB aggregation pipeline
  */
-export const updateProductRating = async (productId: string | mongoose.Types.ObjectId) => {
+export const updateProductRating = async (
+  productId: string | mongoose.Types.ObjectId,
+  session?: mongoose.ClientSession,
+) => {
   if (!productId) return;
 
   const stats = await Review.aggregate([
@@ -30,20 +33,31 @@ export const updateProductRating = async (productId: string | mongoose.Types.Obj
 
   if (stats.length > 0) {
     const { avgRating, reviewCount } = stats[0];
-    await Product.findByIdAndUpdate(productId, {
-      rating: Math.round(avgRating * 10) / 10,
-      reviews: reviewCount,
-    });
+    await Product.findByIdAndUpdate(
+      productId,
+      {
+        rating: Math.round(avgRating * 10) / 10,
+        reviews: reviewCount,
+      },
+      { session },
+    );
   } else {
     // Zero out if there are no approved reviews remaining
-    await Product.findByIdAndUpdate(productId, {
-      rating: 0,
-      reviews: 0,
-    });
+    await Product.findByIdAndUpdate(
+      productId,
+      {
+        rating: 0,
+        reviews: 0,
+      },
+      { session },
+    );
   }
 };
 
-export const updateShowcaseRating = async (showcaseId: string | mongoose.Types.ObjectId) => {
+export const updateShowcaseRating = async (
+  showcaseId: string | mongoose.Types.ObjectId,
+  session?: mongoose.ClientSession,
+) => {
   if (!showcaseId) return;
 
   const stats = await Review.aggregate([
@@ -59,15 +73,23 @@ export const updateShowcaseRating = async (showcaseId: string | mongoose.Types.O
 
   if (stats.length > 0) {
     const { avgRating, reviewCount } = stats[0];
-    await ShowcaseCollection.findByIdAndUpdate(showcaseId, {
-      rating: Math.round(avgRating * 10) / 10,
-      reviewCount: reviewCount,
-    });
+    await ShowcaseCollection.findByIdAndUpdate(
+      showcaseId,
+      {
+        rating: Math.round(avgRating * 10) / 10,
+        reviewCount: reviewCount,
+      },
+      { session },
+    );
   } else {
-    await ShowcaseCollection.findByIdAndUpdate(showcaseId, {
-      rating: 0,
-      reviewCount: 0,
-    });
+    await ShowcaseCollection.findByIdAndUpdate(
+      showcaseId,
+      {
+        rating: 0,
+        reviewCount: 0,
+      },
+      { session },
+    );
   }
 };
 
@@ -432,19 +454,8 @@ export const deleteReview = asyncHandler(async (req: Request, res: Response) => 
     await review.save();
   }
 
-  // Clean up any uploaded review images from Cloudinary to prevent orphan costs
-  if (review.reviewImages && review.reviewImages.length > 0) {
-    const publicIds = review.reviewImages.map((img: any) => img.publicId).filter(Boolean);
-    if (publicIds.length > 0) {
-      const { CloudinaryAdapter } = require('../../services/media/CloudinaryAdapter');
-      const logger = require('../../config/logger').default || require('../../config/logger');
-      try {
-        await CloudinaryAdapter.deleteMultiple(publicIds);
-      } catch (err: any) {
-        logger.error(`Failed to delete review images from Cloudinary: ${err}`);
-      }
-    }
-  } else if (Array.isArray(review.images) && review.images.length > 0) {
+  // Soft-delete images by dropping references to 0
+  if (Array.isArray(review.images) && review.images.length > 0) {
     const { MediaService } = require('../../services/media/MediaService');
     const logger = require('../../config/logger').default || require('../../config/logger');
     try {
@@ -471,6 +482,97 @@ export const deleteReview = asyncHandler(async (req: Request, res: Response) => 
   }
 
   res.status(200).json(new ApiResponse(true, 'Review deleted', review));
+});
+
+export const updateReviewStatus = asyncHandler(async (req: Request, res: Response) => {
+  const { status, moderationReason, internalNotes } = req.body;
+  const reviewId = req.params.id;
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  let review;
+  try {
+    review = await Review.findById(reviewId).session(session);
+
+    if (!review) throw new ApiError(404, 'Review not found');
+
+    review.status = status;
+    review.moderatedBy = new mongoose.Types.ObjectId(req.user!.id);
+    review.moderatedAt = new Date();
+    if (moderationReason !== undefined) review.moderationReason = moderationReason;
+    if (internalNotes !== undefined) review.internalNotes = internalNotes;
+
+    await review.save({ session });
+
+    // Atomically recalculate ratings
+    if (review.product) {
+      await updateProductRating(review.product, session);
+    }
+    if (review.showcase) {
+      await updateShowcaseRating(review.showcase, session);
+    }
+
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+
+  try {
+    const { emitAdminEvent } = require('../../socket');
+    emitAdminEvent('review_update', { reviewId: review._id });
+  } catch (e) {
+    const logger = require('../../config/logger').default || require('../../config/logger');
+    logger.debug('Failed to emit review_update event', e);
+  }
+
+  res.status(200).json(new ApiResponse(true, 'Review status updated successfully', review));
+});
+
+export const bulkUpdateReviewStatus = asyncHandler(async (req: Request, res: Response) => {
+  const { reviewIds, status, moderationReason, internalNotes } = req.body;
+
+  if (!Array.isArray(reviewIds) || reviewIds.length === 0) {
+    throw new ApiError(400, 'reviewIds array is required');
+  }
+
+  const reviews = await Review.find({ _id: { $in: reviewIds } });
+
+  const updatedReviews = [];
+  const productIds = new Set<string>();
+  const showcaseIds = new Set<string>();
+
+  for (const review of reviews) {
+    review.status = status;
+    review.moderatedBy = new mongoose.Types.ObjectId(req.user!.id);
+    review.moderatedAt = new Date();
+    if (moderationReason !== undefined) review.moderationReason = moderationReason;
+    if (internalNotes !== undefined) review.internalNotes = internalNotes;
+    await review.save();
+    updatedReviews.push(review._id);
+
+    if (review.product) productIds.add(review.product.toString());
+    if (review.showcase) showcaseIds.add(review.showcase.toString());
+  }
+
+  // Recalculate ratings
+  for (const productId of productIds) {
+    await updateProductRating(productId);
+  }
+  for (const showcaseId of showcaseIds) {
+    await updateShowcaseRating(showcaseId);
+  }
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(true, `Successfully updated ${updatedReviews.length} reviews`, {
+        updatedReviews,
+      }),
+    );
 });
 
 export const getPublicReviews = asyncHandler(async (req: Request, res: Response) => {

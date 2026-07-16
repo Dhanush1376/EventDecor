@@ -9,7 +9,6 @@ import Order from '../src/models/Order';
 import RentalOrder from '../src/models/RentalOrder';
 import EventJob from '../src/domains/event_operations/models/EventJob';
 import CustomOrder from '../src/models/CustomOrder';
-import Transaction from '../src/models/Transaction';
 import { TransactionService } from '../src/services/TransactionService';
 
 async function migrateTransactions() {

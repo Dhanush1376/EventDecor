@@ -45,7 +45,7 @@ const TemplatePreviewer = ({ templateText = '' }) => {
       {/* Chat Area */}
       <div className="flex-1 p-4 bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat overflow-y-auto">
         {/* Mock Message Bubble */}
-        <div className="max-w-[85%] bg-white rounded-lg rounded-tl-none p-2 pb-6 shadow-sm relative text-[14px] text-[#111B21] leading-snug">
+        <div className="max-w-[85%] bg-white rounded-xl rounded-tl-none p-3.5 pb-7 shadow-sm relative text-[14.5px] text-[#111B21] leading-snug">
           <div
             className="whitespace-pre-wrap break-words"
             dangerouslySetInnerHTML={parseWhatsAppMarkdown(templateText)}

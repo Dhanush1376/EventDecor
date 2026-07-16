@@ -19,6 +19,10 @@ export interface IReview extends ISoftDeleted {
     uploadedAt?: Date;
   }[];
   status: 'pending' | 'approved' | 'rejected';
+  moderatedBy?: mongoose.Types.ObjectId;
+  moderatedAt?: Date;
+  moderationReason?: string;
+  internalNotes?: string;
   location?: string;
   eventType?: string;
   favoriteElement?: string;
@@ -42,7 +46,7 @@ const ReviewSchema: Schema = new Schema(
     reviewImages: [
       {
         secureUrl: { type: String, required: true },
-        publicId: { type: String, required: true },
+        publicId: { type: String, required: false },
         width: { type: Number },
         height: { type: Number },
         bytes: { type: Number },
@@ -55,6 +59,10 @@ const ReviewSchema: Schema = new Schema(
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending',
     },
+    moderatedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    moderatedAt: { type: Date },
+    moderationReason: { type: String },
+    internalNotes: { type: String },
     location: { type: String, default: 'Ongole' },
     eventType: { type: String, default: 'Traditional Celebration' },
     favoriteElement: { type: String },

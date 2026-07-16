@@ -57,6 +57,12 @@ export const registerApiRoutes = (
     noCacheMiddleware,
     lazyRouter('./notifications/whatsappAutomationRoutes'),
   );
+  apiRouter.use(
+    '/notifications/whatsapp-rbac',
+    noCacheMiddleware,
+    lazyRouter('./notifications/whatsappRBACRoutes'),
+  );
+  apiRouter.use('/webhooks', lazyRouter('./notifications/whatsappWebhookRoutes'));
   apiRouter.use('/notification-center', lazyRouter('./notifications/notificationCenterRoutes'));
   apiRouter.use('/policies', lazyRouter('./customer/policyRoutes'));
   apiRouter.use('/custom-orders', lazyRouter('./commerce/customOrderRoutes'));

@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import { clearAllCaches } from '../src/services/search/searchCache';
 import { initRedis, closeRedisConnections, redisClient } from '../src/utils/cache/redis';
 

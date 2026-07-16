@@ -37,6 +37,12 @@ export function ProductReviewImages() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activePhotoIndex, setActivePhotoIndex] = useState(null); // index in the flat list of photos
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(true);
+
+  // Reset drawer state when modal opens
+  useEffect(() => {
+    setIsMobileDrawerOpen(true);
+  }, [activePhotoIndex]);
 
   useEffect(() => {
     const fetchAllReviews = async () => {
@@ -93,6 +99,36 @@ export function ProductReviewImages() {
     }
   };
 
+  // Touch Swipe Handlers
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const isSwiping = React.useRef(false);
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    isSwiping.current = false;
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+
+    if (Math.abs(distance) > minSwipeDistance) {
+      isSwiping.current = true; // Prevent drawer toggle on this tap
+      if (distance > 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
+    }
+  };
+
   if (productLoading || (loading && photos.length === 0)) {
     return (
       <div className="min-h-screen pt-32 pb-16 bg-surface flex items-center justify-center">
@@ -109,32 +145,26 @@ export function ProductReviewImages() {
       />
 
       <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop space-y-8">
-        {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 font-label text-[11px] uppercase tracking-widest text-[#685c57] font-bold">
-          <Link
-            to={`/product/${id}`}
-            className="hover:text-primary transition-colors flex items-center gap-1"
-          >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-            Back to masterpiece
-          </Link>
-          <span className="opacity-30">/</span>
-          <span className="text-[#2d2b29] truncate font-bold">Customer Gallery</span>
-        </nav>
+        {/* Header & Back Button */}
+        <div className="flex flex-col border-b border-neutral-200/60 pb-6">
+          <div className="border-b border-black/5 pb-1 mb-1.5">
+            <Link
+              to={`/product/${id}`}
+              className="inline-flex items-center gap-1.5 font-label text-[10px] uppercase tracking-widest text-neutral-400 hover:text-primary transition-colors font-bold w-fit"
+            >
+              <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+              Back to Product
+            </Link>
+          </div>
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/5 pb-6">
           <div>
-            <span className="font-label text-[10px] uppercase tracking-[0.35em] text-primary font-bold block mb-1">
+            <h2 className="font-display text-[26px] lg:text-[32px] text-neutral-900 font-semibold tracking-tight">
               Customer Gallery
-            </span>
-            <h2 className="font-display text-2xl lg:text-3xl text-black font-bold tracking-tight">
-              Real Setup Inspiration
             </h2>
             {product && (
-              <p className="font-body text-xs text-black/40 mt-1">
-                Visual stories submitted by buyers of{' '}
-                <span className="font-semibold text-black">{product.title}</span>
+              <p className="font-body text-[14px] text-neutral-500 mt-1.5">
+                Real setup photos of{' '}
+                <span className="font-medium text-neutral-800">{product.title}</span>
               </p>
             )}
           </div>
@@ -198,20 +228,31 @@ export function ProductReviewImages() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-5xl h-full lg:h-[80vh] bg-white rounded-t-[32px] lg:rounded-[28px] overflow-hidden flex flex-col lg:flex-row shadow-2xl z-[100000]"
+              className="relative w-full max-w-5xl h-full lg:h-[80vh] bg-black lg:bg-white rounded-none lg:rounded-[28px] overflow-hidden flex flex-col lg:flex-row shadow-2xl z-[100000]"
             >
               {/* Image Column */}
-              <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden h-[50vh] lg:h-full group">
+              <div
+                className="flex-1 bg-black relative flex items-center justify-center overflow-hidden min-h-0 group cursor-pointer"
+                onClick={() => {
+                  if (!isSwiping.current) setIsMobileDrawerOpen(!isMobileDrawerOpen);
+                }}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+              >
                 <img
                   src={activePhoto.imgUrl}
                   alt="Customer Upload"
-                  className="w-full h-full object-contain max-h-full"
+                  className="w-full h-full object-contain"
                 />
 
                 {/* Left/Right Nav Indicators inside photo */}
                 {activePhotoIndex > 0 && (
                   <button
-                    onClick={handlePrev}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePrev();
+                    }}
                     className="absolute left-4 w-11 h-11 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[20px]">chevron_left</span>
@@ -219,7 +260,10 @@ export function ProductReviewImages() {
                 )}
                 {activePhotoIndex < photos.length - 1 && (
                   <button
-                    onClick={handleNext}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleNext();
+                    }}
                     className="absolute right-4 w-11 h-11 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[20px]">chevron_right</span>
@@ -228,22 +272,40 @@ export function ProductReviewImages() {
               </div>
 
               {/* Review Context Details Column */}
-              <div className="w-full lg:w-[380px] bg-white flex flex-col p-6 overflow-y-auto max-h-[50vh] lg:max-h-full shrink-0">
+              <div
+                className={`w-full lg:w-[420px] bg-white/95 backdrop-blur-xl flex flex-col shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] lg:shadow-[-10px_0_30px_rgba(0,0,0,0.03)] z-10 rounded-t-[32px] lg:rounded-none lg:rounded-tr-[28px] lg:rounded-br-[28px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                  isMobileDrawerOpen
+                    ? 'max-h-[60vh] lg:max-h-full p-8 pt-10 lg:pt-8 opacity-100 overflow-y-auto'
+                    : 'max-h-0 lg:max-h-full p-0 lg:p-8 opacity-0 lg:opacity-100 overflow-hidden'
+                }`}
+              >
+                {/* Mobile Drawer Drag Handle */}
+                <div
+                  className="lg:hidden absolute top-0 left-0 right-0 flex justify-center py-3 cursor-pointer"
+                  onClick={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
+                >
+                  <div className="w-12 h-1.5 bg-neutral-300 rounded-full opacity-60"></div>
+                </div>
+
                 {/* Close Button Header */}
-                <div className="flex justify-between items-center pb-4 border-b border-black/5">
-                  <h4 className="font-display font-bold text-lg text-black">celebration review</h4>
+                <div className="flex justify-between items-center pb-6 border-b border-neutral-200/60">
+                  <h4 className="font-display font-semibold text-[22px] tracking-tight text-neutral-800 capitalize">
+                    {activePhoto.review.title || 'Customer Review'}
+                  </h4>
                   <button
                     onClick={() => setActivePhotoIndex(null)}
-                    className="w-9 h-9 min-h-0 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center transition-all"
+                    className="w-10 h-10 min-h-0 rounded-full bg-neutral-100 hover:bg-neutral-800 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm"
                   >
-                    <span className="material-symbols-outlined text-[18px] text-black">close</span>
+                    <span className="material-symbols-outlined text-[20px] transition-colors">
+                      close
+                    </span>
                   </button>
                 </div>
 
                 {/* Reviewer Meta */}
-                <div className="py-5 flex items-center gap-3 border-b border-black/5">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                    <span className="font-display text-primary text-sm font-bold">
+                <div className="py-6 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0 shadow-inner">
+                    <span className="font-display text-primary text-base font-bold tracking-wider">
                       {(activePhoto.review.customer?.name || activePhoto.review.customerName || 'C')
                         .split(' ')
                         .map((n) => n[0])
@@ -252,16 +314,16 @@ export function ProductReviewImages() {
                         .slice(0, 2)}
                     </span>
                   </div>
-                  <div>
-                    <h5 className="font-body text-sm font-semibold text-black leading-tight">
+                  <div className="flex flex-col justify-center">
+                    <h5 className="font-body text-base font-medium text-neutral-900 leading-tight">
                       {activePhoto.review.customer?.name ||
                         activePhoto.review.customerName ||
                         'Customer'}
                     </h5>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-2 mt-1">
                       {activePhoto.review.verified && (
-                        <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-green-100">
-                          <span className="material-symbols-outlined text-[10px]">verified</span>
+                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full border border-emerald-200/50 shadow-sm">
+                          <span className="material-symbols-outlined text-[12px]">verified</span>
                           Verified Purchase
                         </span>
                       )}
@@ -270,9 +332,11 @@ export function ProductReviewImages() {
                 </div>
 
                 {/* Rating / Date */}
-                <div className="py-4 flex justify-between items-center">
-                  <StarRating value={activePhoto.review.rating} size={15} />
-                  <span className="font-label text-[10px] text-black/30 font-medium">
+                <div className="pb-4 flex justify-between items-center border-b border-neutral-200/60">
+                  <div className="flex items-center gap-1.5 p-1.5 px-3 bg-yellow-50/50 rounded-full border border-yellow-100/50">
+                    <StarRating value={activePhoto.review.rating} size={16} />
+                  </div>
+                  <span className="font-label text-[11px] text-neutral-400 font-medium tracking-wide">
                     {activePhoto.review.createdAt
                       ? new Date(activePhoto.review.createdAt).toLocaleDateString('en-IN', {
                           day: 'numeric',
@@ -284,30 +348,36 @@ export function ProductReviewImages() {
                 </div>
 
                 {/* Comment Text */}
-                <div className="flex-1 mt-2">
-                  <p className="font-body text-[13px] text-black/75 leading-relaxed whitespace-pre-line">
+                <div className="flex-1 mt-6 relative">
+                  <span className="material-symbols-outlined absolute -top-2 -left-2 text-[40px] text-neutral-100 -z-10 select-none">
+                    format_quote
+                  </span>
+                  <p className="font-body text-[15px] text-neutral-700 leading-[1.8] whitespace-pre-line z-10 relative">
                     {activePhoto.review.comment}
                   </p>
                 </div>
 
                 {/* Related Masterpiece Info */}
                 {product && (
-                  <div className="mt-8 p-3 bg-neutral-50 rounded-2xl border border-black/5 flex items-center gap-3 shrink-0">
-                    <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 shadow-3xs">
+                  <div className="mt-8 p-3 bg-white hover:bg-neutral-50 rounded-2xl border border-neutral-200/80 flex items-center gap-3 shrink-0 cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border border-neutral-100 relative">
                       <OptimizedImage
                         src={product.imageSrc}
                         alt={product.title}
                         containerClassName="w-full h-full"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[9px] uppercase tracking-widest text-black/40 font-bold font-label">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] uppercase tracking-widest text-primary/80 font-bold font-label mb-0.5">
                         masterpiece
                       </p>
-                      <p className="text-[11px] font-semibold text-black truncate leading-tight mt-0.5">
+                      <p className="text-[13px] font-semibold text-neutral-800 truncate leading-tight group-hover:text-primary transition-colors">
                         {product.title}
                       </p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                     </div>
                   </div>
                 )}

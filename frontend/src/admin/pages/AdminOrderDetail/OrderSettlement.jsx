@@ -91,8 +91,8 @@ export function OrderSettlement({
         <div className="bg-[#fffbeb] p-5 rounded-[var(--admin-radius-lg)] border border-[#fde68a] space-y-4">
           <p className="text-[12px] text-[#92400e] leading-relaxed font-medium">
             This order is marked as <strong>{order.payment}</strong>. The courier partner (
-            {order.courierPartner || 'Delhivery'}) has collected the cash. Adjust and enter the
-            actual shipping + COD handling fees below to reconcile the remittance to our bank.
+            {order.courierPartner || 'Standard Courier'}) has collected the cash. Adjust and enter
+            the actual shipping + COD handling fees below to reconcile the remittance to our bank.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 items-end">
             <div className="w-full sm:w-1/2 text-left">

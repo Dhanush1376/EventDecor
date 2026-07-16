@@ -1,4 +1,5 @@
-import { v2 as cloudinary, UploadApiOptions } from 'cloudinary';
+import { UploadApiOptions } from 'cloudinary';
+import getCloudinary from '../../config/cloudinary';
 import { cloudinaryCircuitBreaker } from '../../utils/CircuitBreaker';
 import logger from '../../config/logger';
 import crypto from 'crypto';
@@ -55,25 +56,29 @@ export class CloudinaryAdapter {
 
     const action = () => {
       return new Promise<CloudinaryUploadResult>((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
-          if (error) {
-            reject(error);
-          } else if (result) {
-            resolve({
-              publicId: result.public_id,
-              secureUrl: result.secure_url,
-              width: result.width,
-              height: result.height,
-              format: result.format,
-              bytes: result.bytes,
-              resourceType: result.resource_type as 'image' | 'video' | 'raw',
-              duration: result.duration,
-              codec: result.video?.codec,
-            });
-          } else {
-            reject(new Error('Unknown Cloudinary upload error: No result returned'));
-          }
-        });
+        const cloudinary = getCloudinary();
+        const stream = cloudinary.uploader.upload_stream(
+          uploadOptions,
+          (error: any, result: any) => {
+            if (error) {
+              reject(error);
+            } else if (result) {
+              resolve({
+                publicId: result.public_id,
+                secureUrl: result.secure_url,
+                width: result.width,
+                height: result.height,
+                format: result.format,
+                bytes: result.bytes,
+                resourceType: result.resource_type as 'image' | 'video' | 'raw',
+                duration: result.duration,
+                codec: result.video?.codec,
+              });
+            } else {
+              reject(new Error('Unknown Cloudinary upload error: No result returned'));
+            }
+          },
+        );
 
         stream.end(buffer);
       });
@@ -87,6 +92,7 @@ export class CloudinaryAdapter {
    */
   static async delete(publicId: string, resourceType: string = 'image'): Promise<boolean> {
     const action = async () => {
+      const cloudinary = getCloudinary();
       const result = await cloudinary.uploader.destroy(publicId, {
         resource_type: resourceType,
         invalidate: true,
@@ -112,6 +118,7 @@ export class CloudinaryAdapter {
     // Note: cloudinary.api.delete_resources is rate limited.
     // For large lists, consider batching into chunks of 100.
     const action = async () => {
+      const cloudinary = getCloudinary();
       const result = await cloudinary.api.delete_resources(publicIds, {
         resource_type: resourceType,
         invalidate: true,
@@ -140,6 +147,7 @@ export class CloudinaryAdapter {
    */
   static async getAssetInfo(publicId: string, resourceType: string = 'image'): Promise<any> {
     const action = async () => {
+      const cloudinary = getCloudinary();
       return await cloudinary.api.resource(publicId, { resource_type: resourceType });
     };
 
@@ -152,6 +160,7 @@ export class CloudinaryAdapter {
    */
   static async invalidateCache(publicId: string, resourceType: string = 'image'): Promise<void> {
     const action = async () => {
+      const cloudinary = getCloudinary();
       await cloudinary.uploader.explicit(publicId, {
         type: 'upload',
         invalidate: true,
@@ -175,6 +184,7 @@ export class CloudinaryAdapter {
     maxResults: number = 50,
   ): Promise<any[]> {
     const action = async () => {
+      const cloudinary = getCloudinary();
       const result = await cloudinary.api.resources({
         type: 'upload',
         prefix: folderPath + '/',

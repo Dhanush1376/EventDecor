@@ -585,7 +585,7 @@ export class PaymentVerificationService {
       await attempt.save({ session });
 
       try {
-        const { RuleEngine } = require('./RuleEngine');
+        const { RuleEngine } = require('../domains/rules/services/RuleEngine');
         const userForRule = await User.findById(userId).lean().session(session);
         await RuleEngine.evaluateTrigger('on_checkout', { user: userForRule, order: finalOrder });
       } catch (ruleErr) {

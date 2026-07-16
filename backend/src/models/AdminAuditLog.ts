@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
+import storeSettingsService from '../services/StoreSettingsService';
 
 export interface IAdminAuditLog extends Document {
   actorId?: mongoose.Types.ObjectId;
@@ -18,6 +19,7 @@ export interface IAdminAuditLog extends Document {
   previousValue?: any;
   newValue?: any;
   createdAt: Date;
+  expiresAt?: Date;
 }
 
 const AdminAuditLogSchema = new Schema(
@@ -37,6 +39,7 @@ const AdminAuditLogSchema = new Schema(
     changes: { type: Schema.Types.Mixed },
     previousValue: { type: Schema.Types.Mixed },
     newValue: { type: Schema.Types.Mixed },
+    expiresAt: { type: Date },
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 );
@@ -45,7 +48,20 @@ AdminAuditLogSchema.index({ actorId: 1, createdAt: -1 });
 AdminAuditLogSchema.index({ path: 1, createdAt: -1 });
 AdminAuditLogSchema.index({ entityType: 1, entityId: 1, createdAt: -1 });
 
-// Immutable permanent audit logging (No TTL index)
+// Dynamic TTL index (expiresAt calculated on save) for eventual cleanup or archival
+AdminAuditLogSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+AdminAuditLogSchema.pre('save', async function () {
+  if (!this.expiresAt) {
+    try {
+      const settings = await storeSettingsService.getSettings();
+      const days = settings.retentionPolicies?.adminAuditLogsDays || 180;
+      this.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    } catch (err) {
+      this.expiresAt = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // 180 days fallback
+    }
+  }
+});
 
 AdminAuditLogSchema.plugin(ForensicAuditPlugin);
 

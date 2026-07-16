@@ -32,8 +32,6 @@ import RefundRecord from '../src/models/RefundRecord';
 import WalletTransaction from '../src/models/WalletTransaction';
 import OutboxEvent from '../src/models/OutboxEvent';
 import { PaymentWebhookService } from '../src/services/PaymentWebhookService';
-import { PaymentRefundService } from '../src/services/PaymentRefundService';
-import { PaymentReconciliationJob } from '../src/jobs/PaymentReconciliationJob';
 
 const createdArtifacts = {
   users: [] as string[],

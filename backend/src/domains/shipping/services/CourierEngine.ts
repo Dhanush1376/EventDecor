@@ -43,11 +43,15 @@ export class CourierEngine {
       const booking = await adapter.createShipment(payload);
       const shipmentId = `SHP-${Date.now().toString().slice(-6)}`;
 
+      const Order = mongoose.model('Order');
+      const order = await Order.findById(orderId);
+      const defaultProvider = order?.courierPartner || 'Standard Courier';
+
       const shipment = new Shipment({
         shipmentId,
         orderId: new mongoose.Types.ObjectId(orderId),
         packages: packageIds.map((id) => new mongoose.Types.ObjectId(id)),
-        courierPartner: courierType === 'shiprocket' ? 'Delhivery' : 'Local Courier',
+        provider: courierType === 'shiprocket' ? defaultProvider : 'Local Courier',
         trackingNumber: booking.trackingNumber,
         trackingUrl: booking.labelUrl,
         status: 'booked', // from Shipment schema enum

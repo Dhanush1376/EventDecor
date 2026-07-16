@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import storeSettingsService from '../services/StoreSettingsService';
 
 export interface IAnalyticsEvent extends Document {
   userId?: mongoose.Types.ObjectId;
@@ -42,6 +43,7 @@ export interface IAnalyticsEvent extends Document {
     city?: string;
   };
   timestamp: Date;
+  expiresAt?: Date;
 }
 
 const AnalyticsEventSchema: Schema = new Schema(
@@ -142,6 +144,7 @@ const AnalyticsEventSchema: Schema = new Schema(
       city: String,
     },
     timestamp: { type: Date, default: Date.now },
+    expiresAt: { type: Date },
   },
   { timestamps: false },
 );
@@ -159,8 +162,20 @@ AnalyticsEventSchema.index({ page: 1, timestamp: 1 });
 AnalyticsEventSchema.index({ 'metadata.referralChannel': 1, timestamp: 1 });
 AnalyticsEventSchema.index({ 'metadata.searchIntent': 1, timestamp: 1 });
 
-// TTL index to automatically delete events older than 90 days
-AnalyticsEventSchema.index({ timestamp: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+// Dynamic TTL index (expiresAt calculated on save)
+AnalyticsEventSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+AnalyticsEventSchema.pre('save', async function () {
+  if (!this.expiresAt) {
+    try {
+      const settings = await storeSettingsService.getSettings();
+      const days = settings.retentionPolicies?.analyticsEventsDays || 30;
+      this.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    } catch (err) {
+      this.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days fallback
+    }
+  }
+});
 
 const AnalyticsEvent = mongoose.model<IAnalyticsEvent>('AnalyticsEvent', AnalyticsEventSchema);
 export default AnalyticsEvent;

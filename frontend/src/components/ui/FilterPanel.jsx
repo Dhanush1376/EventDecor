@@ -90,21 +90,20 @@ const PriceRangeSlider = ({ maxPossible, initialMax, group, onSetFilterValue }) 
         onChange={(e) => setLocalMax(parseInt(e.target.value, 10))}
         onMouseUp={handleCommit}
         onTouchEnd={handleCommit}
-        className="w-full h-1.5 rounded-lg cursor-pointer accent-primary focus:outline-none"
+        className="w-full h-1 bg-black/10 rounded-lg cursor-pointer accent-primary focus:outline-none"
       />
-      <div className="flex items-center justify-between gap-3 mt-5">
-        <div className="flex-1 bg-surface-bright border border-outline-variant/30 rounded-2xl p-2.5 flex flex-col items-center justify-center shadow-sm transition-all">
-          <span className="text-[8px] uppercase tracking-[0.2em] text-secondary/70 font-bold mb-0.5">
-            Min Price
+      <div className="flex items-center justify-between mt-6 px-1">
+        <div className="flex flex-col">
+          <span className="font-label text-[9px] uppercase tracking-[0.2em] text-black/40 font-bold mb-0.5">
+            Minimum
           </span>
-          <span className="text-sm font-bold text-on-surface">₹0</span>
+          <span className="font-display text-[16px] text-black tracking-tight font-medium">₹0</span>
         </div>
-        <div className="w-3 h-[2px] bg-outline-variant/30 shrink-0 rounded-full"></div>
-        <div className="flex-1 bg-surface-bright border border-primary/20 rounded-2xl p-2.5 flex flex-col items-center justify-center shadow-sm transition-all">
-          <span className="text-[8px] uppercase tracking-[0.2em] text-secondary/70 font-bold mb-0.5">
-            Max Price
+        <div className="flex flex-col items-end">
+          <span className="font-label text-[9px] uppercase tracking-[0.2em] text-black/40 font-bold mb-0.5">
+            Maximum
           </span>
-          <span className="text-sm font-bold text-primary">
+          <span className="font-display text-[16px] text-black tracking-tight font-medium">
             {localMax === maxPossible ? 'No Limit' : `₹${localMax.toLocaleString()}`}
           </span>
         </div>

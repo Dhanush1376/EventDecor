@@ -119,6 +119,14 @@ export const ShippingSettingsPanel = ({ formData, handleChange, handleSave, savi
           placeholder="e.g. 5-7"
         />
       </FormGroup>
+      <FormGroup label="Default Courier Partner">
+        <Input
+          name="defaultCourierPartner"
+          value={formData.defaultCourierPartner}
+          onChange={handleChange}
+          placeholder="e.g. Delhivery Logistics"
+        />
+      </FormGroup>
       <div className="md:col-span-2">
         <Checkbox
           name="enableFreeShipping"

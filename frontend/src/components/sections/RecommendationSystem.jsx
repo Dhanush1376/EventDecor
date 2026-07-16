@@ -239,6 +239,7 @@ export function RecommendationSystem({
                       id={product.id || product._id}
                       imageSrc={product.imageSrc || product.image}
                       price={product.price || product.basePrice}
+                      oldPrice={product.strikingPrice || product.oldPrice || product.mrp}
                       compact={compact}
                       cartType={rentalOnly ? 'rental' : 'purchase'}
                     />

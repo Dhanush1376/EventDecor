@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-
+import storeSettingsService from '../services/StoreSettingsService';
 export type InteractionEventType =
   | 'product_view'
   | 'product_click'
@@ -42,6 +42,7 @@ export interface IUserInteraction extends Document {
   };
   timestamp: Date;
   createdAt: Date;
+  expiresAt?: Date;
 }
 
 const UserInteractionSchema: Schema = new Schema(
@@ -91,6 +92,7 @@ const UserInteractionSchema: Schema = new Schema(
       source: { type: String },
     },
     timestamp: { type: Date, default: Date.now, required: true },
+    expiresAt: { type: Date },
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
@@ -104,8 +106,20 @@ UserInteractionSchema.index({ targetId: 1, eventType: 1 });
 UserInteractionSchema.index({ eventType: 1, timestamp: -1 });
 UserInteractionSchema.index({ 'metadata.category': 1, eventType: 1, timestamp: -1 });
 
-// TTL Index — auto-delete interactions older than 90 days
-UserInteractionSchema.index({ timestamp: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+// Dynamic TTL index (expiresAt calculated on save)
+UserInteractionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+UserInteractionSchema.pre('save', async function () {
+  if (!this.expiresAt) {
+    try {
+      const settings = await storeSettingsService.getSettings();
+      const days = settings.retentionPolicies?.userInteractionsDays || 30;
+      this.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    } catch (err) {
+      this.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days fallback
+    }
+  }
+});
 
 const UserInteraction = mongoose.model<IUserInteraction>('UserInteraction', UserInteractionSchema);
 export default UserInteraction;
