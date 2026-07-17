@@ -7,6 +7,7 @@ import { AuthProvider } from '../context/AuthProvider';
 import { UserSocketProvider } from '../context/UserSocketProvider';
 import { NetworkProvider } from '../context/NetworkProvider';
 import { ConfigProvider } from '../context/ConfigContext';
+import { QuickViewProvider } from '../context/QuickViewContext';
 import { queryClient } from '../config/queryClient';
 import { BrowserRouter } from 'react-router-dom';
 import { ProviderComposer } from './ProviderComposer';
@@ -24,6 +25,7 @@ export function AppProviders({ children }) {
         <CartProvider />,
         <WishlistProvider />,
         <UserSocketProvider />,
+        <QuickViewProvider />,
       ]}
     >
       {children}

@@ -68,7 +68,7 @@ export function CategoryTabs({ categories = [], activeCategory, onCategoryChange
             : undefined
         }
       >
-        <div className="inline-flex gap-1 p-1.5 min-w-max items-center mx-auto bg-surface-container/60 backdrop-blur-xl border border-outline-variant/20 rounded-full shadow-inner">
+        <div className="inline-flex gap-1 p-1.5 min-w-max items-center mx-auto bg-surface-container border border-outline-variant/20 rounded-full shadow-inner">
           {categories.map((cat) => {
             const isActive = activeCategory === cat;
             return (

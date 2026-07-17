@@ -16,8 +16,8 @@ export function useCheckoutTotals({
     return persistentStorage.getItem('siri_checkout_coupon_input', { session: true, fallback: '' });
   });
   const [appliedCoupon, setAppliedCoupon] = useState(() => {
-    if (location?.state?.couponCode) {
-      return location.state.couponCode;
+    if (location?.state && 'couponCode' in location.state) {
+      return location.state.couponCode || '';
     }
     return persistentStorage.getItem('siri_checkout_applied_coupon', {
       session: true,

@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useCartDispatch } from '../../context/CartContext';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
+import { useQuickView } from '../../context/QuickViewContext';
 
 export const PremiumRecommendationCard = React.memo(function PremiumRecommendationCard({
   item,
@@ -19,6 +20,15 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
   const { toggleItem } = useWishlistDispatch();
   const [isHovered, setIsHovered] = useState(false);
   const [added, setAdded] = useState(false);
+  const { openQuickView } = useQuickView();
+
+  const handleQuickViewAction = (e, data) => {
+    if (onQuickView) {
+      onQuickView(e, data);
+    } else {
+      openQuickView(e, data);
+    }
+  };
 
   if (loading) {
     return (
@@ -195,9 +205,11 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
                 )}
               </button>
 
-              {onQuickView && targetType === 'product' && (
+              {(onQuickView || targetType === 'product') && (
                 <button
-                  onClick={(e) => onQuickView(e, item)}
+                  onClick={(e) => {
+                    handleQuickViewAction(e, item);
+                  }}
                   className="w-12 h-12 flex items-center justify-center shrink-0 rounded-xl bg-white/20 backdrop-blur-xl text-white border border-white/30 hover:bg-white/30 transition-all"
                   aria-label="Quick View"
                 >

@@ -184,13 +184,6 @@ export function CartView({ isEmbedded = false }) {
     }
   };
 
-  useEffect(() => {
-    if (claimedCoupon && !appliedCoupon && actualSubtotal > 0) {
-      handleApplyCoupon(null, claimedCoupon);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [claimedCoupon, appliedCoupon, actualSubtotal]);
-
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
     setCouponInput('');

@@ -220,7 +220,7 @@ export default function CheckoutPaymentStep() {
       )}
 
       {/* Required By Date Input */}
-      <div className="p-4 sm:p-6 mb-2 border-b border-black/5">
+      <div className="py-4 sm:py-6 mb-2 border-b border-black/5">
         <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider flex items-center gap-2 mb-4">
           <span className="material-symbols-outlined text-[18px] text-primary">calendar_clock</span>
           Required Delivery Date
@@ -244,13 +244,13 @@ export default function CheckoutPaymentStep() {
       </div>
 
       {/* Payment Header */}
-      <div className="p-4 sm:p-6 mb-2">
+      <div className="py-4 sm:py-6 mb-2">
         <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider">
           Payment Options
         </h2>
       </div>
 
-      <div className="px-4 sm:px-6 flex flex-col gap-4 mb-4">
+      <div className="flex flex-col gap-4 mb-4">
         {/* Option: Razorpay (Secure Online Payment) */}
         <div
           onClick={() => setPaymentOption('razorpay')}
@@ -347,7 +347,7 @@ export default function CheckoutPaymentStep() {
                 </p>
               ) : (
                 <p className="text-[10px] text-secondary mt-1 leading-relaxed">
-                  Pay with cash or UPI when your item arrives.
+                  Pay with cash or UPI when your item arrives at your doorstep.
                 </p>
               )}
             </div>
@@ -388,11 +388,10 @@ export default function CheckoutPaymentStep() {
                               verified_user
                             </span>
                             <div className="flex-1">
-                              <p className="text-[11px] text-secondary leading-relaxed font-light">
-                                To secure your order, we will send a 6-digit verification code to
-                                your email:
+                              <p className="text-[10px] text-secondary leading-relaxed font-light">
+                                To secure your order, we will send OTP to your email:
                               </p>
-                              <strong className="text-on-surface font-semibold block mt-1 text-[11px] tracking-wide">
+                              <strong className="text-on-surface font-semibold block mt-1 text-[10px] tracking-wide">
                                 {activeSelectedAddress?.email || user?.email}
                               </strong>
                               <button
@@ -407,7 +406,7 @@ export default function CheckoutPaymentStep() {
                           </div>
                         ) : (
                           <div className="space-y-2.5 bg-primary/5 border border-primary/15 p-4 rounded-md">
-                            <p className="text-[12px] text-secondary leading-normal">
+                            <p className="text-[10px] text-secondary leading-normal">
                               We sent a 6-digit code to{' '}
                               <strong className="text-on-surface font-semibold">
                                 {activeSelectedAddress?.email || user?.email}

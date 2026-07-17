@@ -24,7 +24,14 @@ const errorMiddleware = (err: any, req: Request, res: Response, _next: NextFunct
   else if (err.code === 11000) {
     statusCode = 400;
     const duplicateField = Object.keys(err.keyPattern || {}).join(', ') || 'field';
-    message = `A record with this ${duplicateField} already exists. Please choose a different value.`;
+    const duplicateValue = err.keyValue ? Object.values(err.keyValue).join(', ') : '';
+
+    if (['slug', 'title', 'name', 'sku'].includes(duplicateField)) {
+      message = `A record with ${duplicateField} '${duplicateValue}' already exists. Please choose a different value.`;
+    } else {
+      // Redact value for other fields to prevent potential PII leakage (SEC-08)
+      message = `A record with this ${duplicateField} already exists. Please choose a different value.`;
+    }
   }
 
   // Handle Mongoose Connection / MongoDB offline errors

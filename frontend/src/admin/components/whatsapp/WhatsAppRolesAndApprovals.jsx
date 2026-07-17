@@ -11,6 +11,7 @@ const WhatsAppRolesAndApprovals = () => {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSubTab]);
 
   const fetchData = async () => {

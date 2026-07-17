@@ -97,7 +97,7 @@ export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCou
               coupon={coupon}
               isBest={idx === 0}
               onApply={() => handleApply(coupon)}
-              isApplied={localAppliedCoupon === coupon.code}
+              isCopied={copiedCode === coupon.code}
               isEligible={product.price >= (coupon.minOrderAmount || 0)}
             />
           </div>
@@ -138,7 +138,7 @@ export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCou
                         coupon={coupon}
                         isBest={false}
                         onApply={() => handleApply(coupon)}
-                        isApplied={localAppliedCoupon === coupon.code}
+                        isCopied={copiedCode === coupon.code}
                         isEligible={product.price >= (coupon.minOrderAmount || 0)}
                       />
                     </div>
@@ -153,7 +153,7 @@ export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCou
   );
 }
 
-function CouponCard({ coupon, isBest, onApply, isApplied, isEligible }) {
+function CouponCard({ coupon, isBest, onApply, isCopied, isEligible }) {
   const isPercentage = coupon.discountType === 'percentage';
   const discountText = isPercentage
     ? `${coupon.discountValue}% Off`
@@ -225,16 +225,16 @@ function CouponCard({ coupon, isBest, onApply, isApplied, isEligible }) {
           className={`flex items-center gap-1 text-[9px] uppercase tracking-widest font-extrabold focus:outline-none transition-colors duration-300 pointer-events-none ${
             !isEligible
               ? 'text-on-surface/40'
-              : isApplied
+              : isCopied
                 ? 'text-green-700'
                 : 'text-primary group-hover:text-primary-container'
           }`}
           aria-hidden="true"
         >
           <span className="material-symbols-outlined text-[12px]" style={{ transform: 'none' }}>
-            {!isEligible ? 'block' : isApplied ? 'check_circle' : 'local_offer'}
+            {!isEligible ? 'block' : isCopied ? 'check' : 'content_copy'}
           </span>
-          {!isEligible ? 'Not Eligible' : isApplied ? 'Applied' : 'Apply'}
+          {!isEligible ? 'Not Eligible' : isCopied ? 'Copied!' : 'Copy Code'}
         </button>
       </div>
     </div>

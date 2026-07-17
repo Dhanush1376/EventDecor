@@ -160,6 +160,31 @@ export function ProductListing() {
     setIsQuickViewOpen(true);
   }, []);
 
+  const handleNextQuickView = React.useCallback(() => {
+    if (!activeProduct || !state.products) return;
+    const idx = state.products.findIndex(
+      (p) => (p._id || p.id) === (activeProduct._id || activeProduct.id),
+    );
+    if (idx >= 0 && idx < state.products.length - 1) {
+      setActiveProduct(state.products[idx + 1]);
+    }
+  }, [activeProduct, state.products]);
+
+  const handlePrevQuickView = React.useCallback(() => {
+    if (!activeProduct || !state.products) return;
+    const idx = state.products.findIndex(
+      (p) => (p._id || p.id) === (activeProduct._id || activeProduct.id),
+    );
+    if (idx > 0) {
+      setActiveProduct(state.products[idx - 1]);
+    }
+  }, [activeProduct, state.products]);
+
+  const activeProductIndex =
+    activeProduct && state.products
+      ? state.products.findIndex((p) => (p._id || p.id) === (activeProduct._id || activeProduct.id))
+      : -1;
+
   return (
     <Profiler id="ProductListing" onRender={logRenderMetrics}>
       <div className="bg-surface min-h-screen">
@@ -213,6 +238,10 @@ export function ProductListing() {
           isOpen={isQuickViewOpen}
           onClose={() => setIsQuickViewOpen(false)}
           product={activeProduct}
+          onNext={handleNextQuickView}
+          onPrev={handlePrevQuickView}
+          hasNext={activeProductIndex !== -1 && activeProductIndex < state.products.length - 1}
+          hasPrev={activeProductIndex > 0}
         />
       </div>
     </Profiler>

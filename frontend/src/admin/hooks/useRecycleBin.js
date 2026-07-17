@@ -64,6 +64,7 @@ export const useRecycleBin = () => {
       setFilters((prev) => ({ ...prev, search: searchTerm }));
       setPage(1); // Reset to page 1 on new search
     }, 500),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 

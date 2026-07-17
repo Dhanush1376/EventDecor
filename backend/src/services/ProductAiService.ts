@@ -140,7 +140,7 @@ export class ProductAiService {
       3. NO KEYWORD STUFFING: Do not repeat terms or stack a long list of attributes. A bad example is "Luxurious Premium Traditional Grand Decorative Engagement Ring Ceremony Presentation Tray". A good example is "Floral Ring Tray".
       4. CUSTOMER-FRIENDLY DESCRIPTION: Write a brief, simple, and elegant 2-sentence description. Use simple language that a normal customer instantly understands. Avoid robotic, overly technical, or repetitive jargon.
       5. CULTURAL ACCURACY: Intelligently understand traditional Indian wedding ceremonies (Telugu heritage, Tamil, Kannada, etc.) and generate accurate names for decorated coconuts, thambulam plates, welcome boards, and ring trays.
-      6. CATEGORY MATCHING (MULTI-CATEGORY): Determine the single best 'primary_category' from the Available Store Categories. Then suggest 1 to 5 relevant 'secondary_categories'. If the exact name doesn't exist, suggest a logical new category name.
+      6. CATEGORY MATCHING (MULTI-CATEGORY): STRICTLY prioritize selecting the 'primary_category' and 1 to 5 'secondary_categories' ONLY from the Provided Available Store Categories. DO NOT create new categories unless it is absolutely necessary because NO existing category is even remotely suitable. Avoid creating unnecessary duplicates (e.g., if "Decor" exists, do not create "Decoration").
       7. Generate a clean Telugu translation in Telugu script (e.g., "తాంబూలం ప్లేట్", "కొబ్బరి డెకర్").
       8. Generate a clean, simple, short SEO-friendly slug.
       9. Suggest an estimated, realistic price in INR (e.g., 999, 1500, 2500) based on the intricacy and materials.
@@ -239,13 +239,9 @@ export class ProductAiService {
     const groqController = new AbortController();
     const groqTimeout = setTimeout(() => groqController.abort(), 15000);
 
-    const modelsToTry = base64Image ? [
-      'meta-llama/llama-4-scout-17b-16e-instruct',
-      'qwen/qwen3.6-27b'
-    ] : [
-      'llama-3.3-70b-versatile',
-      'llama-3.1-8b-instant'
-    ];
+    const modelsToTry = base64Image
+      ? ['meta-llama/llama-4-scout-17b-16e-instruct', 'qwen/qwen3.6-27b']
+      : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
 
     let groqResponse;
     let lastErrorText = '';
@@ -273,7 +269,7 @@ export class ProductAiService {
           logger.warn(`Groq Vision Model ${model} failed:`, lastErrorText);
           // If it's a 429 Too Many Requests, break out since it's a rate limit, not a model issue
           if (groqResponse.status === 429) {
-             break;
+            break;
           }
         }
       }

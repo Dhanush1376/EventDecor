@@ -7,7 +7,6 @@ import { useCartQuery } from '../hooks/useCartQueries';
 import { useOptimisticCartMutation } from '../hooks/useOptimisticCartMutation';
 import { transformDbCart } from '../utils/ecommerce/cartCalculations';
 import { persistentStorage } from '../utils/storage/persistentStorage';
-import { logCartTrace, forensicHashId } from '../utils/forensic/cartTrace';
 import { GuestCartService } from '../services/GuestCartService';
 import { userService } from '../services/api/userService';
 

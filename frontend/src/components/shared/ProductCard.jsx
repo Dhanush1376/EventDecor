@@ -1,6 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
+import { useLongPress } from '../../hooks/useLongPress';
 import React, { useState } from 'react';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useCartDispatch } from '../../context/CartContext';
@@ -9,6 +10,7 @@ import { prefetchManager } from '../../utils/performance/prefetchManager';
 import { parseNumericPrice, formatPrice } from '../../utils/ecommerce/priceUtils';
 import { getProductRoute } from '../../utils/ecommerce/productRouteUtils';
 import { DynamicRatingBadge } from '../ui/DynamicRatingBadge';
+import { useQuickView } from '../../context/QuickViewContext';
 
 export const ProductCard = React.memo(function ProductCard({
   id,
@@ -57,6 +59,15 @@ export const ProductCard = React.memo(function ProductCard({
   const { toggleItem } = useWishlistDispatch();
   const { attemptAddToCart } = useCartDispatch();
   const { runProtectedAction } = useAuth();
+  const { openQuickView } = useQuickView();
+
+  const handleQuickViewAction = (e, data) => {
+    if (onQuickView) {
+      onQuickView(e, data);
+    } else {
+      openQuickView(e, data);
+    }
+  };
   const [added, setAdded] = useState(false);
   const [isRippling, setIsRippling] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -74,22 +85,6 @@ export const ProductCard = React.memo(function ProductCard({
     }
   };
 
-  const handleScrollLeft = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -320, behavior: 'smooth' });
-    }
-  };
-
-  const handleScrollRight = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 320, behavior: 'smooth' });
-    }
-  };
-
   const availableImages = React.useMemo(() => {
     const imgs = [imageSrc];
     const imageList = images || gallery || [];
@@ -102,6 +97,35 @@ export const ProductCard = React.memo(function ProductCard({
     }
     return imgs;
   }, [imageSrc, hoverImage, gallery, images]);
+
+  const { longPressTriggered, handlers: longPressHandlers } = useLongPress(
+    (e) => {
+      if (navigator.vibrate) navigator.vibrate(50);
+      handleQuickViewAction(e, {
+        id,
+        _id,
+        title,
+        teluguTitle,
+        nameTE,
+        teluguName,
+        price,
+        rentalPrice,
+        oldPrice,
+        rating,
+        imageSrc,
+        hoverImage,
+        images: availableImages,
+        category: primaryCategory?.name || category,
+        primaryCategory,
+        secondaryCategories,
+        badges,
+        itemType,
+        setupTimeHours,
+        inclusions,
+      });
+    },
+    { delay: 500 },
+  );
 
   if (loading) {
     return (
@@ -151,6 +175,7 @@ export const ProductCard = React.memo(function ProductCard({
   const isOutOfStock = isRental ? rentalStock <= 0 : stock <= 0;
 
   const handleCardClick = (e) => {
+    if (longPressTriggered) return;
     // If the user clicked a button or any interactive element inside a button, don't trigger the card link
     if (e.target.closest('button')) return;
     navigate(getProductRoute(itemType, productId));
@@ -204,10 +229,11 @@ export const ProductCard = React.memo(function ProductCard({
       }}
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
+      {...longPressHandlers}
       tabIndex={0}
       role="link"
       aria-label={`View details of ${title}`}
-      className="group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl z-10"
+      className="group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl z-10 hover:z-[60]"
     >
       {/* 1. VISUAL CANVAS */}
       <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl border border-black/5 group/canvas">
@@ -456,33 +482,27 @@ export const ProductCard = React.memo(function ProductCard({
                   </button>
                   <button
                     onClick={(e) => {
-                      if (onQuickView) {
-                        onQuickView(e, {
-                          id,
-                          _id,
-                          title,
-                          teluguTitle,
-                          nameTE,
-                          teluguName,
-                          price,
-                          rentalPrice,
-                          oldPrice,
-                          rating,
-                          imageSrc,
-                          hoverImage,
-                          category: primaryCategory?.name || category,
-                          primaryCategory,
-                          secondaryCategories,
-                          badges,
-                          itemType,
-                          setupTimeHours,
-                          inclusions,
-                        });
-                      } else {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        navigate(getProductRoute('event', productId));
-                      }
+                      handleQuickViewAction(e, {
+                        id,
+                        _id,
+                        title,
+                        teluguTitle,
+                        nameTE,
+                        teluguName,
+                        price,
+                        rentalPrice,
+                        oldPrice,
+                        rating,
+                        imageSrc,
+                        hoverImage,
+                        category: primaryCategory?.name || category,
+                        primaryCategory,
+                        secondaryCategories,
+                        badges,
+                        itemType,
+                        setupTimeHours,
+                        inclusions,
+                      });
                     }}
                     className="w-full bg-white/10 backdrop-blur-md text-white py-3 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
                   >
@@ -542,7 +562,7 @@ export const ProductCard = React.memo(function ProductCard({
                   </button>
                   <button
                     onClick={(e) =>
-                      onQuickView(e, {
+                      handleQuickViewAction(e, {
                         id,
                         _id,
                         title,

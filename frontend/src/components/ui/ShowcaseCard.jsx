@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { useWishlistState, useWishlistDispatch } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
 import { DynamicRatingBadge } from './DynamicRatingBadge';
+import { useLongPress } from '../../hooks/useLongPress';
 export const ShowcaseCard = React.memo(function ShowcaseCard({
   id,
   _id,
@@ -65,14 +66,28 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
 
   const formattedCat = String(category).replace(/_/g, ' ');
 
+  const { longPressTriggered, handlers: longPressHandlers } = useLongPress(
+    (e) => {
+      if (onOpenShowcase) {
+        if (navigator.vibrate) navigator.vibrate(50);
+        onOpenShowcase(e);
+      }
+    },
+    { delay: 500 },
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      onClick={() => onOpenShowcase?.()}
+      onClick={(e) => {
+        if (longPressTriggered) return;
+        onOpenShowcase?.(e);
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      {...longPressHandlers}
       className="group relative flex flex-col transition-all duration-700 cursor-pointer z-10 rounded-2xl lg:rounded-[32px]"
       aria-label={
         reviews > 0
