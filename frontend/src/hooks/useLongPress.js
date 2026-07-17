@@ -7,13 +7,14 @@ export function useLongPress(onLongPress, { shouldPreventDefault = true, delay =
 
   const start = useCallback(
     (event) => {
-      if (shouldPreventDefault && event.target) {
-        event.target.addEventListener('touchend', preventDefault, { passive: false });
-        target.current = event.target;
-      }
+      const targetNode = event.target;
       timeout.current = setTimeout(() => {
         onLongPress(event);
         setLongPressTriggered(true);
+        if (shouldPreventDefault && targetNode) {
+          targetNode.addEventListener('touchend', preventDefault, { passive: false });
+          target.current = targetNode;
+        }
       }, delay);
     },
     [onLongPress, delay, shouldPreventDefault],
@@ -25,6 +26,7 @@ export function useLongPress(onLongPress, { shouldPreventDefault = true, delay =
       setLongPressTriggered(false);
       if (shouldPreventDefault && target.current) {
         target.current.removeEventListener('touchend', preventDefault);
+        target.current = null;
       }
     },
     [shouldPreventDefault],

@@ -27,7 +27,7 @@ export function BottomNav() {
     <motion.nav
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bottom-nav lg:hidden fixed bottom-2 left-2 right-2 z-[var(--z-overlay)] bg-surface/95 backdrop-blur-xl border border-primary-container/20 shadow-xl rounded-full h-[60px] px-2 flex items-center justify-evenly select-none"
+      className="bottom-nav lg:hidden fixed bottom-2 left-2 right-2 z-[var(--z-overlay)] bg-surface/95 backdrop-blur-xl border border-primary-container/20 rounded-full h-[60px] px-2 flex items-center justify-evenly select-none"
     >
       {navItems.map((item) => {
         const active = item.isCart

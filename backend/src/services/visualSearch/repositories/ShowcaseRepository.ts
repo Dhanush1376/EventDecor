@@ -30,4 +30,21 @@ export class ShowcaseRepository {
       .maxTimeMS(5000)
       .lean();
   }
+
+  async searchByText(searchString: string, limit: number = 100) {
+    return ShowcaseCollection.find(
+      {
+        isActive: true,
+        $text: { $search: searchString },
+      },
+      { score: { $meta: 'textScore' } },
+    )
+      .sort({ score: { $meta: 'textScore' } })
+      .select(
+        '_id title category description image rentalPrice gallery inclusions colorPalette setupTimeHours popularityScore',
+      )
+      .limit(limit)
+      .maxTimeMS(8000)
+      .lean();
+  }
 }

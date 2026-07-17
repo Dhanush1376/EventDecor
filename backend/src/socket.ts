@@ -297,10 +297,10 @@ export const initSocket = (server: HttpServer) => {
   });
 
   // Default namespace is not used — reject stray connections immediately
-  io.on('connection', (socket) => {
-    logger.warn('[SOCKET] Rejected connection on default namespace', { socketId: socket.id });
-    socket.disconnect(true);
-  });
+  // io.on('connection', (socket) => {
+  //   logger.warn('[SOCKET] Rejected connection on default namespace', { socketId: socket.id });
+  //   socket.disconnect(true);
+  // });
 
   registerNamespace(io.of('/admin'), { adminOnly: true });
   registerNamespace(io.of('/user'), { adminOnly: false });

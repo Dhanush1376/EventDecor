@@ -339,7 +339,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a41a943c091bcebec0d6eb0</loc>
-    <lastmod>2026-07-07</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -509,7 +509,7 @@
   </url>
   <url>
     <loc>https://siriartsandcrafts.com/product/6a5932756eac0bc7dabe78b5</loc>
-    <lastmod>2026-07-16</lastmod>
+    <lastmod>2026-07-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -605,6 +605,16 @@
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1784282719/products/wgbibhviuwf4c1wvp1la.jpg</image:loc>
       <image:title>Crimson Red Ganesh Pooja Backdrop</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/product/6a5a0eed91db57ead65fab8f</loc>
+    <lastmod>2026-07-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1784287442/products/jsn8s91p413tms1nzzpm.jpg</image:loc>
+      <image:title>Grey Ganesh Pooja Backdrop</image:title>
     </image:image>
   </url>
   <url>
@@ -1135,6 +1145,16 @@
     <image:image>
       <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1784282719/products/wgbibhviuwf4c1wvp1la.jpg</image:loc>
       <image:title>Crimson Red Ganesh Pooja Backdrop</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://siriartsandcrafts.com/gallery/6a5a0ef091db57ead65fab99</loc>
+    <lastmod>2026-07-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/drxgnnzeb/image/upload/v1784287442/products/jsn8s91p413tms1nzzpm.jpg</image:loc>
+      <image:title>Grey Ganesh Pooja Backdrop</image:title>
     </image:image>
   </url>
 </urlset>

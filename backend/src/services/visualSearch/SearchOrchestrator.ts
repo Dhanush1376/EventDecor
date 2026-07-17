@@ -58,6 +58,8 @@ export class SearchOrchestrator {
 
     const uniqueTermsAndWords = [...new Set([...searchTerms, ...words])];
 
+    const searchString = uniqueTermsAndWords.slice(0, 20).join(' ');
+
     const regexPatterns = uniqueTermsAndWords
       .slice(0, 20)
       .map((term) => new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
@@ -65,20 +67,30 @@ export class SearchOrchestrator {
     const categoryRegex = new RegExp(category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
 
     const [
-      labelResults,
+      textProductResults,
+      regexProductResults,
       categoryResults,
-      eventLabelResults,
+      textEventResults,
+      regexEventResults,
       eventCategoryResults,
-      showcaseLabelResults,
+      textShowcaseResults,
+      regexShowcaseResults,
       showcaseCategoryResults,
     ] = await Promise.all([
-      this.productRepo.searchByRegex(regexPatterns, 100),
+      this.productRepo.searchByText(searchString, 100),
+      this.productRepo.searchByRegex(regexPatterns, 50),
       this.productRepo.searchByCategory(categoryRegex, 50),
-      this.eventRepo.searchByRegex(regexPatterns, 100),
+      this.eventRepo.searchByText(searchString, 100),
+      this.eventRepo.searchByRegex(regexPatterns, 50),
       this.eventRepo.searchByCategory(categoryRegex, 50),
-      this.showcaseRepo.searchByRegex(regexPatterns, 100),
+      this.showcaseRepo.searchByText(searchString, 100),
+      this.showcaseRepo.searchByRegex(regexPatterns, 50),
       this.showcaseRepo.searchByCategory(categoryRegex, 50),
     ]);
+
+    const labelResults = [...textProductResults, ...regexProductResults];
+    const eventLabelResults = [...textEventResults, ...regexEventResults];
+    const showcaseLabelResults = [...textShowcaseResults, ...regexShowcaseResults];
 
     const productMap = new Map<string, any>();
     for (const p of labelResults) productMap.set(p._id.toString(), p);
