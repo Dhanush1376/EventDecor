@@ -447,7 +447,7 @@ export function GalleryInner() {
 
           <div className="flex-1 min-w-0">
             {isLoading ? (
-              <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-4 gap-2 lg:gap-3 space-y-2 lg:space-y-3">
+              <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-4 gap-1.5 lg:gap-2 space-y-1.5 lg:space-y-2">
                 {[
                   'aspect-[2/3]',
                   'aspect-square',
@@ -475,7 +475,7 @@ export function GalleryInner() {
                   isLoading={isFetchingNextPage}
                   renderItem={renderGalleryItem}
                   columns={{ sm: 2, md: 3, lg: 4, xl: 4 }}
-                  gap="gap-2 sm:gap-3"
+                  gap="gap-1.5 lg:gap-2"
                   batchSize={20}
                 />
 

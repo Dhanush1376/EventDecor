@@ -108,7 +108,7 @@
 
   /* Spacing & Breakpoints */
   --spacing-margin-desktop: clamp(22px, 4.5vw, 72px);
-  --spacing-margin-mobile: 18px;
+  --spacing-margin-mobile: 14px;
   --spacing-gutter: 22px;
   --spacing-max-width: 1440px;
   --bottom-nav-height: 64px;

@@ -124,7 +124,7 @@ export const ProductCard = React.memo(function ProductCard({
         inclusions,
       });
     },
-    { delay: 500 },
+    { delay: 2000 },
   );
 
   if (loading) {
@@ -233,7 +233,7 @@ export const ProductCard = React.memo(function ProductCard({
       tabIndex={0}
       role="link"
       aria-label={`View details of ${title}`}
-      className="group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl z-10 hover:z-[60]"
+      className="group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl z-10 hover:z-30"
     >
       {/* 1. VISUAL CANVAS */}
       <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl border border-black/5 group/canvas">

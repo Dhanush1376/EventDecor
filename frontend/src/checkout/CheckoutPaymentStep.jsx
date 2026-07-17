@@ -220,7 +220,7 @@ export default function CheckoutPaymentStep() {
       )}
 
       {/* Required By Date Input */}
-      <div className="py-4 sm:py-6 mb-2 border-b border-black/5">
+      <div className="py-4 sm:py-6 mb-2 border-b border-black/5 pr-4 sm:pr-0">
         <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider flex items-center gap-2 mb-4">
           <span className="material-symbols-outlined text-[18px] text-primary">calendar_clock</span>
           Required Delivery Date
@@ -234,7 +234,7 @@ export default function CheckoutPaymentStep() {
             min={new Date().toISOString().split('T')[0]}
             value={needByDate || ''}
             onChange={(e) => setNeedByDate(e.target.value)}
-            className="w-full sm:w-1/2 p-3 rounded-xl border border-outline-variant/60 bg-surface-bright focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-xs font-semibold text-on-surface"
+            className="w-full max-w-sm p-3 rounded-xl border border-outline-variant/60 bg-surface-bright focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-xs font-semibold text-on-surface"
             required
           />
           <p className="text-[10px] text-secondary mt-1">

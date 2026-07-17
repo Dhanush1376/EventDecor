@@ -77,7 +77,7 @@ export const TrendingProducts = React.memo(function TrendingProducts({ previewCo
             </div>
             <div className="h-4 w-20 bg-surface-container-high rounded-full hidden lg:block"></div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-8">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="flex flex-col gap-4">
                 <div className="w-full aspect-[3/4] bg-surface-container-high rounded-[24px] lg:rounded-[32px]"></div>

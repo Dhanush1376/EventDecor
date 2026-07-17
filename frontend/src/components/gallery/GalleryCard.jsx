@@ -42,7 +42,7 @@ const CardContent = React.memo(function CardContent({
             : item.aspectRatio.replace(':', '/')
           : 'auto',
       }}
-      className="break-inside-avoid mb-2 relative group cursor-pointer rounded-2xl overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 w-full"
+      className="relative group cursor-pointer rounded-[24px] lg:rounded-[32px] overflow-hidden bg-surface-container-low shadow-sm transition-all duration-700 w-full"
     >
       {/* Background Video — plays on hover */}
       {item.video && (

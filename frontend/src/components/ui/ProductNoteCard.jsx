@@ -1,24 +1,44 @@
 import React from 'react';
 
-export function ProductNoteCard({ customerNote, complimentaryGift }) {
-  if (!customerNote && !complimentaryGift?.enabled) return null;
+export function ProductNoteCard({ customerNote, complimentaryGift, dimensions }) {
+  if (!customerNote && !complimentaryGift?.enabled && !dimensions) return null;
 
   return (
     <div className="space-y-4">
-      {/* Designer's Note Section */}
-      {customerNote && (
+      {/* Designer's Note & Dimensions Section */}
+      {(customerNote || dimensions) && (
         <div className="flex items-start gap-3 p-3.5 bg-[#fdfbf7] rounded-xl border border-[#e0d6b8] shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#f5ecd5]/50 to-transparent rounded-full blur-2xl pointer-events-none"></div>
           <span className="material-symbols-outlined text-[18px] text-[#8c7335] shrink-0 mt-0.5 relative z-10">
             info
           </span>
-          <div className="flex flex-col relative z-10">
+          <div className="flex flex-col relative z-10 w-full">
             <span className="font-label-sm text-[11px] sm:text-[12px] text-[#8c7335] uppercase tracking-[0.1em] font-bold">
-              Designer's Note
+              {customerNote && dimensions
+                ? "Designer's Note & Dimensions"
+                : customerNote
+                  ? "Designer's Note"
+                  : 'Product Dimensions'}
             </span>
-            <span className="font-body-sm text-[13px] sm:text-[14px] text-on-surface/80 font-medium mt-0.5 whitespace-pre-wrap">
-              {customerNote}
-            </span>
+
+            {customerNote && (
+              <span className="font-body-sm text-[13px] sm:text-[14px] text-on-surface/80 font-medium mt-0.5 whitespace-pre-wrap">
+                {customerNote}
+              </span>
+            )}
+
+            {customerNote && dimensions && <hr className="my-2.5 border-[#e0d6b8]/60 w-full" />}
+
+            {dimensions && (
+              <div className={!customerNote ? 'mt-0.5' : ''}>
+                <span className="font-body-sm text-[13px] sm:text-[14px] text-on-surface/80 font-medium">
+                  <strong className="text-[#2a2c2a] uppercase tracking-wider text-[10px] mr-1">
+                    Dimensions:
+                  </strong>
+                  {dimensions}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 
 export function CategoryTabs({ categories = [], activeCategory, onCategoryChange }) {
   const scrollRef = useRef(null);
@@ -14,6 +14,45 @@ export function CategoryTabs({ categories = [], activeCategory, onCategoryChange
       setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth);
     }
   };
+
+  const sortedCategories = useMemo(() => {
+    if (!categories || !categories.length) return [];
+
+    // Priority keywords (in order of priority)
+    const PRIORITY_KEYWORDS = [
+      'trending',
+      'best seller',
+      'popular',
+      'new arrival',
+      'coconut',
+      'wedding',
+      'haldi',
+      'mandap',
+      'telugu heritage',
+      'tambulam',
+    ];
+
+    const allCat = categories.filter((c) => c.toLowerCase() === 'all');
+    const others = categories.filter((c) => c.toLowerCase() !== 'all');
+
+    others.sort((a, b) => {
+      const aLower = a.toLowerCase();
+      const bLower = b.toLowerCase();
+
+      const aIndex = PRIORITY_KEYWORDS.findIndex((k) => aLower.includes(k));
+      const bIndex = PRIORITY_KEYWORDS.findIndex((k) => bLower.includes(k));
+
+      const aScore = aIndex !== -1 ? aIndex : 999;
+      const bScore = bIndex !== -1 ? bIndex : 999;
+
+      if (aScore !== bScore) {
+        return aScore - bScore;
+      }
+      return a.localeCompare(b);
+    });
+
+    return [...allCat, ...others];
+  }, [categories]);
 
   useEffect(() => {
     checkScroll();
@@ -69,7 +108,7 @@ export function CategoryTabs({ categories = [], activeCategory, onCategoryChange
         }
       >
         <div className="inline-flex gap-1 p-1.5 min-w-max items-center mx-auto bg-surface-container border border-outline-variant/20 rounded-full shadow-inner">
-          {categories.map((cat) => {
+          {sortedCategories.map((cat) => {
             const isActive = activeCategory === cat;
             return (
               <button

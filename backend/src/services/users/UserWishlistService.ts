@@ -52,6 +52,10 @@ export class UserWishlistService {
     const user = await User.findById(userId);
     if (!user) throw new ApiError(404, 'User not found');
 
+    if (!user.wishlist) {
+      user.wishlist = [];
+    }
+
     const index = user.wishlist.findIndex((id: any) => id.toString() === productId);
     let action = 'Added to wishlist';
 

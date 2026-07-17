@@ -5,6 +5,8 @@ import { useWishlistState, useWishlistDispatch } from '../../context/WishlistCon
 import { useAuth } from '../../context/AuthContext';
 import { DynamicRatingBadge } from './DynamicRatingBadge';
 import { useLongPress } from '../../hooks/useLongPress';
+import { useNavigate } from 'react-router-dom';
+import { getProductRoute } from '../../utils/ecommerce/productRouteUtils';
 export const ShowcaseCard = React.memo(function ShowcaseCard({
   id,
   _id,
@@ -24,6 +26,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
   const { isWishlisted } = useWishlistState();
   const { toggleItem } = useWishlistDispatch();
   const { runProtectedAction } = useAuth();
+  const navigate = useNavigate();
 
   const [_hovered, setHovered] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -73,7 +76,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
         onOpenShowcase(e);
       }
     },
-    { delay: 500 },
+    { delay: 2000 },
   );
 
   return (
@@ -83,7 +86,8 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
       viewport={{ once: true }}
       onClick={(e) => {
         if (longPressTriggered) return;
-        onOpenShowcase?.(e);
+        if (e.target.closest('button')) return;
+        navigate(getProductRoute('event', showcaseId));
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}

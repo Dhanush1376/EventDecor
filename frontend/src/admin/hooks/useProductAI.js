@@ -36,10 +36,7 @@ export function useProductAI({
           const upload = formData.pendingUploads.find((p) => p.localUrl === formData.imageSrc);
           if (upload) imageToAnalyze = upload.file;
         }
-        if (
-          !imageToAnalyze &&
-          typeof formData.imageSrc === 'string'
-        ) {
+        if (!imageToAnalyze && typeof formData.imageSrc === 'string') {
           if (formData.imageSrc.startsWith('blob:')) {
             try {
               const res = await fetch(formData.imageSrc);
@@ -156,6 +153,25 @@ export function useProductAI({
     setIsApplyingFields(true);
     setShowAIHUD(false);
 
+    const baseVariants = [...(aiAnalysisResult.suggested_variants || [])];
+
+    // Auto-map top-level materials and colors to variants for storefront filtering!
+    if (aiAnalysisResult.materials?.length > 0) {
+      aiAnalysisResult.materials.forEach((m) => {
+        if (!baseVariants.some((v) => v.name.toLowerCase() === 'material' && v.value === m)) {
+          baseVariants.push({ name: 'Material', value: m, price: 0 });
+        }
+      });
+    }
+
+    if (aiAnalysisResult.colors?.length > 0) {
+      aiAnalysisResult.colors.forEach((c) => {
+        if (!baseVariants.some((v) => v.name.toLowerCase() === 'color' && v.value === c)) {
+          baseVariants.push({ name: 'Color', value: c, price: 0 });
+        }
+      });
+    }
+
     const fieldsToFill = [
       { key: 'title', value: aiAnalysisResult.english_title },
       { key: 'teluguTitle', value: aiAnalysisResult.telugu_title },
@@ -188,8 +204,8 @@ export function useProductAI({
       { key: '_personalization', value: aiAnalysisResult.personalization_enabled },
       // Customer note (from AI)
       { key: 'customerNote', value: aiAnalysisResult.customer_note },
-      // Variants (from AI)
-      { key: '_variants', value: aiAnalysisResult.suggested_variants || [] },
+      // Variants (from AI + manual mapping)
+      { key: '_variants', value: baseVariants },
     ];
 
     let index = 0;

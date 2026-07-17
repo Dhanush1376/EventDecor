@@ -142,6 +142,7 @@ export default defineConfig({
         secure: false,
         ws: true,
         configure: (proxy, _options) => {
+          proxy.removeAllListeners('error');
           proxy.on('error', (err, _req, _res) => {
             if (
               err.code === 'ECONNREFUSED' ||
@@ -153,6 +154,7 @@ export default defineConfig({
             console.warn('[Vite Proxy Error] Failed to connect to backend target:', err.message);
           });
           proxy.on('proxyReqWs', (proxyReq, req, socket, options, head) => {
+            socket.removeAllListeners('error');
             socket.on('error', (err) => {
               if (err.code === 'ECONNABORTED' || err.code === 'ECONNRESET') return;
               console.error('[Vite WS Proxy Error]', err.message);
@@ -166,6 +168,7 @@ export default defineConfig({
         secure: false,
         ws: true,
         configure: (proxy, _options) => {
+          proxy.removeAllListeners('error');
           proxy.on('error', (err, _req, _res) => {
             if (
               err.code === 'ECONNREFUSED' ||

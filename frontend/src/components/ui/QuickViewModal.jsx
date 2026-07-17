@@ -20,7 +20,8 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
   const { addItem } = useCart();
   const { runProtectedAction } = useAuth();
 
-  const handleWishlist = () => {
+  const handleWishlist = (e) => {
+    e?.stopPropagation();
     if (!product) return;
     runProtectedAction(() => {
       toggleItem(product);
@@ -50,7 +51,8 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e) => {
+    e?.stopPropagation();
     if (!product) return;
     if (product.itemType === 'event') {
       onClose();
@@ -139,7 +141,8 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
   const productId = product._id || product.id;
   const wishlisted = isWishlisted(productId);
 
-  const handleViewDetails = () => {
+  const handleViewDetails = (e) => {
+    e?.stopPropagation();
     onClose();
     navigate(product.itemType === 'event' ? `/events/${productId}` : `/product/${productId}`);
   };
@@ -210,10 +213,11 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="flex flex-col lg:flex-row w-full h-full"
+              className="flex flex-col lg:flex-row w-full h-full cursor-pointer"
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEndHandler}
+              onClick={handleViewDetails}
             >
               <div className="w-full lg:w-1/2 p-2 sm:p-3 lg:p-8 lg:pr-4 shrink-0 flex flex-col gap-3 lg:gap-4">
                 <div className="relative bg-surface-container-low overflow-hidden rounded-[16px] lg:rounded-[24px] aspect-[4/5] sm:aspect-[4/5] lg:aspect-auto lg:h-[540px] w-full group shadow-sm border border-black/5 shrink-0">
@@ -277,7 +281,8 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
                       {product.images.map((_, idx) => (
                         <div
                           key={idx}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             if (scrollContainerRef.current) {
                               scrollContainerRef.current.scrollTo({
                                 left: idx * scrollContainerRef.current.clientWidth,
@@ -415,16 +420,6 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
                       ₹{product.oldPrice.toLocaleString('en-IN')}
                     </span>
                   )}
-                </div>
-
-                <div className="space-y-2 mb-8 lg:mb-10">
-                  <h3 className="font-label text-[10px] lg:text-[11px] text-on-surface/40 uppercase tracking-[0.2em] font-bold">
-                    The Essence
-                  </h3>
-                  <p className="font-body text-on-surface-variant/70 font-light leading-relaxed text-[15px] lg:text-[17px]">
-                    {product.description ||
-                      'A masterfully handcrafted piece that seamlessly blends traditional Indian artistry with contemporary design.'}
-                  </p>
                 </div>
 
                 <div className="mt-auto space-y-4 pb-[max(16px,env(safe-area-inset-bottom))] lg:pb-0">

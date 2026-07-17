@@ -58,7 +58,7 @@ export function RecommendedGrid({ previewContent }) {
             </div>
             <div className="h-4 w-20 bg-surface-container-high rounded-full hidden lg:block"></div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 lg:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6 lg:gap-8">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="flex flex-col gap-4">
                 <div className="w-full aspect-[3/4] bg-surface-container-high rounded-[24px] lg:rounded-[32px]"></div>
@@ -124,7 +124,7 @@ export function RecommendedGrid({ previewContent }) {
         />
       </div>
       <div className="h1-container relative z-10 mt-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6 lg:gap-8">
           {products.slice(0, config.maxDisplay || 8).map((product) => (
             <ProductCard
               key={product.id || product._id}

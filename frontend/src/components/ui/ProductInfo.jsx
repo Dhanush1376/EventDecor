@@ -242,6 +242,7 @@ export function ProductInfo({
       <ProductNoteCard
         customerNote={product.customerNote}
         complimentaryGift={product.complimentaryGift}
+        dimensions={product.dimensions}
       />
 
       {/* Pricing & Shipping */}
@@ -409,12 +410,14 @@ export function ProductInfo({
       </div>
 
       {/* Description Section */}
-      <div className="space-y-1 mt-0 pt-1 md:hidden">
-        <h3 className="font-bold text-[14px] text-on-surface/90">About this Item</h3>
-        <p className="font-body-md text-on-surface/80 font-normal leading-relaxed text-[14px] sm:text-[15px]">
-          {product.description ||
-            'A beautiful handmade item that mixes traditional Indian design with modern style.'}
-        </p>
+      <div className="space-y-3 mt-4 pt-1">
+        <div className="space-y-1">
+          <h3 className="font-bold text-[14px] text-on-surface/90">About this Item</h3>
+          <p className="font-body-md text-on-surface/80 font-normal leading-relaxed text-[14px] sm:text-[15px]">
+            {product.description ||
+              'A beautiful handmade item that mixes traditional Indian design with modern style.'}
+          </p>
+        </div>
       </div>
 
       {/* Action CTA Stack */}

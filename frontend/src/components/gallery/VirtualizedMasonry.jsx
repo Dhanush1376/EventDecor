@@ -125,7 +125,7 @@ export function VirtualizedMasonry({
         {visibleItems.map((item, index) => (
           <div
             key={item._id || item.id || index}
-            className="masonry-item-enter break-inside-avoid mb-2 sm:mb-3"
+            className="masonry-item-enter break-inside-avoid mb-1.5 lg:mb-2"
             style={{
               '--stagger': `${Math.min((index % batchSize) * 30, 300)}ms`,
               contentVisibility: 'auto',

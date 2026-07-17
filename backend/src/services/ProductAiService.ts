@@ -175,8 +175,9 @@ export class ProductAiService {
           - "estimated_quantity_unit": The unit of measurement (e.g. "Chocolate Cones", "Dry Fruit Packs", "Gift Baskets", "Decorative Items", "Pieces").
           - If you cannot determine the quantity, set estimated_quantity to 1 and estimated_quantity_unit to "Set".
 
-      17. VARIANTS GENERATION: Suggest realistic product variations (e.g., Size, Color, Material) if applicable.
-          - "suggested_variants": An array of objects with "name" (Attribute like 'Size' or 'Color'), "value" (Specific choice like 'Large' or 'Red'), and "price" (Price adjustment relative to base price, e.g. 0, 100, -50).
+      17. VARIANTS GENERATION (CRITICAL FOR FILTERING): You MUST suggest realistic product variations for 'Size', 'Color', and 'Material' based on the image and product type.
+          - "suggested_variants": An array of objects with "name" (Attribute like 'Size', 'Color', or 'Material'), "value" (Specific choice like 'Large', 'Red', or 'Wood'), and "price" (Price adjustment relative to base price, e.g. 0).
+          - ALWAYS try to extract at least one 'Material', one 'Color', and one 'Size' variant so they can be used for storefront filtering. Even if there's only one option (e.g., Color: 'Gold'), include it as a variant with price 0.
 
       Please output a clean JSON object matching the following structure strictly (do not include any markdown block ticks, just raw JSON):
       {
