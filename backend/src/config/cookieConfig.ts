@@ -2,7 +2,10 @@ import { CookieOptions } from 'express';
 import logger from './logger';
 
 const isProd = process.env.NODE_ENV === 'production';
-const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
+let cookieDomain = process.env.COOKIE_DOMAIN || undefined;
+if (cookieDomain === 'localhost') {
+  cookieDomain = undefined;
+}
 
 if (isProd && cookieDomain) {
   logger.info(`[COOKIE CONFIG] Using explicit cookie domain: ${cookieDomain}`);

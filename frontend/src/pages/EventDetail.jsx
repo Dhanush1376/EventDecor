@@ -180,15 +180,18 @@ export function EventDetail() {
 
           <div className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-8 lg:gap-12 lg:gap-16 items-start">
             <div className="md:col-span-7 lg:col-span-7 space-y-10 lg:space-y-16">
-              <EventGallery event={event} toggleItem={toggleItem} isWishlisted={isWishlisted} />
+              <div className="relative z-10">
+                <EventGallery event={event} toggleItem={toggleItem} isWishlisted={isWishlisted} />
+              </div>
               <div className="space-y-4 relative z-0">
                 <MandalaArtDecor
-                  variant={3}
-                  size={350}
+                  variant={1}
+                  size={700}
                   opacity={0.15}
-                  className="-top-10 -right-10 z-[-1]"
+                  className="top-[-3%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[-1]"
                   spinDuration={200}
                 />
+
                 <span className="font-label-sm text-primary text-[10px] lg:text-xs uppercase tracking-[0.2em] font-bold block">
                   {event.category?.name ||
                     (typeof event.category === 'string' && event.category.length === 24

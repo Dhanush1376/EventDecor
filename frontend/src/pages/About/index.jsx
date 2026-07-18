@@ -19,52 +19,8 @@ export function About() {
   const [isLoading, setIsLoading] = useState(true);
   const [openFaq, setOpenFaq] = useState(0);
 
-  const faqs =
-    cmsContent?.faqs?.length > 0
-      ? cmsContent.faqs
-      : [
-          {
-            question: 'How far in advance should we book your decor services?',
-            answer:
-              'For grand weddings and large-scale events, we recommend booking 6 to 8 months in advance. This allows our artisans ample time to source rare materials, handcraft bespoke elements, and conceptualize a truly unique design tailored to your vision.',
-          },
-          {
-            question: 'Do you travel for destination weddings?',
-            answer:
-              'Yes, we proudly offer our services for destination weddings globally. Our core team travels to your chosen location, ensuring our signature craftsmanship and meticulous attention to detail are maintained, regardless of the venue.',
-          },
-          {
-            question: 'Can we customize the decor to match a specific heritage theme?',
-            answer:
-              'Absolutely. We specialize in weaving authentic traditions—such as classic Telugu floral scapes and antique brass arrangements—into modern aesthetics. We work closely with you to ensure every cultural nuance is honored beautifully.',
-          },
-          {
-            question: 'What is the typical investment for a bespoke event setup?',
-            answer:
-              'Because every event is custom-designed, the investment varies based on scale, floral choices, and architectural elements. We invite you to schedule a consultation with our design studio to receive a tailored proposal.',
-          },
-        ];
-
-  const policies =
-    cmsContent?.policies?.length > 0
-      ? cmsContent.policies
-      : [
-          { title: 'Shipping Policy', icon: 'local_shipping', path: '/policy/shipping-policy' },
-          { title: 'Terms and Conditions', icon: 'gavel', path: '/policy/terms-and-conditions' },
-          {
-            title: 'Cancellation Policy',
-            icon: 'free_cancellation',
-            path: '/policy/cancellation-policy',
-          },
-          { title: 'Refund Policy', icon: 'currency_exchange', path: '/policy/refund-policy' },
-          {
-            title: 'Exchange Policy',
-            icon: 'published_with_changes',
-            path: '/policy/exchange-policy',
-          },
-          { title: 'Return Policy', icon: 'keyboard_return', path: '/policy/return-policy' },
-          { title: 'Privacy Policy', icon: 'security', path: '/policy/privacy-policy' },
-        ];
+  const faqs = cmsContent?.faqs || [];
+  const policies = cmsContent?.policies || [];
 
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -105,24 +61,12 @@ export function About() {
     return <AboutSkeleton />;
   }
 
-  const specializations = cmsContent?.specializations || [
-    {
-      title: 'Bespoke Decor',
-      description:
-        'Handcrafted with intricate details, pushing the boundaries of traditional setup design.',
-    },
-    {
-      title: 'Heritage Arts',
-      description: 'Authentic Telugu traditions woven seamlessly into contemporary floral scapes.',
-    },
-  ];
-  const features = cmsContent?.features || [];
   const founders = cmsContent?.founders || [];
 
   const getSrc = (img, fallback) => img?.url || (typeof img === 'string' ? img : fallback);
 
-  const heroTitle = cmsContent?.heroTitle || 'The Art of Tradition.';
-  const heroSubtitle = cmsContent?.heroSubtitle || 'Preserving Heritage, Crafting Dreams';
+  const heroTitle = cmsContent?.heroTitle || '';
+  const heroSubtitle = cmsContent?.heroSubtitle || '';
 
   return (
     <div
@@ -259,20 +203,6 @@ export function About() {
 
         {/* Foreground Content */}
         <div className="max-w-4xl mx-auto relative z-20 text-center flex flex-col items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: 'easeOut' }}
-            className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-[var(--color-gold-dark)]/30 bg-white/50 backdrop-blur-sm mb-8"
-          >
-            <span className="material-symbols-outlined text-[14px] text-[var(--color-gold-dark)]">
-              auto_awesome
-            </span>
-            <span className="font-label text-[10px] uppercase tracking-[0.25em] text-[#1A1A1A] font-bold mt-0.5">
-              Our Mission & Vision
-            </span>
-          </motion.div>
-
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -288,9 +218,10 @@ export function About() {
             transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
             className="text-lg md:text-xl text-[#4A4A4A] mb-12 max-w-2xl leading-relaxed font-light"
           >
-            <span className="text-[var(--color-gold-dark)] font-medium">{heroSubtitle}.</span>{' '}
-            {cmsContent?.missionStatement ||
-              'We are building the future of premium event decor by combining traditional artistry with modern technology and unparalleled service.'}
+            <span className="text-[var(--color-gold-dark)] font-medium">
+              {heroSubtitle ? `${heroSubtitle}.` : ''}
+            </span>{' '}
+            {cmsContent?.missionStatement || ''}
           </motion.p>
 
           <motion.div
@@ -318,88 +249,92 @@ export function About() {
       </section>
 
       {/* 3. FAQ Section */}
-      <section className="py-32 bg-[#FAF9F6] relative z-10">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-20">
-          <div className="flex flex-col lg:flex-row gap-16 lg:gap-32">
-            <div className="w-full lg:w-1/3">
-              <span className="font-label text-[9px] uppercase tracking-[0.4em] text-[var(--color-gold-dark)] font-bold mb-4 block">
-                F.A.Q
-              </span>
-              <h2 className="font-display text-4xl lg:text-5xl leading-[1.1] sticky top-32 text-[#1A1A1A]">
-                Got Questions?
-                <br />
-                We've got <span className="italic font-light text-outline">answers.</span>
-              </h2>
-            </div>
+      {faqs.length > 0 && (
+        <section className="py-32 bg-[#FAF9F6] relative z-10">
+          <div className="max-w-[1400px] mx-auto px-6 lg:px-20">
+            <div className="flex flex-col lg:flex-row gap-16 lg:gap-32">
+              <div className="w-full lg:w-1/3">
+                <span className="font-label text-[9px] uppercase tracking-[0.4em] text-[var(--color-gold-dark)] font-bold mb-4 block">
+                  F.A.Q
+                </span>
+                <h2 className="font-display text-4xl lg:text-5xl leading-[1.1] sticky top-32 text-[#1A1A1A]">
+                  Got Questions?
+                  <br />
+                  We've got <span className="italic font-light text-outline">answers.</span>
+                </h2>
+              </div>
 
-            <div className="w-full lg:w-2/3 space-y-6 pt-4">
-              {faqs.map((faq, idx) => (
-                <div key={idx} className="border-b border-outline-variant/30 pb-6">
-                  <button
-                    onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                    className="w-full flex items-start lg:items-center justify-between text-left group gap-8"
-                  >
-                    <h3
-                      className={`font-display text-2xl lg:text-3xl transition-colors duration-500 ${openFaq === idx ? 'text-[var(--color-gold-dark)]' : 'text-[#1A1A1A] group-hover:text-[var(--color-gold-dark)]'}`}
+              <div className="w-full lg:w-2/3 space-y-6 pt-4">
+                {faqs.map((faq, idx) => (
+                  <div key={idx} className="border-b border-outline-variant/30 pb-6">
+                    <button
+                      onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                      className="w-full flex items-start lg:items-center justify-between text-left group gap-8"
                     >
-                      {faq.question}
-                    </h3>
-                    <motion.span
-                      animate={{ rotate: openFaq === idx ? 180 : 0 }}
-                      transition={{ duration: 0.4, ease: 'easeOut' }}
-                      className={`material-symbols-outlined text-[32px] font-light mt-1 lg:mt-0 shrink-0 transition-colors duration-500 ${openFaq === idx ? 'text-[var(--color-gold-dark)]' : 'text-[#1A1A1A] group-hover:text-[var(--color-gold-dark)]'}`}
+                      <h3
+                        className={`font-display text-2xl lg:text-3xl transition-colors duration-500 ${openFaq === idx ? 'text-[var(--color-gold-dark)]' : 'text-[#1A1A1A] group-hover:text-[var(--color-gold-dark)]'}`}
+                      >
+                        {faq.question}
+                      </h3>
+                      <motion.span
+                        animate={{ rotate: openFaq === idx ? 180 : 0 }}
+                        transition={{ duration: 0.4, ease: 'easeOut' }}
+                        className={`material-symbols-outlined text-[32px] font-light mt-1 lg:mt-0 shrink-0 transition-colors duration-500 ${openFaq === idx ? 'text-[var(--color-gold-dark)]' : 'text-[#1A1A1A] group-hover:text-[var(--color-gold-dark)]'}`}
+                      >
+                        expand_more
+                      </motion.span>
+                    </button>
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        height: openFaq === idx ? 'auto' : 0,
+                        opacity: openFaq === idx ? 1 : 0,
+                      }}
+                      className="overflow-hidden"
                     >
-                      expand_more
-                    </motion.span>
-                  </button>
-                  <motion.div
-                    initial={false}
-                    animate={{
-                      height: openFaq === idx ? 'auto' : 0,
-                      opacity: openFaq === idx ? 1 : 0,
-                    }}
-                    className="overflow-hidden"
-                  >
-                    <p className="font-body text-lg text-[#4A4A4A] leading-relaxed font-light mt-6 max-w-2xl">
-                      {faq.answer}
-                    </p>
-                  </motion.div>
-                </div>
-              ))}
+                      <p className="font-body text-lg text-[#4A4A4A] leading-relaxed font-light mt-6 max-w-2xl">
+                        {faq.answer}
+                      </p>
+                    </motion.div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 4. Policy Links Strip (Scrolling Marquee) */}
-      <section className="py-10 bg-[#FAF9F6] relative z-10 border-t border-b border-outline-variant/30 overflow-hidden flex items-center">
-        {/* Subtle Mandala Watermark */}
-        <div className="absolute top-1/2 -translate-y-1/2 right-10 opacity-[0.03] w-96 h-96 pointer-events-none z-0">
-          <MandalaElement className="w-full h-full text-black" />
-        </div>
+      {policies.length > 0 && (
+        <section className="py-10 bg-[#FAF9F6] relative z-10 border-t border-b border-outline-variant/30 overflow-hidden flex items-center">
+          {/* Subtle Mandala Watermark */}
+          <div className="absolute top-1/2 -translate-y-1/2 right-10 opacity-[0.03] w-96 h-96 pointer-events-none z-0">
+            <MandalaElement className="w-full h-full text-black" />
+          </div>
 
-        {/* Marquee Container */}
-        <div className="w-full relative z-10 flex overflow-hidden">
-          <motion.div
-            animate={{ x: ['0%', '-50%'] }}
-            transition={{ repeat: Infinity, duration: 35, ease: 'linear' }}
-            className="flex items-center gap-16 lg:gap-32 w-max shrink-0 pr-16 lg:pr-32 hover:[animation-play-state:paused]"
-          >
-            {[...policies, ...policies].map((policy, idx) => (
-              <div key={idx} className="flex items-center gap-16 lg:gap-32">
-                <Link
-                  to={policy.path}
-                  className="font-label text-[10px] lg:text-[11px] uppercase tracking-[0.25em] text-[#4A4A4A] hover:text-[var(--color-gold-dark)] transition-colors duration-500 font-bold whitespace-nowrap"
-                >
-                  {policy.title}
-                </Link>
-                {/* Elegant separator dot between items */}
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold-dark)]/40 shrink-0" />
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+          {/* Marquee Container */}
+          <div className="w-full relative z-10 flex overflow-hidden">
+            <motion.div
+              animate={{ x: ['0%', '-50%'] }}
+              transition={{ repeat: Infinity, duration: 35, ease: 'linear' }}
+              className="flex items-center gap-16 lg:gap-32 w-max shrink-0 pr-16 lg:pr-32 hover:[animation-play-state:paused]"
+            >
+              {[...policies, ...policies].map((policy, idx) => (
+                <div key={idx} className="flex items-center gap-16 lg:gap-32">
+                  <Link
+                    to={policy.path}
+                    className="font-label text-[10px] lg:text-[11px] uppercase tracking-[0.25em] text-[#4A4A4A] hover:text-[var(--color-gold-dark)] transition-colors duration-500 font-bold whitespace-nowrap"
+                  >
+                    {policy.title}
+                  </Link>
+                  {/* Elegant separator dot between items */}
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold-dark)]/40 shrink-0" />
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* 5. The Artisans (Magazine Spread) */}
       {founders.length > 0 && (

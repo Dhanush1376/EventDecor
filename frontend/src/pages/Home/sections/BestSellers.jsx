@@ -28,7 +28,7 @@ export function BestSellers({ previewContent }) {
 
   if (isPending || loading) {
     return (
-      <section className="h1-section relative overflow-hidden isolate" id="h1-new-arrivals">
+      <section className="h1-section relative isolate" id="h1-new-arrivals">
         <div className="h1-container relative z-10 animate-pulse">
           <div className="flex justify-between items-end mb-8 lg:mb-10">
             <div>
@@ -76,7 +76,7 @@ export function BestSellers({ previewContent }) {
   }
 
   return (
-    <section className="h1-section relative overflow-hidden isolate" id="h1-new-arrivals">
+    <section className="h1-section relative isolate" id="h1-new-arrivals">
       {/* Background glow gradient behind mandala */}
       <div className="absolute -top-32 -right-32 w-[250px] h-[250px] bg-primary-container/15 rounded-full blur-[70px] pointer-events-none z-[-1]" />
       <MandalaElement

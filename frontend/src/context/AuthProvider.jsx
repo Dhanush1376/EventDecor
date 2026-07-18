@@ -130,7 +130,11 @@ export function AuthProvider({ children }) {
         }
 
         if (err.response?.status === 401) {
-          logger.warn('[Auth] Session invalid or expired (401) — logging out');
+          logger.warn(
+            '[Auth] Session invalid or expired (401) — logging out. Error:',
+            err.response?.data,
+          );
+          toast.error(`Session Error 1: ${JSON.stringify(err.response?.data || err.message)}`);
           logout(true);
           return false;
         }
@@ -162,17 +166,24 @@ export function AuthProvider({ children }) {
         } catch (refreshErr) {
           logger.error('[Auth] Failed to refresh token in error recovery', refreshErr);
           if (
-            refreshErr.response?.status === 401 ||
-            refreshErr.response?.status === 403 ||
-            refreshErr.code === 'ERR_NO_SESSION'
+            refreshErr.name !== 'CanceledError' &&
+            (refreshErr.response?.status === 401 ||
+              refreshErr.response?.status === 403 ||
+              refreshErr.code === 'ERR_NO_SESSION')
           ) {
-            logger.warn('[Auth] Refresh token invalid — logging out');
+            logger.warn('[Auth] Refresh token invalid — logging out', refreshErr);
+            toast.error(
+              `Session Error 2: ${JSON.stringify(refreshErr.response?.data || refreshErr.message)}`,
+            );
             logout(true);
             return false;
           }
         }
 
         if (!cachedProfile && !user) {
+          console.warn(
+            '[AUTH_DEBUG] restoreSession failed network, no cachedProfile and no user. Logging out.',
+          );
           logout(true);
         }
         return false;
@@ -186,13 +197,11 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!hasStoredSession && !cachedProfile) {
+      console.warn('[AUTH_DEBUG] No stored session and no cached profile on mount.');
       setLoading(false);
       setIsAuthInitialized(true);
       return;
     }
-
-    if (initStarted.current) return;
-    initStarted.current = true;
 
     if (cachedProfile) {
       setUser(cachedProfile);

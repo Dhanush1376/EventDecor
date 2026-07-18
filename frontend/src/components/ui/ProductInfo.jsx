@@ -448,7 +448,7 @@ export function ProductInfo({
                   ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
                   : added
                     ? 'bg-[#e0d6b8] text-[#1a1c1a] cursor-pointer'
-                    : 'bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] cursor-pointer'
+                    : 'bg-black text-white hover:bg-stone-800 hover:text-white cursor-pointer'
               }`}
             >
               {added ? (

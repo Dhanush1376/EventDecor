@@ -110,7 +110,10 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
     req.cookies?.[CUSTOMER_REFRESH_COOKIE] || req.cookies?.[ADMIN_REFRESH_COOKIE] || '',
   ).trim();
   const bodyToken = String(req.body?.refreshToken || req.headers['x-refresh-token'] || '').trim();
-  const refreshToken = cookieToken || bodyToken;
+
+  // Prefer bodyToken over cookieToken because the JS client explicitly manages
+  // the fallback token, which avoids issues with corrupted/stale browser cookies.
+  const refreshToken = bodyToken || cookieToken;
 
   if (!refreshToken) {
     logger.warn('[AUTH] Refresh attempted without refresh token cookie/body');
@@ -130,12 +133,11 @@ export const refreshSession = asyncHandler(async (req: Request, res: Response) =
   // demonstrably cannot use cookies (e.g. Safari ITP blocking third-party
   // cookies). Cookie-capable clients rotate via Set-Cookie alone, so the
   // long-lived credential never becomes readable by page JavaScript.
-  const usedCookie = Boolean(cookieToken);
   res.status(200).json(
     new ApiResponse(true, 'Session refreshed', {
       user: result.user,
       accessToken: result.accessToken,
-      ...(usedCookie ? {} : { refreshToken: result.refreshToken }),
+      refreshToken: result.refreshToken,
     }),
   );
 });

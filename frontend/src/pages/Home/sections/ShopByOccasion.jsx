@@ -27,7 +27,7 @@ export function ShopByOccasion({ previewContent }) {
 
   if (loading || showcasesLoading) {
     return (
-      <section className="h1-section relative overflow-hidden isolate" id="h1-occasions">
+      <section className="h1-section relative isolate" id="h1-occasions">
         <div className="max-w-[1400px] mx-auto px-6 mb-24 animate-pulse">
           <div className="flex flex-col items-center text-center mb-8 lg:mb-10">
             <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2"></div>
@@ -89,16 +89,11 @@ export function ShopByOccasion({ previewContent }) {
   };
 
   return (
-    <section className="h1-section relative overflow-hidden isolate" id="h1-occasions">
+    <section className="h1-section !pt-4 lg:!pt-8 relative isolate" id="h1-occasions">
       {/* Background glow gradient behind mandala */}
       <div className="absolute -top-44 -right-32 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
       <div className="absolute -bottom-32 -left-32 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
-      <MandalaElement
-        className="absolute -top-36 -right-24 opacity-[0.04] z-[-1]"
-        size={500}
-        duration={200}
-        variant={2}
-      />
+
       <MandalaElement
         className="absolute -bottom-24 -left-24 opacity-[0.04] z-[-1]"
         size={500}

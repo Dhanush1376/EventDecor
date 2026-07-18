@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { recycleBinApi } from '../services/recycleBinService';
 import toast from 'react-hot-toast';
 import debounce from 'lodash.debounce';
@@ -59,12 +59,12 @@ export const useRecycleBin = () => {
   }, []);
 
   // Debounced search to prevent API spam
-  const debouncedSearch = useCallback(
-    debounce((searchTerm) => {
-      setFilters((prev) => ({ ...prev, search: searchTerm }));
-      setPage(1); // Reset to page 1 on new search
-    }, 500),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((searchTerm) => {
+        setFilters((prev) => ({ ...prev, search: searchTerm }));
+        setPage(1); // Reset to page 1 on new search
+      }, 500),
     [],
   );
 

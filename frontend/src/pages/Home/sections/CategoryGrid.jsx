@@ -17,7 +17,7 @@ export const CategoryGrid = React.memo(function CategoryGrid({ previewContent })
 
   if (cms.loading) {
     return (
-      <section className="h1-categories relative overflow-hidden isolate">
+      <section className="h1-categories relative isolate pb-12 lg:pb-20">
         <div className="h1-container relative z-10 animate-pulse">
           <div className="flex flex-col items-center mb-8 lg:mb-10 text-center">
             <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2 mx-auto"></div>
@@ -67,7 +67,7 @@ export const CategoryGrid = React.memo(function CategoryGrid({ previewContent })
   }
 
   return (
-    <section className="h1-categories relative overflow-hidden isolate">
+    <section className="h1-categories relative isolate pb-12 lg:pb-20">
       {/* Background glow gradients behind mandalas */}
       <div className="absolute -top-40 -left-40 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
       <div className="absolute -bottom-40 -right-40 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />

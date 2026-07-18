@@ -256,21 +256,21 @@ export function GalleryInner() {
         description="Explore our curated collection of artisanal event transformations and heritage decor inspirations."
       />
 
-      <MandalaElement className="absolute -top-40 -left-40" size={800} opacity={0.25} />
+      <MandalaElement className="absolute -top-40 -left-40" size={800} opacity={0.15} variant={3} />
       <MandalaElement
         className="absolute -bottom-[150px] -right-[150px] pointer-events-none"
         size={900}
         variant={2}
-        opacity={0.3}
+        opacity={0.2}
       />
 
       {/* Editorial Header Hero */}
       <section className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop pt-4 lg:pt-6 relative z-10">
-        <nav className="hidden lg:flex items-center gap-2 font-label-sm text-[11px] uppercase tracking-[0.3em] mb-6 text-black/30">
+        <nav className="hidden lg:flex items-center gap-2 font-label-sm text-[11px] uppercase tracking-[0.3em] mb-6 text-black/60">
           <Link to="/" className="hover:text-primary transition-colors">
             Home
           </Link>
-          <span className="opacity-30">/</span>
+          <span className="opacity-50">/</span>
           <span className="text-black font-bold">Inspiration Gallery</span>
         </nav>
 
@@ -304,13 +304,13 @@ export function GalleryInner() {
       {/* Sticky Navigation Bar */}
       <nav
         ref={navRef}
-        className={`sticky z-[49] -mt-6 lg:-mt-8 mb-8 lg:mb-12 transition-all duration-300 ${
+        className={`sticky z-[49] -mt-6 lg:-mt-8 mb-8 lg:mb-12 ${
           isSticky ? 'px-0' : 'px-3 lg:px-margin-desktop max-w-max-width mx-auto'
         }`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
       >
         <div
-          className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
+          className={`transition-colors duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
             isSticky
               ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 lg:py-4 lg:py-2 px-3 lg:px-margin-desktop w-full max-w-none'
               : 'bg-transparent border-none shadow-none rounded-[2rem] px-2 py-3 lg:p-4 lg:p-2 w-full max-w-max-width'
@@ -433,7 +433,7 @@ export function GalleryInner() {
 
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 xl:gap-12">
           {/* Sidebar Filter - Handles both Desktop Sidebar and Mobile Drawer */}
-          <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-32 h-fit">
+          <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-32 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto no-scrollbar pb-4">
             <FilterPanel
               filterGroups={filterGroups.filter((group) => group.id !== 'category')} // Category is already in tabs!
               currentFilters={filters}

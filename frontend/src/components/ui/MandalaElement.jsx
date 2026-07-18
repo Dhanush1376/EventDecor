@@ -30,14 +30,13 @@ export const MandalaElement = React.memo(function MandalaElement({
   const isInView = useInView(ref, { amount: 0.1 });
   const src = VARIANT_MAP[variant] || VARIANT_MAP[1];
 
-  // Enforce a minimum opacity to ensure the mandala art is clearly visible across the entire site
-  const effectiveOpacity =
-    variant === 2 ? Math.max(opacity || 0, 0.65) : Math.max(opacity || 0, 0.25);
+  // Use the provided opacity directly so the caller has full control over the fading
+  const effectiveOpacity = opacity ?? 0.12;
 
   const fadeMask =
     variant === 2
-      ? 'radial-gradient(circle closest-side, rgba(0,0,0,1) 15%, rgba(0,0,0,0) 80%)'
-      : 'radial-gradient(circle closest-side, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)';
+      ? 'radial-gradient(circle closest-side, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)'
+      : 'radial-gradient(circle closest-side, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%)';
 
   return (
     <motion.img

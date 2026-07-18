@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import logger from '../utils/core/logger';
 import { logCartTrace } from '../utils/forensic/cartTrace';
 import { getCachedGet, setCachedGet, clearApiCache } from '../utils/api/apiCache';
@@ -8,7 +9,6 @@ import {
   clearAuthStorage,
   getFallbackRefreshToken,
   setFallbackRefreshToken,
-  clearFallbackRefreshToken,
 } from '../utils/auth/authStorage';
 import { clearCachedProfile } from '../utils/auth/authSessionCache';
 import { createRequestInterceptor } from './interceptors/requestInterceptor';
@@ -73,10 +73,6 @@ const applyRefreshPayload = (payload) => {
       // Server only echoes a refresh token when the request was not
       // authenticated via the HttpOnly cookie (cookie-blocked browsers).
       setFallbackRefreshToken(refreshToken);
-    } else {
-      // Cookie-based rotation succeeded — cookies demonstrably work, so drop
-      // the JS-readable fallback credential to shrink the XSS attack surface.
-      clearFallbackRefreshToken();
     }
   }
   return token;
@@ -98,6 +94,7 @@ const dispatchUnauthorized = () => {
     // Already unauthorized, avoid infinite loop of queryClient.clear() triggers
     return;
   }
+  toast.error('Session Error 3: API returned 401/403 unhandled.');
   setAccessToken(null);
   clearAuthStorage();
   clearCachedProfile();
@@ -122,12 +119,32 @@ export const refreshAccessToken = async (retryCount = 0) => {
       })
       .catch(async (err) => {
         if (err.response?.status === 409) {
-          logger.warn(
-            `[API] Concurrent refresh detected (409). Retrying (attempt ${retryCount + 1}/1) in 1s to pick up new tokens from other tab.`,
-          );
-          await new Promise((r) => setTimeout(r, 1000));
-          refreshPromise = null;
-          return refreshAccessToken(retryCount + 1); // Retry the refresh with the new cookie/localStorage token
+          const oldToken = getFallbackRefreshToken();
+          if (oldToken) {
+            logger.warn(`[API] 409 Conflict. Waiting for other tab to update token...`);
+            for (let i = 0; i < 10; i++) {
+              await new Promise((r) => setTimeout(r, 500));
+              const newToken = getFallbackRefreshToken();
+              if (newToken && newToken !== oldToken) {
+                logger.info(`[API] Picked up new token from other tab. Retrying...`);
+                refreshPromise = null;
+                return refreshAccessToken(retryCount + 1);
+              }
+            }
+            logger.error('[API] Refresh token desynced (response lost). Logging out.');
+            dispatchUnauthorized();
+            throw new Error('Refresh token desync');
+          } else {
+            if (retryCount >= 1) {
+              logger.error('[API] Max refresh retry attempts reached (409 conflict loops).');
+              dispatchUnauthorized();
+              throw new Error('Max refresh retry attempts reached');
+            }
+            logger.warn(`[API] Concurrent refresh (409). Retrying in 1s...`);
+            await new Promise((r) => setTimeout(r, 1000));
+            refreshPromise = null;
+            return refreshAccessToken(retryCount + 1);
+          }
         }
         if (err.response?.status === 401 || err.response?.status === 403) {
           dispatchUnauthorized();

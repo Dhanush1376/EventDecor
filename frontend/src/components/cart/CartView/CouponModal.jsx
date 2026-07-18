@@ -62,11 +62,19 @@ export function CouponModal({
                     }}
                     className="w-full bg-surface-container-lowest border border-outline-variant/60 rounded-xl px-4 py-3 text-[13px] outline-none focus:border-primary text-on-surface font-bold uppercase transition-all tracking-wider"
                   />
-                  {couponError && (
-                    <span className="absolute -bottom-5 left-1 text-red-500 text-[10px] font-medium">
-                      {couponError}
-                    </span>
-                  )}
+                  <AnimatePresence>
+                    {couponError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute -bottom-10 left-0 right-0 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-red-100 flex items-center gap-1.5 z-10 shadow-sm"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">error</span>
+                        {couponError}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
                 <button
                   type="submit"

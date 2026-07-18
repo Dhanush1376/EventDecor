@@ -624,3 +624,8 @@ body.filters-open img[src*='mandala'] {
 .linked-products-scroll > * {
   scroll-snap-align: start;
 }
+
+/* ─── Custom Global Overrides ─── */
+@utility bg-black {
+  background-color: #2a2825 !important;
+}

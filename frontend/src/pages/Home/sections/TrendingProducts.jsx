@@ -59,7 +59,7 @@ export const TrendingProducts = React.memo(function TrendingProducts({ previewCo
 
   if (isPending || loading) {
     return (
-      <section className="h1-section relative overflow-hidden isolate" id="h1-trending">
+      <section className="h1-section !pt-4 lg:!pt-8 relative isolate" id="h1-trending">
         {/* Background glow gradient behind mandala */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary-container/20 rounded-full blur-[100px] pointer-events-none z-[-1]" />
 
@@ -116,7 +116,7 @@ export const TrendingProducts = React.memo(function TrendingProducts({ previewCo
   }
 
   return (
-    <section className="h1-section relative overflow-hidden isolate" id="h1-trending">
+    <section className="h1-section !pt-4 lg:!pt-8 !pb-4 lg:!pb-8 relative isolate" id="h1-trending">
       {/* Background glow gradient behind mandala */}
       <div className="absolute top-0 -left-32 w-[250px] h-[250px] bg-primary-container/15 rounded-full blur-[70px] pointer-events-none z-[-1]" />
       <MandalaElement

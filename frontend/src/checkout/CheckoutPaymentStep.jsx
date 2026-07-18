@@ -465,47 +465,60 @@ export default function CheckoutPaymentStep() {
         </div>
       </div>
 
-      {paymentError && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-lg flex items-start gap-3 border border-red-200 shadow-sm animate-shake mx-4 mt-4">
-          <AlertTriangle className="w-5 h-5 shrink-0 text-red-600 mt-0.5" aria-hidden="true" />
-          <span className="font-semibold text-xs">{paymentError}</span>
-        </div>
-      )}
-
-      {totalsError && (
-        <div className="mx-4 mt-4 p-3.5 bg-red-50 text-red-700 rounded-lg text-xs font-semibold border border-red-200 flex flex-col gap-2">
-          <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[15px] text-red-700">error</span>
-            <span>{totalsError}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => fetchBackendTotals(appliedCoupon)}
-            className="btn-primary py-1 px-3 rounded-full text-[9px] uppercase tracking-wider w-fit self-end font-bold shadow-xs cursor-pointer"
-          >
-            Retry Validation
-          </button>
-        </div>
-      )}
-
       {/* Sticky Action Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-lg z-40 flex justify-center">
-        <div className="max-w-[768px] w-full mx-auto flex gap-3">
-          <button
-            onClick={() => setActiveStep(1)}
-            disabled={isProcessing}
-            className="flex-1 bg-transparent text-on-surface font-bold uppercase tracking-widest text-[9px] py-2.5 rounded-full border border-outline-variant/40 hover:bg-surface-container-low transition-colors disabled:opacity-50"
-          >
-            Back
-          </button>
-          <button
-            onClick={handleBottomSubmit}
-            disabled={isButtonDisabled()}
-            className="flex-1 btn-primary py-2.5 rounded-full text-[9px] font-bold uppercase tracking-widest shadow-sm transition-all text-center disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isProcessing && <div className="skeleton-box inline-block w-3 h-3 rounded-full" />}
-            <span>{getSubmitButtonLabel()}</span>
-          </button>
+      <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-lg z-40 flex flex-col items-center">
+        <div className="max-w-[768px] w-full mx-auto flex flex-col gap-3">
+          {paymentError && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-50 text-red-700 p-3 rounded-xl flex items-start gap-3 border border-red-200 shadow-sm"
+            >
+              <AlertTriangle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" aria-hidden="true" />
+              <span className="font-bold text-[11px] leading-snug flex-1">{paymentError}</span>
+            </motion.div>
+          )}
+
+          {totalsError && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3 bg-red-50 text-red-700 rounded-xl text-[11px] font-bold border border-red-200 flex flex-col gap-2 shadow-sm"
+            >
+              <div className="flex items-start gap-2">
+                <AlertTriangle
+                  className="w-4 h-4 shrink-0 text-red-600 mt-0.5"
+                  aria-hidden="true"
+                />
+                <span className="flex-1 leading-snug">{totalsError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => fetchBackendTotals(appliedCoupon)}
+                className="btn-primary py-1 px-3 rounded-full text-[9px] uppercase tracking-wider w-fit self-end font-bold shadow-xs cursor-pointer !text-white"
+              >
+                Retry Validation
+              </button>
+            </motion.div>
+          )}
+
+          <div className="flex gap-3 w-full">
+            <button
+              onClick={() => setActiveStep(1)}
+              disabled={isProcessing}
+              className="flex-1 bg-transparent text-on-surface font-bold uppercase tracking-widest text-[9px] py-2.5 rounded-full border border-outline-variant/40 hover:bg-surface-container-low transition-colors disabled:opacity-50"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleBottomSubmit}
+              disabled={isButtonDisabled()}
+              className="flex-1 btn-primary py-2.5 rounded-full text-[9px] font-bold uppercase tracking-widest shadow-sm transition-all text-center disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2 !text-white"
+            >
+              {isProcessing && <div className="skeleton-box inline-block w-3 h-3 rounded-full" />}
+              <span>{getSubmitButtonLabel()}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

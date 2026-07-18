@@ -35,12 +35,12 @@ export function MandalaArtDecor({
 
   // Enforce a minimum opacity to ensure the mandala art is clearly visible across the entire site
   const effectiveOpacity =
-    variant === 2 ? Math.max(opacity || 0, 0.65) : Math.max(opacity || 0, 0.25);
+    variant === 2 ? Math.max(opacity || 0, 0.65) : Math.max(opacity || 0, 0.1);
 
   const fadeMask =
     variant === 2
-      ? 'radial-gradient(circle closest-side, rgba(0,0,0,1) 15%, rgba(0,0,0,0) 80%)'
-      : 'radial-gradient(circle closest-side, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)';
+      ? 'radial-gradient(circle closest-side, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)'
+      : 'radial-gradient(circle closest-side, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%)';
 
   return (
     <motion.img

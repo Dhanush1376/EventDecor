@@ -32,9 +32,9 @@ export function AddAddressModal({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-0 left-0 right-0 z-[101] bg-surface-container-low rounded-t-2xl sm:rounded-t-3xl max-h-[90vh] w-full max-w-[800px] mx-auto shadow-2xl flex flex-col"
+            className="fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:rounded-2xl lg:overflow-hidden z-[101] bg-surface-container-low rounded-t-2xl sm:rounded-t-3xl max-h-[90vh] w-full max-w-[800px] mx-auto shadow-2xl flex flex-col"
           >
-            <div className="bg-surface-bright z-10 pt-5 pb-4 px-6 flex justify-between items-center border-b border-outline-variant/20 rounded-t-2xl sm:rounded-t-3xl shrink-0">
+            <div className="bg-surface-bright z-10 pt-5 pb-4 px-6 flex justify-between items-center border-b border-outline-variant/20 rounded-t-2xl sm:rounded-t-3xl lg:rounded-t-none shrink-0">
               <h2 className="text-[11px] font-extrabold text-on-surface uppercase tracking-widest">
                 {newAddress?.id ? 'Edit Address' : 'Add New Address'}
               </h2>
@@ -50,16 +50,6 @@ export function AddAddressModal({
             <div className="overflow-y-auto p-4 sm:p-6 pb-28">
               <form id="address-form" onSubmit={handleSaveNewAddress}>
                 <div className="space-y-4">
-                  {addressError && (
-                    <div className="flex items-start gap-3 p-3 bg-red-50 text-red-600 rounded text-[11px] mb-2">
-                      <AlertTriangle
-                        className="w-5 h-5 shrink-0 text-red-600 mt-0.5"
-                        aria-hidden="true"
-                      />
-                      <span className="font-semibold flex-1">{addressError}</span>
-                    </div>
-                  )}
-
                   <div className="py-6 border-b border-outline-variant/20">
                     <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 mb-5">
                       <span className="material-symbols-outlined text-[12px]">person</span>
@@ -115,10 +105,43 @@ export function AddAddressModal({
                   </div>
 
                   <div className="py-6 border-b border-outline-variant/20">
-                    <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 mb-5">
-                      <span className="material-symbols-outlined text-[12px]">home</span>
-                      Address Details
-                    </h2>
+                    <div className="flex items-center justify-between mb-5">
+                      <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 m-0">
+                        <span className="material-symbols-outlined text-[12px]">home</span>
+                        Address Details
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toast.loading('Finding you...', { id: 'gps' });
+                          if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(
+                              (pos) => {
+                                const { latitude, longitude } = pos.coords;
+                                setMapPosition({ lat: latitude, lng: longitude });
+                                fetchAddressFromCoords(latitude, longitude);
+                                toast.success('Location found!', { id: 'gps' });
+                              },
+                              (_err) => {
+                                toast.error('Could not access GPS', { id: 'gps' });
+                              },
+                              { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+                            );
+                          } else {
+                            toast.error('Geolocation not supported by this browser', {
+                              id: 'gps',
+                            });
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 text-[8px] text-primary font-bold uppercase tracking-widest bg-primary/5 hover:bg-primary/10 px-2.5 py-1.5 rounded-full cursor-pointer transition-all"
+                      >
+                        <span className="material-symbols-outlined text-[10px] font-bold">
+                          my_location
+                        </span>
+                        <span>Use Current Location</span>
+                      </button>
+                    </div>
 
                     <div className="w-full h-48 bg-surface-container-low rounded-lg mb-4 relative overflow-hidden border border-outline-variant/30 z-0">
                       <LocationMarker
@@ -126,37 +149,6 @@ export function AddAddressModal({
                         setPosition={setMapPosition}
                         fetchAddressFromCoords={fetchAddressFromCoords}
                       />
-                      <div className="absolute top-2 right-2 z-[1000]">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            toast.loading('Finding you...', { id: 'gps' });
-                            if (navigator.geolocation) {
-                              navigator.geolocation.getCurrentPosition(
-                                (pos) => {
-                                  const { latitude, longitude } = pos.coords;
-                                  setMapPosition({ lat: latitude, lng: longitude });
-                                  fetchAddressFromCoords(latitude, longitude);
-                                  toast.success('Location found!', { id: 'gps' });
-                                },
-                                (_err) => {
-                                  toast.error('Could not access GPS', { id: 'gps' });
-                                },
-                                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-                              );
-                            } else {
-                              toast.error('Geolocation not supported by this browser', {
-                                id: 'gps',
-                              });
-                            }
-                          }}
-                          className="bg-white p-2 rounded shadow flex items-center justify-center text-primary hover:bg-gray-50 transition-colors"
-                          title="Locate Me"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">my_location</span>
-                        </button>
-                      </div>
                     </div>
 
                     {newAddress.latitude && newAddress.longitude && (
@@ -313,6 +305,19 @@ export function AddAddressModal({
             </div>
 
             <div className="bg-surface-bright border-t border-outline-variant/20 p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] mt-auto shrink-0 z-20 absolute bottom-0 left-0 right-0">
+              {addressError && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-start gap-3 p-3 bg-red-50 text-red-600 rounded-xl text-[11px] mb-3 shadow-sm border border-red-100"
+                >
+                  <AlertTriangle
+                    className="w-4 h-4 shrink-0 text-red-600 mt-0.5"
+                    aria-hidden="true"
+                  />
+                  <span className="font-bold flex-1 leading-snug">{addressError}</span>
+                </motion.div>
+              )}
               <div className="w-full flex gap-4">
                 <button
                   type="button"

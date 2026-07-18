@@ -7,7 +7,11 @@ export let redisAlertHandler: (title: string, details: any) => Promise<void> = a
 export const setRedisAlertHandler = (handler: typeof redisAlertHandler) => {
   redisAlertHandler = handler;
 };
-const getRedisUrl = () => process.env.REDIS_URL?.trim();
+const getRedisUrl = () => {
+  const url = process.env.REDIS_URL?.trim();
+  if (url === 'redis://dummy.example.com:6379') return undefined;
+  return url;
+};
 const isTlsRedis = () => {
   const url = getRedisUrl();
   return Boolean(url && (url.startsWith('rediss://') || url.includes('upstash.io')));

@@ -53,7 +53,7 @@ export function GalleryInspiration({ previewContent }) {
   if (!galleryLoading && !cmsLoading && !isError && galleryItems.length === 0) return null;
   if (cmsLoading || galleryLoading) {
     return (
-      <section className="h1-section relative overflow-hidden isolate" id="h1-inspiration">
+      <section className="h1-section relative isolate" id="h1-inspiration">
         <div className="h1-container max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop relative z-10 animate-pulse">
           <div className="flex flex-col items-center mb-8 lg:mb-10 text-center">
             <div className="h-3 w-24 bg-surface-container-high rounded-full mb-2 mx-auto"></div>
@@ -75,10 +75,7 @@ export function GalleryInspiration({ previewContent }) {
   }
 
   return (
-    <section
-      className="h1-section py-16 bg-surface relative overflow-hidden isolate"
-      id="h1-inspiration"
-    >
+    <section className="h1-section py-16 relative isolate" id="h1-inspiration">
       {/* Background glow gradient behind mandala */}
       <div className="absolute -bottom-32 -left-32 w-[250px] h-[250px] bg-primary-container/15 rounded-full blur-[70px] pointer-events-none z-[-1]" />
       <MandalaArtDecor

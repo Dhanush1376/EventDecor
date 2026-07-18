@@ -124,15 +124,6 @@ const CardContent = React.memo(function CardContent({
 
         {/* Type Badge / Video Badge */}
         <div className="flex flex-col items-end gap-1.5">
-          <div
-            className={`px-2.5 py-1 rounded-full backdrop-blur-md border text-[8px] uppercase tracking-widest font-extrabold shadow-lg ${
-              item.type === 'real-event'
-                ? 'bg-[#C4A87C] text-white border-[#C4A87C]/30'
-                : 'bg-stone-900/90 text-white border-white/20'
-            }`}
-          >
-            {item.type === 'real-event' ? 'Real Event' : 'Inspiration'}
-          </div>
           {item.video && (
             <div className="px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 bg-amber-600/90 text-white text-[8px] uppercase tracking-widest font-extrabold shadow-lg flex items-center gap-1">
               <span className="material-symbols-outlined text-[10px]">play_circle</span>
@@ -152,7 +143,7 @@ const CardContent = React.memo(function CardContent({
                 {item.teluguTitle}
               </span>
             )}
-            <h3 className="font-display text-[10px] xs:text-[12px] lg:text-[20px] lg:text-[28px] text-white leading-tight font-bold">
+            <h3 className="font-display text-[11px] sm:text-[14px] lg:text-[18px] text-white leading-tight font-bold">
               {item.title}
             </h3>
           </div>
@@ -166,36 +157,6 @@ const CardContent = React.memo(function CardContent({
               {item.event}
             </span>
           </div>
-
-          <div className="flex items-center justify-between gap-2.5">
-            <p className="hidden lg:block text-white/70 font-body text-[9px] sm:text-[10px] lg:text-[11px] font-light leading-relaxed line-clamp-1 xs:line-clamp-2 max-w-[140px] sm:max-w-[200px] lg:max-w-[240px]">
-              {item.description}
-            </p>
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (itemId && navigate) navigate(linkTo);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (itemId && navigate) navigate(linkTo);
-                }
-              }}
-              className="hidden lg:flex w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full bg-white text-black items-center justify-center shadow-2xl hover:bg-primary hover:text-white focus:outline-none focus:ring-0 transition-all duration-300 flex-shrink-0"
-              aria-label={`View ${item.title}`}
-            >
-              <span className="material-symbols-outlined text-[12px] sm:text-[14px] lg:text-[18px] font-bold">
-                arrow_outward
-              </span>
-            </span>
-          </div>
-
-          <div className="hidden lg:block h-[1px] w-0 bg-primary/40 mt-4 lg:mt-6 transition-all duration-1000 group-hover:w-full" />
         </div>
       </div>
 

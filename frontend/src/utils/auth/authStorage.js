@@ -4,7 +4,9 @@ export const SESSION_MARKER_KEY = 'siri_session_active';
 export const REFRESH_TOKEN_KEY = 'siri_refresh_token_fallback';
 
 export const hasSessionMarker = () => {
-  return persistentStorage.getItem(SESSION_MARKER_KEY, { fallback: 'false' }) === 'true';
+  const val = persistentStorage.getItem(SESSION_MARKER_KEY, { fallback: 'false' });
+  const strVal = String(val).replace(/["']/g, '').trim().toLowerCase();
+  return strVal === 'true';
 };
 
 export const setSessionMarker = () => {

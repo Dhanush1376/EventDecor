@@ -8,7 +8,9 @@ const FilterSection = ({ title, id, children, activeSections, onToggle }) => (
       onClick={() => onToggle(id)}
       className="w-full flex justify-between items-center py-1 text-left font-label text-label-md text-on-surface hover:text-primary transition-colors group"
     >
-      <span className="uppercase tracking-[0.2em] font-bold">{title}</span>
+      <span className="uppercase tracking-[0.2em] font-bold lg:text-[11px] lg:tracking-widest">
+        {title}
+      </span>
       <span
         className={`material-symbols-outlined text-secondary transition-transform duration-500 ${activeSections[id] ? 'rotate-180' : ''}`}
       >

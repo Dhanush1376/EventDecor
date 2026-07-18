@@ -186,7 +186,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
               e.stopPropagation();
               onOpenShowcase?.();
             }}
-            className="w-8 h-8 lg:w-9 lg:h-9 min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer"
+            className="w-8 h-8 lg:w-9 lg:h-9 min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-stone-800 hover:text-white transition-all duration-500 cursor-pointer"
             aria-label="Reserve setup"
             title="Reserve this setup"
           >

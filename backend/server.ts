@@ -292,3 +292,4 @@ const startServer = async () => {
 };
 
 startServer();
+// Trigger restart

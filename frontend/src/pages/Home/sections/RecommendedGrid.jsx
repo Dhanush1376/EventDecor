@@ -30,25 +30,22 @@ export function RecommendedGrid({ previewContent }) {
 
   if (isPending || loading) {
     return (
-      <section
-        className="h1-section bg-surface-container-lowest relative overflow-hidden isolate"
-        id="h1-recommended"
-      >
+      <section className="h1-section relative isolate" id="h1-recommended">
         {/* Background glow gradients behind mandalas */}
         <div className="absolute -top-40 -left-40 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
         <div className="absolute -bottom-40 -right-40 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
 
         <MandalaElement
-          className="absolute -top-32 -left-32 opacity-[0.05] z-[-1]"
-          size={500}
+          className="absolute top-4 -left-32 opacity-[0.05] z-[-1]"
+          size={450}
           duration={170}
-          variant={4}
+          variant={3}
         />
         <MandalaElement
           className="absolute -bottom-32 -right-32 opacity-[0.05] z-[-1]"
           size={500}
           duration={170}
-          variant={4}
+          variant={3}
         />
         <div className="h1-container relative z-10 animate-pulse">
           <div className="flex justify-between items-end mb-8 lg:mb-10">
@@ -97,24 +94,21 @@ export function RecommendedGrid({ previewContent }) {
   }
 
   return (
-    <section
-      className="h1-section bg-surface-container-lowest relative overflow-hidden isolate"
-      id="h1-recommended"
-    >
+    <section className="h1-section relative isolate" id="h1-recommended">
       {/* Background glow gradients behind mandalas */}
       <div className="absolute -top-40 -left-40 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
       <div className="absolute -bottom-40 -right-40 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
       <MandalaElement
-        className="absolute -top-32 -left-32 opacity-[0.05] z-[-1]"
-        size={500}
+        className="absolute top-4 -left-32 opacity-[0.05] z-[-1]"
+        size={450}
         duration={170}
-        variant={4}
+        variant={3}
       />
       <MandalaElement
         className="absolute -bottom-32 -right-32 opacity-[0.05] z-[-1]"
         size={500}
         duration={170}
-        variant={4}
+        variant={3}
       />
       <div className="h1-container relative z-10">
         <SectionHeader

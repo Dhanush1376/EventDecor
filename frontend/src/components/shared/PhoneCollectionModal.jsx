@@ -74,7 +74,19 @@ export function PhoneCollectionModal({ isOpen, onClose, onSuccess }) {
                   disabled={isLoading}
                 />
               </div>
-              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="bg-red-50 text-red-600 px-3 py-2 rounded-lg text-xs font-bold border border-red-100 flex items-start gap-2 shadow-sm mt-3"
+                  >
+                    <span className="material-symbols-outlined text-[16px] mt-0.5">error</span>
+                    <span className="flex-1 leading-snug">{error}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="flex gap-4 pt-2">

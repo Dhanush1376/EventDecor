@@ -45,7 +45,7 @@ export const ProductListingGrid = React.memo(
           spinDuration={120}
         />
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 xl:gap-12">
-          <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-32 h-fit">
+          <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 lg:sticky lg:top-32 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto no-scrollbar pb-4">
             <FilterPanel
               filterGroups={filterGroups}
               currentFilters={filters}

@@ -452,7 +452,7 @@ export const ProductCard = React.memo(function ProductCard({
                     <Component
                       key={`badge-${idx}`}
                       {...extraProps}
-                      className={`relative w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-white/95 backdrop-blur-md text-black/80 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white transition-transform duration-300 select-none ${couponCode ? 'hover:scale-110 cursor-pointer hover:bg-[#e0d6b8] hover:text-[#1a1c1a] active:scale-95 z-50' : 'hover:scale-110 z-[20]'}`}
+                      className={`relative w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-white/95 backdrop-blur-md text-black/80 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white transition-transform duration-300 select-none ${couponCode ? 'hover:scale-110 cursor-pointer hover:bg-stone-800 hover:text-white active:scale-95 z-50' : 'hover:scale-110 z-[20]'}`}
                       style={{ zIndex: 20 - idx }}
                     >
                       {displayContent}
@@ -519,7 +519,7 @@ export const ProductCard = React.memo(function ProductCard({
                         ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
                         : added
                           ? 'bg-[#e0d6b8] text-[#1a1c1a]'
-                          : 'bg-white text-black hover:bg-[#e0d6b8] hover:text-[#1a1c1a]'
+                          : 'bg-white text-black hover:bg-stone-800 hover:text-white'
                     }`}
                   >
                     <AnimatePresence mode="wait">
@@ -600,7 +600,7 @@ export const ProductCard = React.memo(function ProductCard({
                   e.stopPropagation();
                   navigate(getProductRoute('event', productId));
                 }}
-                className={`${compact ? 'w-7 h-7 lg:w-7 lg:h-7' : 'w-8 h-8 lg:w-8 lg:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] transition-all duration-500 cursor-pointer`}
+                className={`${compact ? 'w-7 h-7 lg:w-7 lg:h-7' : 'w-8 h-8 lg:w-8 lg:h-8'} min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-stone-800 hover:text-white transition-all duration-500 cursor-pointer`}
                 aria-label="Book setup"
               >
                 <span
@@ -618,7 +618,7 @@ export const ProductCard = React.memo(function ProductCard({
                     ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
                     : added
                       ? 'bg-[#e0d6b8] text-[#1a1c1a] cursor-pointer'
-                      : 'bg-black text-white hover:bg-[#e0d6b8] hover:text-[#1a1c1a] cursor-pointer'
+                      : 'bg-black text-white hover:bg-stone-800 hover:text-white cursor-pointer'
                 }`}
                 aria-label="Add to bag"
               >
@@ -665,15 +665,16 @@ export const ProductCard = React.memo(function ProductCard({
       <div
         className={`${compact ? 'pt-1.5 pb-1 px-1.5' : 'pt-2.5 pb-2 px-3.5 lg:px-4'} flex flex-col flex-1 transition-opacity duration-500 ${hideDetails ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
-        <div className={`flex items-center gap-1.5 ${compact ? 'mb-0.5' : 'mb-1.5 lg:mb-2'}`}>
+        <div
+          className={`flex items-center justify-between gap-2 ${compact ? 'mb-1.5' : 'mb-2.5 lg:mb-3'}`}
+        >
           <span
-            className={`text-black/60 font-label uppercase ${compact ? 'text-[7px] tracking-[0.1em]' : 'text-[8px] lg:text-[9px] tracking-[0.15em] lg:tracking-[0.2em]'} font-bold truncate flex-1 min-w-0`}
+            className={`bg-surface-container-highest/40 border border-black/15 text-black/70 font-label uppercase ${compact ? 'text-[7px] tracking-[0.1em] px-1.5 py-[3px]' : 'text-[8px] lg:text-[9px] tracking-[0.15em] lg:tracking-[0.2em] px-2 py-[4px]'} rounded-md font-bold truncate min-w-0`}
           >
             {primaryCategory?.name || category || 'Uncategorized'}
           </span>
 
-          <div className="w-0.5 h-0.5 rounded-full bg-black/10" />
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0.5 shrink-0">
             <DynamicRatingBadge
               itemId={productId}
               itemType={itemType}

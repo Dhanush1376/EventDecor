@@ -97,7 +97,24 @@ function App() {
                 },
                 success: { iconTheme: { primary: '#16a34a', secondary: '#ffffff' } },
               }}
-            />
+            >
+              {(t) => (
+                <m.div
+                  drag="y"
+                  dragConstraints={{ top: 0, bottom: 0 }}
+                  dragElastic={0.4}
+                  onDragEnd={(_, info) => {
+                    if (info.offset.y < -20) {
+                      toast.dismiss(t.id);
+                    }
+                  }}
+                  style={{ touchAction: 'none', cursor: 'grab' }}
+                  whileTap={{ cursor: 'grabbing' }}
+                >
+                  <ToastBar toast={t} />
+                </m.div>
+              )}
+            </Toaster>
           </div>
         )}
 
