@@ -18,6 +18,7 @@ export interface ColdStartRecommendation {
   source: string;
   title?: string;
   image?: string;
+  category?: string;
   primaryCategory?: string;
   price?: number;
   rentalEnabled?: boolean;
