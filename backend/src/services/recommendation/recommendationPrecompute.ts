@@ -43,8 +43,9 @@ export async function precomputeCatalogRecommendations(): Promise<void> {
       const productIds = compItems.map((i) => i.targetId);
       const fullProducts = await Product.find({ _id: { $in: productIds }, isActive: true })
         .select(
-          '_id title imageSrc category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+          '_id title imageSrc primaryCategory price oldPrice strikingPrice mrp originalPrice rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
         )
+        .populate('primaryCategory', 'name')
         .lean();
 
       const enrichedComp = compItems

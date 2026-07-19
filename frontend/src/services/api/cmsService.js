@@ -6,8 +6,8 @@ export const cmsService = {
     const response = await api.get('/cms', {
       headers: {
         'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
+        Pragma: 'no-cache',
+      },
     });
     return response.data;
   },
@@ -24,15 +24,23 @@ export const cmsService = {
     return response.data;
   },
   aiGenerateContent: async (text, style) => {
-    const response = await api.post('/cms/ai-generate', { text, style });
+    const response = await api.post('/cms/ai-generate', { text, style }, { timeout: 60000 });
     return response.data;
   },
-  analyzeShowcaseImage: async (imageUrl) => {
-    const response = await api.post('/cms/ai-vision-showcase', { imageUrl });
+  analyzeShowcaseImage: async (imageUrl, providerId = null) => {
+    const response = await api.post(
+      '/cms/ai-vision-showcase',
+      { imageUrl, providerId },
+      { timeout: 60000 },
+    );
     return response.data;
   },
-  refineAiShowcase: async (previousData, prompt) => {
-    const response = await api.post('/cms/ai-vision-refine-showcase', { previousData, prompt });
+  refineAiShowcase: async (previousData, prompt, providerId = null) => {
+    const response = await api.post(
+      '/cms/ai-vision-refine-showcase',
+      { previousData, prompt, providerId },
+      { timeout: 60000 },
+    );
     return response.data;
   },
 };

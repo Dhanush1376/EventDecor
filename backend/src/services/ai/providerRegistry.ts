@@ -51,7 +51,7 @@ export const VISION_PROVIDER_CONFIG: Record<string, VisionProviderConfig> = {
     headerKey: 'Authorization',
     headerPrefix: 'Bearer ',
     apiFormat: 'openai',
-    supportsVision: true,
+    supportsVision: false, // Groq decommissioned all vision models as of 2026
     validationPath: '/chat/completions',
   },
   openai: {
@@ -140,16 +140,34 @@ export const VISION_PROVIDER_CONFIG: Record<string, VisionProviderConfig> = {
     supportsVision: false,
     validationPath: '/chat/completions',
   },
+  ollama: {
+    displayName: 'Ollama (Local)',
+    baseURL: 'http://localhost:11434/v1',
+    headerKey: 'Authorization',
+    headerPrefix: 'Bearer ',
+    apiFormat: 'openai',
+    supportsVision: true,
+    validationPath: '/models',
+  },
+  azure_openai: {
+    displayName: 'Azure OpenAI',
+    baseURL: '', // Requires endpoint URL
+    headerKey: 'api-key',
+    headerPrefix: '',
+    apiFormat: 'openai',
+    supportsVision: true,
+    validationPath: '/deployments',
+  },
 };
 
 // ── Vision Model Registry ──────────────────────────────────────────────────
 
 export const VISION_MODEL_REGISTRY: Record<string, VisionModelEntry> = {
   groq: {
-    validation: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    production: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    fallback: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    chain: ['meta-llama/llama-4-scout-17b-16e-instruct'],
+    validation: 'llama-3.3-70b-versatile',
+    production: 'llama-3.3-70b-versatile',
+    fallback: 'llama-3.1-8b-instant',
+    chain: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
   },
   openai: {
     validation: 'gpt-4o-mini',
@@ -210,6 +228,18 @@ export const VISION_MODEL_REGISTRY: Record<string, VisionModelEntry> = {
     production: 'default',
     fallback: 'default',
     chain: ['default'],
+  },
+  ollama: {
+    validation: 'llama3.2-vision',
+    production: 'llama3.2-vision',
+    fallback: 'llava',
+    chain: ['llama3.2-vision', 'llava'],
+  },
+  azure_openai: {
+    validation: 'gpt-4o-mini',
+    production: 'gpt-4o',
+    fallback: 'gpt-4o-mini',
+    chain: ['gpt-4o-mini', 'gpt-4o'],
   },
 };
 

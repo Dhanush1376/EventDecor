@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { cmsService } from '../../services/domainServices';
+import { aiService } from '../../services/api/aiService';
 import logger from '../../utils/core/logger';
 
 export function useShowcaseAI({ formData, setFormData, setCategories, setCurrentStep }) {
@@ -11,14 +12,29 @@ export function useShowcaseAI({ formData, setFormData, setCategories, setCurrent
   const [isApplyingFields, setIsApplyingFields] = useState(false);
   const [focusedField, setFocusedField] = useState('');
   const [isAIGenerating, setIsAIGenerating] = useState(false);
+  const [aiError, setAiError] = useState(null);
+  const [globalAiConfig, setGlobalAiConfig] = useState(null);
 
-  const handleAiAutofill = async () => {
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await aiService.getSettings();
+        setGlobalAiConfig(res.data);
+      } catch (err) {
+        logger.warn('Failed to load Global AI Settings', err);
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  const handleAiAutofill = async (selectedProviderId = null) => {
     if (!formData.image) {
       toast.error('Please upload or paste an image URL first for AI Vision analysis!');
       return;
     }
     const loadId = toast.loading('AI Vision models analyzing floral accents & prop structures...');
     setIsAIGenerating(true);
+    setAiError(null);
     try {
       let imageToAnalyze = formData.image;
       if (formData.pendingUploads?.length > 0) {
@@ -99,7 +115,7 @@ export function useShowcaseAI({ formData, setFormData, setCategories, setCurrent
         }
       }
 
-      const res = await cmsService.analyzeShowcaseImage(finalImageSrc);
+      const res = await cmsService.analyzeShowcaseImage(finalImageSrc, selectedProviderId);
       if (res.success) {
         if (res.data.category && res.data.category.isNew) {
           const newCat = {
@@ -116,7 +132,10 @@ export function useShowcaseAI({ formData, setFormData, setCategories, setCurrent
         toast.success('AI Vision extracted details successfully');
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to analyze image with AI');
+      const errMsg =
+        err?.response?.data?.message || err?.message || 'Failed to analyze image with AI';
+      toast.error(errMsg);
+      setAiError(errMsg);
     } finally {
       setIsAIGenerating(false);
       toast.dismiss(loadId);
@@ -236,6 +255,9 @@ export function useShowcaseAI({ formData, setFormData, setCategories, setCurrent
     isAIGenerating,
     isApplyingFields,
     focusedField,
+    aiError,
+    setAiError,
+    globalAiConfig,
     handleAiAutofill,
     handleAiChatSubmit,
     handleApplyAISpecs,

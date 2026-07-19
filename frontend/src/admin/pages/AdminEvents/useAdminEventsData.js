@@ -120,8 +120,11 @@ export function useAdminEventsData() {
         }));
 
       const productsPayload = productsRes?.data || productsRes;
-      const productsList =
+      let productsList =
         productsPayload?.items || productsPayload?.products || productsPayload?.data || [];
+      if (!Array.isArray(productsList) && productsList.data) {
+        productsList = productsList.data;
+      }
       const inventory = (Array.isArray(productsList) ? productsList : []).map((product) => ({
         item: product.title || product.name,
         stock: Number(product.stock) || 0,

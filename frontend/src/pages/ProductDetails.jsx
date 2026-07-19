@@ -260,7 +260,7 @@ export function ProductDetails() {
                       'Showcase'
                     }
                     price={showcase.basePrice || showcase.rentalPrice}
-                    originalPrice={showcase.originalPrice}
+                    oldPrice={showcase.originalPrice || showcase.strikingPrice || showcase.oldPrice}
                     rating={showcase.rating}
                     reviewCount={showcase.reviewCount}
                     tags={showcase.tags}

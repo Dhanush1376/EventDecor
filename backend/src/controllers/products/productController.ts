@@ -121,15 +121,20 @@ export const getCategories = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const aiAutofillProduct = asyncHandler(async (req: Request, res: Response) => {
-  const { title, imageSrc, categoryList } = req.body;
-  const parsedData = await ProductAiService.analyzeProductImage(title, imageSrc, categoryList);
+  const { title, imageSrc, categoryList, providerId } = req.body;
+  const parsedData = await ProductAiService.analyzeProductImage(
+    title,
+    imageSrc,
+    categoryList,
+    providerId,
+  );
   res
     .status(200)
     .json(new ApiResponse(true, 'AI specifications generated successfully', parsedData));
 });
 
 export const refineAiProduct = asyncHandler(async (req: Request, res: Response) => {
-  const { previousResult, prompt } = req.body;
-  const parsedData = await ProductAiService.refineAiProduct(previousResult, prompt);
+  const { previousResult, prompt, providerId } = req.body;
+  const parsedData = await ProductAiService.refineAiProduct(previousResult, prompt, providerId);
   res.status(200).json(new ApiResponse(true, 'AI specifications refined successfully', parsedData));
 });

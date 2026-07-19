@@ -41,12 +41,20 @@ export const productService = {
     const response = await api.patch(`/products/${id}/toggle-featured`);
     return response.data;
   },
-  aiAutofill: async (title, imageSrc, categoryList) => {
-    const response = await api.post('/products/ai-autofill', { title, imageSrc, categoryList });
+  aiAutofill: async (title, imageSrc, categoryList, providerId = null) => {
+    const response = await api.post(
+      '/products/ai-autofill',
+      { title, imageSrc, categoryList, providerId },
+      { timeout: 60000 },
+    );
     return response.data;
   },
-  refineAiProduct: async (previousResult, prompt) => {
-    const response = await api.post('/products/ai-refine', { previousResult, prompt });
+  refineAiProduct: async (previousResult, prompt, providerId = null) => {
+    const response = await api.post(
+      '/products/ai-refine',
+      { previousResult, prompt, providerId },
+      { timeout: 60000 },
+    );
     return response.data;
   },
   getCategories: async () => {

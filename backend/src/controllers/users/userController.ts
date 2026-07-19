@@ -295,7 +295,12 @@ export const removeFromCart = asyncHandler(async (req: any, res: Response) => {
 
 // Recently Viewed Products tracking
 export const getRecentlyViewed = asyncHandler(async (req: any, res: Response) => {
-  const user = await User.findById(req.user.id).populate('recentlyViewed.product').lean();
+  const user = await User.findById(req.user.id)
+    .populate({
+      path: 'recentlyViewed.product',
+      populate: { path: 'primaryCategory', select: 'name' },
+    })
+    .lean();
   if (!user) throw new ApiError(404, 'User not found');
 
   const list = (user.recentlyViewed || []).filter((item: any) => item.product != null);

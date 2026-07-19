@@ -281,6 +281,13 @@ export const navSections = [
         keywords: 'alerts, rules, emails',
         domain: 'settings',
       },
+      {
+        label: 'Global AI Platform',
+        icon: 'memory',
+        path: '/admin/ai-settings',
+        keywords: 'ai, machine learning, providers, models',
+        domain: 'settings',
+      },
 
       {
         label: 'WhatsApp Automations',

@@ -21,6 +21,7 @@ export function AdminPolicyEditor() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiTopic, setAiTopic] = useState('');
+  const [aiError, setAiError] = useState(null);
 
   const [initialPolicyData, setInitialPolicyData] = useState({
     title: '',
@@ -118,6 +119,7 @@ export function AdminPolicyEditor() {
 
     setShowAiModal(false);
     setIsGenerating(true);
+    setAiError(null);
     const toastId = toast.loading(
       isNew
         ? 'Analyzing store settings and generating policy...'
@@ -145,7 +147,9 @@ export function AdminPolicyEditor() {
         toast.success('Policy auto-filled successfully!', { id: toastId });
       }
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Failed to generate policy'), { id: toastId });
+      const errMsg = getErrorMessage(error, 'Failed to generate policy');
+      toast.error(errMsg, { id: toastId });
+      setAiError(errMsg);
     } finally {
       setIsGenerating(false);
     }
@@ -245,17 +249,31 @@ export function AdminPolicyEditor() {
           <button
             onClick={handleAiAutoFillClick}
             disabled={isGenerating}
-            className="admin-btn h-10 px-4 flex items-center gap-2 rounded-[var(--admin-radius-md)] bg-[#8b7355] text-white hover:bg-[#7a6548] transition-colors font-bold"
+            className="admin-btn h-10 px-4 flex items-center gap-2 rounded-[var(--admin-radius-md)] bg-[#c4a87c] text-white hover:bg-[#b3976b] transition-colors font-bold"
           >
             <span
               className={`material-symbols-outlined text-[18px] ${isGenerating ? 'animate-spin' : ''}`}
             >
               {isGenerating ? 'sync' : 'auto_awesome'}
             </span>
-            {isGenerating ? 'Generating...' : 'AI Auto-Fill'}
+            <span className="hidden sm:inline">
+              {isGenerating ? 'Generating...' : 'AI Auto-Fill'}
+            </span>
           </button>
         </div>
       </div>
+
+      {aiError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-2">
+          <span className="material-symbols-outlined text-red-500 shrink-0 mt-0.5">error</span>
+          <div className="flex-1">
+            <h3 className="text-red-800 dark:text-red-400 font-bold text-[13px] mb-1">
+              AI Generation Failed
+            </h3>
+            <p className="text-red-600 dark:text-red-300 text-[12px] leading-relaxed">{aiError}</p>
+          </div>
+        </div>
+      )}
 
       <motion.div
         variants={fadeUp}

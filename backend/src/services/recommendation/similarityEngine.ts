@@ -342,8 +342,9 @@ export async function getFastFallbackSimilar(
         isActive: true,
       })
         .select(
-          '_id title imageSrc images category price rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+          '_id title imageSrc images primaryCategory price oldPrice strikingPrice mrp originalPrice rating reviews slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
         )
+        .populate('primaryCategory', 'name')
         .limit(limit)
         .lean();
 
@@ -353,8 +354,14 @@ export async function getFastFallbackSimilar(
         title: p.title,
         imageSrc: p.imageSrc,
         images: p.images,
-        category: p.primaryCategory?.toString()?.toString(),
+        category: (p.primaryCategory as any)?.name || p.primaryCategory?.toString(),
+        primaryCategory: p.primaryCategory,
         price: p.price,
+        oldPrice:
+          (p as any).oldPrice ||
+          (p as any).strikingPrice ||
+          (p as any).mrp ||
+          (p as any).originalPrice,
         rating: p.rating,
         reviews: p.reviews,
         slug: p.slug,

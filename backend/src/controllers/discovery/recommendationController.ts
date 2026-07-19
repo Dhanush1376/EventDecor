@@ -271,8 +271,9 @@ export const getSeasonal = async (req: Request, res: Response) => {
       ],
     })
       .select(
-        '_id title imageSrc images category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+        '_id title imageSrc images primaryCategory price oldPrice strikingPrice mrp originalPrice rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
       )
+      .populate('primaryCategory', 'name')
       .sort({ rating: -1, reviews: -1 })
       .limit(limit)
       .lean();
@@ -283,8 +284,14 @@ export const getSeasonal = async (req: Request, res: Response) => {
       title: p.title,
       imageSrc: p.imageSrc,
       images: p.images,
-      category: p.primaryCategory?.toString()?.toString(),
+      category: (p.primaryCategory as any)?.name,
+      primaryCategory: p.primaryCategory,
       price: p.price,
+      oldPrice:
+        (p as any).oldPrice ||
+        (p as any).strikingPrice ||
+        (p as any).mrp ||
+        (p as any).originalPrice,
       rating: p.rating,
       reviews: p.reviews,
       tags: p.tags,
@@ -520,6 +527,7 @@ async function enrichTrendingItems(items: any[]): Promise<any[]> {
         images: full.images,
         gallery: full.gallery,
         category: full.primaryCategory?.name || undefined,
+        primaryCategory: full.primaryCategory || full.category,
         style: full.style,
         price: full.price,
         oldPrice: full.oldPrice,

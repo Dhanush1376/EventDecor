@@ -6,14 +6,10 @@ import Category from '../../models/Category';
 import logger from '../../config/logger';
 
 export const analyzeShowcaseImage = asyncHandler(async (req: Request, res: Response) => {
-  const { imageUrl } = req.body;
+  const { imageUrl, providerId } = req.body;
 
   if (!imageUrl) {
     throw new ApiError(400, 'Image URL is required for AI Vision analysis');
-  }
-
-  if (!process.env.GROQ_API_KEY) {
-    throw new ApiError(400, 'AI content generation requires GROQ_API_KEY in backend .env file.');
   }
 
   const systemPrompt = `You are an expert luxury event and wedding decorator for "Siri Arts & Crafts". 
@@ -34,8 +30,6 @@ The JSON must have the following keys:
 
 Do NOT include any extra text before or after the JSON.`;
 
-  let timeout: NodeJS.Timeout | undefined;
-
   try {
     let base64Image = '';
     let mimeType = 'image/jpeg';
@@ -53,45 +47,20 @@ Do NOT include any extra text before or after the JSON.`;
       if (contentType) mimeType = contentType;
     }
 
-    const controller = new AbortController();
-    timeout = setTimeout(() => controller.abort(), 20000); // 20s timeout for vision model
+    const { AIClient } = await import('../../services/ai/aiClient.js');
 
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: systemPrompt },
-              { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64Image}` } },
-            ],
-          },
-        ],
+    const generatedText = await AIClient.generateVision(
+      'showcase-ai',
+      base64Image,
+      mimeType,
+      systemPrompt,
+      {
         temperature: 0.2,
-        max_tokens: 800,
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    if (!groqResponse.ok) {
-      const errData = await groqResponse.json().catch(() => ({}));
-      logger.error('Groq API Error: ' + JSON.stringify(errData));
-      throw new ApiError(500, 'AI Vision service temporarily unavailable');
-    }
-
-    const data: any = await groqResponse.json();
-    const generatedText = data.choices?.[0]?.message?.content?.trim();
-
-    if (!generatedText) {
-      throw new ApiError(500, 'Vision analysis returned no results');
-    }
+        maxTokens: 800,
+        jsonMode: true,
+        providerOverride: providerId,
+      },
+    );
 
     let parsedPayload;
     try {
@@ -147,7 +116,6 @@ Do NOT include any extra text before or after the JSON.`;
       }),
     );
   } catch (err: any) {
-    if (timeout) clearTimeout(timeout);
     if (err instanceof ApiError) throw err;
     logger.error('AI Vision Error: ', err);
     throw new ApiError(500, 'AI Vision content generation failed');
@@ -155,14 +123,10 @@ Do NOT include any extra text before or after the JSON.`;
 });
 
 export const refineShowcaseImage = asyncHandler(async (req: Request, res: Response) => {
-  const { previousData, prompt } = req.body;
+  const { previousData, prompt, providerId } = req.body;
 
   if (!previousData || !prompt) {
     throw new ApiError(400, 'Previous data and prompt are required');
-  }
-
-  if (!process.env.GROQ_API_KEY) {
-    throw new ApiError(400, 'AI content generation requires GROQ_API_KEY in backend .env file.');
   }
 
   const systemPrompt = `You are an expert luxury event and wedding decorator for "Siri Arts & Crafts". 
@@ -174,34 +138,15 @@ The user has given you the following feedback/instructions to refine it:
 
 Output ONLY a valid, raw JSON object (without markdown code blocks) representing the updated setup. Maintain the exact same JSON schema: title, subtitle, category, description, inclusionsText, colorPalette, suggestedProps, setupTimeHours, rentalPrice, strikingPrice, seoTitle, seoDescription. Do NOT include any extra text before or after the JSON.`;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20000);
-
   try {
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: systemPrompt }],
-        temperature: 0.3,
-        max_tokens: 800,
-      }),
-      signal: controller.signal,
+    const { AIClient } = await import('../../services/ai/aiClient.js');
+
+    const generatedText = await AIClient.generateText('showcase-ai-refine', systemPrompt, {
+      temperature: 0.3,
+      maxTokens: 800,
+      jsonMode: true,
+      providerOverride: providerId,
     });
-    clearTimeout(timeout);
-
-    if (!groqResponse.ok) {
-      const errData = await groqResponse.json().catch(() => ({}));
-      logger.error('Groq API Error in Refine: ' + JSON.stringify(errData));
-      throw new ApiError(500, 'AI service temporarily unavailable');
-    }
-
-    const data: any = await groqResponse.json();
-    const generatedText = data.choices?.[0]?.message?.content?.trim();
 
     if (!generatedText) {
       throw new ApiError(500, 'Vision analysis returned no results');
@@ -256,7 +201,6 @@ Output ONLY a valid, raw JSON object (without markdown code blocks) representing
       }),
     );
   } catch (err: any) {
-    clearTimeout(timeout);
     if (err instanceof ApiError) throw err;
     throw new ApiError(500, 'AI Refinement failed');
   }

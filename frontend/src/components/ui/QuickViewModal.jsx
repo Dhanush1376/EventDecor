@@ -166,10 +166,11 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
 
           <motion.div
             ref={modalRef}
-            initial={{ opacity: 0, y: '100%', scale: 1 }}
+            initial={{ opacity: 0, y: 40, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: '100%', scale: 1 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            exit={{ opacity: 0, y: 40, scale: 0.96 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300, mass: 0.8 }}
+            style={{ willChange: 'transform, opacity' }}
             drag="y"
             dragDirectionLock
             dragConstraints={{ top: 0, bottom: 150 }}
@@ -422,7 +423,7 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
                   )}
                 </div>
 
-                <div className="mt-auto space-y-4 pb-[max(16px,env(safe-area-inset-bottom))] lg:pb-0">
+                <div className="mt-auto hidden lg:block space-y-4 pb-[max(16px,env(safe-area-inset-bottom))] lg:pb-0">
                   <button
                     onClick={handleAddToCart}
                     className="w-full btn-primary !py-4 md:!py-5 flex items-center justify-center gap-3 font-bold cursor-pointer shadow-lg hover:scale-[1.02] transition-transform"

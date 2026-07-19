@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { productService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
+import { aiService } from '../../services/api/aiService';
 import logger from '../../utils/core/logger';
 
 export function useProductAI({
@@ -17,8 +18,22 @@ export function useProductAI({
   const [isAILearning, setIsAILearning] = useState(false);
   const [_isApplyingFields, setIsApplyingFields] = useState(false);
   const [focusedField, setFocusedField] = useState('');
+  const [aiError, setAiError] = useState(null);
+  const [globalAiConfig, setGlobalAiConfig] = useState(null);
 
-  const handleAIFill = async (fileObj) => {
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await aiService.getSettings();
+        setGlobalAiConfig(res.data);
+      } catch (err) {
+        logger.warn('Failed to load Global AI Settings', err);
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  const handleAIFill = async (fileObj, selectedProviderId = null) => {
     // If fileObj is a React synthetic event, ignore it
     const isEvent = fileObj && fileObj.nativeEvent;
     const actualFile = isEvent ? null : fileObj;
@@ -29,6 +44,7 @@ export function useProductAI({
     }
 
     setIsAIGenerating(true);
+    setAiError(null);
     try {
       let imageToAnalyze = actualFile;
       if (!imageToAnalyze && formData.imageSrc) {
@@ -114,14 +130,22 @@ export function useProductAI({
       const categoryList = categoriesList;
       const title = formData.title || '';
 
-      const generatedData = await productService.aiAutofill(title, finalImageSrc, categoryList);
+      const generatedData = await productService.aiAutofill(
+        title,
+        finalImageSrc,
+        categoryList,
+        selectedProviderId,
+      );
 
       if (generatedData?.success && generatedData?.data) {
         setAiAnalysisResult(generatedData.data);
         setShowAIHUD(true);
       }
     } catch (err) {
+      const errMsg =
+        err?.response?.data?.message || err?.message || 'AI Auto-fill failed. Please try again.';
       toast.error('AI Auto-fill failed. Please try again.');
+      setAiError(errMsg);
       logger.error('AI Error:', err);
     } finally {
       setIsAIGenerating(false);
@@ -330,5 +354,8 @@ export function useProductAI({
     setAiChatInput,
     isAILearning,
     focusedField,
+    aiError,
+    setAiError,
+    globalAiConfig,
   };
 }

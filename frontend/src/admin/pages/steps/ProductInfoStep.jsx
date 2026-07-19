@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AdminToggle } from '../../components/AdminUIKit';
+import { AiProviderDropdown } from '../../components/AiProviderDropdown';
 
 export function ProductInfoStep({
   formData,
@@ -10,7 +11,10 @@ export function ProductInfoStep({
   setIsCustomCategory,
   focusedField,
   handleAIFill,
+  aiError,
 }) {
+  const [selectedProviderId, setSelectedProviderId] = useState(null);
+
   return (
     <div className="space-y-5">
       <div className="flex flex-row justify-between items-start gap-3">
@@ -20,24 +24,53 @@ export function ProductInfoStep({
             Detail product info, category, and materials.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleAIFill}
-          disabled={isAIGenerating}
-          className="bg-[var(--admin-accent)] text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer shrink-0 mt-1 sm:mt-0"
-          title="Auto-Fill with AI"
-        >
-          {isAIGenerating ? (
-            <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
-          ) : (
-            <span className="material-symbols-outlined text-[15px] sm:text-[14px]">smart_toy</span>
-          )}
-          <span className="hidden sm:inline">
-            {isAIGenerating ? 'Analyzing Image & Title...' : 'Auto-Fill with AI'}
-          </span>
-          <span className="sm:hidden">{isAIGenerating ? 'AI...' : 'AI Fill'}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <AiProviderDropdown
+            selectedProviderId={selectedProviderId}
+            onChange={setSelectedProviderId}
+            disabled={isAIGenerating}
+          />
+          <button
+            type="button"
+            onClick={() => handleAIFill(null, selectedProviderId)}
+            disabled={isAIGenerating}
+            className="bg-[var(--admin-accent)] text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer shrink-0"
+            title="Auto-Fill with AI"
+          >
+            {isAIGenerating ? (
+              <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
+            ) : (
+              <span className="material-symbols-outlined text-[15px] sm:text-[14px]">
+                smart_toy
+              </span>
+            )}
+            <span className="hidden sm:inline">
+              {isAIGenerating ? 'Analyzing Image & Title...' : 'Auto-Fill with AI'}
+            </span>
+            <span className="sm:hidden">{isAIGenerating ? 'AI...' : 'AI Fill'}</span>
+          </button>
+        </div>
       </div>
+
+      {aiError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3 mt-4 mb-2 shadow-sm animate-in fade-in slide-in-from-top-2">
+          <span className="material-symbols-outlined text-red-500 shrink-0 mt-0.5">error</span>
+          <div className="flex-1">
+            <h3 className="text-red-800 dark:text-red-400 font-bold text-[13px] mb-1">
+              AI Auto-Fill Failed
+            </h3>
+            <p className="text-red-600 dark:text-red-300 text-[12px] leading-relaxed">{aiError}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              // Usually the parent or hook exposes a way to clear the error, or we can just ignore it until the next run.
+              // Since we don't have setAiError here, we can just leave it, or let the user try again which clears it.
+            }}
+            className="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors pointer-events-none opacity-0" // Hidden but takes space, or we can just remove the close button for now since re-trying clears it.
+          ></button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2 sm:col-span-1">

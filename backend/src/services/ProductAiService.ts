@@ -4,6 +4,7 @@ import path from 'path';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import mongoose from 'mongoose';
+import { AIClient } from './ai/aiClient';
 export class ProductAiService {
   /**
    * AI Autofill Product - Extract object, materials, and generate customer-friendly details
@@ -12,14 +13,8 @@ export class ProductAiService {
     title: string | undefined,
     imageSrc: string | undefined,
     categoryList: any,
+    providerId?: string,
   ) {
-    if (!process.env.GROQ_API_KEY) {
-      throw new ApiError(
-        400,
-        'Groq API Key is not configured. Please add GROQ_API_KEY to your backend .env file.',
-      );
-    }
-
     if (!title && !imageSrc) {
       throw new ApiError(400, 'Please provide a title or image URL for analysis.');
     }
@@ -220,88 +215,54 @@ export class ProductAiService {
       }
     `;
 
-    const messages: Record<string, unknown>[] = [];
-    const userContent: Record<string, unknown>[] = [{ type: 'text', text: prompt }];
-
-    if (base64Image) {
-      userContent.push({
-        type: 'image_url',
-        image_url: {
-          url: `data:${mimeType};base64,${base64Image}`,
-        },
-      });
-    }
-
-    messages.push({
-      role: 'user',
-      content: userContent,
-    });
-
-    const groqController = new AbortController();
-    const groqTimeout = setTimeout(() => groqController.abort(), 15000);
-
-    const modelsToTry = base64Image
-      ? ['meta-llama/llama-4-scout-17b-16e-instruct', 'qwen/qwen3.6-27b']
-      : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
-
-    let groqResponse;
-    let lastErrorText = '';
-
+    let textResponse: string;
     try {
-      for (const model of modelsToTry) {
-        groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          signal: groqController.signal,
-          body: JSON.stringify({
-            model,
-            messages,
-            temperature: 0.2,
-          }),
+      if (base64Image) {
+        textResponse = await AIClient.generateVision('product-ai', base64Image, mimeType, prompt, {
+          temperature: 0.2,
+          maxTokens: 4000,
+          jsonMode: true,
+          providerOverride: providerId,
         });
-
-        if (groqResponse.ok) {
-          break; // Successfully got a response!
-        } else {
-          lastErrorText = await groqResponse.text();
-          logger.warn(`Groq Vision Model ${model} failed:`, lastErrorText);
-          // If it's a 429 Too Many Requests, break out since it's a rate limit, not a model issue
-          if (groqResponse.status === 429) {
-            break;
-          }
-        }
+      } else {
+        textResponse = await AIClient.generateText('product-ai', prompt, {
+          temperature: 0.2,
+          maxTokens: 4000,
+          jsonMode: true,
+          providerOverride: providerId,
+        });
       }
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new ApiError(504, 'Groq API timeout. The request took too long.');
-      }
-      logger.error('Groq fetch error:', error);
-      throw new ApiError(500, 'Failed to connect to Groq AI API.');
-    } finally {
-      clearTimeout(groqTimeout);
-    }
-
-    if (!groqResponse || !groqResponse.ok) {
-      logger.error('Groq API Error:', lastErrorText);
-      throw new ApiError(500, 'Failed to generate product details from Groq AI API.');
-    }
-
-    const responseData = (await groqResponse.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    const textResponse = responseData.choices?.[0]?.message?.content;
-
-    if (!textResponse) {
-      throw new ApiError(500, 'Invalid response received from Groq AI API.');
+    } catch (err: any) {
+      logger.error('AI API Error:', err.message);
+      throw new ApiError(500, 'Failed to generate product details from AI API.');
     }
 
     try {
       const extractedJson = textResponse.match(/\{[\s\S]*\}/);
       if (!extractedJson) throw new Error('No JSON object found in response');
-      const parsedData = JSON.parse(extractedJson[0]);
+
+      let parsedData;
+      try {
+        // First try direct parse
+        parsedData = JSON.parse(extractedJson[0]);
+      } catch (firstParseErr) {
+        // Sanitize: fix unescaped newlines inside JSON string values
+        // Replace actual newlines/tabs within strings with their escaped equivalents
+        const sanitized = extractedJson[0]
+          .replace(/\r\n/g, '\\n')
+          .replace(/\r/g, '\\n')
+          .replace(/\n/g, '\\n')
+          .replace(/\t/g, '\\t');
+        try {
+          parsedData = JSON.parse(sanitized);
+        } catch (secondParseErr) {
+          require('fs').writeFileSync(
+            'C:/Users/Dhanush/OneDrive/Desktop/PROJECTS/EventDecor/backend/logs/ai-debug.json',
+            textResponse,
+          );
+          throw secondParseErr;
+        }
+      }
 
       // Ensure uniqueness against DB for title and slug across both Product and Showcase
       const ProductModel = mongoose.model('Product');
@@ -345,14 +306,7 @@ export class ProductAiService {
   /**
    * Refine AI Product result based on user prompt
    */
-  static async refineAiProduct(previousResult: any, userPrompt: string) {
-    if (!process.env.GROQ_API_KEY) {
-      throw new ApiError(
-        400,
-        'Groq API Key is not configured. Please add GROQ_API_KEY to your backend .env file.',
-      );
-    }
-
+  static async refineAiProduct(previousResult: any, userPrompt: string, providerId?: string) {
     if (!previousResult || !userPrompt) {
       throw new ApiError(400, 'Please provide the previous AI result and a prompt.');
     }
@@ -369,51 +323,17 @@ export class ProductAiService {
       Output ONLY the raw JSON object, without any markdown formatting or ticks.
     `;
 
-    const messages: Record<string, unknown>[] = [
-      { role: 'user', content: [{ type: 'text', text: prompt }] },
-    ];
-
-    const groqController = new AbortController();
-    const groqTimeout = setTimeout(() => groqController.abort(), 15000);
-
-    let groqResponse;
+    let textResponse: string;
     try {
-      groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        signal: groqController.signal,
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages,
-          response_format: { type: 'json_object' },
-          temperature: 0.2,
-        }),
+      textResponse = await AIClient.generateText('product-ai-refine', prompt, {
+        temperature: 0.2,
+        maxTokens: 4000,
+        jsonMode: true,
+        providerOverride: providerId,
       });
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new ApiError(504, 'Groq API timeout. The request took too long.');
-      }
-      throw new ApiError(500, 'Failed to connect to Groq AI API.');
-    } finally {
-      clearTimeout(groqTimeout);
-    }
-
-    if (!groqResponse.ok) {
-      const errorText = await groqResponse.text();
-      logger.error('Groq API Error:', errorText);
-      throw new ApiError(500, 'Failed to refine product details from Groq AI API.');
-    }
-
-    const responseData = (await groqResponse.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    const textResponse = responseData.choices?.[0]?.message?.content;
-
-    if (!textResponse) {
-      throw new ApiError(500, 'Invalid response received from Groq AI API.');
+    } catch (err: any) {
+      logger.error('AI API Error:', err.message);
+      throw new ApiError(500, 'Failed to refine product details from AI API.');
     }
 
     try {

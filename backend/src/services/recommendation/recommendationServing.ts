@@ -367,8 +367,9 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
       const [products, events, galleries] = await Promise.all([
         Product.find({ isActive: true })
           .select(
-            '_id title imageSrc category price rating reviews tags slug featured createdAt rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+            '_id title imageSrc primaryCategory price oldPrice strikingPrice mrp originalPrice rating reviews tags slug featured createdAt rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
           )
+          .populate('primaryCategory', 'name')
           .sort({ createdAt: -1 })
           .limit(Math.floor(limit * 0.6))
           .lean(),
@@ -403,8 +404,9 @@ async function getCandidateItems(ctx: RecommendationContext, userProfile: any): 
         },
       })
         .select(
-          '_id title imageSrc category price rating reviews tags slug createdAt rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+          '_id title imageSrc primaryCategory price oldPrice strikingPrice mrp originalPrice rating reviews tags slug createdAt rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
         )
+        .populate('primaryCategory', 'name')
         .limit(15)
         .lean();
 
@@ -492,8 +494,9 @@ export async function getSimilarRecommendations(
     if (targetType === 'product') {
       fullItems = await Product.find({ _id: { $in: ids }, isActive: true })
         .select(
-          '_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+          '_id title imageSrc primaryCategory price oldPrice strikingPrice mrp originalPrice rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
         )
+        .populate('primaryCategory', 'name')
         .lean();
     } else if (targetType === 'event') {
       fullItems = await Event.find({ _id: { $in: ids }, isActive: true })
@@ -551,8 +554,9 @@ export async function enrichScoredItems(
     productIds.length > 0
       ? Product.find({ _id: { $in: productIds }, isActive: true })
           .select(
-            '_id title imageSrc category price rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+            '_id title imageSrc primaryCategory price oldPrice strikingPrice mrp originalPrice rating reviews tags slug rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
           )
+          .populate('primaryCategory', 'name')
           .lean()
       : Promise.resolve([]),
     eventIds.length > 0

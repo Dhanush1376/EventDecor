@@ -10,6 +10,7 @@ import {
   useTrendingRecommendations,
 } from '../../hooks/useRecommendationQueries';
 import { useRecentlyViewed } from '../../hooks/useUserQueries';
+import { useCategories } from '../../hooks/useProductQueries';
 import { useAuth } from '../../context/AuthContext';
 
 export function RecommendationSystem({
@@ -24,6 +25,7 @@ export function RecommendationSystem({
 }) {
   const { isAuthenticated } = useAuth();
   const [shouldFetch, setShouldFetch] = useState(false);
+  const { data: categoriesData = [] } = useCategories();
 
   // Progressive rendering: defer execution slightly to allow main page content to render first
   useEffect(() => {
@@ -66,9 +68,14 @@ export function RecommendationSystem({
         _id: item.product._id || item.product.id,
         title: item.product.title,
         price: item.product.price,
-        oldPrice: item.product.oldPrice,
-        imageSrc: item.product.imageSrc,
+        oldPrice:
+          item.product.strikingPrice ||
+          item.product.oldPrice ||
+          item.product.originalPrice ||
+          item.product.mrp,
+        imageSrc: item.product.imageSrc || item.product.image || item.product.images?.[0],
         category: item.product.category,
+        primaryCategory: item.product.primaryCategory,
         rating: item.product.rating || 0,
         slug: item.product.slug,
         isRentalAvailable: item.product.isRentalAvailable,
@@ -224,6 +231,13 @@ export function RecommendationSystem({
                       animate: { opacity: 1, scale: 1 },
                       transition: { delay: idx * 0.04, duration: 0.4 },
                     };
+                const matchedCategory =
+                  typeof product.primaryCategory === 'string'
+                    ? categoriesData.find((c) => c._id === product.primaryCategory)?.name ||
+                      product.category?.name ||
+                      product.category
+                    : product.primaryCategory?.name || product.category?.name || product.category;
+
                 return (
                   <motion.div
                     key={product.id || product._id || `reco-item-${idx}`}
@@ -237,9 +251,15 @@ export function RecommendationSystem({
                     <ProductCard
                       {...product}
                       id={product.id || product._id}
-                      imageSrc={product.imageSrc || product.image}
+                      imageSrc={product.imageSrc || product.image || product.images?.[0]}
                       price={product.price || product.basePrice}
-                      oldPrice={product.strikingPrice || product.oldPrice || product.mrp}
+                      oldPrice={
+                        product.strikingPrice ||
+                        product.oldPrice ||
+                        product.originalPrice ||
+                        product.mrp
+                      }
+                      category={matchedCategory}
                       compact={compact}
                       cartType={rentalOnly ? 'rental' : 'purchase'}
                     />

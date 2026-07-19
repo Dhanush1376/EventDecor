@@ -57,8 +57,9 @@ export async function getColdStartFeed(
     const [featuredProducts, popularEvents, topGallery] = await Promise.all([
       Product.find({ isActive: true, featured: true })
         .select(
-          '_id title imageSrc primaryCategory price rating tags rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
+          '_id title imageSrc primaryCategory price oldPrice strikingPrice mrp originalPrice rating tags rentalEnabled availabilityMode rentalPricing securityDeposit isDepositRefundable',
         )
+        .populate('primaryCategory', 'name')
         .sort({ rating: -1, reviews: -1 })
         .limit(12)
         .lean(),
@@ -101,8 +102,14 @@ export async function getColdStartFeed(
         source: trendingItem ? 'trending+featured' : 'featured',
         title: product.title,
         image: product.imageSrc,
+        category: (product.primaryCategory as any)?.name,
         primaryCategory: product.primaryCategory?.toString(),
         price: product.price,
+        oldPrice:
+          (product as any).oldPrice ||
+          (product as any).strikingPrice ||
+          (product as any).mrp ||
+          (product as any).originalPrice,
         rentalEnabled: product.rentalEnabled,
         availabilityMode: product.availabilityMode,
         rentalPricing: product.rentalPricing,

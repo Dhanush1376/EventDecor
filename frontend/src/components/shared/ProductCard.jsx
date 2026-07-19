@@ -233,7 +233,12 @@ export const ProductCard = React.memo(function ProductCard({
       tabIndex={0}
       role="link"
       aria-label={`View details of ${title}`}
-      className="group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl z-10 lg:hover:z-30"
+      onContextMenu={(e) => {
+        // Prevent native context menu on touch devices during long press
+        if (window.innerWidth < 1024) e.preventDefault();
+      }}
+      className="group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl z-10 lg:hover:z-30 select-none touch-pan-y"
+      style={{ WebkitTouchCallout: 'none' }}
     >
       {/* 1. VISUAL CANVAS */}
       <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl border border-black/5 group/canvas">
@@ -671,7 +676,17 @@ export const ProductCard = React.memo(function ProductCard({
           <span
             className={`bg-surface-container-highest/40 border border-black/15 text-black/70 font-label uppercase ${compact ? 'text-[7px] tracking-[0.1em] px-1.5 py-[3px]' : 'text-[8px] lg:text-[9px] tracking-[0.15em] lg:tracking-[0.2em] px-2 py-[4px]'} rounded-md font-bold truncate min-w-0`}
           >
-            {primaryCategory?.name || category || 'Uncategorized'}
+            {(() => {
+              const displayCategory = primaryCategory?.name || category;
+              // Check if it's a 24-character hex string (MongoDB ObjectId)
+              if (
+                typeof displayCategory === 'string' &&
+                /^[a-fA-F0-9]{24}$/.test(displayCategory)
+              ) {
+                return 'Uncategorized';
+              }
+              return displayCategory || 'Uncategorized';
+            })()}
           </span>
 
           <div className="flex items-center gap-0.5 shrink-0">

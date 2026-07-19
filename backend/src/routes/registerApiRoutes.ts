@@ -38,6 +38,7 @@ export const registerApiRoutes = (
   apiRouter.use(attachApiVersion(apiVersion));
 
   apiRouter.use('/products', lazyRouter('./products/productRoutes'));
+  apiRouter.use('/ai', lazyRouter('./ai/aiRoutes'));
   apiRouter.use('/upload', lazyRouter('./media/uploadRoutes'));
   apiRouter.use('/auth', noCacheMiddleware, lazyRouter('./auth/authRoutes'));
   apiRouter.use('/events', lazyRouter('./events/eventRoutes'));

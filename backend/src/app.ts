@@ -269,7 +269,7 @@ app.get('/sitemap.xml', publicEndpointLimiter, async (req: Request, res: Respons
 });
 
 // Apply per-request timeout guard (30s default — excludes webhooks/uploads automatically)
-app.use(requestTimeout(15000));
+app.use(requestTimeout(60000));
 
 // Apply global rate limiting and API flooding protection
 if (process.env.DISABLE_RATE_LIMITER !== 'true') {

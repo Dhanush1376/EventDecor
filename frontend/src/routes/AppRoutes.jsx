@@ -244,6 +244,7 @@ const AdminReviews = lazy(() =>
 const AdminVisualSearch = lazy(() =>
   import('../admin/pages/AdminVisualSearch').then((m) => ({ default: m.AdminVisualSearch })),
 );
+const AdminAiSettings = lazy(() => import('../admin/pages/AdminAiSettings'));
 const AdminServiceAreas = lazy(() => import('../admin/pages/AdminServiceAreas'));
 
 // Returns & Exchanges (Admin)
@@ -410,6 +411,7 @@ export function AppRoutes() {
               <Route path="search" element={<AdminEnterpriseSearch />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="analytics/operations" element={<AdminRecommendationAnalytics />} />
+              <Route path="ai-settings" element={<AdminAiSettings />} />
               <Route
                 path="maintenance"
                 element={<Navigate to="/admin/maintenance-console" replace />}

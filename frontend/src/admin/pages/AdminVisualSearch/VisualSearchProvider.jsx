@@ -23,6 +23,14 @@ export function VisualSearchProvider({
             <p className="text-[12px] text-stone-500 mt-1">
               Select the foundational AI model that powers the visual recognition engine.
             </p>
+            <div className="mt-3 inline-flex items-center gap-2 bg-blue-50/50 border border-blue-100 rounded-lg p-2.5 px-3">
+              <span className="material-symbols-outlined text-[16px] text-blue-500">info</span>
+              <p className="text-[11px] text-blue-700 leading-snug font-medium">
+                Visual Search operates completely independently from the{' '}
+                <span className="font-bold">Global AI Platform</span> routing rules to ensure lowest
+                possible latency for storefront searches.
+              </p>
+            </div>
           </div>
           {config.provider.isValidated ? (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 text-green-600 text-[11px] font-bold uppercase tracking-wider border border-green-200">

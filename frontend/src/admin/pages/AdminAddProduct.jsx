@@ -95,6 +95,8 @@ export function AdminAddProduct({ editId }) {
     setAiChatInput,
     isAILearning,
     focusedField,
+    aiError,
+    globalAiConfig,
   } = useProductAI({ formData, setFormData, categoriesList, setCategoriesList, setCurrentStep });
 
   const handleCancelAction = () => {
@@ -188,6 +190,12 @@ export function AdminAddProduct({ editId }) {
 
         {/* Keyboard Shortcut Banner + Auto-save */}
         <div className="flex items-center gap-3">
+          {globalAiConfig && !globalAiConfig.selectedProviderId && (
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200 text-orange-700 text-[11px] font-semibold">
+              <span className="material-symbols-outlined text-[14px]">warning</span>
+              AI Offline
+            </div>
+          )}
           <div className="hidden md:flex">
             <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
           </div>
@@ -427,6 +435,7 @@ export function AdminAddProduct({ editId }) {
                     setIsCustomCategory={setIsCustomCategory}
                     focusedField={focusedField}
                     handleAIFill={handleAIFill}
+                    aiError={aiError}
                   />
                 )}
 
