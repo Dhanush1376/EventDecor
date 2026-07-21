@@ -72,99 +72,7 @@ export function OrderDetail() {
     };
   }, [order, item, socket]);
 
-  // We'll calculate the true activeStepIndex further down, but for the scroll effect we can just depend on returnRequest
-
-  React.useEffect(() => {
-    // We lock the scroll to the top while the modal opens to prevent the browser
-    // from auto-focusing something at the bottom and ruining the animation start position.
-    let lockScroll = true;
-    let lockFrame;
-
-    const lockToTop = () => {
-      if (!lockScroll) return;
-      const scroller = document.querySelector('.overflow-y-auto');
-      if (scroller) scroller.scrollTop = 0;
-      lockFrame = requestAnimationFrame(lockToTop);
-    };
-    lockToTop();
-
-    if (activeStepRef.current) {
-      const timer = setTimeout(() => {
-        lockScroll = false; // Release the lock
-        cancelAnimationFrame(lockFrame);
-
-        const element = activeStepRef.current;
-        if (!element) return;
-
-        // Find scroll container
-        let container = element.parentElement;
-        while (container && container !== document.body) {
-          const style = window.getComputedStyle(container);
-          if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
-            break;
-          }
-          container = container.parentElement;
-        }
-        if (!container || container === document.body) {
-          container = document.documentElement;
-        }
-
-        const startTop =
-          container === document.documentElement ? window.scrollY : container.scrollTop;
-        const elementRect = element.getBoundingClientRect();
-        const containerRect =
-          container === document.documentElement
-            ? { top: 0, height: window.innerHeight }
-            : container.getBoundingClientRect();
-
-        const targetTop =
-          startTop +
-          (elementRect.top - containerRect.top) -
-          containerRect.height / 2 +
-          elementRect.height / 2;
-
-        if (Math.abs(targetTop - startTop) < 10) return;
-
-        const duration = 1000;
-        const startTime = performance.now();
-
-        // easeOutQuart
-        const easeOutQuart = (t) => 1 - --t * t * t * t;
-
-        const animateScroll = (currentTime) => {
-          const elapsed = currentTime - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          const easeProgress = easeOutQuart(progress);
-
-          const currentPos = startTop + (targetTop - startTop) * easeProgress;
-
-          if (container === document.documentElement) {
-            window.scrollTo(0, currentPos);
-          } else {
-            container.scrollTop = currentPos;
-          }
-
-          if (progress < 1) {
-            requestAnimationFrame(animateScroll);
-          }
-        };
-
-        requestAnimationFrame(animateScroll);
-      }, 300); // 300ms is usually enough for modal to open
-
-      return () => {
-        lockScroll = false;
-        cancelAnimationFrame(lockFrame);
-        clearTimeout(timer);
-      };
-    } else {
-      // If no active step, just release lock after a bit
-      setTimeout(() => {
-        lockScroll = false;
-        cancelAnimationFrame(lockFrame);
-      }, 300);
-    }
-  }, [returnRequest]);
+  // We'll calculate the true activeStepIndex further down.
 
   if (!order || !item) return null;
 
@@ -738,7 +646,7 @@ export function OrderDetail() {
               className="w-full sm:w-auto px-6 py-2.5 bg-black hover:bg-gray-900 text-white font-bold uppercase tracking-widest text-[9px] rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap border-0"
             >
               <span className="material-symbols-outlined text-[14px]">download</span>
-              Download Tax Invoice
+              View Invoice
             </button>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { m as motion } from 'framer-motion';
 import { StatusBadge, fadeUp } from '../../components/AdminUIKit';
 import { EXTERNAL_URLS } from '../../../config/constants';
+import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 
 export function OrderHeader({ order, navigate, onPrintInvoice, onViewInvoice }) {
   return (
@@ -50,7 +51,7 @@ export function OrderHeader({ order, navigate, onPrintInvoice, onViewInvoice }) 
           rel="noopener noreferrer"
           className="admin-btn h-9 bg-[var(--admin-success)] text-white hover:bg-[var(--admin-success-light)] border-none"
         >
-          <span className="material-symbols-outlined text-[16px]">chat</span>
+          <WhatsAppIcon className="w-[16px] h-[16px]" />
           WhatsApp
         </a>
       </div>

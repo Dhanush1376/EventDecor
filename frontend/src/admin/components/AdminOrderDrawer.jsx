@@ -3,6 +3,7 @@ import { m as motion } from 'framer-motion';
 import { formatCurrency } from '../components/AdminUIKit';
 import toast from 'react-hot-toast';
 import { EXTERNAL_URLS } from '../../config/constants';
+import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 
 const slideDrawer = {
   hidden: { x: '100%', opacity: 0 },
@@ -75,7 +76,7 @@ export function AdminOrderDrawer({
                 rel="noopener noreferrer"
                 className="admin-badge admin-badge-success flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
               >
-                <span className="material-symbols-outlined text-[14px]">chat</span>
+                <WhatsAppIcon className="w-[14px] h-[14px]" />
                 WhatsApp
               </a>
             </div>

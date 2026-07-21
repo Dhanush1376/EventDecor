@@ -3,7 +3,7 @@ import Order from '../models/Order';
 import RentalOrder from '../models/RentalOrder';
 import EventJob from '../domains/event_operations/models/EventJob';
 import CustomOrder from '../models/CustomOrder';
-import { InvoiceService } from '../services/InvoiceService';
+
 import { IInvoiceLineItem } from '../models/Invoice';
 import logger from '../config/logger';
 
@@ -108,18 +108,20 @@ export class TransactionToInvoiceMapper {
         }
       }
 
-      const status = transaction.paymentStatus === 'COMPLETED' ? 'PAID' : 'ISSUED';
+      // const status = transaction.paymentStatus === 'COMPLETED' ? 'PAID' : 'ISSUED';
 
-      await InvoiceService.generateInvoiceForTransaction(
-        transaction._id!.toString(),
-        lineItems,
-        subtotal,
-        tax,
-        discount,
-        shipping,
-        totalAmount,
-        status,
-      );
+      // Obsolete: Standalone invoice document generation is replaced by
+      // immutable invoice snapshots embedded directly in the Order document.
+      // await InvoiceService.generateInvoiceForTransaction(
+      //   transaction._id!.toString(),
+      //   lineItems,
+      //   subtotal,
+      //   tax,
+      //   discount,
+      //   shipping,
+      //   totalAmount,
+      //   status,
+      // );
     } catch (error) {
       logger.error(`Error mapping transaction to invoice: ${transaction._id}`, error);
     }

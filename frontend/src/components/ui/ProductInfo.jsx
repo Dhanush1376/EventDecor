@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { couponService } from '../../services/domainServices';
 import { MandalaArtDecor } from './MandalaArtDecor';
 import { ProductCoupons } from './ProductCoupons';
+import { WhatsAppIcon } from './WhatsAppIcon';
 
 export function ProductInfo({
   product,
@@ -584,7 +585,7 @@ export function CustomThemeCard({ product }) {
             onClick={() => runProtectedAction(handleWhatsAppChat)}
             className="bg-transparent border border-white/30 flex-1 md:flex-none lg:flex-1 text-white px-6 py-3 lg:px-2 lg:py-2.5 rounded-full font-label-sm text-[11px] lg:text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">chat</span>
+            <WhatsAppIcon className="w-[14px] h-[14px]" />
             WhatsApp
           </button>
         </div>

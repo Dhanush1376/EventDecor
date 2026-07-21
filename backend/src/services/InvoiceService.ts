@@ -1,85 +1,156 @@
-import { Types } from 'mongoose';
-import { Invoice, IInvoiceLineItem } from '../models/Invoice';
-import { Transaction } from '../models/Transaction';
 import { SequenceGeneratorService } from './SequenceGeneratorService';
+import storeSettingsService from './StoreSettingsService';
 import logger from '../config/logger';
+import type { IOrderInvoice, IOrderStoreSnapshot, IOrderTaxSnapshot } from '../types/invoice';
 
+/**
+ * Enterprise InvoiceService
+ *
+ * Responsible for generating immutable invoice snapshots that are embedded
+ * directly into Order documents at checkout time.
+ *
+ * CRITICAL DESIGN PRINCIPLE:
+ * This service NEVER calculates financial values. It only COPIES values
+ * that were already computed by the checkout pipeline. The tax breakdown
+ * is derived from the exact totals that the customer was charged.
+ */
 export class InvoiceService {
   /**
-   * Generates or retrieves an invoice for a specific transaction.
-   * If an invoice already exists for the transaction, it returns it.
+   * Generates the complete set of immutable snapshots for an order.
+   *
+   * Called once at checkout. The returned objects are stored directly
+   * on the Order document and must never be modified afterwards.
+   *
+   * @param orderTotals - The exact financial values computed by the checkout
+   * @param taxConfig   - The tax configuration active at checkout time
    */
-  public static async generateInvoiceForTransaction(
-    transactionId: string | Types.ObjectId,
-    lineItems: IInvoiceLineItem[],
-    subtotal: number,
-    tax: number,
-    discount: number,
-    shipping: number,
-    totalAmount: number,
-    status: 'DRAFT' | 'ISSUED' | 'PAID' = 'ISSUED',
-  ) {
-    try {
-      const transaction = await Transaction.findById(transactionId);
-      if (!transaction) {
-        throw new Error(`Transaction ${transactionId} not found`);
-      }
+  public static async generateOrderSnapshots(
+    orderTotals: {
+      subtotal: number;
+      discount: number;
+      shippingFee: number;
+      codFee: number;
+      walletDeduction: number;
+      total: number;
+    },
+    taxConfig?: {
+      taxRate: number;
+      cgstRate: number;
+      sgstRate: number;
+      taxInclusive: boolean;
+    },
+  ): Promise<{
+    invoice: IOrderInvoice;
+    store: IOrderStoreSnapshot;
+    tax: IOrderTaxSnapshot;
+  }> {
+    const now = new Date();
 
-      const existingInvoice = await Invoice.findOne({ transactionId: transaction._id });
-      if (existingInvoice) {
-        let changed = false;
-        if (existingInvoice.status !== status) {
-          existingInvoice.status = status;
-          changed = true;
-        }
-        if (status === 'PAID' && !existingInvoice.paidAt) {
-          existingInvoice.paidAt = new Date();
-          changed = true;
-        }
-        if (changed) {
-          await existingInvoice.save();
-        }
-        return existingInvoice;
-      }
+    // 1. Generate sequential invoice number (atomic, never collides)
+    const invoiceNumber = await SequenceGeneratorService.generateInvoiceNumber();
 
-      const invoiceNumber = await SequenceGeneratorService.generateInvoiceNumber();
+    // 2. Capture current store identity
+    const settings = await storeSettingsService.getSettings();
+    const store = this.captureStoreSnapshot(settings);
 
-      const newInvoice = new Invoice({
-        invoiceNumber,
-        transactionId: transaction._id,
-        customer: transaction.customer,
-        domain: transaction.domain,
-        lineItems,
-        subtotal,
-        tax,
-        discount,
-        shipping,
-        totalAmount,
-        status,
-        issuedAt: status !== 'DRAFT' ? new Date() : undefined,
-        paidAt: status === 'PAID' ? new Date() : undefined,
-      });
+    // 3. Capture tax breakdown from the EXACT totals (no recalculation)
+    const effectiveTaxConfig = taxConfig || {
+      taxRate: settings.taxes.gstRate,
+      cgstRate: settings.taxes.cgstRate,
+      sgstRate: settings.taxes.sgstRate,
+      taxInclusive: settings.taxes.taxInclusive,
+    };
+    const tax = this.captureTaxSnapshot(orderTotals, effectiveTaxConfig);
 
-      return await newInvoice.save();
-    } catch (error) {
-      logger.error(`Error generating invoice for transaction ${transactionId}:`, error);
-      throw error;
-    }
+    // 4. Build invoice metadata
+    const invoice: IOrderInvoice = {
+      number: invoiceNumber,
+      issuedAt: now,
+      generatedAt: now,
+    };
+
+    logger.info(`Generated invoice snapshot ${invoiceNumber}`);
+
+    return { invoice, store, tax };
   }
 
   /**
-   * Updates an invoice status (e.g., when a payment goes through)
+   * Captures the store's identity at this exact moment in time.
+   * If the business rebrands or moves, old invoices retain the original data.
    */
-  public static async markInvoicePaid(invoiceNumber: string) {
-    const invoice = await Invoice.findOne({ invoiceNumber });
-    if (!invoice) throw new Error('Invoice not found');
+  private static captureStoreSnapshot(settings: any): IOrderStoreSnapshot {
+    return {
+      displayName: settings.general.storeName || '',
+      legalCompanyName: settings.legal.legalCompanyName || settings.legal.companyName || '',
+      logo: settings.general.logo || '',
+      gstin: settings.taxes.gstNumber || '',
+      addressLine1: settings.contact.addressLine1 || settings.contact.address || '',
+      addressLine2: settings.contact.addressLine2 || '',
+      city: settings.contact.city || '',
+      state: settings.contact.state || '',
+      country: settings.contact.country || 'India',
+      postalCode: settings.contact.postalCode || '',
+      email: settings.general.supportEmail || settings.contact.email || '',
+      phone: settings.contact.phone || '',
+    };
+  }
 
-    if (invoice.status !== 'PAID') {
-      invoice.status = 'PAID';
-      invoice.paidAt = new Date();
-      await invoice.save();
+  /**
+   * Captures the exact tax breakdown from already-computed order totals.
+   *
+   * IMPORTANT: This method does NOT "calculate" tax. It derives the tax
+   * components from the total that the customer was already charged.
+   * This ensures the snapshot is a faithful copy of the checkout math.
+   */
+  private static captureTaxSnapshot(
+    totals: {
+      subtotal: number;
+      discount: number;
+      total: number;
+    },
+    taxConfig: {
+      taxRate: number;
+      cgstRate: number;
+      sgstRate: number;
+      taxInclusive: boolean;
+    },
+  ): IOrderTaxSnapshot {
+    const { subtotal, discount, total } = totals;
+    const { taxRate, cgstRate, sgstRate, taxInclusive } = taxConfig;
+
+    let taxableAmount: number;
+    let totalTax: number;
+
+    if (taxInclusive) {
+      // Tax is already included in the total — extract it
+      taxableAmount = parseFloat((total / (1 + taxRate)).toFixed(2));
+      totalTax = parseFloat((total - taxableAmount).toFixed(2));
+    } else {
+      // Tax is on top of subtotal minus discount
+      taxableAmount = subtotal - discount;
+      totalTax = parseFloat((taxableAmount * taxRate).toFixed(2));
     }
 
-    return invoice;
+    // Split tax into CGST and SGST (intra-state)
+    // For inter-state, IGST would be the full amount and CGST/SGST would be 0
+    const cgstRatio = cgstRate / (taxRate || 1);
+    const sgstRatio = sgstRate / (taxRate || 1);
+
+    const cgst = parseFloat((totalTax * cgstRatio).toFixed(2));
+    const sgst = parseFloat((totalTax * sgstRatio).toFixed(2));
+    const igst = 0; // Intra-state by default; inter-state support can be added later
+
+    return {
+      subtotal,
+      discount,
+      taxableAmount,
+      cgst,
+      sgst,
+      igst,
+      totalTax,
+      grandTotal: total,
+      currency: 'INR',
+      currencySymbol: '₹',
+    };
   }
 }

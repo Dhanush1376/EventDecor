@@ -96,7 +96,7 @@ export class OrderQueryService {
 
     const invoices = orders.map((order: any) => ({
       orderId: order._id,
-      invoiceNumber: order.invoiceNumber || `INV-${order._id.toString().slice(-6).toUpperCase()}`,
+      invoiceNumber: order.invoiceNumber || order.invoice?.number || 'Not Generated',
       date: order.createdAt,
       customerName: (order.user as any)?.name || 'Unknown',
       customerEmail: (order.user as any)?.email || '',

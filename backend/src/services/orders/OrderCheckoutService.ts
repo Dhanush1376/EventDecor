@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { RazorpayGateway } from '../../utils/payment/RazorpayGateway';
 import Order from '../../models/Order';
@@ -15,6 +14,7 @@ import { OrderIdempotencyManager } from './OrderIdempotencyManager';
 import OutboxEvent from '../../models/OutboxEvent';
 import { computeOrderTotals } from './orderTotals';
 import { InventoryService } from '../InventoryService';
+import { InvoiceService } from '../InvoiceService';
 
 export class OrderCheckoutService {
   static async createOrder(userId: string, orderData: any) {
@@ -212,8 +212,17 @@ export class OrderCheckoutService {
       walletDeduction = totals.walletDeduction;
       if (walletDeduction > 0) walletDeducted = true;
 
-      const randomSeq = crypto.randomBytes(3).toString('hex').toUpperCase();
-      const invoiceNumber = `INV-${new Date().getFullYear()}-${randomSeq}`;
+      // Generate immutable invoice snapshots (sequential number, store identity, tax breakdown)
+      const invoiceSnapshots = await InvoiceService.generateOrderSnapshots(
+        { subtotal, discount, shippingFee, codFee, walletDeduction, total },
+        {
+          taxRate: settings.taxes.gstRate,
+          cgstRate: settings.taxes.cgstRate,
+          sgstRate: settings.taxes.sgstRate,
+          taxInclusive: settings.taxes.taxInclusive,
+        },
+      );
+      const invoiceNumber = invoiceSnapshots.invoice.number;
 
       // WAREHOUSE LIFECYCLE: Logistics identifiers are NOT generated at checkout.
       // trackingNumber, courierPartner, barcodeData, qrCodeData are all null until
@@ -295,6 +304,10 @@ export class OrderCheckoutService {
           ],
           reservationIds,
           invoiceNumber,
+          // Immutable invoice snapshots
+          invoice: invoiceSnapshots.invoice,
+          store: invoiceSnapshots.store,
+          tax: invoiceSnapshots.tax,
           // trackingNumber, courierPartner, barcodeData, qrCodeData are intentionally
           // omitted — they will be populated when warehouse dispatch creates real entities.
           notes,
@@ -441,6 +454,10 @@ export class OrderCheckoutService {
           paymentMethod: 'razorpay',
           reservationIds,
           invoiceNumber,
+          // Immutable invoice snapshots (carried through to Order on payment verification)
+          invoice: invoiceSnapshots.invoice,
+          store: invoiceSnapshots.store,
+          tax: invoiceSnapshots.tax,
           // trackingNumber, courierPartner, barcodeData, qrCodeData omitted from
           // PaymentAttempt — set during warehouse dispatch, not at checkout.
           notes,

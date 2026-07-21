@@ -19,6 +19,8 @@ import { getAccessToken } from '../../services/api';
 import { getApiRootUrl } from '../../config/apiConfig';
 import { acquireAdminSocket, releaseAdminSocket } from '../services/adminSocket';
 import CustomerProfile360 from './CustomerProfile360';
+import CustomerTimelineDrawer from './CustomerTimelineDrawer';
+import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 
 const StatCard = ({ title, value, icon, color }) => (
   <div className="bg-[var(--admin-surface)] p-5 rounded-xl border border-[var(--admin-border)] shadow-sm flex items-center justify-between">
@@ -397,7 +399,7 @@ export function AdminCustomers() {
                     rel="noopener noreferrer"
                     className="admin-btn admin-btn-outline min-h-[36px] h-8 text-[10px] px-2 border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)] justify-center gap-1.5 w-full transition-all"
                   >
-                    <span className="material-symbols-outlined text-[14px] shrink-0">chat</span>
+                    <WhatsAppIcon className="w-[14px] h-[14px] shrink-0" />
                     <span className="hidden sm:inline truncate">WhatsApp</span>
                   </a>
                   <button

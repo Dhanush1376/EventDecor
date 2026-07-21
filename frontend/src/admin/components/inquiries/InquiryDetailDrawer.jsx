@@ -9,6 +9,7 @@ import { DraftStatusIndicator } from '../DraftStatusIndicator';
 import { DraftRestoreModal } from '../DraftRestoreModal';
 import { UnsavedChangesGuard } from '../UnsavedChangesGuard';
 import { EXTERNAL_URLS } from '../../../config/constants';
+import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 
 export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOrders, isMobile }) {
   const chatEndRef = useRef(null);
@@ -229,7 +230,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                   className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[var(--admin-surface)] hover:admin-badge admin-badge-success border border-[var(--admin-border-subtle)] flex items-center justify-center shadow-sm cursor-pointer transition-all active:scale-90"
                   title="WhatsApp Client"
                 >
-                  <span className="material-symbols-outlined text-[16px] sm:text-[18px]">chat</span>
+                  <WhatsAppIcon className="w-[16px] sm:w-[18px] h-[16px] sm:h-[18px]" />
                 </a>
                 <a
                   href={`mailto:${selectedOrder.customerEmail}`}

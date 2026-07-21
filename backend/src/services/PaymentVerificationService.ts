@@ -407,6 +407,10 @@ export class PaymentVerificationService {
                 },
               ],
               invoiceNumber: orderData.invoiceNumber,
+              // Transfer immutable invoice snapshots from PaymentAttempt
+              invoice: orderData.invoice,
+              store: orderData.store,
+              tax: orderData.tax,
               trackingNumber: orderData.trackingNumber,
               courierPartner: orderData.courierPartner,
               barcodeData: orderData.barcodeData,

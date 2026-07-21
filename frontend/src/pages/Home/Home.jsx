@@ -64,8 +64,8 @@ export function Home({ previewContent }) {
 
       <div className="h1-page relative bg-surface-bright overflow-hidden">
         {/* Global Background Art - Performance Optimized Gradients & Mandalas */}
-        <div className="absolute inset-0 bg-marble opacity-[0.03] pointer-events-none mix-blend-multiply fixed"></div>
-        <div className="absolute top-0 right-0 w-[600px] lg:w-[1000px] h-[600px] lg:h-[1000px] bg-primary-container/10 rounded-full blur-[160px] translate-x-1/3 -translate-y-1/3 pointer-events-none fixed z-0"></div>
+        <div className="absolute inset-0 bg-marble opacity-[0.03] pointer-events-none z-0"></div>
+        <div className="absolute top-0 right-0 w-[600px] lg:w-[1000px] h-[600px] lg:h-[1000px] bg-primary-container/10 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3 pointer-events-none z-0"></div>
 
         <div className="relative z-10">
           {sections.length === 0 && <HomepageEmptyState />}

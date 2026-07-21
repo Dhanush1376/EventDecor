@@ -4,6 +4,7 @@ import { OrderTimeline } from './OrderTimeline';
 import { QuotationEstimateCard } from './QuotationEstimateCard';
 import { OrderMediaGallery } from './OrderMediaGallery';
 import { OrderChatFeed } from './OrderChatFeed';
+import { WhatsAppIcon } from '../ui/WhatsAppIcon';
 
 export function CustomOrderTracker({
   selectedOrder,
@@ -165,7 +166,7 @@ export function CustomOrderTracker({
                   onClick={handleWhatsAppConsult}
                   className="w-full py-2.5 bg-[#25D366] hover:bg-[#1ebd59] text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm mt-3"
                 >
-                  <span className="material-symbols-outlined text-[16px]">chat</span>
+                  <WhatsAppIcon className="w-[16px] h-[16px]" />
                   Discuss Quote on WhatsApp
                 </button>
 

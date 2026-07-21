@@ -31,15 +31,20 @@ export class DocumentService {
         doc.pipe(stream);
 
         // Simple PDF layout
-        doc.fontSize(20).text('Siri Arts & Crafts - Invoice', { align: 'center' });
+        const storeName = order.store?.displayName || 'Invoice';
+        doc.fontSize(20).text(`${storeName} - Invoice`, { align: 'center' });
         doc.moveDown();
-        doc.fontSize(12).text(`Order ID: ${orderId}`);
+        doc
+          .fontSize(12)
+          .text(`Invoice: ${order.invoice?.number || order.invoiceNumber || orderId}`);
         doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`);
         doc.text(`Total Amount: INR ${order.total}`);
         doc.moveDown();
         doc.text('Items:');
         order.items.forEach((item: any) => {
-          doc.text(`- Product ${item.productId} x ${item.quantity} (INR ${item.price})`);
+          doc.text(
+            `- ${item.title || `Product ${item.productId}`} x ${item.quantity} (INR ${item.price})`,
+          );
         });
 
         doc.end();

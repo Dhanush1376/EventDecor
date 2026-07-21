@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
+import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 import { ShareButton } from '../../../components/ui/ShareButton';
 import { LinkedProductCard } from './LinkedProductCard';
 import { ProductNoteCard } from '../../../components/ui/ProductNoteCard';
@@ -376,7 +377,7 @@ export function GalleryDesktopLayout({
                         }}
                         className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-[14px]">chat</span>
+                        <WhatsAppIcon className="w-[14px] h-[14px]" />
                         WhatsApp
                       </button>
                     </div>

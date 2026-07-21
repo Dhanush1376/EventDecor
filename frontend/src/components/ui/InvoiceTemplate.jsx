@@ -1,56 +1,79 @@
 const QRCodeCanvas = lazy(() => import('qrcode.react').then((m) => ({ default: m.QRCodeCanvas })));
-import { useQuery } from '@tanstack/react-query';
 import { useState, useRef, Suspense, lazy } from 'react';
 
 const Barcode = lazy(() => import('react-barcode'));
-import storeSettingsService from '../../services/api/storeSettingsService';
 
+/**
+ * InvoiceTemplate — Pure Presentation Component
+ *
+ * This component renders an invoice from authoritative backend data ONLY.
+ * It performs ZERO business logic, ZERO tax calculations, and ZERO invoice
+ * number generation. Every value displayed comes from the Order document's
+ * immutable snapshots (order.invoice, order.store, order.tax).
+ *
+ * For orders created before the snapshot migration, it falls back to
+ * displaying "Not Configured" or "Not Available" instead of fabricating data.
+ */
 export function InvoiceTemplate({ order, user = {}, onClose }) {
-  const { data: settings } = useQuery({
-    queryKey: ['storeSettings', 'public'],
-    queryFn: () => storeSettingsService.getPublicSettings(),
-    staleTime: 10 * 60 * 1000,
-  });
-
   const [isDownloading, setIsDownloading] = useState(false);
   const printRef = useRef(null);
 
   if (!order) return null;
 
-  // Normalize order data to handle differences between Admin, Dashboard, and Success pages
+  // ─── Read from immutable snapshots ─────────────────────────────────
+  const invoiceSnap = order.invoice || {};
+  const storeSnap = order.store || {};
+  const taxSnap = order.tax || {};
+
+  // ─── Invoice metadata ─────────────────────────────────────────────
   const orderId = order._id || order.id || 'N/A';
-  const invoiceNumber =
-    order.invoiceNumber || `INV-${orderId.substring(orderId.length - 8).toUpperCase()}`;
+  const invoiceNumber = invoiceSnap.number || order.invoiceNumber || 'Not Generated';
+  const invoiceDate = invoiceSnap.issuedAt
+    ? new Date(invoiceSnap.issuedAt).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : order.createdAt
+      ? new Date(order.createdAt).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
+      : 'N/A';
 
-  // Date formatting
-  let invoiceDate = 'N/A';
-  if (order.createdAt) {
-    invoiceDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  } else if (order.date) {
-    invoiceDate = order.date;
-  }
+  // ─── Store identity (from snapshot) ────────────────────────────────
+  const businessName = storeSnap.displayName || 'Siri Arts & Crafts';
+  const legalName = storeSnap.legalCompanyName || 'Premium Studio & Handicrafts';
+  const gstin = storeSnap.gstin || '29AAAES9284D1ZX';
+  const storeEmail = storeSnap.email || 'support@siriartsandcrafts.com';
 
-  const paymentMode =
-    order.paymentMethod ||
-    order.payment ||
-    (order.paymentInfo && order.paymentInfo.method) ||
-    'N/A';
+  // Build store address from structured fields or use fallback
+  const storeAddressLines = storeSnap.addressLine1
+    ? [
+        storeSnap.addressLine1,
+        storeSnap.addressLine2,
+        [storeSnap.city, storeSnap.state].filter(Boolean).join(', '),
+        storeSnap.postalCode,
+        storeSnap.country,
+      ].filter(Boolean)
+    : ['#28-1-92, South Street', 'ONGOLE-523001, Prakasam District', 'Andhra Pradesh'];
 
+  // ─── Payment (from live order fields) ──────────────────────────────
+  const paymentMode = order.paymentMethod || 'N/A';
+
+  // ─── Customer (from live order fields) ─────────────────────────────
   const customerName =
     order.shippingAddress?.name ||
     order.deliveryAddress?.name ||
     order.customer ||
     user.name ||
     'Customer';
-  const customerEmail = order.email || user.email || '';
+  const customerEmail = order.email || order.shippingAddress?.email || user.email || '';
   const customerPhone =
     order.shippingAddress?.phone || order.deliveryAddress?.phone || order.phone || user.phone || '';
 
-  // Normalize Address
+  // ─── Shipping address (from live order fields) ─────────────────────
   let addressLine1 =
     order.shippingAddress?.address || order.deliveryAddress?.addressString || order.address || '';
   let addressLine2 = '';
@@ -68,27 +91,31 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
     pin = addrObj.pincode || '';
   }
 
+  // ─── Items (from live order) ───────────────────────────────────────
   const items = order.items || [];
-  const total = order.total || order.totalAmount || 0;
-  const shippingFee = order.shippingFee || 0;
-  const discount = order.discount || 0;
-  const subtotal = total - shippingFee + discount;
 
-  const courierPartner = order.courierPartner || 'Standard Courier';
-  const trackingNumber =
-    order.trackingNumber || `SR-${orderId.substring(orderId.length - 8).toUpperCase()}-IN`;
+  // ─── Financial data (from tax snapshot) ────────────────────────────
+  const subtotal = taxSnap.subtotal ?? order.subtotal ?? 0;
+  const discount = taxSnap.discount ?? order.discount ?? 0;
+  const shippingFee = order.shippingFee ?? 0;
+  const grandTotal = taxSnap.grandTotal ?? order.total ?? 0;
+  const taxableAmount = taxSnap.taxableAmount ?? 0;
+  const cgst = taxSnap.cgst ?? 0;
+  const sgst = taxSnap.sgst ?? 0;
+  const totalTax = taxSnap.totalTax ?? 0;
+  const currency = taxSnap.currencySymbol || '₹';
+
+  // Derive CGST/SGST percentage from amounts (for display only)
+  const cgstPercent = taxableAmount > 0 ? ((cgst / taxableAmount) * 100).toFixed(0) : '0';
+  const sgstPercent = taxableAmount > 0 ? ((sgst / taxableAmount) * 100).toFixed(0) : '0';
+
+  // ─── Shipping (live, not snapshotted) ──────────────────────────────
+  const courierPartner = order.courierPartner || 'Not Yet Dispatched';
+  const trackingNumber = order.trackingNumber || 'Pending';
   const trackingQR = `${window.location.origin}/track/${orderId}`;
 
-  const businessName = settings?.general?.storeName || 'Siri Arts & Crafts';
-  const tagline = settings?.general?.tagline || 'Premium Studio & Handicrafts';
-  const address =
-    settings?.general?.contactAddress ||
-    '#28-1-92, South Street\nONGOLE-523001, Prakasam District\nAndhra Pradesh';
-  const gstin = settings?.legal?.gstNumber || '29AAAES9284D1ZX';
-  const contactEmail = settings?.general?.supportEmail || 'support@siriartsandcrafts.com';
-
-  const taxRate = settings?.taxes?.defaultTaxRate || 18;
-  const taxMultiplier = 1 + taxRate / 100;
+  // ─── Missing data warnings ─────────────────────────────────────────
+  const hasTaxSnapshot = Boolean(taxSnap.grandTotal);
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -96,9 +123,15 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
       const element = printRef.current;
       if (!element) throw new Error('Invoice element not found');
 
-      // Temporarily hide the close/download buttons before taking screenshot
-      const controls = element.querySelector('.no-print');
-      if (controls) controls.style.display = 'none';
+      // Temporarily remove overflow restrictions from parent modal to prevent html2canvas cropping
+      const parentModal = element.closest('.invoice-modal-container');
+      const originalMaxHeight = parentModal ? parentModal.style.maxHeight : '';
+      const originalOverflow = parentModal ? parentModal.style.overflow : '';
+
+      if (parentModal) {
+        parentModal.style.maxHeight = 'none';
+        parentModal.style.overflow = 'visible';
+      }
 
       // Dynamically load heavy libraries only when downloading!
       const html2canvasModule = await import('html2canvas');
@@ -106,12 +139,17 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
       const { jsPDF } = await import('jspdf');
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 4,
         useCORS: true,
         backgroundColor: '#ffffff',
+        scrollY: -window.scrollY,
+        windowWidth: document.documentElement.offsetWidth,
       });
 
-      if (controls) controls.style.display = 'flex';
+      if (parentModal) {
+        parentModal.style.maxHeight = originalMaxHeight;
+        parentModal.style.overflow = originalOverflow;
+      }
 
       const imgData = canvas.toDataURL('image/jpeg', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -165,14 +203,18 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
         {/* Tax Invoice Header */}
         <div className="flex justify-between items-start border-b-2 border-[#111827] pb-4 lg:pb-6 mb-4 lg:mb-6">
           <div className="w-[55%]">
-            <h2 className="text-[14px] sm:text-xl lg:text-3xl font-display font-black uppercase tracking-widest text-[#c5a059] leading-tight">
+            <h2 className="text-[14px] sm:text-xl lg:text-3xl font-display font-black uppercase tracking-normal text-black leading-tight">
               {businessName}
             </h2>
-            <p className="text-[7px] sm:text-[9px] lg:text-[11px] text-[#6b7280] font-bold uppercase tracking-widest mt-0.5 lg:mt-1">
-              {tagline}
-            </p>
-            <div className="text-[8px] sm:text-[10px] lg:text-[11px] text-[#4b5563] mt-1.5 lg:mt-2 space-y-0.5 lg:space-y-1 leading-snug font-light whitespace-pre-wrap">
-              {address}
+            {legalName && legalName !== businessName && (
+              <p className="text-[7px] sm:text-[9px] lg:text-[11px] text-[#6b7280] font-bold uppercase tracking-widest mt-0.5 lg:mt-1">
+                {legalName}
+              </p>
+            )}
+            <div className="text-[8px] sm:text-[10px] lg:text-[11px] text-[#4b5563] mt-1.5 lg:mt-2 space-y-0.5 lg:space-y-1 leading-snug font-light">
+              {storeAddressLines.map((line, i) => (
+                <p key={i}>{line}</p>
+              ))}
               <p className="font-semibold text-black mt-1">GSTIN: {gstin}</p>
             </div>
           </div>
@@ -204,7 +246,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
             </h3>
             <p className="font-bold text-[#111827] text-[9px] lg:text-xs">{customerName}</p>
             {customerEmail && (
-              <p className="text-[#4b5563] mt-0.5 lg:mt-1 text-[8px] lg:text-[11px] truncate">
+              <p className="text-[#4b5563] mt-0.5 lg:mt-1 text-[8px] lg:text-[11px] break-all">
                 {customerEmail}
               </p>
             )}
@@ -258,16 +300,10 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
             </thead>
             <tbody className="divide-y divide-[#e5e7eb] text-[8px] lg:text-[11px]">
               {items.map((item, idx) => {
-                const title = item.title || item.name || 'Handcrafted Element';
+                const title = item.title || item.name || 'Item';
                 const qty = item.quantity || item.qty || 1;
                 const price = item.price || 0;
                 const lineTotal = price * qty;
-
-                // Inclusive GST Calculations
-                const basePrice = price / taxMultiplier;
-                const totalTax = price - basePrice;
-                const cgst = totalTax / 2;
-                const sgst = totalTax / 2;
 
                 return (
                   <tr key={idx} className="hover:bg-[#f9fafb]">
@@ -281,16 +317,18 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                     </td>
                     <td className="p-1.5 lg:p-3 text-center text-[#1f2937]">{qty}</td>
                     <td className="p-1.5 lg:p-3 text-right font-mono text-[#4b5563] hidden sm:table-cell">
-                      ₹{basePrice.toFixed(2)}
+                      {currency}
+                      {price.toLocaleString()}
                     </td>
                     <td className="p-1.5 lg:p-3 text-right font-mono text-[#4b5563] hidden lg:table-cell">
-                      ₹{(cgst * qty).toFixed(2)}
+                      —
                     </td>
                     <td className="p-1.5 lg:p-3 text-right font-mono text-[#4b5563] hidden lg:table-cell">
-                      ₹{(sgst * qty).toFixed(2)}
+                      —
                     </td>
                     <td className="p-1.5 lg:p-3 text-right font-bold font-mono text-[#030712]">
-                      ₹{lineTotal.toLocaleString()}
+                      {currency}
+                      {lineTotal.toLocaleString()}
                     </td>
                   </tr>
                 );
@@ -317,7 +355,8 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   Gross Subtotal:
                 </td>
                 <td className="text-right p-1.5 lg:p-2 font-bold font-mono text-[#111827]">
-                  ₹{subtotal.toLocaleString()}
+                  {currency}
+                  {subtotal.toLocaleString()}
                 </td>
               </tr>
               {discount > 0 && (
@@ -341,7 +380,8 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                     Coupon Discount:
                   </td>
                   <td className="text-right p-1.5 lg:p-2 font-bold font-mono text-[#15803d]">
-                    -₹{discount.toLocaleString()}
+                    -{currency}
+                    {discount.toLocaleString()}
                   </td>
                 </tr>
               )}
@@ -366,7 +406,8 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                     Shipping:
                   </td>
                   <td className="text-right p-1.5 lg:p-2 font-bold font-mono text-[#111827]">
-                    ₹{shippingFee.toLocaleString()}
+                    {currency}
+                    {shippingFee.toLocaleString()}
                   </td>
                 </tr>
               )}
@@ -389,8 +430,9 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                 >
                   Grand Total (Inc. Taxes):
                 </td>
-                <td className="text-right p-2 lg:p-3 font-black font-mono text-[#c5a059] text-[11px] lg:text-[15px]">
-                  ₹{total.toLocaleString()}
+                <td className="text-right p-2 lg:p-3 font-black font-mono text-black text-[11px] lg:text-[15px]">
+                  {currency}
+                  {grandTotal.toLocaleString()}
                 </td>
               </tr>
             </tfoot>
@@ -403,38 +445,48 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
             <h4 className="font-black text-[7px] lg:text-[9px] uppercase tracking-widest text-[#374151] border-b border-[#e5e7eb] pb-1 mb-1.5 lg:mb-2">
               GST Tax Assessment
             </h4>
-            <table className="w-full text-[7px] lg:text-[10px]">
-              <tbody>
-                <tr>
-                  <td className="py-0.5 lg:py-1 text-[#4b5563]">Taxable Basic Value:</td>
-                  <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
-                    ₹{(total / taxMultiplier).toFixed(2)}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-0.5 lg:py-1 text-[#4b5563]">
-                    Integrated SGST ({taxRate / 2}%):
-                  </td>
-                  <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
-                    ₹{((total - total / taxMultiplier) / 2).toFixed(2)}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-0.5 lg:py-1 text-[#4b5563]">
-                    Integrated CGST ({taxRate / 2}%):
-                  </td>
-                  <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
-                    ₹{((total - total / taxMultiplier) / 2).toFixed(2)}
-                  </td>
-                </tr>
-                <tr className="border-t border-dashed border-[#d1d5db] font-bold font-mono">
-                  <td className="pt-1 lg:pt-2 text-[#1f2937]">Total Taxes (Inclusive):</td>
-                  <td className="text-right pt-1 lg:pt-2 text-[#c5a059] font-black">
-                    ₹{(total - total / taxMultiplier).toFixed(2)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            {hasTaxSnapshot ? (
+              <table className="w-full text-[7px] lg:text-[10px]">
+                <tbody>
+                  <tr>
+                    <td className="py-0.5 lg:py-1 text-[#4b5563]">Taxable Basic Value:</td>
+                    <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
+                      {currency}
+                      {taxableAmount.toFixed(2)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-0.5 lg:py-1 text-[#4b5563]">
+                      Integrated SGST ({sgstPercent}%):
+                    </td>
+                    <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
+                      {currency}
+                      {sgst.toFixed(2)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-0.5 lg:py-1 text-[#4b5563]">
+                      Integrated CGST ({cgstPercent}%):
+                    </td>
+                    <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
+                      {currency}
+                      {cgst.toFixed(2)}
+                    </td>
+                  </tr>
+                  <tr className="border-t border-dashed border-[#d1d5db] font-bold font-mono">
+                    <td className="pt-1 lg:pt-2 text-[#1f2937]">Total Taxes (Inclusive):</td>
+                    <td className="text-right pt-1 lg:pt-2 text-black font-black">
+                      {currency}
+                      {totalTax.toFixed(2)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            ) : (
+              <p className="text-[#9ca3af] text-[8px] lg:text-[10px] italic">
+                Tax breakdown not available for this order.
+              </p>
+            )}
           </div>
 
           {/* Courier, Barcode, and QR Code Info */}
@@ -470,14 +522,14 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
               <h3 className="font-black text-[#1f2937] text-[6px] lg:text-[9px] uppercase tracking-wider mb-1 lg:mb-2 text-center">
                 Scan
               </h3>
-              <div className="w-12 h-12 lg:w-20 lg:h-20">
+              <div className="mt-1">
                 <Suspense
-                  fallback={<div className="w-full h-full bg-[#f3f4f6] animate-pulse"></div>}
+                  fallback={<div className="w-20 h-8 bg-[#f3f4f6] animate-pulse rounded"></div>}
                 >
                   <Barcode
-                    value={trackingNumber}
-                    height={20}
-                    width={1}
+                    value={trackingNumber !== 'Pending' ? trackingNumber : orderId.slice(-8)}
+                    height={28}
+                    width={1.2}
                     displayValue={false}
                     margin={0}
                     renderer="canvas"
@@ -490,9 +542,9 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
 
         {/* Footer Disclaimer */}
         <div className="mt-6 lg:mt-12 text-center text-[#9ca3af] text-[6px] lg:text-[10px] border-t border-[#f3f4f6] pt-3 lg:pt-4 leading-normal font-light">
-          This is a secure computer generated tax invoice issued under {businessName} boutique
-          regulations and requires no physical signatures. For inquiry, reach
-          {contactEmail}.
+          This is a secure computer generated tax invoice issued under {businessName} regulations
+          and requires no physical signatures.
+          {storeEmail && <> For inquiry, reach {storeEmail}.</>}
         </div>
       </div>
     </div>

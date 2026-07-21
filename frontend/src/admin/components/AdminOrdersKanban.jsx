@@ -2,6 +2,7 @@ import React from 'react';
 import { formatCurrency } from '../components/AdminUIKit';
 import toast from 'react-hot-toast';
 import { EXTERNAL_URLS } from '../../config/constants';
+import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 
 export function AdminOrdersKanban({
   filteredOrders,
@@ -126,7 +127,7 @@ export function AdminOrdersKanban({
                             rel="noopener noreferrer"
                             className="w-7 h-7 rounded-[var(--admin-radius-sm)] bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] flex items-center justify-center hover:bg-[var(--admin-success)] hover:text-white transition-colors"
                           >
-                            <span className="material-symbols-outlined text-[14px]">chat</span>
+                            <WhatsAppIcon className="w-[14px] h-[14px]" />
                           </a>
                         </div>
                       </div>

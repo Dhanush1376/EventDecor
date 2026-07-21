@@ -4,6 +4,7 @@ import { ShareButton } from '../../../components/ui/ShareButton';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 import { MandalaArtDecor } from '../../../components/ui/MandalaArtDecor';
 import { ProductNoteCard } from '../../../components/ui/ProductNoteCard';
+import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 
 export function GalleryMobileLayout({
   item,
@@ -170,7 +171,7 @@ export function GalleryMobileLayout({
                     }}
                     className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
                   >
-                    <span className="material-symbols-outlined text-[14px]">chat</span>
+                    <WhatsAppIcon className="w-[14px] h-[14px]" />
                     WhatsApp
                   </button>
                 </div>

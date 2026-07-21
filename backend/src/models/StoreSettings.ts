@@ -3,6 +3,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IStoreSettings extends Document {
   general: {
     storeName: string;
+    tagline: string;
+    supportEmail: string;
+    logo: string;
     announcementText: string;
     announcementLink: string;
     maintenanceMode: boolean; // Retained for backward compatibility
@@ -99,6 +102,12 @@ export interface IStoreSettings extends Document {
     email: string;
     supportHours: string;
     address: string;
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode: string;
     googleMapsUrl: string;
     instagram: string;
     facebook: string;
@@ -109,6 +118,7 @@ export interface IStoreSettings extends Document {
   };
   legal: {
     companyName: string;
+    legalCompanyName: string;
     registeredAddress: string;
     cin: string;
   };
@@ -141,7 +151,10 @@ export interface IStoreSettings extends Document {
 const StoreSettingsSchema: Schema = new Schema(
   {
     general: {
-      storeName: { type: String, default: 'Siri Arts & Crafts' },
+      storeName: { type: String, default: '' },
+      tagline: { type: String, default: '' },
+      supportEmail: { type: String, default: '' },
+      logo: { type: String, default: '' },
       announcementText: { type: String, default: '' },
       announcementLink: { type: String, default: '' },
       maintenanceMode: { type: Boolean, default: false },
@@ -200,8 +213,9 @@ const StoreSettingsSchema: Schema = new Schema(
       cgstRate: { type: Number, default: 0.09 }, // 9%
       sgstRate: { type: Number, default: 0.09 }, // 9%
       invoicePrefix: { type: String, default: 'INV-' },
+      invoiceFooter: { type: String, default: '' },
       hsnCode: { type: String, default: '' },
-      gstNumber: { type: String, default: '29AAAES9284D1ZX' },
+      gstNumber: { type: String, default: '' },
       taxInclusive: { type: Boolean, default: true },
     },
     loyalty: {
@@ -241,10 +255,13 @@ const StoreSettingsSchema: Schema = new Schema(
       phone: { type: String, default: '' },
       email: { type: String, default: '' },
       supportHours: { type: String, default: 'Mon - Sat, 10 AM to 6 PM' },
-      address: {
-        type: String,
-        default: '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
-      },
+      address: { type: String, default: '' },
+      addressLine1: { type: String, default: '' },
+      addressLine2: { type: String, default: '' },
+      city: { type: String, default: '' },
+      state: { type: String, default: '' },
+      country: { type: String, default: 'India' },
+      postalCode: { type: String, default: '' },
       googleMapsUrl: { type: String, default: '' },
       instagram: { type: String, default: '' },
       facebook: { type: String, default: '' },
@@ -254,7 +271,8 @@ const StoreSettingsSchema: Schema = new Schema(
       whatsappMessage: { type: String, default: '' },
     },
     legal: {
-      companyName: { type: String, default: 'Siri Arts & Crafts' },
+      companyName: { type: String, default: '' },
+      legalCompanyName: { type: String, default: '' },
       registeredAddress: { type: String, default: '' },
       cin: { type: String, default: '' },
     },
@@ -264,8 +282,8 @@ const StoreSettingsSchema: Schema = new Schema(
       whatsappEnabled: { type: Boolean, default: true },
     },
     storefront: {
-      seoTitle: { type: String, default: 'Siri Arts & Crafts' },
-      seoDescription: { type: String, default: 'Premium Handicrafts and Studio' },
+      seoTitle: { type: String, default: '' },
+      seoDescription: { type: String, default: '' },
     },
     retentionPolicies: {
       analyticsEventsDays: { type: Number, default: 30 },

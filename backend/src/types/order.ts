@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { ISoftDeleted } from '../utils/SoftDeletePlugin';
+import { IOrderInvoice, IOrderStoreSnapshot, IOrderTaxSnapshot } from './invoice';
 
 export interface IOrderStatusHistory {
   status: string;
@@ -119,6 +120,14 @@ export interface IOrder extends ISoftDeleted {
   transitDays?: number;
   delayWarning?: boolean;
   productSnapshots?: any[];
+
+  /** Immutable invoice metadata — generated once at checkout, never modified */
+  invoice?: IOrderInvoice;
+  /** Immutable store snapshot — captures business identity at time of order */
+  store?: IOrderStoreSnapshot;
+  /** Immutable tax snapshot — captures exact monetary breakdown at checkout */
+  tax?: IOrderTaxSnapshot;
+
   createdAt: Date;
   updatedAt: Date;
 }

@@ -139,6 +139,45 @@ const OrderSchema: Schema = new Schema(
     transitDays: { type: Number },
     delayWarning: { type: Boolean, default: false },
     productSnapshots: [{ type: Schema.Types.Mixed }],
+
+    // ─── Immutable Invoice Snapshots ─────────────────────────────────
+    // These are captured at checkout and MUST NEVER be modified afterwards.
+    // They form the legal record of the transaction.
+
+    invoice: {
+      number: { type: String },
+      issuedAt: { type: Date },
+      generatedAt: { type: Date },
+      migrationGenerated: { type: Boolean },
+    },
+
+    store: {
+      displayName: { type: String },
+      legalCompanyName: { type: String },
+      logo: { type: String },
+      gstin: { type: String },
+      addressLine1: { type: String },
+      addressLine2: { type: String },
+      city: { type: String },
+      state: { type: String },
+      country: { type: String },
+      postalCode: { type: String },
+      email: { type: String },
+      phone: { type: String },
+    },
+
+    tax: {
+      subtotal: { type: Number },
+      discount: { type: Number },
+      taxableAmount: { type: Number },
+      cgst: { type: Number },
+      sgst: { type: Number },
+      igst: { type: Number },
+      totalTax: { type: Number },
+      grandTotal: { type: Number },
+      currency: { type: String, default: 'INR' },
+      currencySymbol: { type: String, default: '₹' },
+    },
   },
   { timestamps: true },
 );

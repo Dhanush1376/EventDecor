@@ -18,39 +18,42 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
   const grayColor = '#555555';
   const lightGray = '#888888';
 
+  // Read from order snapshots if available, otherwise fall back to settings
+  const storeSnap = (orderData as any).store;
+  const invoiceSnap = (orderData as any).invoice;
+
+  const storeName = storeSnap?.displayName || settings?.general?.storeName || 'Not Configured';
+  const tagline = storeSnap?.legalCompanyName || settings?.general?.tagline || '';
+  const gstin = storeSnap?.gstin || settings?.taxes?.gstNumber || 'Not Configured';
+  const storeAddress = storeSnap
+    ? [storeSnap.addressLine1, storeSnap.addressLine2, storeSnap.city, storeSnap.state]
+        .filter(Boolean)
+        .join(', ')
+    : settings?.contact?.address || '';
+
   // --- HEADER ---
   // Left: Brand & Address
-  doc
-    .fillColor(brandColor)
-    .font('Helvetica-Bold')
-    .fontSize(24)
-    .text(settings.general.storeName || 'Siri Arts & Crafts', 50, 50);
-  doc
-    .fillColor(grayColor)
-    .font('Helvetica-Bold')
-    .fontSize(10)
-    .text(settings.storefront.seoDescription || 'PREMIUM STUDIO & HANDICRAFTS', 50, 75);
+  doc.fillColor(brandColor).font('Helvetica-Bold').fontSize(24).text(storeName, 50, 50);
+  if (tagline) {
+    doc.fillColor(grayColor).font('Helvetica-Bold').fontSize(10).text(tagline, 50, 75);
+  }
 
-  const addressLines = (settings.contact.address || '').split(', ');
+  const addressLines = storeAddress.split(', ');
   let currentY = 90;
   addressLines.slice(0, 3).forEach((line: string) => {
     doc.fillColor(grayColor).font('Helvetica').fontSize(9).text(line.trim(), 50, currentY);
     currentY += 12;
   });
 
-  doc
-    .fillColor(textColor)
-    .font('Helvetica-Bold')
-    .fontSize(9)
-    .text(`GSTIN: ${settings.taxes.gstNumber || 'N/A'}`, 50, 126);
+  doc.fillColor(textColor).font('Helvetica-Bold').fontSize(9).text(`GSTIN: ${gstin}`, 50, 126);
 
   // Right: Invoice Info
+  const invoiceNum = invoiceSnap?.number || (orderData as any).invoiceNumber || 'Not Generated';
   doc
     .fillColor(textColor)
     .font('Helvetica-Bold')
     .fontSize(18)
     .text('TAX INVOICE', 50, 50, { align: 'right' });
-  const invoiceNum = `INV-${orderData.orderId.substring(orderData.orderId.length - 8).toUpperCase()}`;
   doc
     .fillColor(grayColor)
     .font('Helvetica')
@@ -60,7 +63,9 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
     .text(`Invoice Date: ${new Date(orderData.date).toLocaleDateString()}`, 50, 99, {
       align: 'right',
     })
-    .text(`Payment Mode: PREPAID`, 50, 111, { align: 'right' }); // Assuming PREPAID for now, or add to InvoicePdfData
+    .text(`Payment Mode: ${(orderData as any).paymentMethod || 'PREPAID'}`, 50, 111, {
+      align: 'right',
+    });
 
   // Separator
   doc.moveTo(50, 145).lineTo(550, 145).lineWidth(1).strokeColor(grayColor).stroke();
@@ -237,18 +242,13 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
     .text(`Rs. ${totalTax.toFixed(2)}`, 200, y + 68, { width: 90, align: 'right' });
 
   // --- FOOTER ---
-  doc
-    .fillColor(lightGray)
-    .font('Helvetica')
-    .fontSize(8)
-    .text(
-      'This is a secure computer generated tax invoice issued under Siri Arts & Crafts boutique regulations and requires no physical signatures. For inquiry, reach support@siriartsandcrafts.com.',
-      50,
-      720,
-      {
-        align: 'center',
-      },
-    );
+  const footerStoreName = storeSnap?.displayName || settings?.general?.storeName || 'the store';
+  const footerEmail =
+    storeSnap?.email || settings?.general?.supportEmail || settings?.contact?.email || '';
+  const footerText = `This is a secure computer generated tax invoice issued under ${footerStoreName} regulations and requires no physical signatures.${footerEmail ? ` For inquiry, reach ${footerEmail}.` : ''}`;
+  doc.fillColor(lightGray).font('Helvetica').fontSize(8).text(footerText, 50, 720, {
+    align: 'center',
+  });
 };
 
 /** Stream PDF directly to HTTP response (chunked; no full-file RAM buffer). */

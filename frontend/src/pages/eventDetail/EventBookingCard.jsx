@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 
 export function EventBookingCard({
   event,
@@ -25,12 +26,6 @@ export function EventBookingCard({
           </div>
           <div className="flex flex-row gap-2 w-full">
             <button
-              onClick={() => navigate(`/custom-orders?event=${event._id || event.id}`)}
-              className="bg-white text-black flex-1 px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-stone-200 transition-all whitespace-nowrap font-bold shadow-sm flex items-center justify-center"
-            >
-              Customize
-            </button>
-            <button
               onClick={() => {
                 if (!event) return;
                 const num = '919866006648';
@@ -40,9 +35,9 @@ export function EventBookingCard({
                 );
                 window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
               }}
-              className="bg-transparent border border-white/30 flex-1 text-white px-2 py-2.5 rounded-full font-label-sm text-[10px] uppercase tracking-[0.15em] hover:bg-white/10 transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5"
+              className="bg-white hover:bg-gray-100 text-black px-4 py-2.5 rounded-full font-label-sm text-[11px] uppercase tracking-[0.15em] transition-all whitespace-nowrap font-bold flex items-center justify-center gap-1.5 w-full shadow-sm"
             >
-              <span className="material-symbols-outlined text-[14px]">chat</span>
+              <WhatsAppIcon className="w-[14px] h-[14px] text-black" />
               WhatsApp
             </button>
           </div>

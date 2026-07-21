@@ -59,6 +59,9 @@ class StoreSettingsService {
     return {
       general: {
         storeName: settings.general.storeName,
+        tagline: settings.general.tagline,
+        supportEmail: settings.general.supportEmail,
+        logo: settings.general.logo,
         announcementText: settings.general.announcementText,
         announcementLink: settings.general.announcementLink,
         maintenanceMode: settings.general.maintenanceMode,
@@ -94,6 +97,7 @@ class StoreSettingsService {
       taxes: {
         taxInclusive: settings.taxes.taxInclusive,
         gstRate: settings.taxes.gstRate,
+        gstNumber: settings.taxes.gstNumber,
       },
       loyalty: {
         welcomeBonus: settings.loyalty.welcomeBonus,
@@ -115,6 +119,12 @@ class StoreSettingsService {
         email: settings.contact.email,
         supportHours: settings.contact.supportHours,
         address: settings.contact.address,
+        addressLine1: settings.contact.addressLine1,
+        addressLine2: settings.contact.addressLine2,
+        city: settings.contact.city,
+        state: settings.contact.state,
+        country: settings.contact.country,
+        postalCode: settings.contact.postalCode,
         googleMapsUrl: settings.contact.googleMapsUrl,
         instagram: settings.contact.instagram,
         facebook: settings.contact.facebook,
@@ -125,6 +135,7 @@ class StoreSettingsService {
       },
       legal: {
         companyName: settings.legal.companyName,
+        legalCompanyName: settings.legal.legalCompanyName,
         registeredAddress: settings.legal.registeredAddress,
         cin: settings.legal.cin,
       },

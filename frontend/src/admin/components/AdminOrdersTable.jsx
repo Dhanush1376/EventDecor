@@ -1,6 +1,7 @@
 import React from 'react';
 import { EmptyState, formatCurrency, StatusBadge } from '../components/AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
+import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 
 export function AdminOrdersTable({
   filteredOrders,
@@ -204,7 +205,7 @@ export function AdminOrdersTable({
                           className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-success)]"
                           title="WhatsApp"
                         >
-                          <span className="material-symbols-outlined text-[16px]">chat</span>
+                          <WhatsAppIcon className="w-[16px] h-[16px]" />
                         </a>
                       </div>
                     </td>
