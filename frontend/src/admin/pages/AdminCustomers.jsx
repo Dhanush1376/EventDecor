@@ -19,7 +19,7 @@ import { getAccessToken } from '../../services/api';
 import { getApiRootUrl } from '../../config/apiConfig';
 import { acquireAdminSocket, releaseAdminSocket } from '../services/adminSocket';
 import CustomerProfile360 from './CustomerProfile360';
-import CustomerTimelineDrawer from './CustomerTimelineDrawer';
+
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 
 const StatCard = ({ title, value, icon, color }) => (
