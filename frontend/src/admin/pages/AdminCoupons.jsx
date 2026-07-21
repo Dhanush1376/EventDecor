@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { couponService } from '../../services/domainServices';
 import { useAdmin } from '../context/AdminContext';
+import { useConfirm } from '../../context/ConfirmProvider';
 import toast from 'react-hot-toast';
 import {
   PageHeader,
@@ -17,6 +18,7 @@ import {
 export function AdminCoupons() {
   const navigate = useNavigate();
   const { searchQuery } = useAdmin();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
 
   // Route-based creation instead of drawer
@@ -62,8 +64,15 @@ export function AdminCoupons() {
     toggleMutation.mutate({ id, isActive: !currentStatus });
   };
 
-  const handleDelete = (id) => {
-    if (!window.confirm('Are you sure you want to permanently delete this coupon?')) return;
+  const handleDelete = async (id) => {
+    if (
+      !(await confirm({
+        title: 'Delete Coupon',
+        message: 'Are you sure you want to permanently delete this coupon?',
+        type: 'danger',
+      }))
+    )
+      return;
     deleteMutation.mutate(id);
   };
 

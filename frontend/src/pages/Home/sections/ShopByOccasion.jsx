@@ -95,6 +95,12 @@ export function ShopByOccasion({ previewContent }) {
       <div className="absolute -bottom-32 -left-32 w-[300px] h-[300px] bg-primary-container/15 rounded-full blur-[80px] pointer-events-none z-[-1]" />
 
       <MandalaElement
+        className="absolute -top-32 -right-32 opacity-[0.04] z-[-1]"
+        size={450}
+        duration={250}
+        variant={1}
+      />
+      <MandalaElement
         className="absolute -bottom-24 -left-24 opacity-[0.04] z-[-1]"
         size={500}
         duration={200}

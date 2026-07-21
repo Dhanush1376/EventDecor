@@ -4,6 +4,7 @@ import Zap from 'lucide-react/dist/esm/icons/zap';
 import AlertOctagon from 'lucide-react/dist/esm/icons/alert-octagon';
 import Activity from 'lucide-react/dist/esm/icons/activity';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
+import toast from 'react-hot-toast';
 import Settings from 'lucide-react/dist/esm/icons/settings';
 import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 import backupService from '../../services/backupService';
@@ -13,15 +14,17 @@ const DisasterRecoveryPanel = () => {
 
   const handleRunChaosTest = async () => {
     if (
-      window.confirm(
-        `Run chaos scenario: ${chaosScenario}? This will simulate a failure but will not affect production.`,
-      )
+      await confirm({
+        title: 'Run Chaos Test',
+        message: `Run chaos scenario: ${chaosScenario}? This will simulate a failure but will not affect production.`,
+        type: 'warning',
+      })
     ) {
       try {
         await backupService.runChaosTest(chaosScenario);
-        alert('Chaos test initiated. Check audit logs for results.');
+        toast.success('Chaos test initiated. Check audit logs for results.');
       } catch (e) {
-        alert('Failed to initiate chaos test');
+        toast.error('Failed to initiate chaos test');
       }
     }
   };

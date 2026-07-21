@@ -12,12 +12,12 @@ import logger from '../config/logger';
  *   - Logs slow requests to Winston with full correlation context
  */
 const EXCLUDED_PREFIXES = [
-  '/api/orders/webhook', // Razorpay webhook — has its own timeout
-  '/api/uploads', // File uploads — have Cloudinary-level timeouts
+  '/api/orders/webhook',
+  '/api/uploads',
   '/api/v1/uploads',
-  '/api/gallery', // Gallery uploads — stream-based with Cloudinary timeout
+  '/api/gallery',
   '/api/v1/gallery',
-  '/api/v1/visual-search', // Visual search — calls slow vision AI APIs
+  '/api/v1/visual-search',
   '/api/visual-search',
 ];
 

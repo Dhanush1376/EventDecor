@@ -6,6 +6,8 @@ export interface IPaymentAttempt extends Document {
   type: 'purchase' | 'rental' | 'event_booking';
   status: 'initiated' | 'processing' | 'success' | 'failed' | 'expired';
   orderData: Record<string, any>;
+  processingBy?: string;
+  leaseExpiresAt?: Date;
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -24,6 +26,8 @@ const paymentAttemptSchema = new Schema<IPaymentAttempt>(
     // We use a strictly defined structure where possible for the core payload,
     // but keep it flexible enough for all three order types.
     orderData: { type: Schema.Types.Mixed, required: true },
+    processingBy: { type: String },
+    leaseExpiresAt: { type: Date },
     expiresAt: {
       type: Date,
       default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days

@@ -44,7 +44,7 @@ FallbackJobSchema.pre('save', async function () {
           ? settings.retentionPolicies?.fallbackJobsFailedDays || 30
           : settings.retentionPolicies?.fallbackJobsProcessedDays || 7;
       this.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    } catch (err) {
+    } catch (_err) {
       this.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     }
   }
@@ -67,7 +67,7 @@ FallbackJobSchema.pre('findOneAndUpdate', async function () {
       } else {
         update.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
       }
-    } catch (err) {}
+    } catch (_err) {}
   }
 });
 
@@ -298,6 +298,24 @@ export class QueueFallbackService {
         case 'notificationQueue': {
           const { createAdminNotification } = require('./notificationService');
           await createAdminNotification(data);
+          break;
+        }
+        case 'cleanupQueue': {
+          const { GlobalAssetCleanupService } = require('./GlobalAssetCleanupService');
+          if (jobName === 'clean-replaced-assets') {
+            await GlobalAssetCleanupService.cleanReplacedAssets(
+              data.oldData,
+              data.newData,
+              data.context,
+            );
+          } else if (jobName === 'clean-all-assets') {
+            await GlobalAssetCleanupService.cleanAllAssets(data.data || data.urls, data.context);
+          }
+          break;
+        }
+        case 'mediaQueue': {
+          // Add basic handler for media if needed. Usually just process-thumbnails etc.
+          // Since it's a fallback, if we need it, we'd call the service. We can leave it as a no-op if nothing vital is there.
           break;
         }
         case 'whatsapp-retry': {

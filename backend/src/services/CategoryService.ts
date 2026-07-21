@@ -1,10 +1,19 @@
 import mongoose from 'mongoose';
 import Category from '../models/Category';
-import Product from '../models/Product';
-import Gallery from '../models/Gallery';
-import Event from '../models/Event';
+import { ReferenceIntegrityService } from './ReferenceIntegrityService';
 
 export class CategoryService {
+  static {
+    // Register cascade rules for when a category is soft-deleted
+    ReferenceIntegrityService.register('Category', [
+      { targetModel: 'Product', targetField: 'secondaryCategories', action: 'pull' },
+      { targetModel: 'Event', targetField: 'secondaryCategories', action: 'pull' },
+      { targetModel: 'Gallery', targetField: 'secondaryCategories', action: 'pull' },
+      { targetModel: 'Product', targetField: 'primaryCategory', action: 'nullify' },
+      { targetModel: 'Event', targetField: 'primaryCategory', action: 'nullify' },
+      { targetModel: 'Gallery', targetField: 'primaryCategory', action: 'nullify' },
+    ]);
+  }
   /**
    * Retrieves active categories based on optional filter.
    */
@@ -113,21 +122,31 @@ export class CategoryService {
   }
 
   /**
-   * Deletes a category safely.
-   * Removes references from Products, Events, and Galleries.
+   * Deletes a category safely using a transaction.
+   * ReferenceIntegrityService will handle the cascading logic.
    */
   static async deleteCategory(id: string, user: any) {
-    const existing = await Category.findById(id);
-    if (!existing) {
-      return null;
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const existing = await Category.findById(id).session(session);
+      if (!existing) {
+        await session.abortTransaction();
+        session.endSession();
+        return null;
+      }
+
+      // The softDelete method (via plugin) will trigger ReferenceIntegrityService.onSoftDelete
+      await (existing as any).softDelete(user, 'Deleted via categoryController');
+
+      await session.commitTransaction();
+      session.endSession();
+      return existing;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
     }
-    await (existing as any).softDelete(user, 'Deleted via categoryController');
-
-    // Remove from secondary categories
-    await Product.updateMany({}, { $pull: { secondaryCategories: existing._id } });
-    await Event.updateMany({}, { $pull: { secondaryCategories: existing._id } });
-    await Gallery.updateMany({}, { $pull: { secondaryCategories: existing._id } });
-
-    return existing;
   }
 }

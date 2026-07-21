@@ -144,3 +144,43 @@ export interface EventRegistryConfig {
   recipients: RecipientConfig[];
   idempotent?: boolean; // Ensure only sent once per unique payload
 }
+
+export interface NotificationContext {
+  eventId: string; // Unique ID for the event occurrence (e.g. outbox event id)
+  aggregateId: string; // The domain entity ID (e.g. Order ID)
+  correlationId?: string; // For tracing across systems
+  requestId?: string; // Web request ID
+  actorId?: string; // User who triggered this (if any)
+  tenantId?: string; // For multi-tenant support
+  priority: 'critical' | 'high' | 'normal' | 'low';
+  locale?: string;
+  timezone?: string;
+  retryCount: number;
+  metadata?: Record<string, any>;
+}
+
+export interface IEmailProvider {
+  name: string;
+  isConfigured(): boolean;
+  sendEmail(options: EmailSendOptions): Promise<EmailSendResult>;
+}
+
+export interface EmailSendOptions {
+  to: string;
+  subject: string;
+  html: string;
+  from?: string;
+  headers?: Record<string, string>;
+  attachments?: {
+    filename: string;
+    content: Buffer | string;
+    contentType?: string;
+  }[];
+}
+
+export interface EmailSendResult {
+  success: boolean;
+  messageId?: string;
+  provider: string;
+  error?: Error;
+}

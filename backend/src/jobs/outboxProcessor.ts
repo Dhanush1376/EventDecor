@@ -1,17 +1,7 @@
 import logger from '../config/logger';
 import OutboxEvent from '../models/OutboxEvent';
 import { withCronLock } from '../utils/cronLock';
-import { getAdminEmails } from '../config/adminConfig';
-import Order from '../models/Order';
-import User from '../models/User';
-import EventJob from '../domains/event_operations/models/EventJob';
-import RentalOrder from '../models/RentalOrder';
 import * as Sentry from '@sentry/node';
-import { LoyaltyService } from '../services/loyaltyService';
-import { notificationQueue } from '../jobs/queues';
-import { EventJobMailService } from '../services/eventBookingMailService';
-import { CustomOrderMailService } from '../services/customOrderMailService';
-import storeSettingsService from '../services/StoreSettingsService';
 
 /**
  * OutboxProcessor — Processes ALL outbox event types.
@@ -72,388 +62,71 @@ export const processOutboxEvents = async () => {
 };
 
 async function processEvent(event: any): Promise<void> {
-  const adminEmails = getAdminEmails();
-  const { sendDirectEmail } = require('../services/notificationService');
-  const settings = await storeSettingsService.getSettings();
+  const { NotificationEngine } = require('../services/notifications/NotificationEngine');
 
-  switch (`${event.aggregateType}:${event.eventType}`) {
-    // ─── ORDER EVENTS ───────────────────────────────────────────────
-    case 'Order:OrderCreated': {
-      const order = await Order.findById(event.aggregateId).populate('items.product').lean();
-      const user = await User.findById(event.payload.userId).lean();
+  // Convert "Aggregate:Action" to "AGGREGATE_ACTION" format
+  const eventName = `${event.aggregateType}_${event.eventType}`.toUpperCase();
 
-      if (order && user) {
-        // [MIGRATION]: Replaced OrderNotificationService with Universal NotificationEngine
-        const { NotificationEngine } = require('../services/notifications/NotificationEngine');
-        const { NotificationEvent } = require('../services/notifications/types');
+  const context = {
+    eventId: event._id.toString(),
+    aggregateId: event.aggregateId,
+    retryCount: event.retryCount || 0,
+    priority: 'normal',
+    metadata: {
+      payload: event.payload,
+    },
+  };
 
-        await NotificationEngine.notify(NotificationEvent.ORDER_CREATED, {
-          aggregateId: order._id.toString(),
-          userId: user._id.toString(),
-          data: {
-            customerInfo: { name: user.name, email: user.email },
-            orderDetails: {
-              id: order._id.toString(),
-              total: order.total,
-              subtotal: order.subtotal,
-              tax: 0,
-              shipping: order.shippingFee,
-            },
-            products: order.items,
-            deliveryInfo: { expectedDelivery: '5-7 business days' },
-          },
-        });
-      }
-      break;
-    }
+  // 1. Delegate ALL Notification duties to the Notification Engine
+  await NotificationEngine.notify(eventName, context);
 
-    case 'Order:PaymentFailed': {
-      const order = await Order.findById(event.aggregateId).lean();
-      if (order) {
-        const user = await User.findById(order.user).lean();
-        if (user?.email) {
-          await sendDirectEmail({
-            email: user.email,
-            subject: 'Payment Failed — Your Order Was Not Placed',
-            customHtml: `<p>Hi ${user.name || 'there'},</p><p>Unfortunately, your payment could not be verified for your recent order attempt. If money was deducted, it will be automatically refunded within ${settings.cancellation.refundTimeline || '5-7 business days'}.</p><p>If you believe this is an error, please contact our support team.</p>`,
-            type: 'order',
-            action: 'payment_failed',
-          });
-        }
-        // Admin alert
-        for (const email of adminEmails) {
-          await sendDirectEmail({
-            email,
-            subject: `[ALERT] Payment Failed — Order ${order._id}`,
-            customHtml: `<p>Payment verification failed for order ${order._id}.</p><p>Amount: ₹${order.total}</p><p>User: ${user?.email || 'unknown'}</p><p>Razorpay Order ID: ${order.razorpayOrderId}</p>`,
-            type: 'system',
-            action: 'admin_payment_failed_alert',
-          });
-        }
-      }
-      break;
-    }
+  // 2. Handle specific internal Business Domain Side-Effects (Event Subscribers)
+  // In a full microservices architecture, this would publish to Kafka/RabbitMQ.
+  // Here we route to specific domain services if necessary.
 
-    case 'Order:PaymentDisputed': {
-      const order = await Order.findById(event.aggregateId).lean();
-      for (const email of adminEmails) {
-        await sendDirectEmail({
-          email,
-          subject: `[CRITICAL] Payment Dispute — Order ${event.aggregateId}`,
-          customHtml: `<p><strong>A payment dispute has been raised.</strong></p><p>Order ID: ${event.aggregateId}</p><p>Dispute State: ${event.payload.disputeState}</p><p>Amount: ₹${order?.total || 'unknown'}</p><p>Action required: Review in Razorpay Dashboard immediately.</p>`,
-          type: 'system',
-          action: 'admin_payment_dispute_alert',
-        });
-      }
-      break;
-    }
-
-    case 'Order:OrderDelivered': {
-      const order = await Order.findById(event.aggregateId).lean();
-      if (order) {
-        const user = await User.findById(order.user).lean();
-        if (user?.email) {
-          await sendDirectEmail({
-            email: user.email,
-            subject: `Your Order Has Been Delivered! — ${order._id}`,
-            customHtml: `<p>Hi ${user.name || 'there'},</p><p>Your order <strong>${order._id}</strong> has been successfully delivered. We hope you love it!</p><p>You have earned loyalty points for this purchase which have been credited to your account.</p><p>If you have any issues, please contact our support team.</p>`,
-            type: 'order',
-            action: 'order_delivered',
-          });
-        }
-      }
-      break;
-    }
-
-    case 'Order:OrderStatusUpdated': {
-      const {
-        triggerPurchaseRewards,
-        triggerReversalRewards,
-        newStatus,
-        note,
-        total,
-        userId,
-        orderId,
-      } = event.payload;
-
-      // Handle rewards safely outside of transaction
-      if (triggerPurchaseRewards) {
-        try {
-          await LoyaltyService.processPurchaseRewards(userId, orderId, total);
-        } catch (rewardsErr) {
-          logger.error('Failed to process purchase rewards on delivery:', rewardsErr);
-        }
-      } else if (triggerReversalRewards) {
-        try {
-          await LoyaltyService.reversePurchaseRewards(orderId);
-        } catch (reversalErr) {
-          logger.error('Failed to reverse purchase rewards on status transition:', reversalErr);
-        }
-      }
-
-      // Handle admin notification queue safely outside of transaction
+  if (eventName === 'ORDER_ORDERSTATUSUPDATED') {
+    const { triggerPurchaseRewards, triggerReversalRewards, total, userId, orderId } =
+      event.payload;
+    if (triggerPurchaseRewards) {
       try {
-        await notificationQueue.add('adminNotification', {
-          title: `Order Status: ${newStatus}`,
-          message: `Order #${orderId} has been updated to ${newStatus}. ${note || ''}`,
-          type: 'order',
-          actionLink: `/admin/orders/${orderId}`,
-        });
-      } catch (notifErr) {
-        logger.error('Failed to create admin notification for order status change:', notifErr);
+        const { LoyaltyService } = require('../services/loyaltyService');
+        await LoyaltyService.processPurchaseRewards(userId, orderId, total);
+      } catch (err) {
+        logger.error('Failed to process purchase rewards:', err);
       }
-      break;
-    }
-
-    // ─── EVENT BOOKING EVENTS ───────────────────────────────────────
-    case 'EventJob:BookingInquirySubmitted': {
-      const booking = await EventJob.findById(event.aggregateId).populate('user').lean();
-      if (booking) {
-        const user = booking.user as any;
-        const eventDateStr = new Date(booking.date).toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        } as const);
-
-        await notificationQueue.add('adminNotification', {
-          title: 'New Luxury Event Booking Inquiry',
-          message: `${user.name || 'A customer'} submitted a new event booking inquiry ("${booking.title}") for ${eventDateStr}.`,
-          type: 'custom_request',
-          actionLink: `/admin/bookings`,
-          metadata: { bookingId: booking._id.toString() },
-        });
-
-        // Use the elegant mail service instead of basic HTML
-        await EventJobMailService.sendSubmissionEmails(booking, user);
+    } else if (triggerReversalRewards) {
+      try {
+        const { LoyaltyService } = require('../services/loyaltyService');
+        await LoyaltyService.reversePurchaseRewards(orderId);
+      } catch (err) {
+        logger.error('Failed to reverse purchase rewards:', err);
       }
-      break;
     }
+  }
 
-    case 'EventJob:BookingConfirmed': {
-      const booking = await EventJob.findById(event.aggregateId).populate('user').lean();
-      if (booking) {
-        const user = booking.user as any;
-        if (user?.email) {
-          const { sendDirectEmail } = require('../services/notificationService');
-          await sendDirectEmail({
-            email: user.email,
-            subject: `🎉 Booking Confirmed — ${booking.title}`,
-            customHtml: `<p>Hi ${user.name || 'there'},</p><p>Your event booking <strong>${booking.title}</strong> on ${new Date(booking.date).toLocaleDateString('en-IN')} has been confirmed!</p><p>Deposit Paid: ₹${booking.pricing.depositAmount}</p><p>Pending Balance: ₹${booking.pricing.pendingBalance}</p><p>Our team will be in touch shortly to discuss your event details.</p>`,
-            type: 'order',
-            action: 'booking_confirmed',
-          });
-        }
-        // Admin notification
-        for (const email of adminEmails) {
-          const { sendDirectEmail } = require('../services/notificationService');
-          await sendDirectEmail({
-            email,
-            subject: `[NEW BOOKING] ${booking.title} — ${new Date(booking.date).toLocaleDateString('en-IN')}`,
-            customHtml: `<p>New event booking confirmed:</p><p>Booking ID: ${booking.bookingId}</p><p>Event: ${booking.title} (${booking.eventType})</p><p>Date: ${new Date(booking.date).toLocaleDateString('en-IN')}</p><p>Guests: ${booking.guestCount}</p><p>Total: ₹${booking.pricing.totalPrice}</p><p>Deposit Paid: ₹${booking.pricing.depositAmount}</p>`,
-            type: 'system',
-            action: 'admin_new_booking_alert',
-          });
-        }
-      }
-      break;
-    }
-
-    case 'EventJob:PaymentFailed': {
-      const booking = await EventJob.findById(event.aggregateId).populate('user').lean();
-      if (booking) {
-        const user = booking.user as any;
-        if (user?.email) {
-          await sendDirectEmail({
-            email: user.email,
-            subject: 'Payment Failed — Event Booking Not Confirmed',
-            customHtml: `<p>Hi ${user.name || 'there'},</p><p>Unfortunately, the payment for your event booking could not be processed. Please try again or contact support.</p>`,
-            type: 'order',
-            action: 'booking_payment_failed',
-          });
-        }
-      }
-      break;
-    }
-
-    case 'EventJob:BookingCancelled': {
-      const booking = await EventJob.findById(event.aggregateId).populate('user').lean();
-      if (booking) {
-        const user = booking.user as any;
-        if (user?.email) {
-          await sendDirectEmail({
-            email: user.email,
-            subject: `Event Booking Cancelled — ${booking.title}`,
-            customHtml: `<p>Hi ${user.name || 'there'},</p><p>Your event booking <strong>${booking.title}</strong> has been cancelled.</p><p>Reason: ${booking.cancellationReason || 'User Request'}</p><p>If you are eligible for a refund, it will be processed shortly.</p>`,
-            type: 'order',
-            action: 'booking_cancelled',
-          });
-        }
-        for (const email of adminEmails) {
-          await sendDirectEmail({
-            email,
-            subject: `[BOOKING CANCELLED] ${booking.title} — ${booking.bookingId || booking._id}`,
-            customHtml: `<p>A booking was cancelled:</p><p>Booking ID: ${booking.bookingId || booking._id}</p><p>Event: ${booking.title}</p><p>Reason: ${booking.cancellationReason || 'unknown'}</p>`,
-            type: 'system',
-            action: 'admin_booking_cancelled_alert',
-          });
-        }
-      }
-      break;
-    }
-
-    // ─── RENTAL EVENTS ──────────────────────────────────────────────
-    case 'RentalOrder:RentalCreated': {
-      const rental = await RentalOrder.findById(event.aggregateId).populate('user').lean();
-      if (rental) {
-        const user = rental.user as any;
-        const paymentType = event.payload.type === 'cod' ? 'Cash on Delivery' : 'Online Payment';
-        if (user?.email) {
-          await sendDirectEmail({
-            email: user.email,
-            subject: `Rental Confirmed — ${rental.productTitle}`,
-            customHtml: `<p>Hi ${user.name || 'there'},</p><p>Your rental order for <strong>${rental.productTitle}</strong> has been confirmed!</p><p>Rental Period: ${new Date(rental.rentalStartDate).toLocaleDateString('en-IN')} → ${new Date(rental.rentalEndDate).toLocaleDateString('en-IN')}</p><p>Total: ₹${rental.totalAmount} (${paymentType})</p><p>Security Deposit: ₹${rental.securityDeposit}</p>`,
-            type: 'order',
-            action: 'rental_confirmed',
-          });
-        }
-        // Admin notification
-        for (const email of adminEmails) {
-          await sendDirectEmail({
-            email,
-            subject: `[NEW RENTAL] ${rental.productTitle} — ${rental.rentalOrderId}`,
-            customHtml: `<p>New rental order:</p><p>Order: ${rental.rentalOrderId}</p><p>Product: ${rental.productTitle}</p><p>Period: ${new Date(rental.rentalStartDate).toLocaleDateString('en-IN')} → ${new Date(rental.rentalEndDate).toLocaleDateString('en-IN')}</p><p>Total: ₹${rental.totalAmount} (${paymentType})</p>`,
-            type: 'system',
-            action: 'admin_new_rental_alert',
-          });
-        }
-      }
-      break;
-    }
-
-    case 'RentalOrder:RentalPaymentFailed': {
-      const rental = await RentalOrder.findById(event.aggregateId).populate('user').lean();
-      if (rental) {
-        const user = rental.user as any;
-        if (user?.email) {
-          await sendDirectEmail({
-            email: user.email,
-            subject: 'Payment Failed — Rental Order Not Confirmed',
-            customHtml: `<p>Hi ${user.name || 'there'},</p><p>Unfortunately, the payment for your rental of <strong>${rental.productTitle}</strong> could not be processed. Please try again.</p>`,
-            type: 'order',
-            action: 'rental_payment_failed',
-          });
-        }
-      }
-      break;
-    }
-
-    case 'RentalOrder:RentalCancelled': {
-      const rental = await RentalOrder.findById(event.aggregateId).populate('user').lean();
-      if (rental) {
-        const user = rental.user as any;
-        if (user?.email) {
-          await sendDirectEmail({
-            email: user.email,
-            subject: `Rental Order Cancelled — ${rental.productTitle}`,
-            customHtml: `<p>Hi ${user.name || 'there'},</p><p>Your rental order for <strong>${rental.productTitle}</strong> has been cancelled.</p><p>If you are eligible for a refund, it will be processed shortly.</p>`,
-            type: 'order',
-            action: 'rental_cancelled',
-          });
-        }
-        for (const email of adminEmails) {
-          await sendDirectEmail({
-            email,
-            subject: `[RENTAL CANCELLED] ${rental.productTitle} — ${rental.rentalOrderId || rental._id}`,
-            customHtml: `<p>A rental order was cancelled:</p><p>Rental ID: ${rental.rentalOrderId || rental._id}</p><p>Product: ${rental.productTitle}</p>`,
-            type: 'system',
-            action: 'admin_rental_cancelled_alert',
-          });
-        }
-      }
-      break;
-    }
-
-    // ─── REFUND EVENTS ──────────────────────────────────────────────
-    case 'RentalOrder:RentalDepositRefunded': {
-      const { orderId, userId, depositAmount, refundAmount, deductions } = event.payload;
-      const user = await User.findById(userId).lean();
-      if (user?.email) {
-        await sendDirectEmail({
-          email: user.email,
-          subject: `Security Deposit Refunded - Rental #${orderId}`,
-          customHtml: `<p>Hi ${user.name || 'there'},</p>
-          <p>Your security deposit for rental <strong>#${orderId}</strong> has been processed.</p>
-          <p>Deposit Amount: ₹${depositAmount}<br/>
-          Deductions: ₹${depositAmount - refundAmount}<br/>
-          <strong>Refund Amount: ₹${refundAmount}</strong></p>
-          ${deductions?.length ? '<p>Deductions breakdown:</p><ul>' + deductions.map((d: any) => `<li>${d.reason}: ₹${d.amount}</li>`).join('') + '</ul>' : ''}
-          <p>The refund should reflect in your original payment method in ${settings.cancellation.refundTimeline || '5-7 business days'}.</p>`,
-          type: 'rental',
-          action: 'rental_deposit_refund',
-        });
-      }
-      break;
-    }
-
-    case 'RentalOrder:RentalDepositForfeited': {
-      const { orderId, userId, depositAmount, deductions } = event.payload;
-      const user = await User.findById(userId).lean();
-      if (user?.email) {
-        await sendDirectEmail({
-          email: user.email,
-          subject: `Security Deposit Update - Rental #${orderId}`,
-          customHtml: `<p>Hi ${user.name || 'there'},</p>
-          <p>Your security deposit (₹${depositAmount}) for rental <strong>#${orderId}</strong> has been fully forfeited due to the following deductions:</p>
-          ${deductions?.length ? '<ul>' + deductions.map((d: any) => `<li>${d.reason}: ₹${d.amount}</li>`).join('') + '</ul>' : ''}
-          <p>If you have any questions, please contact our support team.</p>`,
-          type: 'rental',
-          action: 'rental_deposit_forfeit',
-        });
-      }
-      break;
-    }
-
-    case 'Refund:RefundFailed': {
-      Sentry.captureMessage(`Refund failed for entity ${event.aggregateId}`, {
-        level: 'error',
-        tags: { critical: 'refund_failure' },
-        extra: { aggregateId: event.aggregateId, payload: event.payload },
+  if (eventName.endsWith('_REFUNDREQUESTED')) {
+    const { PaymentRefundService } = require('../services/PaymentRefundService');
+    const { amount, reason, razorpayPaymentId } = event.payload;
+    try {
+      await PaymentRefundService.initiateAsyncRefund({
+        amount,
+        currency: 'INR',
+        originalTransactionId: razorpayPaymentId,
+        entityType: event.aggregateType,
+        entityId: event.aggregateId,
+        reason,
       });
-      for (const email of adminEmails) {
-        await sendDirectEmail({
-          email,
-          subject: `[CRITICAL] Refund Failed — ${event.aggregateId}`,
-          customHtml: `<p><strong>A refund has failed and requires manual intervention.</strong></p><p>Entity: ${event.payload?.entityType || 'unknown'}</p><p>Entity ID: ${event.payload?.entityId || event.aggregateId}</p><p>Amount: ₹${event.payload?.amount || 'unknown'}</p><p>Error: ${event.payload?.error || 'unknown'}</p>`,
-          type: 'system',
-          action: 'admin_refund_failed_critical',
-        });
-      }
-      break;
+      logger.info(`[OUTBOX REFUND] Successfully enqueued refund for ${razorpayPaymentId}`);
+    } catch (err) {
+      logger.error(`[OUTBOX REFUND] Failed to enqueue refund for ${razorpayPaymentId}:`, err);
+      throw err; // Force retry
     }
+  }
 
-    // ─── SYSTEM EVENTS ──────────────────────────────────────────────
-    case 'System:NotificationQueued': {
-      // Generic async email handler
-      if (event.payload && event.payload.emailOptions) {
-        const { sendDirectEmailProcessor } = require('../services/notificationService');
-        await sendDirectEmailProcessor(event.payload.emailOptions);
-      }
-      break;
+  if (eventName === 'SYSTEM_NOTIFICATIONQUEUED') {
+    if (event.payload && event.payload.emailOptions) {
+      const { sendDirectEmailProcessor } = require('../services/notificationService');
+      await sendDirectEmailProcessor(event.payload.emailOptions);
     }
-
-    // ─── CUSTOM ORDER EVENTS ──────────────────────────────────────────────
-    case 'CustomOrder:CustomOrderSubmitted': {
-      const CustomOrder = require('../models/CustomOrder').default;
-      const order = await CustomOrder.findById(event.aggregateId).lean();
-      if (order) {
-        await CustomOrderMailService.sendSubmissionEmails(order);
-      }
-      break;
-    }
-
-    default:
-      logger.warn(`[OUTBOX] Unhandled event type: ${event.aggregateType}:${event.eventType}`);
-      break;
   }
 }

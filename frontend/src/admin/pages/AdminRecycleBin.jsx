@@ -5,6 +5,7 @@ import X from 'lucide-react/dist/esm/icons/x';
 import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
 import Info from 'lucide-react/dist/esm/icons/info';
 import { useRecycleBin } from '../hooks/useRecycleBin';
+import { useConfirm } from '../../context/ConfirmProvider';
 import { useAdminSecurity } from '../hooks/useAdminSecurity';
 import { recycleBinApi } from '../services/recycleBinService';
 import { m as motion } from 'framer-motion';
@@ -93,6 +94,7 @@ const AdminRecycleBin = () => {
   const { activeRole } = useAdminSecurity();
   const isSuperAdmin = activeRole === 'super_admin' || activeRole === 'owner';
   const isOwner = activeRole === 'owner';
+  const confirm = useConfirm();
 
   // Modal states
   const [previewModal, setPreviewModal] = useState({ isOpen: false, item: null });
@@ -186,9 +188,11 @@ const AdminRecycleBin = () => {
 
   const handlePermanentDeleteClick = async (item) => {
     if (
-      window.confirm(
-        `Are you sure you want to permanently delete ${item.entityName}? This action cannot be undone.`,
-      )
+      await confirm({
+        title: 'Permanent Delete',
+        message: `Are you sure you want to permanently delete ${item.entityName}? This action cannot be undone.`,
+        type: 'danger',
+      })
     ) {
       const result = await permanentDelete(item._id);
       if (result.success && result.report) {

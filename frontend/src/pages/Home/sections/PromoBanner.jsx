@@ -66,11 +66,11 @@ export function PromoBanner({ previewContent }) {
   const renderItems = () =>
     [...Array(4)].map((_, i) => (
       <div key={i} className="flex items-center gap-8 shrink-0">
-        <Sparkles className="w-3.5 h-3.5 opacity-50 text-[var(--color-primary-variant)]" />
-        <span className="text-neutral-500 font-label-sm text-[10px] tracking-[0.25em] uppercase font-bold">
+        <Sparkles className="w-3.5 h-3.5 text-[var(--color-primary-variant)]" />
+        <span className="text-neutral-900 font-label-sm text-[10px] tracking-[0.25em] uppercase font-bold">
           {promoText}
         </span>
-        <span className="text-[var(--color-gold-dark)] border border-[var(--color-gold-dark)]/30 group-hover:border-[var(--color-gold-dark)] px-3.5 py-1 rounded-full text-[9px] font-bold tracking-[0.15em] transition-all duration-300 bg-[var(--color-gold-dark)]/5 group-hover:bg-[var(--color-gold-dark)] group-hover:text-white">
+        <span className="text-white border border-[var(--color-gold-dark)] px-3.5 py-1 rounded-full text-[9px] font-bold tracking-[0.15em] transition-all duration-300 bg-[var(--color-gold-dark)] hover:opacity-90">
           {ctaText}
         </span>
       </div>
@@ -99,7 +99,7 @@ export function PromoBanner({ previewContent }) {
   };
 
   return (
-    <section className="relative w-full overflow-hidden bg-white py-4 border-y border-neutral-200 cursor-pointer group">
+    <section className="relative z-50 w-full overflow-hidden bg-white py-4 border-y border-neutral-200 cursor-pointer group">
       <style>
         {`
           @keyframes marquee-scroll {
@@ -108,7 +108,7 @@ export function PromoBanner({ previewContent }) {
           }
           .animate-marquee-custom {
             display: flex;
-            animation: marquee-scroll 80s linear infinite;
+            animation: marquee-scroll 150s linear infinite;
           }
           .group:hover .animate-marquee-custom {
             animation-play-state: paused;

@@ -1,5 +1,6 @@
 import { m as motion } from 'framer-motion';
 import { PageHeader, StatusBadge, SkeletonTable, fadeUp, stagger } from '../components/AdminUIKit';
+import { useConfirm } from '../../context/ConfirmProvider';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { policyService } from '../../services/domainServices';
@@ -10,6 +11,7 @@ export function AdminPolicies() {
   const navigate = useNavigate();
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
   // Drawer state removed in favor of routing
 
   useEffect(() => {
@@ -28,7 +30,13 @@ export function AdminPolicies() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this policy?')) {
+    if (
+      await confirm({
+        title: 'Delete Policy',
+        message: 'Are you sure you want to delete this policy?',
+        type: 'danger',
+      })
+    ) {
       try {
         await policyService.delete(id);
         fetchPolicies();

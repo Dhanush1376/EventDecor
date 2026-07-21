@@ -3,6 +3,8 @@ import Save from 'lucide-react/dist/esm/icons/save';
 import Lock from 'lucide-react/dist/esm/icons/lock';
 import Key from 'lucide-react/dist/esm/icons/key';
 import backupService from '../../services/backupService';
+import toast from 'react-hot-toast';
+import { useConfirm } from '../../../context/ConfirmProvider';
 
 const RetentionManager = () => {
   const [retention, setRetention] = useState({
@@ -15,14 +17,15 @@ const RetentionManager = () => {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const confirm = useConfirm();
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
       await backupService.updateRetentionPolicy(retention);
-      alert('Retention policies updated successfully.');
+      toast.success('Retention policies updated successfully.');
     } catch (err) {
-      alert('Failed to update policies');
+      toast.error('Failed to update policies');
     } finally {
       setIsSaving(false);
     }
@@ -30,15 +33,18 @@ const RetentionManager = () => {
 
   const handleKeyRotation = async () => {
     if (
-      window.confirm(
-        'Are you sure you want to rotate the master encryption key? This is a highly sensitive operation.',
-      )
+      await confirm({
+        title: 'Rotate Master Key',
+        message:
+          'Are you sure you want to rotate the master encryption key? This is a highly sensitive operation.',
+        type: 'danger',
+      })
     ) {
       try {
         await backupService.rotateKey();
-        alert('Master key rotated successfully. New backups will use V2.');
+        toast.success('Master key rotated successfully. New backups will use V2.');
       } catch (err) {
-        alert('Failed to rotate key');
+        toast.error('Failed to rotate key');
       }
     }
   };

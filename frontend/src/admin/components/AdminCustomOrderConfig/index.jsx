@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { customOrderService } from '../../../services/domainServices';
 import toast from 'react-hot-toast';
+import { useConfirm } from '../../../context/ConfirmProvider';
 import { getErrorMessage } from '../../../utils/core/errorHelpers';
 
 import { CustomOrderConfigHeader } from './CustomOrderConfigHeader';
@@ -15,6 +16,7 @@ export function AdminCustomOrderConfig() {
   const [loading, setLoading] = useState(true);
   const [savingDraft, setSavingDraft] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const confirm = useConfirm();
 
   const [activeTypeTab, setActiveTypeTab] = useState(null);
   const [activeSectionTab, setActiveSectionTab] = useState('forms'); // 'forms' | 'workflows'
@@ -66,7 +68,13 @@ export function AdminCustomOrderConfig() {
   };
 
   const handlePublish = async () => {
-    if (!window.confirm('Are you sure you want to publish these changes live to the storefront?'))
+    if (
+      !(await confirm({
+        title: 'Publish Configuration',
+        message: 'Are you sure you want to publish these changes live to the storefront?',
+        type: 'warning',
+      }))
+    )
       return;
     try {
       setPublishing(true);
@@ -127,8 +135,15 @@ export function AdminCustomOrderConfig() {
     }));
   };
 
-  const deleteStep = (typeId, stepId) => {
-    if (!window.confirm('Delete this entire step?')) return;
+  const deleteStep = async (typeId, stepId) => {
+    if (
+      !(await confirm({
+        title: 'Delete Step',
+        message: 'Delete this entire step?',
+        type: 'danger',
+      }))
+    )
+      return;
     setConfig((prev) => ({
       ...prev,
       types: prev.types.map((t) => {

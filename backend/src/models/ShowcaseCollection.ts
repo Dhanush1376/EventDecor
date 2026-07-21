@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
+import { AssetLifecyclePlugin } from '../utils/AssetLifecyclePlugin';
 
 export interface IShowcaseItem {
   name: string;
@@ -82,6 +83,13 @@ ShowcaseCollectionSchema.post('save', () => {
 });
 
 ShowcaseCollectionSchema.plugin(SoftDeletePlugin);
+ShowcaseCollectionSchema.plugin(AssetLifecyclePlugin, {
+  tier: 3,
+  assetFields: [
+    { path: 'image', type: 'single', resourceType: 'image' },
+    { path: 'gallery', type: 'array', resourceType: 'image' },
+  ],
+});
 
 const ShowcaseCollection = mongoose.model<
   IShowcaseCollection,

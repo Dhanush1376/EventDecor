@@ -3,6 +3,7 @@ import Download from 'lucide-react/dist/esm/icons/download';
 import Search from 'lucide-react/dist/esm/icons/search';
 import Shield from 'lucide-react/dist/esm/icons/shield';
 import backupService from '../../services/backupService';
+import toast from 'react-hot-toast';
 
 const AuditTrail = () => {
   const [logs, setLogs] = useState([]);
@@ -36,7 +37,7 @@ const AuditTrail = () => {
       link.click();
       link.parentNode.removeChild(link);
     } catch (err) {
-      alert('Failed to export logs');
+      toast.error('Failed to export logs');
     }
   };
 

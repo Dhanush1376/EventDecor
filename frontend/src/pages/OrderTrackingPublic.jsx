@@ -148,8 +148,106 @@ export function OrderTrackingPublic() {
           </div>
         </div>
 
-        {/* Real-time Timeline Visualization */}
+        {/* Real-time Timeline Visualization (Overall Order) */}
         <TrackingTimeline orderStatus={order.orderStatus} />
+
+        {/* Package Level Progress */}
+        {order.packages && order.packages.length > 0 && (
+          <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 lg:p-8 shadow-xs mt-6">
+            <h2 className="text-xs font-bold text-secondary uppercase tracking-widest mb-4 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-sm">inventory_2</span>
+              <span>Package Tracking ({order.packages.length})</span>
+            </h2>
+            <div className="space-y-6">
+              {order.packages.map((pkg, i) => (
+                <div
+                  key={pkg.packageId}
+                  className="border border-outline-variant/50 rounded-xl p-5 bg-surface/50"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="font-bold text-on-surface text-sm">
+                        Package {pkg.packageNumber} of {pkg.totalPackages}
+                      </h3>
+                      <p className="text-xs text-secondary font-mono mt-1">{pkg.packageId}</p>
+                    </div>
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider ${statusColors[pkg.status] || 'bg-surface'}`}
+                    >
+                      {pkg.status.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+
+                  {pkg.shipment ? (
+                    <div className="mb-4 bg-primary/5 p-3 rounded-lg border border-primary/10 text-xs">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-secondary font-medium">Courier:</span>
+                        <span className="font-bold">{pkg.shipment.courierPartner}</span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-secondary font-medium">AWB / Tracking:</span>
+                        <span className="font-bold font-mono text-primary">
+                          {pkg.shipment.awbNumber}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-secondary font-medium">Shipment Status:</span>
+                        <span className="font-bold uppercase tracking-wider">
+                          {pkg.shipment.status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mb-4 text-xs text-secondary/70 italic">
+                      Tracking pending - Currently being processed in warehouse
+                    </div>
+                  )}
+
+                  <div className="text-[11px] text-secondary">
+                    <strong className="block mb-1 text-on-surface">Items:</strong>
+                    <ul className="list-disc pl-4 space-y-0.5">
+                      {pkg.items.map((item, idx) => (
+                        <li key={idx}>
+                          {item.sku} (Qty: {item.quantity})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Shipment Events Timeline if any */}
+                  {pkg.events && pkg.events.length > 0 && (
+                    <div className="mt-5 pt-4 border-t border-outline-variant/30">
+                      <strong className="block text-[11px] text-on-surface uppercase tracking-widest mb-3">
+                        Courier Transit Logs
+                      </strong>
+                      <div className="space-y-3 pl-2">
+                        {pkg.events.map((event, idx) => (
+                          <div key={idx} className="flex gap-3 text-[11px]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                            <div>
+                              <strong className="text-on-surface uppercase block">
+                                {event.status.replace(/_/g, ' ')}
+                              </strong>
+                              <span className="text-secondary">
+                                {event.location} •{' '}
+                                {new Date(event.timestamp).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Detailed Transit History Logs */}
         <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 lg:p-8 shadow-xs">

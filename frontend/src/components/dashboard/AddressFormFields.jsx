@@ -10,80 +10,84 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
           <span className="material-symbols-outlined text-[12px]">person</span>
           Contact Details
         </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label htmlFor="dashboard-address-name" className="form-label">
-              Receiver Full Name*
-            </label>
-            <input
-              id="dashboard-address-name"
-              type="text"
-              required
-              placeholder="Receiver full name"
-              className="form-field"
-              value={addressFormData.name}
-              onChange={(e) =>
-                setAddressFormData({
-                  ...addressFormData,
-                  name: e.target.value,
-                })
-              }
-            />
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="dashboard-address-name" className="form-label">
+                Receiver Full Name*
+              </label>
+              <input
+                id="dashboard-address-name"
+                type="text"
+                required
+                placeholder="Receiver full name"
+                className="form-field"
+                value={addressFormData.name}
+                onChange={(e) =>
+                  setAddressFormData({
+                    ...addressFormData,
+                    name: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label htmlFor="dashboard-address-email" className="form-label">
+                Email Address
+              </label>
+              <input
+                id="dashboard-address-email"
+                type="email"
+                placeholder="Enter email address"
+                className="form-field"
+                value={addressFormData.email}
+                onChange={(e) =>
+                  setAddressFormData({
+                    ...addressFormData,
+                    email: e.target.value,
+                  })
+                }
+              />
+            </div>
           </div>
-          <div>
-            <label htmlFor="dashboard-address-phone" className="form-label">
-              Contact Phone Number*
-            </label>
-            <input
-              id="dashboard-address-phone"
-              type="tel"
-              required
-              placeholder="10-digit number"
-              className="form-field"
-              value={addressFormData.phone}
-              onChange={(e) =>
-                setAddressFormData({
-                  ...addressFormData,
-                  phone: e.target.value,
-                })
-              }
-            />
-          </div>
-          <div>
-            <label htmlFor="dashboard-address-alt-phone" className="form-label">
-              Alternate Phone Number
-            </label>
-            <input
-              id="dashboard-address-alt-phone"
-              type="tel"
-              placeholder="Optional alternate number"
-              className="form-field"
-              value={addressFormData.alternatePhone}
-              onChange={(e) =>
-                setAddressFormData({
-                  ...addressFormData,
-                  alternatePhone: e.target.value,
-                })
-              }
-            />
-          </div>
-          <div>
-            <label htmlFor="dashboard-address-email" className="form-label">
-              Email Address
-            </label>
-            <input
-              id="dashboard-address-email"
-              type="email"
-              placeholder="Enter email address"
-              className="form-field"
-              value={addressFormData.email}
-              onChange={(e) =>
-                setAddressFormData({
-                  ...addressFormData,
-                  email: e.target.value,
-                })
-              }
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="dashboard-address-phone" className="form-label">
+                Contact Phone Number*
+              </label>
+              <input
+                id="dashboard-address-phone"
+                type="tel"
+                required
+                placeholder="10-digit number"
+                className="form-field"
+                value={addressFormData.phone}
+                onChange={(e) =>
+                  setAddressFormData({
+                    ...addressFormData,
+                    phone: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label htmlFor="dashboard-address-alt-phone" className="form-label">
+                Alternate Phone Number
+              </label>
+              <input
+                id="dashboard-address-alt-phone"
+                type="tel"
+                placeholder="Optional alternate number"
+                className="form-field"
+                value={addressFormData.alternatePhone}
+                onChange={(e) =>
+                  setAddressFormData({
+                    ...addressFormData,
+                    alternatePhone: e.target.value,
+                  })
+                }
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -94,46 +98,48 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
           <span className="material-symbols-outlined text-[12px]">home</span>
           Address Information
         </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label htmlFor="dashboard-address-pincode" className="form-label">
-              6-Digit Pincode*
-            </label>
-            <input
-              id="dashboard-address-pincode"
-              type="text"
-              required
-              placeholder="e.g. 560041"
-              className="form-field"
-              value={addressFormData.pincode}
-              onChange={(e) =>
-                setAddressFormData({
-                  ...addressFormData,
-                  pincode: e.target.value,
-                })
-              }
-            />
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="dashboard-address-pincode" className="form-label">
+                6-Digit Pincode*
+              </label>
+              <input
+                id="dashboard-address-pincode"
+                type="text"
+                required
+                placeholder="e.g. 560041"
+                className="form-field"
+                value={addressFormData.pincode}
+                onChange={(e) =>
+                  setAddressFormData({
+                    ...addressFormData,
+                    pincode: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label htmlFor="dashboard-address-locality" className="form-label">
+                Locality / Sector*
+              </label>
+              <input
+                id="dashboard-address-locality"
+                type="text"
+                required
+                placeholder="e.g. Sector 4 / Jayanagar"
+                className="form-field"
+                value={addressFormData.locality}
+                onChange={(e) =>
+                  setAddressFormData({
+                    ...addressFormData,
+                    locality: e.target.value,
+                  })
+                }
+              />
+            </div>
           </div>
           <div>
-            <label htmlFor="dashboard-address-locality" className="form-label">
-              Locality / Sector*
-            </label>
-            <input
-              id="dashboard-address-locality"
-              type="text"
-              required
-              placeholder="e.g. Sector 4 / Jayanagar"
-              className="form-field"
-              value={addressFormData.locality}
-              onChange={(e) =>
-                setAddressFormData({
-                  ...addressFormData,
-                  locality: e.target.value,
-                })
-              }
-            />
-          </div>
-          <div className="sm:col-span-2">
             <label htmlFor="dashboard-address-street" className="form-label">
               Street Address & Building Details*
             </label>
@@ -151,7 +157,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               }
             />
           </div>
-          <div className="sm:col-span-2">
+          <div>
             <label htmlFor="dashboard-address-landmark" className="form-label">
               Landmark*
             </label>
@@ -170,43 +176,45 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               }
             />
           </div>
-          <div>
-            <label htmlFor="dashboard-address-city" className="form-label">
-              City / District*
-            </label>
-            <input
-              id="dashboard-address-city"
-              type="text"
-              required
-              placeholder="City"
-              className="form-field"
-              value={addressFormData.city}
-              onChange={(e) =>
-                setAddressFormData({
-                  ...addressFormData,
-                  city: e.target.value,
-                })
-              }
-            />
-          </div>
-          <div>
-            <label htmlFor="dashboard-address-state" className="form-label">
-              State*
-            </label>
-            <input
-              id="dashboard-address-state"
-              type="text"
-              required
-              placeholder="State"
-              className="form-field"
-              value={addressFormData.state}
-              onChange={(e) =>
-                setAddressFormData({
-                  ...addressFormData,
-                  state: e.target.value,
-                })
-              }
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="dashboard-address-city" className="form-label">
+                City / District*
+              </label>
+              <input
+                id="dashboard-address-city"
+                type="text"
+                required
+                placeholder="City"
+                className="form-field"
+                value={addressFormData.city}
+                onChange={(e) =>
+                  setAddressFormData({
+                    ...addressFormData,
+                    city: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label htmlFor="dashboard-address-state" className="form-label">
+                State*
+              </label>
+              <input
+                id="dashboard-address-state"
+                type="text"
+                required
+                placeholder="State"
+                className="form-field"
+                value={addressFormData.state}
+                onChange={(e) =>
+                  setAddressFormData({
+                    ...addressFormData,
+                    state: e.target.value,
+                  })
+                }
+              />
+            </div>
           </div>
           <div>
             <label htmlFor="dashboard-address-tag" className="form-label">

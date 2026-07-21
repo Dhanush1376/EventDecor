@@ -441,7 +441,7 @@ export class RecycleBinService {
     if (!Model && modelName) {
       try {
         Model = require(`../models/${modelName}`).default;
-      } catch (err) {
+      } catch (_err) {
         // ignore
       }
     }
@@ -549,7 +549,7 @@ export class RecycleBinService {
       await bumpPublicCacheVersion();
 
       return { success: true, restoredEntity: entry.entityData };
-    } catch (err) {
+    } catch (err: any) {
       await session.abortTransaction();
       logger.error(`[RecycleBin] Restore failed for ${id}: ${(err as Error).message}`);
       throw err;
@@ -613,7 +613,7 @@ export class RecycleBinService {
       if (!Model && modelName) {
         try {
           Model = require(`../models/${modelName}`).default;
-        } catch (err) {
+        } catch (_err) {
           // ignore
         }
       }
@@ -767,7 +767,7 @@ export class RecycleBinService {
       await bumpPublicCacheVersion();
 
       return { success: true, report, errors };
-    } catch (err) {
+    } catch (err: any) {
       await session.abortTransaction();
       report.push({
         step: 'MongoDB Cleanup',

@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
+import { AssetLifecyclePlugin } from '../utils/AssetLifecyclePlugin';
 
 export interface ICategory extends ISoftDeleted {
   name: string;
@@ -45,6 +46,10 @@ CategorySchema.index(
 );
 
 CategorySchema.plugin(SoftDeletePlugin);
+CategorySchema.plugin(AssetLifecyclePlugin, {
+  tier: 3,
+  assetFields: [{ path: 'imageSrc', type: 'single', resourceType: 'image' }],
+});
 
 const Category = mongoose.model<ICategory, SoftDeleteModel<ICategory>>('Category', CategorySchema);
 export default Category;

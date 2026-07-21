@@ -20,6 +20,7 @@ import {
 } from '../components/AdminUIKit';
 import { DeleteConfirmModal } from '../components/ui/DeleteConfirmModal';
 import { PermanentDeleteModal } from '../components/ui/PermanentDeleteModal';
+import { useConfirm } from '../../context/ConfirmProvider';
 
 export function AdminProducts() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export function AdminProducts() {
     updateProductStatus,
     permanentlyDeleteProduct,
   } = useAdmin();
+  const confirm = useConfirm();
 
   const { data: productCategories = [] } = useCategories();
 
@@ -54,6 +56,9 @@ export function AdminProducts() {
   // Category states
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [isBulkDeletingCategories, setIsBulkDeletingCategories] = useState(false);
+  const [isBulkDeactivatingCategories, setIsBulkDeactivatingCategories] = useState(false);
 
   // ─── Categories Logic ───
   const fetchCategories = useCallback(async () => {
@@ -85,13 +90,84 @@ export function AdminProducts() {
   };
 
   const handleDeleteCategory = async (id) => {
-    if (!window.confirm('Are you sure you want to permanently delete this category?')) return;
+    if (
+      !(await confirm({
+        title: 'Delete Category',
+        message: 'Are you sure you want to permanently delete this category?',
+        type: 'danger',
+      }))
+    )
+      return;
+
     try {
       await api.delete(`/categories/${id}`);
       toast.success('Category deleted');
+      setSelectedCategories((prev) => prev.filter((cId) => cId !== id));
       fetchCategories();
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to delete category'));
+    }
+  };
+
+  const toggleSelectAllCategories = () => {
+    setSelectedCategories((prev) =>
+      prev.length === categories.length ? [] : categories.map((c) => c._id),
+    );
+  };
+
+  const toggleSelectCategory = (id) => {
+    setSelectedCategories((prev) =>
+      prev.includes(id) ? prev.filter((cId) => cId !== id) : [...prev, id],
+    );
+  };
+
+  const handleBulkDeleteCategories = async () => {
+    if (
+      !(await confirm({
+        title: 'Bulk Delete Categories',
+        message: `Are you sure you want to permanently delete ${selectedCategories.length} categories?`,
+        type: 'danger',
+      }))
+    )
+      return;
+
+    setIsBulkDeletingCategories(true);
+    try {
+      await Promise.all(selectedCategories.map((id) => api.delete(`/categories/${id}`)));
+      toast.success(`${selectedCategories.length} categories deleted`);
+      setSelectedCategories([]);
+      fetchCategories();
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete some categories'));
+      fetchCategories();
+    } finally {
+      setIsBulkDeletingCategories(false);
+    }
+  };
+
+  const handleBulkDeactivateCategories = async () => {
+    if (
+      !(await confirm({
+        title: 'Bulk Deactivate Categories',
+        message: `Are you sure you want to deactivate ${selectedCategories.length} categories?`,
+        type: 'warning',
+      }))
+    )
+      return;
+
+    setIsBulkDeactivatingCategories(true);
+    try {
+      await Promise.all(
+        selectedCategories.map((id) => api.put(`/categories/${id}`, { isActive: false })),
+      );
+      toast.success(`${selectedCategories.length} categories deactivated`);
+      setSelectedCategories([]);
+      fetchCategories();
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to deactivate some categories'));
+      fetchCategories();
+    } finally {
+      setIsBulkDeactivatingCategories(false);
     }
   };
 
@@ -120,15 +196,33 @@ export function AdminProducts() {
 
   const handleBulkDelete = async () => {
     if (
-      window.confirm(
-        `Are you sure you want to move ${selectedProducts.length} products to the recycle bin?`,
-      )
+      await confirm({
+        title: 'Bulk Delete',
+        message: `Are you sure you want to move ${selectedProducts.length} products to the recycle bin?`,
+        type: 'danger',
+      })
     ) {
       for (const id of selectedProducts) {
         if (softDeleteProduct) await softDeleteProduct(id);
       }
       setSelectedProducts([]);
       toast.success(`${selectedProducts.length} products moved to recycle bin`);
+    }
+  };
+
+  const handleBulkDeactivateProducts = async () => {
+    if (
+      await confirm({
+        title: 'Bulk Deactivate',
+        message: `Are you sure you want to deactivate ${selectedProducts.length} products?`,
+        type: 'warning',
+      })
+    ) {
+      for (const id of selectedProducts) {
+        if (updateProductStatus) await updateProductStatus(id, 'inactive');
+      }
+      setSelectedProducts([]);
+      toast.success(`${selectedProducts.length} products deactivated`);
     }
   };
 
@@ -276,11 +370,67 @@ export function AdminProducts() {
             />
           ) : (
             <div className="admin-card divide-y divide-[var(--admin-border-subtle)] p-0">
+              {/* Bulk Actions Header for Categories */}
+              <AnimatePresence>
+                {selectedCategories.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden bg-[var(--admin-surface-muted)] border-b border-[var(--admin-border-subtle)] rounded-t-[var(--admin-radius-lg)]"
+                  >
+                    <div className="p-3 flex items-center justify-between">
+                      <span className="font-bold text-[13px] text-[var(--admin-text-primary)] pl-3">
+                        {selectedCategories.length} Selected
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleBulkDeactivateCategories}
+                          disabled={isBulkDeactivatingCategories}
+                          className="admin-btn h-8 bg-amber-500 hover:bg-amber-600 text-white border-none px-3 text-[12px] font-bold shadow-sm flex items-center gap-1.5"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">block</span>
+                          Deactivate
+                        </button>
+                        <button
+                          onClick={handleBulkDeleteCategories}
+                          disabled={isBulkDeletingCategories}
+                          className="admin-btn h-8 bg-[var(--admin-error)] text-white hover:opacity-90 border-none px-3 text-[12px] font-bold shadow-sm flex items-center gap-1.5"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">delete</span>
+                          Delete
+                        </button>
+                        <button
+                          onClick={() => setSelectedCategories([])}
+                          className="admin-btn-outline h-8 w-8 p-0 flex items-center justify-center shadow-sm ml-1"
+                          title="Clear Selection"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="overflow-x-auto">
                 <table className="admin-table w-full min-w-[700px]">
                   <thead>
                     <tr>
-                      <th className="pl-6">Category Name</th>
+                      <th className="pl-6 w-[40px]">
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={
+                              categories.length > 0 &&
+                              selectedCategories.length === categories.length
+                            }
+                            onChange={toggleSelectAllCategories}
+                            className="admin-checkbox"
+                          />
+                        </div>
+                      </th>
+                      <th>Category Name</th>
                       <th>Slug / URL Path</th>
                       <th>Type Scope</th>
                       <th>Status</th>
@@ -291,9 +441,23 @@ export function AdminProducts() {
                     {categories.map((cat) => (
                       <tr
                         key={cat._id}
-                        className="hover:bg-[var(--admin-surface-muted)] transition-colors"
+                        className={`hover:bg-[var(--admin-surface-muted)] transition-colors ${
+                          selectedCategories.includes(cat._id)
+                            ? 'bg-[var(--admin-surface-muted)]'
+                            : ''
+                        }`}
                       >
                         <td className="pl-6">
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedCategories.includes(cat._id)}
+                              onChange={() => toggleSelectCategory(cat._id)}
+                              className="admin-checkbox"
+                            />
+                          </div>
+                        </td>
+                        <td>
                           <span className="font-bold text-[var(--admin-text-primary)] text-[13px]">
                             {cat.name}
                           </span>
@@ -358,6 +522,13 @@ export function AdminProducts() {
                   {selectedProducts.length} Selected
                 </span>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleBulkDeactivateProducts}
+                    className="admin-btn h-8 bg-amber-500 text-white hover:bg-amber-600 border-none px-3 text-[12px] font-bold shadow-sm flex items-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">block</span>
+                    Deactivate
+                  </button>
                   <button
                     onClick={handleBulkDelete}
                     className="admin-btn h-8 bg-[var(--admin-error)] text-white hover:opacity-90 border-none px-3 text-[12px] font-bold shadow-sm flex items-center gap-1.5"
@@ -439,6 +610,13 @@ export function AdminProducts() {
                   <span className="admin-badge admin-badge-neutral h-full px-3 flex items-center justify-center font-bold text-[11px] hidden sm:inline-flex bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]">
                     {selectedProducts.length} SELECTED
                   </span>
+                  <button
+                    onClick={handleBulkDeactivateProducts}
+                    className="admin-btn h-full bg-amber-500 text-white hover:bg-amber-600 border-none px-3 text-[12px] font-bold shadow-sm flex items-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">block</span>
+                    Deactivate
+                  </button>
                   <button
                     onClick={handleBulkDelete}
                     className="admin-btn h-full bg-[var(--admin-error)] text-white hover:opacity-90 border-none px-3 text-[12px] font-bold shadow-sm flex items-center gap-1.5"

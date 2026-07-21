@@ -59,7 +59,7 @@ export class MediaAttachmentService {
     // or return the dynamic endpoint that renders it.
     try {
       const baseUrl = await this.getBaseUrl();
-      const qrUrl = `${baseUrl}/order/${orderId}`; // The URL the QR code points to
+      const _qrUrl = `${baseUrl}/order/${orderId}`; // The URL the QR code points to
 
       // If we needed to return the raw base64:
       // const qrBase64 = await QRCode.toDataURL(qrUrl);

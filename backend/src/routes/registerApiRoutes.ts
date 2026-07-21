@@ -137,6 +137,7 @@ export const registerApiRoutes = (
 
   // Enterprise Domain Routes
   apiRouter.use('/warehouse', lazyRouter('./warehouse/warehouseRoutes'));
+  apiRouter.use('/shipping/couriers', lazyRouter('./shipping/courierRoutes'));
   apiRouter.use('/production', lazyRouter('./production/productionRoutes'));
   apiRouter.use('/shipping', lazyRouter('./shipping/shippingRoutes'));
   apiRouter.use('/documents', lazyRouter('./documents/documentRoutes'));

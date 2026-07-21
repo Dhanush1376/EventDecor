@@ -16,6 +16,19 @@ export const generateInvoice = async (req: Request, res: Response) => {
   }
 };
 
+export const generatePackingSlip = async (req: Request, res: Response) => {
+  try {
+    const packageId = req.params.packageId as string;
+
+    const document = await DocumentService.generatePackingSlip(packageId);
+
+    res.json({ success: true, data: document });
+  } catch (error: any) {
+    logger.error('generatePackingSlip Error:', error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 export const generateShippingLabel = async (req: Request, res: Response) => {
   try {
     const shipmentId = req.params.shipmentId as string;

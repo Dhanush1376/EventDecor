@@ -1,5 +1,6 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SkeletonDashboard } from '../components/AdminUIKit';
+import { useConfirm } from '../../context/ConfirmProvider';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/domainServices';
@@ -13,6 +14,7 @@ const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 export function AdminCampaigns() {
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState('broadcasts'); // broadcasts | templates
   const [campaigns, setCampaigns] = useState([]);
   const [templates, setTemplates] = useState([]);
@@ -55,10 +57,13 @@ export function AdminCampaigns() {
   // Campaign logic moved to AdminCampaignCreate.jsx
 
   const handleSendTrigger = async (campaignId) => {
-    const confirm = window.confirm(
-      'Are you absolutely sure you want to broadcast this campaign now to all matched contacts?',
-    );
-    if (!confirm) return;
+    const isConfirmed = await confirm({
+      title: 'Broadcast Campaign',
+      message:
+        'Are you absolutely sure you want to broadcast this campaign now to all matched contacts?',
+      type: 'warning',
+    });
+    if (!isConfirmed) return;
 
     try {
       const res = await notificationService.sendCampaign(campaignId);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import whatsappAutomationService from '../../services/whatsappAutomationService';
 import { toast } from 'react-hot-toast';
+import { useConfirm } from '../../../context/ConfirmProvider';
 
 const WhatsAppCampaigns = () => {
   const [campaigns, setCampaigns] = useState([]);
@@ -9,6 +10,7 @@ const WhatsAppCampaigns = () => {
   const [showForm, setShowForm] = useState(false);
   const [validatingCamp, setValidatingCamp] = useState(null); // Holds validation results before dispatch
   const [validationLoading, setValidationLoading] = useState(false);
+  const confirm = useConfirm();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -98,7 +100,14 @@ const WhatsAppCampaigns = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this campaign?')) return;
+    if (
+      !(await confirm({
+        title: 'Delete Campaign',
+        message: 'Delete this campaign?',
+        type: 'danger',
+      }))
+    )
+      return;
     try {
       await whatsappAutomationService.deleteCampaign(id);
       toast.success('Deleted');

@@ -171,7 +171,7 @@ AnalyticsEventSchema.pre('save', async function () {
       const settings = await storeSettingsService.getSettings();
       const days = settings.retentionPolicies?.analyticsEventsDays || 30;
       this.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    } catch (err) {
+    } catch (_err) {
       this.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days fallback
     }
   }

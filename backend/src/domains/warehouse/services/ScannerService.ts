@@ -5,8 +5,10 @@ import {
   QRPayload,
 } from '../../../shared/services/barcode/QRVerificationService';
 import { ScanPipeline } from './ScanPipeline';
+import { ScanParserRegistry } from './scanParsers';
 import logger from '../../../config/logger';
 import ApiError from '../../../utils/ApiError';
+import { IScanEvent } from '../types/scanEvent';
 
 export class ScannerService {
   /**
@@ -23,21 +25,14 @@ export class ScannerService {
     try {
       session.startTransaction();
 
-      let scanType:
-        | 'product'
-        | 'package'
-        | 'location'
-        | 'operational'
-        | 'unknown'
-        | 'transaction'
-        | 'rental'
-        | 'event'
-        | 'custom' = 'unknown';
+      let scanType: IScanEvent['entityType'] = 'unknown' as any;
       let decodedPayload: QRPayload | null = null;
       let referenceId = rawPayload;
 
       // Try decoding as QR Code
       decodedPayload = QRVerificationService.safeVerifyQrPayload(rawPayload);
+
+      let handler;
 
       if (decodedPayload) {
         scanType = decodedPayload.type as any;
@@ -46,17 +41,16 @@ export class ScannerService {
           decodedPayload.productUuid ||
           decodedPayload.packageId ||
           rawPayload;
+        handler = ScanParserRegistry.getHandlerForType(scanType);
       } else {
-        // Fallback heuristics for barcodes
-        if (rawPayload.startsWith('PKG-')) scanType = 'package';
-        else if (rawPayload.startsWith('AWB-')) scanType = 'package';
-        else if (rawPayload.startsWith('LOC-')) scanType = 'location';
-        else if (rawPayload.startsWith('TRN-') || rawPayload.startsWith('TXN-'))
-          scanType = 'transaction';
-        else if (rawPayload.startsWith('RNT-')) scanType = 'rental';
-        else if (rawPayload.startsWith('EVT-')) scanType = 'event';
-        else if (rawPayload.startsWith('CO-')) scanType = 'custom';
-        else scanType = 'product';
+        // Find best match in registry based on prefix
+        handler = ScanParserRegistry.getHandlerForPrefix(rawPayload);
+        if (handler) {
+          scanType = handler.entityType;
+        } else {
+          // Reject unknown barcodes instead of guessing "product"
+          throw new ApiError(400, `Unrecognized barcode format: ${rawPayload}`);
+        }
       }
 
       // Try to resolve the transaction if it's a domain barcode

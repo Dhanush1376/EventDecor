@@ -43,4 +43,24 @@ export interface StorageProvider {
    * Invalidate asset in CDN cache.
    */
   invalidateCache(identifier: string): Promise<void>;
+
+  // --- Lifecycle Management Methods ---
+
+  /** Check if a URL belongs to this provider */
+  isProviderUrl?(url: string): boolean;
+
+  /**
+   * Verify the URL belongs to OUR account/bucket,
+   * to prevent deleting third-party assets if URLs match provider domains.
+   */
+  isOwnedAsset?(url: string): boolean;
+
+  /** Extract a provider-specific asset identifier from a URL */
+  extractAssetId?(url: string): string | null;
+
+  /** Delete multiple assets in batch, optionally applying rate limits */
+  deleteBatch?(
+    assetIds: string[],
+    batchSize?: number,
+  ): Promise<{ succeeded: string[]; failed: string[] }>;
 }

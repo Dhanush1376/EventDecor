@@ -6,11 +6,14 @@ import Lock from 'lucide-react/dist/esm/icons/lock';
 import Unlock from 'lucide-react/dist/esm/icons/unlock';
 import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 import backupService from '../../services/backupService';
+import toast from 'react-hot-toast';
+import { useConfirm } from '../../../context/ConfirmProvider';
 import './BackupCenter.css';
 
 const BackupHistory = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0 });
 
   const fetchHistory = useCallback(async () => {
@@ -48,23 +51,27 @@ const BackupHistory = () => {
   const handleVerify = async (id) => {
     try {
       await backupService.verifyBackup(id);
-      alert('Verification triggered successfully.');
+      toast.success('Verification triggered successfully.');
       fetchHistory();
     } catch (err) {
-      alert('Verification failed');
+      toast.error('Verification failed');
     }
   };
 
   const handleLock = async (id) => {
     if (
-      window.confirm('Mark this backup as immutable? It cannot be deleted until retention expires.')
+      await confirm({
+        title: 'Lock Backup',
+        message: 'Mark this backup as immutable? It cannot be deleted until retention expires.',
+        type: 'warning',
+      })
     ) {
       try {
         await backupService.lockBackup(id);
-        alert('Backup locked.');
+        toast.success('Backup locked.');
         fetchHistory();
       } catch (err) {
-        alert('Locking failed');
+        toast.error('Locking failed');
       }
     }
   };

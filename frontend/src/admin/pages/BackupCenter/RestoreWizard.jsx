@@ -6,6 +6,7 @@ import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
 import PlayCircle from 'lucide-react/dist/esm/icons/play-circle';
 import Clock from 'lucide-react/dist/esm/icons/clock';
 import backupService from '../../services/backupService';
+import toast from 'react-hot-toast';
 import './BackupCenter.css';
 
 const RestoreWizard = () => {
@@ -17,7 +18,10 @@ const RestoreWizard = () => {
   const [restoreProgress, setRestoreProgress] = useState(0);
 
   const handleSimulate = async () => {
-    if (!selectedBackup) return alert('Select a backup ID');
+    if (!selectedBackup) {
+      toast.error('Select a backup ID');
+      return;
+    }
     try {
       const sim = await backupService.simulateRestore(selectedBackup);
       const time = await backupService.fetchRestoreTimeline(selectedBackup);
@@ -25,7 +29,7 @@ const RestoreWizard = () => {
       setTimeline(time);
       setStep(4);
     } catch (err) {
-      alert('Simulation failed: ' + err.message);
+      toast.error('Simulation failed: ' + err.message);
     }
   };
 

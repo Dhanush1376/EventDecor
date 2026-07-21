@@ -5,6 +5,7 @@ import { galleryService, productService } from '../../services/domainServices';
 import { handleImageError } from '../../utils/media/imageUtils';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
+import { useConfirm } from '../../context/ConfirmProvider';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
 import {
   PageHeader,
@@ -22,6 +23,7 @@ export function AdminGallery() {
   const [filter, setFilter] = useState('All');
   const [typeFilter, setTypeFilter] = useState('All');
   const [isLoading, setIsLoading] = useState(true);
+  const confirm = useConfirm();
   const [_showUpload, setShowUpload] = useState(false);
   const [newItem, setNewItem] = useState({
     title: '',
@@ -181,7 +183,14 @@ export function AdminGallery() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) return;
+    if (
+      !(await confirm({
+        title: 'Delete Item',
+        message: 'Are you sure you want to delete this item?',
+        type: 'danger',
+      }))
+    )
+      return;
     try {
       const res = await galleryService.delete(id);
       if (res.success) {

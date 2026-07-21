@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Product, { IProduct } from '../models/Product';
+import { ReferenceIntegrityService } from './ReferenceIntegrityService';
 import Gallery from '../models/Gallery';
 import { getPaginationOptions, formatPaginationResponse } from '../utils/pagination';
 import logger from '../config/logger';
@@ -21,6 +22,12 @@ import {
   normalizeProductImages,
   resolveCategories,
 } from './productWriteNormalization';
+
+ReferenceIntegrityService.register('Product', [
+  { targetModel: 'Review', targetField: 'product', action: 'softDelete' },
+  { targetModel: 'Wishlist', targetField: 'products', action: 'pull' },
+  { targetModel: 'Cart', targetField: 'items.product', action: 'pull' },
+]);
 
 const productCountCache = new MemoryCache({
   defaultTtlMs: 60 * 1000,
@@ -692,7 +699,7 @@ class ProductService {
     }
   }
 
-  static async updateStatus(id: string, status: 'active' | 'inactive', actor?: any) {
+  static async updateStatus(id: string, status: 'active' | 'inactive', _actor?: any) {
     const product = await Product.findById(id);
     if (!product) return null;
 

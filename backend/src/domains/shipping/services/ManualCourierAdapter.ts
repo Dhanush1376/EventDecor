@@ -21,8 +21,8 @@ export class ManualCourierAdapter implements ICourierAdapter {
   async createShipment(
     _shipmentData: any,
   ): Promise<{ trackingNumber: string; labelUrl?: string; additionalData?: any }> {
-    // Generate a local tracking ID
-    const trackingNumber = `LOCAL-${Date.now().toString().slice(-6)}`;
+    const { SequenceGeneratorService } = require('../../../services/SequenceGeneratorService');
+    const trackingNumber = `LOCAL-${await SequenceGeneratorService.generateFulfilmentNumber()}`;
     return {
       trackingNumber,
     };

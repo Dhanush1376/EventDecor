@@ -11,6 +11,8 @@ import Zap from 'lucide-react/dist/esm/icons/zap';
 import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 import Database from 'lucide-react/dist/esm/icons/database';
 import backupService from '../../services/backupService';
+import toast from 'react-hot-toast';
+import { useConfirm } from '../../../context/ConfirmProvider';
 import './BackupCenter.css';
 
 // Sub-components
@@ -26,6 +28,7 @@ const BackupCenter = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [storageData, setStorageData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -51,12 +54,18 @@ const BackupCenter = () => {
   };
 
   const handleTriggerBackup = async (type) => {
-    if (window.confirm(`Trigger a manual ${type} backup now?`)) {
+    if (
+      await confirm({
+        title: 'Trigger Backup',
+        message: `Trigger a manual ${type} backup now?`,
+        type: 'info',
+      })
+    ) {
       try {
         await backupService.triggerBackup(type, 'manual');
-        alert('Backup initiated successfully. Check History tab for progress.');
+        toast.success('Backup initiated successfully. Check History tab for progress.');
       } catch (err) {
-        alert('Failed to start backup: ' + (err.response?.data?.message || err.message));
+        toast.error('Failed to start backup: ' + (err.response?.data?.message || err.message));
       }
     }
   };

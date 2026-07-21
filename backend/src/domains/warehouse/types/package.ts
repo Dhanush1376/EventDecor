@@ -10,6 +10,8 @@ export interface IPackageItem {
 
 export interface IPackage extends mongoose.Document {
   packageId: string;
+  barcode?: string;
+  version: number;
   orderId: mongoose.Types.ObjectId;
   packageNumber: number;
   totalPackages: number;
@@ -33,7 +35,15 @@ export interface IPackage extends mongoose.Document {
     sealed: string[];
     label: string[];
   };
-  status: 'created' | 'items_verified' | 'sealed' | 'labeled' | 'ready_for_pickup' | 'shipped';
+  status:
+    | 'created'
+    | 'items_verified'
+    | 'packed'
+    | 'sealed'
+    | 'labeled'
+    | 'ready_for_pickup'
+    | 'shipped'
+    | 'dispatched';
   packedBy?: {
     userId: mongoose.Types.ObjectId;
     name: string;

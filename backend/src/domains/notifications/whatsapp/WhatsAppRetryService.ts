@@ -22,7 +22,7 @@ export class WhatsAppRetryService {
     if (process.env.WA_RETRY_INTERVALS) {
       try {
         defaultIntervals = JSON.parse(process.env.WA_RETRY_INTERVALS);
-      } catch (e) {
+      } catch (_e) {
         logger.warn('Failed to parse WA_RETRY_INTERVALS. Using defaults.');
       }
     }

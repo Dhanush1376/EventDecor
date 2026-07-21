@@ -13,14 +13,16 @@ export function MainDeliveryView({
 }) {
   return (
     <div className="bg-surface-container-low -mt-2">
-      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs mb-4">
+      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs mb-4 relative">
         {activeSelectedAddress ? (
-          <div className="relative">
+          <div>
             <button
               onClick={() => setIsSelectingList(true)}
-              className="absolute top-0 right-0 text-[12px] font-bold text-primary uppercase tracking-wide cursor-pointer py-1 px-2 hover:opacity-85 transition-opacity"
+              className="absolute top-4 right-4 text-primary cursor-pointer p-1.5 hover:bg-primary/10 rounded-full transition-colors flex items-center justify-center"
+              title="Change Address"
+              aria-label="Change Address"
             >
-              Change
+              <span className="material-symbols-outlined text-[20px]">edit</span>
             </button>
 
             <div className="pr-16 mb-4">

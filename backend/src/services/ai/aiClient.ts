@@ -81,7 +81,7 @@ export class AIClient {
     isVision: boolean,
     settings: any,
     initialProvider: any,
-    options: {
+    _options: {
       temperature?: number;
       maxTokens?: number;
       jsonMode?: boolean;

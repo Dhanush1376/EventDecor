@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import logger from '../config/logger';
+import { ReferenceIntegrityService } from '../services/ReferenceIntegrityService';
 
 export interface ISoftDeleted extends Document {
   isDeleted: boolean;
@@ -206,6 +207,13 @@ const SoftDeletePlugin = (schema: Schema, options?: { retentionDays?: number }) 
       logger.error(
         `[SoftDelete] Failed to create RecycleBin entry for ${this._id}: ${err.message}`,
       );
+    }
+
+    // Trigger cascading updates for reference integrity
+    try {
+      await ReferenceIntegrityService.onSoftDelete(modelName, this._id.toString(), this.toObject());
+    } catch (err: any) {
+      logger.error(`[SoftDelete] Cascade failure for ${this._id}: ${err.message}`);
     }
 
     return this;

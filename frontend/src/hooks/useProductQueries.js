@@ -58,7 +58,9 @@ export function useCategories(options = {}) {
     queryKey: ['product_categories'],
     queryFn: async () => {
       const res = await productService.getCategories();
-      return res.success ? res.data : res;
+      if (res?.success && Array.isArray(res.data)) return res.data;
+      if (Array.isArray(res)) return res;
+      return [];
     },
     enabled,
     staleTime,

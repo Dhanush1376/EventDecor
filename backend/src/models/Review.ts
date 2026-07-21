@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import { AssetLifecyclePlugin } from '../utils/AssetLifecyclePlugin';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 
 export interface IReview extends ISoftDeleted {
@@ -97,6 +98,7 @@ ReviewSchema.index(
 );
 
 ReviewSchema.plugin(SoftDeletePlugin);
+ReviewSchema.plugin(AssetLifecyclePlugin);
 
 const Review = mongoose.model<IReview, SoftDeleteModel<IReview>>('Review', ReviewSchema);
 export default Review;

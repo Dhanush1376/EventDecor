@@ -10,7 +10,13 @@ router.use(requireAuth);
 // For now, allow auth users to access invoices
 router.get('/invoice/:orderId', documentController.generateInvoice);
 
-// Only warehouse/shipping staff can generate labels
+// Only warehouse/shipping staff can generate labels and packing slips
+router.get(
+  '/packing-slip/:packageId',
+  requireRole(['admin', 'super_admin', 'warehouse_manager', 'packer', 'picker']),
+  documentController.generatePackingSlip,
+);
+
 router.get(
   '/label/:shipmentId',
   requireRole(['admin', 'super_admin', 'warehouse_manager', 'shipping_manager']),

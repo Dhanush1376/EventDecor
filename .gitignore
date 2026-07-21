@@ -177,3 +177,4 @@ generate_tree.py
 rewrite_commits.py
 rewrite_dependabot.py
 filter-commits.sh
+private-ops-repository

@@ -245,7 +245,7 @@ export class ProductAiService {
       try {
         // First try direct parse
         parsedData = JSON.parse(extractedJson[0]);
-      } catch (firstParseErr) {
+      } catch (_firstParseErr) {
         // Sanitize: fix unescaped newlines inside JSON string values
         // Replace actual newlines/tabs within strings with their escaped equivalents
         const sanitized = extractedJson[0]

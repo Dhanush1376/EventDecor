@@ -106,7 +106,7 @@ export const getOrderPublicTrack = asyncHandler(async (req: Request, res: Respon
   }
 
   const order = await LogisticsService.verifyTrackingTokenAndGetOrder(trackingToken);
-  const trackingData = LogisticsService.formatPublicTrackingData(order);
+  const trackingData = await LogisticsService.formatPublicTrackingData(order);
 
   res.status(200).json(new ApiResponse(true, 'Order public tracking fetched', trackingData));
 });

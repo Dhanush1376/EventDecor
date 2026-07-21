@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../../services/api';
 import toast from 'react-hot-toast';
+import { useConfirm } from '../../../context/ConfirmProvider';
 import { m as motion } from 'framer-motion';
 import {
   PageHeader,
@@ -14,6 +15,8 @@ import {
 export default function CampaignManager() {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchCampaigns();
@@ -58,7 +61,14 @@ export default function CampaignManager() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this campaign?')) return;
+    if (
+      !(await confirm({
+        title: 'Delete Campaign',
+        message: 'Are you sure you want to delete this campaign?',
+        type: 'danger',
+      }))
+    )
+      return;
     try {
       await api.delete(`/campaigns/${id}`);
       toast.success('Campaign deleted');

@@ -1,6 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import { decryptField, encryptField } from '../utils/security/fieldEncryption';
 import SoftDeletePlugin, { SoftDeleteModel } from '../utils/SoftDeletePlugin';
+import { AssetLifecyclePlugin } from '../utils/AssetLifecyclePlugin';
 
 import { IUser } from '../types/user';
 
@@ -160,6 +161,7 @@ UserSchema.pre('save', async function () {
 UserSchema.plugin(SoftDeletePlugin);
 import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
 UserSchema.plugin(ForensicAuditPlugin);
+UserSchema.plugin(AssetLifecyclePlugin);
 
 const User = mongoose.model<IUser, SoftDeleteModel<IUser>>('User', UserSchema);
 

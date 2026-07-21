@@ -1,4 +1,4 @@
-import { m as motion } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
@@ -12,11 +12,16 @@ import {
   fadeUp,
   stagger,
 } from '../components/AdminUIKit';
+import { useConfirm } from '../../context/ConfirmProvider';
 
 export function AdminCategories() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [isBulkDeactivating, setIsBulkDeactivating] = useState(false);
+  const confirm = useConfirm();
 
   // Add/Edit moved to standalone AdminAddCategory component
 
@@ -48,13 +53,84 @@ export function AdminCategories() {
   // Edit form functions moved to standalone component
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to permanently delete this category?')) return;
+    if (
+      !(await confirm({
+        title: 'Delete Category',
+        message: 'Are you sure you want to permanently delete this category?',
+        type: 'danger',
+      }))
+    )
+      return;
+
     try {
       await api.delete(`/categories/${id}`);
       toast.success('Category deleted');
+      setSelectedCategories((prev) => prev.filter((cId) => cId !== id));
       fetchCategories();
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to delete category'));
+    }
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedCategories((prev) =>
+      prev.length === categories.length ? [] : categories.map((c) => c._id),
+    );
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedCategories((prev) =>
+      prev.includes(id) ? prev.filter((cId) => cId !== id) : [...prev, id],
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (
+      !(await confirm({
+        title: 'Bulk Delete Categories',
+        message: `Are you sure you want to permanently delete ${selectedCategories.length} categories?`,
+        type: 'danger',
+      }))
+    )
+      return;
+
+    setIsBulkDeleting(true);
+    try {
+      await Promise.all(selectedCategories.map((id) => api.delete(`/categories/${id}`)));
+      toast.success(`${selectedCategories.length} categories deleted`);
+      setSelectedCategories([]);
+      fetchCategories();
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete some categories'));
+      fetchCategories();
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  const handleBulkDeactivate = async () => {
+    if (
+      !(await confirm({
+        title: 'Bulk Deactivate Categories',
+        message: `Are you sure you want to deactivate ${selectedCategories.length} categories?`,
+        type: 'warning',
+      }))
+    )
+      return;
+
+    setIsBulkDeactivating(true);
+    try {
+      await Promise.all(
+        selectedCategories.map((id) => api.put(`/categories/${id}`, { isActive: false })),
+      );
+      toast.success(`${selectedCategories.length} categories deactivated`);
+      setSelectedCategories([]);
+      fetchCategories();
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to deactivate some categories'));
+      fetchCategories();
+    } finally {
+      setIsBulkDeactivating(false);
     }
   };
 
@@ -95,11 +171,66 @@ export function AdminCategories() {
           variants={fadeUp}
           className="admin-card divide-y divide-[var(--admin-border-subtle)] p-0"
         >
+          {/* Bulk Actions Header */}
+          <AnimatePresence>
+            {selectedCategories.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden bg-[var(--admin-surface-muted)] border-b border-[var(--admin-border-subtle)] rounded-t-[var(--admin-radius-lg)]"
+              >
+                <div className="p-3 flex items-center justify-between">
+                  <span className="font-bold text-[13px] text-[var(--admin-text-primary)] pl-3">
+                    {selectedCategories.length} Selected
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleBulkDeactivate}
+                      disabled={isBulkDeactivating}
+                      className="admin-btn h-8 bg-amber-500 hover:bg-amber-600 text-white border-none px-3 text-[12px] font-bold shadow-sm flex items-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">block</span>
+                      Deactivate
+                    </button>
+                    <button
+                      onClick={handleBulkDelete}
+                      disabled={isBulkDeleting}
+                      className="admin-btn h-8 bg-[var(--admin-error)] text-white hover:opacity-90 border-none px-3 text-[12px] font-bold shadow-sm flex items-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => setSelectedCategories([])}
+                      className="admin-btn-outline h-8 w-8 p-0 flex items-center justify-center shadow-sm ml-1"
+                      title="Clear Selection"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">close</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="overflow-x-auto">
             <table className="admin-table w-full min-w-[700px]">
               <thead>
                 <tr>
-                  <th className="pl-6">Category Name</th>
+                  <th className="pl-6 w-[40px]">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          categories.length > 0 && selectedCategories.length === categories.length
+                        }
+                        onChange={toggleSelectAll}
+                        className="admin-checkbox"
+                      />
+                    </div>
+                  </th>
+                  <th>Category Name</th>
                   <th>Slug / URL Path</th>
                   <th>Type Scope</th>
                   <th>Status</th>
@@ -110,9 +241,21 @@ export function AdminCategories() {
                 {categories.map((cat) => (
                   <tr
                     key={cat._id}
-                    className="hover:bg-[var(--admin-surface-muted)] transition-colors"
+                    className={`hover:bg-[var(--admin-surface-muted)] transition-colors ${
+                      selectedCategories.includes(cat._id) ? 'bg-[var(--admin-surface-muted)]' : ''
+                    }`}
                   >
                     <td className="pl-6">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(cat._id)}
+                          onChange={() => toggleSelect(cat._id)}
+                          className="admin-checkbox"
+                        />
+                      </div>
+                    </td>
+                    <td>
                       <span className="font-bold text-[var(--admin-text-primary)] text-[13px]">
                         {cat.name}
                       </span>

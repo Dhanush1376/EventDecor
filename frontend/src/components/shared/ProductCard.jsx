@@ -237,7 +237,7 @@ export const ProductCard = React.memo(function ProductCard({
         // Prevent native context menu on touch devices during long press
         if (window.innerWidth < 1024) e.preventDefault();
       }}
-      className="group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl z-10 lg:hover:z-30 select-none touch-pan-y"
+      className="group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl z-10 hover:z-40 focus-within:z-40 select-none touch-pan-y"
       style={{ WebkitTouchCallout: 'none' }}
     >
       {/* 1. VISUAL CANVAS */}

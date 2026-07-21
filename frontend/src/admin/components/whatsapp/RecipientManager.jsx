@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import whatsappAutomationService from '../../services/whatsappAutomationService';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useConfirm } from '../../../context/ConfirmProvider';
 
 const RecipientManager = () => {
   const [recipients, setRecipients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
 
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -81,7 +83,13 @@ const RecipientManager = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this recipient?')) {
+    if (
+      await confirm({
+        title: 'Delete Recipient',
+        message: 'Are you sure you want to delete this recipient?',
+        type: 'danger',
+      })
+    ) {
       try {
         await whatsappAutomationService.deleteRecipient(id);
         toast.success('Recipient deleted');

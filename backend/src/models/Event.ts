@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import { AssetLifecyclePlugin } from '../utils/AssetLifecyclePlugin';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 import { indexEvent } from '../services/search/searchIndexer';
 import logger from '../config/logger';
@@ -101,6 +102,8 @@ EventSchema.post('findOneAndUpdate', async function (doc) {
 });
 
 EventSchema.plugin(SoftDeletePlugin);
+// Apply Asset Lifecycle Management
+EventSchema.plugin(AssetLifecyclePlugin);
 
 const Event = mongoose.model<IEvent, SoftDeleteModel<IEvent>>('Event', EventSchema);
 export default Event;

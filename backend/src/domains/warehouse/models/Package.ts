@@ -6,6 +6,8 @@ import { IPackage } from '../types/package';
 const PackageSchema = new Schema(
   {
     packageId: { type: String, required: true, unique: true, index: true },
+    barcode: { type: String, index: true }, // Encodes the packageId for printing
+    version: { type: Number, default: 0 }, // For optimistic concurrency control
     orderId: { type: Schema.Types.ObjectId, ref: 'Order', required: true, index: true },
     packageNumber: { type: Number, default: 1 },
     totalPackages: { type: Number, default: 1 },
@@ -43,7 +45,16 @@ const PackageSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ['created', 'items_verified', 'sealed', 'labeled', 'ready_for_pickup', 'shipped'],
+      enum: [
+        'created',
+        'items_verified',
+        'packed',
+        'sealed',
+        'labeled',
+        'ready_for_pickup',
+        'shipped',
+        'dispatched', // Shipped implies courier has it, dispatched implies it left the warehouse via courier
+      ],
       default: 'created',
       index: true,
     },

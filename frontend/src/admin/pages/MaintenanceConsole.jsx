@@ -4,9 +4,11 @@ import toast from 'react-hot-toast';
 import { useMaintenanceSession } from '../hooks/useMaintenanceSession';
 import { maintenanceService } from '../../services/api/maintenanceService';
 import { SiriLogo } from '../../components/ui/SiriLogo';
+import { useConfirm } from '../../context/ConfirmProvider';
 
 export function MaintenanceConsole() {
   const { session, logout, clearSession } = useMaintenanceSession();
+  const confirm = useConfirm();
   const [status, setStatus] = useState(null);
   const [logs, setLogs] = useState([]);
   const [deadLetters, setDeadLetters] = useState([]);
@@ -77,9 +79,12 @@ export function MaintenanceConsole() {
 
   const handleDisable = async () => {
     if (
-      !window.confirm(
-        'Are you sure you want to disable maintenance mode and bring the site back online?',
-      )
+      !(await confirm({
+        title: 'Disable Maintenance Mode',
+        message:
+          'Are you sure you want to disable maintenance mode and bring the site back online?',
+        type: 'warning',
+      }))
     )
       return;
 

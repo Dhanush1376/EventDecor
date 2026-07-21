@@ -76,12 +76,24 @@ export class PaymentVerificationService {
 
     let attempt: any;
     try {
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const processingNode = process.env.HOSTNAME || require('os').hostname();
+
       attempt = await PaymentAttempt.findOneAndUpdate(
         {
           razorpayOrderId: razorpay_order_id,
-          status: { $in: ['initiated', 'failed'] },
+          $or: [
+            { status: { $in: ['initiated', 'failed'] } },
+            { status: 'processing', leaseExpiresAt: { $lt: fiveMinutesAgo } },
+          ],
         },
-        { $set: { status: 'processing' } },
+        {
+          $set: {
+            status: 'processing',
+            processingBy: processingNode,
+            leaseExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
+          },
+        },
         { returnDocument: 'after', session },
       );
 
@@ -189,12 +201,17 @@ export class PaymentVerificationService {
           }
         }
 
-        // Persist the failed-payment audit event INSIDE the transaction so it
-        // is durably recorded before the session is committed/ended. (Writing
-        // it after commit would run against a closed session and throw,
-        // masking the 400 below and losing the audit trail.)
-        await PaymentEvent.create(
-          [
+        // External side-effects are now handled via Outbox Pattern AFTER rollback
+        // So we rollback the active transaction immediately.
+        if (!externalSession) {
+          await session.abortTransaction();
+          session.endSession();
+        }
+
+        // Persist the failed-payment audit event OUTSIDE the main transaction boundary
+        // to ensure it is durably recorded despite the rollback of business state.
+        try {
+          await PaymentEvent.create([
             {
               eventId: generateUuid(),
               orderId: attempt.orderData.pendingOrderId,
@@ -207,23 +224,30 @@ export class PaymentVerificationService {
               performedBy: 'system',
               gatewayResponse: fetchedPayment,
             },
-          ],
-          { session },
-        );
-
-        if (!externalSession) {
-          await session.commitTransaction();
-          session.endSession();
+          ]);
+        } catch (auditErr) {
+          logger.error('Failed to save PaymentEvent audit after rollback:', auditErr);
         }
 
-        // External side-effects run only after the transaction has committed.
         if (fetchedPayment && fetchedPayment.status === 'captured') {
           try {
-            await RazorpayGateway.initiateRefund(razorpay_payment_id, {
-              amount: Number(fetchedPayment.amount),
+            await OutboxEvent.create({
+              aggregateId: attempt.orderData.pendingOrderId.toString(),
+              aggregateType:
+                attempt.type === 'purchase'
+                  ? 'Order'
+                  : attempt.type === 'rental'
+                    ? 'RentalOrder'
+                    : 'EventJob',
+              eventType: 'RefundRequested',
+              payload: {
+                razorpayPaymentId: razorpay_payment_id,
+                amount: Number(fetchedPayment.amount),
+                reason: 'tampered_signature',
+              },
             });
             logger.info(
-              `[PAYMENT REFUND] Automatically refunded tampered captured payment ${razorpay_payment_id}`,
+              `[PAYMENT REFUND] Scheduled outbox refund for tampered captured payment ${razorpay_payment_id}`,
             );
           } catch (refundErr) {
             Sentry.captureException(refundErr, {
@@ -604,25 +628,6 @@ export class PaymentVerificationService {
 
     AnalyticsService.clearCache();
     logger.info(`Payment verified and entity created successfully: ${finalOrder._id}`);
-
-    try {
-      const { emitAdminEvent } = require('../socket');
-      if (attempt.type === 'purchase') {
-        emitAdminEvent('order_update', { orderId: finalOrder._id });
-
-        // Fire WhatsApp Notification for Online Order
-        const {
-          WhatsAppTriggers,
-        } = require('../domains/notifications/whatsapp/whatsappTriggerHooks');
-        await WhatsAppTriggers.onOrderCreated(finalOrder);
-      } else if (attempt.type === 'event_booking') {
-        emitAdminEvent('booking_update', { bookingId: finalOrder._id });
-      } else if (attempt.type === 'rental') {
-        emitAdminEvent('rental_update', { rentalId: finalOrder._id });
-      }
-    } catch (e) {
-      logger.warn('Failed to emit admin event or send WhatsApp for verified payment', e);
-    }
 
     return finalOrder;
   }

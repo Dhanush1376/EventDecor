@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useMediaLibrary } from '../../hooks/useMediaLibrary';
+import { useConfirm } from '../../context/ConfirmProvider';
+import toast from 'react-hot-toast';
 import {
   Box,
   Typography,
@@ -24,6 +26,7 @@ import MediaUploader from '../components/MediaUploader';
 const MediaLibrary = () => {
   const { items, stats, loading, fetchLibrary, fetchStats, deleteMedia, restoreMedia } =
     useMediaLibrary();
+  const confirm = useConfirm();
   const [tab, setTab] = useState(0);
   const [uploadOpen, setUploadOpen] = useState(false);
 
@@ -38,7 +41,13 @@ const MediaLibrary = () => {
   }, [fetchStats, loadItems]);
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this asset? (Soft delete for 30 days)')) {
+    if (
+      await confirm({
+        title: 'Delete Asset',
+        message: 'Are you sure you want to delete this asset? (Soft delete for 30 days)',
+        type: 'danger',
+      })
+    ) {
       await deleteMedia(id);
       loadItems();
     }
@@ -51,7 +60,7 @@ const MediaLibrary = () => {
 
   const copyToClipboard = (url) => {
     navigator.clipboard.writeText(url);
-    alert('URL copied to clipboard!');
+    toast.success('URL copied to clipboard!');
   };
 
   return (

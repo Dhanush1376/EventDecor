@@ -1,6 +1,30 @@
 import mongoose from 'mongoose';
 import Package from '../models/Package';
 import { PackagingCalculator } from './PackagingCalculator';
+import Counter from '../../../models/Counter';
+
+async function generateSequentialPackageId(session?: mongoose.ClientSession): Promise<string> {
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+  const counterId = `pkg_seq_${dateStr}`;
+
+  let counter;
+  if (session) {
+    counter = await Counter.findByIdAndUpdate(
+      counterId,
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true, session },
+    );
+  } else {
+    counter = await Counter.findByIdAndUpdate(
+      counterId,
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true },
+    );
+  }
+
+  const seqStr = counter.seq.toString().padStart(6, '0');
+  return `PKG-${dateStr}-${seqStr}`;
+}
 
 export class PackageService {
   /**
@@ -11,7 +35,7 @@ export class PackageService {
     const createdPackages = [];
 
     for (const pkg of proposal.packages) {
-      const packageId = `PKG-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 100)}`;
+      const packageId = await generateSequentialPackageId(session);
 
       const newPackage = new Package({
         packageId,
@@ -24,8 +48,10 @@ export class PackageService {
         })),
         dimensions: { length: 0, width: 0, height: 0 }, // Would be set based on pkg.size
         weight: pkg.weight,
-        sizeCategory: pkg.size,
+        packageType: pkg.size === 'small' ? 'standard' : 'oversized', // Basic mapping
         status: 'created',
+        barcode: packageId,
+        version: 0,
       });
 
       if (session) {

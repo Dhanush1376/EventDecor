@@ -79,37 +79,55 @@ const handleStorageUpload = (folder: string, isArray: boolean, allowVideo: boole
         if (!files || files.length === 0) return next();
 
         const uploadedFiles = [];
-        for (const file of files) {
-          const detectedMime = verifyImageSignature(file.buffer);
-          if (!detectedMime)
-            throw new ApiError(400, `Malicious or invalid file: ${file.originalname}`);
+        const uploadedMediaIds: string[] = []; // for rollback
 
-          const isVideo = videoMimeTypes.has(detectedMime);
-          if (!allowVideo && isVideo)
-            throw new ApiError(400, `Video not allowed for ${file.originalname}`);
+        try {
+          for (const file of files) {
+            const detectedMime = verifyImageSignature(file.buffer);
+            if (!detectedMime)
+              throw new ApiError(400, `Malicious or invalid file: ${file.originalname}`);
 
-          const result = await MediaService.uploadSingle(file.buffer, detectedMime, {
-            module: folder,
-            filename: file.originalname,
-            uploadedBy: (req as any).user?._id || undefined,
-          });
+            const isVideo = videoMimeTypes.has(detectedMime);
+            if (!allowVideo && isVideo)
+              throw new ApiError(400, `Video not allowed for ${file.originalname}`);
 
-          uploadedFiles.push({
-            path: result.secureUrl,
-            secure_url: result.secureUrl,
-            thumbnail_url: result.thumbnails?.[0]?.url || null,
-            originalname: file.originalname,
-            mimetype: file.mimetype,
-            size: result.bytes,
-            mediaId: result._id,
-            publicId: result.publicId,
-            width: result.width,
-            height: result.height,
-            format: result.format,
-            uploadedAt: result.createdAt,
-          });
+            const result = await MediaService.uploadSingle(file.buffer, detectedMime, {
+              module: folder,
+              filename: file.originalname,
+              uploadedBy: (req as any).user?._id || undefined,
+            });
+
+            uploadedMediaIds.push(result._id.toString());
+            // Clear memory
+            file.buffer = Buffer.alloc(0);
+
+            uploadedFiles.push({
+              path: result.secureUrl,
+              secure_url: result.secureUrl,
+              thumbnail_url: result.thumbnails?.[0]?.url || null,
+              originalname: file.originalname,
+              mimetype: file.mimetype,
+              size: result.bytes,
+              mediaId: result._id,
+              publicId: result.publicId,
+              width: result.width,
+              height: result.height,
+              format: result.format,
+              uploadedAt: result.createdAt,
+            });
+          }
+          req.files = uploadedFiles as any;
+        } catch (uploadError) {
+          // Atomicity rollback: mark uploaded files as pending_delete
+          if (uploadedMediaIds.length > 0) {
+            const MediaModel = require('../models/Media').default;
+            await MediaModel.updateMany(
+              { _id: { $in: uploadedMediaIds } },
+              { $set: { status: 'pending_delete' } },
+            );
+          }
+          throw uploadError;
         }
-        req.files = uploadedFiles as any;
       } else {
         const file = req.file as Express.Multer.File;
         if (!file) return next();
@@ -127,6 +145,9 @@ const handleStorageUpload = (folder: string, isArray: boolean, allowVideo: boole
           filename: file.originalname,
           uploadedBy: (req as any).user?._id || undefined,
         });
+
+        // Clear memory
+        file.buffer = Buffer.alloc(0);
 
         (req as any).file = {
           path: result.secureUrl,

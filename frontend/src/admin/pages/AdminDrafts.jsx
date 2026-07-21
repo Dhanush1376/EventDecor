@@ -5,10 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { getAllDrafts, deleteDraft, deleteAllDrafts, formatBytes } from '../services/draftService';
 import { useDraftContext } from '../context/DraftProvider';
+import { useConfirm } from '../../context/ConfirmProvider';
 
 export function AdminDrafts() {
   const navigate = useNavigate();
   const { refreshStats, isCleaning } = useDraftContext();
+  const confirm = useConfirm();
 
   const [drafts, setDrafts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +62,13 @@ export function AdminDrafts() {
 
   // Actions
   const handleDelete = async (key) => {
-    if (window.confirm('Are you sure you want to delete this draft? This cannot be undone.')) {
+    if (
+      await confirm({
+        title: 'Delete Draft',
+        message: 'Are you sure you want to delete this draft? This cannot be undone.',
+        type: 'danger',
+      })
+    ) {
       await deleteDraft(key);
       await loadDrafts();
       refreshStats();
@@ -69,9 +77,12 @@ export function AdminDrafts() {
 
   const handleClearAll = async () => {
     if (
-      window.confirm(
-        'Are you sure you want to delete ALL drafts? This will remove all unsaved work across the admin portal.',
-      )
+      await confirm({
+        title: 'Delete All Drafts',
+        message:
+          'Are you sure you want to delete ALL drafts? This will remove all unsaved work across the admin portal.',
+        type: 'danger',
+      })
     ) {
       await deleteAllDrafts();
       await loadDrafts();

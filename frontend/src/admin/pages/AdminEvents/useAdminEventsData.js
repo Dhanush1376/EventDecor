@@ -9,6 +9,7 @@ import {
 import toast from 'react-hot-toast';
 import logger from '../../../utils/core/logger';
 import { getErrorMessage } from '../../../utils/core/errorHelpers';
+import { useConfirm } from '../../../context/ConfirmProvider';
 
 export function useAdminEventsData() {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -25,7 +26,8 @@ export function useAdminEventsData() {
 
   // Showcase state variables
   const [showcases, setShowcases] = useState([]);
-  const [loadingShowcases, setLoadingShowcases] = useState(false);
+  const [loadingShowcases, setLoadingShowcases] = useState(true);
+  const confirm = useConfirm();
 
   const fetchEvents = async () => {
     setLoadingPortfolio(true);
@@ -73,7 +75,13 @@ export function useAdminEventsData() {
   };
 
   const handleDeleteShowcase = async (id) => {
-    if (!window.confirm('Are you sure you want to permanently withdraw this showcase theme?'))
+    if (
+      !(await confirm({
+        title: 'Withdraw Showcase',
+        message: 'Are you sure you want to permanently withdraw this showcase theme?',
+        type: 'danger',
+      }))
+    )
       return;
     try {
       const res = await showcaseService.delete(id);

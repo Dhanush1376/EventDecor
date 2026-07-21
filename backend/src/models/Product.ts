@@ -301,6 +301,7 @@ ProductSchema.index({ isActive: 1, aiTags: 1 }, { sparse: true });
 // Sitemap Auto-Update Trigger
 import { triggerSitemapUpdate } from '../utils/sitemapGenerator';
 import ForensicAuditPlugin from '../utils/ForensicAuditPlugin';
+import { AssetLifecyclePlugin } from '../utils/AssetLifecyclePlugin';
 
 ProductSchema.post('save', () => {
   triggerSitemapUpdate();
@@ -328,6 +329,13 @@ ProductSchema.post('findOneAndUpdate', async function (doc) {
 
 ProductSchema.plugin(SoftDeletePlugin);
 ProductSchema.plugin(ForensicAuditPlugin);
+ProductSchema.plugin(AssetLifecyclePlugin, {
+  tier: 3,
+  assetFields: [
+    { path: 'imageSrc', type: 'single', resourceType: 'image' },
+    { path: 'images', type: 'array', resourceType: 'image' },
+  ],
+});
 
 const Product = mongoose.model<IProduct, SoftDeleteModel<IProduct>>('Product', ProductSchema);
 export default Product;

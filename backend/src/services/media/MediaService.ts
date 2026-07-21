@@ -252,6 +252,22 @@ export class MediaService {
       logger.info(
         `[MEDIA_REF_DEC] [MEDIA_DELETE] Media ${media._id} referenceCount reached 0. Marked as pending_delete.`,
       );
+
+      // Queue for permanent deletion after grace period
+      const { cleanupQueue } = require('../../jobs/queues');
+      const { LifecycleConfig } = require('../../config/lifecycleConfig');
+      cleanupQueue.add(
+        'clean-all-assets',
+        {
+          data: [media.secureUrl],
+          context: {
+            entityType: 'Media',
+            entityId: media._id.toString(),
+            operation: 'purge',
+          },
+        },
+        { delay: LifecycleConfig.pendingDeleteGracePeriodMs },
+      );
     } else {
       await media.save();
       logger.debug(

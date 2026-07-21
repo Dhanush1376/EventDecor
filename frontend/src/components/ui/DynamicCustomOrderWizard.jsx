@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { customOrderService } from '../../services/domainServices';
 import { uploadService } from '../../services/api/uploadService';
 import toast from 'react-hot-toast';
+import { useConfirm } from '../../context/ConfirmProvider';
 import { CustomerContactGate } from '../shared/CustomerContactGate';
 import { Skeleton } from './Skeleton';
 import Check from 'lucide-react/dist/esm/icons/check';
@@ -15,6 +16,7 @@ export function DynamicCustomOrderWizard({
 }) {
   const [config, setConfig] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(true);
+  const confirm = useConfirm();
 
   // Core Wizard States
   const [selectedType, setSelectedType] = useState(() => {
@@ -83,17 +85,23 @@ export function DynamicCustomOrderWizard({
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (window.confirm('You have an unsaved draft. Restore Previous Draft?')) {
-            setCurrentStep(parsed.currentStep || 1);
-            setFormData(parsed.formData || { dynamicData: {}, files: [] });
-          } else {
-            localStorage.removeItem(draftKey);
-          }
+          confirm({
+            title: 'Unsaved Draft',
+            message: 'You have an unsaved draft. Restore Previous Draft?',
+            type: 'info',
+          }).then((shouldRestore) => {
+            if (shouldRestore) {
+              setCurrentStep(parsed.currentStep || 1);
+              setFormData(parsed.formData || { dynamicData: {}, files: [] });
+            } else {
+              localStorage.removeItem(draftKey);
+            }
+          });
         } catch (_e) {}
       }
       setDraftRestored(true);
     }
-  }, [selectedType, config, loadingConfig, draftRestored]);
+  }, [selectedType, config, loadingConfig, draftRestored, confirm]);
 
   if (loadingConfig) {
     return (

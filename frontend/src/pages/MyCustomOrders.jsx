@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useUserSocket } from '../context/UserSocketProvider';
 import { customOrderService, uploadService } from '../services/domainServices';
+import { useConfirm } from '../context/ConfirmProvider';
 import toast from 'react-hot-toast';
 import logger from '../utils/core/logger';
 
@@ -48,6 +49,7 @@ export function MyCustomOrders() {
   const socket = useUserSocket();
   const queryClient = useQueryClient();
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState('orders'); // 'orders' or 'drafts'
   const [chatMessage, setChatMessage] = useState('');
   const [chatFiles, setChatFiles] = useState([]);
@@ -665,8 +667,14 @@ export function MyCustomOrders() {
                   {quotation.status === 'sent' && selectedOrder.status === 'Quote Sent' && (
                     <div className="p-4 bg-amber-50/50 flex flex-col sm:flex-row justify-end items-center gap-3 border-t border-amber-200/50">
                       <button
-                        onClick={() => {
-                          if (window.confirm('Are you sure you want to request changes?')) {
+                        onClick={async () => {
+                          if (
+                            await confirm({
+                              title: 'Request Changes',
+                              message: 'Are you sure you want to request changes?',
+                              type: 'warning',
+                            })
+                          ) {
                             respondQuoteMutation.mutate({
                               id: selectedOrder._id,
                               status: 'rejected',
@@ -679,11 +687,14 @@ export function MyCustomOrders() {
                         Request Changes
                       </button>
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (
-                            window.confirm(
-                              'Are you sure you want to approve this quote? This action cannot be undone.',
-                            )
+                            await confirm({
+                              title: 'Approve Quote',
+                              message:
+                                'Are you sure you want to approve this quote? This action cannot be undone.',
+                              type: 'info',
+                            })
                           ) {
                             respondQuoteMutation.mutate({
                               id: selectedOrder._id,

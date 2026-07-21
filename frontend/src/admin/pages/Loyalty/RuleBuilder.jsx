@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Trash2, ArrowLeft, Save } from 'lucide-react';
 import api from '../../../services/api';
 import toast from 'react-hot-toast';
+import { useConfirm } from '../../../context/ConfirmProvider';
 
 export default function RuleBuilder() {
   const { campaignId } = useParams();
   const navigate = useNavigate();
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
 
   const fetchData = useCallback(async () => {
     try {
@@ -112,7 +114,14 @@ export default function RuleBuilder() {
   };
 
   const handleDeleteRule = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this rule?')) return;
+    if (
+      !(await confirm({
+        title: 'Delete Rule',
+        message: 'Are you sure you want to delete this rule?',
+        type: 'danger',
+      }))
+    )
+      return;
     try {
       await api.delete(`/campaigns/rules/${id}`);
       toast.success('Rule deleted');

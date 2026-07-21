@@ -157,4 +157,61 @@ export class CloudinaryStorageProvider implements StorageProvider {
       logger.error(`[CloudinaryStorage] Failed to invalidate cache: ${error}`);
     }
   }
+
+  // --- Lifecycle Management Methods ---
+
+  isProviderUrl(url: string): boolean {
+    return url.includes('cloudinary.com');
+  }
+
+  isOwnedAsset(url: string): boolean {
+    if (!this.isProviderUrl(url)) return false;
+
+    // Check if it belongs to our configured cloud name
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || '';
+    if (!cloudName) return false;
+
+    return url.includes(`/${cloudName}/`);
+  }
+
+  extractAssetId(url: string): string | null {
+    if (!this.isProviderUrl(url)) return null;
+
+    try {
+      const parts = url.split('/');
+      const fileWithExt = parts.pop();
+      const folder = parts.pop();
+      if (!fileWithExt || !folder) return null;
+
+      const publicId = fileWithExt.split('.')[0];
+      return `siri-arts-crafts/${folder}/${publicId}`;
+    } catch {
+      return null;
+    }
+  }
+
+  async deleteBatch(
+    assetIds: string[],
+    batchSize?: number,
+  ): Promise<{ succeeded: string[]; failed: string[] }> {
+    const size = batchSize || 50;
+    const delayMs = parseInt(process.env.CLOUDINARY_BATCH_DELAY_MS || '1000');
+    const results = { succeeded: [] as string[], failed: [] as string[] };
+
+    // We already have deleteMultiple but this one uses rate-limited batches
+    for (let i = 0; i < assetIds.length; i += size) {
+      const batch = assetIds.slice(i, i + size);
+
+      const batchResult = await this.deleteMultiple(batch);
+      results.succeeded.push(...batchResult.succeeded);
+      results.failed.push(...batchResult.failed);
+
+      // Throttle between batches
+      if (i + size < assetIds.length) {
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+    }
+
+    return results;
+  }
 }

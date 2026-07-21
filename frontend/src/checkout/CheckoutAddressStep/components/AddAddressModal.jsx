@@ -55,51 +55,59 @@ export function AddAddressModal({
                       <span className="material-symbols-outlined text-[12px]">person</span>
                       Contact Details
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div>
-                        <label className="form-label">Receiver Full Name*</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Receiver full name"
-                          value={newAddress.name}
-                          onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
-                          className="form-field"
-                        />
+                    <div className="flex flex-col gap-5">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="form-label">Receiver Full Name*</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Receiver full name"
+                            value={newAddress.name}
+                            onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
+                            className="form-field"
+                          />
+                        </div>
+                        <div>
+                          <label className="form-label">Email Address</label>
+                          <input
+                            type="email"
+                            placeholder="Enter email address"
+                            value={newAddress.email}
+                            onChange={(e) =>
+                              setNewAddress({ ...newAddress, email: e.target.value })
+                            }
+                            className="form-field"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="form-label">Contact Phone Number*</label>
-                        <input
-                          type="tel"
-                          required
-                          pattern="[0-9]{10}"
-                          placeholder="10-digit mobile number"
-                          value={newAddress.phone}
-                          onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
-                          className="form-field"
-                        />
-                      </div>
-                      <div>
-                        <label className="form-label">Alternate Phone Number</label>
-                        <input
-                          type="tel"
-                          placeholder="Optional alternate number"
-                          value={newAddress.alternatePhone}
-                          onChange={(e) =>
-                            setNewAddress({ ...newAddress, alternatePhone: e.target.value })
-                          }
-                          className="form-field"
-                        />
-                      </div>
-                      <div>
-                        <label className="form-label">Email Address</label>
-                        <input
-                          type="email"
-                          placeholder="Enter email address"
-                          value={newAddress.email}
-                          onChange={(e) => setNewAddress({ ...newAddress, email: e.target.value })}
-                          className="form-field"
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="form-label">Contact Phone Number*</label>
+                          <input
+                            type="tel"
+                            required
+                            pattern="[0-9]{10}"
+                            placeholder="10-digit mobile number"
+                            value={newAddress.phone}
+                            onChange={(e) =>
+                              setNewAddress({ ...newAddress, phone: e.target.value })
+                            }
+                            className="form-field"
+                          />
+                        </div>
+                        <div>
+                          <label className="form-label">Alternate Phone Number</label>
+                          <input
+                            type="tel"
+                            placeholder="Optional alternate number"
+                            value={newAddress.alternatePhone}
+                            onChange={(e) =>
+                              setNewAddress({ ...newAddress, alternatePhone: e.target.value })
+                            }
+                            className="form-field"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -165,43 +173,45 @@ export function AddAddressModal({
                       </motion.div>
                     )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div>
-                        <label className="form-label">6-Digit Pincode*</label>
-                        <input
-                          type="tel"
-                          required
-                          maxLength={6}
-                          placeholder="e.g. 560041"
-                          value={newAddress.pincode}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                            const updated = { ...newAddress, pincode: val };
-                            if (val.length === 6 && PINCODE_MAP[val]) {
-                              updated.city = PINCODE_MAP[val].city;
-                              updated.state = PINCODE_MAP[val].state;
+                    <div className="flex flex-col gap-5">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="form-label">6-Digit Pincode*</label>
+                          <input
+                            type="tel"
+                            required
+                            maxLength={6}
+                            placeholder="e.g. 560041"
+                            value={newAddress.pincode}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                              const updated = { ...newAddress, pincode: val };
+                              if (val.length === 6 && PINCODE_MAP[val]) {
+                                updated.city = PINCODE_MAP[val].city;
+                                updated.state = PINCODE_MAP[val].state;
+                              }
+                              setNewAddress(updated);
+                            }}
+                            className="form-field"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="form-label">Locality / Sector*</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Sector 4 / Jayanagar"
+                            value={newAddress.locality}
+                            onChange={(e) =>
+                              setNewAddress({ ...newAddress, locality: e.target.value })
                             }
-                            setNewAddress(updated);
-                          }}
-                          className="form-field"
-                        />
+                            className="form-field"
+                          />
+                        </div>
                       </div>
 
                       <div>
-                        <label className="form-label">Locality / Sector*</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. Sector 4 / Jayanagar"
-                          value={newAddress.locality}
-                          onChange={(e) =>
-                            setNewAddress({ ...newAddress, locality: e.target.value })
-                          }
-                          className="form-field"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
                         <label className="form-label">Street Address & Building Details*</label>
                         <textarea
                           required
@@ -214,7 +224,7 @@ export function AddAddressModal({
                         />
                       </div>
 
-                      <div className="sm:col-span-2">
+                      <div>
                         <label className="form-label">Landmark</label>
                         <input
                           type="text"
@@ -227,28 +237,32 @@ export function AddAddressModal({
                         />
                       </div>
 
-                      <div>
-                        <label className="form-label">City / District*</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="City"
-                          value={newAddress.city}
-                          onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                          className="form-field"
-                        />
-                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="form-label">City / District*</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="City"
+                            value={newAddress.city}
+                            onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                            className="form-field"
+                          />
+                        </div>
 
-                      <div>
-                        <label className="form-label">State*</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="State"
-                          value={newAddress.state}
-                          onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
-                          className="form-field uppercase"
-                        />
+                        <div>
+                          <label className="form-label">State*</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="State"
+                            value={newAddress.state}
+                            onChange={(e) =>
+                              setNewAddress({ ...newAddress, state: e.target.value })
+                            }
+                            className="form-field uppercase"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

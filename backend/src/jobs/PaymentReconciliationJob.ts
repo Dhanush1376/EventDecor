@@ -1,238 +1,93 @@
-import mongoose from 'mongoose';
-import Order from '../models/Order';
-import EventJob from '../domains/event_operations/models/EventJob';
-import RentalOrder from '../models/RentalOrder';
-import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import logger from '../config/logger';
-import { createAdminNotification, sendDirectEmail } from '../services/notificationService';
-import { getAdminEmails } from '../config/adminConfig';
-import { PaymentRefundService } from '../services/PaymentRefundService';
+import PaymentAttempt from '../models/PaymentAttempt';
+import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
+import { PaymentVerificationService } from '../services/PaymentVerificationService';
+import { withCronLock } from '../utils/cronLock';
 
+/**
+ * PaymentReconciliationJob
+ *
+ * Scans for PaymentAttempts that have been stuck in 'initiated' or 'processing'
+ * for an extended period. If the user successfully paid but the webhook was dropped
+ * (e.g. firewall issue) and their browser crashed before redirecting, this job
+ * queries Razorpay directly and recovers the payment.
+ */
 export const runPaymentReconciliation = async () => {
-  logger.info('[RECONCILIATION] Starting automated payment reconciliation...');
+  await withCronLock('payment-reconciliation', 10, async () => {
+    logger.info('[PAYMENT RECONCILIATION] Starting reconciliation job...');
 
-  const yesterday = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
-  const now = Math.floor(Date.now() / 1000);
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
-  try {
-    let skip = 0;
-    const count = 100;
-    let hasMore = true;
+    // Find attempts that are stuck in 'initiated' or 'processing'
+    // Limit to the last 48 hours to avoid scanning ancient dead records
+    const stuckAttempts = await PaymentAttempt.find({
+      status: { $in: ['initiated', 'processing'] },
+      createdAt: { $gte: twoDaysAgo, $lte: thirtyMinutesAgo },
+    }).limit(100);
 
-    const mismatches: string[] = [];
-    const healed: string[] = [];
-
-    while (hasMore) {
-      const payments: any = await RazorpayGateway.getAllPayments({
-        from: yesterday,
-        to: now,
-        count,
-        skip,
-      });
-
-      if (!payments.items || payments.items.length === 0) {
-        hasMore = false;
-        break;
-      }
-
-      for (const rp of payments.items) {
-        if (rp.status === 'captured' || rp.status === 'authorized') {
-          const orderId = rp.order_id;
-
-          let dbEntity: any = null;
-          let entityType: 'Order' | 'EventJob' | 'Rental' | null = null;
-
-          if (orderId) {
-            dbEntity = await Order.findOne({ razorpayOrderId: orderId }).lean();
-            if (dbEntity) entityType = 'Order';
-          }
-
-          if (!dbEntity) {
-            dbEntity = await EventJob.findOne({ 'payments.transactionId': rp.id }).lean();
-            if (dbEntity) entityType = 'EventJob';
-          }
-
-          if (!dbEntity) {
-            dbEntity = await RentalOrder.findOne({ razorpayPaymentId: rp.id }).lean();
-            if (dbEntity) entityType = 'Rental';
-          }
-
-          if (!dbEntity) {
-            // GHOST PAYMENT: Auto Refund
-            mismatches.push(
-              `Ghost Payment: Razorpay Payment ${rp.id} (Order ${orderId || 'None'}). Auto-refunding.`,
-            );
-            try {
-              await PaymentRefundService.initiateAsyncRefund({
-                amount: Number(rp.amount) / 100, // convert paise to INR
-                currency: rp.currency,
-                originalTransactionId: rp.id,
-                entityType: 'Order',
-                entityId: new mongoose.Types.ObjectId(), // Dummy ID for ghost payment tracking
-              });
-              healed.push(`Auto-refunded Ghost Payment ${rp.id} (₹${Number(rp.amount) / 100})`);
-            } catch (err: any) {
-              mismatches.push(`Failed to auto-refund Ghost Payment ${rp.id}: ${err.message}`);
-            }
-            continue;
-          }
-
-          // Check Status Mismatches
-          if (entityType === 'Order') {
-            if (dbEntity.paymentStatus !== 'paid' && dbEntity.paymentStatus !== 'refunded') {
-              mismatches.push(
-                `Status Mismatch: Order ${dbEntity._id} is '${dbEntity.paymentStatus}' in DB, but '${rp.status}' in Razorpay.`,
-              );
-              try {
-                // Attempt auto-salvage by refunding the orphaned payment
-                await PaymentRefundService.initiateAsyncRefund({
-                  amount: Number(rp.amount) / 100,
-                  currency: rp.currency,
-                  originalTransactionId: rp.id,
-                  entityType: 'Order',
-                  entityId: dbEntity._id,
-                });
-                healed.push(
-                  `Auto-refunded Orphaned Order ${dbEntity._id} (₹${Number(rp.amount) / 100})`,
-                );
-              } catch (err: any) {
-                mismatches.push(
-                  `Failed to auto-refund Orphaned Order ${dbEntity._id}: ${err.message}`,
-                );
-              }
-            }
-          } else if (entityType === 'EventJob') {
-            // EventJob status mismatch handling
-            const payment = dbEntity.payments.find((p: any) => p.transactionId === rp.id);
-            if (!payment || payment.status !== 'success') {
-              mismatches.push(
-                `Status Mismatch: EventJob ${dbEntity._id} payment is '${payment?.status || 'Missing'}' in DB, but '${rp.status}' in Razorpay.`,
-              );
-              try {
-                await PaymentRefundService.initiateAsyncRefund({
-                  amount: Number(rp.amount) / 100,
-                  currency: rp.currency,
-                  originalTransactionId: rp.id,
-                  entityType: 'EventJob',
-                  entityId: dbEntity._id,
-                });
-                healed.push(`Auto-refunded failed EventJob payment ${rp.id} for ${dbEntity._id}`);
-              } catch (err: any) {
-                mismatches.push(
-                  `Failed to auto-refund failed EventJob payment ${rp.id}: ${err.message}`,
-                );
-              }
-            }
-          } else if (entityType === 'Rental') {
-            if (dbEntity.paymentStatus !== 'paid' && dbEntity.paymentStatus !== 'refunded') {
-              mismatches.push(
-                `Status Mismatch: Rental ${dbEntity._id} is '${dbEntity.paymentStatus}' in DB, but '${rp.status}' in Razorpay.`,
-              );
-              try {
-                await PaymentRefundService.initiateAsyncRefund({
-                  amount: Number(rp.amount) / 100,
-                  currency: rp.currency,
-                  originalTransactionId: rp.id,
-                  entityType: 'Rental',
-                  entityId: dbEntity._id,
-                });
-                healed.push(`Auto-refunded failed Rental payment ${rp.id} for ${dbEntity._id}`);
-              } catch (err: any) {
-                mismatches.push(
-                  `Failed to auto-refund failed Rental payment ${rp.id}: ${err.message}`,
-                );
-              }
-            }
-          }
-        }
-      }
-
-      skip += count;
+    if (stuckAttempts.length === 0) {
+      logger.info('[PAYMENT RECONCILIATION] No stuck payment attempts found.');
+      return;
     }
 
-    // --- Refund Reconciliation ---
-    skip = 0;
-    hasMore = true;
-    while (hasMore) {
-      const refunds: any = await RazorpayGateway.getAllRefunds({
-        from: yesterday,
-        to: now,
-        count,
-        skip,
-      });
+    logger.info(
+      `[PAYMENT RECONCILIATION] Found ${stuckAttempts.length} stuck attempts. Recovering...`,
+    );
 
-      if (!refunds.items || refunds.items.length === 0) {
-        hasMore = false;
-        break;
-      }
+    for (const attempt of stuckAttempts) {
+      try {
+        // Query Razorpay to see if this order was actually paid
+        const paymentResponse = await RazorpayGateway.getOrderPayments(attempt.razorpayOrderId);
 
-      for (const rzpRefund of refunds.items) {
-        const refundRecordId = rzpRefund.notes?.refundRecordId;
-        let dbRefund: any = null;
-
-        if (refundRecordId) {
-          const RefundRecord = require('../models/RefundRecord').default;
-          dbRefund = await RefundRecord.findById(refundRecordId).lean();
-        } else {
-          const RefundRecord = require('../models/RefundRecord').default;
-          dbRefund = await RefundRecord.findOne({ razorpayRefundId: rzpRefund.id }).lean();
+        if (!paymentResponse || !paymentResponse.items || paymentResponse.items.length === 0) {
+          // User never even attempted payment, just abandoned checkout. Let it expire naturally.
+          continue;
         }
 
-        if (!dbRefund) {
-          mismatches.push(
-            `Ghost Refund: Razorpay Refund ${rzpRefund.id} (Payment ${rzpRefund.payment_id}) has no corresponding internal RefundRecord.`,
+        // Check if there is any successfully captured payment
+        const capturedPayment = paymentResponse.items.find((p: any) => p.status === 'captured');
+
+        if (capturedPayment) {
+          logger.info(
+            `[PAYMENT RECONCILIATION] Recovering lost payment ${capturedPayment.id} for order ${attempt.razorpayOrderId}`,
           );
-          // Healing a ghost refund implies we might need to update the Order/Booking status if it's not already refunded.
-          // For now, just logging it as it's hard to safely auto-heal without knowing the internal entity.
+
+          const paymentData = {
+            razorpay_order_id: attempt.razorpayOrderId,
+            razorpay_payment_id: capturedPayment.id,
+            razorpay_signature: 'reconciliation_bypass',
+          };
+
+          // Invoke the standard verification pipeline directly (bypassing the HTTP/Webhook layer)
+          // The 'webhook' source flag tells the service to skip HMAC signature validation
+          // since we fetched this data securely server-to-server directly from Razorpay.
+          await PaymentVerificationService.verifyPayment(paymentData, 'system', 'admin', 'webhook');
+
+          logger.info(
+            `[PAYMENT RECONCILIATION] Successfully recovered order ${attempt.razorpayOrderId}`,
+          );
         } else {
-          // Status mismatch
-          if (rzpRefund.status === 'processed' && dbRefund.status !== 'completed') {
-            mismatches.push(
-              `Refund Status Mismatch: RZP is processed but DB is ${dbRefund.status} for RefundRecord ${dbRefund._id}.`,
-            );
-            try {
-              const RefundRecord = require('../models/RefundRecord').default;
-              await RefundRecord.updateOne(
-                { _id: dbRefund._id },
-                { $set: { status: 'completed', razorpayRefundId: rzpRefund.id } },
-              );
-              healed.push(`Auto-healed RefundRecord ${dbRefund._id} to completed.`);
-            } catch (err: any) {
-              mismatches.push(`Failed to auto-heal RefundRecord ${dbRefund._id}: ${err.message}`);
-            }
+          // Payments were attempted but all failed.
+          const failedPayment = paymentResponse.items.find((p: any) => p.status === 'failed');
+          if (failedPayment) {
+            attempt.status = 'failed';
+            await attempt.save();
+            logger.info(`[PAYMENT RECONCILIATION] Marked attempt ${attempt._id} as failed.`);
           }
         }
+      } catch (err: any) {
+        // If it throws 409 or already verified, it's safe and idempotent.
+        if (err.statusCode === 409) {
+          logger.info(
+            `[PAYMENT RECONCILIATION] Attempt ${attempt._id} is currently being processed by another worker.`,
+          );
+        } else {
+          logger.error(`[PAYMENT RECONCILIATION] Failed to reconcile attempt ${attempt._id}:`, err);
+        }
       }
-      skip += count;
     }
 
-    if (mismatches.length > 0 || healed.length > 0) {
-      logger.error(
-        `[RECONCILIATION] Found ${mismatches.length} discrepancies, Healed ${healed.length}.`,
-      );
-      const adminEmails = getAdminEmails();
-
-      await createAdminNotification({
-        title: 'Payment Reconciliation Auto-Heal Report',
-        message: `Found ${mismatches.length} mismatches. Successfully healed ${healed.length}. Check email for details.`,
-        type: 'system',
-      });
-
-      if (adminEmails.length > 0) {
-        await sendDirectEmail({
-          email: adminEmails[0],
-          subject: 'Payment Reconciliation Auto-Heal Report',
-          customHtml: `<p>The daily reconciliation job executed.</p>
-                       <h3>Mismatches Found:</h3><ul>${mismatches.map((m) => `<li>${m}</li>`).join('') || '<li>None</li>'}</ul>
-                       <h3>Auto-Healed Actions:</h3><ul>${healed.map((h) => `<li>${h}</li>`).join('') || '<li>None</li>'}</ul>`,
-          type: 'system',
-          action: 'admin_reconciliation_alert',
-        });
-      }
-    } else {
-      logger.info('[RECONCILIATION] Success: No discrepancies found. All payments match exactly.');
-    }
-  } catch (err: any) {
-    logger.error('[RECONCILIATION] Job failed to execute:', err);
-  }
+    logger.info('[PAYMENT RECONCILIATION] Reconciliation job completed.');
+  });
 };

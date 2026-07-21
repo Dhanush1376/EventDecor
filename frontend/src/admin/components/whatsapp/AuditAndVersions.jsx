@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import whatsappAutomationService from '../../services/whatsappAutomationService';
 import toast from 'react-hot-toast';
+import { useConfirm } from '../../../context/ConfirmProvider';
 import { format } from 'date-fns';
 
 const AuditAndVersions = () => {
   const [snapshots, setSnapshots] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  const [versions, setVersions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
   const [creating, setCreating] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
   const [selectedLog, setSelectedLog] = useState(null); // For diff modal
@@ -51,9 +54,11 @@ const AuditAndVersions = () => {
 
   const handleRollback = async (snapshot) => {
     if (
-      !window.confirm(
-        `CRITICAL WARNING: Are you sure you want to rollback the entire system configuration to "${snapshot.name}"? This action will overwrite all current automations, templates, routing rules, and policies.`,
-      )
+      !(await confirm({
+        title: 'CRITICAL WARNING: System Rollback',
+        message: `Are you sure you want to rollback the entire system configuration to "${snapshot.name}"? This action will overwrite all current automations, templates, routing rules, and policies.`,
+        type: 'danger',
+      }))
     ) {
       return;
     }

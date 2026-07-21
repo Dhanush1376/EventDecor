@@ -14,6 +14,7 @@ import {
 } from '../services/recommendation/seasonalEngine';
 import { requestContextStorage } from '../middleware/requestTracker';
 import { createMediaWorker } from './mediaWorker';
+import { createCleanupWorker } from './cleanupWorker';
 
 // Declare workers as let (live bindings)
 export let emailWorker: Worker | null = null;
@@ -24,6 +25,7 @@ export let webhookWorker: Worker | null = null;
 export let refundWorker: Worker | null = null;
 export let systemWorker: Worker | null = null;
 export let mediaWorker: Worker | null = null;
+export let cleanupWorker: Worker | null = null;
 
 let workersInitialized = false;
 
@@ -501,7 +503,8 @@ export const initWorkers = async () => {
       logger.error(`[WORKER system] Error:`, err);
     });
 
-    mediaWorker = createMediaWorker(connection);
+    mediaWorker = createMediaWorker(connection as any);
+    cleanupWorker = createCleanupWorker(connection as any);
 
     // Initialize WhatsApp Workers
     require('./whatsappWorkers');
@@ -529,6 +532,7 @@ export const closeWorkers = async () => {
       refundWorker?.close(),
       systemWorker?.close(),
       mediaWorker?.close(),
+      cleanupWorker?.close(),
     ].filter(Boolean);
 
     await Promise.allSettled(closePromises);

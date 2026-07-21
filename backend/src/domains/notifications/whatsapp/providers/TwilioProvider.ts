@@ -70,7 +70,7 @@ export class TwilioProvider implements IMessagingProvider {
       const contentVars: Record<string, string> = {};
       components.forEach((comp, idx) => {
         if (comp.parameters) {
-          comp.parameters.forEach((p: any, pIdx: number) => {
+          comp.parameters.forEach((p: any, _pIdx: number) => {
             contentVars[`${idx + 1}`] = p.text;
           });
         }

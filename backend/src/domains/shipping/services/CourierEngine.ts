@@ -27,7 +27,13 @@ export class CourierEngine {
         adapter = new ManualCourierAdapter();
       }
 
-      // TODO: Fetch weight from packages dynamically
+      // Calculate actual weight (fallback to 0.5kg if missing)
+      const Package = mongoose.model('Package');
+      const packages = await Package.find({ _id: { $in: packageIds } });
+      const totalWeightKg = packages.reduce((sum: number, pkg: any) => {
+        return sum + (pkg.weight || 0.5);
+      }, 0);
+
       const payload = {
         order_id: orderId,
         billing_name: shippingAddress.firstName,
@@ -37,11 +43,13 @@ export class CourierEngine {
         billing_state: shippingAddress.state,
         billing_country: shippingAddress.country || 'India',
         billing_phone: shippingAddress.phone || '9999999999',
-        weight: 2,
+        weight: totalWeightKg,
       };
 
       const booking = await adapter.createShipment(payload);
-      const shipmentId = `SHP-${Date.now().toString().slice(-6)}`;
+
+      const { SequenceGeneratorService } = require('../../../services/SequenceGeneratorService');
+      const shipmentId = await SequenceGeneratorService.generateFulfilmentNumber();
 
       const Order = mongoose.model('Order');
       const order = await Order.findById(orderId);

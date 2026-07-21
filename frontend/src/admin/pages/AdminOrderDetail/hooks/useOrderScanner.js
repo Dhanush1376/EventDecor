@@ -29,14 +29,24 @@ export function useOrderScanner(order, updateOrderStatus) {
 
           const cleanOrderId = order.id.toUpperCase();
           const cleanAWB = (order.trackingNumber || '').toUpperCase();
-          const customBarcode = `SR-${order.id.substring(order.id.length - 8).toUpperCase()}-IN`;
           const invoiceNum = (order.invoiceNumber || '').toUpperCase();
+          const barcodeData = (order.rawOrder?.barcodeData || '').toUpperCase();
+
+          let packageMatched = false;
+          if (order.rawOrder?.packages) {
+            packageMatched = order.rawOrder.packages.some(
+              (pkg) =>
+                (pkg.packageId || '').toUpperCase() === scannedCode ||
+                (pkg.barcode || '').toUpperCase() === scannedCode,
+            );
+          }
 
           if (
             scannedCode === cleanOrderId ||
             scannedCode === cleanAWB ||
-            scannedCode === customBarcode ||
             scannedCode === invoiceNum ||
+            scannedCode === barcodeData ||
+            packageMatched ||
             scannedCode.includes(cleanOrderId.substring(0, 8))
           ) {
             playSuccessBeep();

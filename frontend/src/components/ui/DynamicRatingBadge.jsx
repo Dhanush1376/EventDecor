@@ -42,6 +42,45 @@ export function DynamicRatingBadge({
   const [hasFetched, setHasFetched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const hideTimeoutRef = useRef(null);
+  const wrapperRef = useRef(null);
+  const [popoverStyle, setPopoverStyle] = useState({ left: '50%', transform: 'translateX(-50%)' });
+  const [arrowStyle, setArrowStyle] = useState({ left: '50%', transform: 'translateX(-50%)' });
+
+  const calculatePosition = () => {
+    if (!wrapperRef.current) return;
+    const rect = wrapperRef.current.getBoundingClientRect();
+    const popoverWidth = window.innerWidth < 640 ? 250 : 256; // roughly w-64
+    const padding = 16;
+
+    // Ideal center position (relative to viewport)
+    let idealCenter = rect.left + rect.width / 2;
+
+    // Calculate the left position of the popover (relative to viewport)
+    let popoverLeft = idealCenter - popoverWidth / 2;
+
+    // Constrain to viewport
+    if (popoverLeft < padding) {
+      popoverLeft = padding;
+    } else if (popoverLeft + popoverWidth > window.innerWidth - padding) {
+      popoverLeft = window.innerWidth - padding - popoverWidth;
+    }
+
+    // Relative offset from wrapper
+    const relativeLeft = popoverLeft - rect.left;
+
+    setPopoverStyle({
+      left: `${relativeLeft}px`,
+      transform: 'none',
+      width: `${popoverWidth}px`,
+    });
+
+    // Arrow should point to the center of the badge
+    const arrowLeft = idealCenter - popoverLeft;
+    setArrowStyle({
+      left: `${arrowLeft}px`,
+      transform: 'translateX(-50%)',
+    });
+  };
 
   if (!initialReviews || initialReviews === 0) {
     return null;
@@ -75,6 +114,7 @@ export function DynamicRatingBadge({
     if (hideTimeoutRef.current) {
       clearTimeout(hideTimeoutRef.current);
     }
+    calculatePosition();
     setIsHovered(true);
     if (!hasFetched) {
       fetchReviews();
@@ -94,6 +134,19 @@ export function DynamicRatingBadge({
     navigate(`${route}#reviews-section`);
   };
 
+  const handleBadgeClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.innerWidth < 1024) {
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+      calculatePosition();
+      setIsHovered(true);
+      if (!hasFetched) fetchReviews();
+    } else {
+      handleNavigateToReviews(e);
+    }
+  };
+
   // Calculate distribution exactly like PDP
   const avgRating = reviewsData.length
     ? reviewsData.reduce((s, r) => s + r.rating, 0) / reviewsData.length
@@ -110,13 +163,14 @@ export function DynamicRatingBadge({
 
   return (
     <div
+      ref={wrapperRef}
       className={`relative inline-flex ${className}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {/* The visible Badge */}
       <div
-        onClick={handleNavigateToReviews}
+        onClick={handleBadgeClick}
         className="flex items-center gap-0.5 shrink-0 cursor-pointer group"
       >
         <span
@@ -135,96 +189,110 @@ export function DynamicRatingBadge({
       {/* Popover */}
       <AnimatePresence>
         {isHovered && initialReviews > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 5, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 5, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute z-[100] bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-white rounded-2xl shadow-luxury border border-black/5 p-4 cursor-default pointer-events-auto"
-            onClick={(e) => e.stopPropagation()} // prevent clicking through to card
-          >
-            {/* Popover Arrow */}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-white" />
+          <>
+            {/* Mobile Backdrop */}
+            <div
+              className="fixed inset-0 z-[90] lg:hidden"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsHovered(false);
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 5, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 5, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              style={popoverStyle}
+              className="absolute bottom-full mb-2 bg-white rounded-2xl shadow-luxury border border-black/5 p-4 cursor-default pointer-events-auto z-[100]"
+              onClick={(e) => e.stopPropagation()} // prevent clicking through to card
+            >
+              {/* Popover Arrow */}
+              <div
+                style={arrowStyle}
+                className="absolute top-full -mt-1 border-4 border-transparent border-t-white"
+              />
 
-            {isLoading ? (
-              <div className="flex flex-col gap-2 animate-pulse">
-                <div className="h-4 bg-neutral-100 rounded w-1/2 mx-auto" />
-                <div className="h-16 bg-neutral-100 rounded w-full" />
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {/* Header Stats */}
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="font-display text-2xl font-bold text-black leading-none">
-                      {avgRating.toFixed(1)}
-                    </span>
-                    <StarRating value={avgRating} />
-                  </div>
-                  <div className="text-right flex flex-col">
-                    <span className="font-label text-[10px] uppercase tracking-wider text-black/40 font-bold">
-                      {initialReviews} Review{initialReviews !== 1 ? 's' : ''}
-                    </span>
-                  </div>
+              {isLoading ? (
+                <div className="flex flex-col gap-2 animate-pulse">
+                  <div className="h-4 bg-neutral-100 rounded w-1/2 mx-auto" />
+                  <div className="h-16 bg-neutral-100 rounded w-full" />
                 </div>
-
-                {/* Distribution Bars */}
-                <div className="flex flex-col gap-1 w-full">
-                  {ratingCounts.map(({ star, count }) => {
-                    const pct = reviewsData.length
-                      ? Math.round((count / reviewsData.length) * 100)
-                      : 0;
-                    return (
-                      <div key={star} className="flex items-center gap-1.5 w-full">
-                        <span className="font-label text-[9px] font-bold text-black/50 w-2 shrink-0">
-                          {star}
-                        </span>
-                        <div className="flex-1 h-1 bg-neutral-100 rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${pct}%` }}
-                            transition={{ duration: 0.4 }}
-                            className="h-full bg-[#D4A853] rounded-full"
-                          />
-                        </div>
-                        <span className="font-label text-[8px] text-black/30 w-5 text-right">
-                          {pct}%
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Top Review Snippet */}
-                {topReview && (
-                  <div className="bg-neutral-50 rounded-lg p-2.5 border border-black/5">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="font-body text-[10px] font-semibold text-black">
-                        {topReview.customer?.name || topReview.customerName || 'Customer'}
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {/* Header Stats */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="font-display text-2xl font-bold text-black leading-none">
+                        {avgRating.toFixed(1)}
                       </span>
-                      {topReview.verified && (
-                        <span className="material-symbols-outlined text-[10px] text-green-600">
-                          verified
-                        </span>
-                      )}
+                      <StarRating value={avgRating} />
                     </div>
-                    <p className="font-body text-[10px] text-black/70 leading-relaxed line-clamp-2 italic">
-                      "{topReview.comment}"
-                    </p>
+                    <div className="text-right flex flex-col">
+                      <span className="font-label text-[10px] uppercase tracking-wider text-black/40 font-bold">
+                        {initialReviews} Review{initialReviews !== 1 ? 's' : ''}
+                      </span>
+                    </div>
                   </div>
-                )}
 
-                {/* Action */}
-                <button
-                  onClick={handleNavigateToReviews}
-                  className="w-full py-2 bg-black hover:bg-neutral-800 text-white font-label text-[9px] uppercase tracking-widest font-bold rounded-lg transition-colors mt-1 flex items-center justify-center gap-1.5"
-                >
-                  Read All Reviews
-                  <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
-                </button>
-              </div>
-            )}
-          </motion.div>
+                  {/* Distribution Bars */}
+                  <div className="flex flex-col gap-1 w-full">
+                    {ratingCounts.map(({ star, count }) => {
+                      const pct = reviewsData.length
+                        ? Math.round((count / reviewsData.length) * 100)
+                        : 0;
+                      return (
+                        <div key={star} className="flex items-center gap-1.5 w-full">
+                          <span className="font-label text-[9px] font-bold text-black/50 w-2 shrink-0">
+                            {star}
+                          </span>
+                          <div className="flex-1 h-1 bg-neutral-100 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${pct}%` }}
+                              transition={{ duration: 0.4 }}
+                              className="h-full bg-[#D4A853] rounded-full"
+                            />
+                          </div>
+                          <span className="font-label text-[8px] text-black/30 w-5 text-right">
+                            {pct}%
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Top Review Snippet */}
+                  {topReview && (
+                    <div className="bg-neutral-50 rounded-lg p-2.5 border border-black/5">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="font-body text-[10px] font-semibold text-black">
+                          {topReview.customer?.name || topReview.customerName || 'Customer'}
+                        </span>
+                        {topReview.verified && (
+                          <span className="material-symbols-outlined text-[10px] text-green-600">
+                            verified
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-body text-[10px] text-black/70 leading-relaxed line-clamp-2 italic">
+                        "{topReview.comment}"
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action */}
+                  <button
+                    onClick={handleNavigateToReviews}
+                    className="w-full py-2 bg-black hover:bg-neutral-800 text-white font-label text-[9px] uppercase tracking-widest font-bold rounded-lg transition-colors mt-1 flex items-center justify-center gap-1.5"
+                  >
+                    Read All Reviews
+                    <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

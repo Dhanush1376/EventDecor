@@ -18,6 +18,8 @@ import { initDataMonitorJob } from './DataMonitorJob';
 import { runMediaIntegrityCheck } from './mediaIntegrityJob';
 import { startDocumentBackupJob } from './S3SyncJob';
 import { runRecycleBinAutoPurge } from './recycleBinPurgeJob';
+import { sweepPendingDeletes } from './pendingDeleteSweeper';
+import { runDeadDataScan } from './deadDataDetector';
 
 export const initJobs = () => {
   if (process.env.ENABLE_CRON === 'false') {
@@ -48,6 +50,16 @@ export const initJobs = () => {
   // 1c. Recycle Bin Auto-Purge every night at 3 AM
   cron.schedule('0 3 * * *', async () => {
     await runRecycleBinAutoPurge();
+  });
+
+  // 1d. Pending Delete Sweeper every night at 4 AM
+  cron.schedule('0 4 * * *', async () => {
+    await sweepPendingDeletes();
+  });
+
+  // 1e. Dead Data Scan every Sunday at 1 AM
+  cron.schedule('0 1 * * 0', async () => {
+    await runDeadDataScan();
   });
 
   // 2. Release stock for stale pending orders and rentals (every 15 minutes)

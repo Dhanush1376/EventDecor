@@ -7,7 +7,18 @@ export interface INotificationLog extends Document {
   type: 'marketing' | 'order' | 'account' | 'engagement' | 'system' | 'security';
   channel: 'email' | 'sms' | 'push' | 'websocket';
   action: string; // e.g. welcome_email, otp_verification, order_placed, abandoned_cart
-  status: 'queued' | 'pending' | 'sent' | 'delivered' | 'failed' | 'retried';
+  status:
+    | 'queued'
+    | 'pending'
+    | 'processing'
+    | 'sent'
+    | 'delivered'
+    | 'read'
+    | 'clicked'
+    | 'failed'
+    | 'dead_letter'
+    | 'cancelled'
+    | 'retried';
   scheduledAt?: Date;
   queuedAt?: Date;
   retryCount: number;
@@ -50,7 +61,19 @@ const NotificationLogSchema: Schema = new Schema(
     action: { type: String, required: true },
     status: {
       type: String,
-      enum: ['queued', 'pending', 'sent', 'delivered', 'failed', 'retried'],
+      enum: [
+        'queued',
+        'pending',
+        'processing',
+        'sent',
+        'delivered',
+        'read',
+        'clicked',
+        'failed',
+        'dead_letter',
+        'cancelled',
+        'retried',
+      ],
       default: 'pending',
     },
     scheduledAt: { type: Date },
@@ -102,7 +125,7 @@ NotificationLogSchema.pre('save', async function () {
       const defaultDays = settings.retentionPolicies?.notificationLogsDays || 14;
       const days = this.status === 'failed' ? 30 : defaultDays;
       this.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    } catch (err) {
+    } catch (_err) {
       this.expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
     }
   }
@@ -123,7 +146,7 @@ NotificationLogSchema.pre('findOneAndUpdate', async function () {
       } else {
         update.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
       }
-    } catch (err) {}
+    } catch (_err) {}
   }
 });
 

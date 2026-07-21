@@ -16,6 +16,7 @@ import { useCart } from './CartContext';
 import { useWebsiteContent } from '../hooks/useWebsiteContent';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { userService } from '../services/domainServices';
+import { useConfirm } from './ConfirmProvider';
 import toast from 'react-hot-toast';
 
 const DashboardContext = createContext(null);
@@ -111,6 +112,7 @@ export function DashboardProvider({ children }) {
   const [editingAddressId, setEditingAddressId] = useState(null);
   const [addressFormData, setAddressFormData] = useState(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const confirm = useConfirm();
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
   const [reviewingProduct, setReviewingProduct] = useState(null);
 
@@ -261,7 +263,12 @@ export function DashboardProvider({ children }) {
   }, []);
 
   const handleDeleteAddress = useCallback(async (id) => {
-    if (!window.confirm('Are you sure you want to delete this address?')) return;
+    const isConfirmed = await confirm({
+      title: 'Delete Address',
+      message: 'Are you sure you want to delete this address?',
+      type: 'danger',
+    });
+    if (!isConfirmed) return;
     const toastId = toast.loading('Removing address...');
     try {
       await userService.deleteAddress(id);

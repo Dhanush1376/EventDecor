@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 import Shipment from '../models/Shipment';
 import ShipmentEvent from '../models/ShipmentEvent';
-import { ShiprocketAdapter } from './ShiprocketAdapter';
-import { ManualCourierAdapter } from './ManualCourierAdapter';
-import { ICourierAdapter } from './CourierAdapter';
+import Package from '../../warehouse/models/Package';
+import Order from '../../../models/Order';
+import { CourierAdapterFactory } from './CourierAdapterFactory';
 import logger from '../../../config/logger';
 
 export class ShippingService {
@@ -20,12 +20,13 @@ export class ShippingService {
     try {
       session.startTransaction();
 
-      let adapter: ICourierAdapter;
-      if (courierType === 'shiprocket') {
-        adapter = new ShiprocketAdapter();
-      } else {
-        adapter = new ManualCourierAdapter();
-      }
+      const adapter = CourierAdapterFactory.getAdapter(courierType);
+
+      // Calculate actual weight (fallback to 0.5kg if missing)
+      const packages = await Package.find({ _id: { $in: packageIds } }).session(session);
+      const totalWeightKg = packages.reduce((sum: number, pkg: any) => {
+        return sum + (pkg.weight || 0.5);
+      }, 0);
 
       // Prepare shipment payload for courier
       const payload = {
@@ -37,25 +38,28 @@ export class ShippingService {
         billing_state: shippingAddress.state,
         billing_country: shippingAddress.country || 'India',
         billing_phone: shippingAddress.phone || '9999999999',
-        weight: 2, // Assuming calculated from packages
+        weight: totalWeightKg,
       };
 
       const booking = await adapter.createShipment(payload);
 
-      const shipmentId = `SHP-${Date.now().toString().slice(-6)}`;
+      const { SequenceGeneratorService } = require('../../../services/SequenceGeneratorService');
+      const shipmentId = await SequenceGeneratorService.generateFulfilmentNumber();
 
-      const Order = mongoose.model('Order');
-      const order = await Order.findById(orderId);
-      const defaultProvider = order?.courierPartner || 'Standard Courier';
+      const order = await Order.findById(orderId).session(session);
+      if (!order) throw new Error('Order not found');
+
+      const defaultProvider = order.courierPartner || 'Standard Courier';
 
       const shipment = new Shipment({
         shipmentId,
         orderId: new mongoose.Types.ObjectId(orderId),
-        packages: packageIds.map((id) => new mongoose.Types.ObjectId(id)),
-        provider: courierType === 'shiprocket' ? defaultProvider : 'Local Courier',
+        packageIds: packageIds.map((id) => new mongoose.Types.ObjectId(id)),
+        courierPartner: courierType === 'shiprocket' ? defaultProvider : 'Local Courier',
+        awbNumber: booking.trackingNumber, // Use AWB provided by courier
         trackingNumber: booking.trackingNumber,
-        labelUrl: booking.labelUrl,
-        status: 'pending',
+        trackingUrl: booking.labelUrl, // Tracking label URL provided by the courier or generated locally
+        status: 'booked',
       });
 
       await shipment.save({ session });
@@ -65,7 +69,7 @@ export class ShippingService {
         [
           {
             shipmentId: shipment._id,
-            status: 'dispatched',
+            status: 'booked',
             location: { city: 'Warehouse', hubName: 'Origin Hub' },
             timestamp: new Date(),
             source: 'manual_scan',
@@ -75,7 +79,66 @@ export class ShippingService {
         { session },
       );
 
+      // Update Packages status to dispatched
+      await Package.updateMany(
+        { _id: { $in: packageIds } },
+        {
+          $set: {
+            status: 'dispatched',
+            shipmentId: shipment._id,
+          },
+        },
+        { session },
+      );
+
+      // Update Order with tracking info and status if ALL packages are dispatched
+      // For partial shipment, we might set orderStatus to 'Partially Shipped'
+      const totalPackages = await Package.countDocuments({ orderId }).session(session);
+      const dispatchedPackages = await Package.countDocuments({
+        orderId,
+        status: 'dispatched',
+      }).session(session);
+
+      const newOrderStatus = dispatchedPackages >= totalPackages ? 'Shipped' : 'Ready to Ship'; // or Partially Shipped if we add it
+
+      // For customer visibility, we assign the first AWB to the order tracking field
+      // Advanced frontends will query the packages/shipments directly for multi-package orders
+      if (!order.trackingNumber) {
+        order.trackingNumber = shipment.awbNumber;
+        order.courierPartner = shipment.courierPartner;
+        order.barcodeData = shipment.awbNumber; // Now encodes real AWB
+
+        const { getFrontendUrl } = require('../../../utils/getFrontendUrl');
+        const { LogisticsService } = require('../../../services/logisticsService');
+        const token = LogisticsService.generateTrackingToken(order._id.toString());
+        order.qrCodeData = `${getFrontendUrl()}/track/${order._id}?token=${token}`;
+      }
+
+      order.orderStatus = newOrderStatus as any;
+      order.dispatchDate = new Date();
+      await order.save({ session });
+
       await session.commitTransaction();
+
+      // POST-COMMIT SIDE EFFECTS
+      try {
+        const { emitUserEvent } = require('../../../socket');
+        emitUserEvent(order.user.toString(), 'order_status_updated', {
+          orderId: order._id,
+          orderStatus: newOrderStatus,
+        });
+
+        const { NotificationService } = require('../../../services/notificationService');
+        await NotificationService.createNotification({
+          userId: order.user,
+          title: newOrderStatus === 'Shipped' ? 'Order Shipped' : 'Order Partially Shipped',
+          message: `Your order has been shipped. Tracking AWB: ${shipment.awbNumber}`,
+          type: 'order_update',
+        });
+      } catch (e) {
+        logger.warn('Post-commit notification failed', e);
+      }
+
       return shipment;
     } catch (error) {
       await session.abortTransaction();
@@ -93,10 +156,8 @@ export class ShippingService {
     const shipment = await Shipment.findById(shipmentId);
     if (!shipment) throw new Error('Shipment not found');
 
-    const adapter =
-      (shipment as any).provider === 'Local Courier'
-        ? new ManualCourierAdapter()
-        : new ShiprocketAdapter();
+    const provider = (shipment as any).provider || (shipment as any).courierPartner || 'manual';
+    const adapter = CourierAdapterFactory.getAdapter(provider);
     const tracking = await adapter.trackShipment(shipment.trackingNumber!);
 
     // Naive state machine mapping

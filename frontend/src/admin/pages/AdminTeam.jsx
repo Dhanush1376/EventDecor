@@ -14,6 +14,7 @@ import {
   fadeUp,
   stagger,
 } from '../components/AdminUIKit';
+import { useConfirm } from '../../context/ConfirmProvider';
 
 const ROLE_WEIGHTS = {
   owner: 100,
@@ -47,6 +48,7 @@ export function AdminTeam({ hideHeader }) {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('admin');
   const [invitePermissions, setInvitePermissions] = useState('Access Admin Portal & Dashboard');
+  const confirm = useConfirm();
 
   const location = useLocation();
 
@@ -165,7 +167,14 @@ export function AdminTeam({ hideHeader }) {
   };
 
   const handleRevokeInvite = async (inviteId) => {
-    if (!window.confirm('Are you sure you want to revoke this pending invitation?')) return;
+    if (
+      !(await confirm({
+        title: 'Revoke Invitation',
+        message: 'Are you sure you want to revoke this pending invitation?',
+        type: 'warning',
+      }))
+    )
+      return;
     try {
       const res = await adminInviteService.revokeInvite(inviteId);
       if (res?.success) {
@@ -209,9 +218,12 @@ export function AdminTeam({ hideHeader }) {
       return;
     }
     if (
-      !window.confirm(
-        'Are you sure you want to completely revoke admin access for this user? This will downgrade their account to customer status.',
-      )
+      !(await confirm({
+        title: 'Revoke Privileges',
+        message:
+          'Are you sure you want to completely revoke admin access for this user? This will downgrade their account to customer status.',
+        type: 'danger',
+      }))
     )
       return;
 

@@ -57,7 +57,7 @@ AdminAuditLogSchema.pre('save', async function () {
       const settings = await storeSettingsService.getSettings();
       const days = settings.retentionPolicies?.adminAuditLogsDays || 180;
       this.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    } catch (err) {
+    } catch (_err) {
       this.expiresAt = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // 180 days fallback
     }
   }

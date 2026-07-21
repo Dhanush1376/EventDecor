@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
+import { AssetLifecyclePlugin } from '../utils/AssetLifecyclePlugin';
 import { indexGallery } from '../services/search/searchIndexer';
 import logger from '../config/logger';
 
@@ -123,6 +124,13 @@ GallerySchema.post('findOneAndUpdate', async function (doc) {
 });
 
 GallerySchema.plugin(SoftDeletePlugin);
+GallerySchema.plugin(AssetLifecyclePlugin, {
+  tier: 3,
+  assetFields: [
+    { path: 'image', type: 'single', resourceType: 'image' },
+    { path: 'video', type: 'single', resourceType: 'video' },
+  ],
+});
 
 const Gallery = mongoose.model<IGallery, SoftDeleteModel<IGallery>>('Gallery', GallerySchema);
 export default Gallery;

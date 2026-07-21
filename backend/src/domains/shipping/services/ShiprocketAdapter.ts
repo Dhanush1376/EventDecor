@@ -1,5 +1,6 @@
 import { ICourierAdapter, CourierQuote, TrackingInfo } from './CourierAdapter';
-import axios from 'axios';
+import { shippingConfig } from '../../../config/shippingConfig';
+import { CourierHttpClient } from './CourierHttpClient';
 import logger from '../../../config/logger';
 import ApiError from '../../../utils/ApiError';
 
@@ -18,11 +19,15 @@ import ApiError from '../../../utils/ApiError';
  * already wired) and remove the NOT_IMPLEMENTED guards.
  */
 export class ShiprocketAdapter implements ICourierAdapter {
-  private baseUrl = 'https://apiv2.shiprocket.in/v1/external';
+  private httpClient: CourierHttpClient;
   private token: string | null = null;
 
+  constructor() {
+    this.httpClient = new CourierHttpClient(shippingConfig.shiprocket.apiUrl);
+  }
+
   private get isConfigured(): boolean {
-    return Boolean(process.env.SHIPROCKET_EMAIL && process.env.SHIPROCKET_PASSWORD);
+    return shippingConfig.shiprocket.isConfigured;
   }
 
   private notImplemented(operation: string): never {
@@ -40,11 +45,16 @@ export class ShiprocketAdapter implements ICourierAdapter {
       this.notImplemented('authentication');
     }
     try {
-      const res = await axios.post(`${this.baseUrl}/auth/login`, {
-        email: process.env.SHIPROCKET_EMAIL,
-        password: process.env.SHIPROCKET_PASSWORD,
+      const res = await this.httpClient.request<{ token: string }>({
+        url: '/auth/login',
+        method: 'POST',
+        providerName: 'Shiprocket',
+        data: {
+          email: shippingConfig.shiprocket.email,
+          password: shippingConfig.shiprocket.password,
+        },
       });
-      this.token = res.data.token;
+      this.token = res.token;
     } catch (error) {
       logger.error('Shiprocket authentication failed', error);
       throw new ApiError(502, 'Courier Gateway Error');

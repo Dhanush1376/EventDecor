@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
+import { AssetLifecyclePlugin } from '../utils/AssetLifecyclePlugin';
 
 export interface IContentRevision {
   previousData: any;
@@ -37,6 +38,11 @@ const ContentSectionSchema: Schema = new Schema(
 ContentSectionSchema.index({ status: 1 });
 
 ContentSectionSchema.plugin(SoftDeletePlugin);
+ContentSectionSchema.plugin(AssetLifecyclePlugin, {
+  tier: 3,
+  assetFields: [{ path: 'data', type: 'mixed' }],
+  excludeFields: ['revisionHistory'], // handled separately
+});
 
 export default mongoose.model<IContentSection, SoftDeleteModel<IContentSection>>(
   'ContentSection',

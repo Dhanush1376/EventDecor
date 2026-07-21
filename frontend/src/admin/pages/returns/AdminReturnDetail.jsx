@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useConfirm } from '../../../context/ConfirmProvider';
 import { format } from 'date-fns';
 import { useReturnManagement } from '../../hooks/useReturnManagement';
 import { handleImageError } from '../../../utils/media/imageUtils';
@@ -44,20 +46,27 @@ const AdminReturnDetail = () => {
   const [activeTab, setActiveTab] = useState('items'); // items, timeline, conversation, refund
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchReturnDetails(id);
   }, [id, fetchReturnDetails]);
 
-  const handleApprove = () => {
-    if (window.confirm('Are you sure you want to approve this return request?')) {
+  const handleApprove = async () => {
+    if (
+      await confirm({
+        title: 'Approve Return',
+        message: 'Are you sure you want to approve this return request?',
+        type: 'warning',
+      })
+    ) {
       approveReturn(id);
     }
   };
 
   const handleReject = () => {
     if (!rejectReason.trim()) {
-      alert('Please provide a reason for rejection.');
+      toast.error('Please provide a reason for rejection.');
       return;
     }
     rejectReturn(id, { reason: rejectReason });
@@ -65,8 +74,14 @@ const AdminReturnDetail = () => {
     setRejectReason('');
   };
 
-  const handleTransition = (nextStatus) => {
-    if (window.confirm(`Are you sure you want to transition to ${nextStatus}?`)) {
+  const handleTransition = async (nextStatus) => {
+    if (
+      await confirm({
+        title: 'Transition Status',
+        message: `Are you sure you want to transition to ${nextStatus}?`,
+        type: 'warning',
+      })
+    ) {
       transitionStatus(id, { nextStatus });
     }
   };

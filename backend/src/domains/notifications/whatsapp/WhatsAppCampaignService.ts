@@ -161,7 +161,7 @@ export class WhatsAppCampaignService {
    */
   static async processCampaignMessage(job: any): Promise<void> {
     const { campaignId, templateId, recipientPhone, triggerTimestamp } = job.data;
-    const workerStart = Date.now();
+    const _workerStart = Date.now();
 
     try {
       const campaign = await WhatsAppCampaign.findById(campaignId);
@@ -175,8 +175,8 @@ export class WhatsAppCampaignService {
 
       const provider = await SmartRouter.getRoute('marketing');
 
-      const dispatchStart = Date.now();
-      const providerCallStart = Date.now();
+      const _dispatchStart = Date.now();
+      const _providerCallStart = Date.now();
       let response;
 
       try {
@@ -195,7 +195,7 @@ export class WhatsAppCampaignService {
         response = { success: false, raw: { error: err.message || err }, messageId: 'failed' };
       }
 
-      const providerCallEnd = Date.now();
+      const _providerCallEnd = Date.now();
 
       if (response.success) {
         ProviderCircuitBreaker.recordSuccess(provider.name);

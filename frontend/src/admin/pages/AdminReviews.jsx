@@ -1,6 +1,7 @@
 import { m as motion } from 'framer-motion';
 import { PageHeader, SkeletonCard, FilterBar } from '../components/AdminUIKit';
 import { useState, useEffect } from 'react';
+import { useConfirm } from '../../context/ConfirmProvider';
 import { loyaltyService, reviewService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
@@ -13,6 +14,7 @@ export function AdminReviews() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const confirm = useConfirm();
 
   const fetchReviews = async () => {
     setLoading(true);
@@ -56,7 +58,14 @@ export function AdminReviews() {
   };
 
   const handleDelete = async (reviewId) => {
-    if (!window.confirm('Are you sure you want to delete this review?')) return;
+    if (
+      !(await confirm({
+        title: 'Delete Review',
+        message: 'Are you sure you want to delete this review?',
+        type: 'danger',
+      }))
+    )
+      return;
 
     const toastId = toast.loading('Deleting review...');
     try {

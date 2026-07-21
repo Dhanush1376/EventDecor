@@ -61,7 +61,7 @@ export function AdminOrderDetail() {
     );
   }
 
-  const trackingQR = `${window.location.origin}/track/${order.id}`;
+  const trackingQR = order.rawOrder?.qrCodeData || `${window.location.origin}/track/${order.id}`;
 
   return (
     <>

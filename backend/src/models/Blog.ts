@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
+import { AssetLifecyclePlugin } from '../utils/AssetLifecyclePlugin';
 
 export interface IBlog extends ISoftDeleted {
   id: string; // for compatibility with legacy json
@@ -67,5 +68,12 @@ const BlogSchema: Schema = new Schema(
 );
 
 BlogSchema.plugin(SoftDeletePlugin);
+BlogSchema.plugin(AssetLifecyclePlugin, {
+  tier: 3,
+  assetFields: [
+    { path: 'heroImage', type: 'single', resourceType: 'image' },
+    { path: 'content', type: 'array', resourceType: 'auto' }, // This will pick up content[].src
+  ],
+});
 
 export default mongoose.model<IBlog, SoftDeleteModel<IBlog>>('Blog', BlogSchema);

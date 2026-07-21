@@ -11,12 +11,10 @@ import storeSettingsService from '../../services/StoreSettingsService';
 import WalletTransaction from '../../models/WalletTransaction';
 import { debitWalletBalance } from '../../utils/payment/walletMutations';
 import PaymentAttempt from '../../models/PaymentAttempt';
-import { LogisticsService } from '../../services/logisticsService';
 import { OrderIdempotencyManager } from './OrderIdempotencyManager';
 import OutboxEvent from '../../models/OutboxEvent';
 import { computeOrderTotals } from './orderTotals';
 import { InventoryService } from '../InventoryService';
-import { getFrontendUrl } from '../../utils/getFrontendUrl';
 
 export class OrderCheckoutService {
   static async createOrder(userId: string, orderData: any) {
@@ -216,12 +214,11 @@ export class OrderCheckoutService {
 
       const randomSeq = crypto.randomBytes(3).toString('hex').toUpperCase();
       const invoiceNumber = `INV-${new Date().getFullYear()}-${randomSeq}`;
-      const trackingNumber = `TRK${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-      const courierPartner = settings.shipping.defaultCourierPartner || 'Standard Courier';
-      const barcodeData = invoiceNumber;
-      const frontendUrl = getFrontendUrl();
-      const publicTrackingToken = LogisticsService.generateTrackingToken(pendingOrderId.toString());
-      const qrCodeData = `${frontendUrl}/track/${pendingOrderId}?token=${publicTrackingToken}`;
+
+      // WAREHOUSE LIFECYCLE: Logistics identifiers are NOT generated at checkout.
+      // trackingNumber, courierPartner, barcodeData, qrCodeData are all null until
+      // the warehouse creates a Package (PKG-) and courier assigns an AWB.
+      // This ensures every barcode/tracking number maps to a real database entity.
 
       // --- RULE ENGINE INTEGRATION ---
       const { RuleEngine } = require('../../domains/rules/services/RuleEngine');
@@ -298,13 +295,8 @@ export class OrderCheckoutService {
           ],
           reservationIds,
           invoiceNumber,
-          trackingNumber,
-          courierPartner,
-          weight: 1.8,
-          dimensions: { length: 30, width: 20, height: 15 },
-          packageType: 'Standard Box',
-          barcodeData,
-          qrCodeData,
+          // trackingNumber, courierPartner, barcodeData, qrCodeData are intentionally
+          // omitted — they will be populated when warehouse dispatch creates real entities.
           notes,
           needByDate,
           idempotencyKey,
@@ -449,10 +441,8 @@ export class OrderCheckoutService {
           paymentMethod: 'razorpay',
           reservationIds,
           invoiceNumber,
-          trackingNumber,
-          courierPartner,
-          barcodeData,
-          qrCodeData,
+          // trackingNumber, courierPartner, barcodeData, qrCodeData omitted from
+          // PaymentAttempt — set during warehouse dispatch, not at checkout.
           notes,
           needByDate,
           idempotencyKey,

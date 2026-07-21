@@ -51,6 +51,7 @@ export const switchToFallbackQueues = () => {
   systemQueue = QueueFallbackService.getQueue('systemQueue');
   deadLetterQueue = QueueFallbackService.getQueue('deadLetterQueue');
   mediaQueue = QueueFallbackService.getQueue('mediaQueue');
+  cleanupQueue = QueueFallbackService.getQueue('cleanupQueue');
 
   usingFallback = true;
 };
@@ -122,6 +123,7 @@ export let refundQueue: Queue;
 export let systemQueue: Queue;
 export let deadLetterQueue: Queue;
 export let mediaQueue: Queue;
+export let cleanupQueue: Queue;
 
 let queuesInitialized = false;
 export let usingFallback = false;
@@ -154,6 +156,16 @@ export const initQueues = async () => {
       },
     });
 
+    cleanupQueue = new Queue('cleanupQueue', {
+      ...defaultQueueOptions,
+      defaultJobOptions: {
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 30000 },
+        removeOnComplete: { count: 1000 },
+        removeOnFail: false, // Keep failed jobs for inspection
+      },
+    });
+
     queuesInitialized = true;
     logger.info('[BULLMQ] Queues initialized successfully');
   } catch (err: any) {
@@ -176,6 +188,7 @@ export const initQueues = async () => {
       systemQueue = QueueFallbackService.getQueue('systemQueue');
       deadLetterQueue = QueueFallbackService.getQueue('deadLetterQueue');
       mediaQueue = QueueFallbackService.getQueue('mediaQueue');
+      cleanupQueue = QueueFallbackService.getQueue('cleanupQueue');
 
       usingFallback = true;
       queuesInitialized = true;
@@ -198,6 +211,7 @@ export const closeQueues = async () => {
     if (systemQueue) await systemQueue.close();
     if (deadLetterQueue) await deadLetterQueue.close();
     if (mediaQueue) await mediaQueue.close();
+    if (cleanupQueue) await cleanupQueue.close();
   }
   connection.disconnect();
 };

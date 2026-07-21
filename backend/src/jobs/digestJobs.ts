@@ -22,7 +22,11 @@ export const initDigestJobs = async () => {
         };
 
         await NotificationEngine.notify(NotificationEvent.DAILY_SALES_REPORT, {
-          data: todayStats,
+          eventId: 'DIGEST_DAILY',
+          aggregateId: 'SYSTEM',
+          priority: 'low',
+          retryCount: 0,
+          metadata: { payload: todayStats },
         });
 
         logger.info('[DIGEST JOBS] Daily Sales Report generated successfully.');
@@ -48,7 +52,11 @@ export const initDigestJobs = async () => {
         };
 
         await NotificationEngine.notify(NotificationEvent.WEEKLY_REPORT, {
-          data: weeklyStats,
+          eventId: 'DIGEST_WEEKLY',
+          aggregateId: 'SYSTEM',
+          priority: 'low',
+          retryCount: 0,
+          metadata: { payload: weeklyStats },
         });
       } catch (error) {
         logger.error('[DIGEST JOBS] Failed to generate Weekly Report:', error);
@@ -71,7 +79,11 @@ export const initDigestJobs = async () => {
         };
 
         await NotificationEngine.notify(NotificationEvent.MONTHLY_REPORT, {
-          data: monthlyStats,
+          eventId: 'DIGEST_MONTHLY',
+          aggregateId: 'SYSTEM',
+          priority: 'low',
+          retryCount: 0,
+          metadata: { payload: monthlyStats },
         });
       } catch (error) {
         logger.error('[DIGEST JOBS] Failed to generate Monthly Report:', error);

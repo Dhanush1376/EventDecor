@@ -110,7 +110,7 @@ export class WhatsAppWebhookController {
                 try {
                   // Transition the message state
                   // The API Message ID from Meta usually matches `apiMessageId` in our DB
-                  const msgLog = await MessageLifecycleService.transitionTo(
+                  const _msgLog = await MessageLifecycleService.transitionTo(
                     messageId, // We might need to find by apiMessageId
                     status as any, // 'sent', 'delivered', 'read', 'failed'
                     {
