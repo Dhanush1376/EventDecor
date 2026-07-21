@@ -12,7 +12,7 @@ export class EmailAdapter {
     this.providers.push(new SMTPProvider());
   }
 
-  public async send(recipient: any, payload: any, priority: string) {
+  public async send(recipient: any, payload: any, _priority: string) {
     const options: EmailSendOptions = {
       to: recipient.email,
       subject: payload.subject,

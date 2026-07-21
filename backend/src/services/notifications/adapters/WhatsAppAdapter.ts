@@ -5,7 +5,7 @@ export class WhatsAppAdapter {
     return Boolean(process.env.WHATSAPP_API_KEY && process.env.WHATSAPP_PHONE_ID);
   }
 
-  public static async send(recipient: any, payload: any, priority: string) {
+  public static async send(recipient: any, _payload: any, _priority: string) {
     if (!recipient.phone) {
       logger.debug('[WHATSAPP ADAPTER] No phone number provided. Skipping.');
       return { success: false, reason: 'missing_phone' };

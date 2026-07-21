@@ -2,7 +2,7 @@ import logger from '../../../config/logger';
 import AdminNotification from '../../../models/AdminNotification';
 
 export class InAppAdapter {
-  public static async send(recipient: any, payload: any, priority: string) {
+  public static async send(recipient: any, payload: any, _priority: string) {
     try {
       if (recipient.role === 'ADMIN' || recipient.role === 'SUPER_ADMIN') {
         const notification = new AdminNotification({

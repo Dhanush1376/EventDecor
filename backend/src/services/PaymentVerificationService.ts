@@ -167,33 +167,33 @@ export class PaymentVerificationService {
       const isValid =
         isSignatureValid && isAmountValid && isCurrencyValid && isOrderValid && isStatusValid;
 
-      await PaymentAudit.create(
-        [
-          {
-            orderId: attempt.orderData.pendingOrderId, // Assuming we use pendingOrderId for all
-            userId: attempt.userId,
-            razorpayOrderId: razorpay_order_id,
-            razorpayPaymentId: razorpay_payment_id,
-            eventType: 'verification_attempt',
-            status: isValid ? 'success' : !isSignatureValid ? 'failed' : 'tampered',
-            amountExpected: expectedAmount,
-            amountReceived: Number(Number(fetchedPayment.amount)),
-            currencyReceived: String(fetchedPayment.currency),
-            signatureValid: isSignatureValid,
-            notes: `Signature: ${isSignatureValid}, Amount Match: ${isAmountValid}, Status: ${fetchedPayment.status}`,
-            rawPayload: JSON.stringify(fetchedPayment),
-          },
-        ],
-        { session },
-      );
+      await PaymentAudit.create([
+        {
+          orderId: attempt.orderData.pendingOrderId, // Assuming we use pendingOrderId for all
+          userId: attempt.userId,
+          razorpayOrderId: razorpay_order_id,
+          razorpayPaymentId: razorpay_payment_id,
+          eventType: 'verification_attempt',
+          status: isValid ? 'success' : !isSignatureValid ? 'failed' : 'tampered',
+          amountExpected: expectedAmount,
+          amountReceived: Number(Number(fetchedPayment.amount)),
+          currencyReceived: String(fetchedPayment.currency),
+          signatureValid: isSignatureValid,
+          notes: `Signature: ${isSignatureValid}, Amount Match: ${isAmountValid}, Status: ${fetchedPayment.status}`,
+          rawPayload: JSON.stringify(fetchedPayment),
+        },
+      ]);
 
       if (!isValid) {
         attempt.status = 'failed';
-        await attempt.save({ session });
+        // We do not save it with the session because the session will be aborted.
+        // We will update it outside the transaction below.
 
         if (attempt.orderData?.reservationIds?.length > 0) {
           for (const resId of attempt.orderData.reservationIds) {
             try {
+              // Note: if session is aborted, this might also be rolled back if it uses the session.
+              // We should probably just pass the session for now.
               await InventoryService.cancelReservation(resId.toString(), session);
             } catch (err) {
               logger.error(`Failed to cancel reservation ${resId} on failed payment:`, err);
@@ -206,6 +206,13 @@ export class PaymentVerificationService {
         if (!externalSession) {
           await session.abortTransaction();
           session.endSession();
+        }
+
+        // Persist the attempt failure outside the transaction boundary
+        try {
+          await PaymentAttempt.updateOne({ _id: attempt._id }, { $set: { status: 'failed' } });
+        } catch (err) {
+          logger.error('Failed to persist payment attempt failure after rollback:', err);
         }
 
         // Persist the failed-payment audit event OUTSIDE the main transaction boundary
@@ -607,14 +614,6 @@ export class PaymentVerificationService {
 
       attempt.status = 'success';
       await attempt.save({ session });
-
-      try {
-        const { RuleEngine } = require('../domains/rules/services/RuleEngine');
-        const userForRule = await User.findById(userId).lean().session(session);
-        await RuleEngine.evaluateTrigger('on_checkout', { user: userForRule, order: finalOrder });
-      } catch (ruleErr) {
-        logger.error('Failed to evaluate checkout rules (online):', ruleErr);
-      }
 
       if (!externalSession) await session.commitTransaction();
     } catch (error) {

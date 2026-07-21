@@ -7,9 +7,7 @@ import { LifecycleConfig } from '../config/lifecycleConfig';
 async function test() {
   LifecycleConfig.enabled = true;
   LifecycleConfig.dryRun = false;
-  await mongoose.connect(
-    'mongodb+srv://siriadmin:Balusiri.05@cluster0.odfo3tb.mongodb.net/siri-arts-crafts?retryWrites=true&w=majority&appName=Cluster0',
-  );
+  await mongoose.connect(process.env.MONGO_URI as string);
   const job = await mongoose.connection.db
     ?.collection('fallbackjobs')
     .findOne({ jobName: 'clean-all-assets' });

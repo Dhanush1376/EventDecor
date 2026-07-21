@@ -5,7 +5,7 @@ export class SmsAdapter {
     return Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN);
   }
 
-  public static async send(recipient: any, payload: any, priority: string) {
+  public static async send(recipient: any, _payload: any, _priority: string) {
     if (!recipient.phone) {
       logger.debug('[SMS ADAPTER] No phone number provided. Skipping.');
       return { success: false, reason: 'missing_phone' };
