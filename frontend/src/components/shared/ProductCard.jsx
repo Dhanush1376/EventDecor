@@ -128,7 +128,7 @@ export const ProductCard = React.memo(function ProductCard({
         inclusions,
       });
     },
-    { delay: 1200 },
+    { delay: 1000 },
   );
 
   if (loading) {

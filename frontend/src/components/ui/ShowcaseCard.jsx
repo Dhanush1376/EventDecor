@@ -76,7 +76,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
         onOpenShowcase(e);
       }
     },
-    { delay: 2000 },
+    { delay: 1000 },
   );
 
   return (
