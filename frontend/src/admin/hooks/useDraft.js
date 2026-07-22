@@ -52,7 +52,8 @@ export function useDraft({
       setFormDataInternal(initialData);
       formDataRef.current = initialData;
     }
-  }, [initialDataString, initialData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialDataString]);
 
   // Check for existing draft on mount
   useEffect(() => {
