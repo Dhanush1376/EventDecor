@@ -118,8 +118,23 @@ export class WhatsAppRetryService {
     } catch (err: any) {
       log.failureReason = err.message;
       await log.save();
-      // The error will be caught by BullMQ, which triggers the failed listener,
-      // which calls scheduleRetry() again
+
+      // Check for unrecoverable errors like invalid auth tokens to prevent pointless retries
+      const isUnrecoverable =
+        err.message?.includes('OAuth') ||
+        err.message?.includes('access token') ||
+        err.message?.includes('Authentication');
+
+      if (isUnrecoverable) {
+        logger.error(
+          `[WhatsAppRetryService] Unrecoverable error for ${messageLogId}. Skipping retries.`,
+        );
+        await this.moveToDeadLetter(messageLogId);
+        // Do not throw, so the queue considers the job 'handled' and doesn't retry
+        return;
+      }
+
+      // The error will be caught by BullMQ or QueueFallbackService, which triggers a retry
       throw err;
     }
   }
