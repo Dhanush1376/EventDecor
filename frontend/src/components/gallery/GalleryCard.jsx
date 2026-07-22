@@ -34,7 +34,6 @@ const CardContent = React.memo(function CardContent({
       style={{
         minHeight: minH,
         isolation: 'isolate',
-        transform: 'translateZ(0)',
         backfaceVisibility: 'hidden',
         aspectRatio: item.aspectRatio
           ? typeof item.aspectRatio === 'number'

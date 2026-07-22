@@ -203,6 +203,5 @@
     @apply absolute inset-0 -translate-x-full;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
     animation: skeleton-shimmer 2s infinite;
-    will-change: transform;
   }
 }

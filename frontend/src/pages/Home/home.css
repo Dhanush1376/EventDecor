@@ -588,14 +588,12 @@
   transition:
     transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
     box-shadow 0.4s ease;
-  will-change: transform;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  transform: translateZ(0);
 }
 
 .hover-lift-glow:hover {
-  transform: translateY(-8px) translateZ(0);
+  transform: translateY(-8px);
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.12),
     0 0 40px rgba(180, 150, 100, 0.2);
