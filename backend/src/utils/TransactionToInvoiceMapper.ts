@@ -15,11 +15,11 @@ export class TransactionToInvoiceMapper {
   public static async syncInvoice(transaction: ITransaction) {
     try {
       let lineItems: IInvoiceLineItem[] = [];
-      let subtotal = 0;
-      let tax = 0;
-      let discount = 0;
-      let shipping = 0;
-      let totalAmount = transaction.totalAmount;
+      let _subtotal = 0;
+      let _tax = 0;
+      let _discount = 0;
+      let _shipping = 0;
+      let _totalAmount = transaction.totalAmount;
 
       switch (transaction.domain) {
         case 'purchase': {
@@ -31,11 +31,11 @@ export class TransactionToInvoiceMapper {
               unitPrice: item.price,
               total: item.price * item.quantity,
             }));
-            subtotal = order.subtotal || 0;
-            tax = 0; // Legacy order model didn't heavily separate tax, assuming 0 for now
-            discount = order.discount || 0;
-            shipping = order.shippingFee || 0;
-            totalAmount = order.total || transaction.totalAmount;
+            _subtotal = order.subtotal || 0;
+            _tax = 0; // Legacy order model didn't heavily separate tax, assuming 0 for now
+            _discount = order.discount || 0;
+            _shipping = order.shippingFee || 0;
+            _totalAmount = order.total || transaction.totalAmount;
           }
           break;
         }
@@ -56,10 +56,10 @@ export class TransactionToInvoiceMapper {
                 total: rental.securityDeposit,
               },
             ];
-            subtotal = rental.rentalCharge + rental.securityDeposit;
-            tax = rental.tax || 0;
-            shipping = rental.deliveryCharge || 0;
-            totalAmount = rental.totalAmount || transaction.totalAmount;
+            _subtotal = rental.rentalCharge + rental.securityDeposit;
+            _tax = rental.tax || 0;
+            _shipping = rental.deliveryCharge || 0;
+            _totalAmount = rental.totalAmount || transaction.totalAmount;
           }
           break;
         }
@@ -83,10 +83,10 @@ export class TransactionToInvoiceMapper {
               });
             }
             if (event.pricing?.transportationCost) {
-              shipping = event.pricing.transportationCost;
+              _shipping = event.pricing.transportationCost;
             }
-            subtotal = lineItems.reduce((acc, item) => acc + item.total, 0);
-            totalAmount = event.pricing?.totalPrice || transaction.totalAmount;
+            _subtotal = lineItems.reduce((acc, item) => acc + item.total, 0);
+            _totalAmount = event.pricing?.totalPrice || transaction.totalAmount;
           }
           break;
         }
@@ -101,8 +101,8 @@ export class TransactionToInvoiceMapper {
                 total: custom.costEstimation?.total || 0,
               },
             ];
-            subtotal = custom.costEstimation?.total || 0;
-            totalAmount = custom.costEstimation?.total || transaction.totalAmount;
+            _subtotal = custom.costEstimation?.total || 0;
+            _totalAmount = custom.costEstimation?.total || transaction.totalAmount;
           }
           break;
         }

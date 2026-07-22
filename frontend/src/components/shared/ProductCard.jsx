@@ -98,7 +98,11 @@ export const ProductCard = React.memo(function ProductCard({
     return imgs;
   }, [imageSrc, hoverImage, gallery, images]);
 
-  const { longPressTriggered, handlers: longPressHandlers } = useLongPress(
+  const {
+    longPressTriggered,
+    isPressing,
+    handlers: longPressHandlers,
+  } = useLongPress(
     (e) => {
       if (navigator.vibrate) navigator.vibrate(50);
       handleQuickViewAction(e, {
@@ -124,7 +128,7 @@ export const ProductCard = React.memo(function ProductCard({
         inclusions,
       });
     },
-    { delay: 2000 },
+    { delay: 1200 },
   );
 
   if (loading) {
@@ -186,6 +190,7 @@ export const ProductCard = React.memo(function ProductCard({
     e.stopPropagation();
     setIsRippling(true);
     setTimeout(() => setIsRippling(false), 500);
+
     runProtectedAction(() => {
       toggleItem({
         id: productId,
@@ -223,6 +228,8 @@ export const ProductCard = React.memo(function ProductCard({
 
   return (
     <motion.div
+      animate={{ scale: isPressing ? 0.96 : 1 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
       onMouseEnter={() => {
         const route = getProductRoute(itemType, productId);
         prefetchManager.prefetchRoute(route, { kind: 'hover', productId });

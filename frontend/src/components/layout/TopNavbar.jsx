@@ -42,6 +42,20 @@ export function TopNavbar() {
     useCart();
   const { user, isAuthenticated, logout, openAuthModal } = useAuth();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+
+  // Track cart additions for bouncing animation
+  const prevCartCount = React.useRef(cartCount);
+  const [isCartBouncing, setIsCartBouncing] = useState(false);
+
+  useEffect(() => {
+    if (cartCount > prevCartCount.current) {
+      setIsCartBouncing(true);
+      const timer = setTimeout(() => setIsCartBouncing(false), 500);
+      prevCartCount.current = cartCount;
+      return () => clearTimeout(timer);
+    }
+    prevCartCount.current = cartCount;
+  }, [cartCount]);
   const isMobile = useMediaQuery('(max-width: 767px)');
   const isMobileOrTablet = useMediaQuery('(max-width: 1023px)');
   const [_isMoreOpen, setIsMoreOpen] = useState(false);
@@ -395,12 +409,18 @@ export function TopNavbar() {
                   </span>
                 </Link>
 
-                <button
+                <motion.button
                   id="cart-trigger-desktop"
                   onMouseEnter={() => prefetchManager.prefetchRoute('/cart', { kind: 'hover' })}
                   onClick={() => {
                     navigate('/cart');
                   }}
+                  animate={
+                    isCartBouncing
+                      ? { scale: [1, 1.25, 0.9, 1.1, 1], rotate: [0, 10, -10, 5, 0] }
+                      : {}
+                  }
+                  transition={{ duration: 0.5 }}
                   className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-[#d4af37] hover:bg-[#d4af37]/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
                   aria-label="View Bag"
                 >
@@ -420,7 +440,7 @@ export function TopNavbar() {
                       {cartCount}
                     </motion.span>
                   )}
-                </button>
+                </motion.button>
 
                 {!isAuthenticated ? (
                   <button
@@ -707,11 +727,17 @@ export function TopNavbar() {
                           Wishlist
                         </span>
                       </Link>
-                      <button
+                      <motion.button
                         onClick={() => {
                           setIsOpen(false);
                           setIsCartOpen(true);
                         }}
+                        animate={
+                          isCartBouncing
+                            ? { scale: [1, 1.25, 0.9, 1.1, 1], rotate: [0, 10, -10, 5, 0] }
+                            : {}
+                        }
+                        transition={{ duration: 0.5 }}
                         className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors relative cursor-pointer"
                       >
                         <div className="relative">
@@ -728,7 +754,7 @@ export function TopNavbar() {
                           )}
                         </div>
                         <span className="text-[9px] font-bold uppercase tracking-wider">Bag</span>
-                      </button>
+                      </motion.button>
                       {isAuthenticated && (
                         <Link
                           to="/dashboard"

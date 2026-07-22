@@ -1,4 +1,5 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { userService } from '../services/domainServices';
 import { useAuth } from './AuthContext';
 import { WishlistStateContext, WishlistDispatchContext } from './WishlistContext';
@@ -11,6 +12,7 @@ export function WishlistProvider({ children }) {
   const { user, isAuthenticated, runProtectedAction, isAuthInitialized } = useAuth();
   const queryClient = useQueryClient();
   const userId = user?._id || user?.id;
+  const [showHeartOverlay, setShowHeartOverlay] = useState(false);
 
   const isQueryEnabled = Boolean(isAuthInitialized && userId && isAuthenticated);
 
@@ -68,8 +70,13 @@ export function WishlistProvider({ children }) {
         updatedWishlist = previousWishlist.filter(
           (item) => String(item._id || item.id) !== String(product._id || product.id),
         );
+        // Instant feedback for removal
+        toast.success('Removed from Wishlist');
       } else {
         updatedWishlist = [...previousWishlist, product];
+        // Trigger heart animation instantly on optimistic update
+        setShowHeartOverlay(true);
+        setTimeout(() => setShowHeartOverlay(false), 1200);
       }
 
       queryClient.setQueryData(['wishlist'], updatedWishlist);
@@ -81,7 +88,7 @@ export function WishlistProvider({ children }) {
       toast.error(getErrorMessage(err, 'Unable to update wishlist. Please try again.'));
     },
     onSuccess: (data, product, context) => {
-      toast.success(context.isPresent ? 'Removed from Wishlist' : 'Added to Wishlist');
+      // Intentionally left empty as feedback is now optimistic
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] });
@@ -146,6 +153,36 @@ export function WishlistProvider({ children }) {
     <WishlistStateContext.Provider value={stateValue}>
       <WishlistDispatchContext.Provider value={dispatchValue}>
         {children}
+        {/* Global Instagram-style Heart Overlay */}
+        <AnimatePresence>
+          {showHeartOverlay && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5, y: 0 }}
+              animate={{
+                opacity: [0, 1, 1, 0],
+                scale: [0.5, 1.2, 1, 1],
+                y: [0, 0, -20, -60],
+              }}
+              transition={{
+                duration: 1.2,
+                times: [0, 0.2, 0.4, 1],
+                ease: 'easeOut',
+              }}
+              className="fixed inset-0 flex items-center justify-center pointer-events-none z-[9999]"
+            >
+              <span
+                className="material-symbols-outlined text-[#ff2d55] drop-shadow-2xl"
+                style={{
+                  fontSize: '120px',
+                  fontVariationSettings: "'FILL' 1, 'wght' 400",
+                  filter: 'drop-shadow(0 10px 15px rgba(255, 45, 85, 0.3))',
+                }}
+              >
+                favorite
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </WishlistDispatchContext.Provider>
     </WishlistStateContext.Provider>
   );

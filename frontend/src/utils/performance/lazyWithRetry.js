@@ -7,18 +7,15 @@ import { lazy } from 'react';
  */
 export const lazyWithRetry = (componentImport) =>
   lazy(async () => {
-    const pageHasAlreadyBeenForceRefreshed = JSON.parse(
-      window.sessionStorage.getItem('page-has-been-force-refreshed') || 'false',
-    );
-
     try {
-      const component = await componentImport();
-      window.sessionStorage.setItem('page-has-been-force-refreshed', 'false');
-      return component;
+      return await componentImport();
     } catch (error) {
-      if (!pageHasAlreadyBeenForceRefreshed) {
+      const lastReload = window.sessionStorage.getItem('siri_chunk_reload_time');
+      const now = Date.now();
+
+      if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
         // Assume that the error is due to a new deploy (changed chunk hashes)
-        window.sessionStorage.setItem('page-has-been-force-refreshed', 'true');
+        window.sessionStorage.setItem('siri_chunk_reload_time', String(now));
 
         // Unregister service workers first to prevent them from intercepting the reload and serving old cached index.html
         if ('serviceWorker' in navigator) {
@@ -37,7 +34,7 @@ export const lazyWithRetry = (componentImport) =>
         return new Promise(() => {});
       }
 
-      // The page has already been reloaded, so throw the error to be caught by the ErrorBoundary
+      // The page has already been reloaded recently, so throw the error to be caught by the ErrorBoundary
       throw error;
     }
   });
