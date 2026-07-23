@@ -54,7 +54,7 @@ export class GlobalAssetCleanupService {
         query.isDeleted = { $ne: true };
       }
 
-      const count = await Model.countDocuments(query);
+      const count = await Model.collection.countDocuments(query);
       if (count > 0) {
         return { safe: false, reason: `Live ref in ${modelName}` };
       }

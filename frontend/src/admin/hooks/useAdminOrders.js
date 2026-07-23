@@ -80,7 +80,13 @@ const mapDbOrderToFrontend = (o) => {
   };
 };
 
-export function useAdminOrders({ activeRole, safetyLock, logAdminAction }) {
+export function useAdminOrders({
+  activeRole,
+  safetyLock,
+  logAdminAction,
+  setGlobalActionLoading,
+  setGlobalActionMessage,
+}) {
   const [orders, setOrders] = useState([]);
 
   const updateOrderStatus = useCallback(
@@ -94,6 +100,10 @@ export function useAdminOrders({ activeRole, safetyLock, logAdminAction }) {
         return;
       }
       try {
+        if (setGlobalActionLoading) {
+          setGlobalActionMessage(`Updating order status to ${newStatus}...`);
+          setGlobalActionLoading(true);
+        }
         const res = await orderService.updateStatus(orderId, newStatus, note, courierCharges);
         if (res.success) {
           const mapped = res.data ? mapDbOrderToFrontend(res.data) : null;
@@ -110,9 +120,11 @@ export function useAdminOrders({ activeRole, safetyLock, logAdminAction }) {
         }
       } catch (_err) {
         toast.error('Failed to update order status');
+      } finally {
+        if (setGlobalActionLoading) setGlobalActionLoading(false);
       }
     },
-    [activeRole, safetyLock, logAdminAction],
+    [activeRole, safetyLock, logAdminAction, setGlobalActionLoading, setGlobalActionMessage],
   );
 
   const updateOrderNotes = useCallback(
@@ -126,6 +138,10 @@ export function useAdminOrders({ activeRole, safetyLock, logAdminAction }) {
         return;
       }
       try {
+        if (setGlobalActionLoading) {
+          setGlobalActionMessage('Updating order notes...');
+          setGlobalActionLoading(true);
+        }
         const res = await orderService.updateNotes(orderId, notes);
         if (res.success) {
           setOrders((prev) =>
@@ -141,9 +157,11 @@ export function useAdminOrders({ activeRole, safetyLock, logAdminAction }) {
         }
       } catch (_err) {
         toast.error('Failed to update order notes');
+      } finally {
+        if (setGlobalActionLoading) setGlobalActionLoading(false);
       }
     },
-    [activeRole, safetyLock, logAdminAction],
+    [activeRole, safetyLock, logAdminAction, setGlobalActionLoading, setGlobalActionMessage],
   );
 
   const refreshOrders = useCallback(async () => {

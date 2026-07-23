@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import logger from '../../utils/core/logger';
 
-export function useAdminSecurity() {
+export function useAdminSecurity({ setGlobalActionLoading, setGlobalActionMessage } = {}) {
   const { logout } = useAuth();
 
   const [activeRole, setActiveRole] = useState('owner');
@@ -55,6 +55,10 @@ export function useAdminSecurity() {
 
   const clearAuditLogs = useCallback(async () => {
     try {
+      if (setGlobalActionLoading) {
+        setGlobalActionMessage('Clearing audit logs...');
+        setGlobalActionLoading(true);
+      }
       const res = await analyticsService.clearAuditLogs();
       if (res.success) {
         setAuditLogs([]);
@@ -63,13 +67,19 @@ export function useAdminSecurity() {
     } catch (err) {
       logger.error('Failed to clear audit logs:', err);
       toast.error('Failed to clear cloud audit logs');
+    } finally {
+      if (setGlobalActionLoading) setGlobalActionLoading(false);
     }
-  }, []);
+  }, [setGlobalActionLoading, setGlobalActionMessage]);
 
   const toggleSafetyLock = useCallback(async () => {
     const next = !safetyLock;
     setSafetyLock(next);
     try {
+      if (setGlobalActionLoading) {
+        setGlobalActionMessage(next ? 'Enabling safety lock...' : 'Disabling safety lock...');
+        setGlobalActionLoading(true);
+      }
       await cmsService.updateSection('admin_safety_lock', { safetyLock: next });
       logAdminAction('TOGGLE_SAFETY_LOCK', `Global safety write override lock set to ${next}`);
       toast.success(
@@ -79,13 +89,21 @@ export function useAdminSecurity() {
       logger.error('Failed to update backend safety lock:', err);
       setSafetyLock(!next);
       toast.error('Failed to update safety lock on the backend database.');
+    } finally {
+      if (setGlobalActionLoading) setGlobalActionLoading(false);
     }
-  }, [safetyLock, logAdminAction]);
+  }, [safetyLock, logAdminAction, setGlobalActionLoading, setGlobalActionMessage]);
 
   const toggleMaintenanceMode = useCallback(async () => {
     const next = !maintenanceMode;
     setMaintenanceMode(next);
     try {
+      if (setGlobalActionLoading) {
+        setGlobalActionMessage(
+          next ? 'Enabling maintenance mode...' : 'Disabling maintenance mode...',
+        );
+        setGlobalActionLoading(true);
+      }
       await storeSettingsService.updateSection('general', { maintenanceMode: next });
       logAdminAction('TOGGLE_MAINTENANCE', `Global storefront maintenance mode set to ${next}`);
       toast.success(`Maintenance mode is now ${next ? 'ENABLED' : 'DISABLED'}`);
@@ -93,13 +111,19 @@ export function useAdminSecurity() {
       logger.error('Failed to update backend maintenance mode:', err);
       setMaintenanceMode(!next);
       toast.error('Failed to update maintenance mode on the backend database.');
+    } finally {
+      if (setGlobalActionLoading) setGlobalActionLoading(false);
     }
-  }, [maintenanceMode, logAdminAction]);
+  }, [maintenanceMode, logAdminAction, setGlobalActionLoading, setGlobalActionMessage]);
 
   const toggleAutoPublish = useCallback(async () => {
     const next = !autoPublish;
     setAutoPublish(next);
     try {
+      if (setGlobalActionLoading) {
+        setGlobalActionMessage(next ? 'Enabling auto-publish...' : 'Disabling auto-publish...');
+        setGlobalActionLoading(true);
+      }
       await cmsService.updateSection('admin_auto_publish', { autoPublish: next });
       logAdminAction('TOGGLE_AUTO_PUBLISH', `Global auto publish CMS setting set to ${next}`);
       toast.success(`Auto-Publish mode is now ${next ? 'ENABLED' : 'DISABLED'}`);
@@ -107,8 +131,10 @@ export function useAdminSecurity() {
       logger.error('Failed to update backend auto publish setting:', err);
       setAutoPublish(!next);
       toast.error('Failed to update auto publish in database');
+    } finally {
+      if (setGlobalActionLoading) setGlobalActionLoading(false);
     }
-  }, [autoPublish, logAdminAction]);
+  }, [autoPublish, logAdminAction, setGlobalActionLoading, setGlobalActionMessage]);
 
   const changeActiveRole = useCallback(
     (role) => {

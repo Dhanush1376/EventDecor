@@ -29,7 +29,14 @@ const mapDbProductToFrontend = (p) => {
   };
 };
 
-export function useAdminProducts({ activeRole, safetyLock, logAdminAction, queryClient }) {
+export function useAdminProducts({
+  activeRole,
+  safetyLock,
+  logAdminAction,
+  queryClient,
+  setGlobalActionLoading,
+  setGlobalActionMessage,
+}) {
   const [products, setProducts] = useState([]);
   const [productsError, setProductsError] = useState(null);
 
@@ -48,6 +55,10 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
         return;
       }
       try {
+        if (setGlobalActionLoading) {
+          setGlobalActionMessage('Moving to recycle bin...');
+          setGlobalActionLoading(true);
+        }
         const res = await productService.delete(productId);
         if (res.success) {
           setProducts((prev) => prev.filter((p) => (p._id || p.id) !== productId));
@@ -63,9 +74,18 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
         }
       } catch (_err) {
         toast.error('Failed to move product to recycle bin');
+      } finally {
+        if (setGlobalActionLoading) setGlobalActionLoading(false);
       }
     },
-    [activeRole, safetyLock, logAdminAction, queryClient],
+    [
+      activeRole,
+      safetyLock,
+      logAdminAction,
+      queryClient,
+      setGlobalActionLoading,
+      setGlobalActionMessage,
+    ],
   );
 
   const updateProductStatus = useCallback(
@@ -100,6 +120,10 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
       );
 
       try {
+        if (setGlobalActionLoading) {
+          setGlobalActionMessage(`Updating status to ${status}...`);
+          setGlobalActionLoading(true);
+        }
         const res = await productService.updateStatus(productId, status);
         if (res.success) {
           queryClient?.invalidateQueries({ queryKey: ['products'] });
@@ -116,9 +140,18 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
         toast.error(`Failed to update product status`);
         // We'd ideally rollback the optimistic update here, but for simplicity we'll just refetch or rely on next poll
         return false;
+      } finally {
+        if (setGlobalActionLoading) setGlobalActionLoading(false);
       }
     },
-    [activeRole, safetyLock, logAdminAction, queryClient],
+    [
+      activeRole,
+      safetyLock,
+      logAdminAction,
+      queryClient,
+      setGlobalActionLoading,
+      setGlobalActionMessage,
+    ],
   );
 
   const permanentlyDeleteProduct = useCallback(
@@ -136,6 +169,10 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
         return false;
       }
       try {
+        if (setGlobalActionLoading) {
+          setGlobalActionMessage('Deleting product permanently...');
+          setGlobalActionLoading(true);
+        }
         const res = await productService.permanentDelete(productId);
         if (res.success) {
           setProducts((prev) => prev.filter((p) => (p._id || p.id) !== productId));
@@ -156,9 +193,18 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
       } catch (_err) {
         toast.error('Failed to permanently delete product');
         return false;
+      } finally {
+        if (setGlobalActionLoading) setGlobalActionLoading(false);
       }
     },
-    [activeRole, safetyLock, logAdminAction, queryClient],
+    [
+      activeRole,
+      safetyLock,
+      logAdminAction,
+      queryClient,
+      setGlobalActionLoading,
+      setGlobalActionMessage,
+    ],
   );
 
   const toggleProductFeatured = useCallback(
@@ -172,6 +218,10 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
         return;
       }
       try {
+        if (setGlobalActionLoading) {
+          setGlobalActionMessage('Updating featured status...');
+          setGlobalActionLoading(true);
+        }
         const res = await productService.toggleFeatured(productId);
         if (res.success) {
           setProducts((prev) =>
@@ -186,9 +236,18 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
         }
       } catch (_err) {
         toast.error('Failed to update product');
+      } finally {
+        if (setGlobalActionLoading) setGlobalActionLoading(false);
       }
     },
-    [activeRole, safetyLock, logAdminAction, queryClient],
+    [
+      activeRole,
+      safetyLock,
+      logAdminAction,
+      queryClient,
+      setGlobalActionLoading,
+      setGlobalActionMessage,
+    ],
   );
 
   const updateProductStock = useCallback(
@@ -202,6 +261,10 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
         return;
       }
       try {
+        if (setGlobalActionLoading) {
+          setGlobalActionMessage('Updating stock...');
+          setGlobalActionLoading(true);
+        }
         const res = await productService.update(productId, { stock: newStock });
         if (res.success) {
           setProducts((prev) =>
@@ -213,9 +276,11 @@ export function useAdminProducts({ activeRole, safetyLock, logAdminAction, query
         }
       } catch (_err) {
         toast.error('Failed to update stock');
+      } finally {
+        if (setGlobalActionLoading) setGlobalActionLoading(false);
       }
     },
-    [activeRole, safetyLock, queryClient],
+    [activeRole, safetyLock, queryClient, setGlobalActionLoading, setGlobalActionMessage],
   );
 
   const refreshProducts = useCallback(async () => {

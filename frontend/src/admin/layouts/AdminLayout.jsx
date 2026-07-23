@@ -11,6 +11,7 @@ import { AdminTopBar } from '../components/AdminTopBar';
 import { PublishToast } from '../components/AdminUIKit';
 import { AdminErrorBoundary } from '../components/AdminErrorBoundary';
 import { GlobalSearchPalette } from '../components/GlobalSearchPalette';
+import { GlobalActionLoader } from '../components/GlobalActionLoader';
 import { AdminLoader } from '../../components/ui/PageLoader';
 import { lazyWithRetry as lazy } from '../../utils/performance/lazyWithRetry';
 import api from '../../services/api';
@@ -155,6 +156,9 @@ function AdminLayoutInner() {
 
       {/* Global Command & Search Palette */}
       <GlobalSearchPalette isOpen={searchPaletteOpen} onClose={() => setSearchPaletteOpen(false)} />
+
+      {/* Global Action Loader */}
+      <GlobalActionLoader />
 
       <Suspense fallback={null}>
         <AdminInviteModal />

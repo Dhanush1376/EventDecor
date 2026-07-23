@@ -20,6 +20,8 @@ export function useAdminCMS({
   setMaintenanceMode,
   setIdleTimeoutMinutes,
   setAutoPublish,
+  setGlobalActionLoading,
+  setGlobalActionMessage,
 }) {
   const [customCategories, setCustomCategories] = useState(initialCustomCategories);
   const [websiteContent, setWebsiteContent] = useState(initialWebsiteContent);
@@ -121,6 +123,10 @@ export function useAdminCMS({
   const publishContent = useCallback(
     async (section, customData = null) => {
       try {
+        if (setGlobalActionLoading) {
+          setGlobalActionMessage(`Publishing ${section}...`);
+          setGlobalActionLoading(true);
+        }
         const sectionData = customData || websiteContent[section];
         await cmsService.updateSection(section, sectionData);
 
@@ -148,9 +154,14 @@ export function useAdminCMS({
         setTimeout(() => setPublishToast(null), 3000);
       } catch (_err) {
         toast.error(`Failed to publish ${section}`);
+      } finally {
+        if (setGlobalActionLoading) {
+          setGlobalActionLoading(false);
+          setGlobalActionMessage('');
+        }
       }
     },
-    [websiteContent],
+    [websiteContent, setGlobalActionLoading, setGlobalActionMessage],
   );
 
   const updateContent = useCallback(
@@ -205,7 +216,7 @@ export function useAdminCMS({
         for (let i = 0; i < keys.length - 1; i++) {
           const key = keys[i];
           if (!current[key]) current[key] = {};
-          
+
           if (Array.isArray(current[key])) {
             current[key] = [...current[key]];
           } else {
@@ -239,6 +250,11 @@ export function useAdminCMS({
 
   const publishAllContent = useCallback(async () => {
     try {
+      if (setGlobalActionLoading) {
+        setGlobalActionMessage('Publishing all changes...');
+        setGlobalActionLoading(true);
+      }
+
       const sectionsToPublish = Object.entries(websiteContent).filter(
         ([, val]) => val?.status === 'modified',
       );
@@ -312,8 +328,13 @@ export function useAdminCMS({
       setTimeout(() => setPublishToast(null), 3000);
     } catch (_err) {
       toast.error('Failed to publish all content');
+    } finally {
+      if (setGlobalActionLoading) {
+        setGlobalActionLoading(false);
+        setGlobalActionMessage('');
+      }
     }
-  }, [websiteContent]);
+  }, [websiteContent, setGlobalActionLoading, setGlobalActionMessage]);
 
   const resetContent = useCallback((section) => {
     setWebsiteContent((prev) => ({

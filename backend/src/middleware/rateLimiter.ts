@@ -9,10 +9,8 @@ export const skipRateLimit = (req: Request) => {
   if (process.env.TEST_RATE_LIMIT === 'true') return false;
 
   if (process.env.NODE_ENV === 'development') {
-    const ip = req.ip || req.socket.remoteAddress || '';
-    if (ip.includes('127.0.0.1') || ip.includes('::1') || ip === 'localhost') {
-      return true;
-    }
+    // In development mode, skip rate limiting for all IPs to avoid 429s when using Docker or LAN
+    return true;
   }
 
   const path = (req.originalUrl || req.url || '').split('?')[0];

@@ -69,8 +69,13 @@ const AdminContext = createContext(null);
 export function AdminProvider({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
+  const [globalActionLoading, setGlobalActionLoading] = useState(false);
+  const [globalActionMessage, setGlobalActionMessage] = useState('');
 
-  const security = useAdminSecurity();
+  const security = useAdminSecurity({
+    setGlobalActionLoading,
+    setGlobalActionMessage,
+  });
   const cms = useAdminCMS({
     activeRole: security.activeRole,
     safetyLock: security.safetyLock,
@@ -78,8 +83,11 @@ export function AdminProvider({ children }) {
     autoPublish: security.autoPublish,
     setSafetyLock: security.setSafetyLock,
     setMaintenanceMode: security.setMaintenanceMode,
+    setMaintenanceMode: security.setMaintenanceMode,
     setIdleTimeoutMinutes: security.setIdleTimeoutMinutes,
     setAutoPublish: security.setAutoPublish,
+    setGlobalActionLoading,
+    setGlobalActionMessage,
   });
 
   const productsHook = useAdminProducts({
@@ -445,6 +453,10 @@ export function AdminProvider({ children }) {
         setSearchQuery,
         searchPaletteOpen,
         setSearchPaletteOpen,
+        globalActionLoading,
+        setGlobalActionLoading,
+        globalActionMessage,
+        setGlobalActionMessage,
         themeMode,
         lastDataRefresh,
 
