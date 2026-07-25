@@ -224,7 +224,7 @@ export function OtpVerificationForm({
   );
 }
 
-export function AuthSuccessScreen({ MandalaElement }) {
+export function AuthSuccessScreen({ MandalaElement, isNewUser }) {
   return (
     <motion.div
       key="success-screen"
@@ -250,19 +250,21 @@ export function AuthSuccessScreen({ MandalaElement }) {
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10 flex flex-col items-center w-full"
       >
-        {/* Floating Sparkle Icon */}
+        {/* Success Tick Animation */}
         <motion.div
-          initial={{ scale: 0.4, opacity: 0, y: 10 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
+          initial={{ scale: 0.4, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', damping: 15, delay: 0.2 }}
-          className="mb-6 relative"
+          className="mb-6 relative flex items-center justify-center w-20 h-20 rounded-full bg-green-500/10"
         >
           <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', damping: 12, delay: 0.4 }}
+            className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500 shadow-[0_4px_12px_rgba(34,197,94,0.3)]"
           >
-            <span className="material-symbols-outlined text-[42px] text-primary font-light drop-shadow-sm">
-              auto_awesome
+            <span className="material-symbols-outlined text-white text-[32px] font-bold">
+              check
             </span>
           </motion.div>
         </motion.div>
@@ -281,9 +283,9 @@ export function AuthSuccessScreen({ MandalaElement }) {
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="font-display text-[32px] sm:text-[38px] leading-tight text-on-surface font-light tracking-wide"
+            className="font-display text-[24px] sm:text-[28px] leading-tight text-on-surface font-normal tracking-wide"
           >
-            Welcome Back
+            {isNewUser ? 'Welcome' : 'Welcome Back'}
           </motion.h2>
         </div>
 

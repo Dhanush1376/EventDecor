@@ -27,6 +27,7 @@ export interface IProduct extends ISoftDeleted {
   secondaryCategories: mongoose.Types.ObjectId[];
   material?: string;
   tags: string[];
+  tagIds: mongoose.Types.ObjectId[];
   price: number;
   oldPrice?: number;
   rating: number;
@@ -86,6 +87,7 @@ export interface IProduct extends ISoftDeleted {
     id: string | number;
     name: string;
     value: string;
+    valueId?: mongoose.Types.ObjectId;
     price?: number | string;
     stock?: number | string;
   }[];
@@ -145,6 +147,7 @@ const ProductSchema: Schema = new Schema(
     secondaryCategories: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
     material: { type: String, trim: true },
     tags: [{ type: String, trim: true }],
+    tagIds: [{ type: Schema.Types.ObjectId, ref: 'CatalogValue' }],
     price: { type: Number, required: true, min: 0 },
     oldPrice: { type: Number, min: 0 },
     rating: { type: Number, default: 0, min: 0, max: 5 },
@@ -211,6 +214,7 @@ const ProductSchema: Schema = new Schema(
         id: { type: Schema.Types.Mixed },
         name: { type: String, required: true },
         value: { type: String, required: true },
+        valueId: { type: Schema.Types.ObjectId, ref: 'CatalogValue' },
         price: { type: Schema.Types.Mixed },
         stock: { type: Schema.Types.Mixed },
       },

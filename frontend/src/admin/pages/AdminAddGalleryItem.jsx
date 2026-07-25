@@ -22,6 +22,8 @@ export function AdminAddGalleryItem() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
+  const [showAiInput, setShowAiInput] = useState(false);
+  const [aiPromptTitle, setAiPromptTitle] = useState('');
 
   const {
     formData: newItem,
@@ -112,16 +114,17 @@ export function AdminAddGalleryItem() {
   }, [id, isEditing, navigate, setNewItem]);
 
   const handleAiAutofill = () => {
-    if (!newItem.image) {
-      toast.error('Please upload a photo first for AI Vision analysis!');
+    if (!aiPromptTitle.trim()) {
+      toast.error('Please enter a title for AI analysis!');
       return;
     }
-    const loadId = toast.loading('AI Vision analyzing design accents...');
+    const loadId = toast.loading('AI analyzing design accents from title...');
+    setShowAiInput(false);
     setTimeout(() => {
       toast.dismiss(loadId);
       setNewItem((prev) => ({
         ...prev,
-        title: prev.title || 'Royal Jasmine Backdrop',
+        title: aiPromptTitle,
         teluguTitle: prev.teluguTitle || 'స్వర్ణ మల్లె పందిరి',
         customerNote: prev.customerNote || '',
         category: prev.category || 'Traditional',
@@ -135,7 +138,7 @@ export function AdminAddGalleryItem() {
           prev.story ||
           'Inspired by traditional South Indian temple architecture, handcrafted using locally sourced fresh flowers and premium drapes.',
       }));
-      toast.success(' AI populated details');
+      toast.success('AI populated details based on title');
     }, 1200);
   };
 
@@ -328,12 +331,44 @@ export function AdminAddGalleryItem() {
 
             <button
               type="button"
-              onClick={handleAiAutofill}
+              onClick={() => setShowAiInput(!showAiInput)}
               className="w-full py-2.5 rounded-[var(--admin-radius-lg)] bg-[var(--admin-accent)]/10 hover:bg-[var(--admin-accent)] hover:text-white text-[var(--admin-accent)] border border-[var(--admin-accent)]/20 transition-all font-semibold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98]"
             >
               <span className="material-symbols-outlined text-[15px]">auto_awesome</span>
-              AI Autofill from Photo
+              AI Autofill from Title
             </button>
+
+            {showAiInput && (
+              <div className="bg-[var(--admin-surface)] p-4 rounded-xl border border-[var(--admin-border)] mt-4 animate-in fade-in slide-in-from-top-2">
+                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
+                  Enter Title for AI Generation
+                </label>
+                <textarea
+                  value={aiPromptTitle}
+                  onChange={(e) => setAiPromptTitle(e.target.value)}
+                  className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:ring-1 focus:ring-[var(--admin-accent)] rounded-xl px-4 py-2.5 text-[12.5px] mb-3 outline-none transition-all resize-none"
+                  placeholder="e.g. Royal Jasmine Backdrop..."
+                  rows={2}
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAiInput(false)}
+                    className="px-3 py-1.5 text-[11px] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-subtle)] rounded-lg font-bold transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAiAutofill}
+                    disabled={!aiPromptTitle.trim()}
+                    className="px-4 py-1.5 text-[11px] text-white bg-[var(--admin-accent)] rounded-lg font-bold disabled:opacity-50 hover:brightness-110 transition-all cursor-pointer"
+                  >
+                    Generate
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="admin-card p-5 sm:p-6 space-y-4">

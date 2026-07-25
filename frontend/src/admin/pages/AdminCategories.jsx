@@ -19,6 +19,7 @@ export function AdminCategories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [typeFilter, setTypeFilter] = useState('All');
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [isBulkDeactivating, setIsBulkDeactivating] = useState(false);
   const confirm = useConfirm();
@@ -134,6 +135,10 @@ export function AdminCategories() {
     }
   };
 
+  const filteredCategories = categories.filter(
+    (c) => typeFilter === 'All' || c.type === typeFilter,
+  );
+
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader
@@ -171,6 +176,28 @@ export function AdminCategories() {
           variants={fadeUp}
           className="admin-card divide-y divide-[var(--admin-border-subtle)] p-0"
         >
+          {/* Filters Header */}
+          <div className="p-3 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--admin-border-subtle)]">
+            <div className="flex bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)] overflow-x-auto hide-scrollbar">
+              {['All', 'product', 'gallery', 'event'].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTypeFilter(t)}
+                  className={`px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold cursor-pointer transition-all capitalize whitespace-nowrap ${
+                    typeFilter === t
+                      ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                      : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                >
+                  {t === 'All' ? 'All Types' : t}
+                </button>
+              ))}
+            </div>
+            <span className="text-[11px] text-[var(--admin-text-tertiary)] font-medium shrink-0">
+              {filteredCategories.length} categories
+            </span>
+          </div>
+
           {/* Bulk Actions Header */}
           <AnimatePresence>
             {selectedCategories.length > 0 && (
@@ -223,7 +250,8 @@ export function AdminCategories() {
                       <input
                         type="checkbox"
                         checked={
-                          categories.length > 0 && selectedCategories.length === categories.length
+                          filteredCategories.length > 0 &&
+                          selectedCategories.length === filteredCategories.length
                         }
                         onChange={toggleSelectAll}
                         className="admin-checkbox"
@@ -238,7 +266,7 @@ export function AdminCategories() {
                 </tr>
               </thead>
               <tbody>
-                {categories.map((cat) => (
+                {filteredCategories.map((cat) => (
                   <tr
                     key={cat._id}
                     className={`hover:bg-[var(--admin-surface-muted)] transition-colors ${

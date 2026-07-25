@@ -33,6 +33,7 @@ export function AuthModal() {
     googleLoading,
     handleGoogleSuccess,
     handleGoogleError,
+    isNewUser,
   } = useAuthFlow(loginSuccess, isAuthModalOpen);
 
   const [isFocused, setIsFocused] = useState(false);
@@ -157,7 +158,7 @@ export function AuthModal() {
             <div className="relative z-10">
               <AnimatePresence mode="wait">
                 {step === 'success' ? (
-                  <AuthSuccessScreen MandalaElement={MandalaElement} />
+                  <AuthSuccessScreen MandalaElement={MandalaElement} isNewUser={isNewUser} />
                 ) : (
                   <motion.div
                     key="form-container"

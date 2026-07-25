@@ -33,106 +33,20 @@ export function useProductAI({
     fetchConfig();
   }, []);
 
-  const handleAIFill = async (fileObj, selectedProviderId = null) => {
-    // If fileObj is a React synthetic event, ignore it
-    const isEvent = fileObj && fileObj.nativeEvent;
-    const actualFile = isEvent ? null : fileObj;
-
-    if (!actualFile && !formData.imageSrc) {
-      toast.error('Please add an image first');
+  const handleAIFill = async (customTitle, selectedProviderId = null) => {
+    if (!customTitle || typeof customTitle !== 'string') {
+      toast.error('Please enter a title for AI generation.');
       return;
     }
 
     setIsAIGenerating(true);
     setAiError(null);
     try {
-      let imageToAnalyze = actualFile;
-      if (!imageToAnalyze && formData.imageSrc) {
-        if (formData.pendingUploads?.length > 0) {
-          const upload = formData.pendingUploads.find((p) => p.localUrl === formData.imageSrc);
-          if (upload) imageToAnalyze = upload.file;
-        }
-        if (!imageToAnalyze && typeof formData.imageSrc === 'string') {
-          if (formData.imageSrc.startsWith('blob:')) {
-            try {
-              const res = await fetch(formData.imageSrc);
-              imageToAnalyze = await res.blob();
-            } catch (e) {
-              logger.error('Failed to fetch blob URL', e);
-            }
-          } else {
-            imageToAnalyze = formData.imageSrc;
-          }
-        }
-      }
-
-      let finalImageSrc = typeof imageToAnalyze === 'string' ? imageToAnalyze : null;
-
-      const isFileLike =
-        imageToAnalyze instanceof File ||
-        imageToAnalyze instanceof Blob ||
-        (imageToAnalyze &&
-          typeof imageToAnalyze === 'object' &&
-          'size' in imageToAnalyze &&
-          'type' in imageToAnalyze);
-
-      if (isFileLike) {
-        try {
-          const blobToRead =
-            imageToAnalyze instanceof File || imageToAnalyze instanceof Blob
-              ? imageToAnalyze
-              : new Blob([imageToAnalyze], { type: imageToAnalyze.type || 'image/jpeg' });
-
-          finalImageSrc = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              if (!reader.result) {
-                resolve(null);
-                return;
-              }
-              // Resize image using canvas to avoid massive payloads
-              const img = new Image();
-              img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800;
-                const MAX_HEIGHT = 800;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                  if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                  }
-                } else {
-                  if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
-                  }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL(imageToAnalyze.type || 'image/jpeg', 0.8));
-              };
-              img.onerror = () => resolve(reader.result); // Fallback to original
-              img.src = reader.result;
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blobToRead);
-          });
-        } catch (e) {
-          logger.error('Failed to read and resize image', e);
-        }
-      }
-
       const categoryList = categoriesList;
-      const title = formData.title || '';
 
       const generatedData = await productService.aiAutofill(
-        title,
-        finalImageSrc,
+        customTitle,
+        null,
         categoryList,
         selectedProviderId,
       );

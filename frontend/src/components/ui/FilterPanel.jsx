@@ -31,10 +31,12 @@ const FilterSection = ({ title, id, children, activeSections, onToggle }) => (
   </div>
 );
 
-const Checkbox = ({ label, count, type, currentFilters, onToggleFilter }) => {
+const Checkbox = ({ label, count, type, currentFilters, onToggleFilter, isChild = false }) => {
   const isChecked = currentFilters[type]?.includes(label);
   return (
-    <label className="flex items-center justify-between cursor-pointer group py-1 px-2 hover:bg-surface-container-low rounded-lg transition-all duration-300">
+    <label
+      className={`flex items-center justify-between cursor-pointer group py-1 px-2 hover:bg-surface-container-low rounded-lg transition-all duration-300 ${isChild ? 'ml-6 border-l-2 border-outline-variant/30 pl-3' : ''}`}
+    >
       <div className="flex items-center gap-3">
         <div className="relative flex items-center justify-center">
           <input
@@ -53,7 +55,7 @@ const Checkbox = ({ label, count, type, currentFilters, onToggleFilter }) => {
           {label}
         </span>
       </div>
-      {count && (
+      {count !== null && (
         <span className="font-label text-[10px] text-secondary/50 font-bold bg-surface-container border border-outline-variant/10 px-1.5 py-0.5 rounded-full">
           {count}
         </span>
@@ -209,12 +211,13 @@ export function FilterPanel({
     setActiveSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const renderCheckbox = (type, label, count = null) => (
+  const renderCheckbox = (type, label, count = null, isChild = false) => (
     <Checkbox
       key={label}
       type={type}
       label={label}
       count={count}
+      isChild={isChild}
       currentFilters={currentFilters}
       onToggleFilter={onToggleFilter}
     />
@@ -333,9 +336,23 @@ export function FilterPanel({
                   activeSections={activeSections}
                   onToggle={toggleSection}
                 >
-                  {finalOptions.map((opt) =>
-                    renderCheckbox(group.id, opt.value, opt.count > 0 ? opt.count : null),
-                  )}
+                  {finalOptions.map((opt) => (
+                    <div key={opt.value}>
+                      {renderCheckbox(group.id, opt.value, opt.count > 0 ? opt.count : null)}
+                      {opt.children && opt.children.length > 0 && (
+                        <div className="mt-1 mb-2">
+                          {opt.children.map((child) =>
+                            renderCheckbox(
+                              group.id,
+                              child.value,
+                              child.count > 0 ? child.count : null,
+                              true,
+                            ),
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </FilterSection>
               );
             })

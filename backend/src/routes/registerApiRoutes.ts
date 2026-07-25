@@ -74,6 +74,7 @@ export const registerApiRoutes = (
   apiRouter.use('/admin/invites', noCacheMiddleware, lazyRouter('./auth/adminInviteRoutes'));
   apiRouter.use('/admin/approvals', noCacheMiddleware, lazyRouter('./system/approvalRoutes'));
   apiRouter.use('/admin/rules', noCacheMiddleware, lazyRouter('./system/businessRuleRoutes'));
+  apiRouter.use('/admin/catalog', noCacheMiddleware, lazyRouter('./products/catalogHealthRoutes'));
   apiRouter.use('/admin/search', noCacheMiddleware, lazyRouter('./admin/synonymRoutes'));
   apiRouter.use(
     '/admin/operations-center',

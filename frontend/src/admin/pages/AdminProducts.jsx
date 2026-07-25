@@ -53,10 +53,10 @@ export function AdminProducts() {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, type: 'soft', product: null });
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Category states
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [categoryTypeFilter, setCategoryTypeFilter] = useState('All');
   const [isBulkDeletingCategories, setIsBulkDeletingCategories] = useState(false);
   const [isBulkDeactivatingCategories, setIsBulkDeactivatingCategories] = useState(false);
 
@@ -170,6 +170,10 @@ export function AdminProducts() {
       setIsBulkDeactivatingCategories(false);
     }
   };
+
+  const filteredCategories = categories.filter(
+    (c) => categoryTypeFilter === 'All' || c.type === categoryTypeFilter,
+  );
 
   // ─── Products Helpers ───
   const getIsHeroProduct = (productId) => {
@@ -370,6 +374,28 @@ export function AdminProducts() {
             />
           ) : (
             <div className="admin-card divide-y divide-[var(--admin-border-subtle)] p-0">
+              {/* Category Filters Header */}
+              <div className="p-3 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--admin-border-subtle)]">
+                <div className="flex bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)] overflow-x-auto hide-scrollbar">
+                  {['All', 'product', 'gallery', 'event'].map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setCategoryTypeFilter(t)}
+                      className={`px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold cursor-pointer transition-all capitalize whitespace-nowrap ${
+                        categoryTypeFilter === t
+                          ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                          : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+                      }`}
+                    >
+                      {t === 'All' ? 'All Types' : t}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-[11px] text-[var(--admin-text-tertiary)] font-medium shrink-0">
+                  {filteredCategories.length} categories
+                </span>
+              </div>
+
               {/* Bulk Actions Header for Categories */}
               <AnimatePresence>
                 {selectedCategories.length > 0 && (
@@ -422,8 +448,8 @@ export function AdminProducts() {
                           <input
                             type="checkbox"
                             checked={
-                              categories.length > 0 &&
-                              selectedCategories.length === categories.length
+                              filteredCategories.length > 0 &&
+                              selectedCategories.length === filteredCategories.length
                             }
                             onChange={toggleSelectAllCategories}
                             className="admin-checkbox"
@@ -438,7 +464,7 @@ export function AdminProducts() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map((cat) => (
+                    {filteredCategories.map((cat) => (
                       <tr
                         key={cat._id}
                         className={`hover:bg-[var(--admin-surface-muted)] transition-colors ${
@@ -550,8 +576,23 @@ export function AdminProducts() {
 
           <motion.div
             variants={fadeUp}
-            className="admin-card p-2 sm:p-3 hidden md:flex flex-row items-center justify-between gap-2"
+            className="admin-card p-2 sm:p-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2"
           >
+            {/* Mobile Search */}
+            <div className="flex md:hidden w-full">
+              <div className="admin-search-wrapper w-full">
+                <span className="material-symbols-outlined admin-search-icon">search</span>
+                <input
+                  type="text"
+                  placeholder="Search by name or ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="admin-input h-9 w-full"
+                />
+              </div>
+            </div>
+
+            {/* Desktop Search & Filters */}
             <div className="hidden md:flex items-center gap-1.5 flex-1 min-w-0">
               <div className="admin-search-wrapper flex-1 min-w-[200px] max-w-[300px]">
                 <span className="material-symbols-outlined admin-search-icon">search</span>

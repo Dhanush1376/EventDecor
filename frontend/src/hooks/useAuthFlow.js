@@ -14,6 +14,7 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isNewUser, setIsNewUser] = useState(false);
 
   const otpRefs = useRef([]);
   const isSubmittingRef = useRef(false);
@@ -27,6 +28,7 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
     setErrorMsg('');
     setTotpCode('');
     setPending2faUserId(null);
+    setIsNewUser(false);
   }, []);
 
   const sendOTP = async (e) => {
@@ -73,10 +75,14 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
           return;
         }
         if (response.success) {
+          const user = response.data.user;
+          const isNewlyCreated =
+            user?.createdAt && Date.now() - new Date(user.createdAt).getTime() < 120000;
+          setIsNewUser(!!response.data.isNewUser || !!isNewlyCreated);
           setStep('success');
           setTimeout(async () => {
             await loginSuccess(
-              response.data.user,
+              user,
               response.data.accessToken || response.data.token,
               response.data.refreshToken,
             );
@@ -140,10 +146,14 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
           return;
         }
         if (response.success) {
+          const user = response.data.user;
+          const isNewlyCreated =
+            user?.createdAt && Date.now() - new Date(user.createdAt).getTime() < 120000;
+          setIsNewUser(!!response.data.isNewUser || !!isNewlyCreated);
           setStep('success');
           setTimeout(async () => {
             await loginSuccess(
-              response.data.user,
+              user,
               response.data.accessToken || response.data.token,
               response.data.refreshToken,
             );
@@ -294,5 +304,6 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
     googleLoading,
     handleGoogleSuccess,
     handleGoogleError,
+    isNewUser,
   };
 }

@@ -5,6 +5,8 @@ import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import mongoose from 'mongoose';
 import { AIClient } from './ai/aiClient';
+import { AiPromptContextBuilder } from './AiPromptContextBuilder';
+import { NormalizationEngine } from './NormalizationEngine';
 export class ProductAiService {
   /**
    * AI Autofill Product - Extract object, materials, and generate customer-friendly details
@@ -112,6 +114,8 @@ export class ProductAiService {
       }
     }
 
+    const context = await AiPromptContextBuilder.buildContext(categoryList?.[0]);
+
     const prompt = `
       You are an expert Indian handicraft catalog analyst for "Siri Arts & Crafts", a premium wedding and festive decor ecommerce platform.
       Your job is to analyze the uploaded product image carefully and extract ONLY accurate, clean, customer-friendly information.
@@ -128,6 +132,15 @@ export class ProductAiService {
       STAGE 7 — QUANTITY ESTIMATION: Using the image, title, description, and price, estimate the quantity of items visible (e.g. number of cones, pieces, packs, trays, baskets). Use "approximately" when estimating.
 
       Available Store Categories: ${JSON.stringify(categoryList || [])}
+      
+      APPROVED ATTRIBUTE VALUES (use these whenever possible):
+      Colors: ${JSON.stringify(context.allowedColors)}
+      Materials: ${JSON.stringify(context.allowedMaterials)}
+      Sizes: ${JSON.stringify(context.allowedSizes)}
+      Existing Tags: ${JSON.stringify(context.existingTags.slice(0, 30))}
+      
+      CRITICAL: Use ONLY pre-approved values. Only suggest new values if nothing fits.
+      If suggesting a new value, set its confidence below 70.
 
       CRITICAL RULES FOR CUSTOMER-FRIENDLY NAMING:
       1. THE ENGLISH TITLE MUST BE SHORT & CLEAN: Keep the "english_title" strictly within 2 to 5 words (e.g., "Lotus Gifting Crate", "Floral Ring Tray", "Traditional Garland Basket", "Royal Haldi Setup", "Coconut Welcome Decor", "Wedding Entrance Decor").
@@ -295,6 +308,22 @@ export class ProductAiService {
 
       parsedData.slug = currentSlug;
       parsedData.english_title = currentTitle;
+
+      // Pass AI output through NormalizationEngine
+      parsedData.colors = await NormalizationEngine.normalizeValueList(
+        'color',
+        parsedData.colors || [],
+      );
+      parsedData.materials = await NormalizationEngine.normalizeValueList(
+        'material',
+        parsedData.materials || [],
+      );
+      parsedData.tags = (
+        await NormalizationEngine.normalizeTags(parsedData.tags || [])
+      ).displayTags;
+      parsedData.suggested_variants = await NormalizationEngine.normalizeVariants(
+        parsedData.suggested_variants || [],
+      );
 
       return parsedData;
     } catch (err) {

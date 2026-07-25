@@ -155,6 +155,7 @@ const AdminCustomers = lazy(() =>
 const AdminWarehouseHub = lazy(() => import('../admin/pages/AdminWarehouseHub'));
 const AdminProductionHub = lazy(() => import('../admin/pages/AdminProductionHub'));
 const AdminBusinessRules = lazy(() => import('../admin/pages/AdminBusinessRules'));
+const AdminCatalogRegistry = lazy(() => import('../admin/pages/AdminCatalogRegistry'));
 
 const AdminWhatsAppAutomations = lazy(() =>
   import('../admin/pages/AdminWhatsAppAutomations').then((m) => ({
@@ -378,6 +379,7 @@ export function AppRoutes() {
               <Route path="drafts" element={<AdminDrafts />} />
               <Route path="homepage" element={<AdminContent />} />
               <Route path="products" element={<AdminProducts />} />
+              <Route path="catalog-registry" element={<AdminCatalogRegistry />} />
               <Route path="inventory" element={<AdminInventory />} />
               <Route path="settings" element={<AdminSettings />} />
 

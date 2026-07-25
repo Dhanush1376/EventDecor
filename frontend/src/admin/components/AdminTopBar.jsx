@@ -158,6 +158,15 @@ export function AdminTopBar() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* Mobile Search Button */}
+          <button
+            onClick={() => setSearchPaletteOpen(true)}
+            className="md:hidden admin-btn-icon min-h-0 p-2"
+            aria-label="Open Search"
+          >
+            <span className="material-symbols-outlined text-[20px]">search</span>
+          </button>
+
           {/* Auto-Publish Toggle — Desktop */}
           <div className="hidden xl:flex items-center gap-2 px-1 py-1.5 select-none">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-text-secondary)]">

@@ -87,9 +87,25 @@ export function StickyMobileATC({ product, triggerRef }) {
             <span className="font-label text-[8px] uppercase tracking-[0.25em] text-stone-500 font-bold leading-none">
               Price
             </span>
-            <p className="font-display text-[18px] text-black font-medium leading-none mt-1.5">
-              ₹{product?.price?.toLocaleString('en-IN')}
-            </p>
+            <div className="flex items-end gap-2 mt-1.5">
+              <p className="font-display text-[18px] text-black font-medium leading-none">
+                ₹{product?.price?.toLocaleString('en-IN')}
+              </p>
+              {(product?.strikingPrice ||
+                product?.oldPrice ||
+                product?.originalPrice ||
+                product?.mrp) && (
+                <p className="font-display text-[12px] text-stone-400 line-through leading-none mb-0.5">
+                  ₹
+                  {(
+                    product?.strikingPrice ||
+                    product?.oldPrice ||
+                    product?.originalPrice ||
+                    product?.mrp
+                  )?.toLocaleString('en-IN')}
+                </p>
+              )}
+            </div>
           </div>
 
           <button

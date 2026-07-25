@@ -220,7 +220,7 @@ export function RecommendationSystem({
               className={
                 horizontalScroll
                   ? `flex gap-4 lg:gap-6 ${compact ? 'pb-2' : 'pb-4'} overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar touch-pan-x`
-                  : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pb-6'
+                  : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 sm:gap-x-4 lg:gap-x-6 gap-y-6 sm:gap-y-8 lg:gap-y-10 pb-6'
               }
             >
               {activeList.map((product, idx) => {

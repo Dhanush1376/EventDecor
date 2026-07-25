@@ -43,6 +43,7 @@ export function AdminGallery() {
   const [editingId, setEditingId] = useState(null);
   const {
     searchQuery,
+    setSearchQuery,
     customCategories,
     addCustomCategory,
     updateCustomCategory,
@@ -234,34 +235,49 @@ export function AdminGallery() {
 
       {/* ─── Filters ─── */}
       <motion.div variants={fadeUp} className="space-y-4">
-        {/* Type Filter */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)]">
-            {[
-              { id: 'All', label: 'All Items' },
-              { id: 'inspiration', label: 'Inspirations' },
-              { id: 'real-event', label: 'Real Events' },
-            ].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTypeFilter(t.id)}
-                className={`px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold cursor-pointer transition-all ${
-                  typeFilter === t.id
-                    ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
-                    : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+        {/* Search & Type Filter Row */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="admin-search-wrapper w-full md:flex-1 md:max-w-[320px]">
+            <span className="material-symbols-outlined admin-search-icon text-[18px]">search</span>
+            <input
+              type="text"
+              placeholder="Search by title, event, tags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="admin-input h-9 w-full text-[12px]"
+            />
           </div>
-          <span className="text-[11px] text-[var(--admin-text-tertiary)] font-medium">
-            {filtered.length} items
-          </span>
+
+          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+            <div className="flex bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)] shrink-0">
+              {[
+                { id: 'All', label: 'All Items' },
+                { id: 'inspiration', label: 'Inspirations' },
+                { id: 'real-event', label: 'Real Events' },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTypeFilter(t.id)}
+                  className={`px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold cursor-pointer transition-all ${
+                    typeFilter === t.id
+                      ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                      : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Category Filter */}
-        <FilterBar filters={categories} value={filter} onChange={setFilter} />
+        <div className="flex items-center justify-between gap-4">
+          <FilterBar filters={categories} value={filter} onChange={setFilter} />
+          <span className="text-[11px] text-[var(--admin-text-tertiary)] font-medium shrink-0 hidden sm:block">
+            {filtered.length} items
+          </span>
+        </div>
       </motion.div>
 
       {/* ─── Gallery Grid ─── */}

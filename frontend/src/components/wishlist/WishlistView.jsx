@@ -404,7 +404,7 @@ export function WishlistView({ isEmbedded = false }) {
                     <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
                   </Link>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 sm:gap-x-4 lg:gap-x-6 gap-y-6 sm:gap-y-8 lg:gap-y-10">
                   {trendingLoading
                     ? [...Array(4)].map((_, i) => <ProductCard key={i} loading={true} />)
                     : trendingProducts.map((prod) => (
@@ -446,7 +446,7 @@ export function WishlistView({ isEmbedded = false }) {
             /* Grid Layout matching retail platforms with smooth staggered micro-animations */
             <motion.div
               layout
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 sm:gap-x-4 lg:gap-x-6 gap-y-6 sm:gap-y-8 lg:gap-y-10"
             >
               <AnimatePresence>
                 {filteredItems.map((item, _index) => (

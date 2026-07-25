@@ -21,7 +21,9 @@ import {
   enforceSmartPricing,
   normalizeProductImages,
   resolveCategories,
+  normalizeProductAttributes,
 } from './productWriteNormalization';
+import FilterService from './FilterService';
 
 ReferenceIntegrityService.register('Product', [
   { targetModel: 'Review', targetField: 'product', action: 'softDelete' },
@@ -416,6 +418,7 @@ class ProductService {
 
       normalizeProductImages(data);
       await resolveCategories(data);
+      await normalizeProductAttributes(data);
       enforceSmartPricing(data);
 
       if (!data.productUuid) {
@@ -489,6 +492,7 @@ class ProductService {
 
       try {
         emitAdminEvent('product_update', { productId: saved._id });
+        emitAdminEvent('catalog_update', { type: 'product_saved' });
         emitGlobalUserEvent('product_update', { productId: saved._id });
       } catch (e) {
         logger.warn('Failed to emit product update event', e);
@@ -497,6 +501,7 @@ class ProductService {
       logger.info('[CATEGORY CACHE] Purging distinct categories cache due to new product creation');
       categoryCache.delete('product:distinct_categories');
       productCountCache.clear();
+      FilterService.clearCache();
       await bumpPublicCacheVersion();
 
       return saved;
@@ -530,6 +535,7 @@ class ProductService {
 
       normalizeProductImages(data, oldProduct as IProduct);
       await resolveCategories(data);
+      await normalizeProductAttributes(data);
       enforceSmartPricing(data, oldProduct as IProduct);
 
       const updateData = { ...data };
@@ -585,6 +591,7 @@ class ProductService {
 
       try {
         emitAdminEvent('product_update', { productId: product._id });
+        emitAdminEvent('catalog_update', { type: 'product_saved' });
         emitGlobalUserEvent('product_update', { productId: product._id });
         if (oldProduct.stock !== product.stock) {
           emitAdminEvent('stock_update', { productId: product._id, stock: product.stock });
@@ -597,6 +604,7 @@ class ProductService {
       logger.info('[CATEGORY CACHE] Purging distinct categories cache due to product update');
       categoryCache.delete('product:distinct_categories');
       productCountCache.clear();
+      FilterService.clearCache();
       await bumpPublicCacheVersion();
       return product;
     } catch (err) {

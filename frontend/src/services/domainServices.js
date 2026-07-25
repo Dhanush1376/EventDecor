@@ -1,4 +1,5 @@
 export { authService } from './api/authService';
+export { catalogService } from './api/catalogService';
 export { productService } from './api/productService';
 export { orderService } from './api/orderService';
 export { eventService } from './api/eventService';

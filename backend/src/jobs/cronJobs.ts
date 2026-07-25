@@ -20,6 +20,7 @@ import { startDocumentBackupJob } from './S3SyncJob';
 import { runRecycleBinAutoPurge } from './recycleBinPurgeJob';
 import { sweepPendingDeletes } from './pendingDeleteSweeper';
 import { runDeadDataScan } from './deadDataDetector';
+import { CatalogHealthJob } from './catalogHealthJob';
 
 export const initJobs = () => {
   if (process.env.ENABLE_CRON === 'false') {
@@ -44,6 +45,13 @@ export const initJobs = () => {
   cron.schedule('0 2 * * *', async () => {
     await withCronLock('media-integrity-check', 7200, async () => {
       await runMediaIntegrityCheck();
+    });
+  });
+
+  // Catalog Health Scan every night at 1:30 AM
+  cron.schedule('30 1 * * *', async () => {
+    await withCronLock('catalog-health-scan', 3600, async () => {
+      await CatalogHealthJob.run();
     });
   });
 

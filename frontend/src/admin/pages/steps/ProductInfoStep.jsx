@@ -14,6 +14,8 @@ export function ProductInfoStep({
   aiError,
 }) {
   const [selectedProviderId, setSelectedProviderId] = useState(null);
+  const [showAiInput, setShowAiInput] = useState(false);
+  const [aiPromptTitle, setAiPromptTitle] = useState('');
 
   return (
     <div className="space-y-5">
@@ -32,7 +34,7 @@ export function ProductInfoStep({
           />
           <button
             type="button"
-            onClick={() => handleAIFill(null, selectedProviderId)}
+            onClick={() => setShowAiInput(!showAiInput)}
             disabled={isAIGenerating}
             className="bg-[var(--admin-accent)] text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer shrink-0"
             title="Auto-Fill with AI"
@@ -45,12 +47,47 @@ export function ProductInfoStep({
               </span>
             )}
             <span className="hidden sm:inline">
-              {isAIGenerating ? 'Analyzing Image & Title...' : 'Auto-Fill with AI'}
+              {isAIGenerating ? 'Generating...' : 'Auto-Fill with AI'}
             </span>
             <span className="sm:hidden">{isAIGenerating ? 'AI...' : 'AI Fill'}</span>
           </button>
         </div>
       </div>
+
+      {showAiInput && (
+        <div className="bg-[var(--admin-surface)] p-4 rounded-xl border border-[var(--admin-border)] mb-4 mt-4 animate-in fade-in slide-in-from-top-2">
+          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
+            Enter Title for AI Generation
+          </label>
+          <textarea
+            value={aiPromptTitle}
+            onChange={(e) => setAiPromptTitle(e.target.value)}
+            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:ring-1 focus:ring-[var(--admin-accent)] rounded-xl px-4 py-2.5 text-[12.5px] mb-3 outline-none transition-all resize-none"
+            placeholder="e.g. Traditional Brass Diya..."
+            rows={2}
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAiInput(false)}
+              className="px-3 py-1.5 text-[11px] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-subtle)] rounded-lg font-bold transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowAiInput(false);
+                handleAIFill(aiPromptTitle, selectedProviderId);
+              }}
+              disabled={!aiPromptTitle.trim()}
+              className="px-4 py-1.5 text-[11px] text-white bg-[var(--admin-accent)] rounded-lg font-bold disabled:opacity-50 hover:brightness-110 transition-all cursor-pointer"
+            >
+              Generate
+            </button>
+          </div>
+        </div>
+      )}
 
       {aiError && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3 mt-4 mb-2 shadow-sm animate-in fade-in slide-in-from-top-2">
@@ -102,14 +139,21 @@ export function ProductInfoStep({
 
         <div className="col-span-2 sm:col-span-1">
           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
-            Slug (auto-fills if empty)
+            Slug (auto-generated from title)
           </label>
           <input
             type="text"
-            value={formData.slug}
-            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+            readOnly
+            value={
+              formData.title
+                ? formData.title
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '')
+                : ''
+            }
             placeholder="vintage-teak-mirror"
-            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+            className="w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all border border-transparent opacity-70 cursor-not-allowed text-[var(--admin-text-primary)] font-medium"
           />
         </div>
 

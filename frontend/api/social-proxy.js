@@ -56,6 +56,25 @@ export default async function handler(req, res) {
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
       return res.status(200).send(html);
     } else {
+      // Fallback: Fetch the index.html from the domain itself to serve the SPA
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      if (host) {
+        try {
+          const baseUrl = `${protocol}://${host}`;
+          const response = await fetch(baseUrl);
+          if (response.ok) {
+            const html = await response.text();
+            res.setHeader('Content-Type', 'text/html');
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+            return res.status(200).send(html);
+          }
+        } catch (fetchErr) {
+          console.error('Error fetching index.html from host:', fetchErr);
+        }
+      }
+
+      // Ultimate fallback: meta refresh (which causes the reported issue, but as a last resort)
       res.setHeader('Content-Type', 'text/html');
       return res
         .status(200)

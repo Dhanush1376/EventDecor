@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function ProductSeoStep({ formData, setFormData, focusedField }) {
+export function ProductSeoStep({ formData }) {
   return (
     <div className="space-y-5">
       <div>
@@ -19,14 +19,10 @@ export function ProductSeoStep({ formData, setFormData, focusedField }) {
           </label>
           <input
             type="text"
-            value={formData.seoTitle}
-            onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
+            readOnly
+            value={formData.title ? `${formData.title} | Siri Arts & Crafts` : ''}
             placeholder="SEO Page Title"
-            className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all  ${
-              focusedField === 'seoTitle'
-                ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
-                : 'border border-transparent focus:border-[var(--admin-accent)]/40 focus:bg-white'
-            }`}
+            className="w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all border border-transparent opacity-70 cursor-not-allowed text-[var(--admin-text-primary)] font-medium"
           />
         </div>
 
@@ -36,14 +32,10 @@ export function ProductSeoStep({ formData, setFormData, focusedField }) {
           </label>
           <textarea
             rows={3}
-            value={formData.seoDescription}
-            onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
+            readOnly
+            value={formData.description || ''}
             placeholder="SEO Meta Description"
-            className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all  resize-none ${
-              focusedField === 'seoDescription'
-                ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
-                : 'border border-transparent focus:border-[var(--admin-accent)]/40 focus:bg-white'
-            }`}
+            className="w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all resize-none border border-transparent opacity-70 cursor-not-allowed text-[var(--admin-text-primary)] font-medium"
           />
         </div>
 
@@ -54,14 +46,13 @@ export function ProductSeoStep({ formData, setFormData, focusedField }) {
             <span className="text-[#5f6368]"> › products › {formData.slug || 'jharokha'}</span>
           </div>
           <h4 className="text-[#1a0dab] text-[18px] hover:underline cursor-pointer leading-tight font-medium font-sans">
-            {formData.seoTitle ||
-              formData.title ||
-              'Buy Luxury Handcrafted Traditional Decor Items Online'}
+            {formData.title
+              ? `${formData.title} | Siri Arts & Crafts`
+              : 'Buy Luxury Handcrafted Traditional Decor Items Online'}
           </h4>
           <p className="text-[#4d5156] text-[12.5px] leading-relaxed font-normal">
             <span className="text-[#70757a]">17 May 2026 — </span>
-            {formData.seoDescription ||
-              formData.description ||
+            {formData.description ||
               'Discover organic handcrafted Urli bowls, Rosewood Jharokha mirrors, traditional brass artifacts for wedding backdrops at Siri Arts & Crafts.'}
           </p>
         </div>

@@ -3,6 +3,7 @@ import { IProduct } from '../models/Product';
 import Category from '../models/Category';
 import { CategoryService } from './CategoryService';
 import ApiError from '../utils/ApiError';
+import { NormalizationEngine } from './NormalizationEngine';
 
 // Product write-path normalization helpers extracted from productService.ts:
 // smart rental pricing, image de-duplication/limits, and category resolution.
@@ -160,5 +161,28 @@ export async function resolveCategories(data: any) {
       }
     }
     data.secondaryCategories = resolvedSec;
+  }
+}
+
+export async function normalizeProductAttributes(data: Partial<IProduct>) {
+  if (data.variants?.length) {
+    data.variants = await NormalizationEngine.normalizeVariants(data.variants);
+  }
+
+  if (data.tags?.length || typeof data.tags === 'string') {
+    const tagArray =
+      typeof data.tags === 'string'
+        ? (data.tags as string)
+            .split(',')
+            .map((t: string) => t.trim())
+            .filter(Boolean)
+        : data.tags;
+    const { tagIds, displayTags } = await NormalizationEngine.normalizeTags(tagArray as string[]);
+    data.tags = displayTags;
+    data.tagIds = tagIds;
+  }
+
+  if (data.material) {
+    data.material = await NormalizationEngine.normalizeMaterial(data.material);
   }
 }

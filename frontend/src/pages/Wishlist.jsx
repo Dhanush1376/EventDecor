@@ -15,7 +15,8 @@ export function Wishlist() {
       <MandalaArtDecor
         variant={3}
         size={450}
-        className="-top-24 -right-24 absolute opacity-[0.06] z-0"
+        opacity={0.02}
+        className="-top-24 -right-24 absolute opacity-[0.02] z-0 pointer-events-none"
         spinDuration={240}
       />
       <div className="relative z-10">
