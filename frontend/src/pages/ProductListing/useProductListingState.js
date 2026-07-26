@@ -204,6 +204,9 @@ export function useProductListingState() {
     }
   }, [setSearchParams, visualSearch]);
 
+  console.log('[DEBUG] productsData:', productsData);
+  console.log('[DEBUG] products:', products);
+
   return useMemo(
     () => ({
       searchParams,

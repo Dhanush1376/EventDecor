@@ -7,7 +7,7 @@ export class AiPromptContextBuilder {
    * Only sends relevant approved attributes to reduce AI hallucinations.
    * Optionally takes a category array (e.g., ["Ring Tray", "Wedding"]) to apply business rules.
    */
-  static async buildContext(categories: string[] = []): Promise<{
+  static async buildContext(_categories: string[] = []): Promise<{
     allowedColors: string[];
     allowedMaterials: string[];
     allowedSizes: string[];

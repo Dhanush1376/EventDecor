@@ -108,12 +108,10 @@ export class CatalogHealthController {
       if (!value) return res.status(404).json({ success: false, message: 'Not found' });
 
       if (value.usageCount > 0) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: 'Cannot delete value currently in use by products. Merge it instead.',
-          });
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot delete value currently in use by products. Merge it instead.',
+        });
       }
 
       await CatalogSynonym.deleteMany({ valueId: id });
@@ -206,7 +204,7 @@ export class CatalogHealthController {
         term: source.value,
         termSlug: source.slug,
         type: 'synonym',
-      }).catch((e) => {
+      }).catch((_e) => {
         /* Ignore duplicate key error if synonym already exists */
       });
 

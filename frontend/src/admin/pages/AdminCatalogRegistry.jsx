@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { PageHeader, fadeUp, stagger, StatCard, SkeletonDashboard } from '../components/AdminUIKit';
 import { catalogService } from '../../services/domainServices';
 import { toast } from 'react-hot-toast';
 import {
-  Settings,
   CheckCircle,
   Clock,
   AlertTriangle,
   Layers,
-  Type,
-  Hash,
   ShieldCheck,
   Database,
   RefreshCw,
@@ -49,6 +46,7 @@ export default function AdminCatalogRegistry() {
     } else if (activeTab === 'learning') {
       fetchLearning();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, activeAttribute, searchQuery]);
 
   const fetchStats = async () => {

@@ -48,18 +48,10 @@ export const getApiConfig = () => {
     'local';
 
   let baseUrl;
-  let configured = '';
-
-  if (isDev) {
-    configured = import.meta.env.VITE_API_URL?.trim() || '';
-    const pointsToLocalBackend =
-      !configured || /localhost:5000|127\.0\.0\.1:5000/i.test(configured);
-    baseUrl = pointsToLocalBackend ? '/api/v1' : normalizeApiBase(configured);
-  } else {
-    // Force relative same-origin proxy routing to bypass ISP/carrier blocks on the direct Railway domain
-    const productionBase = '/api/v1';
-    baseUrl = normalizeApiBase(productionBase);
-  }
+  // Force relative same-origin proxy routing to bypass ISP/carrier blocks on the direct domain.
+  // This works universally: Vercel rewrites it in production, and Vite server proxies it in development.
+  const proxyBase = '/api/v1';
+  baseUrl = normalizeApiBase(proxyBase);
 
   const apiRootUrl = baseUrl.startsWith('/') ? '/api' : baseUrl.replace(/\/v1\/?$/, '');
 
@@ -69,7 +61,6 @@ export const getApiConfig = () => {
     apiOrigin: resolveOrigin(baseUrl),
     isDev,
     deployVersion,
-    configuredUrl: configured,
   };
 
   return cachedConfig;
