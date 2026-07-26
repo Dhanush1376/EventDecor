@@ -85,7 +85,7 @@ jobs:
       # Fail the build on critical/high severity vulnerabilities in production deps
       - name: Audit Backend Dependencies
         working-directory: backend
-        run: npm audit --audit-level=critical --omit=dev
+        run: npm audit --audit-level=critical
 
       - name: Validate Backend Environment
         working-directory: backend
@@ -116,7 +116,7 @@ jobs:
       # Fail the build on critical/high severity vulnerabilities in production deps
       - name: Audit Frontend Dependencies
         working-directory: frontend
-        run: npm audit --audit-level=critical --omit=dev
+        run: npm audit --audit-level=critical
 
       - name: Validate Frontend Environment
         working-directory: frontend
