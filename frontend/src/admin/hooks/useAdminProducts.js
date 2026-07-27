@@ -285,7 +285,7 @@ export function useAdminProducts({
 
   const refreshProducts = useCallback(async () => {
     try {
-      const res = await productService.getAdminAll({ limit: 100 });
+      const res = await productService.getAdminAll({ limit: 999999 });
       if (res.success) {
         const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
         setProducts(list.map(mapDbProductToFrontend));

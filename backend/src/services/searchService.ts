@@ -115,7 +115,7 @@ export async function getAutocomplete(
   }
 
   // Check cache
-  const cacheKey = `${normalizedQuery}_${limit}`;
+  const cacheKey = `${normalizedQuery}_${limit}_v3`;
   const cached = await getSearchCache<{
     suggestions: AutocompleteResult[];
     predictedCategories: string[];
@@ -173,6 +173,8 @@ export async function getAutocomplete(
     const predictedCategories = predictCategories(baseSearchQuery);
 
     // Query SearchIndex instead of raw models
+    // Fetch a larger pool to allow in-memory scoring to bubble up the best matches
+    const poolLimit = 50;
     const indexResults = await SearchIndex.find({
       isActive: true,
       entityType: { $ne: 'Gallery' },
@@ -183,18 +185,19 @@ export async function getAutocomplete(
       ],
     })
       .sort({ popularity: -1, adminBoost: -1 })
-      .limit(limit)
+      .limit(poolLimit)
       .lean();
 
     const suggestions: AutocompleteResult[] = [];
 
     // Add category suggestions first
-    for (const cat of predictedCategories.slice(0, 2)) {
+    for (const rawCat of predictedCategories.slice(0, 2)) {
+      const cat = getMatchingProductCategory(rawCat) || rawCat;
       suggestions.push({
         id: `cat:${cat}`,
         title: cat,
         type: 'category',
-        score: 1.2,
+        score: 1000,
       });
     }
 
@@ -217,25 +220,30 @@ export async function getAutocomplete(
     for (const item of indexResults) {
       if (pinnedIds.has(item.entityId.toString())) continue;
 
-      suggestions.push({
-        id: item.entityId.toString(),
-        title: item.title,
-        type: item.entityType.toLowerCase() as any,
-        image: item.image,
-        price: item.price,
-        slug: item.slug,
-        score:
-          computeSearchScore(
-            item.title,
-            '',
-            [],
-            baseSearchQuery,
-            undefined,
-            undefined,
-            [],
-            item.ngrams,
-          ) * (item.adminBoost || 1),
-      });
+      const itemScore =
+        computeSearchScore(
+          item.title,
+          '',
+          [],
+          baseSearchQuery,
+          undefined,
+          undefined,
+          [],
+          item.ngrams,
+        ) * (item.adminBoost || 1);
+
+      // Only add items that have a reasonable match score (avoids showing unrelated items that matched a 1-char ngram)
+      if (itemScore > 0.3) {
+        suggestions.push({
+          id: item.entityId.toString(),
+          title: item.title,
+          type: item.entityType.toLowerCase() as any,
+          image: item.image,
+          price: item.price,
+          slug: item.slug,
+          score: itemScore,
+        });
+      }
     }
 
     // Sort by score

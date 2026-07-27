@@ -224,12 +224,11 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
 
       {/* 2. REFINED INFO SECTION */}
       <div className="py-2.5 sm:py-3 lg:py-4 flex flex-col flex-1">
-        <div className="flex items-center gap-1 mb-1 sm:mb-1.5 lg:mb-2">
-          <span className="text-black/60 font-label text-[7.5px] sm:text-[8px] lg:text-[9px] uppercase tracking-[0.1em] sm:tracking-[0.15em] lg:tracking-[0.2em] font-bold truncate flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2 mb-2 sm:mb-2.5 lg:mb-3">
+          <span className="bg-surface-container-highest/40 border border-black/15 text-black/70 font-label uppercase text-[7.5px] sm:text-[8px] lg:text-[9px] tracking-[0.1em] sm:tracking-[0.15em] lg:tracking-[0.2em] px-2 py-[4px] rounded-md font-bold truncate min-w-0 max-w-max">
             {formattedCat}
           </span>
 
-          <div className="w-0.5 h-0.5 rounded-full bg-black/10" />
           <div className="flex items-center gap-0.5 shrink-0">
             <DynamicRatingBadge
               itemId={showcaseId}
@@ -241,11 +240,6 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
         </div>
 
         <div className="mb-1.5 sm:mb-2 lg:mb-3 group/link">
-          {subtitle && (
-            <span className="block font-label text-[8px] sm:text-[9px] lg:text-[11px] text-black/60 mb-0.5 tracking-wide truncate leading-snug">
-              {subtitle}
-            </span>
-          )}
           <h3 className="font-display text-[13px] sm:text-[15px] lg:text-[20px] text-black group-hover:text-primary transition-colors leading-tight font-medium line-clamp-1 sm:line-clamp-2 lg:line-clamp-1">
             {title}
           </h3>

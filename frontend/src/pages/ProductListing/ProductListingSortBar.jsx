@@ -33,11 +33,9 @@ export const ProductListingSortBar = ({
 
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        const topThreshold = parseFloat(navRef.current.style.top) || 0;
-        setIsStuck((prev) => {
-          const current = rect.top <= topThreshold + 5;
-          return prev === current ? prev : current;
-        });
+        // Use a generous buffer to prevent flickering during rapid scrolling, elastic scrolling, or transitions
+        const maxThreshold = (navbarHeight || 68) + 150;
+        setIsStuck(rect.top <= maxThreshold);
       }
     };
 
@@ -58,16 +56,16 @@ export const ProductListingSortBar = ({
       window.removeEventListener('scroll', onScrollOrResize);
       window.removeEventListener('resize', onScrollOrResize);
     };
-  }, [setNavbarHeight, setIsStuck]);
+  }, [setNavbarHeight, setIsStuck, navbarHeight]);
 
   return (
     <nav
       ref={navRef}
-      className={`sticky -mt-12 lg:-mt-16 mb-4 lg:mb-6 transition-all duration-300 ${isStuck ? 'px-0' : 'px-3 lg:px-margin-desktop'}`}
+      className={`sticky -mt-12 lg:-mt-16 mb-4 lg:mb-6 transition-all duration-300 ease-out ${isStuck ? 'px-0' : 'px-3 lg:px-margin-desktop'}`}
       style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px`, zIndex: 49 }}
     >
       <div
-        className={`transition-all duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
+        className={`transition-all duration-300 ease-out flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
           isStuck
             ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 lg:py-4 lg:py-2 px-3 lg:px-margin-desktop w-full max-w-none'
             : 'bg-transparent border-none shadow-none rounded-[2rem] px-2 py-3 lg:p-4 lg:p-2 w-full max-w-max-width'

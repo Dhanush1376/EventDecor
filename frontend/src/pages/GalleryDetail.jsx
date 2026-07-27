@@ -1,8 +1,9 @@
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { SEO } from '../components/seo/SEO';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { GalleryDetailSkeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/FeedbackStates';
 import { useGalleryViewer } from '../hooks/gallery/useGalleryViewer';
 
 import { GalleryMobileLayout } from './GalleryDetail/components/GalleryMobileLayout';
@@ -34,15 +35,13 @@ export function GalleryDetail() {
   if (!item) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#fcfbf9]">
-        <div className="text-center">
-          <h2 className="font-display text-2xl mb-4">Discovery not found</h2>
-          <Link
-            to="/gallery"
-            className="text-primary underline font-label uppercase tracking-widest text-xs font-bold"
-          >
-            Back to Gallery
-          </Link>
-        </div>
+        <EmptyState
+          title="Discovery not found"
+          description="The moment you're looking for couldn't be found."
+          icon="photo_library"
+          actionLabel="Back to Gallery"
+          onAction={() => (window.location.href = '/gallery')}
+        />
       </div>
     );
   }

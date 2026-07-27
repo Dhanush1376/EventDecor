@@ -8,6 +8,9 @@ import { logStartupDiagnostics } from './utils/core/diagnostics';
 import { isPrerendering } from './utils/performance/prerender';
 
 import logger from './utils/core/logger';
+import { patchToastError } from './utils/core/errorHelpers';
+
+patchToastError();
 
 // Defer non-critical monitoring and analytics until after first paint
 const deferNonCriticalInit = () => {

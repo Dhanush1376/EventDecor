@@ -68,7 +68,7 @@ export function useProductListingState() {
 
   const queryParams = {
     page: pageParam,
-    limit: 50,
+    limit: 100,
     search: searchParam,
     category: categoryParam !== 'All' ? categoryParam : undefined,
     ids: idsParam,

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
 import { EventDetailSkeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/FeedbackStates';
 import { useWishlist } from '../context/WishlistContext';
 import { useAuth } from '../context/AuthContext';
 import { useRecommendationTracker } from '../hooks/useRecommendationTracker';
@@ -135,16 +136,13 @@ export function EventDetail() {
   if (!event) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
-        <h1 className="font-display text-4xl text-black mb-4">Masterpiece Not Found</h1>
-        <p className="font-body text-stone-600 mb-8 max-w-md">
-          This event setup might have been archived or customized for a private client.
-        </p>
-        <Link
-          to="/events"
-          className="px-8 py-3 bg-primary text-black rounded-full font-label-sm uppercase tracking-widest"
-        >
-          Explore Current Collections
-        </Link>
+        <EmptyState
+          title="Masterpiece Not Found"
+          description="This event setup might have been archived or customized for a private client."
+          icon="event_busy"
+          actionLabel="Explore Current Collections"
+          onAction={() => (window.location.href = '/events')}
+        />
       </div>
     );
   }

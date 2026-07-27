@@ -32,7 +32,7 @@ const MediaLibrary = () => {
 
   const loadItems = useCallback(() => {
     const status = tab === 0 ? 'active' : 'pending_delete';
-    fetchLibrary({ status, limit: 100 });
+    fetchLibrary({ status, limit: 999999 });
   }, [tab, fetchLibrary]);
 
   useEffect(() => {

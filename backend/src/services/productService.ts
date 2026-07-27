@@ -220,14 +220,20 @@ class ProductService {
         filter.price.$gte = aiAnalysis.priceMin;
       }
 
-      // Apply category from AI if not manually set and it matches database taxonomy
       if (aiAnalysis.category && !category) {
         const dbCategories = await Category.find({ isActive: true })
           .distinct('name')
           .catch(() => [] as string[]);
         const matchedCategory = getMatchingProductCategory(aiAnalysis.category, dbCategories);
         if (matchedCategory) {
-          filter.primaryCategory = new RegExp(`^${escapeRegex(matchedCategory)}$`, 'i');
+          const categoryDoc = await Category.findOne({ name: matchedCategory }).lean();
+          if (categoryDoc) {
+            filter.$or = filter.$or || [];
+            filter.$or.push(
+              { primaryCategory: categoryDoc._id },
+              { secondaryCategories: categoryDoc._id },
+            );
+          }
         }
       }
 

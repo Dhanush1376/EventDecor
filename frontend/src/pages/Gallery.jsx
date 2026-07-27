@@ -2,7 +2,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { GalleryCard } from '../components/gallery/GalleryCard';
 import { VirtualizedMasonry } from '../components/gallery/VirtualizedMasonry';
-import { SearchBar, CategoryTabs, CustomDropdown } from '../components/ui';
+import { SearchBar, CategoryTabs, CustomDropdown, EmptyState } from '../components/ui';
 import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { GallerySlideshow } from '../components/gallery/GallerySlideshow';
@@ -35,7 +35,7 @@ export function GalleryInner() {
 
   const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const isNavbarHidden = !isAtTop && scrollDirection === 'down' && !isMobile;
+  const isNavbarHidden = !isAtTop && scrollDirection === 'down';
 
   // Debounce search input to match product and events pages behavior
   useEffect(() => {
@@ -148,7 +148,8 @@ export function GalleryInner() {
       }
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        setIsSticky(rect.top <= currentNavHeight + 5);
+        const maxThreshold = currentNavHeight + 150;
+        setIsSticky(rect.top <= maxThreshold);
       }
     };
 
@@ -310,7 +311,7 @@ export function GalleryInner() {
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
       >
         <div
-          className={`transition-colors duration-300 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
+          className={`transition-all duration-300 ease-out flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 pointer-events-auto mx-auto ${
             isSticky
               ? 'bg-white/90 backdrop-blur-xl rounded-none border-b border-black/5 shadow-sm py-3 lg:py-4 lg:py-2 px-3 lg:px-margin-desktop w-full max-w-none'
               : 'bg-transparent border-none shadow-none rounded-[2rem] px-2 py-3 lg:p-4 lg:p-2 w-full max-w-max-width'
@@ -422,14 +423,13 @@ export function GalleryInner() {
         id="gallery-collection"
         className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-4 lg:py-6 relative z-10"
       >
-        {/* Mobile/Tablet inline category tabs (hidden on desktop where they appear in sticky nav) */}
-        <div className="mb-6 lg:mb-8 overflow-x-auto no-scrollbar lg:hidden">
-          <CategoryTabs
-            categories={categories}
-            activeCategory={activeCategory}
-            onCategoryChange={handleCategorySelect}
-          />
-        </div>
+        <MobileStickyCategories
+          categories={categories}
+          activeCategory={activeCategory}
+          handleCategorySelect={handleCategorySelect}
+          isNavbarHidden={isNavbarHidden}
+          navbarHeight={navbarHeight}
+        />
 
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 xl:gap-12">
           {/* Sidebar Filter - Handles both Desktop Sidebar and Mobile Drawer */}
@@ -480,20 +480,16 @@ export function GalleryInner() {
                 />
 
                 {filteredItems.length === 0 && (
-                  <div className="py-32 text-center">
-                    <h3 className="font-headline-sm text-black/40">
-                      No moments found matching your criteria.
-                    </h3>
-                    <button
-                      onClick={() => {
-                        setActiveCategory('All');
-                        setSearchQuery('');
-                      }}
-                      className="mt-4 font-label-sm text-primary underline uppercase tracking-widest text-[10px] font-bold"
-                    >
-                      Clear all filters
-                    </button>
-                  </div>
+                  <EmptyState
+                    title="No moments found"
+                    description="No moments found matching your criteria. Try adjusting your filters."
+                    icon="photo_library"
+                    actionLabel="Clear all filters"
+                    onAction={() => {
+                      setActiveCategory('All');
+                      setSearchQuery('');
+                    }}
+                  />
                 )}
               </>
             )}
@@ -528,3 +524,44 @@ export function GalleryInner() {
 export function Gallery() {
   return <GalleryInner />;
 }
+
+const MobileStickyCategories = ({
+  categories,
+  activeCategory,
+  handleCategorySelect,
+  isNavbarHidden,
+  navbarHeight,
+}) => {
+  const [isStuck, setIsStuck] = React.useState(false);
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    const onScroll = () => {
+      if (!ref.current) return;
+      const maxThreshold = (navbarHeight || 68) + 68 + 150;
+      const rect = ref.current.getBoundingClientRect();
+      setIsStuck(rect.top <= maxThreshold);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [navbarHeight]);
+
+  return (
+    <div
+      ref={ref}
+      className={`mb-8 overflow-x-auto no-scrollbar lg:hidden sticky z-[48] py-2 -mx-[var(--spacing-margin-mobile)] px-[var(--spacing-margin-mobile)] transition-all duration-300 ease-out ${
+        isStuck
+          ? 'bg-surface/95 backdrop-blur-xl shadow-sm border-b border-black/5'
+          : 'bg-transparent border-transparent'
+      }`}
+      style={{ top: isNavbarHidden ? '68px' : `${(navbarHeight || 0) + 68}px` }}
+    >
+      <CategoryTabs
+        categories={categories}
+        activeCategory={activeCategory}
+        onCategoryChange={handleCategorySelect}
+      />
+    </div>
+  );
+};

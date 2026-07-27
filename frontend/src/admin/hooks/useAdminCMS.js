@@ -150,7 +150,7 @@ export function useAdminCMS({
         await refreshWebsiteContent();
 
         setPublishToast(`${section} published!`);
-        toast.success(`${section} published!`);
+        toast.success(`${section} published! (Changes may take 1-2 mins to reflect)`);
         setTimeout(() => setPublishToast(null), 3000);
       } catch (_err) {
         toast.error(`Failed to publish ${section}`);
@@ -323,7 +323,7 @@ export function useAdminCMS({
         toast.error(`Failed to publish: ${failedSections.join(',')}`);
       } else {
         setPublishToast('All content published!');
-        toast.success('All content published!');
+        toast.success('All content published! (Changes may take 1-2 mins to reflect)');
       }
       setTimeout(() => setPublishToast(null), 3000);
     } catch (_err) {

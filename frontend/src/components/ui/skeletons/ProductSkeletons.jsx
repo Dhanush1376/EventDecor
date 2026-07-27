@@ -67,45 +67,76 @@ export function ProductDetailSkeleton() {
 
       <section className="pt-[68px] lg:pt-0 pb-12 lg:pb-20 lg:pb-24 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-20">
-          {/* Image Gallery Skeleton */}
-          <div className="space-y-4">
-            <Skeleton className="w-full aspect-[4/5] lg:aspect-square rounded-[32px] lg:rounded-[40px]" />
-            <div className="flex gap-4 overflow-x-hidden">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl flex-shrink-0" />
-              ))}
+          {/* Left Column: Image Gallery & Extra Cards */}
+          <div className="flex flex-col gap-6 lg:gap-10">
+            {/* Main Image & Thumbnails */}
+            <div className="space-y-4">
+              <Skeleton className="w-full aspect-[4/5] lg:aspect-square rounded-[24px] lg:rounded-[32px]" />
+              <div className="flex gap-4 overflow-x-hidden">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton
+                    key={i}
+                    className="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl flex-shrink-0"
+                  />
+                ))}
+              </div>
+            </div>
+            {/* Desktop-only secondary elements (Coupons, Custom Theme) */}
+            <div className="hidden lg:flex flex-col gap-6 pt-4">
+              <Skeleton className="h-24 w-full rounded-2xl" />
+              <Skeleton className="h-48 w-full rounded-2xl" />
             </div>
           </div>
-          {/* Product Info Skeleton */}
-          <div className="space-y-8 mt-4 lg:mt-0">
+
+          {/* Right Column: Product Info */}
+          <div className="space-y-6 lg:space-y-8 mt-4 lg:mt-0">
+            {/* Title & Brand */}
             <div className="space-y-4">
               <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-[48px] w-full" />
-              <Skeleton className="h-[48px] w-3/4" />
+              <Skeleton className="h-10 lg:h-12 w-full" />
+              <Skeleton className="h-10 lg:h-12 w-3/4" />
             </div>
-            <Skeleton className="h-[1px] w-full bg-outline-variant/20" />
-            <div className="flex items-center gap-6">
-              <Skeleton className="h-10 w-32" />
+
+            {/* Price & Rating */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-10 w-32" />
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
               <Skeleton className="h-6 w-24" />
             </div>
+
+            <Skeleton className="h-[1px] w-full bg-outline-variant/20" />
+
+            {/* Description */}
             <div className="space-y-3">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-[85%]" />
               <Skeleton className="h-4 w-[90%]" />
             </div>
+
+            {/* Options / Variants */}
             <div className="space-y-4 pt-4">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-12 w-full rounded-full" />
+              <Skeleton className="h-5 w-24" />
+              <div className="flex gap-3">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-12 rounded-full" />
+                ))}
+              </div>
             </div>
-            <div className="flex gap-4 pt-6">
-              <Skeleton className="h-14 w-14 rounded-full flex-shrink-0" />
-              <Skeleton className="h-14 flex-1 rounded-full" />
+
+            {/* Actions (ATC & Buy Now) */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+              <Skeleton className="h-14 w-full sm:w-1/3 rounded-full" />
+              <Skeleton className="h-14 w-full sm:flex-1 rounded-full" />
             </div>
-            <div className="grid grid-cols-2 gap-4 pt-8">
+
+            {/* Delivery/Feature Guarantees */}
+            <div className="grid grid-cols-2 gap-6 pt-8">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="flex gap-3 items-center">
-                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
                   <div className="space-y-2 flex-1">
                     <Skeleton className="h-3 w-full" />
                     <Skeleton className="h-2 w-3/4" />

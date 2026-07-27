@@ -32,7 +32,7 @@ export function useAdminEventsData() {
   const fetchEvents = async () => {
     setLoadingPortfolio(true);
     try {
-      const res = await eventService.getAll({ limit: 100 });
+      const res = await eventService.getAll({ limit: 999999 });
       if (res.success) {
         const list = res.data?.data || res.data?.items || (Array.isArray(res.data) ? res.data : []);
         setEvents(list);
@@ -113,7 +113,7 @@ export function useAdminEventsData() {
     try {
       const [teamRes, productsRes] = await Promise.all([
         userService.getTeam(),
-        productService.getAll({ limit: 100, sort: 'newest' }),
+        productService.getAll({ limit: 999999, sort: 'newest' }),
       ]);
 
       const teamPayload = teamRes?.data || teamRes;

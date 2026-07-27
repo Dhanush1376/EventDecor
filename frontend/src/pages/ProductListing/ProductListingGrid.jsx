@@ -1,7 +1,13 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FilterPanel, Pagination, CategoryTabs, CloudinaryImage } from '../../components/ui';
+import {
+  FilterPanel,
+  Pagination,
+  CategoryTabs,
+  CloudinaryImage,
+  EmptyState,
+} from '../../components/ui';
 import { ProductCard } from '../../components/shared/ProductCard';
 import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
 
@@ -32,6 +38,8 @@ export const ProductListingGrid = React.memo(
     setSearchParams,
     searchParams,
     openQuickView,
+    isNavbarHidden,
+    navbarHeight,
   }) => {
     return (
       <main
@@ -72,13 +80,13 @@ export const ProductListingGrid = React.memo(
               </div>
             </div>
 
-            <div className="mb-10 overflow-x-auto no-scrollbar lg:hidden">
-              <CategoryTabs
-                categories={categories}
-                activeCategory={categoryParam}
-                onCategoryChange={handleCategorySelect}
-              />
-            </div>
+            <MobileStickyCategories
+              categories={categories}
+              categoryParam={categoryParam}
+              handleCategorySelect={handleCategorySelect}
+              isNavbarHidden={isNavbarHidden}
+              navbarHeight={navbarHeight}
+            />
 
             {productsData?.correctedQuery && (
               <div className="mb-8 px-6 py-4 bg-primary/5 text-primary rounded-[20px] border border-primary/10 text-[14px] font-medium flex items-center gap-2.5 shadow-sm">
@@ -247,20 +255,13 @@ export const ProductListingGrid = React.memo(
                   )}
                 </>
               ) : (
-                <div className="text-center py-32 lg:py-48 bg-surface-container-low/30 rounded-[40px] border border-dashed border-outline-variant/30 px-6 animate-fade-in">
-                  <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-luxury/5 border border-black/5">
-                    <span className="material-symbols-outlined text-[40px] text-on-surface-variant/20">
-                      filter_list_off
-                    </span>
-                  </div>
-                  <h3 className="font-headline-sm text-on-surface mb-3">No products found</h3>
-                  <p className="font-body-md text-on-surface-variant/50 font-light mb-10 max-w-md mx-auto">
-                    We currently don't have any live pieces matching these filters or category.
-                  </p>
-                  <button onClick={clearAllFilters} className="btn-primary">
-                    Clear All Filters
-                  </button>
-                </div>
+                <EmptyState
+                  title="No products found"
+                  description="We currently don't have any live pieces matching these filters or category."
+                  icon="filter_list_off"
+                  actionLabel="Clear All Filters"
+                  onAction={clearAllFilters}
+                />
               )}
             </div>
           </div>
@@ -284,3 +285,44 @@ export const ProductListingGrid = React.memo(
     );
   },
 );
+
+const MobileStickyCategories = ({
+  categories,
+  categoryParam,
+  handleCategorySelect,
+  isNavbarHidden,
+  navbarHeight,
+}) => {
+  const [isStuck, setIsStuck] = React.useState(false);
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    const onScroll = () => {
+      if (!ref.current) return;
+      const maxThreshold = (navbarHeight || 68) + 68 + 150;
+      const rect = ref.current.getBoundingClientRect();
+      setIsStuck(rect.top <= maxThreshold);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [navbarHeight]);
+
+  return (
+    <div
+      ref={ref}
+      className={`mb-8 overflow-x-auto no-scrollbar lg:hidden sticky z-[48] py-2 -mx-[var(--spacing-margin-mobile)] px-[var(--spacing-margin-mobile)] transition-all duration-300 ease-out ${
+        isStuck
+          ? 'bg-surface/95 backdrop-blur-xl shadow-sm border-b border-black/5'
+          : 'bg-transparent border-transparent'
+      }`}
+      style={{ top: isNavbarHidden ? '68px' : `${(navbarHeight || 0) + 68}px` }}
+    >
+      <CategoryTabs
+        categories={categories}
+        activeCategory={categoryParam}
+        onCategoryChange={handleCategorySelect}
+      />
+    </div>
+  );
+};

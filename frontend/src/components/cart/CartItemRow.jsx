@@ -34,11 +34,28 @@ export const CartItemRow = React.memo(function CartItemRow({
 
   const customOrderData = apiCustomOrder || item.product;
 
-  const actualProductId = customOrderData?.productId?._id || customOrderData?.productId;
-  const { data: realProduct } = useProduct(item.type === 'custom' ? actualProductId : null, {
-    enabled: Boolean(item.type === 'custom' && actualProductId),
+  const actualProductId =
+    customOrderData?.productId?._id ||
+    customOrderData?.productId ||
+    item.product?._id ||
+    item.product?.id ||
+    item.id ||
+    item._id;
+  const { data: realProduct } = useProduct(actualProductId, {
+    enabled: Boolean(actualProductId),
     staleTime: 1000 * 60 * 60, // 1 hour
   });
+
+  const isItemNonRefundable = Boolean(
+    item.isNonRefundable ||
+    item.itemType === 'event' ||
+    item.type === 'custom' ||
+    activeCartMode === 'rental' ||
+    realProduct?.isNonRefundable ||
+    realProduct?.returnSettings?.isReturnable === false ||
+    realProduct?.itemType === 'event' ||
+    realProduct?.category === 'Events',
+  );
 
   // For custom orders, dynamically pull title and image from the full product object
   // or fetch from API if missing.
@@ -214,7 +231,7 @@ export const CartItemRow = React.memo(function CartItemRow({
               {/* Return policy & delivery forecast strip */}
               <div className="text-[11px] text-secondary w-full">
                 <div className="flex flex-col gap-1.5 mt-1">
-                  {item.isNonRefundable ? (
+                  {isItemNonRefundable ? (
                     <div className="flex items-center gap-1.5 text-[#d97706] font-bold whitespace-nowrap text-[10px]">
                       <span className="material-symbols-outlined text-[13px]">block</span>
                       Non-Refundable
@@ -235,13 +252,35 @@ export const CartItemRow = React.memo(function CartItemRow({
                     </div>
                   )}
                   <div className="flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-                    <span className="material-symbols-outlined text-[13px]">local_shipping</span>
-                    <span>
-                      Delivery by{' '}
-                      <span className="text-on-surface font-display font-semibold text-[12px]">
-                        {deliveryDateStr}
-                      </span>
-                    </span>
+                    {Boolean(
+                      item.itemType === 'event' ||
+                      realProduct?.itemType === 'event' ||
+                      realProduct?.category === 'Events',
+                    ) ? (
+                      <>
+                        <span className="material-symbols-outlined text-[13px]">event</span>
+                        <span>Event setup date to be confirmed</span>
+                      </>
+                    ) : activeCartMode === 'rental' ? (
+                      <>
+                        <span className="material-symbols-outlined text-[13px]">
+                          local_shipping
+                        </span>
+                        <span>Delivery schedule to be coordinated</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[13px]">
+                          local_shipping
+                        </span>
+                        <span>
+                          Delivery by{' '}
+                          <span className="text-on-surface font-display font-semibold text-[12px]">
+                            {deliveryDateStr}
+                          </span>
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

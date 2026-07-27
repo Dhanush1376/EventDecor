@@ -20,8 +20,8 @@ export function RecommendedGrid({ previewContent }) {
 
   const { data, isPending, isError, refetch } = useProducts(
     {
-      ...(isManualMode ? { ids: productIds.join(',') } : { featured: true }),
-      limit: config.maxDisplay || 10,
+      ...(isManualMode ? { ids: productIds.join(',') } : {}),
+      limit: config.maxDisplay || 12,
     },
     { enabled: config.isVisible !== false },
   );

@@ -35,6 +35,8 @@ export function SearchDiscovery({
       </div>
 
       <div className="relative z-10">
+        {/* Mobile Event Collections moved down */}
+
         {/* Recent Searches */}
         {recentSearches.length > 0 && (
           <div className={isMobile ? 'py-1' : 'mb-2'}>
@@ -229,57 +231,8 @@ export function SearchDiscovery({
             className={`pt-4 pb-2 ${recentSearches.length > 0 ? 'border-t border-stone-200/30 mt-3' : ''}`}
           >
             <div className="grid grid-cols-12 gap-8 px-6 lg:px-8.5">
-              {/* Left Column: Trending Now Products */}
-              <div className="col-span-12 lg:col-span-5 flex flex-col gap-6">
-                {discoveryData?.popularProducts?.length > 0 && (
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-3 block flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[14px] text-orange-500">
-                        local_fire_department
-                      </span>
-                      Trending Now
-                    </span>
-                    <div className="flex flex-col gap-3">
-                      {discoveryData.popularProducts.slice(0, 4).map((product) => (
-                        <button
-                          key={product.id}
-                          onClick={() => {
-                            handleClose();
-                            navigate(`/product/${product.slug || product.id}`);
-                          }}
-                          className="flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-stone-50 transition-colors text-left group"
-                        >
-                          <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 border border-stone-200/50">
-                            {product.image && (
-                              <CloudinaryImage
-                                src={product.image}
-                                alt={product.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                width={50}
-                                height={50}
-                              />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-medium text-stone-800 line-clamp-1 leading-snug group-hover:text-primary transition-colors">
-                              {product.title}
-                            </p>
-                            {product.price > 0 && (
-                              <p className="text-[11.5px] font-bold text-primary mt-0.5 font-display">
-                                {formatPrice(product.price)}
-                              </p>
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Right Column: Explore Collections & New Arrivals */}
+              {/* Left Column: Explore Collections & New Arrivals */}
               <div className="col-span-12 lg:col-span-7 flex flex-col gap-6 relative">
-                <div className="hidden lg:block absolute left-[-16px] top-0 bottom-0 w-px bg-stone-200/40"></div>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-6">
                   {/* Explore Collections */}
                   {((discoveryData?.eventCollections &&

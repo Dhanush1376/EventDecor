@@ -250,6 +250,31 @@ export function SearchSuggestionsList({
         </div>
       )}
 
+      {/* Skeletons when loading and no previous data to show */}
+      {loading && displaySuggestions.length === 0 && (
+        <div className={isMobile ? 'divide-y divide-stone-100 pb-2' : 'py-2'}>
+          <div className={`${isMobile ? 'px-5 py-2' : 'px-6 lg:px-8.5 py-1.5'}`}>
+            <div className="w-24 h-3 bg-stone-100 rounded animate-pulse"></div>
+          </div>
+          <div className={isMobile ? 'divide-y divide-stone-50' : ''}>
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className={`${isMobile ? 'w-full flex items-center gap-3.5 px-5 py-3.5' : 'w-full flex items-center gap-4.5 px-6 lg:px-8.5 py-2.5'}`}
+              >
+                <div
+                  className={`${isMobile ? 'w-11 h-11 rounded-xl' : 'w-12 h-12 lg:w-14 lg:h-14 rounded-2xl'} bg-stone-100 animate-pulse flex-shrink-0`}
+                ></div>
+                <div className="flex-1 flex flex-col gap-2 justify-center">
+                  <div className="h-4 bg-stone-100 rounded w-2/3 animate-pulse"></div>
+                  <div className="h-3 bg-stone-100 rounded w-1/3 animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* View all results button */}
       {query.trim().length >= 1 && !showNoResults && (
         <button

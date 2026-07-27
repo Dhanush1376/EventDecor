@@ -33,7 +33,7 @@ export function EventCollections() {
 
   const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const isNavbarHidden = !isAtTop && scrollDirection === 'down' && !isMobile;
+  const isNavbarHidden = !isAtTop && scrollDirection === 'down';
 
   // Advanced Filter State
   const [filters, setFilters] = useState({
@@ -246,7 +246,9 @@ export function EventCollections() {
       }
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        setIsSticky(rect.top <= currentNavHeight + 5);
+        // Use a generous buffer to prevent flickering during rapid scrolling, elastic scrolling, or transitions
+        const maxThreshold = currentNavHeight + 150;
+        setIsSticky(rect.top <= maxThreshold);
       }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -506,13 +508,13 @@ export function EventCollections() {
               </div>
             </div>
 
-            <div className="mb-10 overflow-x-auto no-scrollbar lg:hidden">
-              <CategoryTabs
-                categories={categories}
-                activeCategory={activeCategory}
-                onCategoryChange={handleCategorySelect}
-              />
-            </div>
+            <MobileStickyCategories
+              categories={categories}
+              activeCategory={activeCategory}
+              handleCategorySelect={handleCategorySelect}
+              isNavbarHidden={isNavbarHidden}
+              navbarHeight={navbarHeight}
+            />
 
             <EventGrid
               isLoading={isLoading}
@@ -562,3 +564,44 @@ export function EventCollections() {
     </div>
   );
 }
+
+const MobileStickyCategories = ({
+  categories,
+  activeCategory,
+  handleCategorySelect,
+  isNavbarHidden,
+  navbarHeight,
+}) => {
+  const [isStuck, setIsStuck] = React.useState(false);
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    const onScroll = () => {
+      if (!ref.current) return;
+      const maxThreshold = (navbarHeight || 68) + 68 + 150;
+      const rect = ref.current.getBoundingClientRect();
+      setIsStuck(rect.top <= maxThreshold);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [navbarHeight]);
+
+  return (
+    <div
+      ref={ref}
+      className={`mb-8 overflow-x-auto no-scrollbar lg:hidden sticky z-[48] py-2 -mx-[var(--spacing-margin-mobile)] px-[var(--spacing-margin-mobile)] transition-all duration-300 ease-out ${
+        isStuck
+          ? 'bg-surface/95 backdrop-blur-xl shadow-sm border-b border-black/5'
+          : 'bg-transparent border-transparent'
+      }`}
+      style={{ top: isNavbarHidden ? '68px' : `${(navbarHeight || 0) + 68}px` }}
+    >
+      <CategoryTabs
+        categories={categories}
+        activeCategory={activeCategory}
+        onCategoryChange={handleCategorySelect}
+      />
+    </div>
+  );
+};

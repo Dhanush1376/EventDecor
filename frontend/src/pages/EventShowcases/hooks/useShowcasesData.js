@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useScrollDirection } from '../../../hooks/useScrollDirection';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
+import { SHOWCASE_CATEGORIES } from '../../../config/constants';
 
 const CATEGORY_MAP = {
   'Telugu Heritage': 'telugu_heritage',
@@ -35,7 +36,7 @@ export function useShowcasesData() {
 
   const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const isNavbarHidden = !isAtTop && scrollDirection === 'down' && !isMobile;
+  const isNavbarHidden = !isAtTop && scrollDirection === 'down';
 
   const [filters, setFilters] = useState({
     price: [],
@@ -51,7 +52,6 @@ export function useShowcasesData() {
   const [uploadedReferenceUrl, setUploadedReferenceUrl] = useState('');
   const [customNote, setCustomNote] = useState('');
   const [bookingDate, setBookingDate] = useState('');
-  const [aiSuggestions, setAiSuggestions] = useState([]);
 
   const {
     data: showcases = [],
@@ -66,6 +66,22 @@ export function useShowcasesData() {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  const aiSuggestions = useMemo(() => {
+    return ['Popular traditional setups', 'Best for small venues', 'Premium floral decor'];
+  }, []);
+
+  const availableCategories = useMemo(() => {
+    const categoriesWithItems = new Set();
+    showcases.forEach((item) => {
+      const cat = item.category || item.primaryCategory?.name;
+      if (cat) categoriesWithItems.add(cat);
+    });
+    return SHOWCASE_CATEGORIES.filter(
+      (cat) =>
+        cat === 'All' || categoriesWithItems.has(cat) || categoriesWithItems.has(CATEGORY_MAP[cat]),
+    );
+  }, [showcases]);
 
   useEffect(() => {
     if (isError) toast.error('Failed to load event design packages.');
@@ -105,7 +121,8 @@ export function useShowcasesData() {
       }
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        setIsSticky(rect.top <= currentNavHeight + 5);
+        const maxThreshold = currentNavHeight + 150;
+        setIsSticky(rect.top <= maxThreshold);
       }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -322,6 +339,7 @@ export function useShowcasesData() {
     bookingDate,
     setBookingDate,
     aiSuggestions,
+    availableCategories,
     calculateLivePrice,
     handleBookRental,
   };

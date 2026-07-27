@@ -166,7 +166,7 @@ export function useAdminOrders({
 
   const refreshOrders = useCallback(async () => {
     try {
-      const res = await orderService.getAll({ limit: 50 });
+      const res = await orderService.getAll({ limit: 999999 });
       if (res.success) {
         const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
         setOrders(list.map(mapDbOrderToFrontend));

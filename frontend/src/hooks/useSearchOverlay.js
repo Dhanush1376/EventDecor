@@ -112,7 +112,7 @@ export function useSearchOverlay() {
     return autocompleteQuery.data?.correctedQuery || '';
   }, [autocompleteQuery.data]);
 
-  const loading = autocompleteQuery.isLoading;
+  const loading = autocompleteQuery.isFetching || query !== debouncedQuery;
 
   const handleClose = useCallback(() => {
     setIsOpen(false);

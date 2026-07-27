@@ -24,7 +24,7 @@ export function AdminInquiries({ hideHeader = false }) {
 
   // ─── PAGINATION & FILTERS ───
   const [page, setPage] = useState(1);
-  const limit = 15;
+  const limit = 999999;
   const [statusFilter, setStatusFilter] = useState('All');
 
   // Reset page when filters change

@@ -6,6 +6,7 @@ import User from '../../models/User';
 import PaymentWebhookEvent from '../../models/PaymentWebhookEvent';
 import bcrypt from 'bcryptjs';
 import { canonicalizeEmail } from '../../utils/email/emailHelper';
+import { AdminAuditService } from '../../services/AdminAuditService';
 import {
   isProtectedSuperAdminEmail,
   ADMIN_ROLES,
@@ -195,7 +196,6 @@ export const removeAdmin = asyncHandler(async (req: Request, res: Response) => {
   admin.passwordHash = undefined;
   await admin.save();
 
-  const { AdminAuditService } = require('../../services/AdminAuditService');
   await AdminAuditService.logAction({
     actorId: req.user?.id,
     actorEmail: req.user?.email,

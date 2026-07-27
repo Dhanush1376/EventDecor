@@ -227,7 +227,11 @@ export function useProductSubmission({
 
       if (res.success) {
         await deleteDraft(); // Delete draft on success
-        toast.success(isEditMode ? 'Product updated' : 'Product published');
+        toast.success(
+          isEditMode
+            ? 'Product updated (Changes may take 1-2 mins to reflect)'
+            : 'Product published (Changes may take 1-2 mins to reflect)',
+        );
 
         // Use the server-returned entity to update the cache directly
         const returnedProduct = res.data?.product || res.data;

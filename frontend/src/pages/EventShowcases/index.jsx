@@ -7,11 +7,12 @@ import {
   Skeleton,
   EventShowcaseFilterPanel,
   CategoryTabs,
+  EmptyState,
 } from '../../components/ui';
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
-import { SHOWCASE_CATEGORIES } from '../../config/constants';
+
 import { useShowcasesData } from './hooks/useShowcasesData';
 import { ShowcaseHero } from './components/ShowcaseHero';
 import { ShowcaseNav } from './components/ShowcaseNav';
@@ -57,6 +58,7 @@ export function EventShowcases() {
     isNavbarHidden,
     filters,
     toggleFilter,
+    availableCategories,
     clearAllFilters,
     totalCount,
     totalPages,
@@ -109,6 +111,7 @@ export function EventShowcases() {
         isMobile={isMobile}
         isNavbarHidden={isNavbarHidden}
         searchParam={searchParam}
+        availableCategories={availableCategories}
       />
 
       <main
@@ -146,16 +149,16 @@ export function EventShowcases() {
               </div>
             </div>
 
-            <div className="mb-10 overflow-x-auto no-scrollbar lg:hidden">
-              <CategoryTabs
-                categories={SHOWCASE_CATEGORIES}
-                activeCategory={activeCategory}
-                onCategoryChange={(cat) => {
-                  setActiveCategory(cat);
-                  setCurrentPage(1);
-                }}
-              />
-            </div>
+            <MobileStickyCategories
+              categories={availableCategories}
+              activeCategory={activeCategory}
+              handleCategorySelect={(cat) => {
+                setActiveCategory(cat);
+                setCurrentPage(1);
+              }}
+              isNavbarHidden={isNavbarHidden}
+              navbarHeight={navbarHeight}
+            />
 
             {loading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">
@@ -228,26 +231,13 @@ export function EventShowcases() {
                 )}
               </>
             ) : (
-              <div className="text-center py-32 bg-surface-container-low/30 rounded-[40px] border border-dashed border-outline-variant/30 px-6">
-                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm border border-black/5">
-                  <span className="material-symbols-outlined text-[40px] text-on-surface-variant/20">
-                    filter_list_off
-                  </span>
-                </div>
-                <h3 className="font-headline-sm text-on-surface mb-3 font-normal text-xl">
-                  No traditional showcases found
-                </h3>
-                <p className="font-body-md text-on-surface-variant/60 font-light mb-10 max-w-md mx-auto text-sm">
-                  Try adjusting your filters, category tabs, or search terms to discover other event
-                  designs.
-                </p>
-                <button
-                  onClick={clearAllFilters}
-                  className="px-8 py-3.5 bg-primary text-white rounded-full font-label text-xs uppercase tracking-widest font-bold shadow-lg hover:bg-stone-900 transition-all cursor-pointer"
-                >
-                  Clear All Filters
-                </button>
-              </div>
+              <EmptyState
+                title="No traditional showcases found"
+                description="Try adjusting your filters, category tabs, or search terms to discover other event designs."
+                icon="filter_list_off"
+                actionLabel="Clear All Filters"
+                onAction={clearAllFilters}
+              />
             )}
           </div>
         </div>
@@ -280,5 +270,46 @@ export function EventShowcases() {
     </div>
   );
 }
+
+const MobileStickyCategories = ({
+  categories,
+  activeCategory,
+  handleCategorySelect,
+  isNavbarHidden,
+  navbarHeight,
+}) => {
+  const [isStuck, setIsStuck] = React.useState(false);
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    const onScroll = () => {
+      if (!ref.current) return;
+      const maxThreshold = (navbarHeight || 68) + 68 + 150;
+      const rect = ref.current.getBoundingClientRect();
+      setIsStuck(rect.top <= maxThreshold);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [navbarHeight]);
+
+  return (
+    <div
+      ref={ref}
+      className={`mb-8 overflow-x-auto no-scrollbar lg:hidden sticky z-[48] py-2 -mx-[var(--spacing-margin-mobile)] px-[var(--spacing-margin-mobile)] transition-all duration-300 ease-out ${
+        isStuck
+          ? 'bg-surface/95 backdrop-blur-xl shadow-sm border-b border-black/5'
+          : 'bg-transparent border-transparent'
+      }`}
+      style={{ top: isNavbarHidden ? '68px' : `${(navbarHeight || 0) + 68}px` }}
+    >
+      <CategoryTabs
+        categories={categories}
+        activeCategory={activeCategory}
+        onCategoryChange={handleCategorySelect}
+      />
+    </div>
+  );
+};
 
 export default EventShowcases;

@@ -3,6 +3,7 @@ import { ProductGallery } from '../components/ui/ProductGallery';
 import { ProductInfo, CustomThemeCard } from '../components/ui/ProductInfo';
 import { ProductCoupons } from '../components/ui/ProductCoupons';
 import { Skeleton, ProductDetailSkeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/FeedbackStates';
 import { SEO } from '../components/seo/SEO';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { StickyMobileATC } from '../components/ui/StickyMobileATC';
@@ -140,18 +141,13 @@ export function ProductDetails() {
   if (error || !product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface p-6">
-        <div className="text-center max-w-md">
-          <h2 className="text-2xl font-bold mb-4">Product Not Found</h2>
-          <p className="text-on-surface-variant mb-8">
-            The product you are looking for may have been moved or is currently unavailable.
-          </p>
-          <Link
-            to="/collections"
-            className="bg-primary text-white px-8 py-3 rounded-full font-bold uppercase tracking-wider shadow-xl hover:bg-primary-dark transition-all"
-          >
-            Return to Collections
-          </Link>
-        </div>
+        <EmptyState
+          title="Product Not Found"
+          description="The product you are looking for may have been moved or is currently unavailable."
+          icon="inventory_2"
+          actionLabel="Return to Collections"
+          onAction={() => (window.location.href = '/collections')}
+        />
       </div>
     );
   }

@@ -9,9 +9,7 @@ import { PageHeader, stagger } from '../../components/AdminUIKit';
 import { DashboardTab } from './tabs/DashboardTab';
 import { BookingsTab } from './tabs/BookingsTab';
 import { CalendarTab } from './tabs/CalendarTab';
-import { PackagesTab } from './tabs/PackagesTab';
 import { InventoryTab } from './tabs/InventoryTab';
-import { TeamTab } from './tabs/TeamTab';
 import { ShowcasesTab } from './tabs/ShowcasesTab';
 
 export function AdminEvents() {
@@ -83,8 +81,6 @@ export function AdminEvents() {
     { id: 'showcases', label: 'Showcase', icon: 'redeem' },
     { id: 'inventory', label: 'Inventory', icon: 'inventory' },
     { id: 'calendar', label: 'Calendar', icon: 'calendar_month' },
-    { id: 'packages', label: 'Packages', icon: 'celebration' },
-    { id: 'team', label: 'Team', icon: 'groups' },
   ];
 
   return (
@@ -137,14 +133,8 @@ export function AdminEvents() {
           <BookingsTab bookings={bookings} loadingBookings={loadingBookings} />
         )}
         {activeTab === 'calendar' && <CalendarTab bookings={bookings} />}
-        {activeTab === 'packages' && (
-          <PackagesTab events={events} loadingPortfolio={loadingPortfolio} />
-        )}
         {activeTab === 'inventory' && (
           <InventoryTab inventoryItems={inventoryItems} operationsLoading={operationsLoading} />
-        )}
-        {activeTab === 'team' && (
-          <TeamTab teamMembers={teamMembers} operationsLoading={operationsLoading} />
         )}
         {activeTab === 'showcases' && (
           <ShowcasesTab

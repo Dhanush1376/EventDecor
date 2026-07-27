@@ -1,7 +1,7 @@
 import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Skeleton, OptimizedImage, Pagination } from '../../components/ui';
+import { Skeleton, OptimizedImage, Pagination, EmptyState } from '../../components/ui';
 import { handleImageError } from '../../utils/media/imageUtils';
 
 export function EventGrid({
@@ -83,17 +83,13 @@ export function EventGrid({
           )}
         </>
       ) : (
-        <div className="text-center py-32 lg:py-48 bg-surface-container-low/30 rounded-[40px] border border-dashed border-outline-variant/30 px-6">
-          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-luxury/5 border border-black/5">
-            <span className="material-symbols-outlined text-[40px] text-on-surface-variant/20">
-              search_off
-            </span>
-          </div>
-          <h3 className="font-headline-sm text-on-surface mb-3">No curations match.</h3>
-          <button onClick={clearAllFilters} className="btn-primary">
-            Clear All Filters
-          </button>
-        </div>
+        <EmptyState
+          title="No curations match"
+          description="We couldn't find any curations matching your current filters."
+          icon="search_off"
+          actionLabel="Clear All Filters"
+          onAction={clearAllFilters}
+        />
       )}
     </AnimatePresence>
   );

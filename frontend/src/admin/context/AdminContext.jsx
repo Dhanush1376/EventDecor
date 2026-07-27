@@ -11,6 +11,7 @@ import debounce from 'lodash.debounce';
 import { getAccessToken } from '../../services/api';
 import { acquireAdminSocket, releaseAdminSocket } from '../services/adminSocket';
 import logger from '../../utils/core/logger';
+import { getErrorMessage } from '../../utils/core/errorHelpers';
 
 import { useAdminSecurity } from '../hooks/useAdminSecurity';
 import { useAdminCMS } from '../hooks/useAdminCMS';
@@ -20,7 +21,7 @@ import { useAdminOrders } from '../hooks/useAdminOrders';
 const mapDbNotificationToFrontend = (n) => ({
   id: n._id || n.id,
   title: n.title,
-  message: n.message,
+  message: getErrorMessage({ message: n.message }, 'An automated system event occurred.'),
   type:
     n.type === 'custom_request'
       ? 'booking'
@@ -119,10 +120,10 @@ export function AdminProvider({ children }) {
       try {
         const [reviewsRes, statsRes, eventsRes, auditLogsRes, alertsRes] = await Promise.allSettled(
           [
-            reviewService.getAll({ limit: 50 }),
+            reviewService.getAll({ limit: 999999 }),
             analyticsService.getDashboardStats(),
-            eventService.getAll({ limit: 50 }),
-            analyticsService.getAuditLogs({ limit: 100 }),
+            eventService.getAll({ limit: 999999 }),
+            analyticsService.getAuditLogs({ limit: 999999 }),
             notificationService.getAdminAlerts(),
           ],
         );
@@ -252,7 +253,7 @@ export function AdminProvider({ children }) {
 
   const refreshEvents = useCallback(async () => {
     try {
-      const res = await eventService.getAll({ limit: 100 });
+      const res = await eventService.getAll({ limit: 999999 });
       if (res.success) {
         const evData = res.data;
         const list = evData?.data || evData?.items || (Array.isArray(evData) ? evData : []);
@@ -265,7 +266,7 @@ export function AdminProvider({ children }) {
 
   const refreshReviews = useCallback(async () => {
     try {
-      const res = await reviewService.getAll({ limit: 50 });
+      const res = await reviewService.getAll({ limit: 999999 });
       if (res.success) {
         setReviews(res.data?.data || []);
       }
@@ -310,12 +311,12 @@ export function AdminProvider({ children }) {
                 window.location.href = mapped.actionLink;
               }
             }}
-            className="cursor-pointer flex flex-col font-sans max-w-[280px]"
+            className="cursor-pointer flex flex-col font-sans w-full min-w-[250px] max-w-sm sm:max-w-md break-words p-1"
           >
-            <strong className="text-[12px] text-slate-900 font-bold flex items-center gap-1.5 leading-tight">
+            <strong className="text-sm text-slate-900 font-bold flex items-center gap-1.5 leading-tight">
               {mapped.title}
             </strong>
-            <span className="text-[11px] sm:text-[11px] text-slate-500 mt-1 leading-normal font-normal">
+            <span className="text-xs text-slate-600 mt-1.5 leading-snug font-normal line-clamp-3">
               {mapped.message}
             </span>
           </div>

@@ -62,7 +62,7 @@ export function TopNavbar() {
   const [hasPendingInvite, setHasPendingInvite] = useState(false);
 
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const hideNavbar = !isAtTop && scrollDirection === 'down' && !isMobileOrTablet;
+  const hideNavbar = !isAtTop && scrollDirection === 'down';
 
   const searchParams = new URLSearchParams(location.search);
   const searchParam = searchParams.get('search');
@@ -319,7 +319,9 @@ export function TopNavbar() {
                         >
                           {link.label}
                           {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
-                            <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-[#d4af37]" />
+                            <span className="ml-1.5 inline-flex items-center justify-center h-3.5 min-w-[14px] px-1 rounded-full bg-black text-white text-[8px] font-bold tracking-normal leading-none shadow-sm shadow-black/20">
+                              {activeCustomOrdersCount}
+                            </span>
                           )}
                           {active && (
                             <span
@@ -622,6 +624,12 @@ export function TopNavbar() {
                 className="absolute -top-[10%] -left-[40%] pointer-events-none"
                 spinDuration={80}
                 blendMode="normal"
+                style={{
+                  maskImage:
+                    'radial-gradient(circle at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 45%)',
+                  WebkitMaskImage:
+                    'radial-gradient(circle at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 45%)',
+                }}
               />
 
               {/* Minimal Header */}
@@ -666,10 +674,12 @@ export function TopNavbar() {
                           }`}
                           to={link.href}
                         >
-                          <span className="text-right relative inline-block">
+                          <span className="text-right relative flex items-center justify-end gap-2">
                             {link.label}
                             {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
-                              <span className="absolute top-1 -right-3.5 w-1.5 h-1.5 rounded-full bg-[#d4af37]" />
+                              <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-black text-white text-[9px] font-bold tracking-normal leading-none shadow-sm shadow-black/20">
+                                {activeCustomOrdersCount}
+                              </span>
                             )}
                           </span>
                         </Link>
@@ -685,16 +695,20 @@ export function TopNavbar() {
                         duration: 0.5,
                         ease: [0.22, 1, 0.36, 1],
                       }}
+                      className="flex justify-end mt-4"
                     >
                       <Link
                         onClick={() => setIsOpen(false)}
-                        className="group flex items-center justify-end gap-3 font-label font-bold uppercase tracking-[0.2em] text-[16px] lg:text-[20px] transition-all duration-500 text-[#C4A87C] hover:text-primary hover:-translate-x-2"
+                        className="group inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-[#222222] font-label font-bold uppercase text-[12px] transition-all duration-300 text-white hover:bg-black shadow-sm"
                         to="/admin"
                       >
                         {hasPendingInvite && (
-                          <span className="w-2 h-2 rounded-full bg-error shadow-sm" />
+                          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-error shadow-sm" />
                         )}
-                        <span className="text-right">Admin Portal</span>
+                        <span className="material-symbols-outlined text-[18px] tracking-normal font-normal">
+                          admin_panel_settings
+                        </span>
+                        <span className="tracking-[0.15em] ml-1">Admin Portal</span>
                       </Link>
                     </motion.li>
                   )}

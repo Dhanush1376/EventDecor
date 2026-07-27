@@ -24,7 +24,7 @@ export function ProductListing() {
 
   const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const isNavbarHidden = !isAtTop && scrollDirection === 'down' && !isMobile;
+  const isNavbarHidden = !isAtTop && scrollDirection === 'down';
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [navbarHeight, setNavbarHeight] = useState(0);
@@ -230,6 +230,8 @@ export function ProductListing() {
           isFilterOpen={isFilterOpen}
           setIsFilterOpen={setIsFilterOpen}
           openQuickView={openQuickView}
+          isNavbarHidden={isNavbarHidden}
+          navbarHeight={navbarHeight}
         />
 
         <ProductListingVisualSearch visualSearch={state.visualSearch} />

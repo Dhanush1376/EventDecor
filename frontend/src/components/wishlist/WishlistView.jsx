@@ -11,6 +11,7 @@ import { QuickViewModal } from '../ui/QuickViewModal';
 import { WishlistPageSkeleton } from '../ui/Skeleton';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { useUserProfile, useUserAddresses, useAddressMutations } from '../../hooks/useUserQueries';
+import { useShowcases } from '../../hooks/useShowcaseQueries';
 
 export function WishlistView({ isEmbedded = false }) {
   const { items, _removeItem, _toggleItem, loading: wishlistLoading } = useWishlist();
@@ -34,15 +35,41 @@ export function WishlistView({ isEmbedded = false }) {
     source: 'wishlist',
   });
 
+  // Calculate basic filter emptiness to avoid moving hooks below useMemo
+  const isFilteredEmpty =
+    items.length > 0 &&
+    items.filter((i) => {
+      const iType =
+        i.itemType || (i.setupTimeHours !== undefined || i.inclusions ? 'event' : 'product');
+      return iType === itemTypeFilter;
+    }).length === 0;
+
+  const shouldShowRecommendations = items.length === 0 || isFilteredEmpty;
+
   const { data: trendingData = {}, isPending: trendingLoading } = useProducts(
     { limit: 4, sort: 'Popularity' },
-    { enabled: items.length === 0 },
+    { enabled: shouldShowRecommendations && itemTypeFilter !== 'event' },
   );
   const trendingProducts =
     trendingData?.data ||
     trendingData?.products ||
     trendingData?.items ||
     (Array.isArray(trendingData) ? trendingData : []);
+
+  const { data: eventData = [], isPending: eventsLoading } = useShowcases({
+    enabled: shouldShowRecommendations && itemTypeFilter === 'event',
+  });
+  const trendingEvents = (Array.isArray(eventData) ? eventData : eventData?.data || [])
+    .slice(0, 4)
+    .map((event) => ({
+      ...event,
+      itemType: 'event',
+      imageSrc: event.image || event.imageSrc,
+      price: event.rentalPrice || event.price,
+    }));
+
+  const recommendationItems = itemTypeFilter === 'event' ? trendingEvents : trendingProducts;
+  const recommendationLoading = itemTypeFilter === 'event' ? eventsLoading : trendingLoading;
 
   const _triggerNotification = (msg) => {
     setNotification(msg);
@@ -389,50 +416,22 @@ export function WishlistView({ isEmbedded = false }) {
                   </span>
                 </Link>
               </div>
-
-              {/* Recommendations */}
-              <div className="pt-8 border-t border-outline-variant/20">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl lg:text-2xl font-light tracking-tight text-on-surface font-display leading-tight">
-                    Trending Masterpieces
-                  </h3>
-                  <Link
-                    to="/collections"
-                    className="text-[9px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
-                  >
-                    View All
-                    <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
-                  </Link>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 sm:gap-x-4 lg:gap-x-6 gap-y-6 sm:gap-y-8 lg:gap-y-10">
-                  {trendingLoading
-                    ? [...Array(4)].map((_, i) => <ProductCard key={i} loading={true} />)
-                    : trendingProducts.map((prod) => (
-                        <ProductCard
-                          key={prod._id || prod.id}
-                          {...prod}
-                          onQuickView={(e) => {
-                            e.preventDefault();
-                            setQuickViewProduct(prod);
-                          }}
-                        />
-                      ))}
-                </div>
-              </div>
             </div>
           ) : filteredItems.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[30vh] mt-6"
+              className="flex flex-col items-center justify-center min-h-[40vh] mt-6 text-center"
             >
-              <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
-                <span className="material-symbols-outlined text-[20px]">filter_list_off</span>
+              <div className="w-24 h-24 lg:w-28 lg:h-28 rounded-full bg-[#f6f5f3] flex items-center justify-center mb-6">
+                <span className="material-symbols-outlined text-[24px] lg:text-[28px] text-[#9c8965] font-light">
+                  filter_list_off
+                </span>
               </div>
-              <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
-                No Matches Found
+              <h3 className="font-display text-[28px] lg:text-[34px] text-[#1a1a1a] mb-3 tracking-tight leading-tight">
+                No matches found
               </h3>
-              <p className="text-secondary text-[9px] font-bold uppercase tracking-widest max-w-[250px]">
+              <p className="text-[#8c8c8c] text-[13px] lg:text-[15px] font-light max-w-[320px] mb-10 leading-relaxed">
                 No{' '}
                 {itemTypeFilter === 'product'
                   ? 'products'
@@ -441,6 +440,15 @@ export function WishlistView({ isEmbedded = false }) {
                     : 'items'}{' '}
                 match the active filters.
               </p>
+              <Link
+                to={itemTypeFilter === 'event' ? '/events' : '/collections'}
+                className="group flex items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70 cursor-pointer bg-transparent"
+              >
+                {itemTypeFilter === 'event' ? 'Explore Events' : 'Explore Collections'}
+                <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">
+                  arrow_forward
+                </span>
+              </Link>
             </motion.div>
           ) : (
             /* Grid Layout matching retail platforms with smooth staggered micro-animations */
@@ -466,6 +474,38 @@ export function WishlistView({ isEmbedded = false }) {
             </motion.div>
           )}
         </div>
+
+        {/* Recommendations block placed outside the ternary so it renders for both empty and filtered empty */}
+        {shouldShowRecommendations && (
+          <div className="pt-16 pb-8 border-t border-outline-variant/20 mt-12 relative z-0">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl lg:text-2xl font-light tracking-tight text-on-surface font-display leading-tight">
+                {itemTypeFilter === 'event' ? 'Discover Curated Events' : 'Trending Masterpieces'}
+              </h3>
+              <Link
+                to={itemTypeFilter === 'event' ? '/events' : '/collections'}
+                className="text-[9px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
+              >
+                View All
+                <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 sm:gap-x-4 lg:gap-x-6 gap-y-6 sm:gap-y-8 lg:gap-y-10">
+              {recommendationLoading
+                ? [...Array(4)].map((_, i) => <ProductCard key={i} loading={true} />)
+                : recommendationItems.map((item) => (
+                    <ProductCard
+                      key={item._id || item.id}
+                      {...item}
+                      onQuickView={(e) => {
+                        e.preventDefault();
+                        setQuickViewProduct(item);
+                      }}
+                    />
+                  ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Quick View Modal */}

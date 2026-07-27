@@ -500,7 +500,16 @@ export default function CheckoutSidebar() {
                 <span className="material-symbols-outlined text-sm text-primary">verified</span>
                 Secure delivery
               </p>
-              {activeItems.some((item) => item.isNonRefundable) ? (
+              {activeItems.some((item) =>
+                Boolean(
+                  item.isNonRefundable ||
+                  item.product?.isNonRefundable ||
+                  item.product?.returnSettings?.isReturnable === false ||
+                  item.itemType === 'event' ||
+                  item.type === 'custom' ||
+                  orderType === 'rental',
+                ),
+              ) ? (
                 <p className="flex items-center gap-1.5 font-medium text-[#d97706]">
                   <span className="material-symbols-outlined text-sm text-[#d97706]">block</span>
                   Contains Non-Refundable Items

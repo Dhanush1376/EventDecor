@@ -79,8 +79,22 @@ export function EventBookingCard({
               <span>Free Setup, Logistics & Teardown</span>
             </div>
             <div className="flex items-center gap-2 text-[11px] font-semibold text-stone-700">
-              <span className="material-symbols-outlined text-black text-[16px]">verified</span>
-              <span>100% Refundable Deposit up to 14 days prior</span>
+              {event?.isNonRefundable || event?.returnSettings?.isReturnable === false ? (
+                <>
+                  <span className="material-symbols-outlined text-[#d97706] text-[16px]">
+                    block
+                  </span>
+                  <span className="text-[#d97706]">Non-refundable Deposit</span>
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-black text-[16px]">verified</span>
+                  <span>
+                    100% Refundable Deposit up to {event?.returnSettings?.returnWindowDays || 14}{' '}
+                    days prior
+                  </span>
+                </>
+              )}
             </div>
           </div>
 

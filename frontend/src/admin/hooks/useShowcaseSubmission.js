@@ -148,10 +148,14 @@ export function useShowcaseSubmission({
         : await showcaseService.create(payload);
 
       if (res.success) {
+        toast.success(
+          isEditMode
+            ? 'Design updated! (Changes may take 1-2 mins to reflect)'
+            : 'Design published! (Changes may take 1-2 mins to reflect)',
+        );
         if (!stayOnPage) {
           await deleteDraft(); // Clear draft on success if leaving page
         }
-        toast.success(isEditMode ? 'Design updated!' : 'Design published!');
 
         if (queryClient) {
           queryClient.invalidateQueries({ queryKey: ['adminShowcases'] });
