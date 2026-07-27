@@ -510,7 +510,31 @@ export default function CheckoutSidebar() {
                   <span className="material-symbols-outlined text-sm text-primary">
                     change_circle
                   </span>
-                  Easy {settings?.returnsExchanges?.returnWindowDays || 14}-day returns
+                  Easy{' '}
+                  {activeItems.reduce(
+                    (min, item) =>
+                      Math.min(
+                        min,
+                        item.product?.returnSettings?.returnWindow ||
+                          item.product?.returnSettings?.returnWindowDays ||
+                          settings?.returnsExchanges?.returnWindowDays ||
+                          14,
+                      ),
+                    Infinity,
+                  ) === Infinity
+                    ? settings?.returnsExchanges?.returnWindowDays || 14
+                    : activeItems.reduce(
+                        (min, item) =>
+                          Math.min(
+                            min,
+                            item.product?.returnSettings?.returnWindow ||
+                              item.product?.returnSettings?.returnWindowDays ||
+                              settings?.returnsExchanges?.returnWindowDays ||
+                              14,
+                          ),
+                        Infinity,
+                      )}
+                  -day returns
                 </p>
               )}
             </div>
