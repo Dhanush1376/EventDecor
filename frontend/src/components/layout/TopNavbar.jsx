@@ -74,9 +74,8 @@ export function TopNavbar() {
   const isWishlistPage = location.pathname === '/wishlist';
   const isCartPage = location.pathname === '/cart';
 
-  // Disable transparency on shop page if on mobile with an active search (since hero is hidden)
-  const isTransparent =
-    (isHomePage || (isShopPage && !(isMobile && searchParam)) || isEventsPage) && isAtTop;
+  // Always enable transparency on shop page at the top, since hero banner is always visible
+  const isTransparent = (isHomePage || isShopPage || isEventsPage) && isAtTop;
 
   const adminRoles = [
     'owner',
@@ -338,14 +337,14 @@ export function TopNavbar() {
             {/* Right side actions group */}
             <div className="flex-shrink-0 flex items-center justify-end gap-1 lg:gap-2">
               {/* Trailing Luxury Icons */}
-              <div className="flex items-center gap-1 lg:gap-1.5">
+              <div className="flex items-center gap-1 lg:gap-3">
                 {/* Unified Search Bar (Tablet/Desktop) */}
                 <div
                   onClick={search.handleOpen}
                   className={`hidden lg:flex items-center gap-2.5 px-4 h-10 rounded-full cursor-pointer transition-all duration-300 border backdrop-blur-md w-[200px] lg:w-[260px] group ${
                     isTransparent
-                      ? 'bg-white/10 border-white/20 hover:bg-white/20 text-white'
-                      : 'bg-surface-container-low border-outline-variant/30 hover:border-primary/30 text-on-surface hover:shadow-sm'
+                      ? 'border-white/20 hover:bg-white/10 text-white'
+                      : 'border-outline-variant/40 hover:border-primary/40 hover:bg-primary/5 text-on-surface'
                   }`}
                 >
                   <span
@@ -399,7 +398,7 @@ export function TopNavbar() {
 
                 <Link
                   to="/wishlist"
-                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden lg:flex items-center justify-center w-10 h-10 rounded-full relative group icon-button-touch-target`}
+                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary/10'} transition-all duration-300 hover:scale-110 hidden lg:flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
                   aria-label="View Wishlist"
                 >
                   <span
@@ -423,7 +422,7 @@ export function TopNavbar() {
                       : {}
                   }
                   transition={{ duration: 0.5 }}
-                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-[#d4af37] hover:bg-[#d4af37]/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
+                  className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-[#d4af37] hover:bg-[#d4af37]/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
                   aria-label="View Bag"
                 >
                   <span
@@ -437,7 +436,7 @@ export function TopNavbar() {
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute top-1 right-1 w-3.5 h-3.5 bg-primary-container text-on-primary-container text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs"
+                      className={`absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-on-primary text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs border-2 ${isTransparent ? 'border-transparent' : 'border-surface-bright'}`}
                     >
                       {cartCount}
                     </motion.span>
@@ -447,7 +446,7 @@ export function TopNavbar() {
                 {!isAuthenticated ? (
                   <button
                     onClick={openAuthModal}
-                    className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 hidden lg:flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
+                    className={`${isTransparent ? 'border border-white/20 hover:bg-white/10 text-white' : 'border border-outline-variant/40 hover:border-primary/40 hover:bg-primary/5 text-on-surface hover:text-primary'} transition-all duration-300 hover:scale-110 hidden lg:flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
                     aria-label="User Account"
                   >
                     <span
@@ -466,7 +465,7 @@ export function TopNavbar() {
                       onMouseEnter={() =>
                         prefetchManager.prefetchRoute('/dashboard', { kind: 'hover' })
                       }
-                      className={`w-[36px] h-[36px] rounded-full border flex items-center justify-center cursor-pointer transition-colors relative icon-button-touch-target flex-shrink-0 aspect-square min-h-0 ${isTransparent ? 'bg-white/20 border-white/30 hover:bg-white/30 text-white' : 'bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary'}`}
+                      className={`${isTransparent ? 'border border-white/20 hover:bg-white/10 text-white' : 'border border-outline-variant/40 hover:border-primary/40 hover:bg-primary/5 text-on-surface hover:text-primary'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
                       aria-label="User Dropdown"
                     >
                       <span

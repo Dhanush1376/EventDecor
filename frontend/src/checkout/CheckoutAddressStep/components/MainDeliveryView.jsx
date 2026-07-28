@@ -10,11 +10,25 @@ export function MainDeliveryView({
   deliveryEstimates,
   setActiveStep,
   checkoutSteps,
+  isAddressesLoading,
 }) {
   return (
     <div className="bg-surface-container-low -mt-2">
-      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs mb-4 relative">
-        {activeSelectedAddress ? (
+      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs mb-4 relative min-h-[160px]">
+        {isAddressesLoading ? (
+          <div className="animate-pulse flex flex-col gap-4">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex gap-2 items-center">
+                <div className="h-4 bg-outline-variant/20 rounded w-32"></div>
+                <div className="h-4 bg-outline-variant/20 rounded w-16"></div>
+              </div>
+              <div className="h-8 w-8 bg-outline-variant/20 rounded-full"></div>
+            </div>
+            <div className="h-3 bg-outline-variant/20 rounded w-full"></div>
+            <div className="h-3 bg-outline-variant/20 rounded w-2/3"></div>
+            <div className="h-3 bg-outline-variant/20 rounded w-1/2 mt-4"></div>
+          </div>
+        ) : activeSelectedAddress ? (
           <div>
             <button
               onClick={() => setIsSelectingList(true)}
@@ -27,6 +41,9 @@ export function MainDeliveryView({
 
             <div className="pr-16 mb-4">
               <div className="flex flex-wrap items-center gap-2">
+                <span className="material-symbols-outlined text-[18px] text-primary shrink-0 block">
+                  share_location
+                </span>
                 <span className="text-[15px] font-extrabold text-on-surface capitalize">
                   {activeSelectedAddress.name}
                 </span>

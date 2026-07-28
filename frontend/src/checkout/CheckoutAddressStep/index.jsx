@@ -24,6 +24,7 @@ export default function CheckoutAddressStep() {
     PINCODE_MAP,
     checkoutSteps,
     user,
+    isAddressesLoading,
   } = useCheckout();
 
   const {
@@ -76,6 +77,7 @@ export default function CheckoutAddressStep() {
         deliveryEstimates={deliveryEstimates}
         setActiveStep={setActiveStep}
         checkoutSteps={checkoutSteps}
+        isAddressesLoading={isAddressesLoading}
       />
       <AddAddressModal
         isAddingNewAddress={isAddingNewAddress}

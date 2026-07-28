@@ -43,7 +43,8 @@ export function DashboardHeader() {
 
   const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();
-  const isNavbarHidden = !isAtTop && scrollDirection === 'down' && !isMobile;
+  // Sync the logic perfectly with TopNavbar.jsx to prevent gaps
+  const isNavbarHidden = !isAtTop && scrollDirection === 'down';
 
   const [navbarHeight, setNavbarHeight] = useState(0);
   const [isStuck, setIsStuck] = useState(false);
@@ -92,7 +93,7 @@ export function DashboardHeader() {
   return (
     <div
       ref={headerRef}
-      className={`sticky z-40 transition-all duration-300 flex justify-between items-center gap-4 h-[52px] mb-4 border-b ${
+      className={`sticky z-40 transition-all duration-500 flex justify-between items-center gap-4 h-[52px] mb-4 border-b ${
         isStuck
           ? 'bg-white/95 backdrop-blur-md border-black/5 -mx-margin-mobile lg:-mx-margin-desktop px-margin-mobile lg:px-margin-desktop'
           : 'border-outline-variant/20 bg-surface-container-low'

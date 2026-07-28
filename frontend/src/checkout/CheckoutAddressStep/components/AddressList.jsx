@@ -33,11 +33,11 @@ export function AddressList({
               onClick={() => setSelectedAddressId(addrId)}
               className={`relative p-5 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden ${
                 isSelected
-                  ? 'border-primary bg-primary/5 shadow-md'
-                  : 'border-outline-variant/40 bg-surface-bright hover:border-primary/40 hover:shadow-sm'
+                  ? 'border-outline-variant/50 bg-surface-bright shadow-md'
+                  : 'border-outline-variant/40 bg-surface-bright hover:border-outline-variant/60 hover:shadow-sm'
               }`}
             >
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <div className="pt-1 shrink-0">
                   <div
                     className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${
@@ -52,13 +52,16 @@ export function AddressList({
                     <span className="text-[14px] font-extrabold text-on-surface capitalize">
                       {addr.name}
                     </span>
+                    <span className="text-[10px] text-secondary/80 font-medium bg-surface-container-low px-1.5 py-0.5 rounded">
+                      Default
+                    </span>
                     {addr.tag && (
-                      <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border border-primary text-primary rounded-full bg-primary/10">
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border border-primary text-primary rounded-full">
                         {addr.tag}
                       </span>
                     )}
                   </div>
-                  <p className="text-[13px] text-on-surface/85 leading-relaxed w-[90%] mb-2">
+                  <p className="text-[13px] text-on-surface/85 leading-relaxed w-[90%] mb-1.5">
                     {addr.addressString || addr.address}, {addr.locality}, {addr.city}, {addr.state}{' '}
                     {addr.pincode}
                   </p>
@@ -74,7 +77,7 @@ export function AddressList({
                     {isSelected && (
                       <motion.div
                         initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                        animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                        animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
                         exit={{ opacity: 0, height: 0, marginTop: 0 }}
                         className="flex gap-3 overflow-hidden"
                       >

@@ -88,6 +88,7 @@ export function AddAddressModal({
                             type="tel"
                             required
                             pattern="[0-9]{10}"
+                            title="Please enter exactly 10 digits"
                             placeholder="10-digit mobile number"
                             value={newAddress.phone}
                             onChange={(e) =>
@@ -100,6 +101,8 @@ export function AddAddressModal({
                           <label className="form-label">Alternate Phone Number</label>
                           <input
                             type="tel"
+                            pattern="[0-9]{10}"
+                            title="Please enter exactly 10 digits if providing an alternate number"
                             placeholder="Optional alternate number"
                             value={newAddress.alternatePhone}
                             onChange={(e) =>
@@ -124,25 +127,49 @@ export function AddAddressModal({
                           e.preventDefault();
                           toast.loading('Finding you...', { id: 'gps' });
                           if (navigator.geolocation) {
-                            navigator.geolocation.getCurrentPosition(
-                              (pos) => {
-                                const { latitude, longitude } = pos.coords;
-                                setMapPosition({ lat: latitude, lng: longitude });
-                                fetchAddressFromCoords(latitude, longitude);
-                                toast.success('Location found!', { id: 'gps' });
-                              },
-                              (_err) => {
-                                toast.error('Could not access GPS', { id: 'gps' });
-                              },
-                              { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-                            );
+                            const getPosition = (highAccuracy = true) => {
+                              navigator.geolocation.getCurrentPosition(
+                                (pos) => {
+                                  const { latitude, longitude } = pos.coords;
+                                  setMapPosition({ lat: latitude, lng: longitude });
+                                  fetchAddressFromCoords(latitude, longitude);
+                                  toast.success('Location found!', { id: 'gps' });
+                                },
+                                (err) => {
+                                  if (
+                                    highAccuracy &&
+                                    (err.code === err.TIMEOUT ||
+                                      err.code === err.POSITION_UNAVAILABLE)
+                                  ) {
+                                    toast.loading('Retrying with standard accuracy...', {
+                                      id: 'gps',
+                                    });
+                                    getPosition(false);
+                                  } else {
+                                    let errorMsg = 'Could not access GPS';
+                                    if (err.code === err.PERMISSION_DENIED) {
+                                      errorMsg = 'Location permission denied. Please allow access.';
+                                    } else if (err.code === err.TIMEOUT) {
+                                      errorMsg = 'Location request timed out.';
+                                    }
+                                    toast.error(errorMsg, { id: 'gps' });
+                                  }
+                                },
+                                {
+                                  enableHighAccuracy: highAccuracy,
+                                  timeout: highAccuracy ? 10000 : 20000,
+                                  maximumAge: highAccuracy ? 0 : 60000,
+                                },
+                              );
+                            };
+                            getPosition(true);
                           } else {
                             toast.error('Geolocation not supported by this browser', {
                               id: 'gps',
                             });
                           }
                         }}
-                        className="inline-flex items-center gap-1 text-[8px] text-primary font-bold uppercase tracking-widest bg-primary/5 hover:bg-primary/10 px-2.5 py-1.5 rounded-full cursor-pointer transition-all"
+                        className="inline-flex items-center gap-1 text-[8px] text-white font-bold uppercase tracking-widest bg-[#1a1a1a] hover:bg-black px-2.5 py-1.5 rounded-full cursor-pointer transition-all shadow-sm"
                       >
                         <span className="material-symbols-outlined text-[10px] font-bold">
                           my_location
@@ -344,7 +371,7 @@ export function AddAddressModal({
                   form="address-form"
                   type="submit"
                   disabled={isProcessing}
-                  className="flex-1 btn-primary py-3 rounded-full font-bold uppercase tracking-widest text-[10px] shadow-md flex justify-center disabled:opacity-70 cursor-pointer !text-white"
+                  className="flex-1 bg-[#282828] hover:bg-black text-white py-3 rounded-full font-bold uppercase tracking-widest text-[10px] shadow-md flex justify-center transition-colors disabled:opacity-70 cursor-pointer"
                 >
                   {isProcessing ? 'Saving...' : 'Save Address'}
                 </button>

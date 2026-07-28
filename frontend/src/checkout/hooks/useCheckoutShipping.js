@@ -79,8 +79,11 @@ export function useCheckoutShipping({ isAuthenticated, user, setActiveStep, setI
     }
   }, [user]);
 
+  const [isAddressesLoading, setIsAddressesLoading] = useState(true);
+
   useEffect(() => {
     if (isAuthenticated) {
+      setIsAddressesLoading(true);
       userService
         .getAddresses()
         .then((res) => {
@@ -112,7 +115,12 @@ export function useCheckoutShipping({ isAuthenticated, user, setActiveStep, setI
         })
         .catch((err) => {
           logger.error('Failed to load addresses:', err);
+        })
+        .finally(() => {
+          setIsAddressesLoading(false);
         });
+    } else {
+      setIsAddressesLoading(false);
     }
   }, [isAuthenticated]);
 
@@ -344,6 +352,7 @@ export function useCheckoutShipping({ isAuthenticated, user, setActiveStep, setI
     isAddingNewAddress,
     setIsAddingNewAddress,
     isDetectingLocation,
+    isAddressesLoading,
     newAddress,
     setNewAddress,
     addressError,

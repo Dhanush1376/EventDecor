@@ -88,6 +88,7 @@ export class OrderValidationService {
           customOrder.costEstimation?.total ||
           customOrder.budget ||
           0;
+        item._calculatedPrice = itemPrice;
         subtotal += itemPrice * item.quantity;
         continue;
       }
@@ -128,6 +129,7 @@ export class OrderValidationService {
         }
       }
 
+      item._calculatedPrice = itemPrice;
       subtotal += itemPrice * item.quantity;
     }
 
@@ -184,7 +186,7 @@ export class OrderValidationService {
               if (productIdsStr.includes(item.productId.toString())) {
                 const product = productsById.get(String(item.productId));
                 if (product) {
-                  applicableAmount += product.price * item.quantity;
+                  applicableAmount += (item._calculatedPrice || 0) * item.quantity;
                 }
               }
             }
@@ -196,11 +198,13 @@ export class OrderValidationService {
             coupon.targetCategories &&
             coupon.targetCategories.length > 0
           ) {
-            const targetCatsLower = coupon.targetCategories.map((c: any) => c.toLowerCase());
+            const targetCatsLower = coupon.targetCategories.map((c: any) =>
+              (c || '').toLowerCase(),
+            );
             for (const item of items) {
               const product = productsById.get(String(item.productId));
-              if (product && targetCatsLower.includes(product.category.toLowerCase())) {
-                applicableAmount += product.price * item.quantity;
+              if (product && targetCatsLower.includes((product.category || '').toLowerCase())) {
+                applicableAmount += (item._calculatedPrice || 0) * item.quantity;
               }
             }
             if (applicableAmount === 0) {

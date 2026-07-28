@@ -245,7 +245,8 @@ export default function CheckoutPaymentStep() {
 
       {/* Payment Header */}
       <div className="py-4 sm:py-6 mb-2">
-        <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider">
+        <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider flex items-center gap-2">
+          <span className="material-symbols-outlined text-[18px] text-primary">payments</span>
           Payment Options
         </h2>
       </div>
