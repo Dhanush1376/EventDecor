@@ -280,6 +280,14 @@ export const syncCart = asyncHandler(async (req: any, res: Response) => {
 export const mergeCart = asyncHandler(async (req: any, res: Response) => {
   const { cartItems } = req.body;
   const { cart, droppedItems } = await UserCartService.mergeCart(req.user.id, cartItems);
+
+  // Invalidate and rebuild the cache so subsequent queries get the merged cart
+  await invalidateUserSessionCaches(String(req.user.id));
+  const user = await User.findById(req.user.id);
+  const cartDetails = await UserService.computeAndValidateCart(user);
+  await cacheCart(String(req.user.id), cartDetails);
+
+  res.setHeader('Cache-Control', 'private, no-store, must-revalidate');
   res.json({ success: true, data: { cart, droppedItems } });
 });
 

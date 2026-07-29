@@ -33,8 +33,8 @@ export const ProductListingSortBar = ({
 
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        // Use a generous buffer to prevent flickering during rapid scrolling, elastic scrolling, or transitions
-        const maxThreshold = (navbarHeight || 68) + 150;
+        // Use the maximum sticky top value as a stable threshold to prevent background flashing during navbar transitions
+        const maxThreshold = (navbarHeight || 68) + 2;
         setIsStuck(rect.top <= maxThreshold);
       }
     };
@@ -56,7 +56,7 @@ export const ProductListingSortBar = ({
       window.removeEventListener('scroll', onScrollOrResize);
       window.removeEventListener('resize', onScrollOrResize);
     };
-  }, [setNavbarHeight, setIsStuck, navbarHeight]);
+  }, [setNavbarHeight, setIsStuck, navbarHeight, isNavbarHidden]);
 
   return (
     <nav

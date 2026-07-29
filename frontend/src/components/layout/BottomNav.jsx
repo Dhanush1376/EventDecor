@@ -27,7 +27,8 @@ export function BottomNav() {
     <motion.nav
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bottom-nav lg:hidden fixed bottom-2 left-2 right-2 z-[var(--z-overlay)] bg-surface/95 backdrop-blur-xl border border-primary-container/20 rounded-full h-[60px] px-2 flex items-center justify-evenly select-none"
+      className="bottom-nav lg:hidden fixed bottom-3 left-3 right-3 z-[var(--z-overlay)] bg-[#faf8f2]/95 backdrop-blur-2xl border border-[#b38235]/15 rounded-full h-[65px] px-2 flex items-center justify-evenly select-none shadow-[0_8px_32px_rgba(179,130,53,0.12)]"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {navItems.map((item) => {
         const active = item.isCart
@@ -37,23 +38,27 @@ export function BottomNav() {
         return (
           <div
             key={item.label || item.path}
-            className="relative flex flex-col items-center justify-center"
+            className="relative flex flex-col items-center justify-center h-full flex-1"
           >
             {item.isCart ? (
               <button
                 onMouseEnter={() => prefetchManager.prefetchRoute('/cart', { kind: 'hover' })}
                 onClick={() => setIsCartOpen(true)}
                 aria-label="Open shopping bag"
-                className="relative z-10 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-full group cursor-pointer active:scale-95 transition-all"
+                className="relative z-10 flex flex-col items-center justify-center w-full h-full group cursor-pointer active:scale-95 transition-all"
               >
-                <NavIcon active={active} icon={item.icon} label={item.label} />
-                {cartCount > 0 && <CartBadge count={cartCount} />}
+                <NavIcon
+                  active={active}
+                  icon={item.icon}
+                  label={item.label}
+                  badgeCount={cartCount}
+                />
               </button>
             ) : item.onClick ? (
               <button
                 onClick={item.onClick}
                 aria-label={`Open ${item.label}`}
-                className="relative z-10 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-full group cursor-pointer active:scale-95 transition-all"
+                className="relative z-10 flex flex-col items-center justify-center w-full h-full group cursor-pointer active:scale-95 transition-all"
               >
                 <NavIcon active={false} icon={item.icon} label={item.label} />
               </button>
@@ -63,7 +68,7 @@ export function BottomNav() {
                 onMouseEnter={() => prefetchManager.prefetchRoute(item.path, { kind: 'hover' })}
                 aria-label={`Navigate to ${item.label}`}
                 aria-current={active ? 'page' : undefined}
-                className="relative z-10 flex flex-col items-center justify-center w-[52px] h-[52px] rounded-full group cursor-pointer active:scale-95 transition-all"
+                className="relative z-10 flex flex-col items-center justify-center w-full h-full group cursor-pointer active:scale-95 transition-all"
               >
                 <NavIcon active={active} icon={item.icon} label={item.label} />
               </Link>
@@ -75,20 +80,28 @@ export function BottomNav() {
   );
 }
 
-function NavIcon({ active, icon, label }) {
+function NavIcon({ active, icon, label, badgeCount }) {
   const activeColorClass = 'text-black';
+  const inactiveColorClass = 'text-black';
+
   return (
-    <div
-      className={`flex flex-col items-center justify-center transition-all duration-300 ${active ? `${activeColorClass} scale-[1.05]` : 'text-black/70 group-hover:text-black group-hover:-translate-y-0.5'}`}
-    >
-      <span className={`material-symbols-outlined text-[20px] ${active ? 'font-fill' : ''}`}>
-        {icon}
-      </span>
-      <span
-        className={`text-[9px] uppercase font-bold tracking-wider mt-1 transition-all duration-300 ${active ? activeColorClass : 'text-black/70 group-hover:text-black'}`}
-      >
-        {label}
-      </span>
+    <div className={`flex flex-col items-center justify-center transition-all duration-300 mt-0.5`}>
+      <div className="relative flex items-center justify-center">
+        <span
+          className={`material-symbols-outlined text-[24px] ${active ? `font-fill ${activeColorClass}` : inactiveColorClass} transition-colors`}
+          style={{ fontVariationSettings: active ? "'wght' 400" : "'wght' 200" }}
+        >
+          {icon}
+        </span>
+        {badgeCount > 0 && <CartBadge count={badgeCount} />}
+      </div>
+      {label && (
+        <span
+          className={`text-[9px] uppercase font-bold tracking-[0.05em] mt-1 transition-colors duration-300 ${active ? activeColorClass : inactiveColorClass}`}
+        >
+          {label}
+        </span>
+      )}
     </div>
   );
 }
@@ -98,7 +111,7 @@ function CartBadge({ count }) {
     <motion.span
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
-      className="absolute top-1 right-2 w-[18px] h-[18px] bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md border-[1.5px] border-white z-10"
+      className="absolute -top-1.5 -right-2.5 w-[16px] h-[16px] bg-[#ff3b30] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm border-2 border-[#faf8f2] z-10"
     >
       {count}
     </motion.span>

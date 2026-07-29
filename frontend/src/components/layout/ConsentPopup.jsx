@@ -110,15 +110,8 @@ export function ConsentPopup() {
             .catch(() => {});
         }
 
-        // Proceed to notification step or close
-        const notifAsked = safeLocalStorage.getItem('siri_arts_notif_asked');
-        const supportsNotif = 'Notification' in window && Notification.permission === 'default';
-
-        if (!notifAsked && supportsNotif) {
-          dismissWithAnimation('notification');
-        } else {
-          dismissWithAnimation(null);
-        }
+        // Proceed to close (defer notifications to meaningful actions)
+        dismissWithAnimation(null);
 
         if (actionType === 'accept') {
           toast.success('Preferences saved. Cookies & alerts enabled.', {

@@ -74,7 +74,7 @@
 
   /* Global Minimal Micro-Interaction for all Buttons */
   button {
-    @apply transition-all duration-200 active:scale-[0.96] cursor-pointer;
+    @apply transition-all duration-200 cursor-pointer;
   }
 
   /* Accessibility Focus Rings — only :focus-visible is styled (below) */
@@ -197,11 +197,7 @@
       'opsz' 24;
   }
 
-  /*Logo alignment*/
-  .material-symbols-outlined:not(.absolute) {
-    transform: translateY(-4px) !important;
-  }
-
+  /*Logo alignment removed as it broke global icon alignment*/
   /* Shimmer placeholder state to prevent FOUT and layout shifts during hydration/loading */
   html.fonts-loading .material-symbols-outlined {
     color: transparent !important;

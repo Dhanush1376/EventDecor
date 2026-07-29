@@ -436,7 +436,7 @@ export function TopNavbar() {
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className={`absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-on-primary text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs border-2 ${isTransparent ? 'border-transparent' : 'border-surface-bright'}`}
+                      className={`absolute top-0.5 right-0.5 w-4 h-4 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs border-2 ${isTransparent ? 'border-transparent' : 'border-surface-bright'}`}
                     >
                       {cartCount}
                     </motion.span>

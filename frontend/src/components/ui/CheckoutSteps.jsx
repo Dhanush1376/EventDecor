@@ -6,6 +6,25 @@ export function CheckoutSteps({
   steps = ['BAG', 'ADDRESS', 'PAYMENT'],
   orderType = 'purchase',
 }) {
+  const getStepLabel = (step) => {
+    switch (step) {
+      case 'BAG':
+        return 'Cart';
+      case 'ADDRESS':
+        return 'Delivery';
+      case 'DURATION':
+        return 'Rental Period';
+      case 'VERIFY':
+        return 'Confirm';
+      case 'PAYMENT':
+        return 'Pay';
+      case 'CUSTOMIZATION':
+        return 'Note';
+      default:
+        return step;
+    }
+  };
+
   return (
     <div className="bg-surface-bright border-b border-outline-variant/40 sticky top-[60px] lg:top-[72px] z-40 shadow-[0_2px_15px_rgba(0,0,0,0.03)] backdrop-blur-md bg-surface-bright/95 py-2.5 sm:py-3.5 px-3 sm:px-8">
       <div className="max-w-[1240px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-4">
@@ -68,18 +87,18 @@ export function CheckoutSteps({
                     <span
                       className={`hidden sm:block whitespace-nowrap ${isActive ? 'font-extrabold text-on-surface' : 'font-bold'}`}
                     >
-                      {step === 'CUSTOMIZATION' ? 'NOTE' : step}
+                      {getStepLabel(step)}
                     </span>
                     {/* Show text below circle on mobile only */}
                     <span
                       className={`block sm:hidden text-[8px] sm:mt-1 text-center leading-tight whitespace-nowrap mt-[3px] ${isActive ? 'font-extrabold text-on-surface' : 'font-bold text-secondary/60'}`}
                     >
-                      {step === 'CUSTOMIZATION' ? 'NOTE' : step}
+                      {getStepLabel(step)}
                     </span>
                   </div>
 
                   {index < steps.length - 1 && (
-                    <div className="flex-1 min-w-[15px] max-w-[90px] relative mx-1 sm:mx-3 h-4 flex items-center mb-[10px] sm:mb-0">
+                    <div className="flex-1 relative mx-1 sm:mx-3 h-4 flex items-center mb-[10px] sm:mb-0">
                       <div className="absolute w-full border-t-[1.5px] border-dashed border-outline-variant/40 top-1/2 -translate-y-1/2"></div>
                       <motion.div
                         className="absolute left-0 h-[2px] bg-on-surface top-1/2 -translate-y-1/2 origin-left z-0 shadow-sm"

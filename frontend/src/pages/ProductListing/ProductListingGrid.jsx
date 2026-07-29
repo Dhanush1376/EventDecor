@@ -7,6 +7,7 @@ import {
   CategoryTabs,
   CloudinaryImage,
   EmptyState,
+  ErrorState,
 } from '../../components/ui';
 import { ProductCard } from '../../components/shared/ProductCard';
 import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
@@ -189,20 +190,11 @@ export const ProductListingGrid = React.memo(
 
             <div id="product-results-wrapper">
               {isError ? (
-                <div className="text-center py-32 lg:py-48 bg-surface-container-low/30 rounded-[40px] border border-dashed border-red-500/30 px-6 animate-fade-in">
-                  <div className="w-16 h-16 lg:w-20 lg:h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-6">
-                    <span className="material-symbols-outlined text-red-600 text-3xl lg:text-4xl">
-                      error
-                    </span>
-                  </div>
-                  <h3 className="font-display text-2xl lg:text-3xl text-on-surface mb-3">
-                    Failed to load products
-                  </h3>
-                  <p className="font-body text-on-surface-variant/80 max-w-md mx-auto leading-relaxed">
-                    We encountered a network error while fetching products. If you use an adblocker
-                    or VPN, it might be blocking the request.
-                  </p>
-                </div>
+                <ErrorState
+                  title="Failed to load products"
+                  description="We encountered a network error while fetching products. If you use an adblocker or VPN, it might be blocking the request."
+                  onRetry={() => window.location.reload()}
+                />
               ) : loading ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-2 sm:gap-x-4 lg:gap-x-8 gap-y-6 sm:gap-y-8 lg:gap-y-12">
                   {[...Array(6)].map((_, i) => (
@@ -299,14 +291,14 @@ const MobileStickyCategories = ({
   React.useEffect(() => {
     const onScroll = () => {
       if (!ref.current) return;
-      const maxThreshold = (navbarHeight || 68) + 68 + 150;
+      const maxThreshold = (navbarHeight || 68) + 68 + 2;
       const rect = ref.current.getBoundingClientRect();
       setIsStuck(rect.top <= maxThreshold);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
-  }, [navbarHeight]);
+  }, [navbarHeight, isNavbarHidden]);
 
   return (
     <div

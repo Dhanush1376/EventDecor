@@ -1,3 +1,20 @@
+const HUMAN_ERROR_MAP = {
+  'Network Error': 'Please check your internet connection.',
+  timeout: 'The request timed out. Please try again.',
+  ECONNREFUSED: 'Our servers are temporarily unreachable.',
+  401: 'Please log in again to continue.',
+  403: 'You do not have permission for this action.',
+  404: 'We could not find what you were looking for.',
+  429: 'You are doing that too fast. Please slow down.',
+  500: 'Our servers are taking a quick break. Try again shortly.',
+  502: 'Our servers are taking a quick break. Try again shortly.',
+  503: 'Our servers are taking a quick break. Try again shortly.',
+  504: 'Our servers are taking a quick break. Try again shortly.',
+  'duplicate key': 'This information is already in use.',
+  'invalid token': 'Your session has expired.',
+  'jwt expired': 'Your session has expired. Please log in again.',
+};
+
 /**
  * Extracts the most meaningful error message from any error object.
  * Priority order:
@@ -67,6 +84,22 @@ export const getErrorMessage = (err, fallback = 'Something went wrong. Please tr
   // 3. Native JS error message
   if (!candidate && err?.message && typeof err.message === 'string') {
     candidate = err.message;
+  }
+
+  // Map candidate against human readable messages
+  if (candidate) {
+    const candidateLower = candidate.toLowerCase();
+    for (const [key, value] of Object.entries(HUMAN_ERROR_MAP)) {
+      if (candidateLower.includes(key.toLowerCase())) {
+        return value;
+      }
+    }
+
+    // Check status codes if present in candidate string
+    const statusMatch = candidate.match(/status code (\d{3})/i);
+    if (statusMatch && HUMAN_ERROR_MAP[statusMatch[1]]) {
+      return HUMAN_ERROR_MAP[statusMatch[1]];
+    }
   }
 
   // Verify candidate is not technical

@@ -6,7 +6,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useScrollDirection } from '../../../hooks/useScrollDirection';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
-import { SHOWCASE_CATEGORIES } from '../../../config/constants';
 
 const CATEGORY_MAP = {
   'Telugu Heritage': 'telugu_heritage',
@@ -71,16 +70,26 @@ export function useShowcasesData() {
     return ['Popular traditional setups', 'Best for small venues', 'Premium floral decor'];
   }, []);
 
+  const formatCategory = (cat) => {
+    if (!cat) return '';
+    return cat
+      .split(/[_-]/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const availableCategories = useMemo(() => {
     const categoriesWithItems = new Set();
+    categoriesWithItems.add('All');
+
     showcases.forEach((item) => {
       const cat = item.category || item.primaryCategory?.name;
-      if (cat) categoriesWithItems.add(cat);
+      // Ignore raw ObjectIDs (24 hex chars) which might be invalid/legacy data
+      if (cat && cat.length !== 24) {
+        categoriesWithItems.add(formatCategory(cat));
+      }
     });
-    return SHOWCASE_CATEGORIES.filter(
-      (cat) =>
-        cat === 'All' || categoriesWithItems.has(cat) || categoriesWithItems.has(CATEGORY_MAP[cat]),
-    );
+    return Array.from(categoriesWithItems);
   }, [showcases]);
 
   useEffect(() => {
@@ -121,7 +130,8 @@ export function useShowcasesData() {
       }
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        const maxThreshold = currentNavHeight + 150;
+        // Use the maximum sticky top value as a stable threshold to prevent background flashing during navbar transitions
+        const maxThreshold = currentNavHeight + 2;
         setIsSticky(rect.top <= maxThreshold);
       }
     };
@@ -132,7 +142,7 @@ export function useShowcasesData() {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
-  }, [navbarHeight]);
+  }, [navbarHeight, isNavbarHidden]);
 
   useEffect(() => {
     if (isFilterOpen) document.body.classList.add('filters-open');
@@ -161,7 +171,15 @@ export function useShowcasesData() {
 
     if (activeCategory !== 'All') {
       const mappedKey = CATEGORY_MAP[activeCategory];
-      if (mappedKey) list = list.filter((s) => s.category === mappedKey);
+      if (mappedKey) {
+        list = list.filter((s) => s.category === mappedKey);
+      } else {
+        list = list.filter((s) => {
+          const cat = s.category || s.primaryCategory?.name;
+          if (!cat) return false;
+          return formatCategory(cat) === activeCategory;
+        });
+      }
     }
 
     if (filters.price.length > 0) {

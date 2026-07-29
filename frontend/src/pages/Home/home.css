@@ -54,6 +54,12 @@
   height: 100%;
   display: flex;
   justify-content: flex-end;
+  transform: scale(1);
+  transition: transform 6s ease-out;
+}
+
+.h1-hero__slide--active .h1-hero__slide-image-wrap {
+  transform: scale(1.03);
 }
 
 .h1-hero__slide-image {

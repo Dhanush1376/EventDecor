@@ -89,7 +89,8 @@ export function transformDbCart(dbCartItems) {
       stock: item.product.stock ?? 10,
       seller: item.product.seller || 'Siri Arts & Crafts Artisans',
       rating: item.product.rating || 0,
-      imageSrc: item.product.imageSrc,
+      imageSrc:
+        item.product.imageSrc || (item.product.images?.length > 0 ? item.product.images[0] : null),
       category: item.product.category,
       quantity: item.quantity,
       variant: item.variant || 'Default',

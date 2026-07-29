@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 export function SearchBar({
   value = '',
   onChange,
+  onSubmit,
   placeholder = 'Search collections...',
   className = '',
   onCameraClick,
@@ -85,6 +86,15 @@ export function SearchBar({
           if (e.key === 'Enter') {
             e.preventDefault();
             e.target.blur();
+            if (onSubmit) {
+              onSubmit(localValue);
+            } else if (localValue.trim()) {
+              window.dispatchEvent(
+                new CustomEvent('open-global-search', {
+                  detail: { mode: 'text', query: localValue.trim() },
+                }),
+              );
+            }
           }
         }}
         aria-label="Search"

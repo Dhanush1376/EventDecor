@@ -16,7 +16,7 @@ import {
   getDeadLetterWebhooks,
   retryDeadLetterWebhook,
 } from '../../controllers/system/adminManagementController';
-import { requireSuperAdmin } from '../../middleware/authMiddleware';
+import { requireSuperAdmin, requireAuth } from '../../middleware/authMiddleware';
 import { authLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
@@ -32,13 +32,18 @@ router.post('/auth/2fa/enable', authLimiter, adminEnableTwoFactor);
 router.post('/auth/verify-2fa', authLimiter, adminVerifyTwoFactor);
 
 // --- RBAC Admin Management (Protected) ---
-router.get('/system/users', requireSuperAdmin, getAdmins);
-router.post('/system/users', requireSuperAdmin, addAdmin);
-router.put('/system/users/:id/role', requireSuperAdmin, updateAdminRole);
-router.delete('/system/users/:id', requireSuperAdmin, removeAdmin);
+router.get('/system/users', requireAuth, requireSuperAdmin, getAdmins);
+router.post('/system/users', requireAuth, requireSuperAdmin, addAdmin);
+router.put('/system/users/:id/role', requireAuth, requireSuperAdmin, updateAdminRole);
+router.delete('/system/users/:id', requireAuth, requireSuperAdmin, removeAdmin);
 
 // --- Webhook DLQ Management (Protected) ---
-router.get('/system/webhooks/dlq', requireSuperAdmin, getDeadLetterWebhooks);
-router.post('/system/webhooks/dlq/:id/retry', requireSuperAdmin, retryDeadLetterWebhook);
+router.get('/system/webhooks/dlq', requireAuth, requireSuperAdmin, getDeadLetterWebhooks);
+router.post(
+  '/system/webhooks/dlq/:id/retry',
+  requireAuth,
+  requireSuperAdmin,
+  retryDeadLetterWebhook,
+);
 
 export default router;

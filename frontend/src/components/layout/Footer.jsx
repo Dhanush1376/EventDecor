@@ -91,9 +91,9 @@ export function Footer() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-6 lg:grid-cols-12 gap-6 lg:gap-gutter">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-gutter">
           {/* Navigation Matrix - 3 Columns on Mobile */}
-          <div className="col-span-1 lg:col-span-6 lg:col-span-8 grid grid-cols-3 gap-x-2 gap-y-6 lg:gap-x-4">
+          <div className="col-span-1 lg:col-span-8 grid grid-cols-3 gap-x-2 gap-y-6 lg:gap-x-4">
             <div className="flex flex-col space-y-2.5">
               <h4 className="font-label-sm text-primary uppercase tracking-[0.1em] font-bold text-[10px]">
                 Explore
@@ -150,7 +150,7 @@ export function Footer() {
           </div>
 
           {/* Social Presence */}
-          <div className="col-span-1 lg:col-span-6 lg:col-span-4 flex flex-col gap-3.5 lg:items-start lg:items-end">
+          <div className="col-span-1 lg:col-span-4 flex flex-col gap-3.5 lg:items-start lg:items-end">
             <div className="flex items-center gap-2 lg:gap-3.5">
               {instagramLink && (
                 <a
@@ -196,7 +196,7 @@ export function Footer() {
                     {badge.icon || badge.href || 'star'}
                   </span>
                 </div>
-                <span className="font-label-sm text-[8px] text-on-surface-variant/70 uppercase tracking-[0.15em] font-bold">
+                <span className="font-label-sm text-[10px] text-on-surface-variant/70 uppercase tracking-[0.15em] font-bold">
                   {badge.label}
                 </span>
               </div>

@@ -6,11 +6,18 @@ export function Pagination({ currentPage = 1, totalPages = 5, onPageChange }) {
     return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
   });
 
+  const handlePageChange = (page) => {
+    if (onPageChange) {
+      onPageChange(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <nav className="flex justify-center items-center mt-8 gap-2 sm:gap-4" aria-label="Pagination">
       <button
         disabled={currentPage === 1}
-        onClick={() => onPageChange && onPageChange(currentPage - 1)}
+        onClick={() => handlePageChange(currentPage - 1)}
         className="text-secondary hover:text-primary disabled:opacity-30 transition-colors p-1 sm:p-2 cursor-pointer font-bold"
         aria-label="Previous Page"
       >
@@ -31,7 +38,7 @@ export function Pagination({ currentPage = 1, totalPages = 5, onPageChange }) {
             <React.Fragment key={page}>
               {showGap && <span className="flex h-10 items-center px-1 text-outline">...</span>}
               <button
-                onClick={() => onPageChange && onPageChange(page)}
+                onClick={() => handlePageChange(page)}
                 aria-current={currentPage === page ? 'page' : undefined}
                 className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full font-label text-[11px] sm:text-[12px] flex items-center justify-center transition-all duration-300 font-bold cursor-pointer ${
                   currentPage === page
@@ -48,7 +55,7 @@ export function Pagination({ currentPage = 1, totalPages = 5, onPageChange }) {
 
       <button
         disabled={currentPage === totalPages}
-        onClick={() => onPageChange && onPageChange(currentPage + 1)}
+        onClick={() => handlePageChange(currentPage + 1)}
         className="text-secondary hover:text-primary disabled:opacity-30 transition-colors p-1 sm:p-2 cursor-pointer font-bold"
         aria-label="Next Page"
       >

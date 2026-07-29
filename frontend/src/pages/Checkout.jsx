@@ -64,7 +64,7 @@ function CheckoutContent() {
             setActiveStep(stepIndex);
           } else {
             // Cannot jump forward without passing validations, rely on continue buttons
-            toast.error('Please complete the current step to proceed.');
+            toast('Complete the current step to continue', { icon: '📍' });
           }
         }}
       />
@@ -109,7 +109,12 @@ function CheckoutContent() {
                     <div className="text-[9px] uppercase tracking-wider font-bold text-black/40 px-2.5 pb-2 mb-1 border-b border-black/5">
                       Select Destination
                     </div>
-                    {savedAddresses && savedAddresses.length > 0 ? (
+                    {!savedAddresses ? (
+                      <div className="flex flex-col gap-2 px-2 pb-2">
+                        <div className="h-11 bg-black/[0.04] rounded-xl animate-pulse" />
+                        <div className="h-11 bg-black/[0.04] rounded-xl animate-pulse" />
+                      </div>
+                    ) : savedAddresses.length > 0 ? (
                       savedAddresses.map((addr) => {
                         const isSelected =
                           activeSelectedAddress &&

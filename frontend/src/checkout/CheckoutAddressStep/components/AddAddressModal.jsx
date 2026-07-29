@@ -213,9 +213,29 @@ export function AddAddressModal({
                             onChange={(e) => {
                               const val = e.target.value.replace(/\D/g, '').slice(0, 6);
                               const updated = { ...newAddress, pincode: val };
-                              if (val.length === 6 && PINCODE_MAP[val]) {
-                                updated.city = PINCODE_MAP[val].city;
-                                updated.state = PINCODE_MAP[val].state;
+                              if (val.length === 6) {
+                                toast.loading('Looking up pincode...', { id: 'pincode' });
+                                fetch(`https://api.postalpincode.in/pincode/${val}`)
+                                  .then((res) => res.json())
+                                  .then((data) => {
+                                    if (data && data[0] && data[0].Status === 'Success') {
+                                      const postOffice = data[0].PostOffice[0];
+                                      setNewAddress((prev) => ({
+                                        ...prev,
+                                        city:
+                                          postOffice.District ||
+                                          postOffice.Block ||
+                                          postOffice.Region,
+                                        state: postOffice.State,
+                                      }));
+                                      toast.success('City & state auto-filled!', { id: 'pincode' });
+                                    } else {
+                                      toast.dismiss('pincode');
+                                    }
+                                  })
+                                  .catch(() => {
+                                    toast.dismiss('pincode');
+                                  });
                               }
                               setNewAddress(updated);
                             }}

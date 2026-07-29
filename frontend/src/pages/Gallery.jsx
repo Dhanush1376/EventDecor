@@ -148,7 +148,7 @@ export function GalleryInner() {
       }
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        const maxThreshold = currentNavHeight + 150;
+        const maxThreshold = currentNavHeight + 2;
         setIsSticky(rect.top <= maxThreshold);
       }
     };
@@ -305,7 +305,7 @@ export function GalleryInner() {
       {/* Sticky Navigation Bar */}
       <nav
         ref={navRef}
-        className={`sticky z-[49] -mt-6 lg:-mt-8 mb-8 lg:mb-12 ${
+        className={`sticky z-[49] -mt-6 lg:-mt-8 mb-8 lg:mb-12 transition-all duration-300 ease-out ${
           isSticky ? 'px-0' : 'px-3 lg:px-margin-desktop max-w-max-width mx-auto'
         }`}
         style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px` }}
@@ -536,16 +536,28 @@ const MobileStickyCategories = ({
   const ref = React.useRef(null);
 
   React.useEffect(() => {
-    const onScroll = () => {
+    let ticking = false;
+    const measure = () => {
       if (!ref.current) return;
-      const maxThreshold = (navbarHeight || 68) + 68 + 150;
+      const maxThreshold = (navbarHeight || 68) + 68 + 2;
       const rect = ref.current.getBoundingClientRect();
       setIsStuck(rect.top <= maxThreshold);
     };
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          measure();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
+    measure();
     return () => window.removeEventListener('scroll', onScroll);
-  }, [navbarHeight]);
+  }, [navbarHeight, isNavbarHidden]);
 
   return (
     <div

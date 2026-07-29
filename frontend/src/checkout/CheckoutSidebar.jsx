@@ -93,9 +93,7 @@ export default function CheckoutSidebar() {
                     </span>
                   </label>
                 </div>
-                <span className="material-symbols-outlined text-primary text-sm animate-pulse">
-                  stars
-                </span>
+                <span className="material-symbols-outlined text-primary text-sm">stars</span>
               </div>
 
               {useWallet && backendTotals && backendTotals.walletDeduction > 0 && (

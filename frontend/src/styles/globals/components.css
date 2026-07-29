@@ -71,12 +71,12 @@
 
   /* ─── Unified Form System ─── */
   .form-field {
-    @apply w-full bg-transparent text-[11px] leading-tight text-on-surface;
-    @apply placeholder:text-[10px] placeholder:text-on-surface-variant/50;
+    @apply w-full bg-black/[0.02] text-[13px] leading-tight text-on-surface;
+    @apply placeholder:text-[11px] placeholder:text-on-surface-variant/50;
     border: none;
     border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 0;
-    padding: 8px 0px;
+    border-radius: 4px 4px 0 0;
+    padding: 8px 12px;
     font-family: var(--font-body);
     transition: all var(--duration-normal) var(--ease-smooth);
     box-shadow: none; /* Remove heavy shadow to flatten it out */
@@ -98,7 +98,7 @@
   }
 
   .form-label {
-    @apply text-[9px] font-bold text-on-surface-variant/80 uppercase tracking-widest;
+    @apply text-[11px] font-bold text-on-surface-variant/80 uppercase tracking-widest;
     margin-left: 2px;
     margin-bottom: 4px;
     display: block;
@@ -147,12 +147,12 @@
   }
 
   .hover-lift-glow {
-    transition: all var(--duration-slow) var(--ease-luxury) !important;
+    transition: all var(--duration-slow) var(--ease-luxury);
   }
 
   .hover-lift-glow:hover {
-    transform: translateY(-8px) !important;
-    box-shadow: var(--shadow-glow) !important;
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-glow);
   }
 
   /* ─── Scrollbar ─── */

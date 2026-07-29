@@ -171,11 +171,11 @@ export function ProductDetails() {
       <div className="hidden lg:block pt-32 pb-10 max-w-max-width mx-auto px-margin-desktop relative z-10">
         <nav className="flex items-center gap-3 font-label text-[12px] uppercase tracking-[0.3em] text-on-surface-variant/40 font-bold overflow-x-auto no-scrollbar whitespace-nowrap pb-2">
           <Link to="/" className="hover:text-primary transition-colors">
-            Studio
+            Home
           </Link>
           <span className="opacity-30">/</span>
           <Link to="/collections" className="hover:text-primary transition-colors">
-            Heritage Collections
+            Collections
           </Link>
           <span className="opacity-30">/</span>
           <span className="text-on-surface font-bold truncate">{product.title}</span>

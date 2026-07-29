@@ -246,8 +246,8 @@ export function EventCollections() {
       }
       if (navRef.current) {
         const rect = navRef.current.getBoundingClientRect();
-        // Use a generous buffer to prevent flickering during rapid scrolling, elastic scrolling, or transitions
-        const maxThreshold = currentNavHeight + 150;
+        // Use the maximum sticky top value as a stable threshold to prevent background flashing during navbar transitions
+        const maxThreshold = currentNavHeight + 2;
         setIsSticky(rect.top <= maxThreshold);
       }
     };
@@ -258,7 +258,7 @@ export function EventCollections() {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
-  }, [navbarHeight]);
+  }, [navbarHeight, isNavbarHidden]);
 
   useEffect(() => {
     if (isFilterOpen) {
@@ -578,14 +578,14 @@ const MobileStickyCategories = ({
   React.useEffect(() => {
     const onScroll = () => {
       if (!ref.current) return;
-      const maxThreshold = (navbarHeight || 68) + 68 + 150;
+      const maxThreshold = (navbarHeight || 68) + 68 + 2;
       const rect = ref.current.getBoundingClientRect();
       setIsStuck(rect.top <= maxThreshold);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
-  }, [navbarHeight]);
+  }, [navbarHeight, isNavbarHidden]);
 
   return (
     <div

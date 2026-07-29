@@ -284,14 +284,14 @@ const MobileStickyCategories = ({
   React.useEffect(() => {
     const onScroll = () => {
       if (!ref.current) return;
-      const maxThreshold = (navbarHeight || 68) + 68 + 150;
+      const maxThreshold = (navbarHeight || 68) + 68 + 2;
       const rect = ref.current.getBoundingClientRect();
       setIsStuck(rect.top <= maxThreshold);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
-  }, [navbarHeight]);
+  }, [navbarHeight, isNavbarHidden]);
 
   return (
     <div
