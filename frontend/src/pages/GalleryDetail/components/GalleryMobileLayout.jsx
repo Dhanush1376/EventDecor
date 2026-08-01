@@ -1,3 +1,4 @@
+import { ArrowLeft, ShoppingBag, Quote } from 'lucide-react';
 import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { ShareButton } from '../../../components/ui/ShareButton';
@@ -51,7 +52,7 @@ export function GalleryMobileLayout({
             className="absolute top-4 left-4 z-10 w-9 h-9 min-h-0 p-0 aspect-square shrink-0 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-lg active:scale-95 text-black cursor-pointer"
             aria-label="Go back"
           >
-            <span className="material-symbols-outlined text-[18px] font-bold">arrow_back</span>
+            <ArrowLeft className="text-[18px] font-bold" strokeWidth={1.5} />
           </button>
 
           {/* Actions */}
@@ -122,7 +123,7 @@ export function GalleryMobileLayout({
                 onClick={handleShopLook}
                 className="bg-primary text-white h-11 px-5 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0"
               >
-                <span className="material-symbols-outlined text-[16px]">shopping_bag</span>
+                <ShoppingBag className="text-[16px]" strokeWidth={1.5} />
                 <span className="hidden sm:inline">Shop look</span>
                 <span className="sm:hidden text-[9px]">Shop</span>
               </button>
@@ -131,9 +132,10 @@ export function GalleryMobileLayout({
 
           <div className="space-y-6 pt-8 mt-6 border-t border-black/5">
             <div className="relative p-6 bg-[#fcfbf9] rounded-[28px] border border-black/5">
-              <span className="material-symbols-outlined absolute -top-3 -left-3 w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-md border-4 border-white text-[12px]">
-                format_quote
-              </span>
+              <Quote
+                className="absolute -top-3 -left-3 w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-md border-4 border-white text-[12px]"
+                strokeWidth={1.5}
+              />
               <p className="font-body text-[15px] text-black/80 font-medium leading-relaxed mb-4">
                 {item.description}
               </p>
@@ -228,7 +230,7 @@ export function GalleryMobileLayout({
                 onClick={handleShopLook}
                 className="bg-black text-white h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg active:scale-[0.96] transition-all flex items-center justify-center gap-1.5 border-none cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[15px]">shopping_bag</span>
+                <ShoppingBag className="text-[15px]" strokeWidth={1.5} />
                 <span>Shop Look</span>
               </button>
             </div>

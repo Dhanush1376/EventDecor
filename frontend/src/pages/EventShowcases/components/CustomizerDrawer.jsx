@@ -1,3 +1,4 @@
+import { X, CloudUpload, LineChart } from 'lucide-react';
 import { m as motion } from 'framer-motion';
 import { OptimizedImage } from '../../../components/ui/OptimizedImage';
 import toast from 'react-hot-toast';
@@ -68,7 +69,7 @@ export function CustomizerDrawer({
             onClick={() => setSelectedShowcase(null)}
             className="absolute top-4 right-4 w-10 h-10 min-h-0 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            <X className="text-[18px]" strokeWidth={1.5} />
           </button>
           <div className="absolute bottom-6 left-6 right-6 text-white space-y-1">
             <span className="font-label text-[8px] tracking-[0.2em] text-[#ffe088] uppercase block font-bold">
@@ -221,9 +222,7 @@ export function CustomizerDrawer({
               Upload placement visual blueprint (Optional)
             </label>
             <div className="border border-dashed border-black/10 rounded-2xl p-5 text-center bg-stone-50/50 hover:bg-stone-50 transition-colors relative cursor-pointer flex items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-primary">
-                cloud_upload
-              </span>
+              <CloudUpload className="text-[18px] text-primary" strokeWidth={1.5} />
               <span className="font-body text-xs text-black font-semibold">
                 Upload Arrangement Reference
               </span>
@@ -273,7 +272,7 @@ export function CustomizerDrawer({
 
           <div className="space-y-3 pt-6 border-t border-black/5">
             <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[18px] text-primary">insights</span>
+              <LineChart className="text-[18px] text-primary" strokeWidth={1.5} />
               <h4 className="font-label text-[10px] uppercase tracking-widest text-primary font-bold">
                 Artisan AI Recommended Pairings
               </h4>

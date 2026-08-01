@@ -1,3 +1,4 @@
+import { ArrowRight, PlayCircle, Eye } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { m as motion, useScroll, useTransform } from 'framer-motion';
@@ -234,12 +235,13 @@ export function About() {
               <span className="font-label text-[11px] uppercase tracking-[0.2em] font-bold">
                 Explore Collections
               </span>
-              <span className="material-symbols-outlined text-[18px] group-hover:translate-x-2 transition-transform duration-500">
-                arrow_forward
-              </span>
+              <ArrowRight
+                className="text-[18px] group-hover:translate-x-2 transition-transform duration-500"
+                strokeWidth={1.5}
+              />
             </button>
             <button className="group inline-flex items-center gap-3 border-b border-transparent pb-2 text-[#4A4A4A] hover:text-[var(--color-gold-dark)] transition-colors duration-500">
-              <span className="material-symbols-outlined text-[20px] font-light">play_circle</span>
+              <PlayCircle className="text-[20px] font-light" strokeWidth={1.5} />
               <span className="font-label text-[11px] uppercase tracking-[0.2em] font-bold">
                 Watch Our Story
               </span>
@@ -429,9 +431,10 @@ export function About() {
                   <span className="font-label text-[11px] uppercase tracking-[0.2em] font-bold">
                     Explore Full Gallery
                   </span>
-                  <span className="material-symbols-outlined text-[18px] group-hover:translate-x-2 transition-transform duration-500">
-                    arrow_forward
-                  </span>
+                  <ArrowRight
+                    className="text-[18px] group-hover:translate-x-2 transition-transform duration-500"
+                    strokeWidth={1.5}
+                  />
                 </Link>
               </div>
             </div>
@@ -456,9 +459,7 @@ export function About() {
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500 flex items-center justify-center">
                       <div className="opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500 flex flex-col items-center">
-                        <span className="material-symbols-outlined text-white text-[32px] mb-3 font-light">
-                          visibility
-                        </span>
+                        <Eye className="text-white text-[32px] mb-3 font-light" strokeWidth={1.5} />
                         <span className="font-label text-[10px] uppercase tracking-[0.2em] text-white font-bold">
                           View in Gallery
                         </span>

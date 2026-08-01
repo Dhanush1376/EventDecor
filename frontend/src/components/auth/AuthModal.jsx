@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { MandalaElement } from '../ui/MandalaElement';
 import { useState, useEffect } from 'react';
@@ -151,7 +152,7 @@ export function AuthModal() {
               className="absolute top-6 right-6 w-11 h-11 rounded-full bg-white/50 backdrop-blur-md border border-outline-variant/20 flex items-center justify-center hover:bg-primary/10 text-on-surface-variant/40 hover:text-primary transition-all duration-300 z-50 cursor-pointer shadow-2xs"
               aria-label="Close authentication modal"
             >
-              <span className="material-symbols-outlined text-[18px]">close</span>
+              <X className="text-[18px]" strokeWidth={1.5} />
             </button>
 
             {/* Core Content Layout */}

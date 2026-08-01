@@ -1,3 +1,18 @@
+import {
+  BadgeCheck,
+  FileEdit,
+  X,
+  MessageSquare,
+  Camera,
+  Plus,
+  Send,
+  Pencil,
+  Check,
+  Lock,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { OptimizedImage } from '../ui/OptimizedImage';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -89,7 +104,7 @@ function ReviewCard({ review, showcaseId }) {
               <div className="flex items-center gap-1.5 mt-0.5">
                 {review.verified && (
                   <span className="inline-flex items-center gap-0.5 bg-green-50 text-green-700 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border border-green-100">
-                    <span className="material-symbols-outlined text-[9px]">verified</span>
+                    <BadgeCheck className="text-[9px]" strokeWidth={1.5} />
                     Verified Purchase
                   </span>
                 )}
@@ -263,7 +278,7 @@ export function WriteReviewModal({ showcaseId, showcaseTitle, onClose, onSuccess
         <div className="flex items-center justify-between p-5 pt-8 sm:pt-5 border-b border-outline-variant/20 shrink-0 bg-surface-bright rounded-t-[24px] sm:rounded-t-lg">
           <div>
             <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[14px]">edit_note</span>
+              <FileEdit className="text-[14px]" strokeWidth={1.5} />
               Write a Review
             </h2>
             <p className="font-body text-[11px] text-on-surface mt-1 font-bold line-clamp-1">
@@ -274,7 +289,7 @@ export function WriteReviewModal({ showcaseId, showcaseTitle, onClose, onSuccess
             onClick={onClose}
             className="w-8 h-8 rounded-lg hover:bg-surface-container-low flex items-center justify-center transition-all text-secondary"
           >
-            <span className="material-symbols-outlined text-[16px]">close</span>
+            <X className="text-[16px]" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -319,7 +334,7 @@ export function WriteReviewModal({ showcaseId, showcaseTitle, onClose, onSuccess
             {/* Comment */}
             <div className="bg-surface-bright rounded-lg border border-outline-variant/40 shadow-xs p-5 space-y-3">
               <label className="text-[9px] uppercase tracking-widest text-secondary font-bold flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[14px]">comment</span>
+                <MessageSquare className="text-[14px]" strokeWidth={1.5} />
                 Your Experience
               </label>
               <textarea
@@ -337,7 +352,7 @@ export function WriteReviewModal({ showcaseId, showcaseTitle, onClose, onSuccess
             {/* Photo Uploader */}
             <div className="bg-surface-bright rounded-lg border border-outline-variant/40 shadow-xs p-5 space-y-3">
               <label className="text-[9px] uppercase tracking-widest text-secondary font-bold flex items-center gap-1.5 mb-2">
-                <span className="material-symbols-outlined text-[14px]">photo_camera</span>
+                <Camera className="text-[14px]" strokeWidth={1.5} />
                 Add Photos (Max 5)
               </label>
               <div className="flex flex-wrap gap-2.5">
@@ -355,13 +370,13 @@ export function WriteReviewModal({ showcaseId, showcaseTitle, onClose, onSuccess
                       }}
                       className="absolute top-1 right-1 w-4 h-4 rounded bg-black/70 hover:bg-black text-white flex items-center justify-center cursor-pointer transition-all opacity-0 group-hover:opacity-100"
                     >
-                      <span className="material-symbols-outlined text-[10px]">close</span>
+                      <X className="text-[10px]" strokeWidth={1.5} />
                     </button>
                   </div>
                 ))}
                 {selectedFiles.length < 5 && (
                   <label className="w-14 h-14 rounded-lg border border-dashed border-outline-variant/50 hover:border-primary bg-surface-container-lowest hover:bg-primary/5 flex flex-col items-center justify-center cursor-pointer transition-all gap-0.5 text-secondary hover:text-primary flex-shrink-0">
-                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    <Plus className="text-[16px]" strokeWidth={1.5} />
                     <span className="text-[7px] font-bold uppercase tracking-wider">Add</span>
                     <input
                       type="file"
@@ -392,7 +407,7 @@ export function WriteReviewModal({ showcaseId, showcaseTitle, onClose, onSuccess
                   <div className="w-16 h-16 border-[1px] border-white/30 border-t-white rounded-full animate-spin duration-1000 ease-linear" />
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-[14px]">send</span>
+                    <Send className="text-[14px]" strokeWidth={1.5} />
                     Submit Review
                   </>
                 )}
@@ -499,7 +514,7 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
           title="Write a Review"
           className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer animate-fade-in shrink-0"
         >
-          <span className="material-symbols-outlined text-[20px]">edit</span>
+          <Pencil className="text-[20px]" strokeWidth={1.5} />
         </motion.button>
       );
     }
@@ -518,7 +533,7 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
           title="You've reviewed this product"
           className="w-10 h-10 flex items-center justify-center bg-green-50 text-green-700 rounded-full border border-green-100 animate-fade-in shrink-0"
         >
-          <span className="material-symbols-outlined text-[18px]">check</span>
+          <Check className="text-[18px]" strokeWidth={1.5} />
         </div>
       );
     }
@@ -532,7 +547,7 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
           title="Write a Review"
           className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer animate-fade-in shrink-0"
         >
-          <span className="material-symbols-outlined text-[20px]">edit</span>
+          <Pencil className="text-[20px]" strokeWidth={1.5} />
         </motion.button>
       );
     }
@@ -542,7 +557,7 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
         title="Purchase to review"
         className="w-10 h-10 flex items-center justify-center bg-neutral-100 text-black/40 rounded-full border border-black/5 animate-fade-in shrink-0"
       >
-        <span className="material-symbols-outlined text-[18px]">lock</span>
+        <Lock className="text-[18px]" strokeWidth={1.5} />
       </div>
     );
   };
@@ -569,7 +584,7 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
                 className="font-label text-[11px] uppercase tracking-widest font-bold text-primary hover:text-primary-dark mr-2 transition-colors inline-flex items-center gap-1.5"
               >
                 View All ({reviews.length})
-                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                <ArrowRight className="text-[14px]" strokeWidth={1.5} />
               </Link>
               {reviews.length > 1 && (
                 <div className="flex items-center gap-1.5">
@@ -578,14 +593,14 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
                     className="w-8 h-8 rounded-full border border-black/15 flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition-all text-black/60 cursor-pointer"
                     aria-label="Scroll left"
                   >
-                    <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                    <ChevronLeft className="text-[16px]" strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={() => handleScroll('right')}
                     className="w-8 h-8 rounded-full border border-black/15 flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition-all text-black/60 cursor-pointer"
                     aria-label="Scroll right"
                   >
-                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                    <ChevronRight className="text-[16px]" strokeWidth={1.5} />
                   </button>
                 </div>
               )}
@@ -721,7 +736,7 @@ export function ShowcaseReviews({ showcaseId, showcaseTitle }) {
             className="font-label text-[10px] uppercase tracking-widest font-bold text-primary hover:text-primary-dark transition-colors inline-flex items-center gap-1.5"
           >
             See All Photos
-            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+            <ChevronRight className="text-[14px]" strokeWidth={1.5} />
           </Link>
         </div>
       )}

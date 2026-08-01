@@ -1,3 +1,4 @@
+import { PartyPopper } from 'lucide-react';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Skeleton } from '../../components/ui';
@@ -23,7 +24,7 @@ export function EventsSection() {
     >
       <div className="pb-4 mb-4 border-b border-outline-variant/20">
         <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[12px]">celebration</span>
+          <PartyPopper className="text-[12px]" strokeWidth={1.5} />
           My Event Bookings
         </h2>
       </div>

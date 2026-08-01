@@ -1,3 +1,4 @@
+import { Camera } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { MandalaElement } from '../ui/MandalaElement';
 import { SiriLogo } from '../ui/SiriLogo';
@@ -160,9 +161,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <span className="material-symbols-outlined font-light text-[16px]">
-                    photo_camera
-                  </span>
+                  <Camera className="font-light text-[16px]" strokeWidth={1.5} />
                   <span className="font-label-sm text-[10px] uppercase tracking-widest font-bold">
                     Insta
                   </span>

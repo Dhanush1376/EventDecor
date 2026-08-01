@@ -1,3 +1,20 @@
+import {
+  PackageCheck,
+  Ban,
+  CheckCircle2,
+  ListChecks,
+  HelpCircle,
+  Handshake,
+  CreditCard,
+  ArrowLeftRight,
+  Truck,
+  Wallet,
+  Landmark,
+  Eye,
+  Info,
+  Check,
+  ArrowRight,
+} from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -210,7 +227,7 @@ export const ReturnRequestPage = () => {
           >
             <div className="pb-5 mb-5 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px]">inventory_2</span>
+                <PackageCheck className="text-[12px]" strokeWidth={1.5} />
                 WHICH ITEMS WOULD YOU LIKE TO RETURN?
               </h2>
             </div>
@@ -257,16 +274,14 @@ export const ReturnRequestPage = () => {
 
                       {!isEligible && eligibility && (
                         <div className="inline-flex items-center gap-1.5 mt-2 text-error text-[9px] uppercase tracking-widest font-bold">
-                          <span className="material-symbols-outlined text-[12px]">block</span>
+                          <Ban className="text-[12px]" strokeWidth={1.5} />
                           {eligibility.reason}
                         </div>
                       )}
 
                       {isEligible && (
                         <div className="inline-flex items-center gap-1 mt-2 text-success text-[9px] uppercase tracking-widest font-bold">
-                          <span className="material-symbols-outlined text-[12px]">
-                            check_circle
-                          </span>
+                          <CheckCircle2 className="text-[12px]" strokeWidth={1.5} />
                           RETURN WINDOW OPEN
                         </div>
                       )}
@@ -290,7 +305,7 @@ export const ReturnRequestPage = () => {
           >
             <div className="pb-5 mb-5 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px]">fact_check</span>
+                <ListChecks className="text-[12px]" strokeWidth={1.5} />
                 WHAT IS THE CONDITION OF THE ITEMS?
               </h2>
             </div>
@@ -338,7 +353,7 @@ export const ReturnRequestPage = () => {
           >
             <div className="pb-5 mb-5 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px]">help</span>
+                <HelpCircle className="text-[12px]" strokeWidth={1.5} />
                 WHY ARE YOU RETURNING THESE?
               </h2>
             </div>
@@ -440,7 +455,7 @@ export const ReturnRequestPage = () => {
           >
             <div className="pb-5 mb-5 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px]">handshake</span>
+                <Handshake className="text-[12px]" strokeWidth={1.5} />
                 HOW WOULD YOU LIKE THIS RESOLVED?
               </h2>
             </div>
@@ -466,7 +481,7 @@ export const ReturnRequestPage = () => {
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center ${data.resolution === 'refund' ? 'bg-[#2A2927] text-white' : 'bg-surface-variant text-on-surface-variant'}`}
                     >
-                      <span className="material-symbols-outlined text-[14px]">payments</span>
+                      <CreditCard className="text-[14px]" strokeWidth={1.5} />
                     </div>
                     <div className="text-center">
                       <span className="block font-bold uppercase tracking-widest text-[9px] text-[#2A2927]">
@@ -483,7 +498,7 @@ export const ReturnRequestPage = () => {
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center ${data.resolution === 'exchange' ? 'bg-[#2A2927] text-white' : 'bg-surface-variant text-on-surface-variant'}`}
                     >
-                      <span className="material-symbols-outlined text-[14px]">swap_horiz</span>
+                      <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
                     </div>
                     <div className="text-center">
                       <span className="block font-bold uppercase tracking-widest text-[9px] text-[#2A2927]">
@@ -512,7 +527,7 @@ export const ReturnRequestPage = () => {
           >
             <div className="pb-5 mb-5 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px]">local_shipping</span>
+                <Truck className="text-[12px]" strokeWidth={1.5} />
                 CONFIRM PICKUP ADDRESS
               </h2>
             </div>
@@ -559,9 +574,7 @@ export const ReturnRequestPage = () => {
           >
             <div className="pb-5 mb-5 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px]">
-                  account_balance_wallet
-                </span>
+                <Wallet className="text-[12px]" strokeWidth={1.5} />
                 SELECT REFUND METHOD
               </h2>
             </div>
@@ -580,9 +593,7 @@ export const ReturnRequestPage = () => {
                 />
                 <div className="flex-1">
                   <div className="font-bold uppercase tracking-widest text-[#2A2927] text-[10px] flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#2A2927] text-[14px]">
-                      account_balance_wallet
-                    </span>
+                    <Wallet className="text-[#2A2927] text-[14px]" strokeWidth={1.5} />
                     STORE WALLET (RECOMMENDED)
                   </div>
                   <p className="text-[9px] uppercase tracking-wider text-secondary mt-1.5">
@@ -605,9 +616,7 @@ export const ReturnRequestPage = () => {
                   />
                   <div className="flex-1">
                     <div className="font-bold uppercase tracking-widest text-[#2A2927] text-[10px] flex items-center gap-2">
-                      <span className="material-symbols-outlined text-secondary text-[14px]">
-                        account_balance
-                      </span>
+                      <Landmark className="text-secondary text-[14px]" strokeWidth={1.5} />
                       ORIGINAL PAYMENT METHOD
                     </div>
                     <p className="text-[9px] uppercase tracking-wider text-secondary mt-1.5">
@@ -656,7 +665,7 @@ export const ReturnRequestPage = () => {
           >
             <div className="pb-5 mb-5 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px]">preview</span>
+                <Eye className="text-[12px]" strokeWidth={1.5} />
                 REVIEW YOUR REQUEST
               </h2>
             </div>
@@ -697,8 +706,7 @@ export const ReturnRequestPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="border rounded-[16px] border-outline-variant/30 p-4">
                 <h3 className="font-bold uppercase tracking-widest text-[9px] text-[#2A2927] mb-3 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[14px]">local_shipping</span>{' '}
-                  PICKUP ADDRESS
+                  <Truck className="text-[14px]" strokeWidth={1.5} /> PICKUP ADDRESS
                 </h3>
                 <p className="text-[10px] text-secondary uppercase tracking-wider">
                   {pickupAddress?.addressLine1}, {pickupAddress?.city}
@@ -707,8 +715,7 @@ export const ReturnRequestPage = () => {
 
               <div className="border rounded-[16px] border-outline-variant/30 p-4">
                 <h3 className="font-bold uppercase tracking-widest text-[9px] text-[#2A2927] mb-3 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[14px]">payments</span> REFUND
-                  METHOD
+                  <CreditCard className="text-[14px]" strokeWidth={1.5} /> REFUND METHOD
                 </h3>
                 <p className="text-[10px] text-secondary uppercase tracking-wider">
                   {refundMethod === 'wallet' ? 'STORE WALLET (INSTANT)' : 'ORIGINAL PAYMENT'}
@@ -717,7 +724,7 @@ export const ReturnRequestPage = () => {
             </div>
 
             <div className="bg-info/10 border rounded-[16px] border-info/20 p-4 flex items-start gap-3">
-              <span className="material-symbols-outlined text-info mt-0.5 text-[14px]">info</span>
+              <Info className="text-info mt-0.5 text-[14px]" strokeWidth={1.5} />
               <p className="text-[9px] uppercase tracking-wider text-info leading-relaxed">
                 By submitting this request, you agree to our return policy. Items must be returned
                 in their original packaging.
@@ -736,7 +743,7 @@ export const ReturnRequestPage = () => {
             className="text-center py-10"
           >
             <div className="w-16 h-16 bg-[#FDFBF7] text-[#2A2927] flex items-center justify-center mx-auto mb-6">
-              <span className="material-symbols-outlined text-[32px]">check</span>
+              <Check className="text-[32px]" strokeWidth={1.5} />
             </div>
             <h2 className="text-[14px] font-bold uppercase tracking-widest text-[#2A2927] mb-3">
               REQUEST SUBMITTED SUCCESSFULLY
@@ -749,8 +756,7 @@ export const ReturnRequestPage = () => {
               onClick={() => navigate('dashboard/returns')}
               className="bg-[#2A2927] hover:bg-black text-white px-8 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer"
             >
-              TRACK RETURN STATUS{' '}
-              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+              TRACK RETURN STATUS <ArrowRight className="text-[14px]" strokeWidth={1.5} />
             </button>
           </motion.div>
         )}
@@ -787,8 +793,7 @@ export const ReturnRequestPage = () => {
               'SUBMIT REQUEST'
             ) : (
               <>
-                CONTINUE{' '}
-                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                CONTINUE <ArrowRight className="text-[14px]" strokeWidth={1.5} />
               </>
             )}
           </button>

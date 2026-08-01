@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useEffect } from 'react';
 
@@ -148,9 +149,7 @@ export function CustomDropdown({
                   }`}
                 >
                   {option.label}
-                  {value === option.value && (
-                    <span className="material-symbols-outlined text-[14px]">check</span>
-                  )}
+                  {value === option.value && <Check className="text-[14px]" strokeWidth={1.5} />}
                 </button>
               ))}
             </div>

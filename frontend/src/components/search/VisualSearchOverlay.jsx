@@ -1,3 +1,4 @@
+import { Camera, X, CloudUpload, AlertCircle, RefreshCw, SearchX, Wand2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ProductCard } from '../shared/ProductCard';
 import { MandalaArtDecor } from '../ui/MandalaArtDecor';
@@ -243,9 +244,7 @@ export function VisualSearchOverlay({
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-outline-variant/10 bg-surface-container-lowest">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[16px] text-primary">
-                      photo_camera
-                    </span>
+                    <Camera className="text-[16px] text-primary" strokeWidth={1.5} />
                   </div>
                   <h2 className="text-on-surface font-display font-bold text-[17px]">
                     Visual Search
@@ -256,7 +255,7 @@ export function VisualSearchOverlay({
                   className="w-8 h-8 min-h-0 rounded-full hover:bg-surface-container-low flex items-center justify-center transition-all cursor-pointer text-on-surface-variant/70"
                   aria-label="Close visual search"
                 >
-                  <span className="material-symbols-outlined text-[20px]">close</span>
+                  <X className="text-[20px]" strokeWidth={1.5} />
                 </button>
               </div>
 
@@ -297,15 +296,13 @@ export function VisualSearchOverlay({
                             onClick={stopCamera}
                             className="w-12 h-12 min-h-0 rounded-full bg-black/60 flex items-center justify-center text-white border border-white/20 active:scale-90 transition-transform cursor-pointer"
                           >
-                            <span className="material-symbols-outlined">close</span>
+                            <X className="" strokeWidth={1.5} />
                           </button>
                           <button
                             onClick={capturePhoto}
                             className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-primary border-4 border-primary/20 active:scale-90 transition-transform cursor-pointer"
                           >
-                            <span className="material-symbols-outlined text-[32px]">
-                              photo_camera
-                            </span>
+                            <Camera className="text-[32px]" strokeWidth={1.5} />
                           </button>
                         </div>
                       </div>
@@ -323,9 +320,7 @@ export function VisualSearchOverlay({
                         >
                           <div className="flex flex-col items-center gap-3">
                             <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center text-primary">
-                              <span className="material-symbols-outlined text-[32px]">
-                                cloud_upload
-                              </span>
+                              <CloudUpload className="text-[32px]" strokeWidth={1.5} />
                             </div>
                             <div>
                               <p className="text-on-surface font-semibold text-[15px]">
@@ -344,9 +339,7 @@ export function VisualSearchOverlay({
                             onClick={startCamera}
                             className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-outline-variant/30 hover:bg-surface-container-low transition-colors text-on-surface-variant font-bold text-[13px] uppercase tracking-wider cursor-pointer"
                           >
-                            <span className="material-symbols-outlined text-[18px]">
-                              photo_camera
-                            </span>
+                            <Camera className="text-[18px]" strokeWidth={1.5} />
                             Use Camera
                           </button>
                         </div>
@@ -413,7 +406,7 @@ export function VisualSearchOverlay({
                             onClick={onReset}
                             className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-full border border-outline-variant/30 hover:bg-surface-container-low transition-colors text-on-surface-variant/70 text-[10px] uppercase font-bold tracking-[0.15em]"
                           >
-                            <span className="material-symbols-outlined text-[14px]">close</span>
+                            <X className="text-[14px]" strokeWidth={1.5} />
                             Cancel
                           </button>
                         </div>
@@ -431,9 +424,7 @@ export function VisualSearchOverlay({
                   >
                     <div className="py-4">
                       <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-5 border border-error/20">
-                        <span className="material-symbols-outlined text-[32px] text-error">
-                          error
-                        </span>
+                        <AlertCircle className="text-[32px] text-error" strokeWidth={1.5} />
                       </div>
                       <h3 className="text-on-surface-variant font-display text-[22px] font-bold mb-2">
                         Search Failed
@@ -495,13 +486,13 @@ export function VisualSearchOverlay({
                   onClick={onClose}
                   className="w-10 h-10 min-h-0 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-md active:scale-95 transition-transform pointer-events-auto cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[20px]">close</span>
+                  <X className="text-[20px]" strokeWidth={1.5} />
                 </button>
                 <button
                   onClick={onReset}
                   className="px-4 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center gap-2 text-white border border-white/20 shadow-md active:scale-95 transition-transform pointer-events-auto cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">refresh</span>
+                  <RefreshCw className="text-[18px]" strokeWidth={1.5} />
                   <span className="font-label-sm text-[10px] uppercase tracking-widest font-bold">
                     New Search
                   </span>
@@ -576,9 +567,10 @@ export function VisualSearchOverlay({
                         className="hidden lg:flex shrink-0 px-6 py-3 rounded-full border border-outline-variant/30 bg-white hover:bg-surface-container-low shadow-xs transition-all items-center justify-center gap-2 cursor-pointer text-on-surface-variant group"
                         title="New Search"
                       >
-                        <span className="material-symbols-outlined text-[18px] group-hover:-rotate-90 transition-transform duration-300">
-                          refresh
-                        </span>
+                        <RefreshCw
+                          className="text-[18px] group-hover:-rotate-90 transition-transform duration-300"
+                          strokeWidth={1.5}
+                        />
                         <span className="font-label-sm text-[11px] uppercase tracking-widest font-bold">
                           New Search
                         </span>
@@ -610,9 +602,10 @@ export function VisualSearchOverlay({
                       {/* No Results */}
                       {unifiedResults.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-outline-variant/20 shadow-sm">
-                          <span className="material-symbols-outlined text-[64px] text-on-surface-variant/20 mb-5">
-                            search_off
-                          </span>
+                          <SearchX
+                            className="text-[64px] text-on-surface-variant/20 mb-5"
+                            strokeWidth={1.5}
+                          />
                           <p className="text-on-surface-variant font-display text-[24px] font-bold mb-2">
                             No Exact Matches Found
                           </p>
@@ -641,9 +634,7 @@ export function VisualSearchOverlay({
                           transition={{ delay: 0.1 }}
                         >
                           <h3 className="text-on-surface-variant text-base font-normal mb-5 lg:mb-6 pl-1 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[16px] text-primary">
-                              auto_awesome
-                            </span>
+                            <Wand2 className="text-[16px] text-primary" strokeWidth={1.5} />
                             Visual Matches ({unifiedResults.length})
                           </h3>
 

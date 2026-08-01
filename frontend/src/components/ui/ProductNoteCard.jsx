@@ -1,3 +1,4 @@
+import { Info, Gift } from 'lucide-react';
 import React from 'react';
 
 export function ProductNoteCard({ customerNote, complimentaryGift, dimensions }) {
@@ -9,9 +10,10 @@ export function ProductNoteCard({ customerNote, complimentaryGift, dimensions })
       {(customerNote || dimensions) && (
         <div className="flex items-start gap-3 p-3.5 bg-[#fdfbf7] rounded-xl border border-[#e0d6b8] shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#f5ecd5]/50 to-transparent rounded-full blur-2xl pointer-events-none"></div>
-          <span className="material-symbols-outlined text-[18px] text-[#8c7335] shrink-0 mt-0.5 relative z-10">
-            info
-          </span>
+          <Info
+            className="text-[18px] text-[#8c7335] shrink-0 mt-0.5 relative z-10"
+            strokeWidth={1.5}
+          />
           <div className="flex flex-col relative z-10 w-full">
             <span className="font-label-sm text-[11px] sm:text-[12px] text-[#8c7335] uppercase tracking-[0.1em] font-bold">
               {customerNote && dimensions
@@ -49,7 +51,7 @@ export function ProductNoteCard({ customerNote, complimentaryGift, dimensions })
           {/* Decorative Background */}
           <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/40 rounded-full blur-xl pointer-events-none"></div>
           <div className="absolute bottom-0 right-0 p-2 opacity-5 pointer-events-none">
-            <span className="material-symbols-outlined text-[64px]">card_giftcard</span>
+            <Gift className="text-[64px]" strokeWidth={1.5} />
           </div>
 
           <div className="w-10 h-10 rounded-full bg-white/80 shadow-sm flex items-center justify-center shrink-0 relative z-10 text-[#0284c7]">

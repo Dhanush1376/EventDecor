@@ -1,3 +1,4 @@
+import { CheckCircle2, Trash2, BadgeCheck, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useEffect, Profiler } from 'react';
 import { createPortal } from 'react-dom';
@@ -252,9 +253,7 @@ export function CartView({ isEmbedded = false }) {
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed top-28 left-1/2 -translate-x-1/2 z-[100] bg-white/40 backdrop-blur-2xl border border-white/60 text-black px-6 py-3 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.08),_inset_0_1px_0_rgba(255,255,255,0.4)] text-[12px] font-bold tracking-wide flex items-center gap-2.5 whitespace-nowrap"
           >
-            <span className="material-symbols-outlined text-[18px] text-green-600 font-fill">
-              check_circle
-            </span>
+            <CheckCircle2 className="text-[18px] text-green-600 font-fill" strokeWidth={1.5} />
             {notification}
           </motion.div>
         )}
@@ -273,7 +272,7 @@ export function CartView({ isEmbedded = false }) {
               className="bg-surface-bright rounded-2xl p-6 max-w-[320px] w-full shadow-2xl border border-outline-variant/20 text-center"
             >
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
-                <span className="material-symbols-outlined text-[24px]">delete</span>
+                <Trash2 className="text-[24px]" strokeWidth={1.5} />
               </div>
               <h3 className="text-[18px] font-bold text-on-surface mb-2 font-display">
                 Clear entire bag?
@@ -341,7 +340,7 @@ export function CartView({ isEmbedded = false }) {
             <div className="lg:col-span-7 xl:col-span-8 space-y-3">
               {discountOnMRP + couponDiscountAmount > 0 && (
                 <div className="bg-primary/10 border border-primary/20 text-primary text-[13px] font-bold rounded-lg flex items-center justify-center p-3 gap-2 shadow-xs">
-                  <span className="material-symbols-outlined text-[18px]">verified</span>
+                  <BadgeCheck className="text-[18px]" strokeWidth={1.5} />
                   You're saving ₹{(discountOnMRP + couponDiscountAmount).toLocaleString()} on this
                   order
                 </div>
@@ -381,14 +380,14 @@ export function CartView({ isEmbedded = false }) {
                     className="hover:text-red-600 transition-colors cursor-pointer"
                     title="Delete All"
                   >
-                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                    <Trash2 className="text-[18px]" strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={handleMoveAllToWishlist}
                     className="hover:text-primary transition-colors cursor-pointer"
                     title="Move All to Wishlist"
                   >
-                    <span className="material-symbols-outlined text-[18px]">favorite_border</span>
+                    <Heart className="text-[18px]" strokeWidth={1.5} />
                   </button>
                 </div>
               </div>

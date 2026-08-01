@@ -1,3 +1,4 @@
+import { BadgeCheck, ArrowRight } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -270,9 +271,7 @@ export function DynamicRatingBadge({
                           {topReview.customer?.name || topReview.customerName || 'Customer'}
                         </span>
                         {topReview.verified && (
-                          <span className="material-symbols-outlined text-[10px] text-green-600">
-                            verified
-                          </span>
+                          <BadgeCheck className="text-[10px] text-green-600" strokeWidth={1.5} />
                         )}
                       </div>
                       <p className="font-body text-[10px] text-black/70 leading-relaxed line-clamp-2 italic">
@@ -287,7 +286,7 @@ export function DynamicRatingBadge({
                     className="w-full py-2 bg-black hover:bg-neutral-800 text-white font-label text-[9px] uppercase tracking-widest font-bold rounded-lg transition-colors mt-1 flex items-center justify-center gap-1.5"
                   >
                     Read All Reviews
-                    <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+                    <ArrowRight className="text-[12px]" strokeWidth={1.5} />
                   </button>
                 </div>
               )}

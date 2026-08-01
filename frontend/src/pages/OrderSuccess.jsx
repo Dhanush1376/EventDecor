@@ -1,3 +1,17 @@
+import {
+  Lock,
+  CheckCircle2,
+  Info,
+  BadgeCheck,
+  Truck,
+  MapPin,
+  Calendar,
+  GitCommit,
+  Receipt,
+  ShoppingBag,
+  ShieldCheck,
+  History,
+} from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
@@ -225,7 +239,7 @@ export function OrderSuccess() {
       <div className="min-h-screen bg-surface-container-low flex flex-col items-center justify-center pt-12 pb-32 px-4">
         <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-8 max-w-md w-full text-center shadow-xs">
           <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="material-symbols-outlined text-[28px]">lock</span>
+            <Lock className="text-[28px]" strokeWidth={1.5} />
           </div>
           <h2 className="text-lg font-bold text-on-surface mb-2">Access Restrained</h2>
           <p className="text-xs text-secondary leading-relaxed mb-6">
@@ -317,7 +331,7 @@ export function OrderSuccess() {
               />
 
               <div className="w-20 h-20 rounded-full bg-green-50 text-green-600 flex items-center justify-center mx-auto mb-6 border border-green-100">
-                <span className="material-symbols-outlined text-[32px]">check_circle</span>
+                <CheckCircle2 className="text-[32px]" strokeWidth={1.5} />
               </div>
 
               <h2 className="font-display text-2xl lg:text-3xl text-on-surface font-bold mb-3">
@@ -349,8 +363,7 @@ export function OrderSuccess() {
               {(order.orderType === 'rental' || order.items.some((i) => i.type === 'rental')) && (
                 <div className="mt-6 bg-[#8c7335]/5 border border-[#8c7335]/20 rounded-lg p-5 text-left text-[#5a481f] shadow-inner text-sm">
                   <h4 className="font-bold text-[#8c7335] uppercase tracking-widest text-[11px] mb-4 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px]">info</span> Rental
-                    Details
+                    <Info className="text-[16px]" strokeWidth={1.5} /> Rental Details
                   </h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -404,7 +417,7 @@ export function OrderSuccess() {
                   Items in this shipment ({order.items.length})
                 </span>
                 <span className="text-[11px] text-green-700 font-bold flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm">verified</span>
+                  <BadgeCheck className="text-sm" strokeWidth={1.5} />
                   Confirmed
                 </span>
               </div>
@@ -457,7 +470,7 @@ export function OrderSuccess() {
                         </span>
                         <span className="text-outline-variant">|</span>
                         <span className="text-green-700 font-bold flex items-center gap-1">
-                          <span className="material-symbols-outlined text-xs">local_shipping</span>
+                          <Truck className="text-xs" strokeWidth={1.5} />
                           Est. Delivery: {item.deliveryEstimate}
                         </span>
                       </div>
@@ -519,9 +532,7 @@ export function OrderSuccess() {
                 <h3 className="text-xs font-bold text-secondary uppercase tracking-wider">
                   Delivery Address
                 </h3>
-                <span className="material-symbols-outlined text-sm text-secondary">
-                  location_on
-                </span>
+                <MapPin className="text-sm text-secondary" strokeWidth={1.5} />
               </div>
               <div className="text-[12px] space-y-1.5 text-on-surface">
                 <p className="font-bold text-sm">{order.deliveryAddress.name}</p>
@@ -560,7 +571,7 @@ export function OrderSuccess() {
                     Timeline Requested
                   </span>
                   <span className="bg-[var(--color-gold-dark)]/5 text-[var(--color-gold-dark)] px-2.5 py-1 rounded-full font-bold border border-[var(--color-gold-dark)]/25 uppercase text-[10px] flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[12px]">calendar_today</span>
+                    <Calendar className="text-[12px]" strokeWidth={1.5} />
                     Customer Request
                   </span>
                 </div>
@@ -577,21 +588,21 @@ export function OrderSuccess() {
                 onClick={() => navigate('/profile?tab=orders')}
                 className="w-full bg-primary hover:bg-primary-dark text-white py-3.5 rounded text-[11px] font-bold uppercase tracking-widest transition-all shadow-md block text-center cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[15px]">track_changes</span>
+                <GitCommit className="text-[15px]" strokeWidth={1.5} />
                 Track Your Order
               </button>
               <button
                 onClick={() => setShowStickerModal(true)}
                 className="w-full bg-white border border-primary text-primary py-3.5 rounded text-[11px] font-bold uppercase tracking-widest hover:bg-primary/5 transition-all block text-center cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[15px]">receipt_long</span>
+                <Receipt className="text-[15px]" strokeWidth={1.5} />
                 View Digital Tax Invoice
               </button>
               <Link
                 to="/collections"
                 className="w-full bg-surface-bright border border-outline-variant text-secondary py-3.5 rounded text-[11px] font-bold uppercase tracking-widest hover:bg-surface-container-low transition-all block text-center flex items-center justify-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[15px]">shopping_bag</span>
+                <ShoppingBag className="text-[15px]" strokeWidth={1.5} />
                 Continue Shopping
               </Link>
             </div>
@@ -600,15 +611,11 @@ export function OrderSuccess() {
             <div className="pt-4 text-center text-[11px] text-secondary flex flex-col items-center gap-3">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px] text-green-700 font-bold">
-                    verified_user
-                  </span>
+                  <ShieldCheck className="text-[14px] text-green-700 font-bold" strokeWidth={1.5} />
                   Safe
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px] text-primary font-bold">
-                    history
-                  </span>
+                  <History className="text-[14px] text-primary font-bold" strokeWidth={1.5} />
                   Easy Returns
                 </span>
               </div>

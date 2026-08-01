@@ -1,9 +1,10 @@
+import { CalendarCheck, MessageSquare, Store, Navigation } from 'lucide-react';
 export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
   return (
     <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs text-left font-body">
       <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center">
         <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[14px]">event_available</span>
+          <CalendarCheck className="text-[14px]" strokeWidth={1.5} />
           Booking Details
         </h2>
         <div className="flex items-center gap-3">
@@ -12,7 +13,7 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
             onClick={() => setIsMobileChatOpen(true)}
             className="lg:hidden flex items-center justify-center gap-1.5 text-primary hover:text-on-surface transition-colors border-0 bg-transparent"
           >
-            <span className="material-symbols-outlined text-[14px]">forum</span>
+            <MessageSquare className="text-[14px]" strokeWidth={1.5} />
             <span className="text-[9px] uppercase tracking-widest font-bold">Chat</span>
           </button>
           <span className="text-[9px] text-secondary font-mono tracking-wider">
@@ -58,7 +59,7 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
           </span>
           {selectedBooking.venue?.name && (
             <span className="text-on-surface font-bold text-[12px] flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[14px]">storefront</span>
+              <Store className="text-[14px]" strokeWidth={1.5} />
               {selectedBooking.venue.name}
             </span>
           )}
@@ -84,7 +85,7 @@ export function BookingDetailsCard({ selectedBooking, setIsMobileChatOpen }) {
                 rel="noopener noreferrer"
                 className="text-[9px] font-bold uppercase tracking-widest text-on-surface hover:text-[#2A2927] hover:underline flex items-center gap-1 ml-auto"
               >
-                <span className="material-symbols-outlined text-[12px]">directions</span> Navigate
+                <Navigation className="text-[12px]" strokeWidth={1.5} /> Navigate
               </a>
             )}
           </div>

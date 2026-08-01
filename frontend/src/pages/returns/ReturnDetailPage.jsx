@@ -1,3 +1,4 @@
+import { ArrowLeft, Truck } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { returnService } from '../../services/api/returnService';
@@ -75,7 +76,7 @@ export const ReturnDetailPage = () => {
             onClick={() => navigate('/dashboard/returns')}
             className="flex items-center gap-1.5 text-sm font-medium text-on-surface-variant hover:text-primary transition-colors mb-2"
           >
-            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+            <ArrowLeft className="text-[16px]" strokeWidth={1.5} />
             Back to Returns
           </button>
           <h1 className="text-2xl font-bold text-on-surface flex items-center gap-3">
@@ -168,7 +169,7 @@ export const ReturnDetailPage = () => {
 
           <div className="bg-surface rounded-2xl border border-outline-variant/40 p-5 shadow-sm">
             <h3 className="font-semibold text-on-surface mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">local_shipping</span>
+              <Truck className="text-[18px]" strokeWidth={1.5} />
               Pickup Details
             </h3>
             {returnRequest.pickup ? (

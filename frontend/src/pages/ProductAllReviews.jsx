@@ -1,3 +1,4 @@
+import { BadgeCheck, PenSquare, ArrowLeft, Search } from 'lucide-react';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { useParams, Link } from 'react-router-dom';
@@ -75,7 +76,7 @@ function FullPageReviewCard({ review, productId }) {
               <div className="flex items-center gap-1.5 mt-0.5">
                 {review.verified && (
                   <span className="inline-flex items-center gap-0.5 text-[7px] font-bold text-emerald-800 uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100/60">
-                    <span className="material-symbols-outlined text-[9px] font-bold">verified</span>
+                    <BadgeCheck className="text-[9px] font-bold" strokeWidth={1.5} />
                     Verified Purchase
                   </span>
                 )}
@@ -208,7 +209,7 @@ export function ProductAllReviews() {
     if (!isAuthenticated) {
       return (
         <button onClick={openAuthModal} title="Write a Review" className={buttonClass}>
-          <span className="material-symbols-outlined text-[14px]">edit_square</span>
+          <PenSquare className="text-[14px]" strokeWidth={1.5} />
         </button>
       );
     }
@@ -216,7 +217,7 @@ export function ProductAllReviews() {
     if (eligibility?.canReview) {
       return (
         <button onClick={() => setShowModal(true)} title="Write a Review" className={buttonClass}>
-          <span className="material-symbols-outlined text-[14px]">edit_square</span>
+          <PenSquare className="text-[14px]" strokeWidth={1.5} />
         </button>
       );
     }
@@ -260,9 +261,10 @@ export function ProductAllReviews() {
             to={`/product/${id}`}
             className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.2em] font-bold text-[#685c57] hover:text-[#8C7000] transition-colors self-start group"
           >
-            <span className="material-symbols-outlined text-[12px] group-hover:-translate-x-1 transition-transform">
-              arrow_back
-            </span>
+            <ArrowLeft
+              className="text-[12px] group-hover:-translate-x-1 transition-transform"
+              strokeWidth={1.5}
+            />
             Back to Masterpiece
           </Link>
           <h1 className="font-display text-2xl lg:text-3xl text-[#2D2B29] font-light tracking-tight mt-0.5">
@@ -368,9 +370,10 @@ export function ProductAllReviews() {
 
             {/* Custom Search Box */}
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-[#685c57]/50 pointer-events-none">
-                search
-              </span>
+              <Search
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-[#685c57]/50 pointer-events-none"
+                strokeWidth={1.5}
+              />
               <input
                 type="text"
                 value={searchQuery}

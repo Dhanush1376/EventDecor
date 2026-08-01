@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useActiveCoupons } from '../../hooks/useActiveCoupons';
@@ -71,7 +72,7 @@ export function FloatingOfferCard() {
             }}
             className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/5 flex items-center justify-center text-black/40 hover:text-black hover:bg-black/10 transition-colors z-10"
           >
-            <span className="material-symbols-outlined text-[14px]">close</span>
+            <X className="text-[14px]" strokeWidth={1.5} />
           </button>
 
           <div className="relative p-5">

@@ -1,3 +1,4 @@
+import { Search, Camera, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 export function SearchBar({
@@ -55,9 +56,10 @@ export function SearchBar({
       }}
       className={`relative group w-full lg:flex-1 bg-surface-bright/90 backdrop-blur-md border-none rounded-full transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
     >
-      <span className="material-symbols-outlined absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant/60 transition-colors select-none pointer-events-none font-bold">
-        search
-      </span>
+      <Search
+        className="absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 text-[20px] text-on-surface-variant/60 transition-colors select-none pointer-events-none font-bold"
+        strokeWidth={1.5}
+      />
       <input
         type="text"
         value={localValue}
@@ -110,7 +112,7 @@ export function SearchBar({
             className="text-on-surface-variant/60 hover:text-primary hover:scale-105 transition-all w-8 h-8 lg:w-9 lg:h-9 !min-h-0 aspect-square flex items-center justify-center rounded-full hover:bg-primary/5 cursor-pointer shrink-0"
             aria-label="Search by image"
           >
-            <span className="material-symbols-outlined text-[18px]">photo_camera</span>
+            <Camera className="text-[18px]" strokeWidth={1.5} />
           </button>
         )}
         {localValue && (
@@ -122,7 +124,7 @@ export function SearchBar({
             className="text-on-surface-variant/60 hover:text-primary transition-colors w-8 h-8 lg:w-9 lg:h-9 !min-h-0 aspect-square flex items-center justify-center rounded-full hover:bg-primary/5 cursor-pointer shrink-0"
             aria-label="Clear search"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            <X className="text-[18px]" strokeWidth={1.5} />
           </button>
         )}
       </div>

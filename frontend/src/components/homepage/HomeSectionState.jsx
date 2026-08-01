@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 export function HomeSectionState({
   title = 'Content unavailable',
   message = 'This homepage section is waiting for published content.',
@@ -19,7 +20,7 @@ export function HomeSectionState({
             onClick={onRetry}
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-on-surface text-surface px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.16em]"
           >
-            <span className="material-symbols-outlined text-[16px]">refresh</span>
+            <RefreshCw className="text-[16px]" strokeWidth={1.5} />
             {actionLabel || 'Retry'}
           </button>
         )}

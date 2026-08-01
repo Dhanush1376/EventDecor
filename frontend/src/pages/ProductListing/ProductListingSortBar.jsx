@@ -1,3 +1,4 @@
+import { SlidersHorizontal } from 'lucide-react';
 import React, { useRef, useEffect } from 'react';
 import { SearchBar, CategoryTabs, CustomDropdown } from '../../components/ui';
 
@@ -90,7 +91,7 @@ export const ProductListingSortBar = ({
             aria-label="Open filters"
             className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-[0.98] active:opacity-90 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
           >
-            <span className="material-symbols-outlined text-[20px]">tune</span>
+            <SlidersHorizontal className="text-[20px]" strokeWidth={1.5} />
           </button>
         </div>
 

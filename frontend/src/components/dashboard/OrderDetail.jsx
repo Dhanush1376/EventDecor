@@ -1,3 +1,19 @@
+import {
+  PackageCheck,
+  Check,
+  FileEdit,
+  Map,
+  Tag,
+  Receipt,
+  ChevronDown,
+  CreditCard,
+  AlertTriangle,
+  Info,
+  CornerDownLeft,
+  ArrowLeftRight,
+  Download,
+  BellRing,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -267,7 +283,7 @@ export function OrderDetail() {
       <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
         <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center">
           <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[14px]">inventory_2</span>
+            <PackageCheck className="text-[14px]" strokeWidth={1.5} />
             Order Overview
           </h2>
           <span className="text-[9px] text-secondary font-mono tracking-wider">
@@ -344,12 +360,10 @@ export function OrderDetail() {
                     className={`absolute left-0 top-1 w-6 h-6 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-300 z-10 shrink-0 overflow-hidden ${getColorClasses(step.color, step.status, step.isCurrent)}`}
                   >
                     {step.status === 'completed' && !step.isCurrent ? (
-                      <span
-                        className="material-symbols-outlined font-bold flex items-center justify-center w-full h-full leading-none"
-                        style={{ fontSize: '14px' }}
-                      >
-                        check
-                      </span>
+                      <Check
+                        className="font-bold flex items-center justify-center w-full h-full leading-none"
+                        strokeWidth={1.5}
+                      />
                     ) : (
                       <span
                         className="material-symbols-outlined flex items-center justify-center w-full h-full leading-none"
@@ -426,7 +440,7 @@ export function OrderDetail() {
           disabled={!isDelivered}
           className="px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50"
         >
-          <span className="material-symbols-outlined text-[14px]">edit_note</span> Write Review
+          <FileEdit className="text-[14px]" strokeWidth={1.5} /> Write Review
         </button>
       </div>
 
@@ -467,7 +481,7 @@ export function OrderDetail() {
         <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs flex flex-col">
           <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center">
             <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[14px]">map</span>
+              <Map className="text-[14px]" strokeWidth={1.5} />
               Destination GPS
             </h2>
             <span className="text-[8px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded uppercase tracking-widest border border-emerald-200">
@@ -488,7 +502,7 @@ export function OrderDetail() {
       {discount > 0 && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-lg flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px]">local_offer</span>
+            <Tag className="text-[14px]" strokeWidth={1.5} />
             <span className="text-[9px] font-bold uppercase tracking-widest">
               Premium Discount Applied
             </span>
@@ -506,15 +520,13 @@ export function OrderDetail() {
           className="w-full px-5 py-4 flex items-center justify-between hover:bg-surface-container-low transition-colors font-bold text-[9px] uppercase tracking-widest text-on-surface border-b border-outline-variant/20 text-left cursor-pointer bg-transparent"
         >
           <span className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[14px]">receipt_long</span>
+            <Receipt className="text-[14px]" strokeWidth={1.5} />
             Order Price Breakdown
           </span>
-          <span
-            className="material-symbols-outlined text-[16px] text-secondary transition-transform duration-200"
-            style={{ transform: isPriceDetailsOpen ? 'rotate(180deg)' : 'none' }}
-          >
-            expand_more
-          </span>
+          <ChevronDown
+            className="text-[16px] text-secondary transition-transform duration-200"
+            strokeWidth={1.5}
+          />
         </button>
 
         <AnimatePresence initial={false}>
@@ -562,7 +574,7 @@ export function OrderDetail() {
 
               <div className="p-4 bg-surface-container-low/50 flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-outline-variant/20">
                 <span className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px]">credit_card</span>
+                  <CreditCard className="text-[14px]" strokeWidth={1.5} />
                   Payment: {order.paymentMethod?.toUpperCase() || 'RAZORPAY'}
                 </span>
                 <span className="text-[8px] text-secondary uppercase tracking-widest">
@@ -577,7 +589,7 @@ export function OrderDetail() {
         {order.paymentStatus === 'pending' && order.paymentMethod === 'razorpay' && (
           <div className="bg-amber-50/50 p-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-amber-200/50">
             <span className="text-[9px] uppercase tracking-widest text-amber-800 font-bold flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[14px]">warning</span>
+              <AlertTriangle className="text-[14px]" strokeWidth={1.5} />
               Payment Pending
             </span>
             <button
@@ -603,7 +615,7 @@ export function OrderDetail() {
         {/* Actions (Return / Exchange & Download Invoice) */}
         <div className="p-5 bg-surface-container-lowest flex flex-col sm:flex-row justify-between items-center gap-4">
           <span className="text-[9px] uppercase tracking-widest text-secondary font-medium flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[14px]">info</span>
+            <Info className="text-[14px]" strokeWidth={1.5} />
             Need official copies or assistance?
           </span>
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
@@ -612,7 +624,7 @@ export function OrderDetail() {
                 disabled
                 className="w-full sm:w-auto px-6 py-2.5 bg-surface text-secondary font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed"
               >
-                <span className="material-symbols-outlined text-[14px]">keyboard_return</span>
+                <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
                 Return Items
               </button>
             ) : (
@@ -620,7 +632,7 @@ export function OrderDetail() {
                 to={`/dashboard/returns/new?orderId=${order._id}`}
                 className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
-                <span className="material-symbols-outlined text-[14px]">keyboard_return</span>
+                <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
                 Return Items
               </Link>
             )}
@@ -629,7 +641,7 @@ export function OrderDetail() {
                 disabled
                 className="w-full sm:w-auto px-6 py-2.5 bg-surface text-secondary font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed"
               >
-                <span className="material-symbols-outlined text-[14px]">swap_horiz</span>
+                <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
                 Exchange Items
               </button>
             ) : (
@@ -637,7 +649,7 @@ export function OrderDetail() {
                 to={`/dashboard/returns/exchanges/new?orderId=${order._id}`}
                 className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
-                <span className="material-symbols-outlined text-[14px]">swap_horiz</span>
+                <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
                 Exchange Items
               </Link>
             )}
@@ -645,7 +657,7 @@ export function OrderDetail() {
               onClick={() => downloadInvoice(order._id)}
               className="w-full sm:w-auto px-6 py-2.5 bg-black hover:bg-gray-900 text-white font-bold uppercase tracking-widest text-[9px] rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap border-0"
             >
-              <span className="material-symbols-outlined text-[14px]">download</span>
+              <Download className="text-[14px]" strokeWidth={1.5} />
               View Invoice
             </button>
           </div>
@@ -654,9 +666,7 @@ export function OrderDetail() {
 
       {/* Footer Info */}
       <div className="flex items-start gap-3 p-4 bg-surface-bright border border-outline-variant/30 rounded-lg shadow-xs">
-        <span className="material-symbols-outlined text-primary text-[16px] mt-0.5">
-          notifications_active
-        </span>
+        <BellRing className="text-primary text-[16px] mt-0.5" strokeWidth={1.5} />
         <div className="space-y-2">
           <p className="text-[10px] text-secondary tracking-wider leading-relaxed">
             Real-time dispatch and delivery status updates are forwarded automatically to{' '}

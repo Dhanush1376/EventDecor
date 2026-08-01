@@ -1,3 +1,4 @@
+import { X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
@@ -38,7 +39,7 @@ export function CouponModal({
               onClick={() => setIsCouponModalOpen(false)}
               className="absolute top-6 right-6 w-8 h-8 min-h-0 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center hover:bg-surface-container transition-all z-50 cursor-pointer shadow-xs hidden sm:flex"
             >
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              <X className="text-[16px]" strokeWidth={1.5} />
             </button>
             <div className="relative z-10 flex flex-col h-full max-h-[75vh]">
               <div className="mb-6">
@@ -70,7 +71,7 @@ export function CouponModal({
                         exit={{ opacity: 0 }}
                         className="absolute -bottom-10 left-0 right-0 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-red-100 flex items-center gap-1.5 z-10 shadow-sm"
                       >
-                        <span className="material-symbols-outlined text-[14px]">error</span>
+                        <AlertCircle className="text-[14px]" strokeWidth={1.5} />
                         {couponError}
                       </motion.div>
                     )}
@@ -152,9 +153,7 @@ export function CouponModal({
                               </p>
                             ) : (
                               <p className="text-[10px] text-green-600 font-medium flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[12px]">
-                                  check_circle
-                                </span>
+                                <CheckCircle2 className="text-[12px]" strokeWidth={1.5} />
                                 Unlocked
                               </p>
                             )}

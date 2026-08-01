@@ -1,3 +1,4 @@
+import { Plus, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
 import { AddressCard } from '../../components/dashboard/AddressCard';
@@ -54,7 +55,7 @@ export function AddressesSection() {
           className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[9px] font-bold text-primary hover:bg-primary/5 transition-colors uppercase tracking-widest cursor-pointer bg-transparent border-0"
           title="Add New Delivery Destination"
         >
-          <span className="material-symbols-outlined text-[14px]">add</span>
+          <Plus className="text-[14px]" strokeWidth={1.5} />
           Add New
         </button>
       </div>
@@ -124,9 +125,10 @@ export function AddressesSection() {
               className="group flex items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70 bg-transparent outline-none cursor-pointer"
             >
               Add New Site
-              <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">
-                arrow_forward
-              </span>
+              <ArrowRight
+                className="text-[16px] transition-transform group-hover:translate-x-1"
+                strokeWidth={1.5}
+              />
             </button>
           </div>
         </div>

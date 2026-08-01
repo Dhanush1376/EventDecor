@@ -1,3 +1,4 @@
+import { CloudUpload, Camera } from 'lucide-react';
 import React from 'react';
 import { m as motion } from 'framer-motion';
 
@@ -23,7 +24,7 @@ export function VisualSearchPanel({
         >
           <div className="flex flex-col items-center gap-3">
             <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-[32px]">cloud_upload</span>
+              <CloudUpload className="text-[32px]" strokeWidth={1.5} />
             </div>
             <div>
               <p className="text-on-surface font-semibold text-[15px]">Upload an image</p>
@@ -41,7 +42,7 @@ export function VisualSearchPanel({
           }}
           className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl border border-stone-200 active:bg-stone-50 text-stone-700 font-bold text-[13px] uppercase tracking-wider bg-white cursor-pointer"
         >
-          <span className="material-symbols-outlined text-[18px]">photo_camera</span>
+          <Camera className="text-[18px]" strokeWidth={1.5} />
           Use Camera
         </button>
       </div>
@@ -66,7 +67,7 @@ export function VisualSearchPanel({
       >
         <div className="flex flex-col items-center gap-3">
           <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center text-primary">
-            <span className="material-symbols-outlined text-[32px]">cloud_upload</span>
+            <CloudUpload className="text-[32px]" strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-on-surface font-semibold text-[15px]">Upload an image</p>
@@ -86,7 +87,7 @@ export function VisualSearchPanel({
           }}
           className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-outline-variant/30 hover:bg-surface-container-low transition-colors text-on-surface-variant font-bold text-[13px] uppercase tracking-wider cursor-pointer bg-white"
         >
-          <span className="material-symbols-outlined text-[18px]">photo_camera</span>
+          <Camera className="text-[18px]" strokeWidth={1.5} />
           Use Camera
         </button>
       </div>

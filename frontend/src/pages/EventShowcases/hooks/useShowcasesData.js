@@ -221,7 +221,12 @@ export function useShowcasesData() {
     } else if (sortBy === 'Fastest Setup') {
       list.sort((a, b) => (a.setupTimeHours || 2) - (b.setupTimeHours || 2));
     } else {
-      list.sort((a, b) => String(a._id || a.id).localeCompare(String(b._id || b.id)));
+      list.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+        return String(b._id || b.id).localeCompare(String(a._id || a.id));
+      });
     }
 
     return list;

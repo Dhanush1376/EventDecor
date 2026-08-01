@@ -1,3 +1,4 @@
+import { LayoutDashboard } from 'lucide-react';
 import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { DashboardProvider } from '../context/DashboardContext';
 import { DashboardLayout } from './Dashboard/DashboardLayout';
@@ -28,7 +29,7 @@ function DashboardIndex() {
   return (
     <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[50vh] hidden lg:flex">
       <div className="w-16 h-16 rounded-full bg-surface-container-low border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
-        <span className="material-symbols-outlined text-[32px]">dashboard</span>
+        <LayoutDashboard className="text-[32px]" strokeWidth={1.5} />
       </div>
       <h2 className="font-display text-xl lg:text-2xl font-bold text-on-surface mb-2 tracking-wide uppercase">
         Welcome to your Dashboard

@@ -1,3 +1,4 @@
+import { LayoutDashboard } from 'lucide-react';
 import { useEffect, useRef, useCallback, Suspense } from 'react';
 import { lazyWithRetry as lazy } from '../../utils/performance/lazyWithRetry';
 import { SEO } from '../../components/seo/SEO';
@@ -276,9 +277,10 @@ function HomepageEmptyState() {
   return (
     <section className="min-h-[60vh] flex items-center justify-center px-6 text-center">
       <div className="max-w-xl rounded-2xl border border-outline-variant/30 bg-surface/80 p-8">
-        <span className="material-symbols-outlined text-[40px] text-on-surface-variant/50 mb-4">
-          dashboard_customize
-        </span>
+        <LayoutDashboard
+          className="text-[40px] text-on-surface-variant/50 mb-4"
+          strokeWidth={1.5}
+        />
         <h1 className="font-display text-2xl text-on-surface mb-3">
           Homepage content is not published
         </h1>

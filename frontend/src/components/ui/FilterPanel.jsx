@@ -1,3 +1,4 @@
+import { Check, CheckCircle2, X } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -45,9 +46,10 @@ const Checkbox = ({ label, count, type, currentFilters, onToggleFilter, isChild 
             onChange={() => onToggleFilter(type, label)}
             className="peer appearance-none h-4.5 w-4.5 border border-outline-variant/50 rounded bg-transparent checked:bg-primary checked:border-primary transition-all cursor-pointer focus:ring-2 focus:ring-primary/20"
           />
-          <span className="absolute material-symbols-outlined text-white text-[13px] opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity font-bold">
-            check
-          </span>
+          <Check
+            className="absolute text-white text-[13px] opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity font-bold"
+            strokeWidth={1.5}
+          />
         </div>
         <span
           className={`font-body text-[13px] lg:text-[14px] transition-colors ${isChecked ? 'text-primary font-semibold' : 'text-on-surface/70 group-hover:text-on-surface'}`}
@@ -266,9 +268,10 @@ export function FilterPanel({
                 {opt.label}
               </span>
               {sortBy === opt.value && (
-                <span className="material-symbols-outlined text-[16px] text-primary animate-scale-in">
-                  check_circle
-                </span>
+                <CheckCircle2
+                  className="text-[16px] text-primary animate-scale-in"
+                  strokeWidth={1.5}
+                />
               )}
             </button>
           ))}
@@ -398,7 +401,7 @@ export function FilterPanel({
                     onClick={onClose}
                     className="absolute top-5 right-5 w-9 h-9 min-h-0 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
                   >
-                    <span className="material-symbols-outlined text-[18px]">close</span>
+                    <X className="text-[18px]" strokeWidth={1.5} />
                   </button>
 
                   <div className="flex-1 overflow-y-auto no-scrollbar pt-2">{panelContent}</div>

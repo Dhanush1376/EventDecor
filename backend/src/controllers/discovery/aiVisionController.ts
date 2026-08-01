@@ -4,6 +4,7 @@ import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
 import Category from '../../models/Category';
 import logger from '../../config/logger';
+import { AIClient } from '../../services/ai/aiClient';
 
 export const analyzeShowcaseImage = asyncHandler(async (req: Request, res: Response) => {
   const { imageUrl, providerId } = req.body;
@@ -47,7 +48,7 @@ Do NOT include any extra text before or after the JSON.`;
       if (contentType) mimeType = contentType;
     }
 
-    const { AIClient } = await import('../../services/ai/aiClient.js');
+    // Using statically imported AIClient
 
     const generatedText = await AIClient.generateVision(
       'showcase-ai',
@@ -139,7 +140,7 @@ The user has given you the following feedback/instructions to refine it:
 Output ONLY a valid, raw JSON object (without markdown code blocks) representing the updated setup. Maintain the exact same JSON schema: title, subtitle, category, description, inclusionsText, colorPalette, suggestedProps, setupTimeHours, rentalPrice, strikingPrice, seoTitle, seoDescription. Do NOT include any extra text before or after the JSON.`;
 
   try {
-    const { AIClient } = await import('../../services/ai/aiClient.js');
+    // Using statically imported AIClient
 
     const generatedText = await AIClient.generateText('showcase-ai-refine', systemPrompt, {
       temperature: 0.3,

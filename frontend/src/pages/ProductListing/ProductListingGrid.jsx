@@ -1,3 +1,4 @@
+import { X, Tag } from 'lucide-react';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -143,7 +144,7 @@ export const ProductListingGrid = React.memo(
                   onClick={visualSearch.reset}
                   className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-full text-[13px] font-bold transition-all shadow-md active:scale-[0.98] cursor-pointer flex items-center gap-1.5 outline-none"
                 >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  <X className="text-[16px]" strokeWidth={1.5} />
                   Clear Visual Search
                 </button>
               </div>
@@ -159,9 +160,10 @@ export const ProductListingGrid = React.memo(
                   className="mb-8 px-5 py-3 sm:px-6 sm:py-4 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-200 text-[13px] sm:text-[14px] font-medium flex items-center justify-between gap-4 shadow-sm"
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-emerald-600">
-                      local_offer
-                    </span>
+                    <Tag
+                      className="text-[18px] sm:text-[20px] text-emerald-600"
+                      strokeWidth={1.5}
+                    />
                     <span>
                       Showing eligible items for coupon:{' '}
                       <strong className="font-bold">{searchParams.get('coupon')}</strong>
@@ -180,9 +182,7 @@ export const ProductListingGrid = React.memo(
                     className="p-1.5 shrink-0 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-800 rounded-full transition-colors flex items-center justify-center cursor-pointer outline-none"
                     title="Clear Filter"
                   >
-                    <span className="material-symbols-outlined text-[18px] sm:text-[20px]">
-                      close
-                    </span>
+                    <X className="text-[18px] sm:text-[20px]" strokeWidth={1.5} />
                   </button>
                 </motion.div>
               )}

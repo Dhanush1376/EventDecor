@@ -1,3 +1,4 @@
+import { ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SectionHeader } from '../../../components/shared/SectionHeader';
 import { MandalaElement } from '../../../components/ui/MandalaElement';
@@ -131,7 +132,7 @@ export const CategoryGrid = React.memo(function CategoryGrid({ previewContent })
                     <div className="h1-categories__label">
                       <span>{displayName}</span>
                       <span className="h1-categories__label-icon">
-                        <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                        <ExternalLink className="text-[18px]" strokeWidth={1.5} />
                       </span>
                     </div>
                   </div>

@@ -1,3 +1,14 @@
+import {
+  ShoppingBag,
+  Palette,
+  Trash2,
+  ArrowLeft,
+  Plus,
+  Minus,
+  Image,
+  CalendarCheck,
+  ArrowRight,
+} from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { EmptyState } from '../ui';
@@ -104,12 +115,10 @@ export function CartDrawer({ isOpen, onClose }) {
                 className="group flex items-center gap-3 shrink-0 cursor-pointer"
                 aria-label="Close cart"
               >
-                <span
-                  className="material-symbols-outlined text-[24px] text-[#1a1a1a] group-hover:-translate-x-1 transition-transform"
-                  style={{ fontVariationSettings: "'wght' 200" }}
-                >
-                  west
-                </span>
+                <ArrowLeft
+                  className="text-[24px] text-[#1a1a1a] group-hover:-translate-x-1 transition-transform"
+                  strokeWidth={1.5}
+                />
                 <h2 className="font-label text-[13px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] leading-none pt-0.5">
                   Cart
                 </h2>
@@ -161,7 +170,7 @@ export function CartDrawer({ isOpen, onClose }) {
                   {items.filter((item) => item.type === 'purchase').length > 0 && (
                     <div className="space-y-5">
                       <h4 className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-black/40 flex items-center gap-2 ml-1">
-                        <span className="material-symbols-outlined text-[14px]">shopping_bag</span>
+                        <ShoppingBag className="text-[14px]" strokeWidth={1.5} />
                         Purchases
                       </h4>
                       <div className="space-y-5">
@@ -196,9 +205,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                     />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center opacity-20">
-                                      <span className="material-symbols-outlined text-[32px]">
-                                        image
-                                      </span>
+                                      <Image className="text-[32px]" strokeWidth={1.5} />
                                     </div>
                                   )}
                                 </div>
@@ -230,9 +237,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                           className="w-7 h-7 min-h-0 rounded-full flex items-center justify-center text-black/50 hover:bg-black/5 hover:text-[#1a1a1a] transition-all cursor-pointer active:scale-95"
                                           aria-label="Decrease quantity"
                                         >
-                                          <span className="material-symbols-outlined text-[16px]">
-                                            remove
-                                          </span>
+                                          <Minus className="text-[16px]" strokeWidth={1.5} />
                                         </button>
                                       ) : (
                                         <div className="relative">
@@ -269,9 +274,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                         className="w-7 h-7 rounded-full flex items-center justify-center text-black/50 hover:bg-black/5 hover:text-[#1a1a1a] transition-all cursor-pointer active:scale-95"
                                         aria-label="Increase quantity"
                                       >
-                                        <span className="material-symbols-outlined text-[16px]">
-                                          add
-                                        </span>
+                                        <Plus className="text-[16px]" strokeWidth={1.5} />
                                       </button>
                                     </div>
                                   </div>
@@ -287,9 +290,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                       }}
                                       className="absolute inset-0 z-20 bg-[#ff3b30]/95 backdrop-blur-sm text-white flex flex-col items-center justify-center gap-1.5 rounded-3xl font-label text-[10px] uppercase tracking-widest font-bold shadow-inner transition-colors hover:bg-[#ff3b30]"
                                     >
-                                      <span className="material-symbols-outlined text-[24px] mb-1">
-                                        delete_forever
-                                      </span>
+                                      <Trash2 className="text-[24px] mb-1" strokeWidth={1.5} />
                                       Tap to remove
                                     </motion.button>
                                   )}
@@ -303,7 +304,7 @@ export function CartDrawer({ isOpen, onClose }) {
                   {items.filter((item) => item.type === 'custom').length > 0 && (
                     <div className="space-y-5">
                       <h4 className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-[#b38235]/70 flex items-center gap-2 ml-1">
-                        <span className="material-symbols-outlined text-[14px]">palette</span>
+                        <Palette className="text-[14px]" strokeWidth={1.5} />
                         Custom Orders
                       </h4>
                       <div className="space-y-5">
@@ -336,9 +337,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center opacity-20">
-                                    <span className="material-symbols-outlined text-[32px]">
-                                      image
-                                    </span>
+                                    <Image className="text-[32px]" strokeWidth={1.5} />
                                   </div>
                                 )}
                                 <div className="absolute top-1.5 left-1.5 bg-[#b38235] text-white text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest shadow-md">
@@ -394,9 +393,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                     }}
                                     className="absolute inset-0 z-20 bg-[#ff3b30]/95 backdrop-blur-sm text-white flex flex-col items-center justify-center gap-1.5 rounded-3xl font-label text-[10px] uppercase tracking-widest font-bold shadow-inner transition-colors hover:bg-[#ff3b30]"
                                   >
-                                    <span className="material-symbols-outlined text-[24px] mb-1">
-                                      delete_forever
-                                    </span>
+                                    <Trash2 className="text-[24px] mb-1" strokeWidth={1.5} />
                                     Tap to remove
                                   </motion.button>
                                 )}
@@ -410,9 +407,7 @@ export function CartDrawer({ isOpen, onClose }) {
                   {items.filter((item) => item.type === 'rental').length > 0 && (
                     <div className="space-y-5">
                       <h4 className="font-display text-[11px] font-bold uppercase tracking-[0.25em] text-[#8c7335]/70 flex items-center gap-2 ml-1">
-                        <span className="material-symbols-outlined text-[14px]">
-                          event_available
-                        </span>
+                        <CalendarCheck className="text-[14px]" strokeWidth={1.5} />
                         Rentals
                       </h4>
                       <div className="space-y-5">
@@ -445,9 +440,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center opacity-20">
-                                    <span className="material-symbols-outlined text-[32px]">
-                                      image
-                                    </span>
+                                    <Image className="text-[32px]" strokeWidth={1.5} />
                                   </div>
                                 )}
                                 <div className="absolute top-1.5 left-1.5 bg-[#8c7335] text-white text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest shadow-md">
@@ -482,9 +475,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                         className="w-7 h-7 min-h-0 rounded-full flex items-center justify-center text-black/50 hover:bg-[#8c7335]/10 hover:text-[#8c7335] transition-all cursor-pointer active:scale-95"
                                         aria-label="Decrease quantity"
                                       >
-                                        <span className="material-symbols-outlined text-[16px]">
-                                          remove
-                                        </span>
+                                        <Minus className="text-[16px]" strokeWidth={1.5} />
                                       </button>
                                     ) : (
                                       <div className="relative">
@@ -521,9 +512,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                       className="w-7 h-7 rounded-full flex items-center justify-center text-black/50 hover:bg-[#8c7335]/10 hover:text-[#8c7335] transition-all cursor-pointer active:scale-95"
                                       aria-label="Increase quantity"
                                     >
-                                      <span className="material-symbols-outlined text-[16px]">
-                                        add
-                                      </span>
+                                      <Plus className="text-[16px]" strokeWidth={1.5} />
                                     </button>
                                   </div>
                                 </div>
@@ -539,9 +528,7 @@ export function CartDrawer({ isOpen, onClose }) {
                                     }}
                                     className="absolute inset-0 z-20 bg-[#ff3b30]/95 backdrop-blur-sm text-white flex flex-col items-center justify-center gap-1.5 rounded-3xl font-label text-[10px] uppercase tracking-widest font-bold shadow-inner transition-colors hover:bg-[#ff3b30]"
                                   >
-                                    <span className="material-symbols-outlined text-[24px] mb-1">
-                                      delete_forever
-                                    </span>
+                                    <Trash2 className="text-[24px] mb-1" strokeWidth={1.5} />
                                     Tap to remove
                                   </motion.button>
                                 )}
@@ -649,9 +636,10 @@ export function CartDrawer({ isOpen, onClose }) {
                   >
                     <span className="relative z-10 flex items-center justify-center gap-1.5">
                       Checkout
-                      <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform duration-300">
-                        arrow_forward
-                      </span>
+                      <ArrowRight
+                        className="text-[14px] group-hover:translate-x-1 transition-transform duration-300"
+                        strokeWidth={1.5}
+                      />
                     </span>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
                   </Link>

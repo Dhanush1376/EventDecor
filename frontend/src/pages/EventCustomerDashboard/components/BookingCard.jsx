@@ -1,3 +1,4 @@
+import { PartyPopper } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { StatusPill, OptimizedImage } from '../../../components/ui';
 
@@ -74,7 +75,7 @@ export function BookingCard({ booking, idx, onClick }) {
           />
         ) : (
           <div className="w-16 h-20 rounded-lg bg-surface-container border border-outline-variant/20 flex-shrink-0 shadow-3xs flex items-center justify-center text-primary/40 group-hover:text-primary transition-colors">
-            <span className="material-symbols-outlined text-[32px]">celebration</span>
+            <PartyPopper className="text-[32px]" strokeWidth={1.5} />
           </div>
         )}
 

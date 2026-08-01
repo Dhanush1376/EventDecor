@@ -1,3 +1,4 @@
+import { PlayCircle, ShoppingBag, Eye, Heart, Calendar, Compass, ArrowRight } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
@@ -75,7 +76,7 @@ export function GalleryDesktopLayout({
             </span>
             {item.video && (
               <span className="ml-2 px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 bg-amber-600/90 text-white text-[8px] uppercase tracking-widest font-extrabold shadow-lg inline-flex items-center gap-1">
-                <span className="material-symbols-outlined text-[10px]">play_circle</span>
+                <PlayCircle className="text-[10px]" strokeWidth={1.5} />
                 Video
               </span>
             )}
@@ -133,7 +134,7 @@ export function GalleryDesktopLayout({
                 className="gallery-action-btn"
                 aria-label="Shop this look"
               >
-                <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
+                <ShoppingBag className="text-[20px]" strokeWidth={1.5} />
               </button>
             </div>
           </motion.div>
@@ -275,26 +276,19 @@ export function GalleryDesktopLayout({
                   <div className="flex items-center gap-5 text-black/25">
                     {typeof item.views === 'number' && (
                       <span className="flex items-center gap-1.5 text-[11px] font-medium">
-                        <span className="material-symbols-outlined text-[14px]">visibility</span>
+                        <Eye className="text-[14px]" strokeWidth={1.5} />
                         {item.views.toLocaleString()} views
                       </span>
                     )}
                     {typeof item.likes === 'number' && item.likes > 0 && (
                       <span className="flex items-center gap-1.5 text-[11px] font-medium">
-                        <span
-                          className="material-symbols-outlined text-[14px]"
-                          style={{ fontVariationSettings: "'FILL' 1" }}
-                        >
-                          favorite
-                        </span>
+                        <Heart className="text-[14px]" strokeWidth={1.5} />
                         {item.likes.toLocaleString()} likes
                       </span>
                     )}
                     {formattedDate && (
                       <span className="flex items-center gap-1.5 text-[11px] font-medium">
-                        <span className="material-symbols-outlined text-[14px]">
-                          calendar_today
-                        </span>
+                        <Calendar className="text-[14px]" strokeWidth={1.5} />
                         {formattedDate}
                       </span>
                     )}
@@ -308,9 +302,7 @@ export function GalleryDesktopLayout({
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <span className="font-label text-[10px] uppercase tracking-[0.3em] text-black font-bold flex items-center gap-2">
-                          <span className="material-symbols-outlined text-primary text-[16px]">
-                            shopping_bag
-                          </span>
+                          <ShoppingBag className="text-primary text-[16px]" strokeWidth={1.5} />
                           Shop This Look
                         </span>
                         <span className="text-[10px] text-black/30 font-medium">
@@ -329,7 +321,7 @@ export function GalleryDesktopLayout({
                       className="flex items-center gap-3 p-4 rounded-2xl bg-[#f5f3ef] border border-black/5 hover:border-primary/20 transition-all group"
                     >
                       <span className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                        <span className="material-symbols-outlined text-[18px]">explore</span>
+                        <Compass className="text-[18px]" strokeWidth={1.5} />
                       </span>
                       <div>
                         <span className="font-body text-[13px] text-black font-semibold block">
@@ -339,9 +331,10 @@ export function GalleryDesktopLayout({
                           Discover similar handcrafted items
                         </span>
                       </div>
-                      <span className="material-symbols-outlined text-black/20 ml-auto group-hover:text-primary transition-colors text-[18px]">
-                        arrow_forward
-                      </span>
+                      <ArrowRight
+                        className="text-black/20 ml-auto group-hover:text-primary transition-colors text-[18px]"
+                        strokeWidth={1.5}
+                      />
                     </Link>
                   )}
                 </div>

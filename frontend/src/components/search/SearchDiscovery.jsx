@@ -1,3 +1,4 @@
+import { History, X, TrendingUp, Search, Compass, Flame, Wand2 } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
@@ -75,9 +76,7 @@ export function SearchDiscovery({
                     : 'gap-3 px-6 lg:px-8.5 py-1.5 hover:bg-stone-50/60 transition-all border-b border-stone-100/30 last:border-b-0 group cursor-pointer'
                 }`}
               >
-                <span className="material-symbols-outlined text-[18px] text-stone-400">
-                  history
-                </span>
+                <History className="text-[18px] text-stone-400" strokeWidth={1.5} />
                 <span
                   className={`flex-1 ${
                     isMobile
@@ -99,9 +98,7 @@ export function SearchDiscovery({
                   }
                   aria-label={`Remove ${search}`}
                 >
-                  <span className="material-symbols-outlined text-[16px] text-stone-400">
-                    close
-                  </span>
+                  <X className="text-[16px] text-stone-400" strokeWidth={1.5} />
                 </button>
               </div>
             ))}
@@ -112,9 +109,7 @@ export function SearchDiscovery({
         {trendingSearches && trendingSearches.length > 0 && (
           <div className={`mb-3 ${isMobile ? 'px-5' : 'px-6 lg:px-8.5'}`}>
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 flex items-center gap-1.5 mb-2.5">
-              <span className="material-symbols-outlined text-[14px] text-orange-500">
-                trending_up
-              </span>
+              <TrendingUp className="text-[14px] text-orange-500" strokeWidth={1.5} />
               Popular Searches
             </span>
             <div className="flex flex-wrap gap-2">
@@ -127,7 +122,7 @@ export function SearchDiscovery({
                   }}
                   className="px-3.5 py-1.5 rounded-full bg-stone-100 hover:bg-primary/10 text-stone-700 hover:text-primary text-[12px] font-medium transition-colors border border-stone-200/50 hover:border-primary/20 flex items-center gap-1.5 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[14px] opacity-50">search</span>
+                  <Search className="text-[14px] opacity-50" strokeWidth={1.5} />
                   {term.query}
                 </button>
               ))}
@@ -144,9 +139,7 @@ export function SearchDiscovery({
               <div className="mb-4 mt-2">
                 <div className="px-5 mb-3">
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[14px] text-primary">
-                      explore
-                    </span>
+                    <Compass className="text-[14px] text-primary" strokeWidth={1.5} />
                     Explore Collections
                   </span>
                 </div>
@@ -182,9 +175,7 @@ export function SearchDiscovery({
               <div className="mb-4">
                 <div className="px-5 mb-2.5">
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[14px] text-orange-500">
-                      local_fire_department
-                    </span>
+                    <Flame className="text-[14px] text-orange-500" strokeWidth={1.5} />
                     Trending Now
                   </span>
                 </div>
@@ -240,9 +231,7 @@ export function SearchDiscovery({
                     true) && (
                     <div className="col-span-2 sm:col-span-1">
                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-3 flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[14px] text-primary">
-                          explore
-                        </span>
+                        <Compass className="text-[14px] text-primary" strokeWidth={1.5} />
                         Explore Collections
                       </span>
                       <div className="flex flex-col gap-1.5">
@@ -278,9 +267,7 @@ export function SearchDiscovery({
                   {discoveryData?.newArrivals?.length > 0 && (
                     <div className="col-span-2 sm:col-span-1">
                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-3 flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[14px] text-emerald-500">
-                          auto_awesome
-                        </span>
+                        <Wand2 className="text-[14px] text-emerald-500" strokeWidth={1.5} />
                         New Arrivals
                       </span>
                       <div className="flex flex-col gap-3">

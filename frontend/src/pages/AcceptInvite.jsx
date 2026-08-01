@@ -1,3 +1,4 @@
+import { AlertTriangle, BadgeCheck, UserPlus } from 'lucide-react';
 import { m as motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -106,7 +107,7 @@ export function AcceptInvite() {
         {error ? (
           <motion.div variants={fadeUp} className="space-y-6">
             <div className="w-16 h-16 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center mx-auto text-rose-500">
-              <span className="material-symbols-outlined text-[32px]">warning</span>
+              <AlertTriangle className="text-[32px]" strokeWidth={1.5} />
             </div>
             <div>
               <h2 className="text-[18px] font-bold text-on-surface font-display mb-2">
@@ -124,7 +125,7 @@ export function AcceptInvite() {
         ) : successMessage ? (
           <motion.div variants={fadeUp} className="space-y-6">
             <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto text-emerald-600">
-              <span className="material-symbols-outlined text-[32px]">verified</span>
+              <BadgeCheck className="text-[32px]" strokeWidth={1.5} />
             </div>
             <div>
               <h2 className="text-[20px] font-bold text-on-surface font-display mb-3">
@@ -152,7 +153,7 @@ export function AcceptInvite() {
         ) : (
           <motion.div variants={fadeUp} className="space-y-6">
             <div className="w-16 h-16 rounded-2xl bg-primary/5 border border-primary/20 flex items-center justify-center mx-auto text-primary shadow-sm">
-              <span className="material-symbols-outlined text-[32px]">person_add</span>
+              <UserPlus className="text-[32px]" strokeWidth={1.5} />
             </div>
 
             <div className="space-y-3">

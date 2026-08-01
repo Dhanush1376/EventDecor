@@ -1,3 +1,4 @@
+import { ChevronRight, Star } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
@@ -168,16 +169,16 @@ export function EventDetail() {
             <Link to="/" className="hover:text-primary transition-colors">
               Home
             </Link>
-            <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+            <ChevronRight className="text-[12px]" strokeWidth={1.5} />
             <Link to="/events" className="hover:text-primary transition-colors">
               Collections
             </Link>
-            <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+            <ChevronRight className="text-[12px]" strokeWidth={1.5} />
             <span className="text-black line-clamp-1">{event.title}</span>
           </nav>
 
           <div className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-8 lg:gap-12 lg:gap-16 items-start">
-            <div className="md:col-span-7 lg:col-span-7 space-y-10 lg:space-y-16">
+            <div className="md:col-span-7 lg:col-span-7 space-y-8 lg:space-y-10">
               <div className="relative z-10">
                 <EventGallery event={event} toggleItem={toggleItem} isWishlisted={isWishlisted} />
               </div>
@@ -186,7 +187,7 @@ export function EventDetail() {
                   variant={1}
                   size={700}
                   opacity={0.15}
-                  className="top-[-3%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[-1]"
+                  className="absolute -top-16 -left-32 lg:-left-48 z-[-1] pointer-events-none"
                   spinDuration={200}
                 />
 
@@ -199,12 +200,7 @@ export function EventDetail() {
                 </span>
                 {event.rating > 0 && (
                   <div className="flex items-center gap-1.5 mt-2">
-                    <span
-                      className="material-symbols-outlined text-[14px] text-[#D4A853]"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      star
-                    </span>
+                    <Star className="text-[14px] text-[#D4A853]" strokeWidth={1.5} />
                     <span className="font-body text-xs font-bold text-black">
                       {event.rating?.toFixed(1)}
                     </span>

@@ -1,3 +1,4 @@
+import { Tag } from 'lucide-react';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -76,12 +77,7 @@ export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCou
       aria-label="Available Coupons and Offers"
     >
       <div className="flex items-center gap-2 mb-3">
-        <span
-          className="material-symbols-outlined text-[18px] text-black"
-          style={{ transform: 'none' }}
-        >
-          sell
-        </span>
+        <Tag className="text-[18px] text-black" strokeWidth={1.5} />
         <span className="font-label text-[11px] lg:text-[12px] text-black uppercase tracking-[0.1em] font-bold">
           Available Coupons & Savings
         </span>
@@ -200,7 +196,7 @@ function CouponCard({ coupon, isBest, onApply, isCopied, isEligible }) {
             {coupon.code}
           </span>
           {isBest && isEligible && (
-            <span className="bg-primary-container/20 border border-primary/40 text-primary font-bold px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider whitespace-nowrap">
+            <span className="bg-orange-500-[] uppercase tracking-wider whitespace-nowrap">
               Best Offer
             </span>
           )}

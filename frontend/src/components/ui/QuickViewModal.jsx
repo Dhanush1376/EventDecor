@@ -1,3 +1,4 @@
+import { X, Star, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from './CloudinaryImage';
 import React from 'react';
@@ -188,18 +189,13 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
               className="absolute top-4 right-4 lg:top-8 lg:right-8 w-9 h-9 lg:w-12 lg:h-12 min-h-0 rounded-full border border-outline-variant/30 bg-surface/80 backdrop-blur-md flex items-center justify-center hover:bg-surface-container-low transition-colors cursor-pointer z-[60] shadow-sm icon-button-touch-target"
               aria-label="Close product quick view"
             >
-              <span className="material-symbols-outlined text-[18px] lg:text-[24px]">close</span>
+              <X className="text-[18px] lg:text-[24px]" strokeWidth={1.5} />
             </button>
 
             {/* Ratings Badge - Fixed in Modal Container, matching Close button height/alignment */}
             {(product.reviews > 0 || product.rating > 0) && (
               <div className="absolute top-4 left-4 lg:top-8 lg:left-8 h-9 lg:h-12 min-h-0 z-[60] flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-3 lg:px-4 rounded-full shadow-sm border border-black/5 pointer-events-auto">
-                <span
-                  className="material-symbols-outlined text-[12px] lg:text-[14px] text-primary"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  star
-                </span>
+                <Star className="text-[12px] lg:text-[14px] text-primary" strokeWidth={1.5} />
                 <span className="font-label text-[10px] lg:text-[11px] text-black/60 font-bold uppercase tracking-wider flex items-center">
                   <span className="text-black font-bold mr-1">
                     {Number(product.rating || 0).toFixed(1)}
@@ -256,9 +252,10 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
                       className="absolute left-2 lg:left-4 top-1/2 -translate-y-1/2 w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center text-black/80 hover:scale-110 active:scale-95 transition-all z-[50]"
                       aria-label="Previous product"
                     >
-                      <span className="material-symbols-outlined text-[16px] lg:text-[20px] drop-shadow-md">
-                        chevron_left
-                      </span>
+                      <ChevronLeft
+                        className="text-[16px] lg:text-[20px] drop-shadow-md"
+                        strokeWidth={1.5}
+                      />
                     </button>
                   )}
 
@@ -271,9 +268,10 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
                       className="absolute right-2 lg:right-4 top-1/2 -translate-y-1/2 w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center text-black/80 hover:scale-110 active:scale-95 transition-all z-[50]"
                       aria-label="Next product"
                     >
-                      <span className="material-symbols-outlined text-[16px] lg:text-[20px] drop-shadow-md">
-                        chevron_right
-                      </span>
+                      <ChevronRight
+                        className="text-[16px] lg:text-[20px] drop-shadow-md"
+                        strokeWidth={1.5}
+                      />
                     </button>
                   )}
 
@@ -335,9 +333,10 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
                       aria-label="View Details"
                       title="View Details"
                     >
-                      <span className="material-symbols-outlined text-[16px] group-hover:-rotate-45 transition-transform text-black/80">
-                        arrow_forward
-                      </span>
+                      <ArrowRight
+                        className="text-[16px] group-hover:-rotate-45 transition-transform text-black/80"
+                        strokeWidth={1.5}
+                      />
                     </button>
 
                     <button
@@ -463,9 +462,10 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
                       onClick={handleViewDetails}
                       className="flex items-center justify-center gap-2 py-3 lg:py-4 rounded-full border border-outline-variant/30 font-label text-[10px] lg:text-[11px] uppercase tracking-widest font-bold hover:bg-surface-container-low transition-colors cursor-pointer group"
                     >
-                      <span className="material-symbols-outlined text-[18px] lg:text-[20px] group-hover:translate-x-1 transition-transform">
-                        arrow_forward
-                      </span>
+                      <ArrowRight
+                        className="text-[18px] lg:text-[20px] group-hover:translate-x-1 transition-transform"
+                        strokeWidth={1.5}
+                      />
                       Details
                     </button>
                   </div>

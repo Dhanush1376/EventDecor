@@ -345,6 +345,13 @@ export function EventCollections() {
         const pb = b.pricing ? parseInt(b.pricing.replace(/[^0-9]/g, '')) : 0;
         return pb - pa;
       });
+    } else {
+      result.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+        return String(b._id || b.id).localeCompare(String(a._id || a.id));
+      });
     }
 
     return result;

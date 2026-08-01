@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react';
 import { m as motion } from 'framer-motion';
 import { CloudinaryImage } from './CloudinaryImage';
 import React, { useState, useRef } from 'react';
@@ -14,6 +15,8 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
   subtitle,
   _description,
   rentalPrice = 15000,
+  originalPrice,
+  discountPercentage,
   setupTimeHours = 2,
   image,
   images = [],
@@ -35,7 +38,21 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
   const showcaseId = id || _id;
   const wishlisted = isWishlisted(showcaseId);
 
-  const availableImages = images && images.length > 0 ? images : [image].filter(Boolean);
+  const availableImages = React.useMemo(() => {
+    const imgs = [];
+    if (image) imgs.push(image);
+    if (images && images.length > 0) {
+      images.forEach((img) => {
+        if (!imgs.includes(img)) imgs.push(img);
+      });
+    }
+    return imgs;
+  }, [image, images]);
+
+  const displayOriginalPrice = originalPrice || Math.round(rentalPrice * 1.25);
+  const displayDiscount =
+    discountPercentage ||
+    Math.round(((displayOriginalPrice - rentalPrice) / displayOriginalPrice) * 100);
 
   const formatPrice = (val) => {
     if (!val) return '15,000';
@@ -92,7 +109,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       {...longPressHandlers}
-      className="group relative flex flex-col transition-all duration-700 cursor-pointer z-10 rounded-2xl lg:rounded-[32px]"
+      className="group relative flex flex-col transition-all duration-700 cursor-pointer z-10 rounded-2xl lg:rounded-3xl bg-surface border border-black/5 shadow-sm hover:shadow-md overflow-hidden"
       aria-label={
         reviews > 0
           ? `Rated ${Number(rating).toFixed(1)} out of 5 stars from ${reviews} reviews`
@@ -100,7 +117,19 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
       }
     >
       {/* 1. VISUAL CANVAS */}
-      <div className="relative h-44 sm:h-56 lg:h-72 w-full overflow-hidden bg-[#fafafa] rounded-2xl lg:rounded-[32px] border border-black/5 shadow-2xs group/canvas">
+      <div className="relative aspect-[4/3] lg:aspect-[3/2] w-full overflow-hidden bg-[#fafafa] group/canvas shrink-0 border-b border-black/5">
+        {displayDiscount > 0 && (
+          <div className="absolute top-2.5 left-2.5 lg:top-4 lg:left-4 z-20 pointer-events-none">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-[#3e2723]/85 backdrop-blur-md text-[#fdfbf7] border border-[#e0d6b8]/70 rounded-full flex flex-col items-center justify-center shadow-md">
+              <span className="font-display font-bold text-[10px] sm:text-[11px] lg:text-[13px] leading-none">
+                {displayDiscount}%
+              </span>
+              <span className="font-label text-[5px] sm:text-[5.5px] lg:text-[6.5px] tracking-widest uppercase mt-0.5 text-[#e0d6b8]">
+                OFF
+              </span>
+            </div>
+          </div>
+        )}
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
@@ -123,25 +152,51 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
         </div>
 
         {availableImages.length > 1 && (
-          <div className="absolute bottom-3 left-3 lg:bottom-4 lg:left-4 flex items-center gap-1.5 z-10 pointer-events-none">
+          <div className="absolute bottom-3 left-3 lg:bottom-4 lg:left-4 flex items-center gap-1.5 z-20 bg-black/20 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/10 shadow-sm pointer-events-auto">
             {availableImages.map((_, i) => (
               <div
                 key={i}
-                className={`transition-all duration-300 rounded-full shadow-md border border-black/10 ${
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (scrollContainerRef.current) {
+                    scrollContainerRef.current.scrollTo({
+                      left: i * scrollContainerRef.current.clientWidth,
+                      behavior: 'smooth',
+                    });
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (scrollContainerRef.current) {
+                      scrollContainerRef.current.scrollTo({
+                        left: i * scrollContainerRef.current.clientWidth,
+                        behavior: 'smooth',
+                      });
+                    }
+                  }
+                }}
+                className={`transition-all duration-300 rounded-full shadow-md border border-black/10 outline-none cursor-pointer hover:scale-125 flex-shrink-0 p-0 m-0 ${
                   i === activeIndex
                     ? 'w-2 h-2 lg:w-2.5 lg:h-2.5 bg-white'
-                    : 'w-1.5 h-1.5 lg:w-2 lg:h-2 bg-white/60'
+                    : 'w-1.5 h-1.5 lg:w-2 lg:h-2 bg-white/60 hover:bg-white/80'
                 }`}
+                style={{ minHeight: 'auto', minWidth: 'auto' }}
+                aria-label={`Go to image ${i + 1}`}
               />
             ))}
           </div>
         )}
 
         {/* Floating Utility Actions */}
-        <div className="absolute top-2 right-2 lg:top-4 lg:right-4 z-20 flex flex-col gap-2">
+        <div className="absolute top-2.5 right-2.5 lg:top-4 lg:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 min-h-0 min-w-0 p-0 aspect-square bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]"
+            className="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 min-h-0 min-w-0 p-0 aspect-square bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]"
             aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <motion.span
@@ -151,48 +206,10 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
                 fontVariationSettings: wishlisted ? "'FILL' 1, 'wght' 300" : "'FILL' 0, 'wght' 300",
               }}
               transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-              className="material-symbols-outlined text-[14px] lg:text-[18px]"
+              className="material-symbols-outlined text-[16px] lg:text-[20px]"
             >
               favorite
             </motion.span>
-          </button>
-        </div>
-
-        {/* Overlapping Circle Badges */}
-        <div className="absolute top-2 left-2 lg:top-4 lg:left-4 flex flex-row items-center -space-x-2 lg:-space-x-3 z-10">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label text-[7px] sm:text-[8px] lg:text-[10px] uppercase font-bold shadow-lg border-2 border-white z-20 hover:z-30 hover:scale-110 transition-all duration-300 select-none">
-            <span className="leading-none">{setupTimeHours}h</span>
-            <span className="text-[5px] sm:text-[6px] lg:text-[7px] tracking-tighter opacity-80 uppercase mt-0.5">
-              Setup
-            </span>
-          </div>
-
-          {inclusions && inclusions.length > 0 && (
-            <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-white/95 backdrop-blur-md text-stone-800 rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white z-10 hover:z-30 hover:scale-110 transition-all duration-300 select-none">
-              <span className="leading-none text-[7px] sm:text-[8px] lg:text-[10px]">
-                {inclusions.length}
-              </span>
-              <span className="text-[4.5px] sm:text-[5px] lg:text-[6px] tracking-tighter opacity-80 uppercase mt-0.5">
-                Props
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Quick Book Button (Floating bottom-right) */}
-        <div className="absolute bottom-3 right-3 z-20">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenShowcase?.();
-            }}
-            className="w-8 h-8 lg:w-9 lg:h-9 min-h-0 shrink-0 aspect-square p-0 rounded-full flex items-center justify-center shadow-lg bg-black text-white hover:bg-stone-800 hover:text-white transition-all duration-500 cursor-pointer"
-            aria-label="Reserve setup"
-            title="Reserve this setup"
-          >
-            <span className="material-symbols-outlined text-[13px] lg:text-[15px]">
-              event_available
-            </span>
           </button>
         </div>
 
@@ -223,12 +240,11 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
       </div>
 
       {/* 2. REFINED INFO SECTION */}
-      <div className="py-2.5 sm:py-3 lg:py-4 flex flex-col flex-1">
-        <div className="flex items-center justify-between gap-2 mb-2 sm:mb-2.5 lg:mb-3">
-          <span className="bg-surface-container-highest/40 border border-black/15 text-black/70 font-label uppercase text-[7.5px] sm:text-[8px] lg:text-[9px] tracking-[0.1em] sm:tracking-[0.15em] lg:tracking-[0.2em] px-2 py-[4px] rounded-md font-bold truncate min-w-0 max-w-max">
-            {formattedCat}
+      <div className="p-3 sm:p-4 lg:p-5 flex flex-col flex-1">
+        <div className="flex items-center justify-between gap-2 mb-1.5 sm:mb-2">
+          <span className="text-primary font-label-sm text-[8px] lg:text-[10px] uppercase tracking-widest font-bold truncate">
+            {formattedCat} • {setupTimeHours}H SETUP
           </span>
-
           <div className="flex items-center gap-0.5 shrink-0">
             <DynamicRatingBadge
               itemId={showcaseId}
@@ -239,19 +255,31 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
           </div>
         </div>
 
-        <div className="mb-1.5 sm:mb-2 lg:mb-3 group/link">
-          <h3 className="font-display text-[13px] sm:text-[15px] lg:text-[20px] text-black group-hover:text-primary transition-colors leading-tight font-medium line-clamp-1 sm:line-clamp-2 lg:line-clamp-1">
+        <div className="mb-2 sm:mb-3 group/link">
+          <h3 className="font-display text-[15px] sm:text-[16px] lg:text-[20px] text-black group-hover:text-primary transition-colors leading-tight font-medium line-clamp-1">
             {title}
           </h3>
         </div>
 
-        <div className="mt-auto flex items-baseline gap-1 sm:gap-2">
-          <span className="font-display text-[14px] sm:text-[16px] lg:text-[22px] text-black font-medium leading-none">
-            ₹{formatPrice(rentalPrice)}
-          </span>
-          <span className="font-label text-[8px] sm:text-[9px] lg:text-[10px] text-black/40">
-            / day
-          </span>
+        <div className="mt-auto flex items-end justify-between">
+          <div className="flex flex-col gap-0.5">
+            {displayOriginalPrice > rentalPrice && (
+              <span className="font-label text-[9.5px] lg:text-[11px] text-black/40 line-through decoration-black/30">
+                ₹{formatPrice(displayOriginalPrice)}
+              </span>
+            )}
+            <div className="flex items-baseline gap-1 sm:gap-1.5">
+              <span className="font-display text-[15px] sm:text-[18px] lg:text-[22px] text-black font-medium leading-none">
+                ₹{formatPrice(rentalPrice)}
+              </span>
+              <span className="font-label text-[9px] lg:text-[10px] text-black/40">/ day</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 font-label-sm text-[9px] lg:text-[11px] uppercase tracking-widest font-bold text-black/60 group-hover:text-primary transition-colors mb-1">
+            <span>Details</span>
+            <ArrowRight className="text-[12px] lg:text-[14px]" strokeWidth={1.5} />
+          </div>
         </div>
       </div>
     </motion.div>

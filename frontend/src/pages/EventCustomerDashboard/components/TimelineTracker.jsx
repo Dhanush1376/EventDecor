@@ -1,3 +1,4 @@
+import { Hourglass, ListTodo, Check } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { STATUS_STEPS } from '../constants';
 
@@ -32,7 +33,7 @@ export function TimelineTracker({ currentStatusIndex, isTimelineExpanded, setIsT
 
       <div className="p-4 bg-surface-container-lowest rounded-lg border border-outline-variant/20 flex items-start gap-4">
         <div className="w-8 h-8 rounded-full border border-outline-variant/40 text-secondary flex items-center justify-center shrink-0 animate-pulse bg-surface-bright">
-          <span className="material-symbols-outlined text-[14px]">hourglass_empty</span>
+          <Hourglass className="text-[14px]" strokeWidth={1.5} />
         </div>
         <div className="space-y-1">
           <span className="text-secondary text-[9px] uppercase tracking-widest font-bold">
@@ -51,7 +52,7 @@ export function TimelineTracker({ currentStatusIndex, isTimelineExpanded, setIsT
           className="w-full px-5 py-4 flex items-center justify-between hover:bg-surface-container-low transition-colors font-bold text-[9px] uppercase tracking-widest text-on-surface border border-outline-variant/20 rounded-lg text-left cursor-pointer bg-transparent"
         >
           <span className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[14px]">list_alt</span>
+            <ListTodo className="text-[14px]" strokeWidth={1.5} />
             {isTimelineExpanded ? 'Hide Full Timeline Roster' : 'View Full Timeline Roster'}
           </span>
           <span
@@ -85,9 +86,7 @@ export function TimelineTracker({ currentStatusIndex, isTimelineExpanded, setIsT
                       }`}
                     >
                       {isPast && (
-                        <span className="material-symbols-outlined text-[8px] text-black font-bold">
-                          check
-                        </span>
+                        <Check className="text-[8px] text-black font-bold" strokeWidth={1.5} />
                       )}
                     </div>
                     <div className="space-y-1">

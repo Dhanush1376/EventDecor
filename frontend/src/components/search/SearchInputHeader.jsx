@@ -1,3 +1,4 @@
+import { ArrowLeft, Search, X, Camera } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 
@@ -44,7 +45,7 @@ export function SearchInputHeader({
           className="w-8 h-8 min-h-0 rounded-full flex items-center justify-center text-stone-700 active:bg-stone-200/60 transition-colors flex-shrink-0"
           aria-label={searchMode === 'visual' ? 'Back to text search' : 'Close search'}
         >
-          <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+          <ArrowLeft className="text-[20px]" strokeWidth={1.5} />
         </button>
 
         {searchMode === 'visual' ? (
@@ -54,9 +55,7 @@ export function SearchInputHeader({
         ) : (
           /* Search Input Pill container */
           <div className="flex-1 min-w-0 flex items-center gap-2 px-3 py-1.5 bg-surface-container-low border border-outline-variant/40 rounded-full focus-within:border-primary/40 focus-within:bg-white transition-all duration-300">
-            <span className="material-symbols-outlined text-[20px] text-stone-400 select-none">
-              search
-            </span>
+            <Search className="text-[20px] text-stone-400 select-none" strokeWidth={1.5} />
             <input
               ref={inputRef}
               type="text"
@@ -88,7 +87,7 @@ export function SearchInputHeader({
                 className="w-7 h-7 min-h-0 rounded-full flex items-center justify-center bg-stone-200/50 text-stone-500 active:bg-stone-300/50 transition-all flex-shrink-0"
                 aria-label="Clear search"
               >
-                <span className="material-symbols-outlined text-[15px]">close</span>
+                <X className="text-[15px]" strokeWidth={1.5} />
               </button>
             ) : null}
 
@@ -117,7 +116,7 @@ export function SearchInputHeader({
                 className="w-7 h-7 min-h-0 rounded-full flex items-center justify-center bg-stone-100 text-stone-500 active:bg-stone-200 transition-all flex-shrink-0"
                 aria-label="Search by Image"
               >
-                <span className="material-symbols-outlined text-[16px]">photo_camera</span>
+                <Camera className="text-[16px]" strokeWidth={1.5} />
               </button>
             )}
           </div>
@@ -135,7 +134,7 @@ export function SearchInputHeader({
             className="w-8 h-8 min-h-0 rounded-full bg-stone-200/50 hover:bg-stone-300/50 flex items-center justify-center text-stone-600 transition-all duration-300 flex-shrink-0 cursor-pointer -ml-2"
             aria-label="Back to text search"
           >
-            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            <ArrowLeft className="text-[20px]" strokeWidth={1.5} />
           </button>
           <h2 className="flex-1 text-[18px] lg:text-[20px] text-stone-900 font-display font-medium">
             Search by Image
@@ -143,9 +142,10 @@ export function SearchInputHeader({
         </>
       ) : (
         <>
-          <span className="material-symbols-outlined text-[26px] text-primary flex-shrink-0 select-none transition-colors duration-500">
-            search
-          </span>
+          <Search
+            className="text-[26px] text-primary flex-shrink-0 select-none transition-colors duration-500"
+            strokeWidth={1.5}
+          />
           <div className="flex-1 min-w-0 relative">
             <AnimatePresence mode="wait">
               {!query && (
@@ -216,7 +216,7 @@ export function SearchInputHeader({
                 }}
                 aria-label="Clear search"
               >
-                <span className="material-symbols-outlined text-[16px] leading-none">close</span>
+                <X className="text-[16px] leading-none" strokeWidth={1.5} />
               </button>
             ) : null}
 
@@ -268,9 +268,7 @@ export function SearchInputHeader({
                 }}
                 aria-label="Search by Image"
               >
-                <span className="material-symbols-outlined text-[20px] leading-none">
-                  photo_camera
-                </span>
+                <Camera className="text-[20px] leading-none" strokeWidth={1.5} />
               </button>
             )}
           </div>

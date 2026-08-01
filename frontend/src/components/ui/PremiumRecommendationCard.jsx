@@ -1,3 +1,4 @@
+import { Palette, Check, Eye } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from './CloudinaryImage';
@@ -129,7 +130,7 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-surface-container-high/50 text-on-surface-variant/30">
-              <span className="material-symbols-outlined text-4xl">style</span>
+              <Palette className="text-4xl" strokeWidth={1.5} />
             </div>
           )}
         </Link>
@@ -194,7 +195,7 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
               >
                 {added ? (
                   <>
-                    <span className="material-symbols-outlined text-[16px]">check</span> Added
+                    <Check className="text-[16px]" strokeWidth={1.5} /> Added
                   </>
                 ) : targetType === 'event' ? (
                   'View Event'
@@ -213,7 +214,7 @@ export const PremiumRecommendationCard = React.memo(function PremiumRecommendati
                   className="w-12 h-12 flex items-center justify-center shrink-0 rounded-xl bg-white/20 backdrop-blur-xl text-white border border-white/30 hover:bg-white/30 transition-all"
                   aria-label="Quick View"
                 >
-                  <span className="material-symbols-outlined text-[18px]">visibility</span>
+                  <Eye className="text-[18px]" strokeWidth={1.5} />
                 </button>
               )}
             </motion.div>

@@ -1,3 +1,14 @@
+import {
+  Camera,
+  ShoppingBag,
+  ChevronRight,
+  PackageCheck,
+  Compass,
+  CornerDownLeft,
+  User,
+  CalendarDays,
+  LogOut,
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
@@ -73,7 +84,7 @@ export function Sidebar() {
 
           {/* Edit Camera Overlay */}
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center text-white transition-opacity duration-300">
-            <span className="material-symbols-outlined text-[18px]">photo_camera</span>
+            <Camera className="text-[18px]" strokeWidth={1.5} />
           </div>
         </div>
 
@@ -142,7 +153,7 @@ export function Sidebar() {
       >
         <div className="border-b border-surface-container">
           <div className="px-4 py-3 bg-surface-container-low text-secondary font-bold text-[11px] uppercase tracking-wider flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-primary">shopping_bag</span>
+            <ShoppingBag className="text-sm text-primary" strokeWidth={1.5} />
             Orders
           </div>
 
@@ -158,7 +169,7 @@ export function Sidebar() {
             }`}
           >
             <span>My Order History</span>
-            <span className="material-symbols-outlined text-xs">chevron_right</span>
+            <ChevronRight className="text-xs" strokeWidth={1.5} />
           </motion.button>
 
           <motion.button
@@ -173,7 +184,7 @@ export function Sidebar() {
             }`}
           >
             <span>My Rentals</span>
-            <span className="material-symbols-outlined text-xs text-[#8c7335]">inventory_2</span>
+            <PackageCheck className="text-xs text-[#8c7335]" strokeWidth={1.5} />
           </motion.button>
 
           <motion.button
@@ -188,7 +199,7 @@ export function Sidebar() {
             }`}
           >
             <span>My Custom Orders</span>
-            <span className="material-symbols-outlined text-xs text-secondary">architecture</span>
+            <Compass className="text-xs text-secondary" strokeWidth={1.5} />
           </motion.button>
 
           <motion.button
@@ -203,15 +214,13 @@ export function Sidebar() {
             }`}
           >
             <span>Returns & Exchanges</span>
-            <span className="material-symbols-outlined text-xs text-secondary">
-              assignment_return
-            </span>
+            <CornerDownLeft className="text-xs text-secondary" strokeWidth={1.5} />
           </motion.button>
         </div>
 
         <div className="border-b border-surface-container">
           <div className="px-4 py-3 bg-surface-container-low text-secondary font-bold text-[11px] uppercase tracking-wider flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-primary">person</span>
+            <User className="text-sm text-primary" strokeWidth={1.5} />
             Profile
           </div>
 
@@ -227,7 +236,7 @@ export function Sidebar() {
             }`}
           >
             <span>Profile Settings</span>
-            <span className="material-symbols-outlined text-xs">chevron_right</span>
+            <ChevronRight className="text-xs" strokeWidth={1.5} />
           </motion.button>
 
           <motion.button
@@ -242,9 +251,7 @@ export function Sidebar() {
             }`}
           >
             <span>My Event Bookings</span>
-            <span className="material-symbols-outlined text-xs text-[var(--color-gold-dark)]">
-              calendar_month
-            </span>
+            <CalendarDays className="text-xs text-[var(--color-gold-dark)]" strokeWidth={1.5} />
           </motion.button>
 
           <motion.button
@@ -276,7 +283,7 @@ export function Sidebar() {
             }`}
           >
             <span>Settings</span>
-            <span className="material-symbols-outlined text-xs">chevron_right</span>
+            <ChevronRight className="text-xs" strokeWidth={1.5} />
           </motion.button>
         </div>
 
@@ -347,7 +354,7 @@ export function Sidebar() {
           }}
           className="w-full text-left px-4 py-3.5 text-error font-bold text-[11px] uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer outline-none"
         >
-          <span className="material-symbols-outlined text-sm">logout</span>
+          <LogOut className="text-sm" strokeWidth={1.5} />
           Logout
         </motion.button>
 

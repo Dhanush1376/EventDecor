@@ -1,3 +1,4 @@
+import { CheckCircle2, MapPin, ArrowRight, Grid3X3, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -171,9 +172,7 @@ export function WishlistView({ isEmbedded = false }) {
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed top-28 left-1/2 -translate-x-1/2 z-[100] bg-white/40 backdrop-blur-2xl border border-white/60 text-black px-6 py-3 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.08),_inset_0_1px_0_rgba(255,255,255,0.4)] text-[12px] font-bold tracking-wide flex items-center gap-2.5 whitespace-nowrap"
           >
-            <span className="material-symbols-outlined text-[18px] text-green-600 font-fill">
-              check_circle
-            </span>
+            <CheckCircle2 className="text-[18px] text-green-600 font-fill" strokeWidth={1.5} />
             {notification}
           </motion.div>
         )}
@@ -190,9 +189,7 @@ export function WishlistView({ isEmbedded = false }) {
               className="flex items-center justify-between py-3 cursor-pointer select-none"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span className="material-symbols-outlined text-[18px] text-primary">
-                  location_on
-                </span>
+                <MapPin className="text-[18px] text-primary" strokeWidth={1.5} />
                 <span className="text-[11px] lg:text-xs text-[#1a1817] font-semibold truncate leading-none">
                   {activeAddress
                     ? `${activeAddress.name} - ${activeAddress.addressString || activeAddress.address}, ${activeAddress.locality || ''}, ${activeAddress.city}`
@@ -250,7 +247,7 @@ export function WishlistView({ isEmbedded = false }) {
                       className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
                     >
                       Manage Addresses
-                      <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+                      <ArrowRight className="text-[12px]" strokeWidth={1.5} />
                     </Link>
                   </div>
                 </motion.div>
@@ -301,7 +298,7 @@ export function WishlistView({ isEmbedded = false }) {
                       {/* Top-Right Overlapping Badge */}
                       <span
                         className={`absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold border border-white shadow-sm transition-colors z-20 ${
-                          isActive ? 'bg-black text-white' : 'bg-[#e8e3d9] text-[#685c57]'
+                          isActive ? 'bg-orange-500 text-white' : 'bg-[#e8e3d9] text-[#685c57]'
                         }`}
                       >
                         {opt.count}
@@ -336,9 +333,10 @@ export function WishlistView({ isEmbedded = false }) {
                             : 'border border-outline-variant/10 shadow-xs hover:border-black/50 group-hover:scale-105'
                         }`}
                       >
-                        <span className="material-symbols-outlined text-white text-[24px] lg:text-[28px] font-light tracking-widest drop-shadow-sm select-none">
-                          border_all
-                        </span>
+                        <Grid3X3
+                          className="text-white text-[24px] lg:text-[28px] font-light tracking-widest drop-shadow-sm select-none"
+                          strokeWidth={1.5}
+                        />
                       </div>
                       <span
                         className={`text-[9.5px] lg:text-[10px] font-bold text-center mt-2 tracking-wide transition-colors whitespace-normal leading-tight h-8 flex items-start justify-center w-full ${
@@ -396,9 +394,10 @@ export function WishlistView({ isEmbedded = false }) {
             <div className="space-y-12">
               <div className="flex flex-col items-center justify-center min-h-[50vh] mt-6 text-center">
                 <div className="w-24 h-24 lg:w-28 lg:h-28 rounded-full bg-[#f6f5f3] flex items-center justify-center mb-6">
-                  <span className="material-symbols-outlined text-[24px] lg:text-[28px] text-[#9c8965] font-light">
-                    favorite_border
-                  </span>
+                  <Heart
+                    className="text-[24px] lg:text-[28px] text-[#9c8965] font-light"
+                    strokeWidth={1.5}
+                  />
                 </div>
                 <h3 className="font-display text-[28px] lg:text-[34px] text-[#1a1a1a] mb-3 tracking-tight leading-tight">
                   Your wishlist is empty
@@ -411,9 +410,10 @@ export function WishlistView({ isEmbedded = false }) {
                   className="group flex items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70"
                 >
                   Explore Collections
-                  <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">
-                    arrow_forward
-                  </span>
+                  <ArrowRight
+                    className="text-[16px] transition-transform group-hover:translate-x-1"
+                    strokeWidth={1.5}
+                  />
                 </Link>
               </div>
             </div>
@@ -445,9 +445,10 @@ export function WishlistView({ isEmbedded = false }) {
                 className="group flex items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70 cursor-pointer bg-transparent"
               >
                 {itemTypeFilter === 'event' ? 'Explore Events' : 'Explore Collections'}
-                <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">
-                  arrow_forward
-                </span>
+                <ArrowRight
+                  className="text-[16px] transition-transform group-hover:translate-x-1"
+                  strokeWidth={1.5}
+                />
               </Link>
             </motion.div>
           ) : (
@@ -487,7 +488,7 @@ export function WishlistView({ isEmbedded = false }) {
                 className="text-[9px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
               >
                 View All
-                <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+                <ArrowRight className="text-[12px]" strokeWidth={1.5} />
               </Link>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 sm:gap-x-4 lg:gap-x-6 gap-y-6 sm:gap-y-8 lg:gap-y-10">

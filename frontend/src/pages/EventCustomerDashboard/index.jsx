@@ -1,3 +1,4 @@
+import { Plus, CalendarX, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -99,7 +100,7 @@ export function EventCustomerDashboard({
               className="bg-[#2A2927] hover:bg-black text-white px-6 py-3 rounded-[32px] font-bold text-[9px] uppercase tracking-widest transition-all self-start lg:self-auto flex items-center gap-2 shadow-lg"
             >
               BROWSE EVENTS & SETUPS
-              <span className="material-symbols-outlined text-[14px]">add</span>
+              <Plus className="text-[14px]" strokeWidth={1.5} />
             </Link>
           </div>
         )}
@@ -138,9 +139,7 @@ export function EventCustomerDashboard({
                 className="absolute inset-0 rounded-full border border-[#8c7335]/20 animate-ping"
                 style={{ animationDuration: '3s' }}
               />
-              <span className="material-symbols-outlined text-[24px] relative z-10">
-                event_busy
-              </span>
+              <CalendarX className="text-[24px] relative z-10" strokeWidth={1.5} />
             </motion.div>
             <h3 className="font-display font-medium text-[18px] lg:text-[20px] text-black mb-2">
               No Active Events
@@ -154,9 +153,10 @@ export function EventCustomerDashboard({
                 className="group flex items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70"
               >
                 Browse Events & Setups
-                <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">
-                  arrow_forward
-                </span>
+                <ArrowRight
+                  className="text-[16px] transition-transform group-hover:translate-x-1"
+                  strokeWidth={1.5}
+                />
               </Link>
             </div>
           </div>
@@ -194,9 +194,10 @@ export function EventCustomerDashboard({
                       }}
                       className="hidden lg:flex group items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-secondary hover:text-[#1a1a1a] transition-all mb-2 cursor-pointer bg-transparent border-0 p-0"
                     >
-                      <span className="material-symbols-outlined text-[16px] transition-transform group-hover:-translate-x-1">
-                        arrow_back
-                      </span>
+                      <ArrowLeft
+                        className="text-[16px] transition-transform group-hover:-translate-x-1"
+                        strokeWidth={1.5}
+                      />
                       Back to Events
                     </button>
                   )}

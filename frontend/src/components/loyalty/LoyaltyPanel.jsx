@@ -1,3 +1,4 @@
+import { Wallet } from 'lucide-react';
 const LoyaltySkeleton = () => <div className="animate-pulse bg-gray-200 h-48 rounded-md"></div>;
 import { m as motion } from 'framer-motion';
 import PartyPopper from 'lucide-react/dist/esm/icons/party-popper';
@@ -328,7 +329,7 @@ export function LoyaltyPanel() {
         ) : (
           <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[40vh] mt-4">
             <div className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
-              <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+              <Wallet className="text-[20px]" strokeWidth={1.5} />
             </div>
             <h3 className="font-bold text-[10px] uppercase tracking-widest text-on-surface mb-2">
               No Transactions Found

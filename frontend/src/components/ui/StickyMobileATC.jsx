@@ -1,3 +1,4 @@
+import { Check, ShoppingBag } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { useCart } from '../../context/CartContext';
@@ -128,7 +129,7 @@ export function StickyMobileATC({ product, triggerRef }) {
                   exit={{ opacity: 0, scale: 0.8 }}
                   className="flex items-center gap-1.5"
                 >
-                  <span className="material-symbols-outlined text-[15px]">check</span>
+                  <Check className="text-[15px]" strokeWidth={1.5} />
                   <span>Added</span>
                 </motion.span>
               ) : (
@@ -139,7 +140,7 @@ export function StickyMobileATC({ product, triggerRef }) {
                   exit={{ opacity: 0, scale: 0.8 }}
                   className="flex items-center gap-1.5"
                 >
-                  <span className="material-symbols-outlined text-[15px]">shopping_bag</span>
+                  <ShoppingBag className="text-[15px]" strokeWidth={1.5} />
                   <span>Add to Bag</span>
                 </motion.span>
               )}

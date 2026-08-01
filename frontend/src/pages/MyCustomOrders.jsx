@@ -1,3 +1,23 @@
+import {
+  Compass,
+  ArrowRight,
+  BellRing,
+  Mail,
+  Trash2,
+  ArrowLeft,
+  PackageCheck,
+  Check,
+  ChevronDown,
+  SlidersHorizontal,
+  Paperclip,
+  FileText,
+  MessageSquare,
+  MessageCircle,
+  X,
+  PlusCircle,
+  RefreshCw,
+  Send,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -196,7 +216,7 @@ export function MyCustomOrders() {
     <div className="space-y-4 text-[11px]">
       <div className="pb-4 mb-4 border-b border-outline-variant/20">
         <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[12px]">architecture</span>
+          <Compass className="text-[12px]" strokeWidth={1.5} />
           Active Custom Requests
         </h2>
       </div>
@@ -217,9 +237,7 @@ export function MyCustomOrders() {
               className="absolute inset-0 rounded-full border border-[#8c7335]/20 animate-ping"
               style={{ animationDuration: '3s' }}
             />
-            <span className="material-symbols-outlined text-[24px] relative z-10">
-              architecture
-            </span>
+            <Compass className="text-[24px] relative z-10" strokeWidth={1.5} />
           </motion.div>
           <h3 className="font-display font-medium text-[18px] lg:text-[20px] text-black mb-2">
             No Custom Orders Yet
@@ -232,9 +250,10 @@ export function MyCustomOrders() {
             className="group flex items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70"
           >
             Explore Collection
-            <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">
-              arrow_forward
-            </span>
+            <ArrowRight
+              className="text-[16px] transition-transform group-hover:translate-x-1"
+              strokeWidth={1.5}
+            />
           </Link>
         </div>
       ) : (
@@ -317,9 +336,7 @@ export function MyCustomOrders() {
                 {order.quotation?.status === 'sent' && order.status === 'Quote Sent' && (
                   <div className="px-4 py-2.5 bg-amber-50/50 border-t border-dashed border-[#8c7335]/10 flex flex-wrap items-center justify-between gap-2 text-[10px]">
                     <div className="flex items-center gap-1.5 text-[#8c7335] font-medium">
-                      <span className="material-symbols-outlined text-[14px]">
-                        notifications_active
-                      </span>
+                      <BellRing className="text-[14px]" strokeWidth={1.5} />
                       <span>Quote available for review</span>
                     </div>
                   </div>
@@ -336,7 +353,7 @@ export function MyCustomOrders() {
     <div className="space-y-4 text-[11px]">
       <div className="pb-4 mb-4 border-b border-outline-variant/20">
         <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[12px]">drafts</span>
+          <Mail className="text-[12px]" strokeWidth={1.5} />
           Saved Drafts
         </h2>
       </div>
@@ -357,7 +374,7 @@ export function MyCustomOrders() {
               className="absolute inset-0 rounded-full border border-[#8c7335]/20 animate-ping"
               style={{ animationDuration: '3s' }}
             />
-            <span className="material-symbols-outlined text-[24px] relative z-10">drafts</span>
+            <Mail className="text-[24px] relative z-10" strokeWidth={1.5} />
           </motion.div>
           <h3 className="font-display font-medium text-[18px] lg:text-[20px] text-black mb-2">
             No Saved Drafts
@@ -400,7 +417,7 @@ export function MyCustomOrders() {
                     className="w-8 h-8 rounded-full border border-red-200 text-red-500 flex items-center justify-center hover:bg-red-50 transition-colors shrink-0"
                     title="Delete Draft"
                   >
-                    <span className="material-symbols-outlined text-[14px]">delete</span>
+                    <Trash2 className="text-[14px]" strokeWidth={1.5} />
                   </button>
                   <Link
                     to={
@@ -463,14 +480,14 @@ export function MyCustomOrders() {
           onClick={() => setSelectedOrder(null)}
           className="lg:hidden flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-secondary mb-2 hover:text-on-surface transition-colors"
         >
-          <span className="material-symbols-outlined text-[14px]">arrow_back</span> Back to List
+          <ArrowLeft className="text-[14px]" strokeWidth={1.5} /> Back to List
         </button>
 
         {/* Product Summary Header */}
         <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
           <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center">
             <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[14px]">inventory_2</span>
+              <PackageCheck className="text-[14px]" strokeWidth={1.5} />
               Order Overview
             </h2>
             <span className="text-[9px] text-secondary font-mono tracking-wider">
@@ -567,9 +584,7 @@ export function MyCustomOrders() {
                       className={`absolute left-0 top-1 w-6 h-6 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-300 z-10 shrink-0 overflow-hidden ${colorClass}`}
                     >
                       {isCompleted ? (
-                        <span className="material-symbols-outlined font-bold text-[14px]">
-                          check
-                        </span>
+                        <Check className="font-bold text-[14px]" strokeWidth={1.5} />
                       ) : (
                         <span className="material-symbols-outlined text-[14px]">{step.icon}</span>
                       )}
@@ -616,12 +631,10 @@ export function MyCustomOrders() {
                 </span>
                 Quotation Breakdown
               </span>
-              <span
-                className="material-symbols-outlined text-[16px] text-secondary transition-transform duration-200"
-                style={{ transform: isQuotationOpen ? 'rotate(180deg)' : 'none' }}
-              >
-                expand_more
-              </span>
+              <ChevronDown
+                className="text-[16px] text-secondary transition-transform duration-200"
+                strokeWidth={1.5}
+              />
             </button>
             <AnimatePresence initial={false}>
               {isQuotationOpen && (
@@ -720,7 +733,7 @@ export function MyCustomOrders() {
           <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
             <div className="pb-4 mb-4 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[14px]">tune</span>
+                <SlidersHorizontal className="text-[14px]" strokeWidth={1.5} />
                 Specifications
               </h2>
             </div>
@@ -756,7 +769,7 @@ export function MyCustomOrders() {
           <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
             <div className="pb-4 mb-4 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[14px]">attach_file</span>
+                <Paperclip className="text-[14px]" strokeWidth={1.5} />
                 Reference Files
               </h2>
             </div>
@@ -770,9 +783,7 @@ export function MyCustomOrders() {
                     rel="noreferrer"
                     className="flex items-center gap-2 p-2.5 rounded-lg border border-outline-variant/20 bg-surface-container-lowest hover:bg-surface-container-low transition-colors text-[10px] text-on-surface"
                   >
-                    <span className="material-symbols-outlined text-[14px] text-secondary">
-                      description
-                    </span>
+                    <FileText className="text-[14px] text-secondary" strokeWidth={1.5} />
                     <span className="truncate flex-1 font-medium">
                       {file.originalName || `Document ${i + 1}`}
                     </span>
@@ -791,16 +802,14 @@ export function MyCustomOrders() {
         <div className="bg-surface-bright border border-outline-variant/40 rounded-lg overflow-hidden shadow-xs flex flex-col h-[400px]">
           <div className="px-5 py-4 border-b border-outline-variant/20 bg-surface-container-low flex justify-between items-center shrink-0">
             <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[14px]">forum</span>
+              <MessageSquare className="text-[14px]" strokeWidth={1.5} />
               Artisan Messages
             </h2>
           </div>
           <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-surface-container-lowest">
             {messages?.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-secondary/50">
-                <span className="material-symbols-outlined text-[32px] mb-2">
-                  chat_bubble_outline
-                </span>
+                <MessageCircle className="text-[32px] mb-2" strokeWidth={1.5} />
                 <p className="text-[10px] uppercase tracking-widest font-bold">No messages yet</p>
               </div>
             ) : (
@@ -841,10 +850,7 @@ export function MyCustomOrders() {
                               rel="noreferrer"
                               className={`px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors ${isCustomer ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-surface-container-low hover:bg-surface-container text-on-surface border border-outline-variant/20'}`}
                             >
-                              <span className="material-symbols-outlined text-[12px]">
-                                attachment
-                              </span>{' '}
-                              View File
+                              <Paperclip className="text-[12px]" strokeWidth={1.5} /> View File
                             </a>
                           ))}
                         </div>
@@ -866,16 +872,14 @@ export function MyCustomOrders() {
                     key={i}
                     className="text-[9px] bg-surface-container-high px-2 py-1 rounded flex items-center gap-1 font-medium text-on-surface border border-outline-variant/20"
                   >
-                    <span className="material-symbols-outlined text-[12px] text-secondary">
-                      attachment
-                    </span>
+                    <Paperclip className="text-[12px] text-secondary" strokeWidth={1.5} />
                     <span className="truncate max-w-[150px]">{f.name}</span>
                     <button
                       type="button"
                       onClick={() => setChatFiles((prev) => prev.filter((_, idx) => idx !== i))}
                       className="text-red-500 hover:text-red-700 ml-1"
                     >
-                      <span className="material-symbols-outlined text-[12px]">close</span>
+                      <X className="text-[12px]" strokeWidth={1.5} />
                     </button>
                   </span>
                 ))}
@@ -902,7 +906,7 @@ export function MyCustomOrders() {
                 className="w-8 h-8 shrink-0 rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center"
                 title="Attach Files"
               >
-                <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                <PlusCircle className="text-[18px]" strokeWidth={1.5} />
               </button>
               <input
                 type="text"
@@ -919,9 +923,9 @@ export function MyCustomOrders() {
                 className="w-8 h-8 shrink-0 rounded-lg bg-[#1a1a1a] text-white flex items-center justify-center hover:bg-black transition-colors shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {sendMessageMutation.isPending ? (
-                  <span className="material-symbols-outlined text-[14px] animate-spin">sync</span>
+                  <RefreshCw className="text-[14px] animate-spin" strokeWidth={1.5} />
                 ) : (
-                  <span className="material-symbols-outlined text-[14px] pl-0.5">send</span>
+                  <Send className="text-[14px] pl-0.5" strokeWidth={1.5} />
                 )}
               </button>
             </form>
@@ -947,7 +951,7 @@ export function MyCustomOrders() {
         className={`pb-4 mb-4 border-b border-outline-variant/20 ${selectedOrder ? 'hidden lg:block' : 'block'}`}
       >
         <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[12px]">architecture</span>
+          <Compass className="text-[12px]" strokeWidth={1.5} />
           My Custom Orders
         </h2>
       </div>

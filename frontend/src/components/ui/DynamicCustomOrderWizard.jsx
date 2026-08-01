@@ -1,3 +1,4 @@
+import { Minus, Plus, Check, CloudUpload, X } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { customOrderService } from '../../services/domainServices';
@@ -6,7 +7,6 @@ import toast from 'react-hot-toast';
 import { useConfirm } from '../../context/ConfirmProvider';
 import { CustomerContactGate } from '../shared/CustomerContactGate';
 import { Skeleton } from './Skeleton';
-import Check from 'lucide-react/dist/esm/icons/check';
 import { WhatsAppIcon } from './WhatsAppIcon';
 
 export function DynamicCustomOrderWizard({
@@ -452,9 +452,7 @@ export function DynamicCustomOrderWizard({
                               }
                               className="w-7 h-8 lg:w-10 lg:h-10 flex items-center justify-center bg-black/5 hover:bg-black/10 rounded-lg transition-colors cursor-pointer shrink-0"
                             >
-                              <span className="material-symbols-outlined text-[16px] lg:text-[20px]">
-                                remove
-                              </span>
+                              <Minus className="text-[16px] lg:text-[20px]" strokeWidth={1.5} />
                             </button>
                             <input
                               type="number"
@@ -475,9 +473,7 @@ export function DynamicCustomOrderWizard({
                               }
                               className="w-7 h-8 lg:w-10 lg:h-10 flex items-center justify-center bg-[var(--color-gold)] hover:bg-black text-white rounded-lg transition-colors cursor-pointer shrink-0"
                             >
-                              <span className="material-symbols-outlined text-[16px] lg:text-[20px]">
-                                add
-                              </span>
+                              <Plus className="text-[16px] lg:text-[20px]" strokeWidth={1.5} />
                             </button>
                           </div>
                         )}
@@ -665,9 +661,7 @@ export function DynamicCustomOrderWizard({
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${formData.dynamicData[field.id] ? 'bg-[var(--color-gold)] border-[var(--color-gold)]' : 'border-black/20 group-hover:border-black/40'}`}
                             >
                               {formData.dynamicData[field.id] && (
-                                <span className="material-symbols-outlined text-white text-[14px]">
-                                  check
-                                </span>
+                                <Check className="text-white text-[14px]" strokeWidth={1.5} />
                               )}
                             </div>
                             <input
@@ -724,9 +718,10 @@ export function DynamicCustomOrderWizard({
                               htmlFor={`file-${field.id}`}
                               className="cursor-pointer flex flex-col items-center"
                             >
-                              <span className="material-symbols-outlined text-[36px] text-black/30 mb-3 group-hover:text-black/60 transition-colors">
-                                cloud_upload
-                              </span>
+                              <CloudUpload
+                                className="text-[36px] text-black/30 mb-3 group-hover:text-black/60 transition-colors"
+                                strokeWidth={1.5}
+                              />
                               <span className="text-[14px] font-bold text-black">
                                 Drag & Drop or Click to Upload
                               </span>
@@ -758,9 +753,7 @@ export function DynamicCustomOrderWizard({
                                         }}
                                         className="text-red-500 hover:text-red-700 flex items-center justify-center p-1"
                                       >
-                                        <span className="material-symbols-outlined text-[16px]">
-                                          close
-                                        </span>
+                                        <X className="text-[16px]" strokeWidth={1.5} />
                                       </button>
                                     </div>
                                   ))}

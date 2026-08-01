@@ -1,3 +1,4 @@
+import { Mail, Check } from 'lucide-react';
 import React from 'react';
 import { m as motion } from 'framer-motion';
 import { GoogleSignInButton } from './GoogleSignInButton';
@@ -32,9 +33,10 @@ export function EmailInputForm({
       {/* OTP Login Section */}
       <form onSubmit={sendOTP} className="space-y-5">
         <div className="relative group">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/30 text-[16px] group-focus-within:text-primary transition-colors">
-            mail
-          </span>
+          <Mail
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/30 text-[16px] group-focus-within:text-primary transition-colors"
+            strokeWidth={1.5}
+          />
 
           <label
             htmlFor="auth-email-input"
@@ -263,9 +265,7 @@ export function AuthSuccessScreen({ MandalaElement, isNewUser }) {
             transition={{ type: 'spring', damping: 12, delay: 0.4 }}
             className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500 shadow-[0_4px_12px_rgba(34,197,94,0.3)]"
           >
-            <span className="material-symbols-outlined text-white text-[32px] font-bold">
-              check
-            </span>
+            <Check className="text-white text-[32px] font-bold" strokeWidth={1.5} />
           </motion.div>
         </motion.div>
 

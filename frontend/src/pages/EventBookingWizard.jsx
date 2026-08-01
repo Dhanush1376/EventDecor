@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
@@ -512,8 +513,7 @@ export function EventBookingWizard() {
                   type="button"
                   className="bg-black text-white px-8 py-3 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-xl shadow-black/20 hover:bg-primary hover:scale-105 transition-all flex items-center gap-2"
                 >
-                  <span className="material-symbols-outlined text-[16px]">lock</span> Pay 50%
-                  Deposit & Reserve
+                  <Lock className="text-[16px]" strokeWidth={1.5} /> Pay 50% Deposit & Reserve
                 </button>
               </CustomerContactGate>
             )}

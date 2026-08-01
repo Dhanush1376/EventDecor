@@ -1,3 +1,4 @@
+import { CheckCircle2, ShoppingBag, History, ArrowLeft, Info, Paperclip, Send } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
@@ -53,7 +54,7 @@ export function OrderChatFeed({
           <div className="bg-white border border-black/10 rounded-2xl p-6 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--color-gold)] opacity-5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
             <h2 className="text-xl font-bold text-[#1a1817] mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[var(--color-gold)]">task_alt</span>
+              <CheckCircle2 className="text-[var(--color-gold)]" strokeWidth={1.5} />
               Quotation Approved
             </h2>
             <p className="text-[13px] text-[#685C57] mb-6 leading-relaxed">
@@ -88,7 +89,7 @@ export function OrderChatFeed({
                 onClick={handleAddToBag}
                 className="w-full py-3.5 bg-black hover:bg-black/90 text-white rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.2)] cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[18px]">local_mall</span>
+                <ShoppingBag className="text-[18px]" strokeWidth={1.5} />
                 Add Custom Order to Bag
               </button>
             )}
@@ -99,7 +100,7 @@ export function OrderChatFeed({
               onClick={() => setShowChat(true)}
               className="text-[10px] font-bold text-[#8C7D73] hover:text-black uppercase tracking-widest flex items-center justify-center gap-1 mx-auto transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[16px]">history</span>
+              <History className="text-[16px]" strokeWidth={1.5} />
               View Chat History
             </button>
           </div>
@@ -118,7 +119,7 @@ export function OrderChatFeed({
             onClick={() => setShowChat(false)}
             className="text-[10px] font-bold text-[#8C7D73] hover:text-black uppercase tracking-widest flex items-center gap-1 transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+            <ArrowLeft className="text-[16px]" strokeWidth={1.5} />
             Back to Summary
           </button>
         </div>
@@ -153,7 +154,7 @@ export function OrderChatFeed({
             return (
               <div key={msg._id || msg.createdAt || i} className="flex justify-center py-1.5">
                 <span className="px-3 py-1.5 bg-[#F2EFEB] text-[#8C7D73] text-[9px] font-bold uppercase tracking-wider rounded-lg shadow-sm border border-black/5 text-center max-w-[80%] flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px]">info</span>
+                  <Info className="text-[14px]" strokeWidth={1.5} />
                   {msg.text}
                 </span>
               </div>
@@ -176,7 +177,7 @@ export function OrderChatFeed({
                   {isAdmin && (
                     <span className="text-[9px] font-extrabold uppercase tracking-widest text-[var(--color-gold)] mb-1 text-left block flex items-center gap-1">
                       {msg.messageType === 'file_upload' && (
-                        <span className="material-symbols-outlined text-[12px]">attach_file</span>
+                        <Paperclip className="text-[12px]" strokeWidth={1.5} />
                       )}
                       {displaySenderName}
                     </span>
@@ -238,7 +239,7 @@ export function OrderChatFeed({
             disabled={isSendingMessage || !chatMessage.trim()}
             className="w-10 h-10 rounded-full bg-[var(--color-gold)] hover:bg-[#b09653] text-white flex items-center justify-center shadow-md cursor-pointer transition-transform active:scale-95 disabled:opacity-40 disabled:pointer-events-none shrink-0"
           >
-            <span className="material-symbols-outlined text-[18px]">send</span>
+            <Send className="text-[18px]" strokeWidth={1.5} />
           </button>
         </form>
       </div>

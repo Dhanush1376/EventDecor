@@ -1,3 +1,4 @@
+import { Link } from 'lucide-react';
 import React from 'react';
 import { OptimizedImage } from '../ui/OptimizedImage';
 
@@ -40,7 +41,7 @@ export function OrderMediaGallery({ selectedOrder, isDirectImageUrl }) {
                 rel="noopener noreferrer"
                 className="text-[10.5px] font-bold text-[var(--color-gold)] hover:underline flex items-center gap-1 min-w-0"
               >
-                <span className="material-symbols-outlined text-[13px] shrink-0">link</span>
+                <Link className="text-[13px] shrink-0" strokeWidth={1.5} />
                 <span className="truncate">{link}</span>
               </a>
             ))}

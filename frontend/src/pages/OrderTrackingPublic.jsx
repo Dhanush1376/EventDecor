@@ -1,3 +1,4 @@
+import { Truck, PackageCheck, History } from 'lucide-react';
 import React from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { SEO } from '../components/seo/SEO';
@@ -51,9 +52,7 @@ export function OrderTrackingPublic() {
     return (
       <div className="min-h-screen bg-surface-bright flex flex-col items-center justify-center p-6 text-center">
         <SEO title="Tracking Error | Siri Arts & Crafts" />
-        <span className="material-symbols-outlined text-[64px] text-red-400 mb-4 animate-bounce">
-          local_shipping
-        </span>
+        <Truck className="text-[64px] text-red-400 mb-4 animate-bounce" strokeWidth={1.5} />
         <h2 className="font-body text-xl font-bold text-on-surface mb-2">
           Tracking Record Unreachable
         </h2>
@@ -94,7 +93,7 @@ export function OrderTrackingPublic() {
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 text-primary rounded-full text-[10px] font-bold uppercase tracking-wider mb-4">
-            <span className="material-symbols-outlined text-xs">local_shipping</span>
+            <Truck className="text-xs" strokeWidth={1.5} />
             <span>{order.courierPartner || 'Standard Courier'} Feed</span>
           </div>
 
@@ -155,7 +154,7 @@ export function OrderTrackingPublic() {
         {order.packages && order.packages.length > 0 && (
           <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 lg:p-8 shadow-xs mt-6">
             <h2 className="text-xs font-bold text-secondary uppercase tracking-widest mb-4 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-sm">inventory_2</span>
+              <PackageCheck className="text-sm" strokeWidth={1.5} />
               <span>Package Tracking ({order.packages.length})</span>
             </h2>
             <div className="space-y-6">
@@ -252,7 +251,7 @@ export function OrderTrackingPublic() {
         {/* Detailed Transit History Logs */}
         <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 lg:p-8 shadow-xs">
           <h2 className="text-xs font-bold text-secondary uppercase tracking-widest mb-4 flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-sm">history</span>
+            <History className="text-sm" strokeWidth={1.5} />
             <span>Detailed Activity Log</span>
           </h2>
 

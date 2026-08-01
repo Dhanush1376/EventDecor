@@ -1,3 +1,4 @@
+import { ArrowUp } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 
@@ -42,9 +43,10 @@ export function ScrollToTopButton() {
           className="relative pointer-events-auto shrink-0 z-50 w-11 h-11 lg:w-12 lg:h-12 bg-white/90 backdrop-blur-md border border-outline-variant/30 text-on-surface shadow-lg hover:shadow-xl rounded-full flex items-center justify-center cursor-pointer transition-all hover:bg-white active:scale-95 group"
           aria-label="Scroll to top"
         >
-          <span className="material-symbols-outlined text-[20px] lg:text-[24px] text-on-surface group-hover:-translate-y-0.5 transition-transform">
-            arrow_upward
-          </span>
+          <ArrowUp
+            className="text-[20px] lg:text-[24px] text-on-surface group-hover:-translate-y-0.5 transition-transform"
+            strokeWidth={1.5}
+          />
         </motion.button>
       )}
     </AnimatePresence>

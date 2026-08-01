@@ -1,3 +1,4 @@
+import { AlertCircle } from 'lucide-react';
 import React, { useState } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useCustomerContact } from '../../hooks/useCustomerContact';
@@ -82,7 +83,7 @@ export function PhoneCollectionModal({ isOpen, onClose, onSuccess }) {
                     exit={{ opacity: 0 }}
                     className="bg-red-50 text-red-600 px-3 py-2 rounded-lg text-xs font-bold border border-red-100 flex items-start gap-2 shadow-sm mt-3"
                   >
-                    <span className="material-symbols-outlined text-[16px] mt-0.5">error</span>
+                    <AlertCircle className="text-[16px] mt-0.5" strokeWidth={1.5} />
                     <span className="flex-1 leading-snug">{error}</span>
                   </motion.div>
                 )}

@@ -123,7 +123,8 @@ app.use((req: Request, res: Response, next) => {
     req.path.includes('/upload') ||
     req.path.includes('/webhook') ||
     req.path.includes('/visual-search') ||
-    req.path.includes('/ai-autofill')
+    req.path.includes('/ai-autofill') ||
+    req.path.includes('/ai-vision-showcase')
   ) {
     return next();
   }

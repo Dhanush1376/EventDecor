@@ -1,3 +1,12 @@
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  BadgeCheck,
+  Quote,
+  ArrowRight,
+} from 'lucide-react';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useProduct } from '../hooks/useProductQueries';
@@ -152,7 +161,7 @@ export function ProductReviewImages() {
               to={`/product/${id}`}
               className="inline-flex items-center gap-1.5 font-label text-[10px] uppercase tracking-widest text-neutral-400 hover:text-primary transition-colors font-bold w-fit"
             >
-              <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+              <ArrowLeft className="text-[14px]" strokeWidth={1.5} />
               Back to Product
             </Link>
           </div>
@@ -255,7 +264,7 @@ export function ProductReviewImages() {
                     }}
                     className="absolute left-4 w-11 h-11 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+                    <ChevronLeft className="text-[20px]" strokeWidth={1.5} />
                   </button>
                 )}
                 {activePhotoIndex < photos.length - 1 && (
@@ -266,7 +275,7 @@ export function ProductReviewImages() {
                     }}
                     className="absolute right-4 w-11 h-11 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                    <ChevronRight className="text-[20px]" strokeWidth={1.5} />
                   </button>
                 )}
               </div>
@@ -296,9 +305,7 @@ export function ProductReviewImages() {
                     onClick={() => setActivePhotoIndex(null)}
                     className="w-10 h-10 min-h-0 rounded-full bg-neutral-100 hover:bg-neutral-800 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm"
                   >
-                    <span className="material-symbols-outlined text-[20px] transition-colors">
-                      close
-                    </span>
+                    <X className="text-[20px] transition-colors" strokeWidth={1.5} />
                   </button>
                 </div>
 
@@ -323,7 +330,7 @@ export function ProductReviewImages() {
                     <div className="flex items-center gap-2 mt-1">
                       {activePhoto.review.verified && (
                         <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full border border-emerald-200/50 shadow-sm">
-                          <span className="material-symbols-outlined text-[12px]">verified</span>
+                          <BadgeCheck className="text-[12px]" strokeWidth={1.5} />
                           Verified Purchase
                         </span>
                       )}
@@ -349,9 +356,10 @@ export function ProductReviewImages() {
 
                 {/* Comment Text */}
                 <div className="flex-1 mt-6 relative">
-                  <span className="material-symbols-outlined absolute -top-2 -left-2 text-[40px] text-neutral-100 -z-10 select-none">
-                    format_quote
-                  </span>
+                  <Quote
+                    className="absolute -top-2 -left-2 text-[40px] text-neutral-100 -z-10 select-none"
+                    strokeWidth={1.5}
+                  />
                   <p className="font-body text-[15px] text-neutral-700 leading-[1.8] whitespace-pre-line z-10 relative">
                     {activePhoto.review.comment}
                   </p>
@@ -377,7 +385,7 @@ export function ProductReviewImages() {
                       </p>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                      <ArrowRight className="text-[16px]" strokeWidth={1.5} />
                     </div>
                   </div>
                 )}

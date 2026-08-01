@@ -1,3 +1,4 @@
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import React from 'react';
 export function Pagination({ currentPage = 1, totalPages = 5, onPageChange }) {
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -21,7 +22,7 @@ export function Pagination({ currentPage = 1, totalPages = 5, onPageChange }) {
         className="text-secondary hover:text-primary disabled:opacity-30 transition-colors p-1 sm:p-2 cursor-pointer font-bold"
         aria-label="Previous Page"
       >
-        <span className="material-symbols-outlined text-[18px] sm:text-[24px]">arrow_back</span>
+        <ArrowLeft className="text-[18px] sm:text-[24px]" strokeWidth={1.5} />
       </button>
 
       {/* Mobile View: Compact Label */}
@@ -59,7 +60,7 @@ export function Pagination({ currentPage = 1, totalPages = 5, onPageChange }) {
         className="text-secondary hover:text-primary disabled:opacity-30 transition-colors p-1 sm:p-2 cursor-pointer font-bold"
         aria-label="Next Page"
       >
-        <span className="material-symbols-outlined text-[18px] sm:text-[24px]">arrow_forward</span>
+        <ArrowRight className="text-[18px] sm:text-[24px]" strokeWidth={1.5} />
       </button>
     </nav>
   );

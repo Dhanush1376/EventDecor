@@ -1,3 +1,4 @@
+import { SlidersHorizontal } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { GalleryCard } from '../components/gallery/GalleryCard';
@@ -341,7 +342,7 @@ export function GalleryInner() {
               aria-label="Open filters"
               className="lg:hidden flex items-center justify-center w-11 h-11 rounded-full bg-on-surface text-surface shadow-md transition-all active:scale-[0.98] active:opacity-90 shrink-0 outline-none focus:outline-none focus-visible:outline-none"
             >
-              <span className="material-symbols-outlined text-[20px]">tune</span>
+              <SlidersHorizontal className="text-[20px]" strokeWidth={1.5} />
             </button>
 
             {/* Mobile Gallery Mode Toggle */}

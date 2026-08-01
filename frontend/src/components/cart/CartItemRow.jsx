@@ -1,3 +1,16 @@
+import {
+  X,
+  Minus,
+  Plus,
+  Ban,
+  CornerDownLeft,
+  Calendar,
+  Truck,
+  Info,
+  CalendarDays,
+  Lock,
+  Heart,
+} from 'lucide-react';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -116,7 +129,7 @@ export const CartItemRow = React.memo(function CartItemRow({
         }}
         className="absolute top-3 right-3 text-secondary/60 hover:text-on-surface transition-colors cursor-pointer w-7 h-7 min-h-0 flex items-center justify-center rounded-full hover:bg-surface-container z-10"
       >
-        <span className="material-symbols-outlined text-[20px]">close</span>
+        <X className="text-[20px]" strokeWidth={1.5} />
       </button>
 
       <div className="flex gap-3 sm:gap-4">
@@ -185,7 +198,7 @@ export const CartItemRow = React.memo(function CartItemRow({
                 className="w-10 h-full flex items-center justify-center text-secondary hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer min-h-0"
                 aria-label="Decrease quantity"
               >
-                <span className="material-symbols-outlined text-[16px]">remove</span>
+                <Minus className="text-[16px]" strokeWidth={1.5} />
               </button>
               <div className="w-8 h-full flex items-center justify-center font-display text-[13px] font-bold text-on-surface border-x border-outline-variant/30 bg-surface-bright">
                 {item.quantity}
@@ -199,7 +212,7 @@ export const CartItemRow = React.memo(function CartItemRow({
                 className={`w-10 h-full flex items-center justify-center transition-colors min-h-0 ${item.quantity >= item.stock ? 'text-secondary/30 cursor-not-allowed bg-surface-container-low' : 'text-secondary hover:text-on-surface hover:bg-surface-container cursor-pointer'}`}
                 aria-label="Increase quantity"
               >
-                <span className="material-symbols-outlined text-[16px]">add</span>
+                <Plus className="text-[16px]" strokeWidth={1.5} />
               </button>
             </div>
           </div>
@@ -233,12 +246,12 @@ export const CartItemRow = React.memo(function CartItemRow({
                 <div className="flex flex-col gap-1.5 mt-1">
                   {isItemNonRefundable ? (
                     <div className="flex items-center gap-1.5 text-[#d97706] font-bold whitespace-nowrap text-[10px]">
-                      <span className="material-symbols-outlined text-[13px]">block</span>
+                      <Ban className="text-[13px]" strokeWidth={1.5} />
                       Non-Refundable
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-                      <span className="material-symbols-outlined text-[13px]">keyboard_return</span>
+                      <CornerDownLeft className="text-[13px]" strokeWidth={1.5} />
                       <span>
                         <span className="font-display font-semibold text-on-surface text-[12px]">
                           {item.product?.returnSettings?.returnWindow ||
@@ -258,21 +271,17 @@ export const CartItemRow = React.memo(function CartItemRow({
                       realProduct?.category === 'Events',
                     ) ? (
                       <>
-                        <span className="material-symbols-outlined text-[13px]">event</span>
+                        <Calendar className="text-[13px]" strokeWidth={1.5} />
                         <span>Event setup date to be confirmed</span>
                       </>
                     ) : activeCartMode === 'rental' ? (
                       <>
-                        <span className="material-symbols-outlined text-[13px]">
-                          local_shipping
-                        </span>
+                        <Truck className="text-[13px]" strokeWidth={1.5} />
                         <span>Delivery schedule to be coordinated</span>
                       </>
                     ) : (
                       <>
-                        <span className="material-symbols-outlined text-[13px]">
-                          local_shipping
-                        </span>
+                        <Truck className="text-[13px]" strokeWidth={1.5} />
                         <span>
                           Delivery by{' '}
                           <span className="text-on-surface font-display font-semibold text-[12px]">
@@ -304,11 +313,11 @@ export const CartItemRow = React.memo(function CartItemRow({
               <div className="text-[11px] text-secondary w-full">
                 <div className="flex flex-col gap-1.5 mt-1">
                   <div className="flex items-center gap-1.5 text-[#d97706] font-bold whitespace-nowrap text-[10px]">
-                    <span className="material-symbols-outlined text-[13px]">block</span>
+                    <Ban className="text-[13px]" strokeWidth={1.5} />
                     Custom Orders are Non-Refundable
                   </div>
                   <div className="flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-                    <span className="material-symbols-outlined text-[13px]">info</span>
+                    <Info className="text-[13px]" strokeWidth={1.5} />
                     <span>Final delivery schedule to be coordinated</span>
                   </div>
                 </div>
@@ -345,9 +354,7 @@ export const CartItemRow = React.memo(function CartItemRow({
           {/* Duration & Deposit details */}
           <div className="flex flex-col gap-2 mt-0.5">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[15px] text-primary shrink-0">
-                calendar_month
-              </span>
+              <CalendarDays className="text-[15px] text-primary shrink-0" strokeWidth={1.5} />
               <span>
                 Duration:{' '}
                 <span className="font-extrabold text-primary uppercase text-[9.5px] tracking-wider ml-1">
@@ -356,9 +363,7 @@ export const CartItemRow = React.memo(function CartItemRow({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[15px] text-[#8c7335] shrink-0">
-                lock
-              </span>
+              <Lock className="text-[15px] text-[#8c7335] shrink-0" strokeWidth={1.5} />
               <span>
                 Refundable Deposit:{' '}
                 <span className="font-display font-semibold text-on-surface text-[12px] ml-1">
@@ -376,7 +381,7 @@ export const CartItemRow = React.memo(function CartItemRow({
           onClick={() => handleMoveToWishlist(item)}
           className="text-[9px] font-bold text-primary uppercase tracking-widest hover:opacity-80 transition-opacity flex items-center justify-center w-full gap-1.5 cursor-pointer"
         >
-          <span className="material-symbols-outlined text-[11px]">favorite_border</span>
+          <Heart className="text-[11px]" strokeWidth={1.5} />
           Move to Wishlist
         </button>
       </div>

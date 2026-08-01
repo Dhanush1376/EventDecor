@@ -1,3 +1,4 @@
+import { CheckCircle2 } from 'lucide-react';
 import { m as motion } from 'framer-motion';
 import { Skeleton } from './Skeleton';
 import React from 'react';
@@ -80,7 +81,7 @@ export const Button = React.memo(function Button({
         </div>
       ) : success ? (
         <div className="flex items-center justify-center gap-2 relative z-10 w-full h-full text-green-600 dark:text-green-500">
-          <span className="material-symbols-outlined text-[18px]">check_circle</span>
+          <CheckCircle2 className="text-[18px]" strokeWidth={1.5} />
           {successText && <span className="truncate">{successText}</span>}
         </div>
       ) : (

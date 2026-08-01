@@ -1,3 +1,4 @@
+import { ShoppingBag, Heart, PlayCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import React from 'react';
@@ -88,9 +89,7 @@ const CardContent = React.memo(function CardContent({
           {item.linkedProducts?.length > 0 && (
             <div className="relative group/shop flex items-center">
               <div className="w-7 h-7 lg:w-8 lg:h-8 bg-primary/95 backdrop-blur-md text-white rounded-full shadow-lg border border-white/10 flex items-center justify-center transform transition-all duration-500 hover:scale-110 cursor-pointer">
-                <span className="material-symbols-outlined text-[14px] lg:text-[16px]">
-                  shopping_bag
-                </span>
+                <ShoppingBag className="text-[14px] lg:text-[16px]" strokeWidth={1.5} />
               </div>
               <span className="ml-2 lg:ml-3 lg:absolute lg:left-full lg:top-1/2 lg:-translate-y-1/2 px-2 lg:px-3 py-1 lg:py-1.5 bg-primary/90 lg:bg-primary text-white text-[8px] lg:text-[9px] uppercase tracking-[0.15em] lg:tracking-[0.2em] rounded-full opacity-100 lg:opacity-0 lg:group-hover/shop:opacity-100 transition-all duration-300 whitespace-nowrap font-bold shadow-xl backdrop-blur-md border border-white/10">
                 Shop look
@@ -104,15 +103,7 @@ const CardContent = React.memo(function CardContent({
                 onClick={handleWishlist}
                 className="w-7 h-7 lg:w-8 lg:h-8 bg-white/95 backdrop-blur-md text-black rounded-full shadow-lg border border-black/10 flex items-center justify-center transform transition-all duration-500 hover:scale-110 cursor-pointer"
               >
-                <span
-                  className="material-symbols-outlined text-[14px] lg:text-[16px] transition-colors"
-                  style={{
-                    fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0",
-                    color: isLiked ? '#ff2d55' : 'inherit',
-                  }}
-                >
-                  favorite
-                </span>
+                <Heart className="text-[14px] lg:text-[16px] transition-colors" strokeWidth={1.5} />
               </div>
               <span className="ml-2 lg:ml-3 lg:absolute lg:left-full lg:top-1/2 lg:-translate-y-1/2 px-2 lg:px-3 py-1 lg:py-1.5 bg-white/90 lg:bg-white text-black text-[8px] lg:text-[9px] uppercase tracking-[0.15em] lg:tracking-[0.2em] rounded-full opacity-100 lg:opacity-0 lg:group-hover/wishlist:opacity-100 transition-all duration-300 whitespace-nowrap font-bold shadow-xl backdrop-blur-md border border-black/10">
                 {isLiked ? 'Wishlisted' : 'Wishlist'}
@@ -125,7 +116,7 @@ const CardContent = React.memo(function CardContent({
         <div className="flex flex-col items-end gap-1.5">
           {item.video && (
             <div className="px-2.5 py-1 rounded-full backdrop-blur-md border border-white/20 bg-amber-600/90 text-white text-[8px] uppercase tracking-widest font-extrabold shadow-lg flex items-center gap-1">
-              <span className="material-symbols-outlined text-[10px]">play_circle</span>
+              <PlayCircle className="text-[10px]" strokeWidth={1.5} />
               Video
             </div>
           )}

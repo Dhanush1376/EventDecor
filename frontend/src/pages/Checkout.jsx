@@ -1,3 +1,4 @@
+import { MapPin, ArrowRight } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { lazyWithRetry as lazy } from '../utils/performance/lazyWithRetry';
 import { Link } from 'react-router-dom';
@@ -83,9 +84,7 @@ function CheckoutContent() {
                 className="flex items-center justify-between py-3 cursor-pointer select-none"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="material-symbols-outlined text-[18px] text-primary">
-                    location_on
-                  </span>
+                  <MapPin className="text-[18px] text-primary" strokeWidth={1.5} />
                   <span className="text-[11px] lg:text-xs text-[#1a1817] font-semibold truncate leading-none">
                     {activeSelectedAddress.name} -{' '}
                     {activeSelectedAddress.addressString || activeSelectedAddress.address},{' '}
@@ -154,7 +153,7 @@ function CheckoutContent() {
                         className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
                       >
                         Manage Addresses
-                        <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+                        <ArrowRight className="text-[12px]" strokeWidth={1.5} />
                       </Link>
                     </div>
                   </motion.div>

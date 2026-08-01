@@ -1,3 +1,4 @@
+import { CloudUpload, X, PlayCircle } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { m as motion } from 'framer-motion';
 
@@ -117,9 +118,7 @@ const EvidenceUploader = ({
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
       >
-        <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-2">
-          cloud_upload
-        </span>
+        <CloudUpload className="text-4xl text-on-surface-variant mb-2" strokeWidth={1.5} />
         <h3 className="text-on-surface font-medium mb-1">
           {isUploading ? 'Uploading...' : 'Click or drag files to upload'}
         </h3>
@@ -155,7 +154,7 @@ const EvidenceUploader = ({
                   }}
                   className="absolute top-1 right-1 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <span className="material-symbols-outlined text-[14px]">close</span>
+                  <X className="text-[14px]" strokeWidth={1.5} />
                 </button>
               </motion.div>
             ))}
@@ -166,9 +165,7 @@ const EvidenceUploader = ({
                 key={`vid-${i}`}
                 className="relative group w-24 h-24 rounded-lg overflow-hidden border border-outline-variant/20 bg-surface-variant flex items-center justify-center"
               >
-                <span className="material-symbols-outlined text-3xl text-on-surface-variant">
-                  play_circle
-                </span>
+                <PlayCircle className="text-3xl text-on-surface-variant" strokeWidth={1.5} />
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -176,7 +173,7 @@ const EvidenceUploader = ({
                   }}
                   className="absolute top-1 right-1 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <span className="material-symbols-outlined text-[14px]">close</span>
+                  <X className="text-[14px]" strokeWidth={1.5} />
                 </button>
               </motion.div>
             ))}

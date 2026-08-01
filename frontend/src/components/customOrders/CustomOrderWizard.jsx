@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react';
 import React from 'react';
 import { ProductSummaryCard } from '../ui/CustomizationFields';
 import { DynamicCustomOrderWizard } from '../ui/DynamicCustomOrderWizard';
@@ -17,9 +18,7 @@ export function CustomOrderWizard({
       {!isAuthenticated && (
         <div className="bg-white border border-[var(--color-gold)]/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[12px] shadow-sm">
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-[var(--color-gold)] text-[20px]">
-              info
-            </span>
+            <Info className="text-[var(--color-gold)] text-[20px]" strokeWidth={1.5} />
             <p className="text-[#685C57] font-light">
               <strong className="text-[var(--color-on-surface)] font-medium">Guest Session:</strong>{' '}
               Draft your request now. Sign in later to submit and track quotes.

@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 const QRCodeCanvas = lazy(() => import('qrcode.react').then((m) => ({ default: m.QRCodeCanvas })));
 import { useState, useRef, Suspense, lazy } from 'react';
 
@@ -189,7 +190,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
               onClick={onClose}
               className="flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 min-w-0 min-h-0 aspect-square p-0 shrink-0 bg-white border border-[#e5e7eb] hover:border-red-200 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors duration-200 text-[#6b7280] shadow-sm active:scale-95"
             >
-              <span className="material-symbols-outlined text-[16px] lg:text-[20px]">close</span>
+              <X className="text-[16px] lg:text-[20px]" strokeWidth={1.5} />
             </button>
           )}
         </div>

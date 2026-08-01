@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 import { useState, useRef, useEffect } from 'react';
@@ -168,7 +169,7 @@ export function HeroCarousel({ previewContent }) {
               <div className="flex flex-wrap items-center gap-6 mt-4">
                 <Link to="/collections" className="h1-hero__slide-cta pointer-events-auto">
                   Explore Collections
-                  <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  <ArrowRight className="text-[14px]" strokeWidth={1.5} />
                 </Link>
               </div>
             </div>
@@ -260,7 +261,7 @@ export function HeroCarousel({ previewContent }) {
                       className="h1-hero__slide-cta pointer-events-auto"
                     >
                       {slide.ctaPrimary.text}
-                      <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                      <ArrowRight className="text-[14px]" strokeWidth={1.5} />
                     </Link>
                   )}
                 </div>

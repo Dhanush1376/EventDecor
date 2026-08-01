@@ -1,3 +1,4 @@
+import { ChevronDown, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from 'react';
 
 /**
@@ -166,9 +167,10 @@ export function VirtualizedMasonry({
             className="btn-primary flex items-center gap-2 group outline-none shadow-lg hover:shadow-primary/20"
           >
             <span>Explore More Designs</span>
-            <span className="material-symbols-outlined text-[16px] group-hover:translate-y-0.5 transition-transform">
-              expand_more
-            </span>
+            <ChevronDown
+              className="text-[16px] group-hover:translate-y-0.5 transition-transform"
+              strokeWidth={1.5}
+            />
           </button>
         </div>
       )}
@@ -186,9 +188,7 @@ export function VirtualizedMasonry({
       {!hasMore && visibleCount >= items.length && items.length > batchSize && (
         <div className="text-center py-12">
           <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-black/[0.02] rounded-full border border-black/5">
-            <span className="material-symbols-outlined text-[16px] text-primary/50">
-              check_circle
-            </span>
+            <CheckCircle2 className="text-[16px] text-primary/50" strokeWidth={1.5} />
             <span className="text-[11px] text-on-surface-variant/50 uppercase tracking-[0.2em] font-bold">
               All {items.length} items loaded
             </span>

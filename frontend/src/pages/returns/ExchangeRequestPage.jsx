@@ -1,3 +1,14 @@
+import {
+  ArrowLeftRight,
+  ArrowRight,
+  SlidersHorizontal,
+  Search,
+  Receipt,
+  Truck,
+  Info,
+  CheckCircle2,
+  Check,
+} from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -140,7 +151,7 @@ export const ExchangeRequestPage = () => {
           >
             <div className="pb-5 mb-5 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px]">swap_horiz</span>
+                <ArrowLeftRight className="text-[12px]" strokeWidth={1.5} />
                 SELECT ITEM TO EXCHANGE
               </h2>
             </div>
@@ -181,8 +192,7 @@ export const ExchangeRequestPage = () => {
                 onClick={handleNext1}
                 className="bg-[#2A2927] hover:bg-black text-white px-6 py-2.5 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-sm transition-all border-0 cursor-pointer"
               >
-                CONTINUE{' '}
-                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                CONTINUE <ArrowRight className="text-[14px]" strokeWidth={1.5} />
               </button>
             </div>
           </motion.div>
@@ -200,7 +210,7 @@ export const ExchangeRequestPage = () => {
           >
             <div className="pb-5 mb-5 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px]">tune</span>
+                <SlidersHorizontal className="text-[12px]" strokeWidth={1.5} />
                 EXCHANGE PREFERENCES
               </h2>
             </div>
@@ -292,7 +302,7 @@ export const ExchangeRequestPage = () => {
                           }}
                           className="px-5 py-2.5 bg-transparent border border-outline-variant/30 text-[#2A2927] text-[9px] font-bold uppercase tracking-widest rounded-[32px] flex items-center gap-1.5 transition-all hover:bg-surface-variant/30"
                         >
-                          <span className="material-symbols-outlined text-[14px]">search</span>
+                          <Search className="text-[14px]" strokeWidth={1.5} />
                           BROWSE CATALOG
                         </button>
                       )}
@@ -306,7 +316,7 @@ export const ExchangeRequestPage = () => {
             {exchangeType === 'different_product' && replacementProduct && (
               <div className="border rounded-[16px] border-outline-variant/30 p-4 mt-4">
                 <h3 className="text-[9px] font-bold uppercase tracking-widest text-secondary mb-4 flex items-center gap-1.5 border-b border-outline-variant/20 pb-3">
-                  <span className="material-symbols-outlined text-[14px]">receipt_long</span>
+                  <Receipt className="text-[14px]" strokeWidth={1.5} />
                   PRICE DIFFERENCE SUMMARY
                 </h3>
 
@@ -382,8 +392,7 @@ export const ExchangeRequestPage = () => {
                 disabled={exchangeType === 'different_product' && !replacementProduct}
                 className="bg-[#2A2927] hover:bg-black text-white px-6 py-2.5 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-sm transition-all border-0 disabled:opacity-50 cursor-pointer"
               >
-                CONTINUE{' '}
-                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                CONTINUE <ArrowRight className="text-[14px]" strokeWidth={1.5} />
               </button>
             </div>
           </motion.div>
@@ -401,7 +410,7 @@ export const ExchangeRequestPage = () => {
           >
             <div className="pb-5 mb-5 border-b border-outline-variant/20">
               <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px]">local_shipping</span>
+                <Truck className="text-[12px]" strokeWidth={1.5} />
                 PICKUP & VERIFICATION
               </h2>
             </div>
@@ -423,8 +432,8 @@ export const ExchangeRequestPage = () => {
 
               <div className="mt-4 pt-4 border-t border-outline-variant/20">
                 <p className="text-[9px] text-secondary font-bold uppercase tracking-widest flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px]">info</span>A courier will
-                  pick up the old item and deliver the new one.
+                  <Info className="text-[14px]" strokeWidth={1.5} />A courier will pick up the old
+                  item and deliver the new one.
                 </p>
               </div>
             </div>
@@ -446,8 +455,7 @@ export const ExchangeRequestPage = () => {
                   'SUBMITTING...'
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-[14px]">check_circle</span>{' '}
-                    CONFIRM EXCHANGE
+                    <CheckCircle2 className="text-[14px]" strokeWidth={1.5} /> CONFIRM EXCHANGE
                   </>
                 )}
               </button>
@@ -465,7 +473,7 @@ export const ExchangeRequestPage = () => {
             className="text-center py-10"
           >
             <div className="w-16 h-16 bg-[#FDFBF7] text-[#2A2927] flex items-center justify-center mx-auto mb-6">
-              <span className="material-symbols-outlined text-[32px]">check</span>
+              <Check className="text-[32px]" strokeWidth={1.5} />
             </div>
             <h2 className="text-[14px] font-bold uppercase tracking-widest text-[#2A2927] mb-3">
               EXCHANGE REQUESTED
@@ -478,8 +486,7 @@ export const ExchangeRequestPage = () => {
               onClick={() => navigate('dashboard/orders')}
               className="bg-[#2A2927] hover:bg-black text-white px-8 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer"
             >
-              BACK TO ORDERS{' '}
-              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+              BACK TO ORDERS <ArrowRight className="text-[14px]" strokeWidth={1.5} />
             </button>
           </motion.div>
         )}

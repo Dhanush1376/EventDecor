@@ -1,3 +1,4 @@
+import { Palette, ArrowRight } from 'lucide-react';
 import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -20,7 +21,7 @@ export function EventGrid({
   return (
     <AnimatePresence mode="wait">
       {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 lg:gap-x-8 gap-y-8 lg:gap-y-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 lg:gap-x-8 gap-y-8 lg:gap-y-12">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="flex flex-col group">
               <div className="relative aspect-[4/3] lg:aspect-[3/2] w-full mb-3 lg:mb-4 bg-surface rounded-[16px] lg:rounded-[32px] border border-black/5 overflow-hidden shadow-sm">
@@ -46,7 +47,7 @@ export function EventGrid({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 lg:gap-x-8 gap-y-8 lg:gap-y-12"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 lg:gap-x-8 gap-y-8 lg:gap-y-12"
           >
             {paginatedEvents.map((evItem, idx) => (
               <EventGridCard key={evItem.id} evItem={evItem} idx={idx} />
@@ -185,7 +186,7 @@ function EventGridCard({ evItem, idx }) {
         <div className="flex items-center justify-between pt-2 lg:pt-4 border-t border-black/5 mt-auto">
           <div className="flex items-center gap-1.5 lg:gap-3">
             <div className="flex items-center gap-1 text-black/40 font-label-sm text-[8px] lg:text-[9px] uppercase tracking-widest font-bold">
-              <span className="material-symbols-outlined text-[10px] lg:text-[14px]">palette</span>
+              <Palette className="text-[10px] lg:text-[14px]" strokeWidth={1.5} />
               <span className="truncate max-w-[60px] lg:max-w-none">
                 {evItem.style || 'Traditional'}
               </span>
@@ -194,9 +195,10 @@ function EventGridCard({ evItem, idx }) {
 
           <div className="flex items-center gap-1 font-label-sm text-[8px] lg:text-[10px] uppercase tracking-widest font-bold text-black group-hover:text-primary transition-colors group/btn">
             <span className="hidden lg:inline">Details</span>
-            <span className="material-symbols-outlined text-[12px] lg:text-[14px] group-hover/btn:translate-x-1 transition-transform">
-              arrow_forward
-            </span>
+            <ArrowRight
+              className="text-[12px] lg:text-[14px] group-hover/btn:translate-x-1 transition-transform"
+              strokeWidth={1.5}
+            />
           </div>
         </div>
       </Link>

@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SiriLogo } from '../ui/SiriLogo';
 export function CheckoutNavbar() {
@@ -39,7 +40,7 @@ export function CheckoutNavbar() {
 
           <div className="hidden sm:flex items-center gap-4 text-[10px] font-bold text-secondary border-l border-outline-variant/30 pl-6 h-8">
             <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px] text-green-700">lock</span>
+              <Lock className="text-[16px] text-green-700" strokeWidth={1.5} />
               Secure
             </span>
           </div>

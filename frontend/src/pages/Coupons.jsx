@@ -1,3 +1,4 @@
+import { Tag } from 'lucide-react';
 import { m as motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { useState, useEffect } from 'react';
@@ -76,9 +77,7 @@ export function Coupons() {
           </div>
         ) : coupons.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-neutral-100 shadow-sm">
-            <span className="material-symbols-outlined text-5xl text-neutral-300 mb-4 block">
-              local_offer
-            </span>
+            <Tag className="text-5xl text-neutral-300 mb-4 block" strokeWidth={1.5} />
             <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-2">
               No active offers right now
             </h3>

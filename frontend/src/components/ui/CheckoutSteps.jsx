@@ -1,3 +1,4 @@
+import { ArrowLeft, ShieldCheck, Check } from 'lucide-react';
 import React from 'react';
 import { m as motion } from 'framer-motion';
 export function CheckoutSteps({
@@ -37,7 +38,7 @@ export function CheckoutSteps({
                 className="w-10 h-10 min-h-0 rounded-full flex items-center justify-center bg-surface-container-low text-secondary hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer mr-1 -ml-2"
                 aria-label="Go back to previous step"
               >
-                <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+                <ArrowLeft className="text-[20px]" strokeWidth={1.5} />
               </button>
             )}
             {orderType === 'rental' && (
@@ -49,7 +50,7 @@ export function CheckoutSteps({
 
           {/* Secure badge shows on mobile right side */}
           <div className="lg:hidden flex items-center gap-1 text-green-700">
-            <span className="material-symbols-outlined text-[14px]">verified_user</span>
+            <ShieldCheck className="text-[14px]" strokeWidth={1.5} />
             <span className="text-[9px] font-bold uppercase tracking-widest">100% Secure</span>
           </div>
         </div>
@@ -74,12 +75,7 @@ export function CheckoutSteps({
                       className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[10px] sm:text-[12px] font-extrabold transition-all duration-500 shrink-0 ${isActive ? 'bg-on-surface text-surface shadow-md ring-4 ring-on-surface/10' : isCompleted ? 'bg-on-surface text-surface' : 'bg-surface-container border border-outline-variant/40 text-secondary/70'}`}
                     >
                       {isCompleted ? (
-                        <span
-                          className="material-symbols-outlined text-[14px] sm:text-[16px] font-bold"
-                          style={{ fontVariationSettings: "'FILL' 0, 'wght' 700" }}
-                        >
-                          check
-                        </span>
+                        <Check className="text-[14px] sm:text-[16px] font-bold" strokeWidth={1.5} />
                       ) : (
                         index + 1
                       )}
@@ -116,7 +112,7 @@ export function CheckoutSteps({
 
         {/* Right: Secure Badge (Desktop) */}
         <div className="hidden lg:flex items-center gap-1.5 text-green-700">
-          <span className="material-symbols-outlined text-[18px]">verified_user</span>
+          <ShieldCheck className="text-[18px]" strokeWidth={1.5} />
           <span className="text-[10px] font-bold uppercase tracking-widest">100% Secure</span>
         </div>
       </div>

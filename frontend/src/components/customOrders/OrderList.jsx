@@ -1,3 +1,4 @@
+import { SearchX, ArrowRight } from 'lucide-react';
 import React from 'react';
 
 export function OrderList({ myOrders, selectedOrder, setSelectedOrder }) {
@@ -8,9 +9,7 @@ export function OrderList({ myOrders, selectedOrder, setSelectedOrder }) {
       </h3>
       {myOrders.length === 0 ? (
         <div className="bg-white rounded-3xl border border-black/5 p-8 text-center text-[#685C57] flex flex-col items-center justify-center">
-          <span className="material-symbols-outlined text-[36px] text-black/20 mb-2">
-            search_off
-          </span>
+          <SearchX className="text-[36px] text-black/20 mb-2" strokeWidth={1.5} />
           <p className="text-[13px] font-bold text-[var(--color-on-surface)]">
             No Custom Orders Found
           </p>
@@ -104,9 +103,10 @@ export function OrderList({ myOrders, selectedOrder, setSelectedOrder }) {
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--color-on-surface)] group-hover:text-[var(--color-gold)] transition-colors">
                   View Details
                 </span>
-                <span className="material-symbols-outlined text-[14px] text-[var(--color-on-surface)] group-hover:text-[var(--color-gold)] group-hover:translate-x-1 transition-all">
-                  arrow_forward
-                </span>
+                <ArrowRight
+                  className="text-[14px] text-[var(--color-on-surface)] group-hover:text-[var(--color-gold)] group-hover:translate-x-1 transition-all"
+                  strokeWidth={1.5}
+                />
               </div>
             </div>
           );

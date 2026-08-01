@@ -72,9 +72,23 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(
     async (silent = false) => {
-      // Clear React Query cache on logout to prevent state leakage/desynchronization
+      // Clear specific user-related React Query cache on logout to prevent state leakage,
+      // but avoid queryClient.clear() so we don't break public pages (like ProductDetails)
       logCartTrace('QUERY_CLIENT_CLEAR', { source: 'AuthProvider.logout' });
-      queryClient.clear();
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return [
+            'user',
+            'cart',
+            'wishlist',
+            'orders',
+            'addresses',
+            'dashboard',
+            'recommendations',
+          ].includes(key);
+        },
+      });
       try {
         logCartTrace('CACHE_REMOVE', { source: 'AuthProvider.logout' });
         localStorage.removeItem(CACHE_KEY);
@@ -196,6 +210,9 @@ export function AuthProvider({ children }) {
   );
 
   useEffect(() => {
+    if (initStarted.current) return;
+    initStarted.current = true;
+
     if (!hasStoredSession && !cachedProfile) {
       console.warn('[AUTH_DEBUG] No stored session and no cached profile on mount.');
       setLoading(false);

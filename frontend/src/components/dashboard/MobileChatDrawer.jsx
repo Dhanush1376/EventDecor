@@ -1,3 +1,4 @@
+import { MessageSquare, X, MessageCircle, Send } from 'lucide-react';
 import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 
@@ -50,14 +51,15 @@ export function MobileChatDrawer({
                 </h4>
               </div>
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px] text-primary animate-pulse">
-                  forum
-                </span>
+                <MessageSquare
+                  className="text-[18px] text-primary animate-pulse"
+                  strokeWidth={1.5}
+                />
                 <button
                   onClick={() => setIsMobileChatOpen(false)}
                   className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center active:scale-90 transition-transform"
                 >
-                  <span className="material-symbols-outlined text-[18px] text-black/60">close</span>
+                  <X className="text-[18px] text-black/60" strokeWidth={1.5} />
                 </button>
               </div>
             </div>
@@ -67,9 +69,7 @@ export function MobileChatDrawer({
               {chatHistory?.length === 0 || !chatHistory ? (
                 <div className="flex flex-col items-center justify-center flex-1 gap-3 py-12">
                   <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[28px]">
-                      chat_bubble_outline
-                    </span>
+                    <MessageCircle className="text-[28px]" strokeWidth={1.5} />
                   </div>
                   <p className="font-body text-xs text-black/45 text-center max-w-[200px] leading-relaxed">
                     Send a message to discuss color palettes, venue dimensions, or prop
@@ -127,7 +127,7 @@ export function MobileChatDrawer({
                 type="submit"
                 className="w-11 h-11 rounded-full bg-black text-white flex items-center justify-center hover:bg-primary hover:text-black transition-all shrink-0 active:scale-90"
               >
-                <span className="material-symbols-outlined text-[17px]">send</span>
+                <Send className="text-[17px]" strokeWidth={1.5} />
               </button>
             </form>
           </motion.div>

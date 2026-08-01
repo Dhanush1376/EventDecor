@@ -1,3 +1,4 @@
+import { ExternalLink, CheckCircle2, Send } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { MandalaElement } from '../components/ui/MandalaElement';
 import { SEO } from '../components/seo/SEO';
@@ -212,7 +213,7 @@ export function Contact() {
               <div className="absolute inset-0 z-[1010] bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
                 <div className="bg-white/95 backdrop-blur text-black px-5 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-xl flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                   <span>Open in Google Maps</span>
-                  <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                  <ExternalLink className="text-[14px]" strokeWidth={1.5} />
                 </div>
               </div>
             </motion.a>
@@ -234,9 +235,7 @@ export function Contact() {
                   className="absolute inset-0 bg-white/95 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center p-8 rounded-[32px]"
                 >
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                    <span className="material-symbols-outlined text-primary text-3xl">
-                      check_circle
-                    </span>
+                    <CheckCircle2 className="text-primary text-3xl" strokeWidth={1.5} />
                   </div>
                   <h2 className="font-display text-2xl text-on-surface mb-3 tracking-tight">
                     Message Received
@@ -412,9 +411,10 @@ export function Contact() {
                   ) : (
                     <>
                       Send Message
-                      <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">
-                        send
-                      </span>
+                      <Send
+                        className="text-[16px] group-hover:translate-x-1 transition-transform"
+                        strokeWidth={1.5}
+                      />
                     </>
                   )}
                 </button>

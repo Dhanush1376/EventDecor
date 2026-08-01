@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import React from 'react';
 import CreditCard from 'lucide-react/dist/esm/icons/credit-card';
 import { m as motion, AnimatePresence } from 'framer-motion';
@@ -42,7 +43,7 @@ export function PaymentModal({
                 onClick={() => setIsPaymentModalOpen(false)}
                 className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center active:scale-90"
               >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <X className="text-[18px]" strokeWidth={1.5} />
               </button>
             </div>
 

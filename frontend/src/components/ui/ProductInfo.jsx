@@ -1,3 +1,18 @@
+import {
+  Award,
+  PenLine,
+  CornerDownLeft,
+  ArrowLeftRight,
+  Heart,
+  Star,
+  Truck,
+  CalendarCheck,
+  Ban,
+  Lock,
+  CalendarDays,
+  Zap,
+  Check,
+} from 'lucide-react';
 import { m as motion } from 'framer-motion';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -135,9 +150,7 @@ export function ProductInfo({
           {(product.isBestseller || product.isFeatured) && (
             <div className="relative group/badge">
               <div className="w-9 h-9 rounded-full bg-primary-container/10 border border-primary-container/20 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-[16px] text-primary">
-                  workspace_premium
-                </span>
+                <Award className="text-[16px] text-primary" strokeWidth={1.5} />
               </div>
               <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl z-10">
                 Bestseller
@@ -146,7 +159,7 @@ export function ProductInfo({
           )}
           <div className="relative group/badge">
             <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-[16px] text-on-surface">draw</span>
+              <PenLine className="text-[16px] text-on-surface" strokeWidth={1.5} />
             </div>
             <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl z-10">
               Handmade
@@ -155,9 +168,7 @@ export function ProductInfo({
           {product.returnSettings?.isReturnable && (
             <div className="relative group/badge">
               <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-[16px] text-on-surface">
-                  assignment_return
-                </span>
+                <CornerDownLeft className="text-[16px] text-on-surface" strokeWidth={1.5} />
               </div>
               <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl z-10">
                 {product.returnSettings.returnWindowDays} Days Returnable
@@ -167,9 +178,7 @@ export function ProductInfo({
           {product.returnSettings?.isExchangeable && (
             <div className="relative group/badge">
               <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-[16px] text-on-surface">
-                  swap_horiz
-                </span>
+                <ArrowLeftRight className="text-[16px] text-on-surface" strokeWidth={1.5} />
               </div>
               <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl z-10">
                 {product.returnSettings.exchangeWindowDays} Days Exchangeable
@@ -190,12 +199,10 @@ export function ProductInfo({
                   {product.teluguTitle || product.nameTE || product.teluguName}
                 </span>
                 <span className="w-8 sm:w-12 h-px bg-primary/40 shrink-0"></span>
-                <span
-                  className="material-symbols-outlined text-[14px] sm:text-[16px] text-primary/60 shrink-0"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  favorite
-                </span>
+                <Heart
+                  className="text-[14px] sm:text-[16px] text-primary/60 shrink-0"
+                  strokeWidth={1.5}
+                />
               </div>
             )}
           </h2>
@@ -210,13 +217,7 @@ export function ProductInfo({
               >
                 <div className="flex items-center gap-0.5 text-primary-container">
                   {[...Array(5)].map((_, i) => (
-                    <span
-                      key={i}
-                      className="material-symbols-outlined text-[13px] sm:text-[14px]"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      star
-                    </span>
+                    <Star className="text-[13px] sm:text-[14px]" strokeWidth={1.5} />
                   ))}
                 </div>
                 <span className="font-body-sm text-on-surface/60 font-semibold text-[12px] sm:text-[13px] underline decoration-dotted decoration-primary/45 hover:text-primary transition-colors">
@@ -279,17 +280,13 @@ export function ProductInfo({
 
         <div className="space-y-2.5">
           <div className="flex items-center gap-3 text-on-surface/70">
-            <span className="material-symbols-outlined text-[18px] text-primary/60">
-              local_shipping
-            </span>
+            <Truck className="text-[18px] text-primary/60" strokeWidth={1.5} />
             <span className="font-body-sm text-[13px] sm:text-[14px] font-medium italic">
               All India premium shipping included
             </span>
           </div>
           <div className="flex items-center gap-3 text-on-surface/70">
-            <span className="material-symbols-outlined text-[18px] text-primary/60">
-              event_available
-            </span>
+            <CalendarCheck className="text-[18px] text-primary/60" strokeWidth={1.5} />
             <span className="font-body-sm text-[13px] sm:text-[14px] font-medium italic">
               Delivered nationwide in{' '}
               <span className="font-display font-semibold not-italic">3-5</span> working days
@@ -297,9 +294,7 @@ export function ProductInfo({
           </div>
           {product.isNonRefundable && (
             <div className="flex items-start gap-3 mt-4 p-3.5 bg-[#fffbeb] rounded-xl border border-[#fde68a]">
-              <span className="material-symbols-outlined text-[18px] text-[#d97706] mt-0.5 shrink-0">
-                block
-              </span>
+              <Ban className="text-[18px] text-[#d97706] mt-0.5 shrink-0" strokeWidth={1.5} />
               <div className="flex flex-col">
                 <span className="text-[12px] font-bold text-[#b45309] uppercase tracking-wider">
                   Non-Refundable Item
@@ -322,9 +317,7 @@ export function ProductInfo({
 
             <div className="relative z-10">
               <div className="flex items-center gap-2.5 mb-5">
-                <span className="material-symbols-outlined text-[18px] text-[#8c7335]">
-                  event_available
-                </span>
+                <CalendarCheck className="text-[18px] text-[#8c7335]" strokeWidth={1.5} />
                 <span className="font-label-sm text-[11px] sm:text-[12px] text-[#8c7335] uppercase tracking-[0.25em] font-extrabold">
                   Available for Rent
                 </span>
@@ -366,9 +359,7 @@ export function ProductInfo({
               {product.securityDeposit > 0 && (
                 <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-[#e0d6b8]/50 shadow-sm mt-2 mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#8c7335]">
-                      lock
-                    </span>
+                    <Lock className="text-[16px] text-[#8c7335]" strokeWidth={1.5} />
                     <span className="text-[11px] sm:text-[12px] font-bold text-[#5a5c5a] uppercase tracking-wider">
                       Security Deposit:
                     </span>
@@ -387,9 +378,10 @@ export function ProductInfo({
               )}
 
               <div className="flex items-start gap-2 p-3 bg-[#fdfbf7] rounded-xl border border-dashed border-[#e0d6b8]">
-                <span className="material-symbols-outlined text-[16px] text-[#8c7335] shrink-0 mt-0.5">
-                  calendar_month
-                </span>
+                <CalendarDays
+                  className="text-[16px] text-[#8c7335] shrink-0 mt-0.5"
+                  strokeWidth={1.5}
+                />
                 <p className="text-[11px] text-[#5a5c5a] leading-relaxed">
                   <strong className="text-[#2a2c2a] uppercase tracking-wider">Availability:</strong>{' '}
                   You can select your exact rental dates during the checkout process. Real-time
@@ -425,9 +417,7 @@ export function ProductInfo({
       <div className="space-y-6 mt-4">
         {canPurchase && product.stock != null && product.stock <= 5 && product.stock > 0 && (
           <div className="flex items-center gap-3 px-4 py-3 rounded-full bg-[#fcfbf9] border border-primary/20 shadow-sm">
-            <span className="material-symbols-outlined text-primary text-[16px] animate-pulse font-bold">
-              bolt
-            </span>
+            <Zap className="text-primary text-[16px] animate-pulse font-bold" strokeWidth={1.5} />
             <span className="font-label-sm text-[10px] text-primary uppercase tracking-[0.2em] font-bold">
               {product.stock === 1
                 ? 'LAST PIECE IN COLLECTION'
@@ -454,7 +444,7 @@ export function ProductInfo({
             >
               {added ? (
                 <>
-                  <span className="material-symbols-outlined text-[16px] shrink-0">check</span>
+                  <Check className="text-[16px] shrink-0" strokeWidth={1.5} />
                   <span className="text-[11px] uppercase tracking-widest">Added</span>
                 </>
               ) : (

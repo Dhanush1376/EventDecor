@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -279,7 +280,7 @@ export function IntelligentSearchOverlay({
                 ref={listRef}
                 id="search-suggestions-list"
                 role="listbox"
-                className="flex-1 overflow-y-auto bg-white flex flex-col overscroll-contain"
+                className="flex-1 overflow-y-auto bg-white flex flex-col overscroll-contain min-h-0 touch-pan-y"
               >
                 {predictedCategories.length > 0 && query.trim().length >= 1 && (
                   <div className="px-5 py-2.5 bg-stone-50 border-b border-stone-200/40 flex items-center gap-2 flex-wrap">
@@ -489,9 +490,7 @@ export function IntelligentSearchOverlay({
                             />
                           ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 p-8 text-center space-y-3 bg-stone-50/50 rounded-2xl border border-stone-200/50 border-dashed">
-                              <span className="material-symbols-outlined text-[48px] text-stone-200">
-                                search
-                              </span>
+                              <Search className="text-[48px] text-stone-200" strokeWidth={1.5} />
                               <p className="text-[13px]">Select a product to view details</p>
                             </div>
                           )}

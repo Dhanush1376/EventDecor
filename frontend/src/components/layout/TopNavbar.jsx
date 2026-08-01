@@ -263,11 +263,8 @@ export function TopNavbar() {
                   onClick={() => navigate('/collections')}
                   className="group flex items-center gap-2 shrink-0 cursor-pointer"
                 >
-                  <span
-                    className="material-symbols-outlined text-[24px] text-on-surface group-hover:-translate-x-1 transition-transform"
-                    style={{ fontVariationSettings: "'wght' 200" }}
-                  >
-                    west
+                  <span className="material-symbols-outlined text-[24px] text-on-surface group-hover:-translate-x-1 transition-transform">
+                    arrow_back
                   </span>
                   <span className="font-label text-[12px] lg:text-[13px] font-bold uppercase tracking-[0.2em] text-on-surface leading-none pt-0.5">
                     {isWishlistPage ? 'Wishlist' : 'Cart'}
@@ -316,12 +313,12 @@ export function TopNavbar() {
                           }`}
                           to={link.href}
                         >
-                          {link.label}
-                          {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
-                            <span className="ml-1.5 inline-flex items-center justify-center h-3.5 min-w-[14px] px-1 rounded-full bg-black text-white text-[8px] font-bold tracking-normal leading-none shadow-sm shadow-black/20">
-                              {activeCustomOrdersCount}
-                            </span>
-                          )}
+                          <span className="flex items-center">
+                            <span>{link.label}</span>
+                            {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
+                              <span className="ml-0.5 relative w-1.5 h-1.5 rounded-full bg-[#ff5a00] shadow-sm"></span>
+                            )}
+                          </span>
                           {active && (
                             <span
                               className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${isTransparent ? 'bg-white' : 'bg-primary'}`}
@@ -372,12 +369,7 @@ export function TopNavbar() {
                       }`}
                       aria-label="Visual Search"
                     >
-                      <span
-                        className="material-symbols-outlined text-[18px]"
-                        style={{ fontVariationSettings: "'wght' 200" }}
-                      >
-                        photo_camera
-                      </span>
+                      <span className="material-symbols-outlined text-[20px]">photo_camera</span>
                     </button>
                   )}
                 </div>
@@ -388,12 +380,7 @@ export function TopNavbar() {
                   className={`lg:hidden ${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
                   aria-label="Search Catalog"
                 >
-                  <span
-                    className="material-symbols-outlined text-[22px]"
-                    style={{ fontVariationSettings: "'wght' 200" }}
-                  >
-                    search
-                  </span>
+                  <span className="material-symbols-outlined text-[24px]">search</span>
                 </button>
 
                 <Link
@@ -401,13 +388,7 @@ export function TopNavbar() {
                   className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary/10'} transition-all duration-300 hover:scale-110 hidden lg:flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
                   aria-label="View Wishlist"
                 >
-                  <span
-                    className="material-symbols-outlined text-[22px]"
-                    aria-hidden="true"
-                    style={{ fontVariationSettings: "'wght' 200" }}
-                  >
-                    favorite
-                  </span>
+                  <span className="material-symbols-outlined text-[24px]">favorite</span>
                 </Link>
 
                 <motion.button
@@ -425,18 +406,12 @@ export function TopNavbar() {
                   className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-[#d4af37] hover:bg-[#d4af37]/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
                   aria-label="View Bag"
                 >
-                  <span
-                    className="material-symbols-outlined text-[22px]"
-                    aria-hidden="true"
-                    style={{ fontVariationSettings: "'wght' 200" }}
-                  >
-                    shopping_cart
-                  </span>
+                  <span className="material-symbols-outlined text-[24px]">shopping_cart</span>
                   {cartCount > 0 && (
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className={`absolute top-0.5 right-0.5 w-4 h-4 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs border-2 ${isTransparent ? 'border-transparent' : 'border-surface-bright'}`}
+                      className={`absolute top-0.5 right-0.5 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs border-2 ${isTransparent ? 'border-transparent' : 'border-surface-bright'}`}
                     >
                       {cartCount}
                     </motion.span>
@@ -449,12 +424,7 @@ export function TopNavbar() {
                     className={`${isTransparent ? 'border border-white/20 hover:bg-white/10 text-white' : 'border border-outline-variant/40 hover:border-primary/40 hover:bg-primary/5 text-on-surface hover:text-primary'} transition-all duration-300 hover:scale-110 hidden lg:flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
                     aria-label="User Account"
                   >
-                    <span
-                      className="material-symbols-outlined text-[22px]"
-                      style={{ fontVariationSettings: "'wght' 200" }}
-                    >
-                      login
-                    </span>
+                    <span className="material-symbols-outlined text-[24px]">login</span>
                   </button>
                 ) : (
                   <div className="relative hidden lg:block">
@@ -474,7 +444,7 @@ export function TopNavbar() {
                         {user?.name?.substring(0, 2) || user?.email?.substring(0, 2) || 'U'}
                       </span>
                       {hasPendingInvite && (
-                        <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm" />
+                        <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm" />
                       )}
                     </button>
 
@@ -502,7 +472,7 @@ export function TopNavbar() {
 
                             {hasPendingInvite && (
                               <div className="px-4 py-2 bg-rose-50 border-b border-rose-100 text-[10px] text-rose-600 font-bold flex items-center gap-1.5 animate-pulse">
-                                <span className="material-symbols-outlined text-[13px]">info</span>
+                                <span className="material-symbols-outlined text-[15px]">info</span>
                                 <span>Pending Admin Invitation</span>
                               </div>
                             )}
@@ -513,7 +483,7 @@ export function TopNavbar() {
                                 onClick={() => setIsProfileDropdownOpen(false)}
                                 className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors font-bold border-b border-outline-variant/10 mb-1.5 pb-2"
                               >
-                                <span className="material-symbols-outlined text-[15px]">
+                                <span className="material-symbols-outlined text-[17px]">
                                   settings
                                 </span>
                                 <span>Admin Portal</span>
@@ -525,7 +495,7 @@ export function TopNavbar() {
                               onClick={() => setIsProfileDropdownOpen(false)}
                               className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
                             >
-                              <span className="material-symbols-outlined text-[15px]">person</span>
+                              <span className="material-symbols-outlined text-[17px]">person</span>
                               <span>My Profile</span>
                             </Link>
 
@@ -534,8 +504,8 @@ export function TopNavbar() {
                               onClick={() => setIsProfileDropdownOpen(false)}
                               className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
                             >
-                              <span className="material-symbols-outlined text-[15px]">
-                                package_2
+                              <span className="material-symbols-outlined text-[17px]">
+                                inventory_2
                               </span>
                               <span>Orders</span>
                             </Link>
@@ -545,7 +515,7 @@ export function TopNavbar() {
                               onClick={() => setIsProfileDropdownOpen(false)}
                               className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
                             >
-                              <span className="material-symbols-outlined text-[15px]">
+                              <span className="material-symbols-outlined text-[17px]">
                                 location_on
                               </span>
                               <span>Addresses</span>
@@ -558,7 +528,7 @@ export function TopNavbar() {
                               }}
                               className="w-full flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-error hover:bg-error/5 transition-colors font-bold border-t border-outline-variant/10 mt-1.5 pt-2 cursor-pointer"
                             >
-                              <span className="material-symbols-outlined text-[15px]">logout</span>
+                              <span className="material-symbols-outlined text-[17px]">logout</span>
                               <span>Logout</span>
                             </button>
                           </motion.div>
@@ -579,9 +549,7 @@ export function TopNavbar() {
                 aria-expanded={isOpen}
                 aria-controls="mobile-menu-drawer"
               >
-                <span className="w-[22px] h-[1.5px] bg-current" />
-                <span className="w-[22px] h-[1.5px] bg-current" />
-                <span className="w-[22px] h-[1.5px] bg-current" />
+                <span className="material-symbols-outlined text-[26px] text-current">menu</span>
               </button>
             </div>
           </div>
@@ -639,12 +607,7 @@ export function TopNavbar() {
                   className="w-10 h-10 flex items-center justify-center text-on-surface hover:text-primary transition-colors cursor-pointer"
                   aria-label="Close menu"
                 >
-                  <span
-                    className="material-symbols-outlined text-[32px] font-light"
-                    style={{ fontVariationSettings: "'wght' 200" }}
-                  >
-                    close
-                  </span>
+                  <span className="material-symbols-outlined text-[32px] font-light">close</span>
                 </button>
               </div>
 
@@ -673,12 +636,10 @@ export function TopNavbar() {
                           }`}
                           to={link.href}
                         >
-                          <span className="text-right relative flex items-center justify-end gap-2">
-                            {link.label}
+                          <span className="text-right relative flex items-center justify-end gap-1.5">
+                            <span>{link.label}</span>
                             {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
-                              <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-black text-white text-[9px] font-bold tracking-normal leading-none shadow-sm shadow-black/20">
-                                {activeCustomOrdersCount}
-                              </span>
+                              <span className="relative w-2 h-2 rounded-full bg-[#ff5a00] shadow-sm"></span>
                             )}
                           </span>
                         </Link>
@@ -702,9 +663,9 @@ export function TopNavbar() {
                         to="/admin"
                       >
                         {hasPendingInvite && (
-                          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-error shadow-sm" />
+                          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-orange-500 shadow-sm" />
                         )}
-                        <span className="material-symbols-outlined text-[18px] tracking-normal font-normal">
+                        <span className="material-symbols-outlined text-[20px]">
                           admin_panel_settings
                         </span>
                         <span className="tracking-[0.15em] ml-1">Admin Portal</span>
@@ -730,12 +691,7 @@ export function TopNavbar() {
                         onClick={() => setIsOpen(false)}
                         className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
                       >
-                        <span
-                          className="material-symbols-outlined text-[24px] font-light"
-                          style={{ fontVariationSettings: "'wght' 200" }}
-                        >
-                          favorite
-                        </span>
+                        <span className="material-symbols-outlined text-[26px]">favorite</span>
                         <span className="text-[9px] font-bold uppercase tracking-wider">
                           Wishlist
                         </span>
@@ -754,14 +710,11 @@ export function TopNavbar() {
                         className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors relative cursor-pointer"
                       >
                         <div className="relative">
-                          <span
-                            className="material-symbols-outlined text-[24px] font-light"
-                            style={{ fontVariationSettings: "'wght' 200" }}
-                          >
+                          <span className="material-symbols-outlined text-[26px]">
                             shopping_bag
                           </span>
                           {cartCount > 0 && (
-                            <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-primary-container text-on-primary-container text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">
+                            <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">
                               {cartCount}
                             </span>
                           )}
@@ -774,12 +727,7 @@ export function TopNavbar() {
                           onClick={() => setIsOpen(false)}
                           className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
                         >
-                          <span
-                            className="material-symbols-outlined text-[24px] font-light"
-                            style={{ fontVariationSettings: "'wght' 200" }}
-                          >
-                            person
-                          </span>
+                          <span className="material-symbols-outlined text-[26px]">person</span>
                           <span className="text-[9px] font-bold uppercase tracking-wider">
                             Profile
                           </span>
@@ -795,12 +743,7 @@ export function TopNavbar() {
                         }}
                         className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors cursor-pointer"
                       >
-                        <span
-                          className="material-symbols-outlined text-[24px] font-light"
-                          style={{ fontVariationSettings: "'wght' 200" }}
-                        >
-                          login
-                        </span>
+                        <span className="material-symbols-outlined text-[26px]">login</span>
                         <span className="text-[9px] font-bold uppercase tracking-wider">
                           Sign In
                         </span>
@@ -813,12 +756,7 @@ export function TopNavbar() {
                         }}
                         className="flex flex-col items-center gap-1 text-on-surface hover:text-error transition-colors cursor-pointer"
                       >
-                        <span
-                          className="material-symbols-outlined text-[24px] font-light"
-                          style={{ fontVariationSettings: "'wght' 200" }}
-                        >
-                          logout
-                        </span>
+                        <span className="material-symbols-outlined text-[26px]">logout</span>
                         <span className="text-[9px] font-bold uppercase tracking-wider">
                           Sign Out
                         </span>

@@ -1,3 +1,4 @@
+import { X, Save } from 'lucide-react';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
@@ -78,7 +79,7 @@ export function AddressModal() {
               onClick={() => setIsAddressModalOpen(false)}
               className="w-8 h-8 min-h-0 rounded-full bg-surface-container flex items-center justify-center text-secondary hover:text-primary transition-colors cursor-pointer border-0"
             >
-              <span className="material-symbols-outlined text-base">close</span>
+              <X className="text-base" strokeWidth={1.5} />
             </button>
           </div>
 
@@ -153,7 +154,7 @@ export function AddressModal() {
                   <div className="skeleton-box inline-block w-4 h-4 rounded-md animate-pulse" />
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-[16px]">save</span>
+                    <Save className="text-[16px]" strokeWidth={1.5} />
                     <span>{editingAddressId === 'new' ? 'ADD ADDRESS' : 'SAVE CHANGES'}</span>
                   </>
                 )}

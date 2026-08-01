@@ -1,3 +1,4 @@
+import { MapPin, ChevronDown } from 'lucide-react';
 import React from 'react';
 import { Skeleton } from '../SkeletonBase';
 
@@ -7,12 +8,10 @@ export function AddressBarSkeleton() {
     <div className="w-full bg-[#fbf9f6] border-b border-black/10 relative py-3.5 hover:bg-[#f6f2ea] transition-colors">
       <div className="max-w-[1240px] mx-auto px-4 sm:px-8 flex items-center justify-between">
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <span className="material-symbols-outlined text-[18px] text-[#8c7335]/30 animate-pulse">
-            location_on
-          </span>
+          <MapPin className="text-[18px] text-[#8c7335]/30 animate-pulse" strokeWidth={1.5} />
           <Skeleton className="h-[12px] w-[50%] rounded-md" />
         </div>
-        <span className="material-symbols-outlined text-[18px] text-black/10">expand_more</span>
+        <ChevronDown className="text-[18px] text-black/10" strokeWidth={1.5} />
       </div>
     </div>
   );

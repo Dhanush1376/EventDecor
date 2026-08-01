@@ -1,3 +1,4 @@
+import { ShoppingCart, Tag, Palette } from 'lucide-react';
 import React from 'react';
 import { motion } from 'framer-motion';
 
@@ -31,7 +32,7 @@ export const CartModeSelector = ({
             <span
               className={`absolute -top-1 right-1 sm:-top-1.5 sm:right-1.5 w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] rounded-full text-[8px] font-bold flex items-center justify-center border shadow-sm transition-all duration-300 z-20 ${
                 activeCartMode === 'purchase'
-                  ? 'bg-primary text-white border-white'
+                  ? 'bg-orange-500 text-white border-white'
                   : 'bg-outline-variant/60 text-on-surface-variant/80 border-surface-bright'
               }`}
             >
@@ -39,9 +40,7 @@ export const CartModeSelector = ({
             </span>
           )}
           <div className="flex items-center gap-1 sm:gap-1.5">
-            <span className="material-symbols-outlined text-[15px] sm:text-[17px]">
-              shopping_cart
-            </span>
+            <ShoppingCart className="text-[15px] sm:text-[17px]" strokeWidth={1.5} />
             <span>Purchase</span>
           </div>
         </button>
@@ -66,7 +65,7 @@ export const CartModeSelector = ({
             <span
               className={`absolute -top-1 right-1 sm:-top-1.5 sm:right-1.5 w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] rounded-full text-[8px] font-bold flex items-center justify-center border shadow-sm transition-all duration-300 z-20 ${
                 activeCartMode === 'rental'
-                  ? 'bg-primary text-white border-white'
+                  ? 'bg-orange-500 text-white border-white'
                   : 'bg-outline-variant/60 text-on-surface-variant/80 border-surface-bright'
               }`}
             >
@@ -74,7 +73,7 @@ export const CartModeSelector = ({
             </span>
           )}
           <div className="flex items-center gap-1 sm:gap-1.5">
-            <span className="material-symbols-outlined text-[15px] sm:text-[17px]">sell</span>
+            <Tag className="text-[15px] sm:text-[17px]" strokeWidth={1.5} />
             <span>Rental</span>
           </div>
         </button>
@@ -99,7 +98,7 @@ export const CartModeSelector = ({
             <span
               className={`absolute -top-1 right-1 sm:-top-1.5 sm:right-1.5 w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] rounded-full text-[8px] font-bold flex items-center justify-center border shadow-sm transition-all duration-300 z-20 ${
                 activeCartMode === 'custom'
-                  ? 'bg-primary text-white border-white'
+                  ? 'bg-orange-500 text-white border-white'
                   : 'bg-outline-variant/60 text-on-surface-variant/80 border-surface-bright'
               }`}
             >
@@ -107,7 +106,7 @@ export const CartModeSelector = ({
             </span>
           )}
           <div className="flex items-center gap-1 sm:gap-1.5">
-            <span className="material-symbols-outlined text-[15px] sm:text-[17px]">palette</span>
+            <Palette className="text-[15px] sm:text-[17px]" strokeWidth={1.5} />
             <span>Custom</span>
           </div>
         </button>

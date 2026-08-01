@@ -1,3 +1,4 @@
+import { SlidersHorizontal, X } from 'lucide-react';
 import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { EVENT_TYPES } from '../../config/constants';
@@ -30,7 +31,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
         >
           <div className="bg-[#FAF6F0] px-6 py-4 border-b border-black/5 flex items-center justify-between shrink-0 relative rounded-t-[2.5rem] lg:rounded-t-none">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-black text-[20px]">tune</span>
+              <SlidersHorizontal className="text-black text-[20px]" strokeWidth={1.5} />
               <div>
                 <h3 className="font-display text-sm lg:text-base text-black font-semibold">
                   Customize Your Order
@@ -61,7 +62,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                 onClick={() => actions.setIsDrawerOpen(false)}
                 className="w-8 h-8 rounded-full bg-white hover:bg-stone-100 text-stone-500 border border-black/5 flex items-center justify-center transition-all cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <X className="text-[16px]" strokeWidth={1.5} />
               </button>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { Clock } from 'lucide-react';
 import React from 'react';
 import { format } from 'date-fns';
 
@@ -162,7 +163,7 @@ const ReturnTimeline = ({
 
               {dateStr && (
                 <div className="flex items-center gap-1.5 mt-2 text-xs text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[14px]">schedule</span>
+                  <Clock className="text-[14px]" strokeWidth={1.5} />
                   {dateStr}
                 </div>
               )}

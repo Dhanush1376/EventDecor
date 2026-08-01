@@ -1,3 +1,4 @@
+import { AlertCircle } from 'lucide-react';
 import { Component } from 'react';
 import { getSentry } from '../../utils/core/sentryLoader';
 
@@ -67,9 +68,7 @@ export class ErrorBoundary extends Component {
           <div className="max-w-lg w-full mx-auto relative z-10">
             {/* Elegant warning icon */}
             <div className="w-24 h-24 mx-auto mb-8 rounded-full bg-rose-50/50 border border-rose-100/50 flex items-center justify-center shadow-2xs">
-              <span className="material-symbols-outlined text-[36px] text-rose-500 font-light">
-                error_outline
-              </span>
+              <AlertCircle className="text-[36px] text-rose-500 font-light" strokeWidth={1.5} />
             </div>
 
             <h2 className="font-display text-2xl lg:text-3xl font-semibold text-on-surface mb-3 tracking-tight">

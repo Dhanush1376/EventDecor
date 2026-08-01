@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -36,9 +37,10 @@ export const CartEmptyState = ({ activeCartMode }) => {
             className="group inline-flex items-center gap-2 text-on-surface hover:text-primary transition-colors py-1.5 font-label text-[10.5px] uppercase tracking-[0.2em] font-bold border-b-2 border-on-surface hover:border-primary"
           >
             <span>Explore Collections</span>
-            <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-              arrow_forward
-            </span>
+            <ArrowRight
+              className="text-[14px] group-hover:translate-x-1 transition-transform"
+              strokeWidth={1.5}
+            />
           </Link>
         </div>
       </motion.div>

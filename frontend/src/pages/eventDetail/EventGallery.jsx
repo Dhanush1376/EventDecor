@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { m as motion } from 'framer-motion';
 import { OptimizedImage } from '../../components/ui/OptimizedImage';
 import { ShareButton } from '../../components/ui/ShareButton';
@@ -7,6 +8,10 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const lightboxScrollRef = useRef(null);
+
+  const allImages = React.useMemo(() => {
+    return Array.from(new Set([event.image, ...(event.gallery || [])].filter(Boolean)));
+  }, [event.image, event.gallery]);
 
   useEffect(() => {
     if (isLightboxOpen) {
@@ -36,7 +41,7 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-3 lg:space-y-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -79,22 +84,20 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
 
         {/* Mobile Horizontal Scroll Gallery */}
         <div className="lg:hidden flex overflow-x-auto snap-x snap-mandatory no-scrollbar h-full w-full">
-          {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map(
-            (img, i) => (
-              <div
-                key={i}
-                onClick={() => openLightbox(i)}
-                className="flex-shrink-0 w-full h-full snap-center cursor-zoom-in"
-              >
-                <OptimizedImage
-                  src={img}
-                  containerClassName="w-full h-full"
-                  className="w-full h-full object-cover"
-                  alt={`${event.title} perspective ${i + 1}`}
-                />
-              </div>
-            ),
-          )}
+          {allImages.map((img, i) => (
+            <div
+              key={i}
+              onClick={() => openLightbox(i)}
+              className="flex-shrink-0 w-full h-full snap-center cursor-zoom-in"
+            >
+              <OptimizedImage
+                src={img}
+                containerClassName="w-full h-full"
+                className="w-full h-full object-cover"
+                alt={`${event.title} perspective ${i + 1}`}
+              />
+            </div>
+          ))}
         </div>
 
         {/* Desktop-Only Fade Gallery */}
@@ -109,7 +112,7 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
             className="w-full h-full cursor-zoom-in"
           >
             <OptimizedImage
-              src={event.gallery?.[activeGalleryIndex] || event.image}
+              src={allImages[activeGalleryIndex]}
               containerClassName="w-full h-full"
               className="w-full h-full object-cover"
               alt={event.title}
@@ -118,43 +121,36 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
           </motion.div>
         </div>
 
-        {event.gallery && event.gallery.length > 1 && (
-          <div className="absolute bottom-6 left-6 lg:bottom-8 lg:left-8 flex gap-2.5 z-10">
-            {event.gallery.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  if (window.innerWidth >= 768) {
-                    setActiveGalleryIndex(i);
-                  } else {
-                    const container = document.querySelector('.snap-x');
-                    if (container) {
-                      container.scrollTo({ left: i * container.offsetWidth, behavior: 'smooth' });
-                    }
-                    setActiveGalleryIndex(i);
-                  }
-                }}
-                className={`w-8 h-8 lg:w-9 lg:h-9 rounded-full backdrop-blur-md border transition-all duration-500 flex items-center justify-center font-body text-[13px] lg:text-[14px] ${activeGalleryIndex === i ? 'bg-white border-white text-black shadow-lg scale-110' : 'bg-black/20 border-white/30 text-white/80 hover:bg-black/40 hover:border-white/50'}`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Pagination dots removed as per request */}
       </motion.div>
 
-      {event.gallery && event.gallery.length > 1 && (
-        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-          {event.gallery.map((img, i) => (
+      {allImages.length > 1 && (
+        <div
+          className="w-full flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar py-1 px-2 lg:px-3 items-center justify-start"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {allImages.map((img, i) => (
             <button
               key={i}
-              onClick={() => setActiveGalleryIndex(i)}
-              className={`relative w-20 h-20 lg:w-24 lg:h-24 rounded-2xl overflow-hidden shrink-0 transition-all duration-500 ${activeGalleryIndex === i ? 'ring-2 ring-primary ring-offset-2 scale-95' : 'opacity-45 grayscale-[70%] hover:opacity-100 hover:grayscale-0'}`}
+              onClick={() => {
+                setActiveGalleryIndex(i);
+                if (window.innerWidth < 1024) {
+                  const container = document.querySelector('.snap-x');
+                  if (container) {
+                    container.scrollTo({ left: i * container.offsetWidth, behavior: 'smooth' });
+                  }
+                }
+              }}
+              className={`shrink-0 w-12 sm:w-14 lg:w-16 lg:w-[60px] aspect-square rounded-[16px] lg:rounded-[20px] overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative group cursor-pointer ${
+                activeGalleryIndex === i
+                  ? 'scale-[1.15] shadow-[0_8px_20px_-6px_rgba(196,168,124,0.4)] z-10 opacity-100'
+                  : 'scale-[0.9] opacity-40 hover:opacity-80 hover:scale-100'
+              }`}
             >
               <OptimizedImage
                 src={img}
                 containerClassName="w-full h-full"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none rounded-[16px] lg:rounded-[20px]"
                 alt={`Thumb ${i}`}
               />
             </button>
@@ -163,45 +159,83 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
       )}
 
       {/* Lightbox Overlay */}
-      {isLightboxOpen && (
-        <div className="fixed inset-0 z-[9999] bg-white/95 backdrop-blur-lg flex flex-col">
-          <div className="flex justify-between items-center p-4 lg:p-6 text-black absolute top-0 w-full z-10">
-            <div className="font-label-sm tracking-widest text-xs uppercase opacity-60">
-              {activeGalleryIndex + 1} / {event.gallery?.length || 1}
+      {isLightboxOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="fixed inset-0 z-[99999] bg-white/95 backdrop-blur-lg flex flex-col">
+            <div className="flex justify-between items-center p-4 lg:p-6 text-black absolute top-0 w-full z-10">
+              <div className="font-label-sm tracking-widest text-xs uppercase opacity-60">
+                {activeGalleryIndex + 1} / {allImages.length}
+              </div>
+              <button
+                onClick={() => setIsLightboxOpen(false)}
+                className="hover:opacity-70 transition-opacity"
+              >
+                <span className="material-symbols-outlined text-3xl">close</span>
+              </button>
             </div>
-            <button
-              onClick={() => setIsLightboxOpen(false)}
-              className="hover:opacity-70 transition-opacity"
+            <div
+              ref={lightboxScrollRef}
+              className="flex-1 flex overflow-x-auto snap-x snap-mandatory no-scrollbar"
+              onScroll={(e) => {
+                const idx = Math.round(e.target.scrollLeft / e.target.clientWidth);
+                if (idx !== activeGalleryIndex) setActiveGalleryIndex(idx);
+              }}
             >
-              <span className="material-symbols-outlined text-3xl">close</span>
-            </button>
-          </div>
-          <div
-            ref={lightboxScrollRef}
-            className="flex-1 flex overflow-x-auto snap-x snap-mandatory no-scrollbar"
-            onScroll={(e) => {
-              const idx = Math.round(e.target.scrollLeft / e.target.clientWidth);
-              if (idx !== activeGalleryIndex) setActiveGalleryIndex(idx);
-            }}
-          >
-            {(event.gallery && event.gallery.length > 0 ? event.gallery : [event.image]).map(
-              (img, i) => (
+              {allImages.map((img, i) => (
                 <div
                   key={i}
-                  className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-4"
+                  className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-2 sm:p-4 lg:p-6"
                 >
                   <OptimizedImage
                     src={img}
                     alt={`Gallery ${i}`}
-                    className="max-w-full max-h-full object-contain"
+                    className="max-w-full max-h-full object-contain shadow-2xl"
                     width={1280}
                   />
                 </div>
-              ),
+              ))}
+            </div>
+
+            {/* Bottom Thumbnail Strip for Lightbox */}
+            {allImages.length > 1 && (
+              <div
+                className="w-full pb-[max(16px,env(safe-area-inset-bottom))] pt-3 px-4 flex gap-3 overflow-x-auto no-scrollbar justify-center items-center shrink-0 z-10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {allImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setActiveGalleryIndex(idx);
+                      if (lightboxScrollRef.current) {
+                        lightboxScrollRef.current.scrollTo({
+                          left: idx * lightboxScrollRef.current.clientWidth,
+                          behavior: 'smooth',
+                        });
+                      }
+                    }}
+                    className={`shrink-0 w-12 sm:w-14 lg:w-16 lg:w-[60px] aspect-square rounded-[16px] lg:rounded-[20px] overflow-hidden relative transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] snap-center outline-none group cursor-pointer ${
+                      activeGalleryIndex === idx
+                        ? 'scale-[1.15] shadow-[0_8px_20px_-6px_rgba(196,168,124,0.4)] z-10 opacity-100'
+                        : 'scale-[0.9] opacity-40 hover:opacity-80 hover:scale-100'
+                    }`}
+                  >
+                    <OptimizedImage
+                      src={img}
+                      alt={`Thumbnail ${idx + 1}`}
+                      containerClassName="w-full h-full"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 pointer-events-none rounded-[16px] lg:rounded-[20px]"
+                      width={100}
+                      height={100}
+                    />
+                  </button>
+                ))}
+              </div>
             )}
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

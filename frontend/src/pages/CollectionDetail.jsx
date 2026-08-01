@@ -1,3 +1,4 @@
+import { PackageCheck } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
 import { SectionWrapper } from '../components/layout';
@@ -208,9 +209,10 @@ export function CollectionDetail() {
                 </div>
               ) : (
                 <div className="text-center py-20 border border-outline-variant/20 rounded-3xl bg-surface-container-low">
-                  <span className="material-symbols-outlined text-[40px] text-primary/40 mb-4 block">
-                    inventory_2
-                  </span>
+                  <PackageCheck
+                    className="text-[40px] text-primary/40 mb-4 block"
+                    strokeWidth={1.5}
+                  />
                   <h2 className="font-display text-[28px] text-on-surface mb-2">
                     No live pieces found
                   </h2>

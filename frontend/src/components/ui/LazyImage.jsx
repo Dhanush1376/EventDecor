@@ -1,3 +1,4 @@
+import { ImageOff } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
 import { useState } from 'react';
 
@@ -25,9 +26,7 @@ export function LazyImage({
       {/* Error state */}
       {hasError && (
         <div className="absolute inset-0 bg-surface-container flex flex-col items-center justify-center rounded-[inherit]">
-          <span className="material-symbols-outlined text-[24px] text-on-surface-variant/30 mb-1">
-            broken_image
-          </span>
+          <ImageOff className="text-[24px] text-on-surface-variant/30 mb-1" strokeWidth={1.5} />
           <span className="text-[10px] text-on-surface-variant/40 font-label uppercase tracking-wider">
             Image unavailable
           </span>

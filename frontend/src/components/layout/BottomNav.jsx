@@ -111,7 +111,7 @@ function CartBadge({ count }) {
     <motion.span
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
-      className="absolute -top-1.5 -right-2.5 w-[16px] h-[16px] bg-[#ff3b30] text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm border-2 border-[#faf8f2] z-10"
+      className="absolute -top-1.5 -right-2.5 w-[16px] h-[16px] bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm border-2 border-[#faf8f2] z-10"
     >
       {count}
     </motion.span>

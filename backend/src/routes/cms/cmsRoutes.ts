@@ -10,13 +10,14 @@ import { requireAuth, requireRole } from '../../middleware/authMiddleware';
 import { cacheResponse } from '../../middleware/cacheMiddleware';
 import { dynamicResponseCache } from '../../middleware/dynamicCacheMiddleware';
 import ContentService from '../../services/contentService';
+import { STAFF_ROLES } from '../../config/adminConfig';
 
 const router = Router();
 
 const requireAdminForSensitiveSections = (req: Request, res: Response, next: NextFunction) => {
   if (ContentService.isAdminOnlySection(req.params.key as string)) {
     return requireAuth(req, res, () =>
-      requireRole(['super_admin', 'main_admin', 'admin', 'content_manager'])(req, res, () => {
+      requireRole([...STAFF_ROLES])(req, res, () => {
         const { applyNoCacheHeaders } = require('../../middleware/noCacheMiddleware');
         applyNoCacheHeaders(res);
         next();
@@ -37,34 +38,24 @@ router.get(
 );
 
 // Admin Routes
-router.put(
-  '/:key',
-  requireAuth,
-  requireRole(['super_admin', 'main_admin', 'admin', 'content_manager']),
-  updateSection,
-);
-router.post(
-  '/publish-all',
-  requireAuth,
-  requireRole(['super_admin', 'main_admin', 'admin', 'content_manager']),
-  publishAll,
-);
-router.post(
-  '/ai-generate',
-  requireAuth,
-  requireRole(['super_admin', 'main_admin', 'admin', 'content_manager']),
-  aiGenerateContent,
-);
+router.put('/:key', requireAuth, requireRole([...STAFF_ROLES]), updateSection);
+router.post('/publish-all', requireAuth, requireRole([...STAFF_ROLES]), publishAll);
+router.post('/ai-generate', requireAuth, requireRole([...STAFF_ROLES]), aiGenerateContent);
 
 import {
   analyzeShowcaseImage,
   refineShowcaseImage,
 } from '../../controllers/discovery/aiVisionController';
-router.post('/ai-vision-showcase', analyzeShowcaseImage);
+router.post(
+  '/ai-vision-showcase',
+  requireAuth,
+  requireRole([...STAFF_ROLES]),
+  analyzeShowcaseImage,
+);
 router.post(
   '/ai-vision-refine-showcase',
   requireAuth,
-  requireRole(['super_admin', 'main_admin', 'admin', 'content_manager']),
+  requireRole([...STAFF_ROLES]),
   refineShowcaseImage,
 );
 

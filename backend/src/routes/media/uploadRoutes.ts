@@ -7,6 +7,7 @@ import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
 import asyncHandler from '../../utils/asyncHandler';
 import { EXTERNAL_URLS } from '../../constants/externalUrls';
+import { STAFF_ROLES } from '../../config/adminConfig';
 
 const router = Router();
 
@@ -67,7 +68,7 @@ router.get(
     ]);
     if (adminOnlyFolders.has(folder)) {
       const userRole = req.user?.role || 'customer';
-      if (!['admin', 'super_admin', 'main_admin', 'owner', 'manager'].includes(userRole)) {
+      if (!STAFF_ROLES.includes(userRole as any)) {
         throw new ApiError(403, 'You are not authorized to upload to this folder');
       }
     }

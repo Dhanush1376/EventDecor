@@ -1,3 +1,4 @@
+import { ExternalLink, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
@@ -146,9 +147,10 @@ export function GalleryInspiration({ previewContent }) {
                       <span className="font-body text-white text-[10px] lg:text-sm transform translate-y-0 lg:translate-y-3.5 lg:group-hover:translate-y-0 transition-transform duration-700 font-semibold tracking-wide text-left">
                         {item.title}
                       </span>
-                      <span className="material-symbols-outlined text-white/90 text-[12px] lg:text-[16px] shrink-0 transform translate-y-0 lg:translate-y-3.5 lg:group-hover:translate-y-0 transition-transform duration-700 delay-75">
-                        open_in_new
-                      </span>
+                      <ExternalLink
+                        className="text-white/90 text-[12px] lg:text-[16px] shrink-0 transform translate-y-0 lg:translate-y-3.5 lg:group-hover:translate-y-0 transition-transform duration-700 delay-75"
+                        strokeWidth={1.5}
+                      />
                     </div>
                   </div>
                 </Link>
@@ -184,9 +186,10 @@ export function GalleryInspiration({ previewContent }) {
                 </h3>
                 <span className="font-label-sm text-[9px] uppercase tracking-[0.2em] font-bold flex items-center justify-center gap-1.5 whitespace-nowrap mt-1">
                   {galleryPreview?.ctaText || 'Explore More'}
-                  <span className="material-symbols-outlined text-[12px] group-hover:translate-x-1 transition-transform">
-                    arrow_forward
-                  </span>
+                  <ArrowRight
+                    className="text-[12px] group-hover:translate-x-1 transition-transform"
+                    strokeWidth={1.5}
+                  />
                 </span>
               </Link>
             </motion.div>

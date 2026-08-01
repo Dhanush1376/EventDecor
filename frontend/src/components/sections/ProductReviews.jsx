@@ -1,3 +1,16 @@
+import {
+  BadgeCheck,
+  FileEdit,
+  X,
+  MessageSquare,
+  Camera,
+  Plus,
+  Pencil,
+  Lock,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { OptimizedImage } from '../ui/OptimizedImage';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -86,7 +99,7 @@ function ReviewCard({ review, productId }) {
               <div className="flex items-center gap-1.5 mt-0.5">
                 {review.verified && (
                   <span className="inline-flex items-center gap-0.5 bg-green-50 text-green-700 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border border-green-100">
-                    <span className="material-symbols-outlined text-[9px]">verified</span>
+                    <BadgeCheck className="text-[9px]" strokeWidth={1.5} />
                     Verified Purchase
                   </span>
                 )}
@@ -287,7 +300,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
         <div className="flex items-center justify-between p-5 pt-8 sm:pt-5 border-b border-outline-variant/20 shrink-0 bg-surface-bright rounded-t-[24px] sm:rounded-t-lg">
           <div>
             <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[14px]">edit_note</span>
+              <FileEdit className="text-[14px]" strokeWidth={1.5} />
               {existingReview ? 'Edit Your Review' : 'Write a Review'}
             </h2>
             <p className="font-body text-[11px] text-on-surface mt-1 font-bold line-clamp-1">
@@ -298,7 +311,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
             onClick={onClose}
             className="w-8 h-8 rounded-lg hover:bg-surface-container-low flex items-center justify-center transition-all text-secondary"
           >
-            <span className="material-symbols-outlined text-[16px]">close</span>
+            <X className="text-[16px]" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -343,7 +356,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
             {/* Comment */}
             <div className="bg-surface-bright rounded-lg border border-outline-variant/40 shadow-xs p-5 space-y-3">
               <label className="text-[9px] uppercase tracking-widest text-secondary font-bold flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[14px]">comment</span>
+                <MessageSquare className="text-[14px]" strokeWidth={1.5} />
                 Your Experience
               </label>
               <textarea
@@ -361,7 +374,7 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
             {/* Photo Uploader */}
             <div className="bg-surface-bright rounded-lg border border-outline-variant/40 shadow-xs p-5 space-y-3">
               <label className="text-[9px] uppercase tracking-widest text-secondary font-bold flex items-center gap-1.5 mb-2">
-                <span className="material-symbols-outlined text-[14px]">photo_camera</span>
+                <Camera className="text-[14px]" strokeWidth={1.5} />
                 Add Photos (Max 5)
               </label>
               <div className="flex flex-wrap gap-2.5">
@@ -389,13 +402,13 @@ export function WriteReviewModal({ productId, productTitle, onClose, onSuccess, 
                       }}
                       className="absolute top-1 right-1 w-4 h-4 rounded bg-black/70 hover:bg-black text-white flex items-center justify-center cursor-pointer transition-all opacity-0 group-hover:opacity-100"
                     >
-                      <span className="material-symbols-outlined text-[10px]">close</span>
+                      <X className="text-[10px]" strokeWidth={1.5} />
                     </button>
                   </div>
                 ))}
                 {selectedFiles.length < 5 && (
                   <label className="w-14 h-14 rounded-lg border border-dashed border-outline-variant/50 hover:border-primary bg-surface-container-lowest hover:bg-primary/5 flex flex-col items-center justify-center cursor-pointer transition-all gap-0.5 text-secondary hover:text-primary flex-shrink-0">
-                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    <Plus className="text-[16px]" strokeWidth={1.5} />
                     <span className="text-[7px] font-bold uppercase tracking-wider">Add</span>
                     <input
                       type="file"
@@ -544,7 +557,7 @@ export function ProductReviews({ productId, productTitle }) {
           title="Write a Review"
           className={buttonClass}
         >
-          <span className="material-symbols-outlined text-[20px]">edit</span>
+          <Pencil className="text-[20px]" strokeWidth={1.5} />
         </motion.button>
       );
     }
@@ -566,7 +579,7 @@ export function ProductReviews({ productId, productTitle }) {
           title="Edit Your Review"
           className={buttonClass}
         >
-          <span className="material-symbols-outlined text-[20px]">edit</span>
+          <Pencil className="text-[20px]" strokeWidth={1.5} />
         </motion.button>
       );
     }
@@ -580,14 +593,14 @@ export function ProductReviews({ productId, productTitle }) {
           title="Write a Review"
           className={buttonClass}
         >
-          <span className="material-symbols-outlined text-[20px]">edit</span>
+          <Pencil className="text-[20px]" strokeWidth={1.5} />
         </motion.button>
       );
     }
 
     return (
       <div title="Purchase to review" className={disabledClass}>
-        <span className="material-symbols-outlined text-[18px]">lock</span>
+        <Lock className="text-[18px]" strokeWidth={1.5} />
       </div>
     );
   };
@@ -613,7 +626,7 @@ export function ProductReviews({ productId, productTitle }) {
                 title={`View all ${reviews.length} reviews`}
                 className="w-10 h-10 rounded-full flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 border border-black/5 text-[#8a7337] transition-all cursor-pointer shrink-0"
               >
-                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                <ArrowRight className="text-[20px]" strokeWidth={1.5} />
               </Link>
               {reviews.length > 1 && (
                 <div className="hidden sm:flex items-center gap-1.5 ml-2">
@@ -622,14 +635,14 @@ export function ProductReviews({ productId, productTitle }) {
                     className="w-8 h-8 rounded-full border border-black/15 flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition-all text-black/60 cursor-pointer"
                     aria-label="Scroll left"
                   >
-                    <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                    <ChevronLeft className="text-[16px]" strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={() => handleScroll('right')}
                     className="w-8 h-8 rounded-full border border-black/15 flex items-center justify-center hover:bg-neutral-50 active:scale-95 transition-all text-black/60 cursor-pointer"
                     aria-label="Scroll right"
                   >
-                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                    <ChevronRight className="text-[16px]" strokeWidth={1.5} />
                   </button>
                 </div>
               )}
@@ -771,7 +784,7 @@ export function ProductReviews({ productId, productTitle }) {
             className="font-label text-[10px] uppercase tracking-widest font-bold text-primary hover:text-primary-dark transition-colors inline-flex items-center gap-1.5"
           >
             See All Photos
-            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+            <ChevronRight className="text-[14px]" strokeWidth={1.5} />
           </Link>
         </div>
       )}

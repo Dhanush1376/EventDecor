@@ -1,3 +1,4 @@
+import { ArrowLeft, Palette, X } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
 import { ShareButton } from './ShareButton';
 import { m as motion, AnimatePresence } from 'framer-motion';
@@ -169,7 +170,7 @@ export function ProductGallery({ images = [], product }) {
           className="flex lg:hidden absolute top-4 left-4 z-20 items-center justify-center w-8 h-8 min-h-0 min-w-0 p-0 aspect-square rounded-full bg-[#fbfbf8]/90 backdrop-blur-xs shadow-lg border border-black/5 active:scale-90 transition-all text-black outline-none focus:outline-none"
           aria-label="Go back"
         >
-          <span className="material-symbols-outlined text-[16px] text-black">arrow_back</span>
+          <ArrowLeft className="text-[16px] text-black" strokeWidth={1.5} />
         </button>
 
         {/* Floating Action Buttons (Wishlist & Share) */}
@@ -218,7 +219,7 @@ export function ProductGallery({ images = [], product }) {
             className="absolute bottom-4 left-4 z-20 flex items-center justify-center w-8 h-8 min-h-0 min-w-0 p-0 aspect-square rounded-full bg-[#fbfbf8]/90 backdrop-blur-xs shadow-lg border border-black/5 active:scale-90 hover:scale-105 transition-all text-black hover:bg-white pointer-events-auto group"
             title="View Similar"
           >
-            <span className="material-symbols-outlined text-[16px]">style</span>
+            <Palette className="text-[16px]" strokeWidth={1.5} />
           </button>
         )}
 
@@ -378,7 +379,7 @@ export function ProductGallery({ images = [], product }) {
                       onClick={() => setIsSimilarOpen(false)}
                       className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center hover:bg-surface-container-high transition-colors"
                     >
-                      <span className="material-symbols-outlined text-[16px]">close</span>
+                      <X className="text-[16px]" strokeWidth={1.5} />
                     </button>
                   </div>
 

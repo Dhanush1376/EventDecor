@@ -1,3 +1,4 @@
+import { CloudUpload, FileText, LineChart, FileUp } from 'lucide-react';
 import React from 'react';
 import { m as motion } from 'framer-motion';
 
@@ -37,7 +38,7 @@ export function AiDesignStep({
               accept="image/*"
             />
             <div className="w-14 h-14 rounded-full bg-primary/5 text-primary flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
-              <span className="material-symbols-outlined text-[24px]">cloud_upload</span>
+              <CloudUpload className="text-[24px]" strokeWidth={1.5} />
             </div>
             <span className="font-body text-xs text-black font-bold block">
               Upload Pinterest Moodboard
@@ -47,7 +48,7 @@ export function AiDesignStep({
             </span>
             {uploadedFileName && (
               <div className="mt-4 px-3 py-1.5 bg-stone-100 rounded-full font-mono text-[9px] text-stone-700 flex items-center gap-1.5 max-w-[200px] truncate">
-                <span className="material-symbols-outlined text-[12px]">description</span>
+                <FileText className="text-[12px]" strokeWidth={1.5} />
                 {uploadedFileName}
               </div>
             )}
@@ -70,9 +71,7 @@ export function AiDesignStep({
               <div className="space-y-4 text-center py-6">
                 <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
                   <div className="skeleton-box inline-block w-8 h-8 rounded-md" />
-                  <span className="material-symbols-outlined text-[20px] text-primary animate-pulse">
-                    insights
-                  </span>
+                  <LineChart className="text-[20px] text-primary animate-pulse" strokeWidth={1.5} />
                 </div>
                 <div className="space-y-1.5">
                   <span className="font-label text-[9px] uppercase tracking-[0.25em] text-primary font-bold block animate-pulse">
@@ -166,9 +165,7 @@ export function AiDesignStep({
               </div>
             ) : (
               <div className="text-center py-8 space-y-3">
-                <span className="material-symbols-outlined text-[36px] text-black/10">
-                  upload_file
-                </span>
+                <FileUp className="text-[36px] text-black/10" strokeWidth={1.5} />
                 <p className="font-body text-xs text-black/40 max-w-xs mx-auto">
                   Upload an inspiration visual above to launch the catalog comparator and
                   auto-populate customizations.

@@ -1,3 +1,4 @@
+import { X, SearchX, ChevronLeft, ChevronRight, ShoppingBag, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
@@ -157,7 +158,7 @@ export function GallerySlideshow({
                 onClick={onClose}
                 className="w-10 h-10 min-h-0 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black/10 transition-colors shrink-0"
               >
-                <span className="material-symbols-outlined text-[20px]">close</span>
+                <X className="text-[20px]" strokeWidth={1.5} />
               </button>
             </div>
 
@@ -165,9 +166,7 @@ export function GallerySlideshow({
             <div className="relative w-full flex-1 flex items-center justify-center overflow-hidden min-h-0">
               {items.length === 0 ? (
                 <div className="text-center py-20 px-6 max-w-md">
-                  <span className="material-symbols-outlined text-[48px] text-[#C4A87C] mb-4 block">
-                    search_off
-                  </span>
+                  <SearchX className="text-[48px] text-[#C4A87C] mb-4 block" strokeWidth={1.5} />
                   <h3 className="font-headline-sm text-black mb-2 font-normal">
                     No designs found.
                   </h3>
@@ -242,9 +241,10 @@ export function GallerySlideshow({
                     }}
                     className="w-10 h-10 min-h-0 rounded-full bg-white/90 border border-black/5 text-black flex items-center justify-center hover:bg-white shadow-md transition-all pointer-events-auto backdrop-blur-md group"
                   >
-                    <span className="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">
-                      arrow_back_ios_new
-                    </span>
+                    <ChevronLeft
+                      className="text-[18px] group-hover:-translate-x-0.5 transition-transform"
+                      strokeWidth={1.5}
+                    />
                   </button>
                   <button
                     onClick={(e) => {
@@ -253,9 +253,10 @@ export function GallerySlideshow({
                     }}
                     className="w-10 h-10 min-h-0 rounded-full bg-white/90 border border-black/5 text-black flex items-center justify-center hover:bg-white shadow-md transition-all pointer-events-auto backdrop-blur-md group"
                   >
-                    <span className="material-symbols-outlined text-[18px] group-hover:translate-x-0.5 transition-transform">
-                      arrow_forward_ios
-                    </span>
+                    <ChevronRight
+                      className="text-[18px] group-hover:translate-x-0.5 transition-transform"
+                      strokeWidth={1.5}
+                    />
                   </button>
                 </div>
               )}
@@ -293,7 +294,7 @@ export function GallerySlideshow({
                         onClick={() => addItem(currentItem, 1, currentItem.variants?.[0] || null)}
                         className="h-8 lg:h-9 px-4 lg:px-5 rounded-full bg-black text-white text-[9px] lg:text-[9.5px] font-bold tracking-widest uppercase hover:bg-black/80 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
                       >
-                        <span className="material-symbols-outlined text-[14px]">local_mall</span>
+                        <ShoppingBag className="text-[14px]" strokeWidth={1.5} />
                         Shop
                       </button>
                     )}
@@ -304,9 +305,10 @@ export function GallerySlideshow({
                       className="h-8 lg:h-9 px-4 lg:px-5 rounded-full border border-black/10 bg-white text-black text-[9px] lg:text-[9.5px] font-bold tracking-[0.15em] uppercase hover:border-primary transition-all shadow-sm group flex items-center gap-1.5 active:scale-95"
                     >
                       Details
-                      <span className="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">
-                        east
-                      </span>
+                      <ArrowRight
+                        className="text-[14px] group-hover:translate-x-0.5 transition-transform"
+                        strokeWidth={1.5}
+                      />
                     </Link>
                   </div>
                 </div>

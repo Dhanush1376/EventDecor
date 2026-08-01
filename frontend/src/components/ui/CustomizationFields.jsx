@@ -1,3 +1,4 @@
+import { Plus, CloudUpload, X, Image, CheckCircle2 } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { OptimizedImage } from './OptimizedImage';
 import { useState, useRef } from 'react';
@@ -70,7 +71,7 @@ export function ColorPickerField({ colors, onChange, label }) {
           onClick={() => setShowPicker(!showPicker)}
           className="w-8 h-8 rounded-full border-2 border-dashed border-black/20 flex items-center justify-center hover:border-[var(--color-gold)] transition-colors"
         >
-          <span className="material-symbols-outlined text-[14px] text-black/40">add</span>
+          <Plus className="text-[14px] text-black/40" strokeWidth={1.5} />
         </button>
       </div>
       <AnimatePresence>
@@ -216,9 +217,10 @@ export function FileUploadZone({
         />
         {uploading ? (
           <div className="space-y-2">
-            <span className="material-symbols-outlined text-[24px] text-[var(--color-gold)] animate-pulse">
-              cloud_upload
-            </span>
+            <CloudUpload
+              className="text-[24px] text-[var(--color-gold)] animate-pulse"
+              strokeWidth={1.5}
+            />
             <p className="text-[11px] font-bold text-[var(--color-gold)]">Uploading...</p>
             <div className="w-full bg-black/5 h-1.5 rounded-full overflow-hidden max-w-[200px] mx-auto">
               <div
@@ -229,9 +231,7 @@ export function FileUploadZone({
           </div>
         ) : (
           <>
-            <span className="material-symbols-outlined text-[28px] text-black/20 mb-1 block">
-              cloud_upload
-            </span>
+            <CloudUpload className="text-[28px] text-black/20 mb-1 block" strokeWidth={1.5} />
             <p className="text-[12px] font-bold text-black/60">
               Drop files here or <span className="text-[var(--color-gold)] underline">browse</span>
             </p>
@@ -283,7 +283,7 @@ export function FileUploadZone({
                 }}
                 className="w-6 h-6 rounded-full bg-red-50 text-red-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 shrink-0"
               >
-                <span className="material-symbols-outlined text-[12px]">close</span>
+                <X className="text-[12px]" strokeWidth={1.5} />
               </button>
             </motion.div>
           ))}
@@ -318,7 +318,7 @@ export function ProductSummaryCard({ product, onClear }) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="material-symbols-outlined text-[24px] text-black/20">image</span>
+            <Image className="text-[24px] text-black/20" strokeWidth={1.5} />
           </div>
         )}
       </div>
@@ -360,7 +360,7 @@ export function ProductSummaryCard({ product, onClear }) {
           className="w-8 h-8 rounded-full bg-black/5 hover:bg-red-50 text-black/40 hover:text-red-500 flex items-center justify-center transition-all shrink-0"
           title="Remove linked product"
         >
-          <span className="material-symbols-outlined text-[16px]">close</span>
+          <X className="text-[16px]" strokeWidth={1.5} />
         </button>
       )}
     </motion.div>
@@ -570,9 +570,10 @@ export function ProductCustomizationSection({ customization, onChange, _product 
                   {addon.label}
                 </span>
                 {selected && (
-                  <span className="material-symbols-outlined text-[14px] text-[var(--color-gold)] ml-auto">
-                    check_circle
-                  </span>
+                  <CheckCircle2
+                    className="text-[14px] text-[var(--color-gold)] ml-auto"
+                    strokeWidth={1.5}
+                  />
                 )}
               </button>
             );

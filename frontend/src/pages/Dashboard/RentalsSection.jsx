@@ -1,3 +1,4 @@
+import { PackageCheck, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -31,7 +32,7 @@ export function RentalsSection() {
         <>
           <div className="pb-4 mb-4 border-b border-outline-variant/20">
             <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[12px]">inventory_2</span>
+              <PackageCheck className="text-[12px]" strokeWidth={1.5} />
               My Rentals
             </h2>
           </div>
@@ -70,9 +71,7 @@ export function RentalsSection() {
                   className="absolute inset-0 rounded-full border border-[#8c7335]/20 animate-ping"
                   style={{ animationDuration: '3s' }}
                 />
-                <span className="material-symbols-outlined text-[24px] relative z-10">
-                  inventory_2
-                </span>
+                <PackageCheck className="text-[24px] relative z-10" strokeWidth={1.5} />
               </motion.div>
 
               <h3 className="font-display font-medium text-[18px] lg:text-[20px] text-black mb-2">
@@ -88,9 +87,10 @@ export function RentalsSection() {
                   className="group flex items-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70"
                 >
                   Explore Rentals
-                  <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">
-                    arrow_forward
-                  </span>
+                  <ArrowRight
+                    className="text-[16px] transition-transform group-hover:translate-x-1"
+                    strokeWidth={1.5}
+                  />
                 </Link>
               </div>
             </div>

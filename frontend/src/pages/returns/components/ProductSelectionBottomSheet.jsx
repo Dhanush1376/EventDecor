@@ -1,3 +1,4 @@
+import { X, Search, SearchX, CheckCircle2 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../../../components/shared/ProductCard';
@@ -75,16 +76,17 @@ export function ProductSelectionBottomSheet({ isOpen, onClose, onSelect, selecte
                 onClick={onClose}
                 className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-secondary hover:text-on-surface transition-colors border-0"
               >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <X className="text-[18px]" strokeWidth={1.5} />
               </button>
             </div>
 
             {/* Search */}
             <div className="p-4 border-b border-outline-variant/20 bg-surface-container-lowest sticky top-0 z-10">
               <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">
-                  search
-                </span>
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]"
+                  strokeWidth={1.5}
+                />
                 <input
                   type="text"
                   placeholder="Search products, categories..."
@@ -141,9 +143,7 @@ export function ProductSelectionBottomSheet({ isOpen, onClose, onSelect, selecte
                 </div>
               ) : (
                 <div className="text-center py-12 text-secondary">
-                  <span className="material-symbols-outlined text-4xl mb-3 opacity-50">
-                    search_off
-                  </span>
+                  <SearchX className="text-4xl mb-3 opacity-50" strokeWidth={1.5} />
                   <p>No products found matching "{searchQuery}"</p>
                 </div>
               )}
@@ -163,7 +163,7 @@ export function ProductSelectionBottomSheet({ isOpen, onClose, onSelect, selecte
                   className="px-8 py-2.5 rounded-[32px] text-xs font-bold uppercase tracking-widest bg-black text-white hover:bg-gray-900 transition-colors shadow-lg flex items-center gap-2 border-0 cursor-pointer"
                 >
                   Confirm Selection
-                  <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                  <CheckCircle2 className="text-[16px]" strokeWidth={1.5} />
                 </button>
               )}
             </div>

@@ -1,3 +1,4 @@
+import { Star, Search, SearchX, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import {
@@ -110,7 +111,7 @@ export function SearchSuggestionsList({
             </div>
           )}
           {discountText && (
-            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10 whitespace-nowrap">
+            <span className="absolute -top-1.5 -right-1.5 bg-orange-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10 whitespace-nowrap">
               {discountText}
             </span>
           )}
@@ -130,12 +131,7 @@ export function SearchSuggestionsList({
             </p>
             {item.rating > 0 && !isMobile && (
               <div className="flex items-center gap-0.5 ml-1">
-                <span
-                  className="material-symbols-outlined text-[#f59e0b] text-[12px] fill-current"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  star
-                </span>
+                <Star className="text-[#f59e0b] text-[12px] fill-current" strokeWidth={1.5} />
                 <span className="text-[11px] font-bold text-stone-600">{item.rating}</span>
               </div>
             )}
@@ -290,7 +286,7 @@ export function SearchSuggestionsList({
               : 'w-full flex items-center justify-center gap-2 px-6 lg:px-8 py-4 text-primary font-bold text-[12px] uppercase tracking-widest hover:bg-primary/5 transition-colors border-t border-stone-200/50 cursor-pointer'
           }`}
         >
-          {!isMobile && <span className="material-symbols-outlined text-[18px]">search</span>}
+          {!isMobile && <Search className="text-[18px]" strokeWidth={1.5} />}
           View all results for "{query}"
         </button>
       )}
@@ -299,9 +295,7 @@ export function SearchSuggestionsList({
       {showNoResults && (
         <div className={isMobile ? 'py-12 text-center px-6' : 'py-16 text-center space-y-4'}>
           <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-2">
-            <span className="material-symbols-outlined text-[32px] text-stone-300 block">
-              search_off
-            </span>
+            <SearchX className="text-[32px] text-stone-300 block" strokeWidth={1.5} />
           </div>
           <p className="text-[18px] text-stone-800 font-bold font-display">
             No exact matches found for "{query}"
@@ -319,7 +313,7 @@ export function SearchSuggestionsList({
               onClick={() => setQuery('')}
               className="inline-flex items-center gap-2 bg-stone-100 text-stone-800 hover:bg-stone-200 px-6 py-2.5 rounded-full font-label text-[11px] uppercase tracking-widest transition-colors font-bold"
             >
-              <span className="material-symbols-outlined text-[16px]">clear</span>
+              <X className="text-[16px]" strokeWidth={1.5} />
               Clear Search
             </button>
           )}

@@ -1,3 +1,4 @@
+import { SlidersHorizontal, Bell, Check } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
@@ -66,7 +67,7 @@ export function SettingsSection() {
       <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs font-body mb-4">
         <div className="pb-4 mb-5 border-b border-outline-variant/20">
           <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[14px]">tune</span>
+            <SlidersHorizontal className="text-[14px]" strokeWidth={1.5} />
             Preferences & Settings
           </h2>
         </div>
@@ -74,7 +75,7 @@ export function SettingsSection() {
         <form onSubmit={handlePreferencesSave} className="space-y-5">
           <div className="space-y-4">
             <h3 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 mb-5">
-              <span className="material-symbols-outlined text-[12px]">notifications</span>
+              <Bell className="text-[12px]" strokeWidth={1.5} />
               Notification Subscriptions
             </h3>
 
@@ -88,9 +89,10 @@ export function SettingsSection() {
                     onChange={(e) => setPrefsForm({ ...prefsForm, email: e.target.checked })}
                     className="peer w-5 h-5 appearance-none rounded border-2 border-outline-variant checked:border-primary checked:bg-primary transition-colors cursor-pointer"
                   />
-                  <span className="material-symbols-outlined text-[16px] text-white absolute pointer-events-none opacity-0 peer-checked:opacity-100 font-bold">
-                    check
-                  </span>
+                  <Check
+                    className="text-[16px] text-white absolute pointer-events-none opacity-0 peer-checked:opacity-100 font-bold"
+                    strokeWidth={1.5}
+                  />
                 </div>
                 <div>
                   <span className="font-bold text-on-surface group-hover:text-primary transition-colors text-xs block mb-1">
@@ -112,9 +114,10 @@ export function SettingsSection() {
                     onChange={(e) => setPrefsForm({ ...prefsForm, marketing: e.target.checked })}
                     className="peer w-5 h-5 appearance-none rounded border-2 border-outline-variant checked:border-primary checked:bg-primary transition-colors cursor-pointer"
                   />
-                  <span className="material-symbols-outlined text-[16px] text-white absolute pointer-events-none opacity-0 peer-checked:opacity-100 font-bold">
-                    check
-                  </span>
+                  <Check
+                    className="text-[16px] text-white absolute pointer-events-none opacity-0 peer-checked:opacity-100 font-bold"
+                    strokeWidth={1.5}
+                  />
                 </div>
                 <div>
                   <span className="font-bold text-on-surface group-hover:text-primary transition-colors text-xs block mb-1">
@@ -139,7 +142,7 @@ export function SettingsSection() {
                 <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-[16px]">tune</span>
+                  <SlidersHorizontal className="text-[16px]" strokeWidth={1.5} />
                   <span>SAVE PREFERENCES</span>
                 </>
               )}

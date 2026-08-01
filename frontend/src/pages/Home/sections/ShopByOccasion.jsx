@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
 import { SectionHeader } from '../../../components/shared/SectionHeader';
@@ -209,9 +210,10 @@ export function ShopByOccasion({ previewContent }) {
 
                       {/* Simple minimal arrow, no circles or borders */}
                       <div className="flex-shrink-0 text-white flex items-center justify-center transition-transform duration-500 group-hover:translate-x-2">
-                        <span className="material-symbols-outlined text-[28px] sm:text-[32px] font-light">
-                          arrow_right_alt
-                        </span>
+                        <ArrowRight
+                          className="text-[28px] sm:text-[32px] font-light"
+                          strokeWidth={1.5}
+                        />
                       </div>
                     </div>
                   </div>
@@ -266,9 +268,7 @@ export function ShopByOccasion({ previewContent }) {
                 </div>
 
                 <div className="flex-shrink-0 text-white flex items-center justify-center transition-transform duration-500 group-hover:translate-x-3 relative z-10">
-                  <span className="material-symbols-outlined text-[36px] xl:text-[44px] font-light">
-                    arrow_right_alt
-                  </span>
+                  <ArrowRight className="text-[36px] xl:text-[44px] font-light" strokeWidth={1.5} />
                 </div>
               </div>
             </div>

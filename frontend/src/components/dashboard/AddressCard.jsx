@@ -1,3 +1,4 @@
+import { CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
 
@@ -44,7 +45,7 @@ export function AddressCard({ addr }) {
 
         {addr.isDefault ? (
           <span className="text-[9px] text-primary font-bold bg-primary/5 px-2 py-0.5 border border-primary/20 rounded-sm flex items-center gap-1 uppercase tracking-widest">
-            <span className="material-symbols-outlined text-[12px]">check_circle</span>
+            <CheckCircle2 className="text-[12px]" strokeWidth={1.5} />
             Default
           </span>
         ) : (

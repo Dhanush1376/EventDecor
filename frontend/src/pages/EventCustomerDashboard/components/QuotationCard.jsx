@@ -1,3 +1,4 @@
+import { AlertTriangle } from 'lucide-react';
 export function QuotationCard({
   selectedBooking,
   handleApproveQuote,
@@ -95,7 +96,7 @@ export function QuotationCard({
         {selectedBooking.pricing?.pendingBalance > 0 && (
           <div className="bg-amber-50/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 border border-amber-200/50 mt-4">
             <span className="text-[9px] uppercase tracking-widest text-amber-800 font-bold flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[14px]">warning</span>
+              <AlertTriangle className="text-[14px]" strokeWidth={1.5} />
               Payment Pending
             </span>
             <button

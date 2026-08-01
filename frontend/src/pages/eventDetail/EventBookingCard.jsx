@@ -1,3 +1,4 @@
+import { Calendar, Truck, Ban, BadgeCheck, ChevronRight } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
@@ -47,7 +48,7 @@ export function EventBookingCard({
       {/* 2. Premium Reservation & Saving Card */}
       <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border border-black/10 p-6 lg:p-8 space-y-6 shadow-[0_15px_40px_rgba(115,92,0,0.02)]">
         <div className="flex items-center gap-2 pb-3 border-b border-black/5">
-          <span className="material-symbols-outlined text-black text-[18px]">calendar_today</span>
+          <Calendar className="text-black text-[18px]" strokeWidth={1.5} />
           <span className="font-label text-[10px] uppercase tracking-widest text-black font-bold">
             Reservation Crate
           </span>
@@ -73,22 +74,18 @@ export function EventBookingCard({
 
           <div className="bg-stone-50 p-4 rounded-2xl border border-black/10 space-y-2.5">
             <div className="flex items-center gap-2 text-[11px] font-semibold text-stone-700">
-              <span className="material-symbols-outlined text-black text-[16px]">
-                local_shipping
-              </span>
+              <Truck className="text-black text-[16px]" strokeWidth={1.5} />
               <span>Free Setup, Logistics & Teardown</span>
             </div>
             <div className="flex items-center gap-2 text-[11px] font-semibold text-stone-700">
               {event?.isNonRefundable || event?.returnSettings?.isReturnable === false ? (
                 <>
-                  <span className="material-symbols-outlined text-[#d97706] text-[16px]">
-                    block
-                  </span>
+                  <Ban className="text-[#d97706] text-[16px]" strokeWidth={1.5} />
                   <span className="text-[#d97706]">Non-refundable Deposit</span>
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-black text-[16px]">verified</span>
+                  <BadgeCheck className="text-black text-[16px]" strokeWidth={1.5} />
                   <span>
                     100% Refundable Deposit up to {event?.returnSettings?.returnWindowDays || 14}{' '}
                     days prior
@@ -105,7 +102,7 @@ export function EventBookingCard({
               className="flex-1 bg-black text-white hover:bg-stone-900 hover:text-white py-3 px-6 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>Book</span>
-              <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+              <ChevronRight className="text-[14px]" strokeWidth={1.5} />
             </button>
             <button
               onClick={() => toggleItem({ ...event, image: event.image })}

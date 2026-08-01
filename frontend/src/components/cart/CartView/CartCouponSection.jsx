@@ -1,3 +1,4 @@
+import { BadgeCheck, ChevronRight } from 'lucide-react';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -44,7 +45,7 @@ export const CartCouponSection = ({
             className="bg-green-50 border border-green-200 rounded p-3 flex items-center justify-between"
           >
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-green-600 text-[18px]">verified</span>
+              <BadgeCheck className="text-green-600 text-[18px]" strokeWidth={1.5} />
               <div>
                 <span className="text-xs font-bold text-green-800 uppercase block">
                   {appliedCoupon.code} APPLIED
@@ -86,9 +87,7 @@ export const CartCouponSection = ({
                       : 'Enter code manually to redeem discounts'}
                 </span>
               </div>
-              <span className="material-symbols-outlined text-secondary text-[16px]">
-                chevron_right
-              </span>
+              <ChevronRight className="text-secondary text-[16px]" strokeWidth={1.5} />
             </div>
 
             {/* Manual input form */}

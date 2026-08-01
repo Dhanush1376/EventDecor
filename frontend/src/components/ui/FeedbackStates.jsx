@@ -1,3 +1,4 @@
+import { ArrowRight, AlertCircle } from 'lucide-react';
 import { m as motion } from 'framer-motion';
 import { Button } from './Button';
 export function EmptyState({
@@ -34,9 +35,10 @@ export function EmptyState({
           className="relative z-10 group flex items-center justify-center gap-2 text-[10px] lg:text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a1a1a] pb-2 border-b-[1.5px] border-[#1a1a1a] transition-all hover:opacity-70 cursor-pointer outline-none"
         >
           {actionLabel}
-          <span className="material-symbols-outlined text-[16px] transition-transform group-hover:translate-x-1">
-            arrow_forward
-          </span>
+          <ArrowRight
+            className="text-[16px] transition-transform group-hover:translate-x-1"
+            strokeWidth={1.5}
+          />
         </button>
       )}
     </motion.div>
@@ -57,7 +59,7 @@ export function ErrorState({
     >
       <div className="relative mb-8">
         <div className="w-24 h-24 rounded-full bg-rose-50/50 border border-rose-100/50 flex items-center justify-center text-rose-500/80 shadow-sm transition-transform duration-500 hover:scale-105">
-          <span className="material-symbols-outlined text-[42px] font-light">error_outline</span>
+          <AlertCircle className="text-[42px] font-light" strokeWidth={1.5} />
         </div>
         <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-rose-500/10 rounded-full blur-xl animate-pulse" />
       </div>

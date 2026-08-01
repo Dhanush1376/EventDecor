@@ -1,3 +1,4 @@
+import { Wrench, Mail } from 'lucide-react';
 import React from 'react';
 import { m } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -58,7 +59,7 @@ export function MaintenanceScreen() {
               transition={{ repeat: Infinity, duration: 8, ease: 'linear' }}
               className="absolute inset-0 rounded-full border-2 border-dashed border-primary/30"
             />
-            <span className="material-symbols-outlined text-[48px] text-primary">build</span>
+            <Wrench className="text-[48px] text-primary" strokeWidth={1.5} />
           </div>
         </m.div>
 
@@ -101,7 +102,7 @@ export function MaintenanceScreen() {
               href={`mailto:${email}`}
               className="flex items-center gap-2 px-6 py-3 rounded-full bg-surface-variant hover:bg-surface-variant-hover text-on-surface transition-colors duration-200"
             >
-              <span className="material-symbols-outlined text-[20px] text-primary">mail</span>
+              <Mail className="text-[20px] text-primary" strokeWidth={1.5} />
               <span>Email Us</span>
             </a>
 

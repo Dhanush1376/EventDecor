@@ -1,3 +1,4 @@
+import { Map, X, Search, MapPin, Store } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
@@ -454,7 +455,7 @@ export function LocationSelectorModal({
             {!inline && (
               <div className="bg-[#FAF6F0] px-6 py-5 border-b border-black/5 flex items-center justify-between relative">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-[24px]">map</span>
+                  <Map className="text-primary text-[24px]" strokeWidth={1.5} />
                   <div>
                     <h3 className="font-display text-lg text-black font-semibold">
                       Select Celebration Venue
@@ -469,7 +470,7 @@ export function LocationSelectorModal({
                   onClick={onClose}
                   className="w-9 h-9 min-h-0 rounded-full bg-white hover:bg-red-50 text-stone-500 hover:text-red-500 border border-black/5 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="text-[18px]" strokeWidth={1.5} />
                 </button>
               </div>
             )}
@@ -478,9 +479,10 @@ export function LocationSelectorModal({
             <div className="p-6 overflow-y-auto space-y-4 flex-1 flex flex-col min-h-[400px]">
               {/* Autocomplete Search Bar */}
               <div className="relative z-30 w-full">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-black/40 text-[18px]">
-                  search
-                </span>
+                <Search
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40 text-[18px]"
+                  strokeWidth={1.5}
+                />
                 <input
                   type="text"
                   placeholder="Search traditional venues, halls, temples..."
@@ -497,7 +499,7 @@ export function LocationSelectorModal({
                     }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 min-h-0 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-700"
                   >
-                    <span className="material-symbols-outlined text-[14px]">close</span>
+                    <X className="text-[14px]" strokeWidth={1.5} />
                   </button>
                 )}
 
@@ -523,9 +525,10 @@ export function LocationSelectorModal({
                           onClick={() => handleSelectSuggestion(item)}
                           className="w-full text-left px-5 py-3 hover:bg-stone-50 text-xs text-stone-700 leading-relaxed font-medium transition-colors flex items-start gap-2.5"
                         >
-                          <span className="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">
-                            location_on
-                          </span>
+                          <MapPin
+                            className="text-primary text-[16px] shrink-0 mt-0.5"
+                            strokeWidth={1.5}
+                          />
                           <span>{item.displayName}</span>
                         </button>
                       ))}
@@ -561,9 +564,7 @@ export function LocationSelectorModal({
                       Selected Destination Blueprint
                     </span>
                     <h4 className="text-sm font-semibold text-black leading-tight flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-primary text-[18px]">
-                        storefront
-                      </span>
+                      <Store className="text-primary text-[18px]" strokeWidth={1.5} />
                       {selectedLocation.name}
                     </h4>
                     <p className="text-xs text-stone-600 font-light leading-relaxed max-w-md">

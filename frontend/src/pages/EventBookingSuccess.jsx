@@ -1,3 +1,4 @@
+import { AlertCircle, CheckCircle2, Receipt, ShieldCheck } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
@@ -83,7 +84,7 @@ export function EventBookingSuccess() {
     return (
       <div className="min-h-screen bg-[#fcfbf9] flex items-center justify-center pt-24 font-body">
         <div className="text-center space-y-4">
-          <span className="material-symbols-outlined text-6xl text-red-400">error</span>
+          <AlertCircle className="text-6xl text-red-400" strokeWidth={1.5} />
           <h2 className="font-display text-2xl text-black">Booking Not Found</h2>
           <p className="text-black/50 text-sm max-w-sm mx-auto">
             {error || "We couldn't locate your booking confirmation."}
@@ -128,9 +129,7 @@ export function EventBookingSuccess() {
           {/* Header */}
           <div className="text-center space-y-4 mb-10 pb-10 border-b border-black/5">
             <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="material-symbols-outlined text-[40px] text-green-600">
-                check_circle
-              </span>
+              <CheckCircle2 className="text-[40px] text-green-600" strokeWidth={1.5} />
             </div>
             <span className="font-label text-[10px] lg:text-[11px] uppercase tracking-[0.4em] text-primary font-bold block">
               Reservation Confirmed
@@ -147,7 +146,7 @@ export function EventBookingSuccess() {
           {/* Booking Info Box */}
           <div className="bg-[#FAF9F6] rounded-[24px] p-6 mb-8 border border-[#C4A87C]/20">
             <h3 className="font-display text-lg text-black font-bold mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">receipt_long</span>
+              <Receipt className="text-primary" strokeWidth={1.5} />
               Booking Details
             </h3>
             <div className="space-y-4 text-sm">
@@ -183,9 +182,7 @@ export function EventBookingSuccess() {
           </div>
 
           <div className="text-center space-y-2 mb-10">
-            <span className="material-symbols-outlined text-primary text-[32px] opacity-20">
-              verified_user
-            </span>
+            <ShieldCheck className="text-primary text-[32px] opacity-20" strokeWidth={1.5} />
             <p className="font-body text-xs text-black/40">
               Payment securely processed via Razorpay.
             </p>

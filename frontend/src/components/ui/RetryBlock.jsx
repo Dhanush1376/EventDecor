@@ -1,3 +1,4 @@
+import { CloudOff, RefreshCw } from 'lucide-react';
 import { Component } from 'react';
 
 /**
@@ -35,7 +36,7 @@ export class RetryBlock extends Component {
       return (
         <div className="flex flex-col items-center justify-center p-8 text-center bg-surface-container-low rounded-2xl border border-dashed border-outline-variant/30 my-4">
           <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center mb-4">
-            <span className="material-symbols-outlined text-rose-500">cloud_off</span>
+            <CloudOff className="text-rose-500" strokeWidth={1.5} />
           </div>
           <h3 className="font-headline-sm text-on-surface mb-2">
             {this.props.title || 'Failed to load content'}
@@ -45,7 +46,7 @@ export class RetryBlock extends Component {
               'There was a temporary issue loading this section. Please try again.'}
           </p>
           <button onClick={this.handleRetry} className="btn-minimal px-6 py-2">
-            <span className="material-symbols-outlined text-[16px]">refresh</span>
+            <RefreshCw className="text-[16px]" strokeWidth={1.5} />
             Retry
           </button>
         </div>

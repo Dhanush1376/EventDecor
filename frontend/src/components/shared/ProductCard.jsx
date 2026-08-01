@@ -1,3 +1,4 @@
+import { CalendarCheck, Calendar, Check } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
@@ -380,9 +381,10 @@ export const ProductCard = React.memo(function ProductCard({
               <>
                 {canRent && resolvedCartType === 'rental' && (
                   <div className="relative z-[40] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-[#8c7335] text-white rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
-                    <span className="material-symbols-outlined text-[10px] lg:text-[12px] leading-none mb-[1px]">
-                      event_available
-                    </span>
+                    <CalendarCheck
+                      className="text-[10px] lg:text-[12px] leading-none mb-[1px]"
+                      strokeWidth={1.5}
+                    />
                     <span className="leading-none text-[6px] lg:text-[8px] tracking-tight">
                       RENT
                     </span>
@@ -489,7 +491,7 @@ export const ProductCard = React.memo(function ProductCard({
                     }}
                     className="w-full py-3 bg-[#e0d6b8] hover:bg-white text-[#1a1c1a] rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
                   >
-                    <span className="material-symbols-outlined text-[14px]">event</span>
+                    <Calendar className="text-[14px]" strokeWidth={1.5} />
                     Book Setup
                   </button>
                   <button
@@ -668,7 +670,7 @@ export const ProductCard = React.memo(function ProductCard({
         {selectionMode && isSelected && (
           <div className="absolute inset-0 bg-black/5 ring-4 ring-inset ring-black rounded-2xl z-30 pointer-events-none flex items-center justify-center transition-all">
             <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center shadow-lg animate-scale-in">
-              <span className="material-symbols-outlined text-[24px]">check</span>
+              <Check className="text-[24px]" strokeWidth={1.5} />
             </div>
           </div>
         )}

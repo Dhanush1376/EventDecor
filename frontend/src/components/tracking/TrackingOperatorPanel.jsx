@@ -1,3 +1,4 @@
+import { ShieldCheck } from 'lucide-react';
 import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 
@@ -82,9 +83,7 @@ export function TrackingOperatorPanel({
               <div className="space-y-4">
                 <div className="bg-green-50 border border-green-200 rounded-xl p-3.5 flex items-center justify-between text-green-700">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm font-bold">
-                      verified_user
-                    </span>
+                    <ShieldCheck className="text-sm font-bold" strokeWidth={1.5} />
                     <span className="text-[10px] font-bold uppercase tracking-wider">
                       Logistics Operator Session Authorized
                     </span>

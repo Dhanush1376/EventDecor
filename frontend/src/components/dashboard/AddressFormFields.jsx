@@ -1,3 +1,4 @@
+import { User, Home } from 'lucide-react';
 import React from 'react';
 
 export function AddressFormFields({ addressFormData, setAddressFormData }) {
@@ -7,7 +8,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
       {/* Contact Information Section */}
       <div className="py-5 border-b border-outline-variant/20">
         <h4 className="text-[9px] font-bold uppercase tracking-widest text-secondary mb-5 flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[12px]">person</span>
+          <User className="text-[12px]" strokeWidth={1.5} />
           Contact Details
         </h4>
         <div className="flex flex-col gap-5">
@@ -95,7 +96,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
       {/* Address Details Section */}
       <div className="py-5">
         <h4 className="text-[9px] font-bold uppercase tracking-widest text-secondary mb-5 flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[12px]">home</span>
+          <Home className="text-[12px]" strokeWidth={1.5} />
           Address Information
         </h4>
         <div className="flex flex-col gap-5">

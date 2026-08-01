@@ -1,3 +1,4 @@
+import { Lock, CreditCard } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -126,7 +127,7 @@ export function QuotationEstimateCard({ selectedOrder, handleQuotationDecision }
                   }
                   className="w-full bg-[var(--color-gold)] hover:bg-black text-white py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer text-center shadow-md animate-pulse flex items-center justify-center gap-2"
                 >
-                  <span className="material-symbols-outlined text-[14px]">lock</span>
+                  <Lock className="text-[14px]" strokeWidth={1.5} />
                   Proceed to Secure Checkout
                 </button>
               </div>
@@ -134,9 +135,7 @@ export function QuotationEstimateCard({ selectedOrder, handleQuotationDecision }
         </div>
       ) : (
         <div className="bg-[var(--color-surface-ivory)] p-4 rounded-2xl border border-black/5 text-center py-6">
-          <span className="material-symbols-outlined text-[24px] text-black/20 block mb-1">
-            payments
-          </span>
+          <CreditCard className="text-[24px] text-black/20 block mb-1" strokeWidth={1.5} />
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#685C57]">
             Preparing Quotation
           </span>

@@ -1,3 +1,4 @@
+import { ImageOff } from 'lucide-react';
 /* eslint-disable */
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import {
@@ -151,7 +152,7 @@ function BaseOptimizedImage({
       {/* Skeleton fallback if the image errored */}
       {hasError && (
         <div className="absolute inset-0 skeleton-box rounded-[inherit] flex flex-col items-center justify-center text-black/20 bg-black/5 z-0">
-          <span className="material-symbols-outlined text-3xl mb-1">broken_image</span>
+          <ImageOff className="text-3xl mb-1" strokeWidth={1.5} />
           <span className="text-[9px] uppercase tracking-widest font-bold">Unavailable</span>
         </div>
       )}

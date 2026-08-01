@@ -1,3 +1,4 @@
+import { Camera, X, CloudUpload, AlertCircle } from 'lucide-react';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 
@@ -133,9 +134,7 @@ export const ProductListingVisualSearch = ({ visualSearch }) => {
         <div className="flex items-center justify-between pb-4 border-b border-outline-variant/10 mb-6">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[16px] text-primary">
-                photo_camera
-              </span>
+              <Camera className="text-[16px] text-primary" strokeWidth={1.5} />
             </div>
             <h2 className="text-on-surface font-display font-bold text-[17px]">Visual Search</h2>
           </div>
@@ -144,7 +143,7 @@ export const ProductListingVisualSearch = ({ visualSearch }) => {
             className="w-8 h-8 min-h-0 rounded-full hover:bg-surface-container-low flex items-center justify-center transition-all cursor-pointer text-on-surface-variant/70 animate-none outline-none focus:outline-none"
             aria-label="Close visual search"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            <X className="text-[20px]" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -182,13 +181,13 @@ export const ProductListingVisualSearch = ({ visualSearch }) => {
                     onClick={stopCamera}
                     className="w-12 h-12 min-h-0 rounded-full bg-black/60 flex items-center justify-center text-white border border-white/20 active:scale-90 transition-transform cursor-pointer"
                   >
-                    <span className="material-symbols-outlined">close</span>
+                    <X className="" strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={capturePhoto}
                     className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-primary border-4 border-primary/20 active:scale-90 transition-transform cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[32px]">photo_camera</span>
+                    <Camera className="text-[32px]" strokeWidth={1.5} />
                   </button>
                 </div>
               </div>
@@ -205,7 +204,7 @@ export const ProductListingVisualSearch = ({ visualSearch }) => {
                 >
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center text-primary">
-                      <span className="material-symbols-outlined text-[32px]">cloud_upload</span>
+                      <CloudUpload className="text-[32px]" strokeWidth={1.5} />
                     </div>
                     <div>
                       <p className="text-on-surface font-semibold text-[15px]">Upload an image</p>
@@ -222,7 +221,7 @@ export const ProductListingVisualSearch = ({ visualSearch }) => {
                     onClick={startCamera}
                     className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-outline-variant/30 hover:bg-surface-container-low transition-colors text-on-surface-variant font-bold text-[13px] uppercase tracking-wider cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[18px]">photo_camera</span>
+                    <Camera className="text-[18px]" strokeWidth={1.5} />
                     Use Camera
                   </button>
                 </div>
@@ -279,7 +278,7 @@ export const ProductListingVisualSearch = ({ visualSearch }) => {
                       onClick={visualSearch.reset}
                       className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-full border border-outline-variant/30 hover:bg-surface-container-low transition-colors text-on-surface-variant/70 text-[10px] uppercase font-bold tracking-[0.15em]"
                     >
-                      <span className="material-symbols-outlined text-[14px]">close</span>
+                      <X className="text-[14px]" strokeWidth={1.5} />
                       Cancel
                     </button>
                   </div>
@@ -293,7 +292,7 @@ export const ProductListingVisualSearch = ({ visualSearch }) => {
           <div className="w-full text-center animate-fade-in">
             <div className="py-4">
               <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-5 border border-error/20">
-                <span className="material-symbols-outlined text-[32px] text-error">error</span>
+                <AlertCircle className="text-[32px] text-error" strokeWidth={1.5} />
               </div>
               <h3 className="text-on-surface-variant font-display text-[22px] font-bold mb-2">
                 Search Failed

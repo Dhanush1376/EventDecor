@@ -1,3 +1,4 @@
+import { MessageSquare, Receipt, X } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { OrderList } from './OrderList';
 import { OrderTimeline } from './OrderTimeline';
@@ -57,9 +58,10 @@ export function CustomOrderTracker({
       >
         {!selectedOrder ? (
           <div className="flex flex-col items-center justify-center flex-1 py-12 lg:py-20 text-center text-[#685C57]">
-            <span className="material-symbols-outlined text-[40px] lg:text-[48px] text-black/10 mb-2">
-              forum
-            </span>
+            <MessageSquare
+              className="text-[40px] lg:text-[48px] text-black/10 mb-2"
+              strokeWidth={1.5}
+            />
             <p className="text-[14px] font-bold text-[var(--color-on-surface)]">
               Custom Order Tracking
             </p>
@@ -94,7 +96,7 @@ export function CustomOrderTracker({
                   onClick={() => setMobileSubTab('summary')}
                   className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/5 hover:bg-black/10 text-[10px] font-bold uppercase tracking-widest text-black transition-colors cursor-pointer border-none shrink-0"
                 >
-                  <span className="material-symbols-outlined text-[14px]">receipt_long</span>
+                  <Receipt className="text-[14px]" strokeWidth={1.5} />
                   View Details
                 </button>
                 <button
@@ -102,7 +104,7 @@ export function CustomOrderTracker({
                   onClick={() => setSelectedOrder(null)}
                   className="lg:hidden aspect-square w-8 h-8 min-w-[32px] min-h-[32px] p-0 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[var(--color-on-surface)] transition-colors shrink-0 cursor-pointer border-none"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="text-[18px]" strokeWidth={1.5} />
                 </button>
               </div>
             </div>

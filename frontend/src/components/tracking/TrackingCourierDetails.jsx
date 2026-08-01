@@ -1,3 +1,4 @@
+import { MapPin, PackageCheck } from 'lucide-react';
 import React from 'react';
 
 export function TrackingCourierDetails({ order }) {
@@ -6,7 +7,7 @@ export function TrackingCourierDetails({ order }) {
       {/* Destination Site */}
       <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 shadow-xs text-[12px]">
         <h3 className="text-[11px] font-bold text-secondary uppercase tracking-widest mb-3 flex items-center gap-1.5 border-b border-outline-variant/20 pb-2">
-          <span className="material-symbols-outlined text-sm text-primary">location_on</span>
+          <MapPin className="text-sm text-primary" strokeWidth={1.5} />
           <span>Destination Parameters</span>
         </h3>
         <div className="space-y-1 text-on-surface">
@@ -24,7 +25,7 @@ export function TrackingCourierDetails({ order }) {
       {/* Package items details */}
       <div className="bg-white border border-outline-variant/30 rounded-2xl p-6 shadow-xs text-[12px]">
         <h3 className="text-[11px] font-bold text-secondary uppercase tracking-widest mb-3 flex items-center gap-1.5 border-b border-outline-variant/20 pb-2">
-          <span className="material-symbols-outlined text-sm text-primary">inventory_2</span>
+          <PackageCheck className="text-sm text-primary" strokeWidth={1.5} />
           <span>Consignment Summary</span>
         </h3>
         <div className="divide-y divide-surface-container max-h-[140px] overflow-y-auto pr-1">

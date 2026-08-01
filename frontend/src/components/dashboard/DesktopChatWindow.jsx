@@ -1,3 +1,4 @@
+import { MessageSquare, Send } from 'lucide-react';
 import React from 'react';
 
 export function DesktopChatWindow({
@@ -16,9 +17,7 @@ export function DesktopChatWindow({
           </span>
           <h4 className="font-display text-sm text-black font-bold">Creative Design Studio Chat</h4>
         </div>
-        <span className="material-symbols-outlined text-[18px] text-primary animate-pulse">
-          forum
-        </span>
+        <MessageSquare className="text-[18px] text-primary animate-pulse" strokeWidth={1.5} />
       </div>
 
       {/* Messages list */}
@@ -71,7 +70,7 @@ export function DesktopChatWindow({
           type="submit"
           className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-primary hover:text-black transition-all shrink-0 active:scale-95"
         >
-          <span className="material-symbols-outlined text-[16px]">send</span>
+          <Send className="text-[16px]" strokeWidth={1.5} />
         </button>
       </form>
     </div>

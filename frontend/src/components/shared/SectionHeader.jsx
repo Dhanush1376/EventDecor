@@ -1,3 +1,4 @@
+import { ArrowRight, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
 /**
@@ -38,9 +39,10 @@ export function SectionHeader({
                 className="group inline-flex items-center gap-2 font-label text-[11px] uppercase tracking-widest font-bold text-on-surface-variant hover:text-primary transition-all pb-1 border-b border-outline-variant/30 hover:border-primary/50 whitespace-nowrap"
               >
                 See All
-                <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-                  arrow_forward
-                </span>
+                <ArrowRight
+                  className="text-[14px] group-hover:translate-x-1 transition-transform"
+                  strokeWidth={1.5}
+                />
               </Link>
             </motion.div>
           )}
@@ -56,7 +58,7 @@ export function SectionHeader({
           >
             <div className="w-8 h-[1.5px] bg-primary/50"></div>
             <span className="font-label text-[11px] uppercase tracking-[0.25em] text-primary font-bold flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[13px]">favorite_border</span>
+              <Heart className="text-[13px]" strokeWidth={1.5} />
               {kicker}
             </span>
           </motion.div>

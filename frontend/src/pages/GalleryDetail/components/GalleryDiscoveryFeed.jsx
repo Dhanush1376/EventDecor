@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { GalleryCard } from '../../../components/gallery/GalleryCard';
@@ -37,7 +38,7 @@ export function GalleryDiscoveryFeed({ moreLikeThis }) {
           className="hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-full border border-black/10 text-black/50 hover:border-primary hover:text-primary transition-all text-[10px] uppercase tracking-[0.2em] font-bold"
         >
           View All
-          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+          <ArrowRight className="text-[14px]" strokeWidth={1.5} />
         </Link>
       </div>
 
@@ -55,7 +56,7 @@ export function GalleryDiscoveryFeed({ moreLikeThis }) {
           className="flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-[10px] uppercase tracking-[0.2em] font-bold shadow-lg active:scale-95 transition-transform"
         >
           Explore Full Gallery
-          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+          <ArrowRight className="text-[14px]" strokeWidth={1.5} />
         </Link>
       </div>
 

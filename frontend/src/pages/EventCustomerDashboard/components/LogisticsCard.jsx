@@ -1,3 +1,4 @@
+import { Truck, Wrench, Phone } from 'lucide-react';
 export function LogisticsCard({ selectedBooking }) {
   if (
     !selectedBooking.setupTiming &&
@@ -11,14 +12,14 @@ export function LogisticsCard({ selectedBooking }) {
     <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs text-left font-body">
       <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center">
         <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[14px]">local_shipping</span>
+          <Truck className="text-[14px]" strokeWidth={1.5} />
           Logistics & Crew Roster
         </h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-secondary">
-            <span className="material-symbols-outlined text-[16px]">build</span>
+            <Wrench className="text-[16px]" strokeWidth={1.5} />
             <span className="text-[9px] uppercase tracking-widest font-bold">
               Decoration Setup Schedule
             </span>
@@ -35,7 +36,7 @@ export function LogisticsCard({ selectedBooking }) {
 
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-secondary">
-            <span className="material-symbols-outlined text-[16px]">local_shipping</span>
+            <Truck className="text-[16px]" strokeWidth={1.5} />
             <span className="text-[9px] uppercase tracking-widest font-bold">
               Prop Pickup & Disassembly
             </span>
@@ -72,7 +73,7 @@ export function LogisticsCard({ selectedBooking }) {
                       href={`tel:${team.contact}`}
                       className="w-8 h-8 rounded-full border border-outline-variant/40 text-secondary flex items-center justify-center hover:bg-[#2A2927] hover:text-white hover:border-[#2A2927] transition-all"
                     >
-                      <span className="material-symbols-outlined text-[14px]">call</span>
+                      <Phone className="text-[14px]" strokeWidth={1.5} />
                     </a>
                   )}
                 </div>

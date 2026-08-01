@@ -1,3 +1,4 @@
+import { Info, ShieldCheck, Shield } from 'lucide-react';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '../../ui/Skeleton';
@@ -93,7 +94,7 @@ export const CartSummary = ({
           {platformFee > 0 && (
             <div className="flex justify-between items-center group">
               <span className="text-secondary flex items-center gap-1 cursor-pointer">
-                Platform Fee <span className="material-symbols-outlined text-[14px]">info</span>
+                Platform Fee <Info className="text-[14px]" strokeWidth={1.5} />
               </span>
               <span className="font-medium">₹{platformFee}</span>
             </div>
@@ -151,7 +152,7 @@ export const CartSummary = ({
           {activeCartMode === 'rental' && depositTotal > 0 && (
             <div className="mt-3 bg-green-50 border border-green-200/60 p-2 rounded-md flex justify-between items-center text-[12px] text-green-800">
               <div className="flex items-center gap-1 font-bold">
-                <span className="material-symbols-outlined text-[15px]">verified_user</span>
+                <ShieldCheck className="text-[15px]" strokeWidth={1.5} />
                 Expected Refund
               </div>
               <span className="font-extrabold">₹{depositTotal.toLocaleString()}</span>
@@ -181,12 +182,10 @@ export const CartSummary = ({
       {/* Secure verification footer inside card */}
       <div className="bg-surface-container-lowest px-5 py-3 border-t border-outline-variant/40 flex items-center justify-between text-[11px] text-secondary font-medium">
         <div className="flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[16px] text-primary">verified_user</span>{' '}
-          Genuine
+          <ShieldCheck className="text-[16px] text-primary" strokeWidth={1.5} /> Genuine
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[16px] text-primary">security</span>{' '}
-          Secure
+          <Shield className="text-[16px] text-primary" strokeWidth={1.5} /> Secure
         </div>
       </div>
     </div>

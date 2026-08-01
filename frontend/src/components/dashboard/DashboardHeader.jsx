@@ -1,3 +1,4 @@
+import { ChevronLeft } from 'lucide-react';
 import React, { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
@@ -108,7 +109,7 @@ export function DashboardHeader() {
               onClick={handleBackToOrders}
               className="text-[11px] text-black hover:text-black/70 transition-colors cursor-pointer uppercase font-bold flex items-center gap-1 bg-transparent border-0 p-0"
             >
-              <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              <ChevronLeft className="text-[18px]" strokeWidth={1.5} />
               <span>Back</span>
             </button>
           ) : activeTab === 'bookings' && selectedEventBookingId ? (
@@ -116,7 +117,7 @@ export function DashboardHeader() {
               onClick={handleBackToEvents}
               className="text-[11px] text-black hover:text-black/70 transition-colors cursor-pointer uppercase font-bold flex items-center gap-1 bg-transparent border-0 p-0"
             >
-              <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              <ChevronLeft className="text-[18px]" strokeWidth={1.5} />
               <span>Back</span>
             </button>
           ) : (
@@ -124,7 +125,7 @@ export function DashboardHeader() {
               onClick={handleMobileBack}
               className="text-[11px] text-black hover:text-black/70 transition-colors cursor-pointer uppercase font-bold flex items-center gap-1 bg-transparent border-0 p-0"
             >
-              <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              <ChevronLeft className="text-[18px]" strokeWidth={1.5} />
               <span>Back</span>
             </button>
           )
@@ -133,7 +134,7 @@ export function DashboardHeader() {
             to="/"
             className="text-[11px] text-black hover:text-black/70 transition-colors cursor-pointer uppercase font-bold flex items-center gap-1 bg-transparent border-0 p-0"
           >
-            <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+            <ChevronLeft className="text-[18px]" strokeWidth={1.5} />
             <span>Home</span>
           </Link>
         )}

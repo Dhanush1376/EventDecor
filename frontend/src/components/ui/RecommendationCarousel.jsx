@@ -1,3 +1,4 @@
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { m as motion } from 'framer-motion';
 import { ProductCard } from '../shared/ProductCard';
@@ -112,9 +113,10 @@ export function RecommendationCarousel({
                 className="hidden lg:inline-flex items-center gap-3 pb-1 border-b border-black/20 text-on-surface font-label text-[10px] uppercase tracking-[0.2em] font-bold hover:border-black transition-colors group mr-4"
               >
                 {viewAllLabel}
-                <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
-                  east
-                </span>
+                <ArrowRight
+                  className="text-[14px] group-hover:translate-x-1 transition-transform"
+                  strokeWidth={1.5}
+                />
               </Link>
             )}
 
@@ -130,9 +132,7 @@ export function RecommendationCarousel({
                 }`}
                 aria-label="Scroll left"
               >
-                <span className="material-symbols-outlined font-light text-[24px]">
-                  arrow_left_alt
-                </span>
+                <ArrowLeft className="font-light text-[24px]" strokeWidth={1.5} />
               </button>
               <button
                 onClick={() => scroll('right')}
@@ -144,9 +144,7 @@ export function RecommendationCarousel({
                 }`}
                 aria-label="Scroll right"
               >
-                <span className="material-symbols-outlined font-light text-[24px]">
-                  arrow_right_alt
-                </span>
+                <ArrowRight className="font-light text-[24px]" strokeWidth={1.5} />
               </button>
             </div>
           </motion.div>
@@ -201,7 +199,7 @@ export function RecommendationCarousel({
             className="w-full py-4 bg-transparent border border-black/15 text-on-surface rounded-full font-label text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/5 flex items-center justify-center gap-3 transition-colors"
           >
             {viewAllLabel}
-            <span className="material-symbols-outlined text-[16px]">east</span>
+            <ArrowRight className="text-[16px]" strokeWidth={1.5} />
           </Link>
         </div>
       )}

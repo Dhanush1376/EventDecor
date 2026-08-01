@@ -1,3 +1,4 @@
+import { Image, Heart, Star, ShoppingCart } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
@@ -43,7 +44,7 @@ export function SearchProductPreview({ product, onClose }) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-stone-300">
-              <span className="material-symbols-outlined text-[48px]">image</span>
+              <Image className="text-[48px]" strokeWidth={1.5} />
             </div>
           )}
 
@@ -69,7 +70,7 @@ export function SearchProductPreview({ product, onClose }) {
               {product.title}
             </h3>
             <button className="text-stone-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50">
-              <span className="material-symbols-outlined text-[20px]">favorite</span>
+              <Heart className="text-[20px]" strokeWidth={1.5} />
             </button>
           </div>
 
@@ -85,12 +86,7 @@ export function SearchProductPreview({ product, onClose }) {
 
             {product.rating > 0 && (
               <div className="flex items-center gap-1 border-l border-stone-200 pl-3">
-                <span
-                  className="material-symbols-outlined text-[#f59e0b] text-[14px] fill-current"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  star
-                </span>
+                <Star className="text-[#f59e0b] text-[14px] fill-current" strokeWidth={1.5} />
                 <span className="text-[12px] font-bold text-stone-700">{product.rating}</span>
               </div>
             )}
@@ -125,7 +121,7 @@ export function SearchProductPreview({ product, onClose }) {
                 }}
                 className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-widest hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
               >
-                <span className="material-symbols-outlined text-[16px]">shopping_cart</span>
+                <ShoppingCart className="text-[16px]" strokeWidth={1.5} />
                 Quick Add
               </button>
             </div>
