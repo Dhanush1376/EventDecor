@@ -1,4 +1,4 @@
-import { Calendar, Truck, Ban, BadgeCheck, ChevronRight } from 'lucide-react';
+import { Calendar, Truck, Ban, BadgeCheck, ChevronRight, Heart } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
@@ -99,23 +99,27 @@ export function EventBookingCard({
             <button
               ref={reserveButtonRef}
               onClick={() => setIsDrawerOpen(true)}
-              className="flex-1 bg-black text-white hover:bg-stone-900 hover:text-white py-3 px-6 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 bg-black text-white hover:bg-stone-900 hover:text-white py-3 px-6 rounded-full font-label text-[11px] uppercase tracking-widest font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>Book</span>
               <ChevronRight className="text-[14px]" strokeWidth={1.5} />
             </button>
             <button
               onClick={() => toggleItem({ ...event, image: event.image })}
-              className={`flex-1 py-3 px-6 rounded-full font-label text-[10px] uppercase tracking-widest font-bold transition-all active:scale-95 border flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-3 px-6 rounded-full font-label text-[11px] uppercase tracking-widest font-bold transition-all active:scale-95 border flex items-center justify-center gap-2 cursor-pointer ${
                 isWishlisted(event._id || event.id)
-                  ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100'
+                  ? 'bg-[#ffe4e8] border-[#ffe4e8] text-[#f40046] hover:bg-[#ffd1da]'
                   : 'bg-white border-black/10 text-stone-700 hover:bg-stone-50'
               }`}
             >
-              <span className="material-symbols-outlined text-[14px]">
-                {isWishlisted(event._id || event.id) ? 'favorite' : 'favorite_border'}
+              <Heart
+                className="w-4 h-4"
+                strokeWidth={isWishlisted(event._id || event.id) ? 2.5 : 1.5}
+                fill="none"
+              />
+              <span className="pt-[1px]">
+                {isWishlisted(event._id || event.id) ? 'SAVED' : 'SAVE'}
               </span>
-              <span>{isWishlisted(event._id || event.id) ? 'Saved' : 'Save'}</span>
             </button>
           </div>
         </div>

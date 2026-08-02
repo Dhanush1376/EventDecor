@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../shared/ProductCard';
 import { RecommendationSkeleton } from '../ui/Skeleton';
@@ -188,16 +189,25 @@ export function RecommendationSystem({
         )}
 
         {!hideHeader && (
-          <div className={`${compact ? 'mb-3' : 'mb-6'} w-full text-left`}>
+          <div
+            className={`${compact ? 'mb-3' : 'mb-6'} w-full flex items-center justify-between relative z-10`}
+          >
             <h2
               className={`${
                 compact
                   ? 'text-[11px] uppercase tracking-widest font-bold text-on-surface/80 font-label'
                   : 'text-xl lg:text-2xl font-light tracking-tight text-on-surface font-display'
-              } leading-tight`}
+              } leading-tight m-0`}
             >
               {rentalOnly ? 'Rental Masterpieces' : 'You May Also Like'}
             </h2>
+            <Link
+              to="/collections"
+              className="text-[10px] lg:text-[12px] font-label uppercase tracking-widest font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+            >
+              View All
+              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+            </Link>
           </div>
         )}
 
@@ -251,6 +261,7 @@ export function RecommendationSystem({
                     <ProductCard
                       {...product}
                       id={product.id || product._id}
+                      isRectangular={true}
                       imageSrc={product.imageSrc || product.image || product.images?.[0]}
                       price={product.price || product.basePrice}
                       oldPrice={

@@ -13,6 +13,7 @@ import { WishlistPageSkeleton } from '../ui/Skeleton';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
 import { useUserProfile, useUserAddresses, useAddressMutations } from '../../hooks/useUserQueries';
 import { useShowcases } from '../../hooks/useShowcaseQueries';
+import { ShowcaseCard } from '../ui/ShowcaseCard';
 
 export function WishlistView({ isEmbedded = false }) {
   const { items, _removeItem, _toggleItem, loading: wishlistLoading } = useWishlist();
@@ -452,25 +453,42 @@ export function WishlistView({ isEmbedded = false }) {
               </Link>
             </motion.div>
           ) : (
-            /* Grid Layout matching retail platforms with smooth staggered micro-animations */
             <motion.div
               layout
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 sm:gap-x-4 lg:gap-x-6 gap-y-6 sm:gap-y-8 lg:gap-y-10"
+              className={
+                itemTypeFilter === 'event'
+                  ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 lg:gap-x-8 gap-y-8 lg:gap-y-12'
+                  : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 sm:gap-x-4 lg:gap-x-6 gap-y-6 sm:gap-y-8 lg:gap-y-10'
+              }
             >
               <AnimatePresence>
-                {filteredItems.map((item, _index) => (
-                  <ProductCard
-                    key={`wishlist-item-${item.id}`}
-                    {...item}
-                    layoutMode="wishlist"
-                    onQuickView={(e) => {
-                      if (window.innerWidth >= 768) {
-                        e.preventDefault();
-                        setQuickViewProduct(item);
-                      }
-                    }}
-                  />
-                ))}
+                {filteredItems.map((item, _index) =>
+                  item.itemType === 'event' ? (
+                    <ShowcaseCard
+                      key={`wishlist-item-${item.id}`}
+                      {...item}
+                      id={item.id}
+                      onOpenShowcase={(e) => {
+                        if (window.innerWidth >= 768 && e) {
+                          e.preventDefault();
+                          setQuickViewProduct(item);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <ProductCard
+                      key={`wishlist-item-${item.id}`}
+                      {...item}
+                      layoutMode="wishlist"
+                      onQuickView={(e) => {
+                        if (window.innerWidth >= 768) {
+                          e.preventDefault();
+                          setQuickViewProduct(item);
+                        }
+                      }}
+                    />
+                  ),
+                )}
               </AnimatePresence>
             </motion.div>
           )}
@@ -491,19 +509,37 @@ export function WishlistView({ isEmbedded = false }) {
                 <ArrowRight className="text-[12px]" strokeWidth={1.5} />
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 sm:gap-x-4 lg:gap-x-6 gap-y-6 sm:gap-y-8 lg:gap-y-10">
+            <div
+              className={
+                itemTypeFilter === 'event'
+                  ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-x-4 lg:gap-x-8 gap-y-8 lg:gap-y-12'
+                  : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 sm:gap-x-4 lg:gap-x-6 gap-y-6 sm:gap-y-8 lg:gap-y-10'
+              }
+            >
               {recommendationLoading
                 ? [...Array(4)].map((_, i) => <ProductCard key={i} loading={true} />)
-                : recommendationItems.map((item) => (
-                    <ProductCard
-                      key={item._id || item.id}
-                      {...item}
-                      onQuickView={(e) => {
-                        e.preventDefault();
-                        setQuickViewProduct(item);
-                      }}
-                    />
-                  ))}
+                : recommendationItems.map((item, _index) =>
+                    item.itemType === 'event' ? (
+                      <ShowcaseCard
+                        key={item._id || item.id}
+                        {...item}
+                        id={item._id || item.id}
+                        onOpenShowcase={(e) => {
+                          if (e) e.preventDefault();
+                          setQuickViewProduct(item);
+                        }}
+                      />
+                    ) : (
+                      <ProductCard
+                        key={item._id || item.id}
+                        {...item}
+                        onQuickView={(e) => {
+                          e.preventDefault();
+                          setQuickViewProduct(item);
+                        }}
+                      />
+                    ),
+                  )}
             </div>
           </div>
         )}

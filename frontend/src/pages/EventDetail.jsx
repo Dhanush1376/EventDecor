@@ -233,9 +233,18 @@ export function EventDetail() {
       {_relatedEvents && _relatedEvents.length > 0 && (
         <section className="bg-surface py-8 lg:py-12 border-t border-outline-variant/30">
           <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">
-            <h2 className="font-display text-xl lg:text-2xl text-black mb-6 lg:mb-8 text-left lg:text-left">
-              Explore More Showcases
-            </h2>
+            <div className="flex items-center justify-between mb-6 lg:mb-8 relative z-10">
+              <h2 className="font-display text-xl lg:text-2xl text-black text-left lg:text-left m-0">
+                Explore More Showcases
+              </h2>
+              <Link
+                to="/events"
+                className="text-[10px] lg:text-[12px] font-label uppercase tracking-widest font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 shrink-0"
+              >
+                View All
+                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+              </Link>
+            </div>
             <div className="flex overflow-x-auto gap-4 lg:gap-6 no-scrollbar pb-6 snap-x snap-mandatory">
               {_relatedEvents.map((showcase) => (
                 <div
@@ -245,6 +254,7 @@ export function EventDetail() {
                   <ProductCard
                     id={showcase._id || showcase.id}
                     _id={showcase._id || showcase.id}
+                    isRectangular={true}
                     itemType="event"
                     title={showcase.title}
                     imageSrc={showcase.image || showcase.images?.[0]}

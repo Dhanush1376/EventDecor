@@ -433,6 +433,7 @@ export function AppRoutes() {
               <Route path="campaigns/templates/add" element={<AdminTemplateCreate />} />
               <Route path="campaigns/templates/edit/:id" element={<AdminTemplateCreate />} />
               <Route path="content" element={<AdminContent />} />
+              <Route path="team" element={<AdminTeam />} />
 
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="visual-search" element={<AdminVisualSearch />} />

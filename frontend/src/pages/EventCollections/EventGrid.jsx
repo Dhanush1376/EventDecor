@@ -96,7 +96,7 @@ export function EventGrid({
   );
 }
 
-function EventGridCard({ evItem, idx }) {
+export function EventGridCard({ evItem, idx }) {
   const [activeIndex, setActiveIndex] = React.useState(0);
   const scrollContainerRef = React.useRef(null);
 

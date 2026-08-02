@@ -54,6 +54,7 @@ export const ProductCard = React.memo(function ProductCard({
   rentalStock,
   selectionMode = false,
   isSelected = false,
+  isRectangular = false,
 }) {
   const navigate = useNavigate();
   const { isWishlisted } = useWishlistState();
@@ -135,7 +136,9 @@ export const ProductCard = React.memo(function ProductCard({
   if (loading) {
     return (
       <div className="flex flex-col gap-4 animate-pulse">
-        <div className="aspect-[4/5] w-full bg-surface-container-high rounded-2xl overflow-hidden" />
+        <div
+          className={`aspect-[4/5] w-full bg-surface-container-high overflow-hidden ${isRectangular ? 'rounded-md' : 'rounded-2xl'}`}
+        />
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <div className="h-3 w-1/4 bg-surface-container rounded-full" />
@@ -198,6 +201,7 @@ export const ProductCard = React.memo(function ProductCard({
         title,
         price: itemType === 'event' ? rentalPrice : price,
         imageSrc,
+        setupTimeHours,
       });
     });
   };
@@ -245,11 +249,13 @@ export const ProductCard = React.memo(function ProductCard({
         // Prevent native context menu on touch devices during long press
         if (window.innerWidth < 1024) e.preventDefault();
       }}
-      className="group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface rounded-2xl z-10 hover:z-40 focus-within:z-40 select-none touch-pan-y"
+      className={`group relative flex flex-col cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-surface z-10 hover:z-40 focus-within:z-40 select-none touch-pan-y ${isRectangular ? 'rounded-md' : 'rounded-2xl'}`}
       style={{ WebkitTouchCallout: 'none' }}
     >
       {/* 1. VISUAL CANVAS */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-[#fafafa] rounded-2xl border border-black/5 group/canvas">
+      <div
+        className={`relative aspect-[4/5] overflow-hidden bg-[#fafafa] border border-black/5 group/canvas ${isRectangular ? 'rounded-md' : 'rounded-2xl'}`}
+      >
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
@@ -360,12 +366,14 @@ export const ProductCard = React.memo(function ProductCard({
           <div className="flex flex-row -space-x-3 lg:-space-x-4 py-1 px-1 pointer-events-auto hover:space-x-1 transition-all duration-300">
             {itemType === 'event' ? (
               <>
-                <div className="relative z-[30] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label text-[8px] lg:text-[10px] uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
-                  <span className="leading-none">{setupTimeHours || 2}h</span>
-                  <span className="text-[5px] lg:text-[7px] tracking-tight opacity-90 uppercase mt-0.5">
-                    Setup
-                  </span>
-                </div>
+                {setupTimeHours ? (
+                  <div className="relative z-[30] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-primary text-white rounded-full flex flex-col items-center justify-center font-label text-[8px] lg:text-[10px] uppercase font-bold shadow-lg border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
+                    <span className="leading-none">{setupTimeHours}H</span>
+                    <span className="text-[5px] lg:text-[7px] tracking-tight opacity-90 uppercase mt-0.5">
+                      Setup
+                    </span>
+                  </div>
+                ) : null}
                 {inclusions && inclusions.length > 0 && (
                   <div className="relative z-[20] w-8 h-8 lg:w-10 lg:h-10 shrink-0 bg-white/95 backdrop-blur-md text-[#1a1817] rounded-full flex flex-col items-center justify-center font-label uppercase font-bold shadow-md border-2 border-white hover:scale-110 transition-transform duration-300 select-none">
                     <span className="leading-none text-[8px] lg:text-[10px]">
