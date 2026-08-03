@@ -201,9 +201,12 @@ export function ProductGallery({ images = [], product }) {
               </motion.span>
             </button>
             <ShareButton
-              url={typeof window !== 'undefined' ? window.location.href : ''}
-              title={`${product.title} - Siri Arts & Crafts`}
-              description={product.description}
+              url={
+                typeof window !== 'undefined'
+                  ? `${window.location.origin}/product/${product.slug || product._id || product.id}`
+                  : ''
+              }
+              title={product.title}
               variant="custom"
               size="custom"
               iconOnly={true}

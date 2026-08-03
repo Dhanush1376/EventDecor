@@ -142,43 +142,48 @@ export const generateSocialPreviewHtml = async (req: Request, res: Response) => 
     let product;
 
     if (mongoose.Types.ObjectId.isValid(id)) {
-      product = await Product.findById(id).lean();
+      product = await Product.findById(id).populate('primaryCategory', 'name').lean();
     } else {
-      product = await Product.findOne({ slug: id }).lean();
+      product = await Product.findOne({ slug: id }).populate('primaryCategory', 'name').lean();
     }
 
     if (!product) {
       return res.status(404).send('Product not found');
     }
 
-    // Ensure we use the frontend's domain for the canonical URL
-    const forwardedHost = req.get('x-forwarded-host') || req.get('host');
-    let siteUrl = process.env.VITE_SITE_URL;
-    if (!siteUrl) {
-      if (process.env.FRONTEND_URLS) {
-        siteUrl = process.env.FRONTEND_URLS.split(',')[0].trim();
-      } else {
-        siteUrl = `https://${forwardedHost}`;
-      }
-    }
+    // Ensure we use the storefront domain for canonical URLs, not the api proxy domain
+    let siteUrl =
+      process.env.STOREFRONT_URL || process.env.VITE_SITE_URL || 'https://siriartsandcrafts.com';
+    // Remove trailing slash if present
+    siteUrl = siteUrl.replace(/\/$/, '');
 
     const siteName = process.env.VITE_SITE_NAME || 'Siri Arts & Crafts';
     const productUrl = `${siteUrl}/product/${product.slug || product._id}`;
 
-    // OG Image Route (make sure to include /api/v1)
-    let baseUrl = process.env.BACKEND_URL || `https://${req.get('host')}`;
-    // Remove trailing slash if present
-    baseUrl = baseUrl.replace(/\/$/, '');
-    if (!baseUrl.endsWith('/api/v1')) {
-      baseUrl = `${baseUrl}/api/v1`;
-    }
-    const ogImageUrl = `${baseUrl}/social/product/${product._id}/image.png`;
+    const escapeHtml = (unsafe: string) => {
+      if (!unsafe) return '';
+      return unsafe
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
 
-    // Truncate description for SEO
-    const description = (product.seoDescription || product.description || '')
-      .replace(/<[^>]*>?/gm, '')
-      .substring(0, 160);
-    const title = `${product.seoTitle || product.title} | ${siteName}`;
+    // Use the actual product image from Cloudinary, with OG-optimized transforms
+    const rawImageUrl = product.imageSrc || (product.images && product.images[0]) || '';
+    const ogImageUrl = rawImageUrl.includes('cloudinary.com')
+      ? rawImageUrl.replace('/upload/', '/upload/w_1200,h_630,c_fill,q_auto,f_jpg/')
+      : rawImageUrl;
+
+    // Very short description — just category or first ~60 chars
+    const categoryName = (product as any).primaryCategory?.name || '';
+    const description = escapeHtml(
+      categoryName
+        ? `${product.title} — ${categoryName}`
+        : (product.description || '').replace(/<[^>]*>?/gm, '').substring(0, 60),
+    );
+    const title = escapeHtml(product.seoTitle || product.title);
 
     const html = `
       <!DOCTYPE html>
@@ -188,12 +193,13 @@ export const generateSocialPreviewHtml = async (req: Request, res: Response) => 
         <title>${title}</title>
         <meta name="description" content="${description}">
         
-        <!-- Open Graph / Facebook -->
         <meta property="og:type" content="product">
         <meta property="og:url" content="${productUrl}">
         <meta property="og:title" content="${title}">
         <meta property="og:description" content="${description}">
         <meta property="og:image" content="${ogImageUrl}">
+        <meta property="og:image:secure_url" content="${ogImageUrl}">
+        <meta property="og:image:alt" content="${title}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
         <meta property="og:site_name" content="${siteName}">

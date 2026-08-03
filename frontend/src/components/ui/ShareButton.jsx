@@ -92,7 +92,7 @@ export function ShareButton({
   const handleShare = async () => {
     const shareData = {
       title,
-      text: description,
+      text: title,
       url,
     };
 
@@ -129,7 +129,7 @@ export function ShareButton({
       name: 'WhatsApp',
       icon: MessageCircle,
       color: 'text-green-500 hover:bg-green-50',
-      href: `https://api.whatsapp.com/send?text=${encodeURIComponent(`${title} - ${url}`)}`,
+      href: `https://api.whatsapp.com/send?text=${encodeURIComponent(`${title}\n${url}`)}`,
     },
     {
       name: 'Facebook',
