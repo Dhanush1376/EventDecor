@@ -7,10 +7,15 @@ import logger from '../../config/logger';
 import { TransactionalEmailService } from '../../services/TransactionalEmailService';
 
 export const submitInquiry = asyncHandler(async (req: Request, res: Response) => {
+  logger.info(`[EMAIL TRACE][INQUIRY][01] controller reached`);
   const inquiry = await Inquiry.create(req.body);
+  logger.info(`[EMAIL TRACE][INQUIRY][02] inquiry persisted id=${inquiry._id}`);
 
   // Send reliable transactional emails (customer acknowledgment + all admins alert)
   // Trigger Notification Asynchronously
+  logger.info(
+    `[EMAIL TRACE][INQUIRY][03] calling TransactionalEmailService eventId=${inquiry._id}`,
+  );
   TransactionalEmailService.sendInquiryEmails(inquiry, inquiry._id.toString()).catch((err) =>
     logger.error('Failed to dispatch inquiry notification:', err),
   );

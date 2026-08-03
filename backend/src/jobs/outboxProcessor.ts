@@ -2,6 +2,9 @@ import logger from '../config/logger';
 import OutboxEvent from '../models/OutboxEvent';
 import { withCronLock } from '../utils/cronLock';
 import * as Sentry from '@sentry/node';
+import { TransactionalEmailService } from '../services/TransactionalEmailService';
+import Order from '../models/Order';
+import CustomOrder from '../models/CustomOrder';
 
 /**
  * OutboxProcessor — Processes ALL outbox event types.
@@ -67,10 +70,6 @@ async function processEvent(event: any): Promise<void> {
 
   // 1. Process Transactional Emails based on Outbox Event (Persistent/Idempotent)
   try {
-    const { TransactionalEmailService } = require('../services/TransactionalEmailService');
-    const Order = require('../models/Order').default;
-    const CustomOrder = require('../models/CustomOrder').default;
-
     if (eventName === 'ORDER_ORDERCREATED') {
       const order = await Order.findById(event.aggregateId).populate('user');
       if (order)

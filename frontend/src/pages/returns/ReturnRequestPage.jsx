@@ -4,9 +4,7 @@ import {
   CheckCircle2,
   ListChecks,
   HelpCircle,
-  Handshake,
   CreditCard,
-  ArrowLeftRight,
   Truck,
   Wallet,
   Landmark,
@@ -16,7 +14,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { returnService } from '../../services/api/returnService';
 import { orderService } from '../../services/domainServices';
@@ -47,9 +45,9 @@ export const ReturnRequestPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [returnState, setReturnState] = useState(null);
 
-  // 8-Step Wizard
+  // 7-Step Wizard
   const [step, setStep] = useState(1);
-  const totalSteps = 7; // Step 8 is success
+  const totalSteps = 6; // Step 7 is success
 
   const [selectedItems, setSelectedItems] = useState({}); // { itemId: { ...details } }
   const [refundMethod, setRefundMethod] = useState('original');
@@ -133,10 +131,7 @@ export const ReturnRequestPage = () => {
     if (step === 3 && Object.values(selectedItems).some((item) => !item.reason)) {
       return toast.error('Please provide a reason for all items');
     }
-    if (step === 4 && Object.values(selectedItems).some((item) => !item.resolution)) {
-      return toast.error('Please select a resolution for all items');
-    }
-    if (step === 6 && refundMethod === 'original' && !upiId.trim()) {
+    if (step === 5 && refundMethod === 'original' && !upiId.trim()) {
       return toast.error('Please provide a UPI ID for original payment refund');
     }
 
@@ -169,7 +164,7 @@ export const ReturnRequestPage = () => {
       const res = await returnService.createReturn(payload);
       if (res.data.success) {
         toast.success('Return request submitted');
-        setStep(8);
+        setStep(7);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit request');
@@ -199,10 +194,9 @@ export const ReturnRequestPage = () => {
           {step === 1 && 'SELECT ITEMS'}
           {step === 2 && 'CONDITION'}
           {step === 3 && 'REASON & EVIDENCE'}
-          {step === 4 && 'RESOLUTION'}
-          {step === 5 && 'PICKUP ADDRESS'}
-          {step === 6 && 'REFUND METHOD'}
-          {step === 7 && 'REVIEW'}
+          {step === 4 && 'PICKUP ADDRESS'}
+          {step === 5 && 'REFUND METHOD'}
+          {step === 6 && 'REVIEW'}
         </span>
       </div>
     </div>
@@ -212,7 +206,7 @@ export const ReturnRequestPage = () => {
     <div className="max-w-2xl text-left text-[11px] py-5">
       <SEO title="Return Request | EventDecor" />
 
-      {step < 8 && renderStepIndicator()}
+      {step < 7 && renderStepIndicator()}
 
       <AnimatePresence mode="wait">
         {/* Step 1: Select Items */}
@@ -312,13 +306,14 @@ export const ReturnRequestPage = () => {
             {Object.entries(selectedItems).map(([itemId, data]) => (
               <div key={itemId} className="p-4 border rounded-[16px] border-outline-variant/30">
                 <div className="flex items-center gap-4 mb-4 pb-4 border-b border-outline-variant/20">
-                  <OptimizedImage
-                    src={data.image}
-                    alt={data.title}
-                    className="w-10 h-10 rounded-[12px] object-cover"
-                    width={80}
-                  />
-                  <span className="font-bold uppercase tracking-wider text-[#2A2927] text-[10px]">
+                  <div className="w-12 h-12 rounded-[12px] overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0">
+                    <OptimizedImage
+                      src={data.image}
+                      alt={data.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="font-bold uppercase tracking-wider text-[#2A2927] text-[10px] flex-1">
                     {data.title}
                   </span>
                 </div>
@@ -363,12 +358,13 @@ export const ReturnRequestPage = () => {
                 className="p-4 border rounded-[16px] border-outline-variant/30 space-y-5"
               >
                 <div className="flex items-center gap-4 border-b border-outline-variant/20 pb-4">
-                  <OptimizedImage
-                    src={data.image}
-                    alt={data.title}
-                    className="w-10 h-10 rounded-[12px] object-cover"
-                    width={80}
-                  />
+                  <div className="w-12 h-12 rounded-[12px] overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0">
+                    <OptimizedImage
+                      src={data.image}
+                      alt={data.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <div className="flex-1">
                     <span className="font-bold uppercase tracking-wider text-[#2A2927] text-[10px] block">
                       {data.title}
@@ -443,82 +439,10 @@ export const ReturnRequestPage = () => {
           </motion.div>
         )}
 
-        {/* Step 4: Resolution Choice */}
+        {/* Step 4: Pickup */}
         {step === 4 && (
           <motion.div
             key="step4"
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            className="space-y-6"
-          >
-            <div className="pb-5 mb-5 border-b border-outline-variant/20">
-              <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <Handshake className="text-[12px]" strokeWidth={1.5} />
-                HOW WOULD YOU LIKE THIS RESOLVED?
-              </h2>
-            </div>
-            {Object.entries(selectedItems).map(([itemId, data]) => (
-              <div key={itemId} className="p-4 border rounded-[16px] border-outline-variant/30">
-                <div className="flex items-center gap-4 mb-4 pb-4 border-b border-outline-variant/20">
-                  <OptimizedImage
-                    src={data.image}
-                    alt={data.title}
-                    className="w-10 h-10 rounded-[12px] object-cover"
-                    width={80}
-                  />
-                  <span className="font-bold uppercase tracking-wider text-[#2A2927] text-[10px]">
-                    {data.title}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div
-                    onClick={() => updateItemDetails(itemId, 'resolution', 'refund')}
-                    className={`p-4 border rounded-[16px] cursor-pointer transition-all flex flex-col items-center gap-3 ${data.resolution === 'refund' ? 'border-[#D4AF37] bg-[#FDFBF7]' : 'bg-[#FDFBF7] border-[#E8E6E1]  hover:border-[#D4AF37]'}`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${data.resolution === 'refund' ? 'bg-[#2A2927] text-white' : 'bg-surface-variant text-on-surface-variant'}`}
-                    >
-                      <CreditCard className="text-[14px]" strokeWidth={1.5} />
-                    </div>
-                    <div className="text-center">
-                      <span className="block font-bold uppercase tracking-widest text-[9px] text-[#2A2927]">
-                        REFUND
-                      </span>
-                      <span className="text-[9px] text-secondary mt-1">Get your money back</span>
-                    </div>
-                  </div>
-
-                  <div
-                    onClick={() => updateItemDetails(itemId, 'resolution', 'exchange')}
-                    className={`p-4 border rounded-[16px] cursor-pointer transition-all flex flex-col items-center gap-3 ${data.resolution === 'exchange' ? 'border-[#D4AF37] bg-[#FDFBF7]' : 'bg-[#FDFBF7] border-[#E8E6E1]  hover:border-[#D4AF37]'}`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${data.resolution === 'exchange' ? 'bg-[#2A2927] text-white' : 'bg-surface-variant text-on-surface-variant'}`}
-                    >
-                      <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
-                    </div>
-                    <div className="text-center">
-                      <span className="block font-bold uppercase tracking-widest text-[9px] text-[#2A2927]">
-                        EXCHANGE
-                      </span>
-                      <span className="text-[9px] text-secondary mt-1">
-                        Swap for a different item/size
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        )}
-
-        {/* Step 5: Pickup */}
-        {step === 5 && (
-          <motion.div
-            key="step5"
             variants={fadeUp}
             initial="hidden"
             animate="show"
@@ -536,18 +460,19 @@ export const ReturnRequestPage = () => {
               {pickupAddress ? (
                 <div>
                   <h3 className="font-bold text-[11px] text-[#2A2927] uppercase tracking-wider mb-2">
-                    {pickupAddress.firstName} {pickupAddress.lastName}
+                    {pickupAddress.name}
                   </h3>
                   <p className="text-[10px] text-secondary leading-relaxed uppercase tracking-wider">
-                    {pickupAddress.addressLine1}
+                    {pickupAddress.address}
                   </p>
-                  {pickupAddress.addressLine2 && (
+                  {(pickupAddress.locality || pickupAddress.landmark) && (
                     <p className="text-[10px] text-secondary leading-relaxed uppercase tracking-wider">
-                      {pickupAddress.addressLine2}
+                      {pickupAddress.locality}{' '}
+                      {pickupAddress.landmark ? `(Near ${pickupAddress.landmark})` : ''}
                     </p>
                   )}
                   <p className="text-[10px] text-secondary leading-relaxed uppercase tracking-wider">
-                    {pickupAddress.city}, {pickupAddress.state} {pickupAddress.pinCode}
+                    {pickupAddress.city}, {pickupAddress.state} {pickupAddress.pincode}
                   </p>
                   <p className="text-[10px] text-secondary mt-2 font-bold uppercase tracking-wider">
                     PHONE: {pickupAddress.phone}
@@ -562,10 +487,10 @@ export const ReturnRequestPage = () => {
           </motion.div>
         )}
 
-        {/* Step 6: Refund */}
-        {step === 6 && (
+        {/* Step 5: Refund */}
+        {step === 5 && (
           <motion.div
-            key="step6"
+            key="step5"
             variants={fadeUp}
             initial="hidden"
             animate="show"
@@ -581,45 +506,53 @@ export const ReturnRequestPage = () => {
 
             <div className="space-y-4">
               <label
-                className={`flex items-start gap-4 p-4 border rounded-[16px] transition-all cursor-pointer ${refundMethod === 'wallet' ? 'border-[#D4AF37] bg-[#FDFBF7]' : 'bg-[#FDFBF7] border-[#E8E6E1]  hover:border-[#D4AF37]'}`}
+                className={`flex items-start p-4 border rounded-[16px] transition-all cursor-pointer ${refundMethod === 'wallet' ? 'bg-[#2A2927] border-[#2A2927] text-white' : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'}`}
               >
                 <input
                   type="radio"
                   name="refundMethod"
                   value="wallet"
-                  className="mt-0.5 w-4 h-4 accent-[#2A2927]"
+                  className="hidden"
                   checked={refundMethod === 'wallet'}
                   onChange={(e) => setRefundMethod(e.target.value)}
                 />
                 <div className="flex-1">
-                  <div className="font-bold uppercase tracking-widest text-[#2A2927] text-[10px] flex items-center gap-2">
-                    <Wallet className="text-[#2A2927] text-[14px]" strokeWidth={1.5} />
+                  <div
+                    className={`font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 ${refundMethod === 'wallet' ? 'text-white' : 'text-[#2A2927]'}`}
+                  >
+                    <Wallet className="text-[14px]" strokeWidth={1.5} />
                     STORE WALLET (RECOMMENDED)
                   </div>
-                  <p className="text-[9px] uppercase tracking-wider text-secondary mt-1.5">
+                  <p
+                    className={`text-[9px] uppercase tracking-wider mt-1.5 ${refundMethod === 'wallet' ? 'text-white/80' : 'text-secondary'}`}
+                  >
                     Instant refund to your wallet. Use it for your next purchase.
                   </p>
                 </div>
               </label>
 
               <div
-                className={`border transition-all overflow-hidden ${refundMethod === 'original' ? 'border-[#D4AF37] bg-[#FDFBF7]' : 'bg-[#FDFBF7] border-[#E8E6E1]  hover:border-[#D4AF37]'}`}
+                className={`border transition-all overflow-hidden rounded-[16px] ${refundMethod === 'original' ? 'bg-[#2A2927] border-[#2A2927] text-white' : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'}`}
               >
-                <label className="flex items-start gap-4 p-4 cursor-pointer">
+                <label className="flex items-start p-4 cursor-pointer">
                   <input
                     type="radio"
                     name="refundMethod"
                     value="original"
-                    className="mt-0.5 w-4 h-4 accent-[#2A2927]"
+                    className="hidden"
                     checked={refundMethod === 'original'}
                     onChange={(e) => setRefundMethod(e.target.value)}
                   />
                   <div className="flex-1">
-                    <div className="font-bold uppercase tracking-widest text-[#2A2927] text-[10px] flex items-center gap-2">
-                      <Landmark className="text-secondary text-[14px]" strokeWidth={1.5} />
+                    <div
+                      className={`font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 ${refundMethod === 'original' ? 'text-white' : 'text-[#2A2927]'}`}
+                    >
+                      <Landmark className="text-[14px]" strokeWidth={1.5} />
                       ORIGINAL PAYMENT METHOD
                     </div>
-                    <p className="text-[9px] uppercase tracking-wider text-secondary mt-1.5">
+                    <p
+                      className={`text-[9px] uppercase tracking-wider mt-1.5 ${refundMethod === 'original' ? 'text-white/80' : 'text-secondary'}`}
+                    >
                       Refund to your original bank account or card (takes 5-7 business days).
                     </p>
                   </div>
@@ -631,10 +564,10 @@ export const ReturnRequestPage = () => {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="px-4 pb-4 ml-8"
+                      className="px-4 pb-4"
                     >
-                      <div className="pt-4 border-t border-[#C5A861]/20">
-                        <label className="form-label mb-1.5 uppercase tracking-widest text-[9px]">
+                      <div className="pt-4 border-t border-white/20">
+                        <label className="form-label mb-1.5 uppercase tracking-widest text-[9px] text-white/80">
                           UPI ID FOR BANK TRANSFER *
                         </label>
                         <input
@@ -642,7 +575,7 @@ export const ReturnRequestPage = () => {
                           value={upiId}
                           onChange={(e) => setUpiId(e.target.value)}
                           placeholder="username@bank"
-                          className="form-field"
+                          className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 px-4 py-2.5 rounded-[32px] text-[11px] focus:outline-none focus:border-white focus:ring-1 focus:ring-white"
                         />
                       </div>
                     </motion.div>
@@ -653,10 +586,10 @@ export const ReturnRequestPage = () => {
           </motion.div>
         )}
 
-        {/* Step 7: Review & Submit */}
-        {step === 7 && (
+        {/* Step 6: Review & Submit */}
+        {step === 6 && (
           <motion.div
-            key="step7"
+            key="step6"
             variants={fadeUp}
             initial="hidden"
             animate="show"
@@ -679,23 +612,22 @@ export const ReturnRequestPage = () => {
               <div className="divide-y divide-outline-variant/20">
                 {Object.values(selectedItems).map((data, idx) => (
                   <div key={idx} className="p-4 flex gap-4">
-                    <OptimizedImage
-                      src={data.image}
-                      alt={data.title}
-                      className="w-12 h-12 rounded-[12px] object-cover"
-                      width={80}
-                    />
-                    <div>
+                    <div className="w-12 h-12 rounded-[12px] overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0">
+                      <OptimizedImage
+                        src={data.image}
+                        alt={data.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
                       <h4 className="font-bold uppercase tracking-wider text-[10px] text-[#2A2927]">
                         {data.title}
                       </h4>
                       <p className="text-[9px] uppercase tracking-wider text-secondary mt-1">
                         QTY: {data.returnQuantity} • REASON: {data.reason}
                       </p>
-                      <span
-                        className={`inline-block mt-2 text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-sm ${data.resolution === 'refund' ? 'bg-[#FDFBF7] text-[#2A2927]' : 'bg-warning/10 text-warning'}`}
-                      >
-                        {data.resolution === 'refund' ? 'REQUESTING REFUND' : 'REQUESTING EXCHANGE'}
+                      <span className="inline-block mt-2 text-[8px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[4px] bg-[#2A2927]/5 text-[#2A2927] border border-[#2A2927]/10">
+                        REQUESTING REFUND
                       </span>
                     </div>
                   </div>
@@ -703,40 +635,69 @@ export const ReturnRequestPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-4">
               <div className="border rounded-[16px] border-outline-variant/30 p-4">
                 <h3 className="font-bold uppercase tracking-widest text-[9px] text-[#2A2927] mb-3 flex items-center gap-2">
                   <Truck className="text-[14px]" strokeWidth={1.5} /> PICKUP ADDRESS
                 </h3>
-                <p className="text-[10px] text-secondary uppercase tracking-wider">
-                  {pickupAddress?.addressLine1}, {pickupAddress?.city}
-                </p>
+                <div className="text-[10px] text-secondary uppercase tracking-wider space-y-1">
+                  <p className="font-bold text-[#2A2927] mb-1">{pickupAddress?.name}</p>
+                  <p>{pickupAddress?.address}</p>
+                  {(pickupAddress?.locality || pickupAddress?.landmark) && (
+                    <p>
+                      {pickupAddress?.locality}{' '}
+                      {pickupAddress?.landmark ? `(Near ${pickupAddress.landmark})` : ''}
+                    </p>
+                  )}
+                  <p>
+                    {pickupAddress?.city}, {pickupAddress?.state} {pickupAddress?.pincode}
+                  </p>
+                  <p className="pt-1 text-[#2A2927] font-medium">PHONE: {pickupAddress?.phone}</p>
+                </div>
               </div>
 
               <div className="border rounded-[16px] border-outline-variant/30 p-4">
                 <h3 className="font-bold uppercase tracking-widest text-[9px] text-[#2A2927] mb-3 flex items-center gap-2">
                   <CreditCard className="text-[14px]" strokeWidth={1.5} /> REFUND METHOD
                 </h3>
-                <p className="text-[10px] text-secondary uppercase tracking-wider">
-                  {refundMethod === 'wallet' ? 'STORE WALLET (INSTANT)' : 'ORIGINAL PAYMENT'}
-                </p>
+                <div className="text-[10px] text-secondary uppercase tracking-wider space-y-1">
+                  <p className="font-bold text-[#2A2927] mb-1">
+                    {refundMethod === 'wallet' ? 'STORE WALLET' : 'ORIGINAL PAYMENT'}
+                  </p>
+                  {refundMethod === 'wallet' ? (
+                    <p>INSTANT REFUND</p>
+                  ) : (
+                    <>
+                      <p>5-7 BUSINESS DAYS</p>
+                      {upiId && (
+                        <p className="pt-1 text-[#2A2927] font-medium break-all">UPI: {upiId}</p>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="bg-info/10 border rounded-[16px] border-info/20 p-4 flex items-start gap-3">
-              <Info className="text-info mt-0.5 text-[14px]" strokeWidth={1.5} />
-              <p className="text-[9px] uppercase tracking-wider text-info leading-relaxed">
-                By submitting this request, you agree to our return policy. Items must be returned
-                in their original packaging.
+            <div className="bg-[#2A2927] rounded-[16px] p-4 flex items-start gap-3 shadow-sm">
+              <Info className="text-white mt-0.5 text-[14px]" strokeWidth={1.5} />
+              <p className="text-[9px] uppercase tracking-wider text-white font-medium leading-relaxed">
+                By submitting this request, you agree to our{' '}
+                <Link
+                  to="/policies/returns"
+                  className="underline hover:text-white/80 transition-colors font-bold cursor-pointer"
+                >
+                  return policy
+                </Link>
+                . Items must be returned in their original packaging.
               </p>
             </div>
           </motion.div>
         )}
 
-        {/* Step 8: Success */}
-        {step === 8 && (
+        {/* Step 7: Success */}
+        {step === 7 && (
           <motion.div
-            key="step8"
+            key="step7"
             variants={fadeUp}
             initial="hidden"
             animate="show"
@@ -763,7 +724,7 @@ export const ReturnRequestPage = () => {
       </AnimatePresence>
 
       {/* Navigation Controls */}
-      {step < 8 && (
+      {step < 7 && (
         <div className="mt-8 pt-5 border-t border-outline-variant/20 flex justify-between">
           {step > 1 ? (
             <button
@@ -778,7 +739,7 @@ export const ReturnRequestPage = () => {
           )}
 
           <button
-            onClick={step === 7 ? handleSubmit : handleNext}
+            onClick={step === 6 ? handleSubmit : handleNext}
             className="bg-[#2A2927] hover:bg-black text-white px-6 py-2.5 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-sm transition-all border-0 disabled:opacity-50 cursor-pointer"
             disabled={submitting}
           >
@@ -789,7 +750,7 @@ export const ReturnRequestPage = () => {
                 </span>{' '}
                 PROCESSING
               </>
-            ) : step === 7 ? (
+            ) : step === 6 ? (
               'SUBMIT REQUEST'
             ) : (
               <>

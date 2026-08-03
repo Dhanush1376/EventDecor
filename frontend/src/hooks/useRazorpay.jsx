@@ -143,7 +143,7 @@ export const useRazorpay = () => {
         description: 'Siri Arts & Crafts Order',
         image:
           import.meta.env.VITE_LOGO_URL ||
-          `${EXTERNAL_URLS.CLOUDINARY_CDN_BASE}/siriartscrafts/image/upload/v1/SiriLogo.webp`,
+          'https://res.cloudinary.com/drxgnnzeb/image/upload/v1785779448/siri-arts-crafts/zqqwwbsrjpb7bqcrl24l.png',
         order_id: razorpayOrder.id,
         handler: async (response) => {
           try {
@@ -241,7 +241,7 @@ export const useRazorpay = () => {
         description: 'Complete Payment for Order',
         image:
           import.meta.env.VITE_LOGO_URL ||
-          `${EXTERNAL_URLS.CLOUDINARY_CDN_BASE}/siriartscrafts/image/upload/v1/SiriLogo.webp`,
+          'https://res.cloudinary.com/drxgnnzeb/image/upload/v1785779448/siri-arts-crafts/zqqwwbsrjpb7bqcrl24l.png',
         order_id: order.razorpayOrderId,
         handler: async (response) => {
           try {

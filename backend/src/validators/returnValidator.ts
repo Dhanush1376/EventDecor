@@ -67,5 +67,6 @@ export const createExchangeSchema = z.object({
     quantity: z.number().int().min(1, 'Quantity must be at least 1'),
     pickupAddress: z.any().optional(),
     idempotencyKey: z.string().optional(),
+    refundMethod: z.enum(['original', 'wallet', 'store_credit']).optional(),
   }),
 });

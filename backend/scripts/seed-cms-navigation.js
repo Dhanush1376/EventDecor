@@ -29,7 +29,7 @@ async function main() {
         sectionKey: 'navigation',
         status: 'published',
         data: {
-          logo: { text: 'SIRI ARTS NEW', tagline: '', image: '/logo.webp' },
+          logo: { text: 'SIRI ARTS NEW', tagline: '', image: '/MainLogo.png' },
           mainLinks: [{ label: 'Home', url: '/' }],
         },
         createdAt: new Date(),

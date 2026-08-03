@@ -78,7 +78,7 @@ export function CheckoutProvider({ children }) {
             variant: 'Custom',
             imageSrc:
               customOrder.inspirationImages?.[0] ||
-              'https://res.cloudinary.com/dwy422pzt/image/upload/v1727787498/Siri_Logo_c5a17k.jpg',
+              'https://res.cloudinary.com/drxgnnzeb/image/upload/v1785779448/siri-arts-crafts/zqqwwbsrjpb7bqcrl24l.png',
             type: 'custom',
             category: 'CustomOrder',
           },

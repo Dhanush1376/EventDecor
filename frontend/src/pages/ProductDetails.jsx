@@ -253,7 +253,6 @@ export function ProductDetails() {
                   <ProductCard
                     id={showcase._id || showcase.id}
                     _id={showcase._id || showcase.id}
-                    isRectangular={true}
                     itemType="event"
                     title={showcase.title}
                     imageSrc={showcase.image || showcase.images?.[0]}

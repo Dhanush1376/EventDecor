@@ -305,7 +305,7 @@ export function MyCustomOrders() {
                     src={
                       order.productSnapshot?.imageSrc ||
                       order.files?.[0]?.url ||
-                      'https://res.cloudinary.com/dwy422pzt/image/upload/v1727787498/Siri_Logo_c5a17k.jpg'
+                      'https://res.cloudinary.com/drxgnnzeb/image/upload/v1785779448/siri-arts-crafts/zqqwwbsrjpb7bqcrl24l.png'
                     }
                     alt={order.productSnapshot?.title || order.occasion}
                     containerClassName="w-16 h-20 rounded-lg bg-surface-container border border-outline-variant/20 flex-shrink-0 shadow-3xs"
@@ -501,7 +501,7 @@ export function MyCustomOrders() {
                 src={
                   productSnapshot?.imageSrc ||
                   files?.[0]?.url ||
-                  'https://res.cloudinary.com/dwy422pzt/image/upload/v1727787498/Siri_Logo_c5a17k.jpg'
+                  'https://res.cloudinary.com/drxgnnzeb/image/upload/v1785779448/siri-arts-crafts/zqqwwbsrjpb7bqcrl24l.png'
                 }
                 alt={productSnapshot?.title || selectedOrder.occasion}
                 containerClassName="w-full h-full"

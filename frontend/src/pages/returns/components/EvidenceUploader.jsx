@@ -108,7 +108,7 @@ const EvidenceUploader = ({
   return (
     <div className="w-full">
       <div
-        className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+        className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
           isDragging
             ? 'border-primary bg-primary/5'
             : 'border-outline-variant/40 hover:border-primary/50'

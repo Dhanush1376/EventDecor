@@ -6,8 +6,8 @@ export function SiriLogo({
 }) {
   // Parse the size to a number to scale it up
   const numericSize = typeof size === 'string' ? parseInt(size, 10) : size;
-  // Make the logo slightly larger than passed size height (1.4x)
-  const height = numericSize ? Math.round(numericSize * 1.4) : 50;
+  // Make the logo slightly larger than passed size height (1.15x)
+  const height = numericSize ? Math.round(numericSize * 1.15) : 42;
 
   return (
     <div
@@ -18,7 +18,7 @@ export function SiriLogo({
       }}
     >
       <img
-        src="/logo-nobg-clean-sm.webp"
+        src="/MainLogo.png"
         alt="Siri Arts & Crafts Logo"
         loading="eager"
         fetchPriority="high"
@@ -27,6 +27,7 @@ export function SiriLogo({
           width: 'auto',
           objectFit: 'contain',
           filter: variant === 'white' ? 'brightness(0) invert(1)' : 'none',
+          transition: 'filter 0.3s ease',
         }}
         className="h-full flex items-center"
       />

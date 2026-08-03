@@ -315,7 +315,7 @@ export function useCheckoutFlow({
         description: `Rental: ${rentalOrder.productTitle}`,
         image:
           import.meta.env.VITE_LOGO_URL ||
-          `${EXTERNAL_URLS.CLOUDINARY_CDN_BASE}/siriartscrafts/image/upload/v1/SiriLogo.webp`,
+          'https://res.cloudinary.com/drxgnnzeb/image/upload/v1785779448/siri-arts-crafts/zqqwwbsrjpb7bqcrl24l.png',
         order_id: razorpayOrderId,
         handler: async (response) => {
           try {

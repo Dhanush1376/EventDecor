@@ -12,9 +12,7 @@
     "create-indexes": "tsx scripts/create_indexes.ts",
     "seed:catalog": "tsx scripts/seedCatalogRegistry.ts",
     "lint": "eslint src",
-    "test": "vitest run",
-    "audit:cloudinary": "tsx scripts/auditCloudinary.ts",
-    "cleanup:cloudinary": "tsx scripts/auditCloudinary.ts"
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",

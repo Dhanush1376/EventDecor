@@ -20,6 +20,7 @@ export class ExchangeService {
     quantity: number,
     pickupAddress?: any,
     idempotencyKey?: string,
+    refundMethod?: 'original' | 'wallet' | 'store_credit',
   ) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -40,6 +41,36 @@ export class ExchangeService {
         throw new ApiError(400, 'Replacement product is out of stock');
       }
 
+      // Calculate real price difference accurately considering discounts
+      const totalDeductions = (order.discount || 0) + (order.walletDeduction || 0);
+      let effectiveUnitPrice = originalItem.price;
+
+      if (totalDeductions > 0 && order.subtotal > 0) {
+        const ratio = effectiveUnitPrice / order.subtotal;
+        effectiveUnitPrice = Math.max(0, effectiveUnitPrice - totalDeductions * ratio);
+      }
+
+      const originalTotal = effectiveUnitPrice * quantity;
+      const replacementTotal = replacementProduct.price * quantity;
+      const priceDifference = Math.abs(originalTotal - replacementTotal);
+
+      let differenceAction: 'collect_payment' | 'refund_difference' | 'direct_exchange' =
+        'direct_exchange';
+      if (replacementTotal > originalTotal) differenceAction = 'collect_payment';
+      else if (replacementTotal < originalTotal) differenceAction = 'refund_difference';
+
+      // Ensure 'original' refund method isn't used if order was COD
+      if (
+        differenceAction === 'refund_difference' &&
+        refundMethod === 'original' &&
+        order.paymentMethod === 'cod'
+      ) {
+        throw new ApiError(
+          400,
+          'Cannot refund to original payment method for COD orders. Please select wallet.',
+        );
+      }
+
       // 1. Create underlying ReturnRequest using State Machine
       const returnRequest = await ReturnStateMachine.createRequest(
         {
@@ -51,6 +82,7 @@ export class ExchangeService {
               productId: originalProductId,
               returnQuantity: quantity,
               reason: `Exchange for ${replacementProduct.title}`,
+              refundMethod: differenceAction === 'refund_difference' ? refundMethod : undefined,
             },
           ],
           pickupAddress,
@@ -70,15 +102,7 @@ export class ExchangeService {
         }
       }
 
-      // Calculate price difference
-      const originalTotal = originalItem.price * quantity;
-      const replacementTotal = replacementProduct.price * quantity;
-      const priceDifference = Math.abs(originalTotal - replacementTotal);
-
-      let differenceAction: 'collect_payment' | 'refund_difference' | 'direct_exchange' =
-        'direct_exchange';
-      if (replacementTotal > originalTotal) differenceAction = 'collect_payment';
-      else if (replacementTotal < originalTotal) differenceAction = 'refund_difference';
+      // (Calculation moved up)
 
       // Generate Exchange ID
       const Counter = mongoose.model('Counter');
@@ -110,6 +134,7 @@ export class ExchangeService {
         exchangeType,
         priceDifference,
         differenceAction,
+        paymentStatus: differenceAction === 'collect_payment' ? 'pending' : 'not_applicable',
         replacementStatus: 'pending_stock',
         timeline: [
           {
@@ -130,8 +155,35 @@ export class ExchangeService {
         session,
       );
 
+      let razorpayOrderId;
+      let amountToPay = 0;
+
+      if (differenceAction === 'collect_payment') {
+        const { RazorpayGateway } = require('../../utils/payment/RazorpayGateway');
+        amountToPay = Math.round(priceDifference * 100); // Amount in paise
+
+        // Wait until transaction commits before creating razorpay order?
+        // Razorpay API calls shouldn't be strictly bound to MongoDB session unless necessary.
+        const rzpOrder = await RazorpayGateway.createOrder({
+          amount: amountToPay,
+          currency: 'INR',
+          receipt: exchangeId,
+          notes: {
+            exchangeId,
+            userId,
+          },
+        });
+
+        razorpayOrderId = rzpOrder.id;
+        exchangeRequest.additionalPaymentId = razorpayOrderId; // Save it to the exchange
+        // Important: Wait for verification before advancing
+        exchangeRequest.inspectionStatus = 'pending';
+        // Note: frontend will need to pass this razorpayOrderId to the Razorpay widget
+        await exchangeRequest.save({ session });
+      }
+
       await session.commitTransaction();
-      return { returnRequest, exchangeRequest };
+      return { returnRequest, exchangeRequest, razorpayOrderId, amountToPay: priceDifference };
     } catch (error) {
       await session.abortTransaction();
       throw error;

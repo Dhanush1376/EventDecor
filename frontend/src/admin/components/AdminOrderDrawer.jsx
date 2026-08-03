@@ -1,7 +1,6 @@
 import React from 'react';
 import { m as motion } from 'framer-motion';
 import { formatCurrency } from '../components/AdminUIKit';
-import toast from 'react-hot-toast';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 

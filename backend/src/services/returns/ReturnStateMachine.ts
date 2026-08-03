@@ -134,8 +134,6 @@ export class ReturnStateMachine {
       }
     } else if (nextStatus === 'rejected' || nextStatus === 'cancelled') {
       await Order.findByIdAndUpdate(request.orderId, { orderStatus: 'Delivered' }, { session });
-    } else if (nextStatus === 'submitted') {
-      await Order.findByIdAndUpdate(request.orderId, { orderStatus: 'Returned' }, { session });
     }
 
     // 2. Refund Triggering

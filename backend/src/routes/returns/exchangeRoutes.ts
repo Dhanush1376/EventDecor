@@ -12,6 +12,9 @@ router.post(
   validateRequest(createExchangeSchema),
   exchangeController.createExchange,
 );
+
+router.post('/verify-payment', requireAuth, exchangeController.verifyPayment);
+
 router.get('/my-exchanges', requireAuth, exchangeController.getMyExchanges);
 
 router.get(

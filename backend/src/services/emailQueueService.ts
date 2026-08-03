@@ -1,13 +1,13 @@
 import { EmailOptions } from './notificationService';
 import { FailedEmailRetryService } from './failedEmailRetryService';
 import logger from '../config/logger';
+import { sendDirectEmailProcessor } from './notificationService';
 
 class EmailQueueManager {
   /**
    * Processes email in the background; failed sends are persisted for cron retry.
    */
   public enqueue(options: EmailOptions) {
-    const { sendDirectEmailProcessor } = require('./notificationService');
     sendDirectEmailProcessor(options).catch((err: any) => {
       const message = err?.message || 'Unknown email error';
       logger.error(

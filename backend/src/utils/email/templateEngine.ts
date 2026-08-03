@@ -19,7 +19,7 @@ handlebars.registerHelper('formatDate', function (dateString) {
 
 export const compileTemplate = (templateName: string, data: Record<string, any>) => {
   try {
-    const templatePath = path.join(__dirname, '..', 'templates', `${templateName}.hbs`);
+    const templatePath = path.join(__dirname, '..', '..', 'templates', `${templateName}.hbs`);
     if (!fs.existsSync(templatePath)) {
       throw new Error(`Template ${templateName} not found at ${templatePath}`);
     }

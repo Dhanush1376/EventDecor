@@ -18,25 +18,31 @@ export const createExchange = asyncHandler(async (req: Request, res: Response) =
     exchangeType,
     quantity,
     pickupAddress,
+    refundMethod,
   } = req.body;
 
   if (!userId) throw new ApiError(401, 'Unauthorized');
 
-  const { returnRequest, exchangeRequest } = await ExchangeService.createExchangeRequest(
-    userId,
-    orderId,
-    originalProductId,
-    replacementProductId,
-    exchangeType,
-    quantity,
-    pickupAddress,
-  );
+  const { returnRequest, exchangeRequest, razorpayOrderId, amountToPay } =
+    await ExchangeService.createExchangeRequest(
+      userId,
+      orderId,
+      originalProductId,
+      replacementProductId,
+      exchangeType,
+      quantity,
+      pickupAddress,
+      undefined, // idempotencyKey
+      refundMethod,
+    );
 
   res.status(201).json({
     success: true,
     data: {
       exchangeRequest,
       returnRequest,
+      razorpayOrderId,
+      amountToPay,
     },
   });
 });
@@ -104,4 +110,55 @@ export const getAllExchanges = asyncHandler(async (req: Request, res: Response) 
       pages: Math.ceil(total / limit),
     },
   });
+});
+
+/**
+ * @desc    Verify Razorpay payment for exchange
+ * @route   POST /api/v1/exchanges/verify-payment
+ * @access  Private
+ */
+export const verifyPayment = asyncHandler(async (req: Request, res: Response) => {
+  const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+
+  if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+    throw new ApiError(400, 'Missing payment details');
+  }
+
+  const { RazorpayGateway } = require('../../utils/payment/RazorpayGateway');
+  const isValid = RazorpayGateway.getInstance().verifySignature(
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature,
+  );
+
+  if (!isValid) {
+    throw new ApiError(400, 'Invalid payment signature');
+  }
+
+  const exchangeRequest = await ExchangeRequest.findOne({ additionalPaymentId: razorpayOrderId });
+  if (!exchangeRequest) {
+    throw new ApiError(404, 'Exchange request not found for this payment');
+  }
+
+  if (exchangeRequest.paymentStatus === 'completed') {
+    return res.status(200).json({ success: true, message: 'Payment already verified' });
+  }
+
+  exchangeRequest.paymentStatus = 'completed';
+  // inspectionStatus remains 'pending' - admin must explicitly approve
+
+  exchangeRequest.timeline.push({
+    action: 'Payment Verified',
+    timestamp: new Date(),
+  });
+
+  await exchangeRequest.save();
+
+  // Trigger side effects: Send Payment Verified Email
+  const { ReturnNotificationService } = require('../../services/returns/ReturnNotificationService');
+  await ReturnNotificationService.notifyCustomerExchangePaymentVerified(
+    exchangeRequest.returnRequestId,
+  );
+
+  res.status(200).json({ success: true, message: 'Payment verified successfully' });
 });

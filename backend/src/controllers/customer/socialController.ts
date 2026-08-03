@@ -142,9 +142,9 @@ export const generateSocialPreviewHtml = async (req: Request, res: Response) => 
     let product;
 
     if (mongoose.Types.ObjectId.isValid(id)) {
-      product = await Product.findById(id).populate('primaryCategory', 'name').lean();
+      product = await Product.findById(id).lean();
     } else {
-      product = await Product.findOne({ slug: id }).populate('primaryCategory', 'name').lean();
+      product = await Product.findOne({ slug: id }).lean();
     }
 
     if (!product) {
@@ -176,12 +176,9 @@ export const generateSocialPreviewHtml = async (req: Request, res: Response) => 
       ? rawImageUrl.replace('/upload/', '/upload/w_1200,h_630,c_fill,q_auto,f_jpg/')
       : rawImageUrl;
 
-    // Very short description — just category or first ~60 chars
-    const categoryName = (product as any).primaryCategory?.name || '';
+    // Very short description — just first ~60 chars
     const description = escapeHtml(
-      categoryName
-        ? `${product.title} — ${categoryName}`
-        : (product.description || '').replace(/<[^>]*>?/gm, '').substring(0, 60),
+      (product.description || '').replace(/<[^>]*>?/gm, '').substring(0, 60),
     );
     const title = escapeHtml(product.seoTitle || product.title);
 

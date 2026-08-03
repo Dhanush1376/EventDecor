@@ -24,6 +24,7 @@ import { EventResourcePlanningService } from './eventBooking/EventResourcePlanni
 import BookingMessage from '../models/BookingMessage';
 import { PaymentRefundService } from './PaymentRefundService';
 import { RuleEngine } from '../domains/rules/services/RuleEngine';
+import { TransactionalEmailService } from './TransactionalEmailService';
 
 export class PaymentVerificationService {
   static async verifyPayment(
@@ -269,7 +270,6 @@ export class PaymentVerificationService {
           extra: { attemptId: attempt._id, razorpay_order_id, razorpay_payment_id },
         });
 
-        const { TransactionalEmailService } = require('./TransactionalEmailService');
         await TransactionalEmailService.sendPaymentFailedEmail(
           {
             orderId: attempt.orderData.pendingOrderId,
@@ -278,6 +278,7 @@ export class PaymentVerificationService {
           },
           null,
           'Invalid payment details. Payment untrusted.',
+          attempt._id.toString(),
         );
 
         throw new ApiError(400, 'Invalid payment details. Payment untrusted.');

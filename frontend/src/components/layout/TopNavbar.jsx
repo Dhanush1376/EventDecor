@@ -14,13 +14,12 @@ import {
   LogOut,
   Menu,
   X,
-  Shield,
   ShoppingBag,
+  ChevronDown,
 } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SiriLogo } from '../ui/SiriLogo';
 import { MandalaElement } from '../ui/MandalaElement';
-import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 import React, { Suspense, useState, useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -32,6 +31,7 @@ import { prefetchManager } from '../../utils/performance/prefetchManager';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useVisualSearch } from '../../hooks/useVisualSearch';
 import { customOrderService } from '../../services/api/customOrderService';
+import { productService } from '../../services/api/productService';
 import { lazyWithRetry as lazy } from '../../utils/performance/lazyWithRetry';
 
 const IntelligentSearchOverlay = lazy(() =>
@@ -60,6 +60,23 @@ export function TopNavbar() {
     useCart();
   const { user, isAuthenticated, logout, openAuthModal } = useAuth();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [openAccordion, setOpenAccordion] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    productService
+      .getCategories()
+      .then((res) => {
+        if (active && res?.success && res.data) {
+          setCategories(res.data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Track cart additions for bouncing animation
   const prevCartCount = React.useRef(cartCount);
@@ -243,7 +260,11 @@ export function TopNavbar() {
         href: link.href || link.link,
       })) || [];
 
-  const navLinks = [{ label: 'Home', href: '/', mobileOnly: true }, ...dbLinks];
+  const navLinks = [
+    { label: 'Home', href: '/', mobileOnly: true },
+    ...dbLinks,
+    { label: 'Contact Us', href: '/contact', mobileOnly: true },
+  ];
 
   const isActive = (href) => location.pathname === href;
 
@@ -596,22 +617,6 @@ export function TopNavbar() {
               transition={{ type: 'spring', damping: 28, stiffness: 250, mass: 0.8 }}
               className="fixed right-0 top-0 bottom-0 w-[85%] max-w-[450px] h-full bg-surface-bright z-[120] lg:hidden px-6 py-6 flex flex-col overflow-y-auto overflow-x-hidden shadow-[-20px_0_60px_rgba(0,0,0,0.15)] border-l border-outline-variant/10"
             >
-              {/* Decorative Mandala Background - Positioned to bleed off the left edge */}
-              <MandalaArtDecor
-                variant={1}
-                size={700}
-                opacity={0.2}
-                className="absolute -top-[10%] -left-[40%] pointer-events-none"
-                spinDuration={80}
-                blendMode="normal"
-                style={{
-                  maskImage:
-                    'radial-gradient(circle at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 45%)',
-                  WebkitMaskImage:
-                    'radial-gradient(circle at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 45%)',
-                }}
-              />
-
               {/* Minimal Header */}
               <div className="flex justify-between items-center mb-12 px-2">
                 <SiriLogo size="32px" />
@@ -624,62 +629,145 @@ export function TopNavbar() {
                 </button>
               </div>
 
-              {/* Massive Luxury Typography Navigation */}
-              <div className="flex-grow flex flex-col justify-center items-end px-4 mb-12">
-                <ul className="space-y-5 relative z-10 flex flex-col items-end">
+              {/* Editorial Typography List Navigation */}
+              <div className="flex-grow flex flex-col justify-start items-start w-full mt-4">
+                <ul className="relative z-10 flex flex-col items-start w-full border-t border-outline-variant/30">
                   {navLinks.map((link, idx) => {
                     const active = isActive(link.href);
+                    const isShopLink =
+                      link.label.toLowerCase() === 'shop' ||
+                      link.label.toLowerCase() === 'collections' ||
+                      link.label.toLowerCase() === 'shop by category';
+                    const isEventsLink = link.label.toLowerCase() === 'events';
+                    const hasSubMenu = isShopLink || isEventsLink;
+                    const accordionId = isShopLink ? 'shop' : isEventsLink ? 'events' : null;
+                    const subItems = isShopLink
+                      ? categories
+                      : ['Weddings', 'Corporate Events', 'Social Gatherings', 'Private Parties'];
+
                     return (
                       <motion.li
                         key={idx}
-                        initial={{ opacity: 0, x: 20 }}
+                        initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{
-                          delay: 0.1 + idx * 0.05,
-                          duration: 0.5,
+                          delay: 0.05 + idx * 0.05,
+                          duration: 0.4,
                           ease: [0.22, 1, 0.36, 1],
                         }}
+                        className="w-full flex flex-col items-start border-b border-outline-variant/30"
                       >
-                        <Link
-                          onClick={() => setIsOpen(false)}
-                          className={`group flex items-center justify-end gap-3 font-label font-bold uppercase tracking-[0.2em] text-[16px] lg:text-[20px] transition-all duration-500 ${
-                            active
-                              ? 'text-primary'
-                              : 'text-on-surface hover:text-primary hover:-translate-x-2'
-                          }`}
-                          to={link.href}
-                        >
-                          <span className="text-right relative flex items-center justify-end gap-1.5">
-                            <span>{link.label}</span>
-                            {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
-                              <span className="relative w-2 h-2 rounded-full bg-[#ff5a00] shadow-sm"></span>
+                        <div className="flex items-center justify-between w-full group">
+                          {hasSubMenu ? (
+                            <button
+                              onClick={() =>
+                                setOpenAccordion(openAccordion === accordionId ? null : accordionId)
+                              }
+                              className={`flex items-center justify-between font-serif uppercase tracking-wider text-[15px] transition-all duration-300 w-full text-left py-5 px-1 ${active || openAccordion === accordionId ? 'text-primary' : 'text-on-surface hover:text-primary'}`}
+                            >
+                              <span>{link.label}</span>
+                              <div className="flex items-center justify-center pl-5 border-l border-outline-variant/40 h-5">
+                                <ChevronDown
+                                  size={16}
+                                  strokeWidth={1.5}
+                                  className={`transition-transform duration-300 ${openAccordion === accordionId ? 'rotate-180' : ''}`}
+                                />
+                              </div>
+                            </button>
+                          ) : (
+                            <Link
+                              onClick={() => setIsOpen(false)}
+                              className={`group flex items-center justify-start gap-3 font-serif uppercase tracking-wider text-[15px] transition-all duration-300 w-full text-left py-5 px-1 ${active ? 'text-primary' : 'text-on-surface hover:text-primary'}`}
+                              to={link.href}
+                            >
+                              <span className="text-left relative flex items-center justify-start gap-2 w-full">
+                                <span>{link.label}</span>
+                                {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
+                                  <span className="relative w-2 h-2 rounded-full bg-[#ff5a00] shadow-sm"></span>
+                                )}
+                              </span>
+                            </Link>
+                          )}
+                        </div>
+
+                        {/* Accordion Content */}
+                        {hasSubMenu && (
+                          <AnimatePresence>
+                            {openAccordion === accordionId && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="overflow-hidden w-full flex flex-col items-start space-y-5 px-1 pb-5 pt-2"
+                              >
+                                {isShopLink && (
+                                  <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.05, duration: 0.3 }}
+                                    className="w-full"
+                                  >
+                                    <Link
+                                      to={link.href}
+                                      onClick={() => setIsOpen(false)}
+                                      className="font-serif text-[15px] capitalize text-on-surface hover:text-primary transition-all duration-300 text-left w-full block"
+                                    >
+                                      View All
+                                    </Link>
+                                  </motion.div>
+                                )}
+                                {subItems.map((cat, i) => {
+                                  const categoryName = typeof cat === 'string' ? cat : cat.name;
+                                  return (
+                                    <motion.div
+                                      key={i}
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      transition={{ delay: 0.05 + (i + 1) * 0.03, duration: 0.3 }}
+                                      className="w-full"
+                                    >
+                                      <Link
+                                        to={
+                                          isShopLink
+                                            ? `/collections?category=${encodeURIComponent(categoryName)}`
+                                            : `/events?type=${encodeURIComponent(categoryName)}`
+                                        }
+                                        onClick={() => setIsOpen(false)}
+                                        className="font-serif text-[15px] capitalize text-on-surface hover:text-primary transition-all duration-300 text-left w-full block"
+                                      >
+                                        {categoryName.toLowerCase()}
+                                      </Link>
+                                    </motion.div>
+                                  );
+                                })}
+                              </motion.div>
                             )}
-                          </span>
-                        </Link>
+                          </AnimatePresence>
+                        )}
                       </motion.li>
                     );
                   })}
                   {isAuthenticated && adminRoles.includes(user?.role) && (
                     <motion.li
-                      initial={{ opacity: 0, x: 20 }}
+                      initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{
-                        delay: 0.1 + navLinks.length * 0.05,
-                        duration: 0.5,
+                        delay: 0.05 + navLinks.length * 0.05,
+                        duration: 0.4,
                         ease: [0.22, 1, 0.36, 1],
                       }}
-                      className="flex justify-end mt-4"
+                      className="flex justify-start w-full bg-[#F5F2EC] border-b border-outline-variant/30"
                     >
                       <Link
                         onClick={() => setIsOpen(false)}
-                        className="group inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-[#222222] font-label font-bold uppercase text-[12px] transition-all duration-300 text-white hover:bg-black shadow-sm"
+                        className="group flex items-center justify-start gap-3 font-serif uppercase tracking-wider text-[15px] transition-all duration-300 w-full text-left py-5 px-1 text-on-surface hover:text-primary"
                         to="/admin"
                       >
+                        <span>Admin Portal</span>
                         {hasPendingInvite && (
-                          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-orange-500 shadow-sm" />
+                          <span className="relative w-2 h-2 rounded-full bg-[#ff5a00] shadow-sm"></span>
                         )}
-                        <Shield size={20} strokeWidth={1.5} />
-                        <span className="tracking-[0.15em] ml-1">Admin Portal</span>
                       </Link>
                     </motion.li>
                   )}
@@ -691,86 +779,107 @@ export function TopNavbar() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="mt-auto w-full px-2 pb-8"
+                className="mt-auto w-full px-2 pb-12 pt-8"
               >
-                <div className="w-full h-[1px] bg-outline-variant/30 mb-8" />
-                <div className="w-full flex flex-col gap-6">
-                  <div className="flex items-center justify-between w-full px-2">
-                    <div className="flex items-center gap-4">
+                <div className="w-full mt-4">
+                  <div className="flex items-center justify-between w-full px-1">
+                    {/* Left Group: Utilities */}
+                    <div className="flex items-center gap-4 sm:gap-7">
                       <Link
                         to="/wishlist"
                         onClick={() => setIsOpen(false)}
-                        className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
+                        className="flex flex-col items-center gap-2 text-on-surface hover:text-primary transition-colors group"
                       >
-                        <Heart size={26} strokeWidth={1.5} />
-                        <span className="text-[9px] font-bold uppercase tracking-wider">
+                        <Heart
+                          size={24}
+                          strokeWidth={1.3}
+                          className="group-hover:scale-105 transition-transform"
+                        />
+                        <span className="text-[9px] font-sans uppercase tracking-[0.2em]">
                           Wishlist
                         </span>
                       </Link>
+
                       <motion.button
                         onClick={() => {
                           setIsOpen(false);
                           setIsCartOpen(true);
                         }}
-                        animate={
-                          isCartBouncing
-                            ? { scale: [1, 1.25, 0.9, 1.1, 1], rotate: [0, 10, -10, 5, 0] }
-                            : {}
-                        }
-                        transition={{ duration: 0.5 }}
-                        className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors relative cursor-pointer"
+                        animate={isCartBouncing ? { scale: [1, 1.1, 0.95, 1.05, 1] } : {}}
+                        transition={{ duration: 0.4 }}
+                        className="flex flex-col items-center gap-2 text-on-surface hover:text-primary transition-colors relative cursor-pointer group"
                       >
                         <div className="relative">
-                          <ShoppingBag size={26} strokeWidth={1.5} />
+                          <ShoppingBag
+                            size={24}
+                            strokeWidth={1.3}
+                            className="group-hover:scale-105 transition-transform"
+                          />
                           {cartCount > 0 && (
-                            <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">
+                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-primary text-white text-[8px] font-bold rounded-full flex items-center justify-center shadow-sm">
                               {cartCount}
                             </span>
                           )}
                         </div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider">Bag</span>
+                        <span className="text-[9px] font-sans uppercase tracking-[0.2em]">Bag</span>
                       </motion.button>
+
                       {isAuthenticated && (
                         <Link
                           to="/dashboard"
                           onClick={() => setIsOpen(false)}
-                          className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
+                          className="flex flex-col items-center gap-2 text-on-surface hover:text-primary transition-colors group"
                         >
-                          <User size={26} strokeWidth={1.5} />
-                          <span className="text-[9px] font-bold uppercase tracking-wider">
+                          <User
+                            size={24}
+                            strokeWidth={1.3}
+                            className="group-hover:scale-105 transition-transform"
+                          />
+                          <span className="text-[9px] font-sans uppercase tracking-[0.2em]">
                             Profile
                           </span>
                         </Link>
                       )}
                     </div>
 
-                    {!isAuthenticated ? (
-                      <button
-                        onClick={() => {
-                          setIsOpen(false);
-                          openAuthModal();
-                        }}
-                        className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors cursor-pointer"
-                      >
-                        <LogIn size={26} strokeWidth={1.5} />
-                        <span className="text-[9px] font-bold uppercase tracking-wider">
-                          Sign In
-                        </span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          setIsOpen(false);
-                          logout();
-                        }}
-                        className="flex flex-col items-center gap-1 text-on-surface hover:text-error transition-colors cursor-pointer"
-                      >
-                        <LogOut size={26} strokeWidth={1.5} />
-                        <span className="text-[9px] font-bold uppercase tracking-wider">
-                          Sign Out
-                        </span>
-                      </button>
-                    )}
+                    {/* Right Group: Authentication */}
+                    <div className="flex items-center">
+                      {!isAuthenticated ? (
+                        <button
+                          onClick={() => {
+                            setIsOpen(false);
+                            openAuthModal();
+                          }}
+                          className="flex flex-col items-center gap-2 text-on-surface hover:text-primary transition-colors group cursor-pointer"
+                        >
+                          <LogIn
+                            size={24}
+                            strokeWidth={1.3}
+                            className="group-hover:scale-105 transition-transform"
+                          />
+                          <span className="text-[9px] font-sans uppercase tracking-[0.2em]">
+                            Sign In
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setIsOpen(false);
+                            logout();
+                          }}
+                          className="flex flex-col items-center gap-2 text-on-surface hover:text-error transition-colors group cursor-pointer"
+                        >
+                          <LogOut
+                            size={24}
+                            strokeWidth={1.3}
+                            className="group-hover:scale-105 transition-transform"
+                          />
+                          <span className="text-[9px] font-sans uppercase tracking-[0.2em]">
+                            Sign Out
+                          </span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>

@@ -19,7 +19,7 @@ export function OrderCard({ order, item, itemIdx, idx }) {
     (typeof item.productId === 'object'
       ? item.productId?.imageSrc || item.productId?.images?.[0]
       : null) ||
-    'https://res.cloudinary.com/dwy422pzt/image/upload/v1727787498/Siri_Logo_c5a17k.jpg';
+    'https://res.cloudinary.com/drxgnnzeb/image/upload/v1785779448/siri-arts-crafts/zqqwwbsrjpb7bqcrl24l.png';
   const prodVariant = item.variant || 'Default';
   const deliveryEntry = order.statusHistory?.find((h) => h.status?.toLowerCase() === 'delivered');
   const deliveryDate = deliveryEntry

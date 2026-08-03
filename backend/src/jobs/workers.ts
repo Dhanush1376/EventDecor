@@ -58,10 +58,9 @@ export const initWorkers = async () => {
         return requestContextStorage.run(
           { requestId: trace.requestId || `bullmq-${job.id}`, userId: trace.userId },
           async () => {
-            logger.info(`[WORKER] Processing email job`, {
-              jobId: job.id,
-              email: job.data.email || job.data.to,
-            });
+            logger.info(
+              `[EMAIL WORKER][ACTIVE] jobId=${job.id} action=${job.data.action || 'unknown'} notificationKey=${job.data.notificationKey || 'NONE'}`,
+            );
 
             // Support both legacy {to, subject, html} and new full EmailOptions formats
             const emailOptions = job.data.email
@@ -78,6 +77,7 @@ export const initWorkers = async () => {
                   attachments: job.data.attachments,
                 };
 
+            logger.info(`[EMAIL WORKER][PROCESSOR_CALL] jobId=${job.id}`);
             await sendDirectEmailProcessor(emailOptions);
           },
         );
@@ -85,26 +85,13 @@ export const initWorkers = async () => {
       { connection: connection as any, concurrency: 5 },
     );
 
-    emailWorker.on('completed', (job) =>
-      logger.info(`[WORKER] Email job completed`, { jobId: job.id }),
-    );
+    emailWorker.on('completed', (job) => logger.info(`[EMAIL WORKER][COMPLETED] jobId=${job.id}`));
     emailWorker.on('failed', (job, err) =>
-      logger.error(`[WORKER] Email job failed`, {
-        jobId: job?.id,
-        error: err.message,
-        stack: err.stack,
-      }),
+      logger.error(`[EMAIL WORKER][FAILED] jobId=${job?.id} error=${err?.message}`),
     );
     emailWorker.on('error', (err: any) => {
-      if (
-        err.code === 'ECONNRESET' ||
-        err.code === 'ENOTFOUND' ||
-        err.name === 'ConnectionClosedError' ||
-        err.message?.includes('max requests limit exceeded') ||
-        err.message?.includes('Connection is closed')
-      )
-        return;
-      logger.error(`[WORKER email] Error:`, err);
+      // Log ALL errors visibly - do not suppress
+      logger.error(`[EMAIL WORKER][ERROR] code=${err?.code} message=${err?.message}`);
     });
 
     // Notification Worker (placeholder for push/SMS)

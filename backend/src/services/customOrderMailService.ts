@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { emailQueue, isQueuesReady } from '../jobs/queues';
 import logger from '../config/logger';
+import { emailQueue as fallbackQueue } from './emailQueueService';
 
 const hashEmail = (email: string) =>
   crypto.createHash('md5').update(email).digest('hex').substring(0, 8);
@@ -11,7 +12,6 @@ const enqueueSafe = async (options: any, notificationKey: string) => {
     if (isQueuesReady()) {
       await emailQueue.add('sendEmail', options, { jobId: notificationKey });
     } else {
-      const { emailQueue: fallbackQueue } = require('./emailQueueService');
       fallbackQueue.enqueue(options);
     }
   } catch (err) {

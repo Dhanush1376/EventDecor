@@ -18,7 +18,7 @@ export const OrderCreatedCustomerTemplate = (data: any) => {
     .join('');
 
   const content = `
-    ${Header('https://your-logo-url.com/logo.png')}
+    ${Header('https://your-logo-url.com/MainLogo.png')}
     
     <h2 style="color: #111827; margin-bottom: 16px;">Thank you for your order, ${customerInfo.name}!</h2>
     <p style="color: #4b5563; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">

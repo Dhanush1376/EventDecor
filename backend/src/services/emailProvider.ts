@@ -138,10 +138,13 @@ export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: str
   const errors: string[] = [];
 
   if (process.env.BREVO_API_KEY) {
+    logger.info(`[EMAIL PROVIDER] selected=BREVO`);
     try {
-      return await sendViaBrevo(payload);
+      const result = await sendViaBrevo(payload);
+      logger.info(`[EMAIL PROVIDER][SUCCESS] provider=BREVO messageId=${result.messageId}`);
+      return result;
     } catch (err: any) {
-      logger.error(`Brevo failed: ${err.message}`);
+      logger.error(`[EMAIL PROVIDER][FAILED] provider=BREVO error=${err.message}`);
       errors.push(`Brevo: ${err.message}`);
     }
   }

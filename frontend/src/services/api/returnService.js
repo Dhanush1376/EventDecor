@@ -78,6 +78,8 @@ export const returnService = {
   createExchange: (data) => api.post('/exchanges', data),
 
   getMyExchanges: () => api.get('/exchanges/my-exchanges'),
+
+  verifyExchangePayment: (data) => api.post('/exchanges/verify-payment', data),
 };
 
 export default returnService;

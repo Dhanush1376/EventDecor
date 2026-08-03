@@ -196,8 +196,8 @@ function CouponCard({ coupon, isBest, onApply, isCopied, isEligible }) {
             {coupon.code}
           </span>
           {isBest && isEligible && (
-            <span className="bg-orange-500-[] uppercase tracking-wider whitespace-nowrap">
-              Best Offer
+            <span className="absolute top-0 right-0 bg-[#2A2927] text-white text-[8px] font-bold uppercase tracking-widest px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-sm z-20">
+              BEST OFFER
             </span>
           )}
         </div>

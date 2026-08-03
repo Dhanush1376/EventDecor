@@ -11,6 +11,7 @@ import logger from '../config/logger';
 import { sendEmail as smartSendEmail } from './emailProvider';
 import AdminNotification from '../models/AdminNotification';
 import { getBackendUrl } from '../utils/getBackendUrl';
+import { emailQueue as fallbackQueue } from './emailQueueService';
 
 export let socketEmitAdminNotificationHandler: (notification: any) => void = () => {};
 export const setSocketNotificationHandler = (
@@ -117,21 +118,28 @@ export interface EmailOptions {
  * Standardized to use BullMQ for distributed persistence and retries.
  */
 export const sendDirectEmail = (options: EmailOptions) => {
-  const { emailQueue, isQueuesReady } = require('../jobs/queues');
+  const { emailQueue, isQueuesReady, usingFallback } = require('../jobs/queues');
 
-  if (isQueuesReady()) {
+  const queueReady = isQueuesReady();
+  logger.info(
+    `[EMAIL TRACE][sendDirectEmail] action=${options.action} queueReady=${queueReady} usingFallback=${usingFallback} notificationKey=${options.notificationKey || 'NONE'}`,
+  );
+
+  if (queueReady) {
     const delay = options.scheduledAt
       ? Math.max(0, new Date(options.scheduledAt).getTime() - Date.now())
       : 0;
-    emailQueue.add('sendEmail', options, { delay }).catch((err: any) => {
-      logger.error('Failed to enqueue email to BullMQ:', err);
-      // Fallback to local memory queue if BullMQ fails after returning isQueuesReady() = true
-      const { emailQueue: fallbackQueue } = require('./emailQueueService');
-      fallbackQueue.enqueue(options);
-    });
+    emailQueue
+      .add('sendEmail', options, { delay })
+      .then((job: any) => {
+        logger.info(`[EMAIL TRACE][sendDirectEmail] BullMQ job created jobId=${job?.id ?? 'NONE'}`);
+      })
+      .catch((err: any) => {
+        logger.error(`[EMAIL TRACE][sendDirectEmail] BullMQ add failed: ${err?.message}`);
+        fallbackQueue.enqueue(options);
+      });
   } else {
-    // Fallback to local memory queue if Redis/BullMQ is down
-    const { emailQueue: fallbackQueue } = require('./emailQueueService');
+    logger.info(`[EMAIL TRACE][sendDirectEmail] using fallback queue (direct processor)`);
     fallbackQueue.enqueue(options);
   }
 };
@@ -155,12 +163,53 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
   let bodyHtml = options.customHtml || '';
   let finalSubject = options.subject;
 
+  logger.info(
+    `[EMAIL PROCESSOR][01] entered action=${actionVal} notificationKey=${options.notificationKey || 'NONE'} hasRecipient=${!!emailVal} hasSubject=${!!finalSubject} hasHtml=${!!bodyHtml} htmlLen=${bodyHtml?.length ?? 0}`,
+  );
+
   try {
     // 0. DB-Level Idempotency Check (Persistent Event Dedup)
     if (options.notificationKey) {
       try {
+        // Check existing record BEFORE attempting upsert for diagnostic clarity
+        const existingEvent: any = await NotificationEvent.findOne({
+          notificationKey: options.notificationKey,
+        }).lean();
+        if (existingEvent) {
+          logger.info(
+            `[EMAIL PROCESSOR][02] idempotency pre-check: key=${options.notificationKey} existingStatus=${existingEvent.status} createdAt=${existingEvent.createdAt} updatedAt=${existingEvent.updatedAt}`,
+          );
+          if (existingEvent.status === 'sent' || existingEvent.status === 'processing') {
+            // Check for stale processing lock (> 5 min)
+            const staleCutoff = new Date(Date.now() - 5 * 60 * 1000);
+            if (
+              existingEvent.status === 'processing' &&
+              existingEvent.updatedAt &&
+              new Date(existingEvent.updatedAt) < staleCutoff
+            ) {
+              logger.warn(
+                `[EMAIL PROCESSOR][02] STALE processing lock detected for key=${options.notificationKey}, age=${Math.round((Date.now() - new Date(existingEvent.updatedAt).getTime()) / 1000)}s. Reclaiming.`,
+              );
+              // Reset stale lock to allow re-processing
+              await NotificationEvent.updateOne(
+                { notificationKey: options.notificationKey, status: 'processing' },
+                { $set: { status: 'queued' } },
+              );
+            } else {
+              logger.warn(
+                `[EMAIL PROCESSOR][02] SKIPPED — existing record status=${existingEvent.status} for key=${options.notificationKey}`,
+              );
+              return { status: 'skipped', reason: `already_${existingEvent.status}` };
+            }
+          }
+        } else {
+          logger.info(
+            `[EMAIL PROCESSOR][02] idempotency pre-check: no existing record for key=${options.notificationKey}`,
+          );
+        }
+
         // Atomic lock acquisition: only update if not already processing or sent
-        await NotificationEvent.findOneAndUpdate(
+        const upsertResult = await NotificationEvent.findOneAndUpdate(
           {
             notificationKey: options.notificationKey,
             status: { $nin: ['sent', 'processing'] },
@@ -174,17 +223,27 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
           },
           { upsert: true, returnDocument: 'after' },
         );
+        logger.info(
+          `[EMAIL PROCESSOR][02] idempotency claim result=CLAIMED newStatus=${upsertResult?.status}`,
+        );
       } catch (upsertErr: any) {
         // If E11000 duplicate key error, it means another thread has it locked as 'processing' or it's 'sent'
         if (upsertErr.code === 11000) {
+          // Re-query to find out WHY it was blocked
+          const blockingRecord = await NotificationEvent.findOne({
+            notificationKey: options.notificationKey,
+          }).lean();
           logger.warn(
-            `[IDEMPOTENCY] Blocked duplicate/concurrent email for notificationKey: ${options.notificationKey}`,
+            `[EMAIL PROCESSOR][02] SKIPPED (E11000) — blocked by existing record status=${blockingRecord?.status} key=${options.notificationKey}`,
           );
-          return { status: 'skipped', reason: 'already_sent_or_processing' };
+          return { status: 'skipped', reason: `already_${blockingRecord?.status || 'unknown'}` };
         }
-        logger.error(`[IDEMPOTENCY] Failed to upsert NotificationEvent: ${upsertErr.message}`);
+        logger.error(
+          `[EMAIL PROCESSOR][02] Failed to upsert NotificationEvent: ${upsertErr.message}`,
+        );
       }
     } else {
+      logger.info(`[EMAIL PROCESSOR][02] no notificationKey — using legacy 5s dedup`);
       // Fallback 5-second idempotency check for legacy non-deterministic calls
       const fiveSecondsAgo = new Date(Date.now() - 5000);
       const existingLog = await NotificationLog.findOne({
@@ -195,9 +254,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
       });
 
       if (existingLog) {
-        logger.warn(
-          `[IDEMPOTENCY] Blocked redundant legacy email to ${emailVal} for action: ${actionVal}`,
-        );
+        logger.warn(`[EMAIL PROCESSOR][02] legacy dedup BLOCKED for action=${actionVal}`);
         return existingLog;
       }
     }
@@ -270,6 +327,13 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
       bodyHtml = getLuxuryEmailWrapper(finalSubject, bodyHtml);
     }
 
+    if (!bodyHtml || !bodyHtml.trim()) {
+      logger.error(
+        `[EMAIL PROCESSOR] BLOCKED — empty HTML body for action=${actionVal} template=${templateNameVal}`,
+      );
+      throw new Error(`Email body is empty for action=${actionVal}`);
+    }
+
     // Generate Invoice PDF if requested and order context exists
     if (options.generatePdf && templateDataVal && templateDataVal.orderId) {
       try {
@@ -329,6 +393,9 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        logger.info(
+          `[EMAIL PROCESSOR][03] calling smartSendEmail attempt=${attempt}/${maxRetries} subjectLen=${finalSubject?.length ?? 0} htmlLen=${bodyHtml?.length ?? 0} hasAttachments=${attachmentsList.length > 0}`,
+        );
         info = await smartSendEmail({
           to: emailVal,
           subject: finalSubject,
@@ -336,6 +403,9 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
           headers,
           attachments: attachmentsList,
         });
+        logger.info(
+          `[EMAIL PROCESSOR][04] smartSendEmail SUCCESS messageId=${info?.messageId || 'NONE'} action=${actionVal}`,
+        );
 
         // Mark as successfully sent in idempotency collection
         if (options.notificationKey) {

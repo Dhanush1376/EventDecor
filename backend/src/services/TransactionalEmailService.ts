@@ -1,7 +1,8 @@
 import logger from '../config/logger';
 import { getActiveAdminEmailsFromDB } from '../config/adminConfig';
 import crypto from 'crypto';
-import { emailQueue, isQueuesReady } from '../jobs/queues';
+import { emailQueue, isQueuesReady, usingFallback } from '../jobs/queues';
+import { emailQueue as fallbackQueue } from './emailQueueService';
 import {
   buildOrderConfirmationCustomerEmail,
   buildOrderConfirmationAdminEmail,
@@ -27,7 +28,10 @@ export class TransactionalEmailService {
     action: string,
     notificationKey: string,
   ) {
-    if (!to) return;
+    if (!to) {
+      logger.warn(`[EMAIL TRACE][ENQUEUE] skipped — no recipient for action=${action}`);
+      return;
+    }
 
     const emailOptions = {
       email: to,
@@ -38,17 +42,32 @@ export class TransactionalEmailService {
       notificationKey, // For DB-level idempotency
     };
 
+    const queueReady = isQueuesReady();
+    logger.info(
+      `[EMAIL TRACE][ENQUEUE][05] enqueue requested key=${notificationKey} queueReady=${queueReady} usingFallback=${usingFallback} queueType=${queueReady && !usingFallback ? 'bullmq' : 'fallback'}`,
+    );
+
     try {
-      if (isQueuesReady()) {
+      if (queueReady) {
         // Queue-level idempotency
-        await emailQueue.add('sendEmail', emailOptions, { jobId: notificationKey });
+        const job = await emailQueue.add('sendEmail', emailOptions, { jobId: notificationKey });
+        logger.info(
+          `[EMAIL TRACE][ENQUEUE][06] queue.add returned jobId=${(job as any)?.id ?? 'NONE'} name=${(job as any)?.name ?? 'NONE'}`,
+        );
       } else {
         // Fallback for local dev without Redis
-        const { emailQueue: fallbackQueue } = require('./emailQueueService');
+        logger.info(
+          `[EMAIL TRACE][ENQUEUE][06] using emailQueueService fallback (direct processor)`,
+        );
         fallbackQueue.enqueue(emailOptions);
       }
-    } catch (err) {
-      logger.error(`[TransactionalEmailService] Failed to enqueue email for ${action}:`, err);
+    } catch (err: any) {
+      logger.error(
+        `[TransactionalEmailService] Failed to enqueue email for ${action}: ${err?.message}`,
+        err,
+      );
+      // MINIMAL FIX: Route to fallback queue if BullMQ add fails (matches OTP behavior)
+      fallbackQueue.enqueue(emailOptions);
     }
   }
 
@@ -232,13 +251,18 @@ export class TransactionalEmailService {
   // ==========================================
 
   public static async sendInquiryEmails(inquiry: any, eventId: string) {
-    logger.info(`[TransactionalEmailService] Dispatching inquiry emails for ${inquiry._id}`);
+    logger.info(
+      `[EMAIL TRACE][INQUIRY][04] sendInquiryEmails entered eventId=${eventId} customerRecipient=${!!inquiry.email}`,
+    );
 
     // 1. Notify Customer
     if (inquiry.email) {
       const { subject, html } = buildInquiryCustomerEmail(inquiry);
       const customerHash = this.hashEmail(inquiry.email);
       const notificationKey = `INQUIRY_CREATED:${eventId}:CUSTOMER:${customerHash}`;
+      logger.info(
+        `[EMAIL TRACE][INQUIRY][04a] customer email: subjectLen=${subject?.length ?? 0} htmlLen=${html?.length ?? 0} key=${notificationKey}`,
+      );
       await this.enqueueEmail(
         inquiry.email,
         subject,
@@ -250,6 +274,8 @@ export class TransactionalEmailService {
     }
 
     // 2. Notify Admins
+    const adminEmails = await getActiveAdminEmailsFromDB();
+    logger.info(`[EMAIL TRACE][INQUIRY][04b] adminRecipientCount=${adminEmails?.length ?? 0}`);
     const adminTemplate = buildInquiryAdminEmail(inquiry);
     await this.notifyAllAdmins(
       adminTemplate.subject,
