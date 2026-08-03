@@ -105,3 +105,22 @@ export const canActorAssignRole = (actorRole: string, roleToAssign: string): boo
 
   return actorWeight > targetWeight;
 };
+
+/**
+ * Returns a list of active admin emails from the database.
+ * Restricted to approved admin roles for operational recipients.
+ */
+export const getActiveAdminEmailsFromDB = async (): Promise<string[]> => {
+  const User = require('../models/User').default;
+  const admins = await User.find({
+    role: { $in: ADMIN_ROLES }, // Using ADMIN_ROLES to restrict operational recipients as per user instruction
+    isDeleted: { $ne: true },
+  })
+    .select('email')
+    .lean();
+
+  const dbEmails = admins.map((a: any) => a.email).filter(Boolean);
+  const envEmails = getAdminEmails(); // Fallback/merge with env
+
+  return [...new Set([...dbEmails, ...envEmails])];
+};

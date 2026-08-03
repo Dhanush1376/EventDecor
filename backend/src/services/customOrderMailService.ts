@@ -1,7 +1,23 @@
-import { sendDirectEmail } from './notificationService';
+import crypto from 'crypto';
+import { emailQueue, isQueuesReady } from '../jobs/queues';
 import logger from '../config/logger';
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@siriartsandcrafts.com';
+const hashEmail = (email: string) =>
+  crypto.createHash('md5').update(email).digest('hex').substring(0, 8);
+
+const enqueueSafe = async (options: any, notificationKey: string) => {
+  options.notificationKey = notificationKey;
+  try {
+    if (isQueuesReady()) {
+      await emailQueue.add('sendEmail', options, { jobId: notificationKey });
+    } else {
+      const { emailQueue: fallbackQueue } = require('./emailQueueService');
+      fallbackQueue.enqueue(options);
+    }
+  } catch (err) {
+    logger.error(`[CustomOrderMailService] Failed to enqueue email:`, err);
+  }
+};
 import { getFrontendUrl } from '../utils/getFrontendUrl';
 
 // HTML escape utility to prevent XSS in email templates
@@ -19,16 +35,19 @@ export class CustomOrderMailService {
   /**
    * 1. Send submission emails when a customer lodges a new custom request
    */
-  static async sendSubmissionEmails(order: any) {
+  static async sendSubmissionEmails(order: any, eventId: string) {
     const frontendUrl = getFrontendUrl();
     const trackingLink = `${frontendUrl}/custom-orders`;
 
     // A. TO CUSTOMER: Elegant Luxury Welcome & Acknowledgment
     try {
-      await sendDirectEmail({
-        email: order.customerEmail,
-        subject: `Your Custom Decor Request Received`,
-        customHtml: `
+      const customerHash = hashEmail(order.customerEmail);
+      const customerKey = `CUSTOM_ORDER_CREATED:${eventId}:CUSTOMER:${customerHash}`;
+      await enqueueSafe(
+        {
+          email: order.customerEmail,
+          subject: `Your Custom Decor Request Received`,
+          customHtml: `
           <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">Your Design Request is Received</h2>
           
           <p style="margin: 0 0 24px 0;">
@@ -73,19 +92,27 @@ export class CustomOrderMailService {
             </a>
           </div>
         `,
-        type: 'order',
-        action: 'custom_order_submission',
-      });
+          type: 'order',
+          action: 'custom_order_submission',
+        },
+        customerKey,
+      );
     } catch (err) {
       logger.error('Failed to dispatch submission confirmation email to customer:', err);
     }
 
     // B. TO ADMIN: Creative Request Notification Alert
     try {
-      await sendDirectEmail({
-        email: ADMIN_EMAIL,
-        subject: `New Custom Request: ${order.customerName} - ${order.occasion}`,
-        customHtml: `
+      const { getActiveAdminEmailsFromDB } = require('../config/adminConfig');
+      const adminEmails = await getActiveAdminEmailsFromDB();
+      for (const email of adminEmails) {
+        const adminHash = hashEmail(email);
+        const adminKey = `CUSTOM_ORDER_CREATED:${eventId}:ADMIN:${adminHash}`;
+        await enqueueSafe(
+          {
+            email: email,
+            subject: `New Custom Request: ${order.customerName} - ${order.occasion}`,
+            customHtml: `
           <div style="border-left: 4px solid #0f172a; padding-left: 16px; margin-bottom: 24px;">
             <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; display: block;">Administrative Dispatch</span>
             <h2 style="margin: 4px 0 0 0; font-size: 18px; color: #0f172a; font-weight: 600;">New Custom Order Lodged</h2>
@@ -119,9 +146,12 @@ export class CustomOrderMailService {
             </a>
           </div>
         `,
-        type: 'order',
-        action: 'admin_custom_order_lodged',
-      });
+            type: 'order',
+            action: 'custom_order_submission_admin',
+          },
+          adminKey,
+        );
+      }
     } catch (err) {
       logger.error('Failed to dispatch alert email to admin:', err);
     }
@@ -154,10 +184,15 @@ export class CustomOrderMailService {
         )
         .join('');
 
-      await sendDirectEmail({
-        email: order.customerEmail,
-        subject: `Your Custom Decor Quote is Ready`,
-        customHtml: `
+      const quoteVersion = order.quotation?.version || 'v1';
+      const customerHash = hashEmail(order.customerEmail);
+      const quoteKey = `QUOTE_READY:${order._id}:${quoteVersion}:${customerHash}`;
+
+      await enqueueSafe(
+        {
+          email: order.customerEmail,
+          subject: `Your Custom Decor Quote is Ready`,
+          customHtml: `
           <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">Studio Curation Estimate</h2>
           
           <p style="margin: 0 0 24px 0;">
@@ -218,9 +253,11 @@ export class CustomOrderMailService {
             </a>
           </div>
         `,
-        type: 'order',
-        action: 'custom_order_quotation_dispatched',
-      });
+          type: 'order',
+          action: 'custom_order_quotation_dispatched',
+        },
+        quoteKey,
+      );
     } catch (err) {
       logger.error('Failed to dispatch estimate invoice email to customer:', err);
     }
@@ -233,10 +270,17 @@ export class CustomOrderMailService {
     const frontendUrl = getFrontendUrl();
 
     try {
-      await sendDirectEmail({
-        email: ADMIN_EMAIL,
-        subject: `Quote Response: ${order.customerName} ${response}`,
-        customHtml: `
+      const { getActiveAdminEmailsFromDB } = require('../config/adminConfig');
+      const adminEmails = await getActiveAdminEmailsFromDB();
+      const quoteVersion = order.quotation?.version || 'v1';
+      for (const email of adminEmails) {
+        const adminHash = hashEmail(email);
+        const responseKey = `QUOTE_RESPONSE:${order._id}:${quoteVersion}:${response}:${adminHash}`;
+        await enqueueSafe(
+          {
+            email: email,
+            subject: `Quote Response: ${order.customerName} ${response}`,
+            customHtml: `
           <div style="border-left: 4px solid ${response === 'approved' ? '#10b981' : '#ef4444'}; padding-left: 16px; margin-bottom: 24px;">
             <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; display: block;">Administrative Dispatch</span>
             <h2 style="margin: 4px 0 0 0; font-size: 18px; color: #0f172a; font-weight: 600;">
@@ -269,9 +313,12 @@ export class CustomOrderMailService {
             </a>
           </div>
         `,
-        type: 'order',
-        action: `admin_custom_quotation_${response}`,
-      });
+            type: 'order',
+            action: `admin_custom_quotation_${response}`,
+          },
+          responseKey,
+        );
+      }
     } catch (err) {
       logger.error('Failed to dispatch quotation response alert email to admin:', err);
     }
@@ -285,45 +332,69 @@ export class CustomOrderMailService {
     senderName: string,
     senderRole: 'admin' | 'customer',
     text: string,
+    messageId: string,
   ) {
     const frontendUrl = getFrontendUrl();
-
-    // Determine recipient
-    const recipientEmail = senderRole === 'admin' ? order.customerEmail : ADMIN_EMAIL;
     const trackingLink =
       senderRole === 'admin' ? `${frontendUrl}/custom-orders` : `${frontendUrl}/admin/inquiries`;
 
+    const customHtml = `
+      <h3 style="font-size: 16px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">New Message Received</h3>
+      
+      <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <span style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 8px;">From ${escapeHtml(senderName)} (${senderRole === 'admin' ? 'Curator Team' : 'Customer'})</span>
+        <p style="color: #334155; font-size: 13.5px; line-height: 1.6; margin: 0; font-style: italic;">
+          "${escapeHtml(text)}"
+        </p>
+      </div>
+
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 24px; color: #334155;">
+        <span style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 6px;">Workspace Context</span>
+        <p style="color: #334155; font-size: 12px; margin: 0;">
+          <strong>Order ID:</strong> ${escapeHtml(order.orderId || order._id)}<br/>
+          <strong>Related Product:</strong> ${escapeHtml(order.productSnapshot?.title || order.productType || 'Custom Request')}
+        </p>
+      </div>
+
+      <div style="text-align: center;">
+        <a href="${trackingLink}" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 14px; font-weight: 500;">
+          Open Chat Workspace
+        </a>
+      </div>
+    `;
+
     try {
-      await sendDirectEmail({
-        email: recipientEmail,
-        subject: `New Message from ${senderName}`,
-        customHtml: `
-          <h3 style="font-size: 16px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">New Message Received</h3>
-          
-          <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-            <span style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 8px;">From ${escapeHtml(senderName)} (${senderRole === 'admin' ? 'Curator Team' : 'Customer'})</span>
-            <p style="color: #334155; font-size: 13.5px; line-height: 1.6; margin: 0; font-style: italic;">
-              "${escapeHtml(text)}"
-            </p>
-          </div>
-
-          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 24px; color: #334155;">
-            <span style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 6px;">Workspace Context</span>
-            <p style="color: #334155; font-size: 12px; margin: 0;">
-              <strong>Order ID:</strong> ${escapeHtml(order.orderId || order._id)}<br/>
-              <strong>Related Product:</strong> ${escapeHtml(order.productSnapshot?.title || order.productType || 'Custom Request')}
-            </p>
-          </div>
-
-          <div style="text-align: center;">
-            <a href="${trackingLink}" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 14px; font-weight: 500;">
-              Open Chat Workspace
-            </a>
-          </div>
-        `,
-        type: 'order',
-        action: 'custom_order_chat_update',
-      });
+      if (senderRole === 'admin') {
+        const customerHash = hashEmail(order.customerEmail);
+        const messageKey = `CUSTOM_ORDER_CHAT:${messageId}:CUSTOMER:${customerHash}`;
+        await enqueueSafe(
+          {
+            email: order.customerEmail,
+            subject: `New Message from ${senderName}`,
+            customHtml,
+            type: 'order',
+            action: 'custom_order_chat_update',
+          },
+          messageKey,
+        );
+      } else {
+        const { getActiveAdminEmailsFromDB } = require('../config/adminConfig');
+        const adminEmails = await getActiveAdminEmailsFromDB();
+        for (const email of adminEmails) {
+          const adminHash = hashEmail(email);
+          const messageKey = `CUSTOM_ORDER_CHAT:${messageId}:ADMIN:${adminHash}`;
+          await enqueueSafe(
+            {
+              email,
+              subject: `New Message from ${senderName}`,
+              customHtml,
+              type: 'order',
+              action: 'custom_order_chat_update',
+            },
+            messageKey,
+          );
+        }
+      }
     } catch (err) {
       logger.error('Failed to dispatch chat message notification email:', err);
     }
@@ -332,15 +403,18 @@ export class CustomOrderMailService {
   /**
    * 5. Send status change email
    */
-  static async sendStatusChangeEmail(order: any, previousStatus: string) {
+  static async sendStatusChangeEmail(order: any, previousStatus: string, eventId: string) {
     const frontendUrl = getFrontendUrl();
     const trackingLink = `${frontendUrl}/custom-orders`;
 
     try {
-      await sendDirectEmail({
-        email: order.customerEmail,
-        subject: `Status Update for Your Custom Order`,
-        customHtml: `
+      const customerHash = hashEmail(order.customerEmail);
+      const statusKey = `CUSTOM_ORDER_STATUS_UPDATED:${eventId}:CUSTOMER:${customerHash}`;
+      await enqueueSafe(
+        {
+          email: order.customerEmail,
+          subject: `Status Update for Your Custom Order`,
+          customHtml: `
           <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">Status Update</h2>
           <p>
             Dear ${escapeHtml(order.customerName)},<br/><br/>
@@ -352,9 +426,11 @@ export class CustomOrderMailService {
             </a>
           </div>
         `,
-        type: 'order',
-        action: 'custom_order_status_update',
-      });
+          type: 'order',
+          action: 'custom_order_status_update',
+        },
+        statusKey,
+      );
     } catch (err) {
       logger.error('Failed to dispatch status change email:', err);
     }

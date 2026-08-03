@@ -31,10 +31,10 @@ function DashboardIndex() {
       <div className="w-16 h-16 rounded-full bg-surface-container-low border border-outline-variant/20 flex items-center justify-center mb-4 text-secondary">
         <LayoutDashboard className="text-[32px]" strokeWidth={1.5} />
       </div>
-      <h2 className="font-display text-xl lg:text-2xl font-bold text-on-surface mb-2 tracking-wide uppercase">
+      <h2 className="font-display text-2xl lg:text-3xl font-light text-on-surface mb-3 tracking-tight">
         Welcome to your Dashboard
       </h2>
-      <p className="text-secondary text-[11px] lg:text-[13px] max-w-md mx-auto uppercase tracking-wider font-bold">
+      <p className="text-secondary text-[13px] lg:text-[14px] max-w-md mx-auto leading-relaxed">
         Select an option from the sidebar to manage your profile, orders, events, and account
         settings.
       </p>

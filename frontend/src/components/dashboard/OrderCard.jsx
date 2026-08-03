@@ -43,8 +43,14 @@ export function OrderCard({ order, item, itemIdx, idx }) {
       className="bg-surface-bright border border-outline-variant/30 rounded-lg overflow-hidden shadow-2xs hover:border-outline-variant hover:shadow-xs transition-all text-left"
     >
       {/* Card Header */}
-      <div className="bg-surface-container-low px-4 py-3 flex items-center justify-between border-b border-outline-variant/15">
-        <div className="flex items-center gap-2">
+      <div className="bg-surface-container-low px-4 py-3 flex items-center justify-between border-b border-outline-variant/15 relative">
+        {order.statusHistory?.length > 0 &&
+          Date.now() -
+            new Date(order.statusHistory[order.statusHistory.length - 1].timestamp).getTime() <
+            24 * 60 * 60 * 1000 && (
+            <span className="absolute top-3 left-3 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+          )}
+        <div className="flex items-center gap-2 pl-3">
           {order.orderStatus?.toLowerCase() === 'delivered' ? (
             <svg
               className="w-4 h-4 text-primary shrink-0"

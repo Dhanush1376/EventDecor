@@ -269,6 +269,17 @@ export class PaymentVerificationService {
           extra: { attemptId: attempt._id, razorpay_order_id, razorpay_payment_id },
         });
 
+        const { TransactionalEmailService } = require('./TransactionalEmailService');
+        await TransactionalEmailService.sendPaymentFailedEmail(
+          {
+            orderId: attempt.orderData.pendingOrderId,
+            total: attempt.orderData.total || expectedAmount / 100,
+            shippingAddress: attempt.orderData.shippingAddress,
+          },
+          null,
+          'Invalid payment details. Payment untrusted.',
+        );
+
         throw new ApiError(400, 'Invalid payment details. Payment untrusted.');
       }
 

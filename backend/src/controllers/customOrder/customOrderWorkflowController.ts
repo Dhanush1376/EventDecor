@@ -180,6 +180,7 @@ export const postMessage = asyncHandler(async (req: Request, res: Response) => {
     isSenderAdmin ? 'Siri Design Team' : order.customerName,
     isSenderAdmin ? 'admin' : 'customer',
     text,
+    (order.messages[order.messages.length - 1] as any)._id.toString(),
   ).catch((err) => logger.error('Chat message notification email error:', err));
 
   // Emit socket event

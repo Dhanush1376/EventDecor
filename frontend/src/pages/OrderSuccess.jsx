@@ -80,6 +80,8 @@ const mapOrderData = (rawOrder) => {
     subtotal: rawOrder.subtotal ?? 0,
     shippingFee: rawOrder.shippingFee ?? 0,
     discount: rawOrder.discount ?? 0,
+    codFee: rawOrder.codFee ?? 0,
+    tax: rawOrder.tax?.totalTax ?? 0,
     paymentMode: rawOrder.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Razorpay Secure',
     needByDate: rawOrder.needByDate ? safeFormatDate(rawOrder.needByDate) : undefined,
     deliveryAddress: {
@@ -495,18 +497,32 @@ export function OrderSuccess() {
                   <span>Subtotal</span>
                   <span>₹{safeFormatNumber(order.subtotal)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Promo Discount</span>
-                  <span className="text-green-700 font-medium">
-                    - ₹{safeFormatNumber(order.discount)}
-                  </span>
-                </div>
+                {order.discount > 0 && (
+                  <div className="flex justify-between">
+                    <span>Promo Discount</span>
+                    <span className="text-green-700 font-medium">
+                      - ₹{safeFormatNumber(order.discount)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Shipping Fee</span>
                   <span className="text-green-700 font-bold">
                     {order.shippingFee === 0 ? 'FREE' : `₹${safeFormatNumber(order.shippingFee)}`}
                   </span>
                 </div>
+                {order.codFee > 0 && (
+                  <div className="flex justify-between">
+                    <span>COD Fee</span>
+                    <span className="font-medium">₹{safeFormatNumber(order.codFee)}</span>
+                  </div>
+                )}
+                {order.tax > 0 && (
+                  <div className="flex justify-between">
+                    <span>Estimated Tax (GST)</span>
+                    <span className="font-medium">₹{safeFormatNumber(order.tax)}</span>
+                  </div>
+                )}
                 {order.depositTotal > 0 && (
                   <div className="flex justify-between">
                     <span className="flex items-center gap-1">
@@ -585,7 +601,7 @@ export function OrderSuccess() {
             {/* Primary Actions */}
             <div className="space-y-3 pt-2">
               <button
-                onClick={() => navigate('/profile?tab=orders')}
+                onClick={() => navigate('/dashboard?tab=orders')}
                 className="w-full bg-primary hover:bg-primary-dark text-white py-3.5 rounded text-[11px] font-bold uppercase tracking-widest transition-all shadow-md block text-center cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <GitCommit className="text-[15px]" strokeWidth={1.5} />

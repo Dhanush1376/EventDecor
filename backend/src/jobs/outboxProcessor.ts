@@ -62,23 +62,54 @@ export const processOutboxEvents = async () => {
 };
 
 async function processEvent(event: any): Promise<void> {
-  const { NotificationEngine } = require('../services/notifications/NotificationEngine');
-
   // Convert "Aggregate:Action" to "AGGREGATE_ACTION" format
   const eventName = `${event.aggregateType}_${event.eventType}`.toUpperCase();
 
-  const context = {
-    eventId: event._id.toString(),
-    aggregateId: event.aggregateId,
-    retryCount: event.retryCount || 0,
-    priority: 'normal',
-    metadata: {
-      payload: event.payload,
-    },
-  };
+  // 1. Process Transactional Emails based on Outbox Event (Persistent/Idempotent)
+  try {
+    const { TransactionalEmailService } = require('../services/TransactionalEmailService');
+    const Order = require('../models/Order').default;
+    const CustomOrder = require('../models/CustomOrder').default;
 
-  // 1. Delegate ALL Notification duties to the Notification Engine
-  await NotificationEngine.notify(eventName, context);
+    if (eventName === 'ORDER_ORDERCREATED') {
+      const order = await Order.findById(event.aggregateId).populate('user');
+      if (order)
+        await TransactionalEmailService.sendOrderPlacedEmails(
+          order,
+          order.user,
+          event._id.toString(),
+        );
+    } else if (eventName === 'ORDER_ORDERSTATUSUPDATED') {
+      const order = await Order.findById(event.aggregateId).populate('user');
+      if (order && event.payload) {
+        await TransactionalEmailService.sendOrderStatusChangeEmail(
+          order,
+          order.user,
+          event.payload.oldStatus,
+          event.payload.newStatus,
+          event._id.toString(),
+        );
+      }
+    } else if (eventName === 'CUSTOMORDER_CUSTOMORDERSUBMITTED') {
+      const customOrder = await CustomOrder.findById(event.aggregateId);
+      if (customOrder)
+        await TransactionalEmailService.sendCustomOrderSubmissionEmails(
+          customOrder,
+          event._id.toString(),
+        );
+    } else if (eventName === 'CUSTOMORDER_PRODUCTCUSTOMIZATIONSUBMITTED') {
+      const customOrder = await CustomOrder.findById(event.aggregateId);
+      if (customOrder)
+        await TransactionalEmailService.sendCustomOrderSubmissionEmails(
+          customOrder,
+          event._id.toString(),
+        );
+    }
+  } catch (emailErr) {
+    logger.error(`[OUTBOX] Failed to send transactional email for ${eventName}:`, emailErr);
+    // We intentionally don't throw here to avoid poisoning the outbox for non-email side-effects,
+    // as TransactionalEmailService itself uses a persistent queue.
+  }
 
   // 2. Handle specific internal Business Domain Side-Effects (Event Subscribers)
   // In a full microservices architecture, this would publish to Kafka/RabbitMQ.

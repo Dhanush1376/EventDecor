@@ -247,18 +247,21 @@ export function AuthProvider({ children }) {
       }
     })();
 
-    const handleUnauthorized = () => {
-      logout(true);
-    };
-
-    window.addEventListener('auth-unauthorized', handleUnauthorized);
-
     return () => {
       controller.abort();
       clearTimeout(safetyTimeout);
+    };
+  }, [restoreSession, cachedProfile, hasStoredSession]);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout(true);
+    };
+    window.addEventListener('auth-unauthorized', handleUnauthorized);
+    return () => {
       window.removeEventListener('auth-unauthorized', handleUnauthorized);
     };
-  }, [restoreSession, logout, cachedProfile, hasStoredSession]);
+  }, [logout]);
 
   useEffect(() => {
     import('../utils/core/observability')

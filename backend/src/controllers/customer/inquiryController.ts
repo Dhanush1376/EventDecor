@@ -4,40 +4,16 @@ import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import logger from '../../config/logger';
 
-import { sendDirectEmail } from '../../services/notificationService';
+import { TransactionalEmailService } from '../../services/TransactionalEmailService';
 
 export const submitInquiry = asyncHandler(async (req: Request, res: Response) => {
   const inquiry = await Inquiry.create(req.body);
 
-  // 1. Notify User
-  if (inquiry.email) {
-    sendDirectEmail({
-      email: inquiry.email,
-      subject: 'We Received Your Vision âœ¦ Siri Arts & Crafts',
-      templateName: 'Inquiry Submitted',
-      templateData: {
-        name: inquiry.name,
-        subject: inquiry.subject || 'Custom Decor Services',
-      },
-      type: 'engagement',
-      action: 'inquiry_submitted',
-    });
-  }
-
-  // 2. Notify Admin
-  const adminEmail = process.env.ADMIN_EMAIL || 'Sirisha.atmakuri@gmail.com';
-  sendDirectEmail({
-    email: adminEmail,
-    subject: `New Inquiry Received: ${inquiry.subject || 'Siri Arts'}`,
-    templateName: 'Admin Alert',
-    templateData: {
-      actionType: 'New Inquiry Submitted',
-      timestamp: new Date().toLocaleString(),
-      details: `Name: ${inquiry.name}\nEmail: ${inquiry.email}\nMessage: ${inquiry.message}`,
-    },
-    type: 'system',
-    action: 'admin_inquiry_alert',
-  });
+  // Send reliable transactional emails (customer acknowledgment + all admins alert)
+  // Trigger Notification Asynchronously
+  TransactionalEmailService.sendInquiryEmails(inquiry, inquiry._id.toString()).catch((err) =>
+    logger.error('Failed to dispatch inquiry notification:', err),
+  );
 
   // 3. Real-time Admin Notification
   try {

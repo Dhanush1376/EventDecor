@@ -3,11 +3,40 @@ import { m as motion } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { prefetchManager } from '../../utils/performance/prefetchManager';
+import { useQuery } from '@tanstack/react-query';
+import { orderService } from '../../services/domainServices';
+import { useMemo } from 'react';
 
 export function BottomNav() {
   const location = useLocation();
   const { cartCount, setIsCartOpen, isCartOpen } = useCart();
-  const { isAuthenticated, openAuthModal } = useAuth();
+  const { isAuthenticated, openAuthModal, user } = useAuth();
+
+  const userId = user?._id || user?.id;
+
+  const ordersQuery = useQuery({
+    queryKey: ['dashboard', 'orders', userId],
+    queryFn: async () => {
+      const res = await orderService.getMyOrders();
+      const payload = res.data ?? res ?? [];
+      return Array.isArray(payload) ? payload : payload.data || [];
+    },
+    enabled: Boolean(userId),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+
+  const hasRecentOrderUpdates = useMemo(() => {
+    if (!ordersQuery.data) return false;
+    const now = Date.now();
+    return ordersQuery.data.some((order) => {
+      if (!order.statusHistory || !order.statusHistory.length) return false;
+      const lastUpdate = new Date(
+        order.statusHistory[order.statusHistory.length - 1].timestamp,
+      ).getTime();
+      return now - lastUpdate < 24 * 60 * 60 * 1000;
+    });
+  }, [ordersQuery.data]);
 
   const navItems = [
     { label: 'Home', icon: 'home', path: '/' },
@@ -15,7 +44,7 @@ export function BottomNav() {
     { label: 'Wishlist', icon: 'favorite', path: '/wishlist' },
     { label: 'Events', icon: 'celebration', path: '/events' },
     isAuthenticated
-      ? { label: 'Profile', icon: 'person', path: '/dashboard' }
+      ? { label: 'Profile', icon: 'person', path: '/dashboard', showBadge: hasRecentOrderUpdates }
       : { label: 'Login', icon: 'login', onClick: openAuthModal },
   ];
 
@@ -60,7 +89,12 @@ export function BottomNav() {
                 aria-label={`Open ${item.label}`}
                 className="relative z-10 flex flex-col items-center justify-center w-full h-full group cursor-pointer active:scale-95 transition-all"
               >
-                <NavIcon active={false} icon={item.icon} label={item.label} />
+                <NavIcon
+                  active={false}
+                  icon={item.icon}
+                  label={item.label}
+                  showBadge={item.showBadge}
+                />
               </button>
             ) : (
               <Link
@@ -70,7 +104,12 @@ export function BottomNav() {
                 aria-current={active ? 'page' : undefined}
                 className="relative z-10 flex flex-col items-center justify-center w-full h-full group cursor-pointer active:scale-95 transition-all"
               >
-                <NavIcon active={active} icon={item.icon} label={item.label} />
+                <NavIcon
+                  active={active}
+                  icon={item.icon}
+                  label={item.label}
+                  showBadge={item.showBadge}
+                />
               </Link>
             )}
           </div>
@@ -80,7 +119,7 @@ export function BottomNav() {
   );
 }
 
-function NavIcon({ active, icon, label, badgeCount }) {
+function NavIcon({ active, icon, label, badgeCount, showBadge }) {
   const activeColorClass = 'text-black';
   const inactiveColorClass = 'text-black';
 
@@ -88,12 +127,17 @@ function NavIcon({ active, icon, label, badgeCount }) {
     <div className={`flex flex-col items-center justify-center transition-all duration-300 mt-0.5`}>
       <div className="relative flex items-center justify-center">
         <span
-          className={`material-symbols-outlined text-[24px] ${active ? `font-fill ${activeColorClass}` : inactiveColorClass} transition-colors`}
-          style={{ fontVariationSettings: active ? "'wght' 400" : "'wght' 200" }}
+          className={`material-symbols-outlined text-[24px] ${active ? activeColorClass : inactiveColorClass} transition-colors`}
+          style={{
+            fontVariationSettings: active ? "'FILL' 1, 'wght' 300" : "'FILL' 0, 'wght' 300",
+          }}
         >
           {icon}
         </span>
         {badgeCount > 0 && <CartBadge count={badgeCount} />}
+        {showBadge && !badgeCount && (
+          <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500 animate-pulse border border-[#faf8f2]" />
+        )}
       </div>
       {label && (
         <span

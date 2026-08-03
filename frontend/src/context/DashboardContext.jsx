@@ -304,6 +304,18 @@ export function DashboardProvider({ children }) {
     [orders],
   );
 
+  const hasRecentOrderUpdates = useMemo(() => {
+    if (!allOrders) return false;
+    const now = Date.now();
+    return allOrders.some((order) => {
+      if (!order.statusHistory || !order.statusHistory.length) return false;
+      const lastUpdate = new Date(
+        order.statusHistory[order.statusHistory.length - 1].timestamp,
+      ).getTime();
+      return now - lastUpdate < 24 * 60 * 60 * 1000;
+    });
+  }, [allOrders]);
+
   const contextValue = useMemo(
     () => ({
       user,
@@ -376,6 +388,7 @@ export function DashboardProvider({ children }) {
       handleDeleteAddress,
       handleSetDefaultAddress,
       downloadInvoice,
+      hasRecentOrderUpdates,
     }),
     [
       user,
@@ -427,6 +440,7 @@ export function DashboardProvider({ children }) {
       handleDeleteAddress,
       handleSetDefaultAddress,
       downloadInvoice,
+      hasRecentOrderUpdates,
     ],
   );
 

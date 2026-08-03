@@ -10,6 +10,14 @@ logger.info(`[STARTUP] NODE_ENV=${process.env.NODE_ENV}`);
 logger.info(`[STARTUP] PORT=${process.env.PORT || '(not set, defaulting to 5000)'}`);
 logger.info(`[STARTUP] MONGO_URI=${process.env.MONGO_URI ? 'SET' : 'NOT SET'}`);
 
+// Verify email provider configuration
+if (process.env.BREVO_API_KEY) {
+  logger.info('[Email] Brevo API key configured ✓');
+} else if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+  logger.info('[Email] SMTP credentials configured ✓');
+} else {
+  logger.warn('[Email] ⚠ No email provider configured! Emails will use Ethereal (dev only).');
+}
 import { auditEnvOnStartup } from './src/config/secretAudit';
 auditEnvOnStartup();
 import { runStartupValidation } from './src/config/startupValidator';

@@ -308,7 +308,6 @@ export function AdminOrderDrawer({
               value={selectedOrderData?.status || selectedOrder.status}
               onChange={(e) => {
                 updateOrderStatus(selectedOrder.id, e.target.value);
-                toast.success(`Updated order status to ${e.target.value}`);
               }}
               className="admin-input font-bold"
             >

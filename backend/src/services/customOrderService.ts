@@ -147,12 +147,7 @@ export class CustomOrderService {
       // Ignored
     }
 
-    // Send emails
-    try {
-      await CustomOrderMailService.sendSubmissionEmails(order);
-    } catch (emailErr) {
-      logger.error('Failed to send custom order submission emails:', emailErr);
-    }
+    // Emails are now dispatched reliably via the OutboxProcessor (CUSTOMORDER_CUSTOMORDERSUBMITTED)
 
     return order;
   }
@@ -286,12 +281,7 @@ export class CustomOrderService {
       // Ignored
     }
 
-    // Send emails
-    try {
-      await CustomOrderMailService.sendSubmissionEmails(order);
-    } catch (emailErr) {
-      logger.error('Failed to send product customization submission emails:', emailErr);
-    }
+    // Emails are now dispatched reliably via the OutboxProcessor (CUSTOMORDER_PRODUCTCUSTOMIZATIONSUBMITTED)
 
     return order;
   }

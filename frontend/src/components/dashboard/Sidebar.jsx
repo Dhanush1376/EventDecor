@@ -32,6 +32,7 @@ export function Sidebar() {
     phoneText,
     mobileShowContent,
     setMobileShowContent,
+    hasRecentOrderUpdates,
   } = useDashboard();
 
   const path = location.pathname;
@@ -168,7 +169,12 @@ export function Sidebar() {
                 : 'text-on-surface hover:bg-surface-container-low'
             }`}
           >
-            <span>My Order History</span>
+            <div className="flex items-center gap-2">
+              <span>My Order History</span>
+              {hasRecentOrderUpdates && (
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+              )}
+            </div>
             <ChevronRight className="text-xs" strokeWidth={1.5} />
           </motion.button>
 

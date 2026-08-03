@@ -67,7 +67,10 @@ export default function OrderTimeline({ orderId }) {
             <div className="text-[13px] text-[var(--admin-text-secondary)]">
               {event.performedBy && (
                 <p>
-                  <strong>By:</strong> {event.performedBy}
+                  <strong>By:</strong>{' '}
+                  {typeof event.performedBy === 'object'
+                    ? event.performedBy.name || 'System'
+                    : event.performedBy}
                 </p>
               )}
               {event.quantity && (

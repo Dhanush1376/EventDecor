@@ -4,6 +4,7 @@ import handlebars from 'handlebars';
 import EmailTemplate from '../models/EmailTemplate';
 import EmailCampaign from '../models/EmailCampaign';
 import NotificationLog from '../models/NotificationLog';
+import NotificationEvent from '../models/NotificationEvent';
 import ConsentPreference from '../models/ConsentPreference';
 import User from '../models/User';
 import logger from '../config/logger';
@@ -108,6 +109,7 @@ export interface EmailOptions {
   template?: string;
   context?: Record<string, any>;
   generatePdf?: boolean;
+  notificationKey?: string;
 }
 
 /**
@@ -154,18 +156,50 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
   let finalSubject = options.subject;
 
   try {
-    // 0. Idempotency check: prevent sending duplicate emails to the same recipient for the same action within 5 seconds
-    const fiveSecondsAgo = new Date(Date.now() - 5000);
-    const existingLog = await NotificationLog.findOne({
-      recipientEmail: emailVal,
-      type: typeVal as any,
-      action: actionVal,
-      createdAt: { $gte: fiveSecondsAgo },
-    });
+    // 0. DB-Level Idempotency Check (Persistent Event Dedup)
+    if (options.notificationKey) {
+      try {
+        // Atomic lock acquisition: only update if not already processing or sent
+        const notifEvent = await NotificationEvent.findOneAndUpdate(
+          {
+            notificationKey: options.notificationKey,
+            status: { $nin: ['sent', 'processing'] },
+          },
+          {
+            $setOnInsert: {
+              eventType: typeVal,
+              recipientGroup: actionVal,
+            },
+            $set: { status: 'processing' },
+          },
+          { upsert: true, returnDocument: 'after' },
+        );
+      } catch (upsertErr: any) {
+        // If E11000 duplicate key error, it means another thread has it locked as 'processing' or it's 'sent'
+        if (upsertErr.code === 11000) {
+          logger.warn(
+            `[IDEMPOTENCY] Blocked duplicate/concurrent email for notificationKey: ${options.notificationKey}`,
+          );
+          return { status: 'skipped', reason: 'already_sent_or_processing' };
+        }
+        logger.error(`[IDEMPOTENCY] Failed to upsert NotificationEvent: ${upsertErr.message}`);
+      }
+    } else {
+      // Fallback 5-second idempotency check for legacy non-deterministic calls
+      const fiveSecondsAgo = new Date(Date.now() - 5000);
+      const existingLog = await NotificationLog.findOne({
+        recipientEmail: emailVal,
+        type: typeVal as any,
+        action: actionVal,
+        createdAt: { $gte: fiveSecondsAgo },
+      });
 
-    if (existingLog) {
-      logger.warn(`[IDEMPOTENCY] Blocked redundant email to ${emailVal} for action: ${actionVal}`);
-      return existingLog;
+      if (existingLog) {
+        logger.warn(
+          `[IDEMPOTENCY] Blocked redundant legacy email to ${emailVal} for action: ${actionVal}`,
+        );
+        return existingLog;
+      }
     }
 
     // 1. Consent preference validation (for Marketing emails only)
@@ -303,6 +337,18 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
           attachments: attachmentsList,
         });
 
+        // Mark as successfully sent in idempotency collection
+        if (options.notificationKey) {
+          await NotificationEvent.updateOne(
+            { notificationKey: options.notificationKey },
+            { $set: { status: 'sent', sentAt: new Date(), providerMessageId: info?.messageId } },
+          ).catch((err) =>
+            logger.error(
+              `[IDEMPOTENCY] Failed to mark sent for ${options.notificationKey}: ${err.message}`,
+            ),
+          );
+        }
+
         log.status = 'sent'; // Marked as sent after handing off to provider
         await log.save();
         break;
@@ -335,9 +381,16 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     );
 
     return log;
-  } catch (err: any) {
-    logger.error(`Failed to deliver email notifications to ${emailVal}:`, err);
-    throw err; // Propagate error so callers can handle or retry correctly
+  } catch (error: any) {
+    if (options.notificationKey) {
+      await NotificationEvent.updateOne(
+        { notificationKey: options.notificationKey },
+        { $set: { status: 'failed', errorLog: error.message } },
+      ).catch(() => {});
+    }
+
+    logger.error(`[NotificationService] Error sending email to ${emailVal}:`, error);
+    throw error; // Propagate error so callers can handle or retry correctly
   }
 };
 

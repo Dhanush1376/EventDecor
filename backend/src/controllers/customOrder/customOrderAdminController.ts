@@ -170,7 +170,11 @@ export const adminUpdateStatus = asyncHandler(async (req: Request, res: Response
 
   // WF-06: Send status change email
   try {
-    await CustomOrderMailService.sendStatusChangeEmail(finalOrder, prevStatus);
+    await CustomOrderMailService.sendStatusChangeEmail(
+      finalOrder,
+      prevStatus,
+      (finalOrder._id as any).toString(),
+    );
   } catch (emailErr) {
     logger.error('Failed to send status change email:', emailErr);
   }

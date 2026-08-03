@@ -135,36 +135,104 @@ export function OrderDetail() {
   // --- Dynamic Journey Steps Generation ---
   const journeySteps = [];
 
-  journeySteps.push({
-    title: 'Order Confirmed',
-    description: 'Dispatched into production ledger',
-    timestamp: new Date(order.createdAt),
-    status: 'completed',
-    icon: 'receipt_long',
-    color: 'blue',
-  });
-
-  if (!isCancelled) {
-    journeySteps.push({
-      title: 'Processed & Shipped',
-      description: 'In transit with Courier Logistics',
-      meta: order.trackingNumber ? `AWB: ${order.trackingNumber}` : null,
-      status: isShipped || isDelivered ? 'completed' : 'pending',
-      icon: 'local_shipping',
-      color: 'amber',
-    });
-
-    journeySteps.push({
-      title: 'Delivery Completed',
-      description: 'Signature check & hand-off validation active',
-      status: isDelivered ? 'completed' : 'pending',
+  const standardTimeline = [
+    {
+      key: 'pending',
+      title: 'Payment Pending / Order Placed',
+      description: 'Order has been placed',
+      icon: 'credit_card',
+      color: 'slate',
+    },
+    {
+      key: 'confirmed',
+      title: 'Confirmed',
+      description: 'Order confirmed and verified',
+      icon: 'check_circle',
+      color: 'sky',
+    },
+    {
+      key: 'packed',
+      title: 'Packed',
+      description: 'Items securely packed',
       icon: 'inventory_2',
+      color: 'fuchsia',
+    },
+    {
+      key: 'ready to ship',
+      title: 'Ready to Ship',
+      description: 'Awaiting courier pickup',
+      icon: 'schedule',
+      color: 'amber',
+    },
+    {
+      key: 'shipped',
+      title: 'Shipped',
+      description: 'In transit with logistics',
+      icon: 'local_shipping',
+      color: 'orange',
+    },
+    {
+      key: 'out for delivery',
+      title: 'Out for Delivery',
+      description: 'Arriving soon',
+      icon: 'directions_car',
+      color: 'teal',
+    },
+    {
+      key: 'delivered',
+      title: 'Delivered',
+      description: 'Package delivered successfully',
+      icon: 'home',
       color: 'emerald',
+    },
+  ];
+
+  const currentStatusLower = status?.toLowerCase() || 'pending';
+
+  if (!isCancelled && !returnRequest && !isReturned) {
+    const currentStatusIndex = standardTimeline.findIndex((s) => s.key === currentStatusLower);
+
+    standardTimeline.forEach((step, index) => {
+      // Find timestamp from history if available
+      const historyEntry = order.statusHistory
+        ?.slice()
+        .reverse()
+        .find((h) => h.status?.toLowerCase() === step.key);
+      const timestamp = historyEntry
+        ? new Date(historyEntry.timestamp)
+        : index === 0
+          ? new Date(order.createdAt)
+          : null;
+
+      let stepStatus = 'pending';
+      if (index <= currentStatusIndex || isDelivered) stepStatus = 'completed';
+
+      journeySteps.push({
+        title: step.title,
+        description: step.description,
+        timestamp,
+        status: stepStatus,
+        icon: step.icon,
+        color: step.color,
+        meta:
+          step.key === 'shipped' && order.trackingNumber ? `AWB: ${order.trackingNumber}` : null,
+      });
     });
-  } else {
+  } else if (isCancelled) {
+    // Show partial timeline until cancelled
+    journeySteps.push({
+      title: 'Order Placed',
+      description: 'Order was placed initially',
+      timestamp: new Date(order.createdAt),
+      status: 'completed',
+      icon: 'receipt_long',
+      color: 'blue',
+    });
+
     journeySteps.push({
       title: 'Order Cancelled',
       description: 'Order was cancelled and will not be shipped',
+      timestamp: order.updatedAt ? new Date(order.updatedAt) : null,
       status: 'error',
       icon: 'cancel',
       color: 'red',
@@ -257,6 +325,11 @@ export function OrderDetail() {
     journeySteps[activeStepIndex].isCurrent = true;
   }
 
+  const hasRecentUpdate =
+    order.statusHistory?.length > 0 &&
+    Date.now() - new Date(order.statusHistory[order.statusHistory.length - 1].timestamp).getTime() <
+      24 * 60 * 60 * 1000;
+
   const getColorClasses = (color, status, isCurrent) => {
     if (status === 'pending')
       return 'bg-surface-container-high border-outline-variant text-secondary';
@@ -264,9 +337,16 @@ export function OrderDetail() {
       return 'bg-red-500 border-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]';
 
     const colors = {
+      slate: 'bg-slate-500 border-slate-500 text-white',
+      sky: 'bg-sky-500 border-sky-500 text-white',
       blue: 'bg-blue-500 border-blue-500 text-white',
+      indigo: 'bg-indigo-500 border-indigo-500 text-white',
+      violet: 'bg-violet-500 border-violet-500 text-white',
+      fuchsia: 'bg-fuchsia-500 border-fuchsia-500 text-white',
       amber: 'bg-amber-500 border-amber-500 text-white',
+      orange: 'bg-orange-500 border-orange-500 text-white',
       emerald: 'bg-emerald-500 border-emerald-500 text-white',
+      teal: 'bg-teal-500 border-teal-500 text-white',
       red: 'bg-red-500 border-red-500 text-white',
     };
 
@@ -281,8 +361,11 @@ export function OrderDetail() {
     <div className="space-y-4 text-left font-body">
       {/* Product Summary Header */}
       <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
-        <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center">
-          <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
+        <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center relative">
+          {hasRecentUpdate && (
+            <span className="absolute top-1 left-[-10px] w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+          )}
+          <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 pl-2">
             <PackageCheck className="text-[14px]" strokeWidth={1.5} />
             Order Overview
           </h2>
