@@ -1,5 +1,4 @@
 import { getLuxuryEmailWrapper } from './emailTemplates';
-import { getFrontendUrl } from '../getFrontendUrl';
 
 // --- Shared Components ---
 

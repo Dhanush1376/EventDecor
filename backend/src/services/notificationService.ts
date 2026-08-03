@@ -160,7 +160,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
     if (options.notificationKey) {
       try {
         // Atomic lock acquisition: only update if not already processing or sent
-        const notifEvent = await NotificationEvent.findOneAndUpdate(
+        await NotificationEvent.findOneAndUpdate(
           {
             notificationKey: options.notificationKey,
             status: { $nin: ['sent', 'processing'] },

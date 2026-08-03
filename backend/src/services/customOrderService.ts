@@ -4,7 +4,6 @@ import CustomOrderConfig from '../models/CustomOrderConfig';
 import CustomOrder from '../models/CustomOrder';
 import OutboxEvent from '../models/OutboxEvent';
 import Product from '../models/Product';
-import { CustomOrderMailService } from './customOrderMailService';
 import logger from '../config/logger';
 
 export class CustomOrderService {
