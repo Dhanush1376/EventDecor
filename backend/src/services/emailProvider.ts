@@ -49,8 +49,8 @@ export const sendViaBrevo = async (payload: EmailPayload): Promise<{ messageId: 
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) throw new Error('BREVO_API_KEY missing');
 
-  const senderEmail = process.env.SMTP_FROM_EMAIL || 'noreply@siriartsandcrafts.com';
-  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
+  const senderEmail = 'noreply@siriartsandcrafts.com';
+  const senderName = 'Siri Arts & Crafts';
 
   const body: any = {
     sender: { name: senderName, email: senderEmail },
@@ -115,8 +115,8 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
 
   const transporter = cachedTransporter;
 
-  const senderEmail = payload.from || process.env.SMTP_FROM_EMAIL || smtpUser;
-  const senderName = payload.fromName || process.env.SMTP_FROM_NAME || 'Siri Arts & Crafts';
+  const senderEmail = 'noreply@siriartsandcrafts.com';
+  const senderName = 'Siri Arts & Crafts';
 
   const info = await transporter.sendMail({
     from: `"${senderName}" <${senderEmail}>`,
@@ -166,7 +166,7 @@ export const sendEmail = async (payload: EmailPayload): Promise<{ messageId: str
       auth: { user: testAccount.user, pass: testAccount.pass },
     });
     const info = await transporter.sendMail({
-      from: `"Siri Arts & Crafts" <${testAccount.user}>`,
+      from: `"Siri Arts & Crafts" <noreply@siriartsandcrafts.com>`,
       to: payload.to,
       subject: payload.subject,
       html: payload.html,

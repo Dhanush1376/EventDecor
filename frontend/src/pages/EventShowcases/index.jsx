@@ -161,10 +161,10 @@ export function EventShowcases() {
             />
 
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="flex flex-col z-10">
-                    <div className="relative aspect-[4/3] lg:aspect-[3/2] w-full mb-2.5 sm:mb-3 lg:mb-4 bg-[#fafafa] rounded-2xl lg:rounded-[32px] border border-black/5 shadow-2xs overflow-hidden">
+                    <div className="relative aspect-[16/9] w-full mb-2.5 sm:mb-3 lg:mb-4 bg-[#fafafa] rounded-2xl lg:rounded-[32px] border border-black/5 shadow-2xs overflow-hidden">
                       <Skeleton className="w-full h-full rounded-none" />
                       <div className="absolute top-2 left-2 lg:top-4 lg:left-4 flex flex-row items-center -space-x-2 lg:-space-x-3 z-10">
                         <Skeleton className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full border-2 border-white shadow-lg" />
@@ -187,7 +187,7 @@ export function EventShowcases() {
               </div>
             ) : paginatedShowcases.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-6 lg:gap-8 gap-y-8 sm:gap-y-12">
                   {paginatedShowcases.map((sc) => (
                     <ShowcaseCard
                       key={sc._id || sc.id}

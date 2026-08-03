@@ -8,6 +8,7 @@ import { DistributedLock } from '../utils/DistributedLock';
 import { LifecycleConfig } from '../config/lifecycleConfig';
 import { getRegisteredAssetFields } from '../utils/AssetLifecyclePlugin';
 import { SNAPSHOT_MODELS, SKIP_MODELS } from '../utils/AssetLifecyclePlugin';
+import { resolvePublicId } from '../utils/cloudinary';
 
 export class GlobalAssetCleanupService {
   /**
@@ -31,36 +32,51 @@ export class GlobalAssetCleanupService {
    */
   private static async isAssetSafeToDelete(
     url: string,
-  ): Promise<{ safe: boolean; reason?: string }> {
-    // Gate 1: Reference Count in Media document
-    const media = await Media.findOne({ secureUrl: url });
+  ): Promise<{ safe: boolean; reason?: string; publicId?: string }> {
+    // Gate 1: Resolve publicId confidently
+    const publicId = await resolvePublicId(url);
+    if (!publicId) {
+      return { safe: false, reason: 'Gate 1 failed: Could not confidently resolve publicId' };
+    }
+
+    // Gate 2: Reference Count in Media document
+    const media = await Media.findOne({ $or: [{ secureUrl: url }, { publicId }] });
     if (media && media.referenceCount > 0) {
-      return { safe: false, reason: `refCount=${media.referenceCount}` };
+      return { safe: false, reason: `Gate 2 failed: refCount=${media.referenceCount}`, publicId };
     }
 
-    // Gate 2: Live Document Verification
-    for (const [modelName, Model] of Object.entries(mongoose.models)) {
-      if (SNAPSHOT_MODELS?.has(modelName) || SKIP_MODELS?.has(modelName)) continue;
-      if (modelName === 'Media' || modelName === 'CleanupAuditLog') continue;
+    // Gate 3: Live Document Verification (Fallback safety net)
+    // Extremely slow on unindexed fields; only run if explicitly enabled
+    if (process.env.STRICT_LIVE_CHECK === 'true') {
+      for (const [modelName, Model] of Object.entries(mongoose.models)) {
+        if (SNAPSHOT_MODELS?.has(modelName) || SKIP_MODELS?.has(modelName)) continue;
+        if (modelName === 'Media' || modelName === 'CleanupAuditLog') continue;
 
-      const assetFields = getRegisteredAssetFields(modelName);
-      if (assetFields.length === 0) continue;
+        const assetFields = getRegisteredAssetFields(modelName);
+        if (assetFields.length === 0) continue;
 
-      const orConditions = assetFields.map((f) => ({ [f.path]: url }));
-      const query: any = { $or: orConditions };
+        const orConditions = assetFields.map((f) => ({ [f.path]: url }));
 
-      // If the model supports soft-delete, exclude soft-deleted docs
-      if (Model.schema.paths.isDeleted) {
-        query.isDeleted = { $ne: true };
+        // Specifically check reviewImages for publicId
+        if (modelName === 'Review') {
+          orConditions.push({ 'reviewImages.publicId': publicId } as any);
+        }
+
+        const query: any = { $or: orConditions };
+
+        // If the model supports soft-delete, exclude soft-deleted docs
+        if (Model.schema.paths.isDeleted) {
+          query.isDeleted = { $ne: true };
+        }
+
+        const count = await Model.collection.countDocuments(query);
+        if (count > 0) {
+          return { safe: false, reason: `Gate 3 failed: Live ref in ${modelName}`, publicId };
+        }
       }
+    } // Close if STRICT_LIVE_CHECK
 
-      const count = await Model.collection.countDocuments(query);
-      if (count > 0) {
-        return { safe: false, reason: `Live ref in ${modelName}` };
-      }
-    }
-
-    return { safe: true };
+    return { safe: true, publicId };
   }
 
   /**
@@ -159,7 +175,7 @@ export class GlobalAssetCleanupService {
         lockKey,
         async () => {
           // Re-check gates inside lock
-          const { safe, reason } = await this.isAssetSafeToDelete(url);
+          const { safe, reason, publicId } = await this.isAssetSafeToDelete(url);
           if (!safe) {
             logger.info(`[CleanupService] Skipped ${url}: ${reason}`);
             auditLog.skippedAssets.push({ url, reason });
@@ -167,10 +183,7 @@ export class GlobalAssetCleanupService {
             return;
           }
 
-          // Determine asset identifier
-          const mediaDoc = await Media.findOne({ secureUrl: url });
-          const assetId = mediaDoc ? mediaDoc.publicId : provider.extractAssetId?.(url);
-
+          const assetId = publicId;
           if (!assetId) {
             logger.error(`[CleanupService] Failed to extract asset ID for ${url}`);
             auditLog.failedAssets.push({ url, error: 'Cannot extract asset ID', willRetry: false });
@@ -178,6 +191,8 @@ export class GlobalAssetCleanupService {
             isFullySuccessful = false;
             return;
           }
+
+          const mediaDoc = await Media.findOne({ publicId: assetId });
 
           if (LifecycleConfig.dryRun) {
             logger.info(`[CleanupService] DRY RUN: would delete ${assetId}`);
@@ -197,6 +212,7 @@ export class GlobalAssetCleanupService {
                   provider: provider.constructor.name,
                 });
                 auditLog.assetsDeleted++;
+                logger.info(`[CleanupService] Successfully deleted asset via provider: ${assetId}`);
 
                 // Keep Media doc in sync if it exists (or we can just delete it)
                 if (mediaDoc) {
@@ -211,6 +227,7 @@ export class GlobalAssetCleanupService {
                 });
                 auditLog.assetsFailed++;
                 isFullySuccessful = false;
+                logger.warn(`[CleanupService] Provider returned false for asset: ${assetId}`);
               }
             } catch (err: any) {
               logger.error(

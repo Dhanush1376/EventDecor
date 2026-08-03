@@ -79,6 +79,60 @@ export function AboutPageDetailsEditor({ content, onUpdate }) {
           </div>
         </div>
 
+        {/* Who We Are Section */}
+        <div className="admin-card-inset p-5 space-y-4">
+          <h4 className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[14px]">groups</span>
+            Who We Are Section
+          </h4>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5">
+            <AdminField label="Title (Normal Text)">
+              <AdminInput
+                value={ab.aboutTitle1 || ''}
+                placeholder="A Legacy of"
+                onChange={(e) => onUpdate('aboutPage', { aboutTitle1: e.target.value })}
+                className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
+              />
+            </AdminField>
+            <AdminField label="Title (Italic/Outline Text)">
+              <AdminInput
+                value={ab.aboutTitle2 || ''}
+                placeholder="Elegance"
+                onChange={(e) => onUpdate('aboutPage', { aboutTitle2: e.target.value })}
+                className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
+              />
+            </AdminField>
+          </div>
+
+          <AdminField label="Primary Paragraph">
+            <AdminTextarea
+              value={ab.aboutText || ''}
+              onChange={(e) => onUpdate('aboutPage', { aboutText: e.target.value })}
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
+              rows={4}
+            />
+          </AdminField>
+
+          <AdminField label="Secondary Paragraph">
+            <AdminTextarea
+              value={ab.aboutTextSecondary || ''}
+              onChange={(e) => onUpdate('aboutPage', { aboutTextSecondary: e.target.value })}
+              className="!py-2.5 !text-[12px] border-[var(--admin-border)] focus:border-[var(--admin-accent)]"
+              rows={4}
+            />
+          </AdminField>
+
+          <div className="mt-4">
+            <ImageUpload
+              label="Section Image"
+              value={ab.aboutImage || ''}
+              onChange={(val) => onUpdate('aboutPage', { aboutImage: val })}
+              folder="cms"
+            />
+          </div>
+        </div>
+
         {/* Dual Leadership */}
         {ab.founders && (
           <div className="admin-card p-5 space-y-4">

@@ -27,7 +27,7 @@ export class CustomOrderMailService {
     try {
       await sendDirectEmail({
         email: order.customerEmail,
-        subject: `Your Bespoke Decor Request has been Lodged! ✦ Siri Arts & Crafts`,
+        subject: `Your Custom Decor Request Received`,
         customHtml: `
           <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">Your Design Request is Received</h2>
           
@@ -84,7 +84,7 @@ export class CustomOrderMailService {
     try {
       await sendDirectEmail({
         email: ADMIN_EMAIL,
-        subject: `🚨 [NEW DESIGN REQUEST] ${order.customerName} - ${order.occasion} (${order.city})`,
+        subject: `New Custom Request: ${order.customerName} - ${order.occasion}`,
         customHtml: `
           <div style="border-left: 4px solid #0f172a; padding-left: 16px; margin-bottom: 24px;">
             <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; display: block;">Administrative Dispatch</span>
@@ -156,7 +156,7 @@ export class CustomOrderMailService {
 
       await sendDirectEmail({
         email: order.customerEmail,
-        subject: `Your Itemized Decor Estimate is Ready! ✦ Siri Arts & Crafts [₹${quote.total.toLocaleString('en-IN')}]`,
+        subject: `Your Custom Decor Quote is Ready`,
         customHtml: `
           <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">Studio Curation Estimate</h2>
           
@@ -235,7 +235,7 @@ export class CustomOrderMailService {
     try {
       await sendDirectEmail({
         email: ADMIN_EMAIL,
-        subject: `⚡ [QUOTE ${response.toUpperCase()}] ${order.customerName} responded to quotation`,
+        subject: `Quote Response: ${order.customerName} ${response}`,
         customHtml: `
           <div style="border-left: 4px solid ${response === 'approved' ? '#10b981' : '#ef4444'}; padding-left: 16px; margin-bottom: 24px;">
             <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; display: block;">Administrative Dispatch</span>
@@ -296,7 +296,7 @@ export class CustomOrderMailService {
     try {
       await sendDirectEmail({
         email: recipientEmail,
-        subject: `New Workspace Message from ${senderName}! ✦ Siri Arts & Crafts`,
+        subject: `New Message from ${senderName}`,
         customHtml: `
           <h3 style="font-size: 16px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">New Message Received</h3>
           
@@ -339,7 +339,7 @@ export class CustomOrderMailService {
     try {
       await sendDirectEmail({
         email: order.customerEmail,
-        subject: `Order Status Update: ${order.status} ✦ Siri Arts & Crafts`,
+        subject: `Status Update for Your Custom Order`,
         customHtml: `
           <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">Status Update</h2>
           <p>

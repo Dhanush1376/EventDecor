@@ -58,7 +58,7 @@ export const OrderCreatedAdminTemplate = (data: any) => {
 
   return {
     html: content,
-    subject: `[NEW ORDER] ₹${orderDetails.total} from ${customerInfo.name}`,
+    subject: `New Order: #${orderDetails.id} (₹${orderDetails.total})`,
     preheader: `Order ID: ${orderDetails.id} | LTV: ₹${customerStats.lifetimeSpend}`,
   };
 };

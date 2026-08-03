@@ -206,7 +206,7 @@ class GoogleAuthService {
         const frontendUrl = getFrontendUrl();
         sendDirectEmail({
           email: user.email,
-          subject: `Welcome to Siri Arts & Crafts, ${user.name} ✦ Discover Timeless Decor`,
+          subject: `Welcome to Siri Arts & Crafts, ${user.name}`,
           templateName: 'Welcome Email',
           templateData: {
             name: user.name,
@@ -226,7 +226,7 @@ class GoogleAuthService {
       const { sendDirectEmail } = require('./notificationService');
       sendDirectEmail({
         email: user.email,
-        subject: 'Security Alert: New Login Detected ✦ Siri Arts & Crafts',
+        subject: 'Security Alert: New Login Detected',
         templateName: 'Suspicious Login Alert',
         templateData: {
           name: user.name,

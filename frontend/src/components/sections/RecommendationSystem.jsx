@@ -157,7 +157,7 @@ export function RecommendationSystem({
 
   return (
     <section
-      className={`${compact ? 'pt-1 pb-0 lg:py-2' : 'pt-6 pb-12 lg:pt-10 lg:pb-16'} bg-transparent relative overflow-hidden`}
+      className={`${compact ? 'pt-1 pb-0 lg:py-2' : 'pt-6 pb-4 lg:pt-10 lg:pb-6'} bg-transparent relative overflow-hidden`}
     >
       {/* Subtle Glow Accent */}
       <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none z-0" />
@@ -261,7 +261,7 @@ export function RecommendationSystem({
                     <ProductCard
                       {...product}
                       id={product.id || product._id}
-                      isRectangular={true}
+                      isRectangular={false}
                       imageSrc={product.imageSrc || product.image || product.images?.[0]}
                       price={product.price || product.basePrice}
                       oldPrice={

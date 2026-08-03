@@ -74,12 +74,12 @@ export default async function handler(req, res) {
         }
       }
 
-      // Ultimate fallback: meta refresh (which causes the reported issue, but as a last resort)
+      // Ultimate fallback: return a simple HTML shell without redirecting
       res.setHeader('Content-Type', 'text/html');
       return res
         .status(200)
         .send(
-          `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/"></head><body>Loading...</body></html>`,
+          `<!DOCTYPE html><html><head><title>Siri Arts & Crafts</title></head><body><div id="root"></div><script>console.warn("Social proxy fallback hit. If you see this, the SPA rewrite might be misconfigured.");</script></body></html>`,
         );
     }
   } catch (error) {

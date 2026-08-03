@@ -1,6 +1,12 @@
-import { uploadOnCloudinary } from '../utils/cloudinary';
+import { uploadOnCloudinary, safeDeleteFromCloudinary } from '../utils/cloudinary';
 import fs from 'fs';
 import ApiError from '../utils/ApiError';
+import logger from '../config/logger';
+
+export interface UploadedImageMetadata {
+  url: string;
+  publicId?: string;
+}
 
 export class ImageUploadService {
   /**
@@ -9,45 +15,61 @@ export class ImageUploadService {
    *
    * @param remoteUrls Array of strings (remote URLs)
    * @param localFiles Array of Express.Multer.File objects
-   * @returns Array of uploaded secure URLs
+   * @param returnMetadata If true, returns objects with url and publicId. Default false returns string[].
+   * @returns Array of uploaded secure URLs or metadata objects
    */
   static async processAndUploadImages(
     remoteUrls: string[] = [],
     localFiles: Express.Multer.File[] = [],
-  ): Promise<string[]> {
-    const urls: string[] = [];
+    returnMetadata = false,
+  ): Promise<any[]> {
+    const results: UploadedImageMetadata[] = [];
+    const rollbackPublicIds: string[] = [];
 
-    // Handle remote URLs
-    for (const url of remoteUrls) {
-      if (typeof url === 'string' && url.startsWith('http')) {
-        const response = await uploadOnCloudinary(url);
-        if (response) {
-          urls.push(response.secure_url);
+    try {
+      // Handle remote URLs
+      for (const url of remoteUrls) {
+        if (typeof url === 'string' && url.startsWith('http')) {
+          const response = await uploadOnCloudinary(url);
+          if (response) {
+            results.push({ url: response.secure_url, publicId: response.public_id });
+            if (response.public_id) rollbackPublicIds.push(response.public_id);
+          }
         }
       }
-    }
 
-    // Handle local file uploads
-    for (const file of localFiles) {
-      const cloudinaryUrl = (file as any).secure_url || file.path;
-      if ((file as any).cloudinaryUploaded && cloudinaryUrl) {
-        urls.push(cloudinaryUrl);
-        continue;
+      // Handle local file uploads
+      for (const file of localFiles) {
+        const cloudinaryUrl = (file as any).secure_url || file.path;
+        if ((file as any).cloudinaryUploaded && cloudinaryUrl) {
+          results.push({ url: cloudinaryUrl, publicId: (file as any).publicId });
+          if ((file as any).publicId) rollbackPublicIds.push((file as any).publicId);
+          continue;
+        }
+
+        const response = await uploadOnCloudinary(file.path);
+        if (response) {
+          results.push({ url: response.secure_url, publicId: response.public_id });
+          if (response.public_id) rollbackPublicIds.push(response.public_id);
+        }
+        if (file.path && fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
       }
 
-      const response = await uploadOnCloudinary(file.path);
-      if (response) {
-        urls.push(response.secure_url);
+      if (results.length === 0) {
+        throw new ApiError(400, 'No files or valid URLs provided');
       }
-      if (file.path && fs.existsSync(file.path)) {
-        fs.unlinkSync(file.path);
+
+      return returnMetadata ? results : results.map((r) => r.url);
+    } catch (error) {
+      logger.error(
+        `[ImageUploadService] Batch upload failed, rolling back ${rollbackPublicIds.length} assets. Error: ${error}`,
+      );
+      for (const pid of rollbackPublicIds) {
+        await safeDeleteFromCloudinary(pid);
       }
+      throw error;
     }
-
-    if (urls.length === 0) {
-      throw new ApiError(400, 'No files or valid URLs provided');
-    }
-
-    return urls;
   }
 }

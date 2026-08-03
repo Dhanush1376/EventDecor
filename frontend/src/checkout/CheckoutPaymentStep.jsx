@@ -52,13 +52,13 @@ export default function CheckoutPaymentStep() {
   React.useEffect(() => {
     if (codOtpInput) {
       const digits = codOtpInput
-        .padEnd(4, ' ')
-        .slice(0, 4)
+        .padEnd(6, ' ')
+        .slice(0, 6)
         .split('')
         .map((c) => (c === ' ' ? '' : c));
       setOtpDigits(digits);
     } else {
-      setOtpDigits(['', '', '', '']);
+      setOtpDigits(['', '', '', '', '', '']);
     }
   }, [codOtpInput]);
 

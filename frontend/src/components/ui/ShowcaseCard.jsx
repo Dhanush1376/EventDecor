@@ -117,14 +117,14 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
       }
     >
       {/* 1. VISUAL CANVAS */}
-      <div className="relative aspect-[4/3] lg:aspect-[3/2] w-full overflow-hidden bg-[#fafafa] group/canvas shrink-0 border-b border-black/5">
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#fafafa] group/canvas shrink-0 border-b border-black/5">
         {displayDiscount > 0 && (
           <div className="absolute top-2.5 left-2.5 lg:top-4 lg:left-4 z-20 pointer-events-none">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-[#3e2723]/85 backdrop-blur-md text-[#fdfbf7] border border-[#e0d6b8]/70 rounded-full flex flex-col items-center justify-center shadow-md">
-              <span className="font-display font-bold text-[10px] sm:text-[11px] lg:text-[13px] leading-none">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 lg:w-10 lg:h-10 bg-[#3e2723]/85 backdrop-blur-md text-[#fdfbf7] border border-[#e0d6b8]/70 rounded-full flex flex-col items-center justify-center shadow-md">
+              <span className="font-display font-bold text-[10px] sm:text-[11px] lg:text-[11px] leading-none">
                 {displayDiscount}%
               </span>
-              <span className="font-label text-[5px] sm:text-[5.5px] lg:text-[6.5px] tracking-widest uppercase mt-0.5 text-[#e0d6b8]">
+              <span className="font-label text-[5px] sm:text-[5.5px] lg:text-[6px] tracking-widest uppercase mt-0.5 text-[#e0d6b8]">
                 OFF
               </span>
             </div>
@@ -143,9 +143,8 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
                 className="w-full h-full object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover/canvas:scale-110"
                 containerClassName="w-full h-full"
                 loading={idx === 0 ? 'eager' : 'lazy'}
-                width={400}
-                height={300}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                width={1200}
+                sizes="(max-width: 640px) 100vw, 50vw"
               />
             </div>
           ))}
@@ -196,7 +195,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
         <div className="absolute top-2.5 right-2.5 lg:top-4 lg:right-4 z-20 flex flex-col gap-2">
           <button
             onClick={handleWishlist}
-            className="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 min-h-0 min-w-0 p-0 aspect-square bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]"
+            className="w-9 h-9 sm:w-10 sm:h-10 lg:w-10 lg:h-10 min-h-0 min-w-0 p-0 aspect-square bg-white/90 backdrop-blur-xl rounded-full flex items-center justify-center shadow-sm border border-black/5 transition-all duration-300 hover:scale-110 cursor-pointer active:scale-[0.96]"
             aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <motion.span
@@ -206,7 +205,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
                 fontVariationSettings: wishlisted ? "'FILL' 1, 'wght' 300" : "'FILL' 0, 'wght' 300",
               }}
               transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-              className="material-symbols-outlined text-[16px] lg:text-[20px]"
+              className="material-symbols-outlined text-[16px] lg:text-[18px]"
             >
               favorite
             </motion.span>
@@ -240,7 +239,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
       </div>
 
       {/* 2. REFINED INFO SECTION */}
-      <div className="p-3 sm:p-4 lg:p-5 flex flex-col flex-1">
+      <div className="p-3 sm:p-4 lg:p-4 flex flex-col flex-1">
         <div className="flex items-center justify-between gap-2 mb-1.5 sm:mb-2">
           <span className="text-primary font-label-sm text-[8px] lg:text-[10px] uppercase tracking-widest font-bold truncate">
             {formattedCat} • {setupTimeHours}H SETUP
@@ -255,7 +254,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
           </div>
         </div>
 
-        <div className="mb-2 sm:mb-3 group/link">
+        <div className="mb-1.5 sm:mb-2 group/link">
           <h3 className="font-display text-[15px] sm:text-[16px] lg:text-[20px] text-black group-hover:text-primary transition-colors leading-tight font-medium line-clamp-1">
             {title}
           </h3>

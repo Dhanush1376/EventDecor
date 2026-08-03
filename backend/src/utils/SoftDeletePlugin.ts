@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import logger from '../config/logger';
 import { ReferenceIntegrityService } from '../services/ReferenceIntegrityService';
+import { extractPublicId } from './cloudinary';
+import { getRegisteredAssetFields } from './AssetLifecyclePlugin';
 
 export interface ISoftDeleted extends Document {
   isDeleted: boolean;
@@ -55,56 +57,102 @@ const extractThumbnail = (doc: any): string | null => {
 /**
  * Extracts all Cloudinary public IDs from a document for future cleanup.
  */
-const extractCloudinaryPublicIds = (doc: any): string[] => {
-  const publicIds: string[] = [];
+const extractCloudinaryPublicIds = (doc: any, modelName?: string): string[] => {
+  const publicIds: Set<string> = new Set();
 
-  // From structured media fields (reviewImages, etc.)
-  const mediaArrayFields = ['reviewImages'];
-  for (const field of mediaArrayFields) {
-    if (Array.isArray(doc[field])) {
-      for (const item of doc[field]) {
-        if (item?.publicId) publicIds.push(item.publicId);
-      }
-    }
-  }
-
-  // From image URL fields — extract Cloudinary public_id from URL patterns
-  const imageFields = ['imageSrc', 'image', 'heroImage', 'thumbnail'];
-  for (const field of imageFields) {
-    if (doc[field] && typeof doc[field] === 'string') {
-      const cloudinaryId = extractPublicIdFromUrl(doc[field]);
-      if (cloudinaryId) publicIds.push(cloudinaryId);
-    }
-  }
-
-  // From image arrays
-  const imageArrayFields = ['images', 'gallery'];
-  for (const field of imageArrayFields) {
-    if (Array.isArray(doc[field])) {
-      for (const url of doc[field]) {
-        if (typeof url === 'string') {
-          const cloudinaryId = extractPublicIdFromUrl(url);
-          if (cloudinaryId) publicIds.push(cloudinaryId);
+  // 1. Try to use AssetLifecyclePlugin's registry if available
+  if (modelName) {
+    const assetFields = getRegisteredAssetFields(modelName);
+    if (assetFields && assetFields.length > 0) {
+      for (const field of assetFields) {
+        if (field.type === 'single') {
+          const url = doc[field.path];
+          if (typeof url === 'string') {
+            const id = extractPublicId(url);
+            if (id) publicIds.add(id);
+          }
+        } else if (field.type === 'array') {
+          const urls = doc[field.path];
+          if (Array.isArray(urls)) {
+            urls.forEach((url) => {
+              if (typeof url === 'string') {
+                const id = extractPublicId(url);
+                if (id) publicIds.add(id);
+              }
+            });
+          }
+        } else if (field.type === 'nested') {
+          const val = doc[field.path];
+          if (val && typeof val === 'object') {
+            Object.values(val).forEach((v) => {
+              if (typeof v === 'string') {
+                const id = extractPublicId(v);
+                if (id) publicIds.add(id);
+              }
+            });
+          }
         }
       }
     }
   }
 
-  return [...new Set(publicIds)];
-};
-
-/**
- * Attempts to extract a Cloudinary public_id from a URL.
- * Handles patterns like: https://res.cloudinary.com/<cloud>/image/upload/v123/folder/filename.ext
- */
-const extractPublicIdFromUrl = (url: string): string | null => {
-  if (!url || !url.includes('cloudinary')) return null;
-  try {
-    const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.\w+)?$/);
-    return match ? match[1] : null;
-  } catch {
-    return null;
+  // 2. Fallback to hardcoded known fields just in case
+  const mediaArrayFields = ['reviewImages'];
+  for (const field of mediaArrayFields) {
+    if (Array.isArray(doc[field])) {
+      for (const item of doc[field]) {
+        if (item?.publicId) publicIds.add(item.publicId);
+      }
+    }
   }
+
+  const imageFields = [
+    'imageSrc',
+    'image',
+    'heroImage',
+    'thumbnail',
+    'video',
+    'avatar',
+    'previewImage',
+    'logo',
+  ];
+  for (const field of imageFields) {
+    if (doc[field] && typeof doc[field] === 'string') {
+      const cloudinaryId = extractPublicId(doc[field]);
+      if (cloudinaryId) publicIds.add(cloudinaryId);
+    }
+  }
+
+  const imageArrayFields = [
+    'images',
+    'gallery',
+    'attachments',
+    'inspirationImages',
+    'referenceImages',
+  ];
+  for (const field of imageArrayFields) {
+    if (Array.isArray(doc[field])) {
+      for (const url of doc[field]) {
+        if (typeof url === 'string') {
+          const cloudinaryId = extractPublicId(url);
+          if (cloudinaryId) publicIds.add(cloudinaryId);
+        }
+      }
+    }
+  }
+
+  if (doc.beforeAfterImages) {
+    if (typeof doc.beforeAfterImages.before === 'string') {
+      const id = extractPublicId(doc.beforeAfterImages.before);
+      if (id) publicIds.add(id);
+    }
+    if (typeof doc.beforeAfterImages.after === 'string') {
+      const id = extractPublicId(doc.beforeAfterImages.after);
+      if (id) publicIds.add(id);
+    }
+  }
+
+  return Array.from(publicIds);
 };
 
 const SoftDeletePlugin = (schema: Schema, options?: { retentionDays?: number }) => {
@@ -165,7 +213,7 @@ const SoftDeletePlugin = (schema: Schema, options?: { retentionDays?: number }) 
       const docObj = this.toObject();
       const entityName = extractEntityName(docObj);
       const entityThumbnail = extractThumbnail(docObj);
-      const cloudinaryPublicIds = extractCloudinaryPublicIds(docObj);
+      const cloudinaryPublicIds = extractCloudinaryPublicIds(docObj, modelName);
       const collectionName = (this.constructor as any).collection.name;
 
       // Check if item was previously deleted & restored (version history tracking)

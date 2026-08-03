@@ -352,7 +352,7 @@ export class UserService {
 
     await sendDirectEmail({
       email: cleanEmail,
-      subject: 'Invitation to join Siri Arts & Crafts Admin Team',
+      subject: 'Invitation to join Siri Arts & Crafts Team',
       customHtml: emailHtml,
       type: 'security',
       action: 'team_invite',

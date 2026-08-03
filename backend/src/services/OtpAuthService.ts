@@ -121,7 +121,7 @@ class OtpAuthService {
     try {
       sendDirectEmail({
         email: cleanEmail,
-        subject: `Your Siri Arts & Crafts Security Code - ${new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })}`,
+        subject: `${otp} is your Siri Arts & Crafts verification code`,
         customHtml: getOtpEmailTemplate(otp, expiryMinutes),
         type: 'security',
         action: 'otp_auth',
@@ -399,7 +399,7 @@ class OtpAuthService {
         const frontendUrl = getFrontendUrl();
         sendDirectEmail({
           email: user.email,
-          subject: `Welcome to Siri Arts & Crafts, ${user.name} ✦ Discover Timeless Decor`,
+          subject: `Welcome to Siri Arts & Crafts, ${user.name}`,
           templateName: 'Welcome Email',
           templateData: {
             name: user.name,
@@ -418,7 +418,7 @@ class OtpAuthService {
       const { sendDirectEmail } = require('./notificationService');
       sendDirectEmail({
         email: user.email,
-        subject: 'Security Alert: New Login Detected ✦ Siri Arts & Crafts',
+        subject: 'Security Alert: New Login Detected',
         templateName: 'Suspicious Login Alert',
         templateData: {
           name: user.name,
@@ -477,7 +477,7 @@ class OtpAuthService {
     try {
       sendDirectEmail({
         email: cleanEmail,
-        subject: '✦ Cash on Delivery Verification Code ✦ Siri Arts & Crafts',
+        subject: `${otp} is your Siri Arts & Crafts COD verification code`,
         customHtml: getCodOtpEmailTemplate(otp, 5),
         type: 'security',
         action: 'cod_otp',

@@ -39,7 +39,7 @@ export class OrderNotificationService {
       // Dispatch to customer
       await emailQueue.add('orderConfirmationEmail', {
         to: user.email,
-        subject: `Order Successfully Placed! ✦ Siri Arts & Crafts [${order._id}]`,
+        subject: `Order Confirmed: #${order._id}`,
         template: 'order-confirmation',
         context,
         generatePdf: true,
@@ -49,7 +49,7 @@ export class OrderNotificationService {
       if (adminEmails && adminEmails.length > 0) {
         await emailQueue.add('adminOrderAlertEmail', {
           to: adminEmails[0],
-          subject: `New Order Received - ₹${order.total} [${order._id}]`,
+          subject: `New Order: #${order._id} (₹${order.total})`,
           template: 'order-confirmation',
           context,
           generatePdf: true,
@@ -75,7 +75,7 @@ export class OrderNotificationService {
     try {
       await emailQueue.add('orderFailureEmail', {
         to: user.email,
-        subject: `Order Update: Payment Failed [${order._id}]`,
+        subject: `Payment Failed for Order #${order._id}`,
         template: 'order-failed',
         context: {
           customerName: user.name,

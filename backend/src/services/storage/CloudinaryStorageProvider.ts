@@ -3,6 +3,7 @@ import getCloudinary from '../../config/cloudinary';
 import crypto from 'crypto';
 import logger from '../../config/logger';
 import streamifier from 'streamifier';
+import { extractPublicId } from '../../utils/cloudinary';
 
 export class CloudinaryStorageProvider implements StorageProvider {
   async uploadBuffer(buffer: Buffer, options: UploadOptions): Promise<UploadResult> {
@@ -71,19 +72,13 @@ export class CloudinaryStorageProvider implements StorageProvider {
 
   async deleteFile(url: string): Promise<boolean> {
     try {
-      // Extract public ID from URL
-      // e.g., https://res.cloudinary.com/cloud_name/image/upload/v1234/folder/public_id.webp
-      const parts = url.split('/');
-      const fileWithExt = parts.pop();
-      const folder = parts.pop();
-      if (!fileWithExt || !folder) return false;
-
-      const publicId = fileWithExt.split('.')[0];
-      const fullPublicId = `siri-arts-crafts/${folder}/${publicId}`;
+      const publicId = extractPublicId(url) || url;
+      if (!publicId) return false;
 
       const cloudinary = getCloudinary();
-      const result = await cloudinary.uploader.destroy(fullPublicId);
-      return result.result === 'ok';
+      const result = await cloudinary.uploader.destroy(publicId);
+      logger.info(`[CLOUDINARY] Destroy result for ${publicId}: ${JSON.stringify(result)}`);
+      return result.result === 'ok' || result.result === 'not found';
     } catch (error) {
       logger.error(`[CLOUDINARY] Delete failed for URL ${url}: ${error}`);
       return false;
@@ -97,14 +92,7 @@ export class CloudinaryStorageProvider implements StorageProvider {
     const cloudinary = getCloudinary();
     try {
       const publicIds = identifiers.map((url) => {
-        try {
-          const parts = url.split('/');
-          const filename = parts[parts.length - 1];
-          const folder = parts[parts.length - 2];
-          return `siri-arts-crafts/${folder}/${filename.split('.')[0]}`;
-        } catch {
-          return url;
-        }
+        return extractPublicId(url) || url;
       });
       const result = await cloudinary.api.delete_resources(publicIds, { invalidate: true });
       const succeeded: string[] = [];
@@ -131,10 +119,7 @@ export class CloudinaryStorageProvider implements StorageProvider {
   async getAssetInfo(identifier: string): Promise<any> {
     const cloudinary = getCloudinary();
     try {
-      const parts = identifier.split('/');
-      const filename = parts[parts.length - 1];
-      const folder = parts[parts.length - 2];
-      const publicId = `siri-arts-crafts/${folder}/${filename.split('.')[0]}`;
+      const publicId = extractPublicId(identifier) || identifier;
       return await cloudinary.api.resource(publicId);
     } catch (error) {
       logger.error(`[CloudinaryStorage] Failed to get asset info: ${error}`);
@@ -148,10 +133,7 @@ export class CloudinaryStorageProvider implements StorageProvider {
   async invalidateCache(identifier: string): Promise<void> {
     const cloudinary = getCloudinary();
     try {
-      const parts = identifier.split('/');
-      const filename = parts[parts.length - 1];
-      const folder = parts[parts.length - 2];
-      const publicId = `siri-arts-crafts/${folder}/${filename.split('.')[0]}`;
+      const publicId = extractPublicId(identifier) || identifier;
       await cloudinary.uploader.explicit(publicId, { type: 'upload', invalidate: true });
     } catch (error) {
       logger.error(`[CloudinaryStorage] Failed to invalidate cache: ${error}`);
@@ -176,18 +158,7 @@ export class CloudinaryStorageProvider implements StorageProvider {
 
   extractAssetId(url: string): string | null {
     if (!this.isProviderUrl(url)) return null;
-
-    try {
-      const parts = url.split('/');
-      const fileWithExt = parts.pop();
-      const folder = parts.pop();
-      if (!fileWithExt || !folder) return null;
-
-      const publicId = fileWithExt.split('.')[0];
-      return `siri-arts-crafts/${folder}/${publicId}`;
-    } catch {
-      return null;
-    }
+    return extractPublicId(url);
   }
 
   async deleteBatch(

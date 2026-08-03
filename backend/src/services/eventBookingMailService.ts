@@ -39,7 +39,7 @@ export class EventJobMailService {
     try {
       await sendDirectEmail({
         email: customerEmail,
-        subject: `Your Landmark Occasion Blueprint is Lodged! ✦ Siri Arts & Crafts`,
+        subject: `Your Event Booking Request Received`,
         customHtml: `
           <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">Your Event Booking is Received</h2>
           
@@ -135,7 +135,7 @@ export class EventJobMailService {
       try {
         await sendDirectEmail({
           email,
-          subject: `🚨 [NEW EVENT BOOKING] ${customerName} - ${booking.title} (${booking.bookingId || 'PENDING'})`,
+          subject: `New Event Booking: ${customerName} - ${booking.title}`,
           customHtml: `
             <div style="border-left: 4px solid #0f172a; padding-left: 16px; margin-bottom: 24px;">
               <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; display: block;">Administrative Dispatch</span>
@@ -219,7 +219,7 @@ export class EventJobMailService {
     try {
       await sendDirectEmail({
         email: customerEmail,
-        subject: `Your Event Booking Status has Been Updated! ✦ Siri Arts & Crafts`,
+        subject: `Update on Your Event Booking`,
         customHtml: `
           <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 16px 0;">Event Workspace Timeline Update</h2>
           

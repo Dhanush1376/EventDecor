@@ -4,10 +4,7 @@
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
     },
-    {
-      "source": "/product/:id",
-      "destination": "/api/social-proxy?id=:id"
-    },
+
     {
       "source": "/api/:path*",
       "destination": "https://api.siriartsandcrafts.com/api/:path*"

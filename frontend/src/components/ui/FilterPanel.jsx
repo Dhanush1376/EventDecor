@@ -392,28 +392,31 @@ export function FilterPanel({
                     stiffness: 300,
                     mass: 0.8,
                   }}
-                  className="relative w-full bg-surface rounded-t-[32px] p-5 shadow-[0_50vh_0_0_var(--color-surface),0_25px_50px_-12px_rgba(0,0,0,0.25)] flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10"
+                  className="relative w-full flex flex-col"
                 >
-                  {/* Handlebar for bottom sheet feel */}
-                  <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-4 shrink-0" />
+                  <div className="absolute top-[98%] left-0 right-0 h-[50vh] bg-surface sm:hidden z-[-1]" />
+                  <div className="relative w-full bg-surface rounded-t-[32px] p-5 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10">
+                    {/* Handlebar for bottom sheet feel */}
+                    <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-4 shrink-0" />
 
-                  <button
-                    onClick={onClose}
-                    className="absolute top-5 right-5 w-9 h-9 min-h-0 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
-                  >
-                    <X className="text-[18px]" strokeWidth={1.5} />
-                  </button>
-
-                  <div className="flex-1 overflow-y-auto no-scrollbar pt-2">{panelContent}</div>
-
-                  {/* Bottom Action Bar */}
-                  <div className="mt-3 pt-4 border-t border-outline-variant/20">
                     <button
                       onClick={onClose}
-                      className="w-full bg-on-surface-variant text-surface py-3.5 rounded-full font-label text-[11px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary transition-all active:scale-[0.98]"
+                      className="absolute top-5 right-5 w-9 h-9 min-h-0 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
                     >
-                      Apply Filters
+                      <X className="text-[18px]" strokeWidth={1.5} />
                     </button>
+
+                    <div className="flex-1 overflow-y-auto no-scrollbar pt-2">{panelContent}</div>
+
+                    {/* Bottom Action Bar */}
+                    <div className="mt-3 pt-4 border-t border-outline-variant/20">
+                      <button
+                        onClick={onClose}
+                        className="w-full bg-on-surface-variant text-surface py-3.5 rounded-full font-label text-[11px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary transition-all active:scale-[0.98]"
+                      >
+                        Apply Filters
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               </div>

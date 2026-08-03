@@ -1,4 +1,22 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Search,
+  Camera,
+  Heart,
+  ShoppingCart,
+  LogIn,
+  Info,
+  Settings,
+  User,
+  Package,
+  MapPin,
+  LogOut,
+  Menu,
+  X,
+  Shield,
+  ShoppingBag,
+} from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SiriLogo } from '../ui/SiriLogo';
 import { MandalaElement } from '../ui/MandalaElement';
@@ -263,9 +281,11 @@ export function TopNavbar() {
                   onClick={() => navigate('/collections')}
                   className="group flex items-center gap-2 shrink-0 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[24px] text-on-surface group-hover:-translate-x-1 transition-transform">
-                    arrow_back
-                  </span>
+                  <ArrowLeft
+                    size={24}
+                    strokeWidth={1.5}
+                    className="text-on-surface group-hover:-translate-x-1 transition-transform"
+                  />
                   <span className="font-label text-[12px] lg:text-[13px] font-bold uppercase tracking-[0.2em] text-on-surface leading-none pt-0.5">
                     {isWishlistPage ? 'Wishlist' : 'Cart'}
                   </span>
@@ -344,12 +364,11 @@ export function TopNavbar() {
                       : 'border-outline-variant/40 hover:border-primary/40 hover:bg-primary/5 text-on-surface'
                   }`}
                 >
-                  <span
-                    className={`material-symbols-outlined text-[18px] transition-colors ${isTransparent ? 'opacity-70 group-hover:opacity-100' : 'text-on-surface-variant group-hover:text-primary'}`}
-                    style={{ fontVariationSettings: "'wght' 200" }}
-                  >
-                    search
-                  </span>
+                  <Search
+                    size={18}
+                    strokeWidth={1.5}
+                    className={`transition-colors ${isTransparent ? 'opacity-70 group-hover:opacity-100' : 'text-on-surface-variant group-hover:text-primary'}`}
+                  />
                   <span
                     className={`flex-1 text-[13px] font-medium truncate select-none ${isTransparent ? 'opacity-70' : 'text-on-surface-variant/70'}`}
                   >
@@ -369,7 +388,7 @@ export function TopNavbar() {
                       }`}
                       aria-label="Visual Search"
                     >
-                      <span className="material-symbols-outlined text-[20px]">photo_camera</span>
+                      <Camera size={20} strokeWidth={1.5} />
                     </button>
                   )}
                 </div>
@@ -380,7 +399,7 @@ export function TopNavbar() {
                   className={`lg:hidden ${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary-container/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target`}
                   aria-label="Search Catalog"
                 >
-                  <span className="material-symbols-outlined text-[24px]">search</span>
+                  <Search size={24} strokeWidth={1.5} />
                 </button>
 
                 <Link
@@ -388,7 +407,7 @@ export function TopNavbar() {
                   className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-primary hover:bg-primary/10'} transition-all duration-300 hover:scale-110 hidden lg:flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
                   aria-label="View Wishlist"
                 >
-                  <span className="material-symbols-outlined text-[24px]">favorite</span>
+                  <Heart size={24} strokeWidth={1.5} />
                 </Link>
 
                 <motion.button
@@ -406,7 +425,7 @@ export function TopNavbar() {
                   className={`${isTransparent ? 'text-white hover:bg-white/10' : 'text-on-surface hover:text-[#d4af37] hover:bg-[#d4af37]/10'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
                   aria-label="View Bag"
                 >
-                  <span className="material-symbols-outlined text-[24px]">shopping_cart</span>
+                  <ShoppingCart size={24} strokeWidth={1.5} />
                   {cartCount > 0 && (
                     <motion.span
                       initial={{ scale: 0 }}
@@ -424,7 +443,7 @@ export function TopNavbar() {
                     className={`${isTransparent ? 'border border-white/20 hover:bg-white/10 text-white' : 'border border-outline-variant/40 hover:border-primary/40 hover:bg-primary/5 text-on-surface hover:text-primary'} transition-all duration-300 hover:scale-110 hidden lg:flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
                     aria-label="User Account"
                   >
-                    <span className="material-symbols-outlined text-[24px]">login</span>
+                    <LogIn size={24} strokeWidth={1.5} />
                   </button>
                 ) : (
                   <div className="relative hidden lg:block">
@@ -472,7 +491,7 @@ export function TopNavbar() {
 
                             {hasPendingInvite && (
                               <div className="px-4 py-2 bg-rose-50 border-b border-rose-100 text-[10px] text-rose-600 font-bold flex items-center gap-1.5 animate-pulse">
-                                <span className="material-symbols-outlined text-[15px]">info</span>
+                                <Info size={15} strokeWidth={1.5} />
                                 <span>Pending Admin Invitation</span>
                               </div>
                             )}
@@ -483,9 +502,7 @@ export function TopNavbar() {
                                 onClick={() => setIsProfileDropdownOpen(false)}
                                 className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors font-bold border-b border-outline-variant/10 mb-1.5 pb-2"
                               >
-                                <span className="material-symbols-outlined text-[17px]">
-                                  settings
-                                </span>
+                                <Settings size={17} strokeWidth={1.5} />
                                 <span>Admin Portal</span>
                               </Link>
                             )}
@@ -495,7 +512,7 @@ export function TopNavbar() {
                               onClick={() => setIsProfileDropdownOpen(false)}
                               className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
                             >
-                              <span className="material-symbols-outlined text-[17px]">person</span>
+                              <User size={17} strokeWidth={1.5} />
                               <span>My Profile</span>
                             </Link>
 
@@ -504,9 +521,7 @@ export function TopNavbar() {
                               onClick={() => setIsProfileDropdownOpen(false)}
                               className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
                             >
-                              <span className="material-symbols-outlined text-[17px]">
-                                inventory_2
-                              </span>
+                              <Package size={17} strokeWidth={1.5} />
                               <span>Orders</span>
                             </Link>
 
@@ -515,9 +530,7 @@ export function TopNavbar() {
                               onClick={() => setIsProfileDropdownOpen(false)}
                               className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
                             >
-                              <span className="material-symbols-outlined text-[17px]">
-                                location_on
-                              </span>
+                              <MapPin size={17} strokeWidth={1.5} />
                               <span>Addresses</span>
                             </Link>
 
@@ -528,7 +541,7 @@ export function TopNavbar() {
                               }}
                               className="w-full flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-error hover:bg-error/5 transition-colors font-bold border-t border-outline-variant/10 mt-1.5 pt-2 cursor-pointer"
                             >
-                              <span className="material-symbols-outlined text-[17px]">logout</span>
+                              <LogOut size={17} strokeWidth={1.5} />
                               <span>Logout</span>
                             </button>
                           </motion.div>
@@ -549,7 +562,7 @@ export function TopNavbar() {
                 aria-expanded={isOpen}
                 aria-controls="mobile-menu-drawer"
               >
-                <span className="material-symbols-outlined text-[26px] text-current">menu</span>
+                <Menu size={26} strokeWidth={1.5} className="text-current" />
               </button>
             </div>
           </div>
@@ -607,7 +620,7 @@ export function TopNavbar() {
                   className="w-10 h-10 flex items-center justify-center text-on-surface hover:text-primary transition-colors cursor-pointer"
                   aria-label="Close menu"
                 >
-                  <span className="material-symbols-outlined text-[32px] font-light">close</span>
+                  <X size={32} strokeWidth={1.5} />
                 </button>
               </div>
 
@@ -665,9 +678,7 @@ export function TopNavbar() {
                         {hasPendingInvite && (
                           <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-orange-500 shadow-sm" />
                         )}
-                        <span className="material-symbols-outlined text-[20px]">
-                          admin_panel_settings
-                        </span>
+                        <Shield size={20} strokeWidth={1.5} />
                         <span className="tracking-[0.15em] ml-1">Admin Portal</span>
                       </Link>
                     </motion.li>
@@ -691,7 +702,7 @@ export function TopNavbar() {
                         onClick={() => setIsOpen(false)}
                         className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
                       >
-                        <span className="material-symbols-outlined text-[26px]">favorite</span>
+                        <Heart size={26} strokeWidth={1.5} />
                         <span className="text-[9px] font-bold uppercase tracking-wider">
                           Wishlist
                         </span>
@@ -710,9 +721,7 @@ export function TopNavbar() {
                         className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors relative cursor-pointer"
                       >
                         <div className="relative">
-                          <span className="material-symbols-outlined text-[26px]">
-                            shopping_bag
-                          </span>
+                          <ShoppingBag size={26} strokeWidth={1.5} />
                           {cartCount > 0 && (
                             <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">
                               {cartCount}
@@ -727,7 +736,7 @@ export function TopNavbar() {
                           onClick={() => setIsOpen(false)}
                           className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors"
                         >
-                          <span className="material-symbols-outlined text-[26px]">person</span>
+                          <User size={26} strokeWidth={1.5} />
                           <span className="text-[9px] font-bold uppercase tracking-wider">
                             Profile
                           </span>
@@ -743,7 +752,7 @@ export function TopNavbar() {
                         }}
                         className="flex flex-col items-center gap-1 text-on-surface hover:text-primary transition-colors cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-[26px]">login</span>
+                        <LogIn size={26} strokeWidth={1.5} />
                         <span className="text-[9px] font-bold uppercase tracking-wider">
                           Sign In
                         </span>
@@ -756,7 +765,7 @@ export function TopNavbar() {
                         }}
                         className="flex flex-col items-center gap-1 text-on-surface hover:text-error transition-colors cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-[26px]">logout</span>
+                        <LogOut size={26} strokeWidth={1.5} />
                         <span className="text-[9px] font-bold uppercase tracking-wider">
                           Sign Out
                         </span>

@@ -178,7 +178,7 @@ export class AlertingService {
       for (const email of recipients) {
         await sendDirectEmailHandler({
           email,
-          subject: `${severityEmoji} [${payload.severity.toUpperCase()}] ${payload.title}`,
+          subject: `System Alert [${payload.severity.toUpperCase()}]: ${payload.title}`,
           customHtml: `
             <div style="font-family:sans-serif;max-width:600px;">
               <h2 style="color:${payload.severity === 'critical' ? '#dc2626' : '#f59e0b'};">${severityEmoji} ${payload.title}</h2>

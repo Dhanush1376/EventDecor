@@ -39,7 +39,7 @@ export const SystemErrorAlertTemplate = (data: any) => {
 
   return {
     html: content,
-    subject: `[${severity.toUpperCase()}] ${errorType} in ${environment || 'production'}`,
+    subject: `System Error [${severity.toUpperCase()}]: ${errorType} in ${environment || 'production'}`,
     preheader: errorMessage.substring(0, 100),
   };
 };

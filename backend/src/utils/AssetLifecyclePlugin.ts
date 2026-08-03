@@ -209,15 +209,21 @@ export const AssetLifecyclePlugin = (schema: Schema, options?: AssetLifecycleOpt
         `[AssetLifecycle] ${modelName} updated, ${removedUrls.length} assets removed. Queueing cleanup.`,
       );
 
-      cleanupQueue.add('clean-replaced-assets', {
-        oldData: oldUrls,
-        newData: newUrls,
-        context: {
-          entityType: modelName,
-          entityId: newDoc._id.toString(),
-          ...contextInfo,
-        },
-      });
+      setTimeout(() => {
+        cleanupQueue.add(
+          'clean-replaced-assets',
+          {
+            oldData: oldUrls,
+            newData: newUrls,
+            context: {
+              entityType: modelName,
+              entityId: newDoc._id.toString(),
+              ...contextInfo,
+            },
+          },
+          { delay: 5000 },
+        );
+      }, 2000);
     }
   };
 
@@ -257,14 +263,20 @@ export const AssetLifecyclePlugin = (schema: Schema, options?: AssetLifecycleOpt
     );
 
     if (urls.length > 0) {
-      cleanupQueue.add('clean-all-assets', {
-        data: urls,
-        context: {
-          entityType: modelName,
-          entityId: doc._id.toString(),
-          operation: 'purge',
-        },
-      });
+      setTimeout(() => {
+        cleanupQueue.add(
+          'clean-all-assets',
+          {
+            data: urls,
+            context: {
+              entityType: modelName,
+              entityId: doc._id.toString(),
+              operation: 'purge',
+            },
+          },
+          { delay: 5000 },
+        );
+      }, 2000);
     }
   });
 };

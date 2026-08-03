@@ -15,10 +15,10 @@ export const uploadOnCloudinary = async (localFilePath: string) => {
       });
     });
 
-    logger.info(`File uploaded to Cloudinary: ${response.url}`);
+    logger.info(`[Cloudinary] Uploaded asset: ${response.public_id} (${response.secure_url})`);
     return response;
   } catch (error) {
-    logger.error(`Cloudinary upload failed (or circuit open): ${error}`);
+    logger.error(`[Cloudinary] Upload failed (or circuit open): ${error}`);
     return null;
   }
 };
@@ -59,26 +59,69 @@ export const deleteFromCloudinary = async (publicId: string) => {
     await cloudinaryCircuitBreaker.execute(async () => {
       await cloudinary.uploader.destroy(publicId);
     });
-  } catch (error) {
-    logger.error(`Cloudinary delete failed (or circuit open): ${error}`);
+    logger.info(`[Cloudinary] Deleted asset: ${publicId}`);
+  } catch (error: any) {
+    logger.error(`[Cloudinary] Cleanup failed: ${publicId} — ${error.message || error}`);
   }
 };
 
+export const safeDeleteFromCloudinary = async (publicId: string): Promise<boolean> => {
+  try {
+    const cloudinary = getCloudinary();
+    const result = await cloudinaryCircuitBreaker.execute(async () => {
+      return await cloudinary.uploader.destroy(publicId);
+    });
+
+    if (result.result === 'ok' || result.result === 'not found') {
+      logger.info(`[Cloudinary] Deleted asset: ${publicId} (status: ${result.result})`);
+      return true;
+    }
+    logger.warn(`[Cloudinary] Delete returned unexpected status for ${publicId}: ${result.result}`);
+    return false;
+  } catch (error: any) {
+    logger.error(`[Cloudinary] Cleanup failed: ${publicId} — ${error.message || error}`);
+    return false;
+  }
+};
+
+export const assetExistsInCloudinary = async (publicId: string): Promise<boolean> => {
+  try {
+    const cloudinary = getCloudinary();
+    const result = await cloudinary.api.resource(publicId);
+    return !!result;
+  } catch (error: any) {
+    if (error?.http_code === 404) return false;
+    throw error;
+  }
+};
+
+/**
+ * Robust extraction of Cloudinary public_id from a URL.
+ * Handles transformations and version segments safely.
+ */
 export const extractPublicId = (url: string): string | null => {
   if (!url || !url.includes('cloudinary.com')) return null;
   try {
     const parts = url.split('/upload/');
     if (parts.length < 2) return null;
 
-    let publicIdWithExt = parts[1];
+    let publicIdWithExt = parts.slice(1).join('/upload/'); // Join back if public_id contains /upload/
 
-    if (publicIdWithExt.startsWith('v')) {
-      const slashIndex = publicIdWithExt.indexOf('/');
-      if (slashIndex !== -1) {
-        publicIdWithExt = publicIdWithExt.substring(slashIndex + 1);
-      }
+    const segments = publicIdWithExt.split('/');
+
+    // 1. Remove transformations segment if present (contains comma or common prefixes)
+    if (segments.length > 1 && (segments[0].includes(',') || /^[whcfq]_/.test(segments[0]))) {
+      segments.shift();
     }
 
+    // 2. Remove version segment if present (e.g. v1234567890)
+    if (segments.length > 1 && /^v\d+$/.test(segments[0])) {
+      segments.shift();
+    }
+
+    publicIdWithExt = segments.join('/');
+
+    // 3. Remove extension
     const dotIndex = publicIdWithExt.lastIndexOf('.');
     if (dotIndex !== -1) {
       return publicIdWithExt.substring(0, dotIndex);
@@ -87,6 +130,30 @@ export const extractPublicId = (url: string): string | null => {
   } catch {
     return null;
   }
+};
+
+/**
+ * Resolves the true public_id for a given URL by checking the Media collection first,
+ * and falling back to robust string parsing if not found.
+ */
+export const resolvePublicId = async (url: string): Promise<string | null> => {
+  if (!url || !url.includes('cloudinary.com')) return null;
+  try {
+    const mongoose = require('mongoose');
+    // Lazy load to prevent circular dependencies
+    const Media = mongoose.models.Media || require('../models/Media').default;
+
+    const media = await Media.findOne({ secureUrl: url }).lean();
+    if (media && media.publicId) {
+      return media.publicId;
+    }
+  } catch (err: any) {
+    logger.warn(
+      `[Cloudinary] Failed to resolve publicId from DB for ${url}, falling back to extraction. Error: ${err.message}`,
+    );
+  }
+
+  return extractPublicId(url);
 };
 
 export const extractAllCloudinaryUrls = (obj: any): string[] => {

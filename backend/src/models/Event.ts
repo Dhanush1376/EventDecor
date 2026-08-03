@@ -103,7 +103,14 @@ EventSchema.post('findOneAndUpdate', async function (doc) {
 
 EventSchema.plugin(SoftDeletePlugin);
 // Apply Asset Lifecycle Management
-EventSchema.plugin(AssetLifecyclePlugin);
+EventSchema.plugin(AssetLifecyclePlugin, {
+  tier: 3,
+  assetFields: [
+    { path: 'image', type: 'single', resourceType: 'image' },
+    { path: 'gallery', type: 'array', resourceType: 'image' },
+    { path: 'beforeAfterImages', type: 'nested', resourceType: 'image' },
+  ],
+});
 
 const Event = mongoose.model<IEvent, SoftDeleteModel<IEvent>>('Event', EventSchema);
 export default Event;
