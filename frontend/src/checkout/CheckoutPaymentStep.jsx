@@ -29,6 +29,7 @@ export default function CheckoutPaymentStep() {
     isTotalsLoading,
     totalsError,
     appliedCoupon,
+    couponValid,
     fetchBackendTotals,
     settings,
     user,
@@ -242,6 +243,36 @@ export default function CheckoutPaymentStep() {
           </p>
         </div>
       </div>
+
+      {/* Promo Savings Banner */}
+      {appliedCoupon && couponValid && backendTotals?.discount > 0 ? (
+        <div className="p-3.5 bg-primary/10 border border-primary/30 rounded-xl flex items-center justify-between text-xs mb-4 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-primary text-lg">local_offer</span>
+            <div>
+              <span className="font-bold text-on-surface block">
+                Promo Code <span className="font-mono text-primary uppercase">{appliedCoupon}</span>{' '}
+                applied
+              </span>
+              <p className="text-[10px] text-secondary">
+                You are saving ₹{backendTotals.discount.toLocaleString('en-IN')} on this order!
+              </p>
+            </div>
+          </div>
+          <span className="text-primary font-extrabold text-sm">
+            −₹{backendTotals.discount.toLocaleString('en-IN')}
+          </span>
+        </div>
+      ) : (
+        <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl flex items-center justify-between text-xs mb-4">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-amber-600 text-base">sell</span>
+            <span className="text-amber-900 font-medium text-[11px]">
+              Have a promo code? Check the price details sidebar to apply & save!
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Payment Header */}
       <div className="py-4 sm:py-6 mb-2">

@@ -170,26 +170,56 @@ export class OrderCheckoutService {
       let couponDoc: any = null;
       if (couponCode) {
         couponDoc = await Coupon.findOne({
-          code: couponCode.toUpperCase(),
+          code: couponCode.toUpperCase().trim(),
           isActive: true,
-          $or: [{ usageLimit: null }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }],
         }).session(session);
 
         if (
           couponDoc &&
           new Date() <= couponDoc.expiryDate &&
-          subtotal >= couponDoc.minOrderAmount
+          subtotal >= couponDoc.minOrderAmount &&
+          (!couponDoc.usageLimit || couponDoc.usedCount < couponDoc.usageLimit)
         ) {
           couponValid = true;
-          if (couponDoc.discountType === 'percentage') {
-            discount = (subtotal * couponDoc.discountValue) / 100;
-            if (couponDoc.maxDiscount && discount > couponDoc.maxDiscount) {
-              discount = couponDoc.maxDiscount;
-            }
-          } else {
-            discount = couponDoc.discountValue;
+          let applicableAmount = subtotal;
+
+          if (
+            couponDoc.targetType === 'products' &&
+            couponDoc.targetProductIds &&
+            couponDoc.targetProductIds.length > 0
+          ) {
+            const productIdsStr = couponDoc.targetProductIds.map((id: any) => id.toString());
+            applicableAmount = orderItems
+              .filter((item) => productIdsStr.includes(item.productId.toString()))
+              .reduce((sum, item) => sum + item.price * item.quantity, 0);
+          } else if (
+            couponDoc.targetType === 'categories' &&
+            couponDoc.targetCategories &&
+            couponDoc.targetCategories.length > 0
+          ) {
+            const targetCatsLower = couponDoc.targetCategories.map((c: any) =>
+              (c || '').toLowerCase().trim(),
+            );
+            applicableAmount = orderItems
+              .filter((item) =>
+                targetCatsLower.includes((item.category || '').toLowerCase().trim()),
+              )
+              .reduce((sum, item) => sum + item.price * item.quantity, 0);
           }
-          discount = Math.round(discount);
+
+          if (applicableAmount > 0) {
+            if (couponDoc.discountType === 'percentage') {
+              discount = (applicableAmount * couponDoc.discountValue) / 100;
+              if (couponDoc.maxDiscount && discount > couponDoc.maxDiscount) {
+                discount = couponDoc.maxDiscount;
+              }
+            } else {
+              discount = Math.min(applicableAmount, couponDoc.discountValue);
+            }
+            discount = Math.round(discount);
+          } else {
+            throw new ApiError(400, 'Coupon is not applicable to the items in your cart');
+          }
         } else {
           throw new ApiError(400, 'Coupon is invalid, expired, or usage limit reached');
         }

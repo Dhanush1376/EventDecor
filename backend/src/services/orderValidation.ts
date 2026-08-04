@@ -152,7 +152,10 @@ export class OrderValidationService {
     let cashbackFixed = 0;
 
     if (couponCode) {
-      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+      const coupon = await Coupon.findOne({
+        code: couponCode.toUpperCase().trim(),
+        isActive: true,
+      });
       if (!coupon) {
         couponMessage = 'Invalid coupon code';
       } else if (new Date() > coupon.expiryDate) {
@@ -199,11 +202,14 @@ export class OrderValidationService {
             coupon.targetCategories.length > 0
           ) {
             const targetCatsLower = coupon.targetCategories.map((c: any) =>
-              (c || '').toLowerCase(),
+              (c || '').toLowerCase().trim(),
             );
             for (const item of items) {
               const product = productsById.get(String(item.productId));
-              if (product && targetCatsLower.includes((product.category || '').toLowerCase())) {
+              if (
+                product &&
+                targetCatsLower.includes((product.category || '').toLowerCase().trim())
+              ) {
                 applicableAmount += (item._calculatedPrice || 0) * item.quantity;
               }
             }

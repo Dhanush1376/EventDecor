@@ -106,7 +106,7 @@ export function useCheckoutTotals({
   // Auto-apply feature removed per user request
 
   const fetchBackendTotals = useCallback(
-    async (couponToApply = '') => {
+    async (couponToApply = '', showToast = false) => {
       if (!activeItems || activeItems.length === 0) return;
       const requestId = totalsRequestRef.current + 1;
       totalsRequestRef.current = requestId;
@@ -136,16 +136,21 @@ export function useCheckoutTotals({
             setCouponMessage(res.data.couponMessage);
             if (res.data.couponValid) {
               setAppliedCoupon(couponToApply);
+              if (showToast) {
+                toast.success(res.data.couponMessage || 'Coupon applied successfully!');
+              }
             } else {
               setAppliedCoupon('');
+              if (showToast) {
+                toast.error(res.data.couponMessage || 'Invalid or expired coupon');
+              }
             }
           }
         }
       } catch (err) {
         logger.error('Failed to validate checkout totals:', err);
         const errMsg =
-          err.response?.data?.message ||
-          'Failed to connect to backend server. Please verify your connection.';
+          err.response?.data?.message || err.message || 'Failed to calculate order totals';
         setTotalsError(errMsg);
         toast.error(errMsg);
       } finally {
@@ -166,7 +171,7 @@ export function useCheckoutTotals({
       toast.error('Please enter a coupon code');
       return;
     }
-    fetchBackendTotals(couponInput.trim());
+    fetchBackendTotals(couponInput.trim(), true);
   };
 
   const handleRemoveCoupon = () => {

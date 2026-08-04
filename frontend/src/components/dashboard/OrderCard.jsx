@@ -44,12 +44,20 @@ export function OrderCard({ order, item, itemIdx, idx }) {
     >
       {/* Card Header */}
       <div className="bg-surface-container-low px-4 py-3 flex items-center justify-between border-b border-outline-variant/15 relative">
-        {order.statusHistory?.length > 0 &&
-          Date.now() -
-            new Date(order.statusHistory[order.statusHistory.length - 1].timestamp).getTime() <
-            24 * 60 * 60 * 1000 && (
-            <span className="absolute top-3 left-3 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-          )}
+        {(() => {
+          if (!order.statusHistory?.length) return false;
+          const lastUpdate = new Date(
+            order.statusHistory[order.statusHistory.length - 1].timestamp,
+          ).getTime();
+          let views = {};
+          try {
+            views = JSON.parse(localStorage.getItem('siri_order_views') || '{}');
+          } catch (e) {}
+          const lastViewTime = views[order._id || order.id] || 0;
+          return Date.now() - lastUpdate < 24 * 60 * 60 * 1000 && lastUpdate > lastViewTime;
+        })() && (
+          <span className="absolute top-3 left-3 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+        )}
         <div className="flex items-center gap-2 pl-3">
           {order.orderStatus?.toLowerCase() === 'delivered' ? (
             <svg
@@ -201,7 +209,7 @@ export function OrderCard({ order, item, itemIdx, idx }) {
             >
               <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
             </svg>
-            <span>Review item & win 50 Loyalty Coins!</span>
+            <span>Review item & win Loyalty Coins!</span>
           </div>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (

@@ -15,10 +15,10 @@ import {
   BellRing,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
-import { OptimizedImage } from '../ui';
+import { OptimizedImage } from '../ui/OptimizedImage';
 import { useRazorpay } from '../../hooks/useRazorpay';
 import toast from 'react-hot-toast';
 import { useUserSocket } from '../../context/UserSocketProvider';
@@ -42,6 +42,16 @@ export function OrderDetail() {
   const activeStepRef = React.useRef(null);
 
   const socket = useUserSocket();
+
+  useEffect(() => {
+    if (!order?.statusHistory?.length) return;
+
+    // Update local storage to mark this order as viewed
+    const initialViews = JSON.parse(localStorage.getItem('siri_order_views') || '{}');
+    initialViews[order._id || order.id] = Date.now();
+    localStorage.setItem('siri_order_views', JSON.stringify(initialViews));
+    window.dispatchEvent(new Event('siri_order_views_updated'));
+  }, [order]);
 
   React.useEffect(() => {
     if (!order || !item) return;
@@ -325,11 +335,6 @@ export function OrderDetail() {
     journeySteps[activeStepIndex].isCurrent = true;
   }
 
-  const hasRecentUpdate =
-    order.statusHistory?.length > 0 &&
-    Date.now() - new Date(order.statusHistory[order.statusHistory.length - 1].timestamp).getTime() <
-      24 * 60 * 60 * 1000;
-
   const getColorClasses = (color, status, isCurrent) => {
     if (status === 'pending')
       return 'bg-surface-container-high border-outline-variant text-secondary';
@@ -362,9 +367,6 @@ export function OrderDetail() {
       {/* Product Summary Header */}
       <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs">
         <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center relative">
-          {hasRecentUpdate && (
-            <span className="absolute top-1 left-[-10px] w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-          )}
           <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 pl-2">
             <PackageCheck className="text-[14px]" strokeWidth={1.5} />
             Order Overview
@@ -506,7 +508,7 @@ export function OrderDetail() {
             </h4>
             <p className="text-[9px] text-secondary tracking-wider mt-0.5">
               {isDelivered
-                ? 'Share your review to win 50 Loyalty Coins!'
+                ? 'Share your review to win Loyalty Coins!'
                 : 'Unlocks once item is successfully delivered.'}
             </p>
           </div>

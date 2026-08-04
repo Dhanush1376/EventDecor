@@ -61,53 +61,50 @@ export default function CheckoutSidebar() {
         className="lg:col-span-5 xl:col-span-4 space-y-4"
       >
         {/* Wallet Balance Card */}
-        {user &&
-          (user.walletBalance > 0 || (backendTotals && backendTotals.walletBalance > 0)) &&
-          checkoutSteps[activeStep] !== 'PAYMENT' && (
-            <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    id="checkout-use-wallet-checkbox"
-                    checked={useWallet}
-                    onChange={(e) => setUseWallet(e.target.checked)}
-                    className="mt-1 rounded text-primary focus:ring-0 cursor-pointer h-4 w-4"
-                  />
-                  <label
-                    htmlFor="checkout-use-wallet-checkbox"
-                    className="cursor-pointer select-none"
-                  >
-                    <span className="text-xs font-bold text-on-surface block uppercase tracking-wider">
-                      Use Siri Pay Wallet
-                    </span>
-                    <span className="text-[10px] text-secondary font-light">
-                      Available Balance:{' '}
-                      <strong className="text-on-surface font-semibold">
-                        ₹
-                        {(
-                          (backendTotals?.walletBalance ?? user?.walletBalance) ||
-                          0
-                        ).toLocaleString('en-IN')}
-                      </strong>
-                    </span>
-                  </label>
-                </div>
-                <span className="material-symbols-outlined text-primary text-sm">stars</span>
-              </div>
-
-              {useWallet && backendTotals && backendTotals.walletDeduction > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="mt-3 pt-3 border-t border-outline-variant/30 text-[11px] text-primary font-bold flex justify-between"
+        {user && (user.walletBalance > 0 || (backendTotals && backendTotals.walletBalance > 0)) && (
+          <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="checkout-use-wallet-checkbox"
+                  checked={useWallet}
+                  onChange={(e) => setUseWallet(e.target.checked)}
+                  className="mt-1 rounded text-primary focus:ring-0 cursor-pointer h-4 w-4"
+                />
+                <label
+                  htmlFor="checkout-use-wallet-checkbox"
+                  className="cursor-pointer select-none"
                 >
-                  <span>Wallet Deducted:</span>
-                  <span>− ₹{backendTotals?.walletDeduction?.toLocaleString('en-IN') || 0}</span>
-                </motion.div>
-              )}
+                  <span className="text-xs font-bold text-on-surface block uppercase tracking-wider">
+                    Use Siri Pay Wallet
+                  </span>
+                  <span className="text-[10px] text-secondary font-light">
+                    Available Balance:{' '}
+                    <strong className="text-on-surface font-semibold">
+                      ₹
+                      {((backendTotals?.walletBalance ?? user?.walletBalance) || 0).toLocaleString(
+                        'en-IN',
+                      )}
+                    </strong>
+                  </span>
+                </label>
+              </div>
+              <span className="material-symbols-outlined text-primary text-sm">stars</span>
             </div>
-          )}
+
+            {useWallet && backendTotals && backendTotals.walletDeduction > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mt-3 pt-3 border-t border-outline-variant/30 text-[11px] text-primary font-bold flex justify-between"
+              >
+                <span>Wallet Deducted:</span>
+                <span>− ₹{backendTotals?.walletDeduction?.toLocaleString('en-IN') || 0}</span>
+              </motion.div>
+            )}
+          </div>
+        )}
 
         {/* Promo Coupon Card */}
         {orderType !== 'rental' && checkoutSteps[activeStep] !== 'PAYMENT' && (
@@ -148,6 +145,7 @@ export default function CheckoutSidebar() {
                           key={coupon.code}
                           onClick={() => {
                             setCouponInput(coupon.code);
+                            fetchBackendTotals(coupon.code, true);
                           }}
                           className="snap-start shrink-0 w-[180px] p-2.5 rounded-lg border border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
                         >

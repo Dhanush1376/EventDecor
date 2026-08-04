@@ -3,9 +3,8 @@ import { m as motion } from 'framer-motion';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { prefetchManager } from '../../utils/performance/prefetchManager';
-import { useQuery } from '@tanstack/react-query';
-import { orderService } from '../../services/domainServices';
-import { useMemo } from 'react';
+import { useDashboardData } from '../../hooks/useDashboardData';
+import { useMemo, useState, useEffect } from 'react';
 
 export function BottomNav() {
   const location = useLocation();
@@ -14,29 +13,35 @@ export function BottomNav() {
 
   const userId = user?._id || user?.id;
 
-  const ordersQuery = useQuery({
-    queryKey: ['dashboard', 'orders', userId],
-    queryFn: async () => {
-      const res = await orderService.getMyOrders();
-      const payload = res.data ?? res ?? [];
-      return Array.isArray(payload) ? payload : payload.data || [];
-    },
-    enabled: Boolean(userId),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-  });
+  const { orders, rentals, customOrders } = useDashboardData(userId);
+
+  const [orderViewsUpdated, setOrderViewsUpdated] = useState(0);
+  useEffect(() => {
+    const handleUpdate = () => setOrderViewsUpdated((prev) => prev + 1);
+    window.addEventListener('siri_order_views_updated', handleUpdate);
+    return () => window.removeEventListener('siri_order_views_updated', handleUpdate);
+  }, []);
 
   const hasRecentOrderUpdates = useMemo(() => {
-    if (!ordersQuery.data) return false;
+    const allOrders = [...(orders || []), ...(rentals || []), ...(customOrders || [])];
+    if (!allOrders.length) return false;
+
     const now = Date.now();
-    return ordersQuery.data.some((order) => {
+    let views = {};
+    try {
+      views = JSON.parse(localStorage.getItem('siri_order_views') || '{}');
+    } catch (e) {}
+
+    return allOrders.some((order) => {
       if (!order.statusHistory || !order.statusHistory.length) return false;
       const lastUpdate = new Date(
         order.statusHistory[order.statusHistory.length - 1].timestamp,
       ).getTime();
-      return now - lastUpdate < 24 * 60 * 60 * 1000;
+      const lastViewTime = views[order._id || order.id] || 0;
+      return now - lastUpdate < 24 * 60 * 60 * 1000 && lastUpdate > lastViewTime;
     });
-  }, [ordersQuery.data]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders, rentals, customOrders, orderViewsUpdated]);
 
   const navItems = [
     { label: 'Home', icon: 'home', path: '/' },

@@ -168,7 +168,13 @@ export function CartView({ isEmbedded = false }) {
     }
 
     try {
-      const res = await couponService.apply(code, actualSubtotal);
+      const itemsPayload = items.map((item) => ({
+        productId: item.id || item._id || item.productId,
+        quantity: item.quantity,
+        type: item.type,
+      }));
+
+      const res = await couponService.apply(code, actualSubtotal, itemsPayload);
       if (res.success) {
         setAppliedCoupon(res.data);
         setClaimedCoupon(code);

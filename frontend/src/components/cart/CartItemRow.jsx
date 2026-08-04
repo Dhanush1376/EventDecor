@@ -35,7 +35,7 @@ export const CartItemRow = React.memo(function CartItemRow({
     itemOldPrice > item.price ? Math.round(((itemOldPrice - item.price) / itemOldPrice) * 100) : 0;
 
   // Fetch the live Custom Order from the API to bypass stale localStorage cache
-  const { data: apiCustomOrder } = useQuery({
+  const { data: apiCustomOrder, isLoading: isCustomOrderLoading } = useQuery({
     queryKey: ['cartCustomOrder', item.id || item._id],
     queryFn: async () => {
       const res = await customOrderService.getById(item.id || item._id);
@@ -54,10 +54,14 @@ export const CartItemRow = React.memo(function CartItemRow({
     item.product?.id ||
     item.id ||
     item._id;
-  const { data: realProduct } = useProduct(actualProductId, {
+  const { data: realProduct, isLoading: isRealProductLoading } = useProduct(actualProductId, {
     enabled: Boolean(actualProductId),
     staleTime: 1000 * 60 * 60, // 1 hour
   });
+
+  const isProductDataLoading =
+    (item.type === 'custom' && isCustomOrderLoading) ||
+    (actualProductId && isRealProductLoading && !realProduct);
 
   const isItemNonRefundable = Boolean(
     item.isNonRefundable ||
@@ -244,7 +248,12 @@ export const CartItemRow = React.memo(function CartItemRow({
               {/* Return policy & delivery forecast strip */}
               <div className="text-[11px] text-secondary w-full">
                 <div className="flex flex-col gap-1.5 mt-1">
-                  {isItemNonRefundable ? (
+                  {isProductDataLoading ? (
+                    <div className="flex items-center gap-1.5 py-0.5 opacity-60">
+                      <div className="w-3 h-3 rounded-full bg-outline-variant/40 animate-pulse" />
+                      <div className="w-24 h-2.5 rounded-sm bg-outline-variant/40 animate-pulse" />
+                    </div>
+                  ) : isItemNonRefundable ? (
                     <div className="flex items-center gap-1.5 text-[#d97706] font-bold whitespace-nowrap text-[10px]">
                       <Ban className="text-[13px]" strokeWidth={1.5} />
                       Non-Refundable

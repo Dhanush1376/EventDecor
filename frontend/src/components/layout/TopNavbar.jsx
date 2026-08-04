@@ -24,7 +24,7 @@ import React, { Suspense, useState, useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { adminInviteService } from '../../services/domainServices';
+import { adminInviteService, eventService } from '../../services/domainServices';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { useSearchOverlay } from '../../hooks/useSearchOverlay';
 import { prefetchManager } from '../../utils/performance/prefetchManager';
@@ -61,6 +61,7 @@ export function TopNavbar() {
   const { user, isAuthenticated, logout, openAuthModal } = useAuth();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [eventCategories, setEventCategories] = useState([]);
   const [openAccordion, setOpenAccordion] = useState(null);
 
   useEffect(() => {
@@ -70,6 +71,21 @@ export function TopNavbar() {
       .then((res) => {
         if (active && res?.success && res.data) {
           setCategories(res.data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    eventService
+      .getCategories()
+      .then((res) => {
+        if (active && res?.success && res.data) {
+          setEventCategories(res.data.map((cat) => cat.name));
         }
       })
       .catch(() => {});
@@ -147,7 +163,14 @@ export function TopNavbar() {
     };
   }, [isAuthenticated, user]);
 
-  const [activeCustomOrdersCount, setActiveCustomOrdersCount] = useState(0);
+  const [hasUnreadCustomOrders, setHasUnreadCustomOrders] = useState(false);
+  const [orderViewsUpdated, setOrderViewsUpdated] = useState(0);
+
+  useEffect(() => {
+    const handleUpdate = () => setOrderViewsUpdated((prev) => prev + 1);
+    window.addEventListener('siri_order_views_updated', handleUpdate);
+    return () => window.removeEventListener('siri_order_views_updated', handleUpdate);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -156,20 +179,31 @@ export function TopNavbar() {
         .getMyOrders()
         .then((res) => {
           if (active && res?.success && res?.data) {
-            const activeOrders = res.data.filter(
-              (o) => !['Completed', 'Cancelled'].includes(o.status),
-            );
-            setActiveCustomOrdersCount(activeOrders.length);
+            const now = Date.now();
+            let views = {};
+            try {
+              views = JSON.parse(localStorage.getItem('siri_order_views') || '{}');
+            } catch (e) {}
+
+            const hasUnread = res.data.some((order) => {
+              if (!order.statusHistory || !order.statusHistory.length) return false;
+              const lastUpdate = new Date(
+                order.statusHistory[order.statusHistory.length - 1].timestamp,
+              ).getTime();
+              const lastViewTime = views[order._id || order.id] || 0;
+              return now - lastUpdate < 24 * 60 * 60 * 1000 && lastUpdate > lastViewTime;
+            });
+            setHasUnreadCustomOrders(hasUnread);
           }
         })
         .catch(() => {});
     } else {
-      setActiveCustomOrdersCount(0);
+      setHasUnreadCustomOrders(false);
     }
     return () => {
       active = false;
     };
-  }, [isAuthenticated, user, location.pathname]);
+  }, [isAuthenticated, user, location.pathname, orderViewsUpdated]);
 
   // ─── INTELLIGENT SEARCH OVERLAYS ───
   const search = useSearchOverlay();
@@ -356,7 +390,7 @@ export function TopNavbar() {
                         >
                           <span className="flex items-center">
                             <span>{link.label}</span>
-                            {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
+                            {link.label === 'Custom Orders' && hasUnreadCustomOrders && (
                               <span className="ml-0.5 relative w-1.5 h-1.5 rounded-full bg-[#ff5a00] shadow-sm"></span>
                             )}
                           </span>
@@ -641,9 +675,7 @@ export function TopNavbar() {
                     const isEventsLink = link.label.toLowerCase() === 'events';
                     const hasSubMenu = isShopLink || isEventsLink;
                     const accordionId = isShopLink ? 'shop' : isEventsLink ? 'events' : null;
-                    const subItems = isShopLink
-                      ? categories
-                      : ['Weddings', 'Corporate Events', 'Social Gatherings', 'Private Parties'];
+                    const subItems = isShopLink ? categories : isEventsLink ? eventCategories : [];
 
                     return (
                       <motion.li
@@ -663,7 +695,7 @@ export function TopNavbar() {
                               onClick={() =>
                                 setOpenAccordion(openAccordion === accordionId ? null : accordionId)
                               }
-                              className={`flex items-center justify-between font-serif uppercase tracking-wider text-[15px] transition-all duration-300 w-full text-left py-5 px-1 ${active || openAccordion === accordionId ? 'text-primary' : 'text-on-surface hover:text-primary'}`}
+                              className={`flex items-center justify-between font-serif uppercase tracking-wider text-[15px] transition-all duration-300 w-full text-left py-3 px-1 ${active || openAccordion === accordionId ? 'text-primary' : 'text-on-surface hover:text-primary'}`}
                             >
                               <span>{link.label}</span>
                               <div className="flex items-center justify-center pl-5 border-l border-outline-variant/40 h-5">
@@ -677,12 +709,12 @@ export function TopNavbar() {
                           ) : (
                             <Link
                               onClick={() => setIsOpen(false)}
-                              className={`group flex items-center justify-start gap-3 font-serif uppercase tracking-wider text-[15px] transition-all duration-300 w-full text-left py-5 px-1 ${active ? 'text-primary' : 'text-on-surface hover:text-primary'}`}
+                              className={`group flex items-center justify-start gap-3 font-serif uppercase tracking-wider text-[15px] transition-all duration-300 w-full text-left py-3 px-1 ${active ? 'text-primary' : 'text-on-surface hover:text-primary'}`}
                               to={link.href}
                             >
                               <span className="text-left relative flex items-center justify-start gap-2 w-full">
                                 <span>{link.label}</span>
-                                {link.label === 'Custom Orders' && activeCustomOrdersCount > 0 && (
+                                {link.label === 'Custom Orders' && hasUnreadCustomOrders && (
                                   <span className="relative w-2 h-2 rounded-full bg-[#ff5a00] shadow-sm"></span>
                                 )}
                               </span>
@@ -761,7 +793,7 @@ export function TopNavbar() {
                     >
                       <Link
                         onClick={() => setIsOpen(false)}
-                        className="group flex items-center justify-start gap-3 font-serif uppercase tracking-wider text-[15px] transition-all duration-300 w-full text-left py-5 px-1 text-on-surface hover:text-primary"
+                        className="group flex items-center justify-start gap-3 font-serif uppercase tracking-wider text-[15px] transition-all duration-300 w-full text-left py-3 px-1 text-on-surface hover:text-primary"
                         to="/admin"
                       >
                         <span>Admin Portal</span>
@@ -816,7 +848,7 @@ export function TopNavbar() {
                             className="group-hover:scale-105 transition-transform"
                           />
                           {cartCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-primary text-white text-[8px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-orange-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center shadow-sm">
                               {cartCount}
                             </span>
                           )}

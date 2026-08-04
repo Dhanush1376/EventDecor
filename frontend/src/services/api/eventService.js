@@ -17,4 +17,8 @@ export const eventService = {
     const response = await api.put(`/events/${id}`, data);
     return response.data;
   },
+  getCategories: async () => {
+    const response = await api.get('/categories/active', { params: { type: 'event' } });
+    return response.data;
+  },
 };

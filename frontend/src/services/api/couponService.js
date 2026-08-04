@@ -16,8 +16,8 @@ export const couponService = {
     const response = await api.get(`/coupons/validate/${code}`);
     return response.data;
   },
-  apply: async (code, orderAmount) => {
-    const response = await api.post('/coupons/apply', { code, orderAmount });
+  apply: async (code, orderAmount, items = undefined) => {
+    const response = await api.post('/coupons/apply', { code, orderAmount, items });
     return response.data;
   },
   create: async (data) => {

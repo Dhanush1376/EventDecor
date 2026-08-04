@@ -7,6 +7,7 @@ import ApiError from '../../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../../utils/pagination';
 import { setPaginationHeaders } from '../../utils/paginationHeaders';
 import { ADMIN_ROLES } from '../../config/adminConfig';
+import { OrderValidationService } from '../../services/orderValidation';
 
 export const getCoupons = asyncHandler(async (req: Request, res: Response) => {
   const isAdmin = ADMIN_ROLES.includes((req as any).user?.role);
@@ -123,7 +124,7 @@ export const deleteCoupon = asyncHandler(async (req: Request, res: Response) => 
 
 export const applyCoupon = asyncHandler(async (req: Request, res: Response) => {
   const code = (req.body.code as string)?.toUpperCase();
-  const { orderAmount } = req.body;
+  const { orderAmount, items } = req.body;
   if (!code) throw new ApiError(400, 'Coupon code is required');
 
   const coupon = await Coupon.findOne({ code, isActive: true }).lean();
@@ -134,13 +135,36 @@ export const applyCoupon = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, 'Coupon usage limit reached');
 
   // Bug-13: Per-User Usage Limit Check
-  const alreadyUsed = coupon.usedBy?.some((u) => String(u.userId) === String((req as any).user.id));
-  if (alreadyUsed) {
+  const userId = (req as any).user?.id;
+  const alreadyUsed = coupon.usedBy?.some((u) => String(u.userId) === String(userId));
+  if (alreadyUsed && userId) {
     throw new ApiError(400, 'You have already used this coupon.');
   }
 
+  // Use robust validation if items are provided (handles product/category restrictions)
+  if (items && items.length > 0) {
+    const validation = await OrderValidationService.validateTotals(userId, {
+      items,
+      couponCode: code,
+    });
+
+    if (!validation.couponValid) {
+      throw new ApiError(400, validation.couponMessage || 'Invalid coupon for these items.');
+    }
+
+    return res.status(200).json(
+      new ApiResponse(true, 'Coupon applied', {
+        code: coupon.code,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        calculatedDiscount: validation.discount,
+        finalAmount: validation.total,
+      }),
+    );
+  }
+
   if (orderAmount < coupon.minOrderAmount)
-    throw new ApiError(400, `Minimum order amount is â‚¹${coupon.minOrderAmount}`);
+    throw new ApiError(400, `Minimum order amount is ₹${coupon.minOrderAmount}`);
 
   const rawDiscount =
     coupon.discountType === 'percentage'

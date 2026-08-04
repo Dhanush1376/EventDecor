@@ -33,6 +33,9 @@ export function Sidebar() {
     mobileShowContent,
     setMobileShowContent,
     hasRecentOrderUpdates,
+    hasRecentRentalUpdates,
+    hasRecentCustomUpdates,
+    hasRecentReturnUpdates,
   } = useDashboard();
 
   const path = location.pathname;
@@ -189,7 +192,12 @@ export function Sidebar() {
                 : 'text-on-surface hover:bg-surface-container-low'
             }`}
           >
-            <span>My Rentals</span>
+            <div className="flex items-center gap-2">
+              <span>My Rentals</span>
+              {hasRecentRentalUpdates && (
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+              )}
+            </div>
             <PackageCheck className="text-xs text-[#8c7335]" strokeWidth={1.5} />
           </motion.button>
 
@@ -204,7 +212,12 @@ export function Sidebar() {
                 : 'text-on-surface hover:bg-surface-container-low'
             }`}
           >
-            <span>My Custom Orders</span>
+            <div className="flex items-center gap-2">
+              <span>My Custom Orders</span>
+              {hasRecentCustomUpdates && (
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+              )}
+            </div>
             <Compass className="text-xs text-secondary" strokeWidth={1.5} />
           </motion.button>
 
@@ -219,7 +232,12 @@ export function Sidebar() {
                 : 'text-on-surface hover:bg-surface-container-low'
             }`}
           >
-            <span>Returns & Exchanges</span>
+            <div className="flex items-center gap-2">
+              <span>Returns & Exchanges</span>
+              {hasRecentReturnUpdates && (
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+              )}
+            </div>
             <CornerDownLeft className="text-xs text-secondary" strokeWidth={1.5} />
           </motion.button>
         </div>

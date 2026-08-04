@@ -128,6 +128,13 @@ export function DashboardProvider({ children }) {
 
   const [orderFilter, setOrderFilter] = useState('PURCHASE');
 
+  const [orderViewsUpdated, setOrderViewsUpdated] = useState(0);
+  useEffect(() => {
+    const handleUpdate = () => setOrderViewsUpdated((prev) => prev + 1);
+    window.addEventListener('siri_order_views_updated', handleUpdate);
+    return () => window.removeEventListener('siri_order_views_updated', handleUpdate);
+  }, []);
+
   const allOrders = useMemo(() => {
     return [...(orders || []), ...(rentals || []), ...(customOrders || [])].sort(
       (a, b) => new Date(b.createdAt || b.orderDate) - new Date(a.createdAt || a.orderDate),
@@ -304,17 +311,61 @@ export function DashboardProvider({ children }) {
     [orders],
   );
 
-  const hasRecentOrderUpdates = useMemo(() => {
-    if (!allOrders) return false;
-    const now = Date.now();
-    return allOrders.some((order) => {
-      if (!order.statusHistory || !order.statusHistory.length) return false;
-      const lastUpdate = new Date(
-        order.statusHistory[order.statusHistory.length - 1].timestamp,
-      ).getTime();
-      return now - lastUpdate < 24 * 60 * 60 * 1000;
-    });
-  }, [allOrders]);
+  const hasUpdatesForFilter = useCallback(
+    (filterFn) => {
+      if (!allOrders) return false;
+      const now = Date.now();
+      let views = {};
+      try {
+        views = JSON.parse(localStorage.getItem('siri_order_views') || '{}');
+      } catch (e) {}
+
+      return allOrders.filter(filterFn).some((order) => {
+        if (!order.statusHistory || !order.statusHistory.length) return false;
+        const lastUpdate = new Date(
+          order.statusHistory[order.statusHistory.length - 1].timestamp,
+        ).getTime();
+        const lastViewTime = views[order._id || order.id] || 0;
+        return now - lastUpdate < 24 * 60 * 60 * 1000 && lastUpdate > lastViewTime;
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allOrders, orderViewsUpdated],
+  );
+
+  const hasRecentOrderUpdates = useMemo(
+    () =>
+      hasUpdatesForFilter(
+        (o) =>
+          o.orderType !== 'rental' &&
+          !o.isRental &&
+          !o.items?.some((i) => i.type === 'rental') &&
+          o.customOrderId === undefined &&
+          !o.occasion,
+      ),
+    [hasUpdatesForFilter],
+  );
+
+  const hasRecentRentalUpdates = useMemo(
+    () =>
+      hasUpdatesForFilter(
+        (o) => o.orderType === 'rental' || o.isRental || o.items?.some((i) => i.type === 'rental'),
+      ),
+    [hasUpdatesForFilter],
+  );
+
+  const hasRecentCustomUpdates = useMemo(
+    () => hasUpdatesForFilter((o) => o.customOrderId !== undefined || o.occasion),
+    [hasUpdatesForFilter],
+  );
+
+  const hasRecentReturnUpdates = useMemo(
+    () =>
+      hasUpdatesForFilter(
+        (o) => o.hasActiveReturn || o.returnRequestIds?.length > 0 || o.returnRequests?.length > 0,
+      ),
+    [hasUpdatesForFilter],
+  );
 
   const contextValue = useMemo(
     () => ({
@@ -389,6 +440,9 @@ export function DashboardProvider({ children }) {
       handleSetDefaultAddress,
       downloadInvoice,
       hasRecentOrderUpdates,
+      hasRecentRentalUpdates,
+      hasRecentCustomUpdates,
+      hasRecentReturnUpdates,
     }),
     [
       user,
@@ -441,6 +495,9 @@ export function DashboardProvider({ children }) {
       handleSetDefaultAddress,
       downloadInvoice,
       hasRecentOrderUpdates,
+      hasRecentRentalUpdates,
+      hasRecentCustomUpdates,
+      hasRecentReturnUpdates,
     ],
   );
 
