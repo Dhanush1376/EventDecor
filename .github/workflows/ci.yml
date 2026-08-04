@@ -73,7 +73,7 @@ jobs:
 
       # Pin TruffleHog to a specific release tag for reproducible builds
       - name: TruffleHog Secret Scanner
-        uses: trufflesecurity/trufflehog@v3.95.8
+        uses: trufflesecurity/trufflehog@v3.96.0
         with:
           path: ./
           extra_args: --debug --only-verified
