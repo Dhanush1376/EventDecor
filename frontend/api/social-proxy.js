@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
   if (isBot && productId) {
     try {
-      let backendUrl = process.env.VITE_API_URL || 'https://api.siriartsandcrafts.com/api/v1';
+      let backendUrl = process.env.VITE_API_URL || 'https://eventdecor-lztd.onrender.com/api/v1';
       if (!backendUrl.endsWith('/v1')) backendUrl += '/v1';
       const url = new URL(`${backendUrl}/social/product/${productId}`);
 

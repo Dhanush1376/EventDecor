@@ -274,7 +274,7 @@ RAZORPAY_WEBHOOK_SECRET=your_razorpay_webhook_secret
 Create a `/frontend/.env` file with reference to `/frontend/.env.example`:
 
 ```env
-VITE_API_URL=https://api.siriartsandcrafts.com/api
+VITE_API_URL=https://eventdecor-lztd.onrender.com/api
 VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
 ```
 
