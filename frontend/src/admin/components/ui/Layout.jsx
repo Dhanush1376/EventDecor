@@ -15,12 +15,13 @@ export function PageHeader({
   headerAction,
   backButton,
   breadcrumbs,
+  badge,
 }) {
   const navigate = useNavigate();
   return (
     <motion.div
       variants={fadeUp}
-      className={`flex ${mobileRow ? 'flex-row' : 'flex-col sm:flex-row'} justify-between items-start sm:items-center gap-3 sm:gap-4 border-b border-[var(--admin-border-subtle)] pb-5 ${className}`}
+      className={`flex ${mobileRow ? 'flex-row' : 'flex-col sm:flex-row'} justify-between items-start sm:items-center gap-5 sm:gap-6 border-b border-[var(--admin-border-subtle)] pb-6 mb-2 ${className}`}
     >
       <div
         className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${mobileRow ? 'flex-1 min-w-0 pr-2' : 'w-full'}`}
@@ -77,16 +78,21 @@ export function PageHeader({
             )}
             <h1 className="text-[20px] sm:text-[26px] font-bold text-[var(--admin-text-primary)] font-display tracking-tight leading-tight flex items-center gap-2">
               {title}
+              {badge !== undefined && (
+                <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-[var(--admin-surface-hover)] border border-[var(--admin-border-strong)] text-[var(--admin-text-secondary)] text-[12px] font-bold ml-1">
+                  {badge}
+                </span>
+              )}
             </h1>
             {subtitle && (
-              <p className="text-[12px] sm:text-[13px] text-[var(--admin-text-tertiary)] mt-1 font-medium leading-normal">
+              <p className="text-[13px] text-[var(--admin-text-secondary)] mt-1.5 font-medium leading-relaxed max-w-[500px]">
                 {subtitle}
               </p>
             )}
           </div>
         </div>
         {headerAction && (
-          <div className="w-full sm:w-auto mt-2 sm:mt-0 shrink-0 flex items-center justify-start sm:justify-center">
+          <div className="w-full sm:w-auto mt-3 sm:mt-0 shrink-0 flex items-center justify-start sm:justify-center">
             {headerAction}
           </div>
         )}

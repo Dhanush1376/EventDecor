@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import { SkeletonDashboard } from '../components/AdminUIKit';
+import { SkeletonDashboard, PageHeader } from '../components/AdminUIKit';
 import { AdminCustomOrderConfig } from '../components/AdminCustomOrderConfig';
 import { useEffect, useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -99,85 +99,78 @@ export function AdminInquiries({ hideHeader = false }) {
       initial="hidden"
       animate="show"
       variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      className="max-w-[1440px] mx-auto space-y-6  text-[var(--admin-text-primary)]"
+      className="flex flex-col h-full max-w-[1440px] mx-auto w-full text-[var(--admin-text-primary)]"
     >
       {loading ? (
         <SkeletonDashboard />
       ) : (
         <>
           {/* Page Header Area */}
-          <motion.div
-            variants={fadeUp}
-            className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${!hideHeader ? 'border-b border-[var(--admin-border)] pb-5' : ''}`}
-          >
-            {!hideHeader && (
-              <div>
-                <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
-                  Custom Orders Manager
-                </h2>
-                <p className="text-[12px] text-[var(--admin-text-tertiary)] font-medium mt-0.5">
-                  Manage custom customer requests, write quotations, chat with customers, and edit
-                  storefront form options.
-                </p>
+          <div className="mb-6">
+            <PageHeader
+              title="Custom Orders"
+              subtitle="Manage custom requests and quotations."
+              icon="architecture"
+              iconColor="custom"
+              headerAction={
+                <div className="flex items-center bg-[var(--admin-surface-muted)] p-0.5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] w-max">
+                  <button
+                    onClick={() => setCurrentWorkspace('active')}
+                    className={`px-4 py-1.5 rounded-[var(--admin-radius-sm)] text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
+                      currentWorkspace === 'active'
+                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                        : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
+                    }`}
+                  >
+                    Orders List
+                  </button>
+                  <button
+                    onClick={() => setCurrentWorkspace('config')}
+                    className={`px-4 py-1.5 rounded-[var(--admin-radius-sm)] text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
+                      currentWorkspace === 'config'
+                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                        : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
+                    }`}
+                  >
+                    Storefront Config
+                  </button>
+                </div>
+              }
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto scrollbar-hide space-y-6 pb-10">
+            {/* ─── WORKSPACE: PIPELINES RETAIN GRID ─── */}
+            {currentWorkspace === 'active' && (
+              <div className="space-y-6">
+                <InquiriesMetrics stats={stats} />
+
+                <InquiriesTable
+                  orders={orders}
+                  statusFilter={statusFilter}
+                  setStatusFilter={setStatusFilter}
+                  setSelectedOrder={setSelectedOrder}
+                  handleUpdatePriority={handleUpdatePriority}
+                  page={page}
+                  setPage={setPage}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                />
+
+                <InquiryDetailDrawer
+                  selectedOrder={selectedOrder}
+                  setSelectedOrder={setSelectedOrder}
+                  refetchOrders={refetch}
+                  isMobile={isMobile}
+                />
               </div>
             )}
 
-            <div
-              className={`flex bg-[var(--admin-surface-muted)] p-0.5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] ${hideHeader ? 'self-end' : 'self-start sm:self-auto'}`}
-            >
-              <button
-                onClick={() => setCurrentWorkspace('active')}
-                className={`px-5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-300 ${
-                  currentWorkspace === 'active'
-                    ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
-                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                }`}
-              >
-                Orders List
-              </button>
-              <button
-                onClick={() => setCurrentWorkspace('config')}
-                className={`px-5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-300 ${
-                  currentWorkspace === 'config'
-                    ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
-                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                }`}
-              >
-                Edit Form Options
-              </button>
-            </div>
-          </motion.div>
-
-          {/* ─── WORKSPACE: PIPELINES RETAIN GRID ─── */}
-          {currentWorkspace === 'active' && (
-            <div className="space-y-6">
-              <InquiriesMetrics stats={stats} />
-
-              <InquiriesTable
-                orders={orders}
-                statusFilter={statusFilter}
-                setStatusFilter={setStatusFilter}
-                setSelectedOrder={setSelectedOrder}
-                handleUpdatePriority={handleUpdatePriority}
-                page={page}
-                setPage={setPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-              />
-
-              <InquiryDetailDrawer
-                selectedOrder={selectedOrder}
-                setSelectedOrder={setSelectedOrder}
-                refetchOrders={refetch}
-                isMobile={isMobile}
-              />
-            </div>
-          )}
-
-          {/* ─── WORKSPACE: STOREFRONT FORM CONFIG ─── */}
-          {currentWorkspace === 'config' && (
-            <AdminCustomOrderConfig cmsConfig={cmsConfig} setCmsConfig={setCmsConfig} />
-          )}
+            {/* ─── WORKSPACE: STOREFRONT FORM CONFIG ─── */}
+            {currentWorkspace === 'config' && (
+              <AdminCustomOrderConfig cmsConfig={cmsConfig} setCmsConfig={setCmsConfig} />
+            )}
+          </div>
         </>
       )}
     </motion.div>

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 const ConfirmContext = createContext(null);
 
@@ -71,29 +72,36 @@ const ConfirmModal = ({
   onConfirm,
   onCancel,
 }) => {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
+
   const getTypeStyles = () => {
     switch (type) {
       case 'danger':
         return {
           icon: 'delete_forever',
-          iconColor: 'text-error',
-          btnBg: 'bg-error hover:bg-error/90',
-          btnText: 'text-onError shadow-error/20',
+          iconColor: isAdmin ? 'text-[var(--admin-error)]' : 'text-error',
+          btnBg: isAdmin
+            ? 'bg-[var(--admin-error)] hover:brightness-110'
+            : 'bg-error hover:bg-error/90',
+          btnText: 'text-white', // forced white for danger button readability
         };
       case 'info':
         return {
           icon: 'info',
-          iconColor: 'text-primary',
-          btnBg: 'bg-primary hover:bg-primary/90',
-          btnText: 'text-onPrimary shadow-primary/20',
+          iconColor: isAdmin ? 'text-[var(--admin-accent)]' : 'text-primary',
+          btnBg: isAdmin
+            ? 'bg-[var(--admin-accent)] hover:brightness-110'
+            : 'bg-primary hover:bg-primary/90',
+          btnText: 'text-white',
         };
       case 'warning':
       default:
         return {
           icon: 'warning',
-          iconColor: 'text-warning',
-          btnBg: 'bg-warning hover:bg-warning/90',
-          btnText: 'text-onWarning shadow-warning/20',
+          iconColor: isAdmin ? 'text-[#d97706]' : 'text-warning',
+          btnBg: isAdmin ? 'bg-[#d97706] hover:brightness-110' : 'bg-warning hover:bg-warning/90',
+          btnText: 'text-white',
         };
     }
   };
@@ -103,7 +111,9 @@ const ConfirmModal = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div
+          className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 ${isAdmin ? 'admin-section-root' : ''}`}
+        >
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -118,38 +128,66 @@ const ConfirmModal = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md bg-surface border border-outline-variant/30 rounded-3xl shadow-2xl overflow-hidden"
+            className={`relative w-full max-w-md overflow-hidden ${
+              isAdmin
+                ? 'bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] rounded-xl shadow-[var(--admin-shadow-lg)]'
+                : 'bg-surface border border-outline-variant/30 rounded-3xl shadow-2xl'
+            }`}
           >
             {/* Header */}
-            <div className="p-6 pb-4 border-b border-outline-variant/20 flex items-center justify-between">
+            <div
+              className={`flex items-center justify-between ${isAdmin ? 'p-5 border-b border-[var(--admin-border-subtle)]' : 'p-6 pb-4 border-b border-outline-variant/20'}`}
+            >
               <div className={`flex items-center gap-3 ${styles.iconColor}`}>
                 <span className="material-symbols-outlined text-[24px]">{styles.icon}</span>
-                <h3 className="font-display text-[18px] font-medium text-on-surface">{title}</h3>
+                <h3
+                  className={`${isAdmin ? 'font-sans text-[16px] font-bold text-[var(--admin-text-primary)]' : 'font-display text-[18px] font-medium text-on-surface'}`}
+                >
+                  {title}
+                </h3>
               </div>
               <button
                 onClick={onCancel}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors"
+                className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+                  isAdmin
+                    ? 'hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                    : 'hover:bg-surface-variant text-on-surface-variant'
+                }`}
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-4">
-              <p className="text-on-surface-variant text-[14px] leading-relaxed">{message}</p>
+            <div className={isAdmin ? 'p-5 space-y-4' : 'p-6 space-y-4'}>
+              <p
+                className={`${isAdmin ? 'text-[var(--admin-text-secondary)] text-[14px] leading-relaxed' : 'text-on-surface-variant text-[14px] leading-relaxed'}`}
+              >
+                {message}
+              </p>
             </div>
 
             {/* Footer */}
-            <div className="p-6 pt-4 bg-surface-variant/30 flex items-center justify-end gap-3">
+            <div
+              className={`flex items-center justify-end gap-3 ${isAdmin ? 'p-5 pt-0' : 'p-6 pt-4 bg-surface-variant/30'}`}
+            >
               <button
                 onClick={onCancel}
-                className="px-5 py-2.5 rounded-full font-label-sm text-[11px] uppercase tracking-widest font-bold text-on-surface hover:bg-surface-variant transition-colors"
+                className={`transition-colors ${
+                  isAdmin
+                    ? 'px-4 py-2 rounded-md text-[13px] font-bold text-[var(--admin-text-primary)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] hover:bg-[var(--admin-border-subtle)]'
+                    : 'px-5 py-2.5 rounded-full font-label-sm text-[11px] uppercase tracking-widest font-bold text-on-surface hover:bg-surface-variant'
+                }`}
               >
                 {cancelText}
               </button>
               <button
                 onClick={onConfirm}
-                className={`px-6 py-2.5 rounded-full font-label-sm text-[11px] uppercase tracking-widest font-bold shadow-md transition-all flex items-center gap-2 ${styles.btnBg} ${styles.btnText}`}
+                className={`transition-all flex items-center gap-2 ${styles.btnBg} ${styles.btnText} ${
+                  isAdmin
+                    ? 'px-4 py-2 rounded-md text-[13px] font-bold shadow-sm'
+                    : 'px-6 py-2.5 rounded-full font-label-sm text-[11px] uppercase tracking-widest font-bold shadow-md'
+                }`}
               >
                 <span>{confirmText}</span>
               </button>

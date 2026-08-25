@@ -21,6 +21,7 @@ import {
   stagger,
 } from '../components/AdminUIKit';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { FilterBar } from '../components/ui/Navigation';
 
 const Sparkline = ({ color, data }) => (
   <svg viewBox="0 0 100 30" className="w-16 h-8 ml-auto opacity-80" preserveAspectRatio="none">
@@ -319,39 +320,40 @@ export function AdminAnalytics() {
       <PageHeader
         title="Business Analytics"
         subtitle={`Real-time performance metrics and growth insights · Last synced ${lastDataRefresh ? lastDataRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`}
-        mobileRow={true}
-      >
-        <div className="hidden sm:flex bg-[var(--admin-surface)] border border-[var(--admin-border)] p-1 rounded-lg items-center text-[12px] font-medium mr-2">
-          {['7D', '30D', '12M', 'YTD'].map((range) => (
-            <button
-              key={range}
-              onClick={() => {
+        headerAction={
+          <div className="flex items-stretch gap-2 w-full sm:w-auto">
+            <FilterBar
+              filters={['7D', '30D', '12M', 'YTD']}
+              value={timeRange}
+              onChange={(range) => {
                 setTimeRange(range);
                 handleRefresh();
               }}
-              className={`px-3 py-1.5 rounded-md transition-colors ${timeRange === range ? 'bg-[var(--admin-accent)] text-white shadow-sm' : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'}`}
-            >
-              {range}
-            </button>
-          ))}
-        </div>
+              className="flex-1 sm:flex-none min-w-0"
+            />
 
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="admin-btn admin-btn-ghost"
-          title="Refresh Data"
-        >
-          <span
-            className={`material-symbols-outlined text-[20px] ${isRefreshing ? 'animate-spin' : ''}`}
-          >
-            sync
-          </span>
-        </button>
-        <button className="admin-btn admin-btn-ghost" title="Export Data">
-          <span className="material-symbols-outlined text-[20px]">download</span>
-        </button>
-      </PageHeader>
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="w-10 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-md flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0"
+              title="Refresh Data"
+            >
+              <span
+                className={`material-symbols-outlined text-[18px] ${isRefreshing ? 'animate-spin' : ''}`}
+              >
+                sync
+              </span>
+            </button>
+
+            <button
+              className="w-10 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-md flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0"
+              title="Export Data"
+            >
+              <span className="material-symbols-outlined text-[18px]">download</span>
+            </button>
+          </div>
+        }
+      />
 
       {/* KPI Cards */}
       <motion.div variants={stagger} className="admin-grid-stats">
@@ -394,93 +396,94 @@ export function AdminAnalytics() {
         />
       </motion.div>
 
-      {/* Revenue Performance - Composed Chart */}
-      <motion.div variants={fadeUp}>
-        <ChartCard
-          title="Revenue & Orders Performance"
-          subtitle={`Correlating order volume with gross revenue across ${timeRange}`}
-        >
-          <div className="h-[380px] w-full pt-4">
-            {!stats.monthlyRevenue || stats.monthlyRevenue.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
-                <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
-                  analytics
-                </span>
-                <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">
-                  No Revenue Data
-                </span>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart
-                  data={[...stats.monthlyRevenue].reverse()}
-                  margin={{ top: 10, right: 0, left: -20, bottom: 0 }}
-                  barGap={8}
-                >
-                  <defs>
-                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    </linearGradient>
-                    <linearGradient id="ordersGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="var(--admin-border-subtle)"
-                  />
-                  <XAxis
-                    dataKey="month"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 500 }}
-                    dy={10}
-                  />
-                  <YAxis
-                    yAxisId="left"
-                    hide={isMobile}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 500 }}
-                    tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
-                    dx={-10}
-                  />
-                  <YAxis yAxisId="right" orientation="right" hide={true} />
-                  <Tooltip
-                    content={<CustomDualTooltip />}
-                    cursor={{ fill: 'var(--admin-surface-muted)', opacity: 0.4 }}
-                  />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="revenue"
-                    name="revenue"
-                    fill="url(#revenueGrad)"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={40}
-                  />
-                  <Bar
-                    yAxisId="right"
-                    dataKey="orders"
-                    name="orders"
-                    fill="url(#ordersGrad)"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={40}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </ChartCard>
-      </motion.div>
-
+      {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Performance - Composed Chart */}
+        <motion.div variants={fadeUp}>
+          <ChartCard
+            title="Revenue & Orders Performance"
+            subtitle={`Correlating order volume with gross revenue across ${timeRange}`}
+          >
+            <div className="h-[380px] w-full pt-4">
+              {!stats.monthlyRevenue || stats.monthlyRevenue.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
+                  <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
+                    analytics
+                  </span>
+                  <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">
+                    No Revenue Data
+                  </span>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                    data={[...stats.monthlyRevenue].reverse()}
+                    margin={{ top: 10, right: 0, left: -20, bottom: 0 }}
+                    barGap={8}
+                  >
+                    <defs>
+                      <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.3} />
+                      </linearGradient>
+                      <linearGradient id="ordersGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="var(--admin-border-subtle)"
+                    />
+                    <XAxis
+                      dataKey="month"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 500 }}
+                      dy={10}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      hide={isMobile}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 500 }}
+                      tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
+                      dx={-10}
+                    />
+                    <YAxis yAxisId="right" orientation="right" hide={true} />
+                    <Tooltip
+                      content={<CustomDualTooltip />}
+                      cursor={{ fill: 'var(--admin-surface-muted)', opacity: 0.4 }}
+                    />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="revenue"
+                      name="revenue"
+                      fill="url(#revenueGrad)"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={40}
+                    />
+                    <Bar
+                      yAxisId="right"
+                      dataKey="orders"
+                      name="orders"
+                      fill="url(#ordersGrad)"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={40}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </ChartCard>
+        </motion.div>
+
         {/* Category Sales */}
         <motion.div variants={fadeUp}>
           <ChartCard title="Category Distribution" subtitle="Sales volume by category">
-            <div className="h-[320px] pt-4">
+            <div className="h-[380px] pt-4">
               {!stats.categoryPerformance || stats.categoryPerformance.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
                   <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
@@ -499,8 +502,8 @@ export function AdminAnalytics() {
                   >
                     <defs>
                       <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.6} />
-                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.9} />
+                        <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.6} />
+                        <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.9} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -528,69 +531,69 @@ export function AdminAnalytics() {
             </div>
           </ChartCard>
         </motion.div>
-
-        {/* Activity Feed */}
-        <motion.div variants={fadeUp} className="admin-card p-6 flex flex-col min-h-[400px]">
-          <h3 className="text-[15px] font-bold text-[var(--admin-text-primary)] mb-1 tracking-tight">
-            Recent System Activity
-          </h3>
-          <p className="text-[12px] text-[var(--admin-text-tertiary)] mb-6 font-medium">
-            Latest events from your store
-          </p>
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-            {!stats.recentActivity || stats.recentActivity.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)] p-4">
-                <span className="material-symbols-outlined text-[28px] text-[var(--admin-text-tertiary)] mb-2">
-                  history
-                </span>
-                <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">
-                  No Recent Activity
-                </span>
-              </div>
-            ) : (
-              <motion.div className="space-y-4" variants={stagger} initial="hidden" animate="show">
-                {stats.recentActivity.map((activity, i) => {
-                  const style = getActivityStyles(activity);
-                  return (
-                    <motion.div
-                      key={i}
-                      variants={fadeUp}
-                      whileHover={{ x: 4, transition: { duration: 0.2 } }}
-                      className="flex gap-4 items-start p-3 rounded-[var(--admin-radius-lg)] hover:bg-[var(--admin-bg-subtle)] transition-colors border border-transparent hover:border-[var(--admin-border-subtle)]"
-                    >
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-                        style={{
-                          backgroundColor: style.bg,
-                          border: `1px solid ${style.bg.replace('0.12', '0.2')}`,
-                        }}
-                      >
-                        <span
-                          className="material-symbols-outlined text-[20px]"
-                          style={{ color: style.color }}
-                        >
-                          {style.icon}
-                        </span>
-                      </div>
-                      <div className="pt-0.5">
-                        <p className="text-[13px] text-[var(--admin-text-primary)] leading-relaxed">
-                          <span className="font-bold text-[var(--admin-text-primary)]">
-                            {activity.user}
-                          </span>{' '}
-                          {activity.action}
-                        </p>
-                        <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-1 font-medium tracking-wide">
-                          {new Date(activity.timestamp).toLocaleString()}
-                        </p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
       </div>
+
+      {/* Activity Feed */}
+      <motion.div variants={fadeUp} className="admin-card p-6 flex flex-col min-h-[400px]">
+        <h3 className="text-[15px] font-bold text-[var(--admin-text-primary)] mb-1 tracking-tight">
+          Recent System Activity
+        </h3>
+        <p className="text-[12px] text-[var(--admin-text-tertiary)] mb-6 font-medium">
+          Latest events from your store
+        </p>
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+          {!stats.recentActivity || stats.recentActivity.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)] p-4">
+              <span className="material-symbols-outlined text-[28px] text-[var(--admin-text-tertiary)] mb-2">
+                history
+              </span>
+              <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">
+                No Recent Activity
+              </span>
+            </div>
+          ) : (
+            <motion.div className="space-y-4" variants={stagger} initial="hidden" animate="show">
+              {stats.recentActivity.map((activity, i) => {
+                const style = getActivityStyles(activity);
+                return (
+                  <motion.div
+                    key={i}
+                    variants={fadeUp}
+                    whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                    className="flex gap-4 items-start p-3 rounded-[var(--admin-radius-lg)] hover:bg-[var(--admin-bg-subtle)] transition-colors border border-transparent hover:border-[var(--admin-border-subtle)]"
+                  >
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                      style={{
+                        backgroundColor: style.bg,
+                        border: `1px solid ${style.bg.replace('0.12', '0.2')}`,
+                      }}
+                    >
+                      <span
+                        className="material-symbols-outlined text-[20px]"
+                        style={{ color: style.color }}
+                      >
+                        {style.icon}
+                      </span>
+                    </div>
+                    <div className="pt-0.5">
+                      <p className="text-[13px] text-[var(--admin-text-primary)] leading-relaxed">
+                        <span className="font-bold text-[var(--admin-text-primary)]">
+                          {activity.user}
+                        </span>{' '}
+                        {activity.action}
+                      </p>
+                      <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-1 font-medium tracking-wide">
+                        {new Date(activity.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

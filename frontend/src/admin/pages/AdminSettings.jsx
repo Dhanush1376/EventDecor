@@ -378,8 +378,8 @@ export function AdminSettings({ hideHeader }) {
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       {!hideHeader && (
         <PageHeader
-          title="System Settings"
-          subtitle="Configure security, branding, integrations, and advanced preferences."
+          title="Settings"
+          subtitle="Configure platform preferences"
           icon="settings"
           actions={
             <div className="flex flex-col sm:flex-row gap-3 min-w-[300px]">

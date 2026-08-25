@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { aiService } from '../../../services/api/aiService';
 import AiProviderList from './AiProviderList';
 import AiGlobalConfig from './AiGlobalConfig';
 import AiProviderForm from './AiProviderForm';
-import AiUsageDashboard from './AiUsageDashboard';
+import { FilterBar } from '../../components/AdminUIKit';
 
 const AdminAiSettings = () => {
-  const [tab, setTab] = useState('dashboard');
+  const [tab, setTab] = useState('Providers');
   const [providers, setProviders] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,23 +58,20 @@ const AdminAiSettings = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Global AI Platform</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Manage AI providers, global routing, and usage analytics.
-          </p>
+          <h1 className="text-[20px] sm:text-[24px] font-bold text-[var(--admin-text-primary)]">
+            Global AI Platform
+          </h1>
         </div>
-        {tab === 'providers' && (
-          <button
-            onClick={openAddForm}
-            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            Add Provider
-          </button>
-        )}
+        <button
+          onClick={openAddForm}
+          className="flex justify-center items-center gap-2 bg-[var(--admin-accent)] text-white px-4 py-2 rounded-md text-[13px] font-bold hover:brightness-110 transition-all active:scale-95 shadow-sm w-full sm:w-auto"
+        >
+          <span className="material-symbols-outlined text-[18px]">add</span>
+          Add Provider
+        </button>
       </div>
 
       {error && (
@@ -84,51 +82,41 @@ const AdminAiSettings = () => {
       )}
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-8 overflow-x-auto">
-        <button
-          onClick={() => setTab('dashboard')}
-          className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-            tab === 'dashboard'
-              ? 'border-black text-black'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[18px]">dashboard</span>
-          Dashboard
-        </button>
-        <button
-          onClick={() => setTab('providers')}
-          className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-            tab === 'providers'
-              ? 'border-black text-black'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[18px]">storage</span>
-          Providers
-        </button>
-        <button
-          onClick={() => setTab('global')}
-          className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-            tab === 'global'
-              ? 'border-black text-black'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[18px]">settings</span>
-          Global Routing
-        </button>
+      <div className="mb-6 w-full overflow-hidden">
+        <FilterBar
+          filters={['Providers', 'Global Routing']}
+          value={tab}
+          onChange={setTab}
+          className="w-full sm:w-auto"
+        />
       </div>
 
       {/* Tab Content */}
-      <div className="animate-fade-in">
-        {tab === 'dashboard' && <AiUsageDashboard />}
-        {tab === 'providers' && (
-          <AiProviderList providers={providers} onEdit={openEditForm} onRefresh={loadData} />
-        )}
-        {tab === 'global' && (
-          <AiGlobalConfig settings={settings} providers={providers} onRefresh={loadData} />
-        )}
+      <div className="relative">
+        <AnimatePresence mode="wait">
+          {tab === 'Providers' && (
+            <motion.div
+              key="providers"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <AiProviderList providers={providers} onEdit={openEditForm} onRefresh={loadData} />
+            </motion.div>
+          )}
+          {tab === 'Global Routing' && (
+            <motion.div
+              key="global"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <AiGlobalConfig settings={settings} providers={providers} onRefresh={loadData} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Provider Modal */}

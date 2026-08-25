@@ -189,15 +189,14 @@ export function AdminDashboard() {
         subtitle={`Welcome back. Here's your business overview. · Last synced ${lastDataRefresh ? lastDataRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`}
         icon="dashboard"
         iconColor="revenue"
+        headerAction={
+          <PeriodSelector
+            value={chartPeriod}
+            onChange={setChartPeriod}
+            periods={['weekly', 'monthly', 'yearly']}
+          />
+        }
       />
-
-      <div className="flex w-full mt-[-8px]">
-        <PeriodSelector
-          value={chartPeriod}
-          onChange={setChartPeriod}
-          periods={['weekly', 'monthly', 'yearly']}
-        />
-      </div>
 
       <motion.div
         variants={fadeUp}

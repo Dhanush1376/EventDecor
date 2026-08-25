@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import Fuse from 'fuse.js';
 import { isWithinPeriod } from '../utils/dateFilters';
 
 export const allStatuses = [
@@ -65,16 +66,31 @@ export function useOrderFilters(orders, searchQuery) {
   }, [orders, dateFilter]);
 
   const filteredOrders = useMemo(() => {
-    return orders.filter((o) => {
+    let result = orders.filter((o) => {
       const matchStatus = filterStatus === 'All' || o.status === filterStatus;
       const matchOrderType = filterOrderType === 'All' || o.orderType === filterOrderType;
-      const matchSearch =
-        !searchQuery ||
-        o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.phone.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchStatus && matchOrderType && matchSearch;
+      return matchStatus && matchOrderType;
     });
+
+    if (searchQuery && searchQuery.trim() !== '') {
+      // fuse.js for advanced fuzzy searching
+      const fuse = new Fuse(result, {
+        keys: [
+          'id',
+          'customer',
+          'phone',
+          'rawOrder.customerEmail',
+          'items.name',
+          'rawOrder.shippingAddress.city',
+          'total',
+        ],
+        threshold: 0.3,
+        ignoreLocation: true,
+      });
+      result = fuse.search(searchQuery).map((res) => res.item);
+    }
+
+    return result;
   }, [orders, filterStatus, filterOrderType, searchQuery]);
 
   const statusCounts = useMemo(() => {

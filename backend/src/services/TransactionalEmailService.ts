@@ -13,6 +13,10 @@ import {
   buildCustomOrderStatusChangeEmail,
   buildInquiryCustomerEmail,
   buildInquiryAdminEmail,
+  buildEventBookingCustomerEmail,
+  buildEventBookingAdminEmail,
+  buildReturnCreatedCustomerEmail,
+  buildReturnStatusUpdateEmail,
 } from '../utils/email/transactionalEmailTemplates';
 
 export class TransactionalEmailService {
@@ -284,5 +288,98 @@ export class TransactionalEmailService {
       eventId,
       'INQUIRY_CREATED',
     );
+  }
+
+  // ==========================================
+  // EVENT BOOKING EMAILS
+  // ==========================================
+
+  public static async sendEventBookingSubmissionEmails(booking: any, user: any, eventId: string) {
+    logger.info(`[TransactionalEmailService] Dispatching event booking emails for ${booking._id}`);
+
+    // 1. Notify Customer
+    const customerEmail = user?.email || booking.user?.email;
+    if (customerEmail) {
+      const { subject, html } = buildEventBookingCustomerEmail(booking, user);
+      const customerHash = this.hashEmail(customerEmail);
+      const notificationKey = `EVENT_BOOKING_CREATED:${eventId}:CUSTOMER:${customerHash}`;
+      await this.enqueueEmail(
+        customerEmail,
+        subject,
+        html,
+        'order',
+        'event_booking_customer',
+        notificationKey,
+      );
+    }
+
+    // 2. Notify Admins
+    const adminTemplate = buildEventBookingAdminEmail(booking, user);
+    await this.notifyAllAdmins(
+      adminTemplate.subject,
+      adminTemplate.html,
+      'event_booking_admin',
+      eventId,
+      'EVENT_BOOKING_CREATED',
+    );
+  }
+
+  // ==========================================
+  // RETURN & EXCHANGE EMAILS
+  // ==========================================
+
+  public static async sendReturnSubmittedEmails(returnRequest: any, user: any, eventId: string) {
+    logger.info(
+      `[TransactionalEmailService] Dispatching return created emails for ${returnRequest._id}`,
+    );
+
+    // 1. Notify Customer
+    const customerEmail = user?.email;
+    if (customerEmail) {
+      const { subject, html } = buildReturnCreatedCustomerEmail(returnRequest, user);
+      const customerHash = this.hashEmail(customerEmail);
+      const notificationKey = `RETURN_CREATED:${eventId}:CUSTOMER:${customerHash}`;
+      await this.enqueueEmail(
+        customerEmail,
+        subject,
+        html,
+        'order',
+        'return_created_customer',
+        notificationKey,
+      );
+    }
+  }
+
+  public static async sendReturnStatusUpdateEmails(
+    returnRequest: any,
+    user: any,
+    previousStatus: string,
+    newStatus: string,
+    eventId: string,
+  ) {
+    logger.info(
+      `[TransactionalEmailService] Dispatching return status update emails for ${returnRequest._id}`,
+    );
+
+    // 1. Notify Customer
+    const customerEmail = user?.email;
+    if (customerEmail) {
+      const { subject, html } = buildReturnStatusUpdateEmail(
+        returnRequest,
+        user,
+        previousStatus,
+        newStatus,
+      );
+      const customerHash = this.hashEmail(customerEmail);
+      const notificationKey = `RETURN_STATUS_UPDATED:${eventId}:CUSTOMER:${customerHash}`;
+      await this.enqueueEmail(
+        customerEmail,
+        subject,
+        html,
+        'order',
+        'return_status_customer',
+        notificationKey,
+      );
+    }
   }
 }

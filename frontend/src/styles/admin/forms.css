@@ -2,6 +2,16 @@
    FORM SYSTEM
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Remove number input spinners */
+.admin-section-root input[type='number']::-webkit-inner-spin-button,
+.admin-section-root input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.admin-section-root input[type='number'] {
+  -moz-appearance: textfield;
+}
+
 .admin-section-root .admin-input {
   width: 100%;
   background: var(--admin-surface);

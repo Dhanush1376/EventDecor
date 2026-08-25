@@ -42,7 +42,7 @@ const StatCard = ({ title, value, icon, color }) => (
 
 export function AdminCustomers() {
   const navigate = useNavigate();
-  const { searchQuery } = useAdmin();
+  const { searchQuery, setSearchQuery } = useAdmin();
 
   const [tierFilter, setTierFilter] = useState('All');
   const [page, setPage] = useState(1);
@@ -63,7 +63,7 @@ export function AdminCustomers() {
         page,
         limit: 12,
         search: searchQuery,
-        tier: tierFilter,
+        tier: tierFilter === 'All' ? undefined : tierFilter,
       });
       setCustomers(res?.data || []);
       setMeta(res?.meta || {});
@@ -123,8 +123,6 @@ export function AdminCustomers() {
     if (isExporting) return;
     setIsExporting(true);
     try {
-      // In a real scenario, this hits the backend /export endpoint using api.js directly
-      // Since customerIntelligenceService doesn't expose the new export endpoint yet, we'll fetch it via getCustomers but without pagination if we mapped it, but let's just use the raw fetch for this snippet
       const token = getAccessToken();
       const res = await fetch(
         `${getApiRootUrl()}/customer-intelligence/customers/export?search=${searchQuery}&tier=${tierFilter}`,
@@ -165,54 +163,53 @@ export function AdminCustomers() {
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader
         title="Customers"
-        subtitle={meta.total ? `${meta.total} total customers` : 'Manage your customer base'}
+        badge={meta.total || customers.length || 0}
+        subtitle="Manage your customer base"
         icon="group"
         iconColor="users"
-        mobileRow={true}
         headerAction={
-          <div className="w-full sm:max-w-md">
-            <FilterBar
-              filters={['All', 'Platinum', 'Gold', 'Silver', 'Bronze']}
-              value={tierFilter}
-              onChange={(v) => {
-                setTierFilter(v);
-                setPage(1);
-              }}
-            />
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] flex items-center px-3">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Search customers..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
+              />
+            </div>
+            <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-hidden">
+              <FilterBar
+                filters={['All', 'Platinum', 'Gold', 'Silver', 'Bronze']}
+                value={tierFilter}
+                onChange={(v) => {
+                  setTierFilter(v);
+                  setPage(1);
+                }}
+                className="flex-1 min-w-0"
+              />
+              <button
+                className="w-10 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-md flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0"
+                title="Export Customers"
+                onClick={handleExport}
+                disabled={isExporting}
+              >
+                <span
+                  className={`material-symbols-outlined text-[18px] ${isExporting ? 'animate-spin' : ''}`}
+                >
+                  {isExporting ? 'sync' : 'download'}
+                </span>
+              </button>
+            </div>
           </div>
         }
-      >
-        <button
-          className="p-1.5 hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] rounded-lg flex items-center justify-center cursor-pointer transition-all active:scale-95 border-none bg-transparent"
-          title="Export Customers"
-          onClick={handleExport}
-          disabled={isExporting}
-        >
-          <span
-            className={`material-symbols-outlined text-[18px] ${isExporting ? 'animate-spin' : ''}`}
-          >
-            {isExporting ? 'sync' : 'download'}
-          </span>
-        </button>
-      </PageHeader>
-
-      {/* Dynamic KPI Dashboard */}
-      {!kpiLoading && kpi && (
-        <motion.div variants={fadeUp} className="admin-grid-stats mb-6">
-          <StatCard
-            title="Total Customers"
-            value={meta.total || kpi.activeCustomers || 0}
-            icon="group"
-            color="#4ade80"
-          />
-          <StatCard
-            title="New This Week"
-            value={kpi.newCustomersThisWeek || 0}
-            icon="fiber_new"
-            color="#3b82f6"
-          />
-        </motion.div>
-      )}
+      />
 
       <AnimatePresence mode="wait">
         {dataLoading ? (

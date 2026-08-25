@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { getAllDrafts, deleteDraft, deleteAllDrafts, formatBytes } from '../services/draftService';
 import { useDraftContext } from '../context/DraftProvider';
 import { useConfirm } from '../../context/ConfirmProvider';
+import { FilterBar } from '../components/AdminUIKit';
 
 export function AdminDrafts() {
   const navigate = useNavigate();
@@ -109,63 +110,57 @@ export function AdminDrafts() {
       </Helmet>
 
       {/* Header */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold text-gray-900 font-display tracking-tight">
-              Drafts Manager
-            </h1>
-            <span className="admin-badge admin-badge-neutral">{drafts.length} drafts</span>
-          </div>
-          <p className="text-sm text-gray-500">
-            Manage your auto-saved work. Drafts older than 30 days are automatically removed.
-          </p>
-        </div>
-
+      <div className="mb-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="text-right mr-2 hidden sm:block">
-            <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-              Local Storage
-            </p>
-            <p className="text-sm font-semibold text-gray-700">{totalSize} used</p>
-          </div>
+          <h1 className="text-[20px] sm:text-[24px] font-bold text-[var(--admin-text-primary)] font-display tracking-tight leading-none whitespace-nowrap">
+            Drafts Manager
+          </h1>
           {drafts.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="admin-btn admin-btn-outline text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-200"
+              className="admin-btn h-8 px-3 sm:ml-2 flex items-center gap-1.5 rounded-[var(--admin-radius-md)] bg-white text-red-600 border border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors font-bold text-[12px] shadow-sm shrink-0"
             >
-              <span className="material-symbols-outlined text-[18px]">delete_sweep</span>
-              Clear All
+              <span className="material-symbols-outlined text-[16px]">delete_sweep</span>
+              <span className="whitespace-nowrap">Clear All</span>
             </button>
           )}
+        </div>
+
+        <div className="flex items-center shrink-0">
+          <div className="text-right hidden sm:block">
+            <p className="text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider leading-none mb-1">
+              Local Storage
+            </p>
+            <p className="text-[12px] font-bold text-[var(--admin-text-secondary)] leading-none">
+              {totalSize} used
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="admin-card p-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="admin-search-wrapper flex-1">
-            <span className="material-symbols-outlined admin-search-icon">search</span>
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full">
+          <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] flex items-center px-3">
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+              search
+            </span>
             <input
               type="text"
               placeholder="Search drafts by title..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="admin-input w-full"
+              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
             />
           </div>
-          <div className="sm:w-64">
-            <select
+
+          <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-hidden">
+            <FilterBar
+              filters={modules}
               value={selectedModule}
-              onChange={(e) => setSelectedModule(e.target.value)}
-              className="admin-select"
-            >
-              {modules.map((m) => (
-                <option key={m} value={m}>
-                  {m === 'All' ? 'All Modules' : m}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedModule}
+              className="flex-1 min-w-0"
+            />
           </div>
         </div>
       </div>

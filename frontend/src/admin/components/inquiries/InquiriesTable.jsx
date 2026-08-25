@@ -1,7 +1,28 @@
 import React from 'react';
 import { m as motion } from 'framer-motion';
-
+import { FilterBar } from '../AdminUIKit';
+import { EXTERNAL_URLS } from '../../../config/constants';
+import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
+
+const getCardColorClass = (status) => {
+  switch (status) {
+    case 'Pending':
+      return 'bg-[#d97706]/15 border-[#d97706]/30'; // Ochre
+    case 'Reviewing':
+    case 'Quote Sent':
+      return 'bg-[#64748b]/15 border-[#64748b]/30'; // Slate Blue
+    case 'Approved':
+    case 'In Progress':
+    case 'Ready':
+    case 'Delivered':
+      return 'bg-[#7a8b76]/15 border-[#7a8b76]/30'; // Sage Green
+    case 'Cancelled':
+      return 'bg-[#9e5b5b]/15 border-[#9e5b5b]/30'; // Terracotta
+    default:
+      return 'bg-[var(--admin-bg-subtle)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]';
+  }
+};
 
 export function InquiriesTable({
   orders,
@@ -14,42 +35,31 @@ export function InquiriesTable({
   totalPages,
   totalItems,
 }) {
+  const tabs = [
+    'All',
+    'Pending',
+    'Reviewing',
+    'Quote Sent',
+    'Approved',
+    'In Progress',
+    'Ready',
+    'Delivered',
+    'Cancelled',
+  ];
+
   return (
     <>
       {/* Luxury Status Pipeline Segment Controls */}
       <motion.div
         variants={fadeUp}
-        className="flex overflow-x-auto gap-2 border-b border-[var(--admin-border-subtle)] pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none snap-x flex-nowrap"
-        style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+        className="mb-6 border-b border-[var(--admin-border-subtle)] w-full"
       >
-        {[
-          'All',
-          'Pending',
-          'Reviewing',
-          'Quote Sent',
-          'Approved',
-          'In Progress',
-          'Ready',
-          'Delivered',
-          'Cancelled',
-        ].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setStatusFilter(tab)}
-            className={`px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer border shrink-0 snap-align-start whitespace-nowrap ${
-              statusFilter === tab
-                ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border-[var(--admin-border-subtle)]'
-                : 'bg-[var(--admin-surface)] border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border-strong)]'
-            }`}
-          >
-            {tab}
-            {statusFilter === tab && (
-              <span className="ml-2 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">
-                {totalItems}
-              </span>
-            )}
-          </button>
-        ))}
+        <FilterBar
+          filters={tabs}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          counts={{ [statusFilter]: totalItems }}
+        />
       </motion.div>
 
       {/* Desktop Table View */}
@@ -64,7 +74,8 @@ export function InquiriesTable({
                 <th className="p-4.5">Event Date</th>
                 <th className="p-4.5">Priority</th>
                 <th className="p-4.5">Status</th>
-                <th className="p-4.5 text-right pr-6">Total Price</th>
+                <th className="p-4.5 text-right">Total Price</th>
+                <th className="p-4.5 text-right pr-6">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -100,7 +111,7 @@ export function InquiriesTable({
                     <tr
                       key={order._id}
                       onClick={() => setSelectedOrder(order)}
-                      className="border-b border-[var(--admin-border-subtle)] hover:bg-[var(--admin-bg-subtle)] cursor-pointer transition-all duration-300 border-l-4 border-l-transparent hover:border-l-[var(--admin-accent)]"
+                      className={`border-b border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all duration-300 border-l-4 border-l-transparent hover:border-l-[var(--admin-accent)] ${getCardColorClass(order.status)}`}
                     >
                       <td className="p-4.5 pl-6 flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-[var(--admin-accent)] flex items-center justify-center font-bold text-[13px] shadow-sm">
@@ -110,7 +121,7 @@ export function InquiriesTable({
                           <p className="font-bold text-[var(--admin-text-primary)]">
                             {order.customerName}
                           </p>
-                          <span className="text-[11px] text-[var(--admin-text-secondary)]/70 font-mono tracking-tight">
+                          <span className="text-[11px] text-[var(--admin-text-secondary)]/70 tracking-tight">
                             {order.customerEmail}
                           </span>
                         </div>
@@ -139,7 +150,7 @@ export function InquiriesTable({
                         </div>
                         <div>{order.productType || 'N/A'}</div>
                       </td>
-                      <td className="p-4.5 font-mono text-[var(--admin-text-primary)] font-light">
+                      <td className="p-4.5 text-[var(--admin-text-primary)] font-light">
                         {dateStr}
                       </td>
                       <td className="p-4.5">
@@ -178,10 +189,47 @@ export function InquiriesTable({
                           {order.status}
                         </span>
                       </td>
-                      <td className="p-4.5 text-right pr-6 font-mono font-bold text-[var(--admin-accent)]">
+                      <td className="p-4.5 text-right pr-6 font-bold text-[var(--admin-accent)]">
                         {order.quotation?.total > 0
                           ? `₹${order.quotation.total.toLocaleString('en-IN')}`
                           : 'Custom Quote'}
+                      </td>
+                      <td className="p-4.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setSelectedOrder(order)}
+                            className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                            title="Quick Details"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">
+                              visibility
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => console.log('Invoice view')}
+                            className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] opacity-50 cursor-not-allowed"
+                            title="Full Invoice (Coming Soon)"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">
+                              receipt_long
+                            </span>
+                          </button>
+                          <a
+                            href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${(order.customerPhone || order.phone || '').replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-success)]"
+                            title="WhatsApp"
+                            onClick={(e) => {
+                              if (!order.customerPhone && !order.phone) {
+                                e.preventDefault();
+                                alert('No phone number available for this inquiry.');
+                              }
+                            }}
+                          >
+                            <WhatsAppIcon className="w-[16px] h-[16px]" />
+                          </a>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -219,7 +267,7 @@ export function InquiriesTable({
               <div
                 key={order._id}
                 onClick={() => setSelectedOrder(order)}
-                className="admin-card p-4 hover:border-[var(--admin-border-strong)] cursor-pointer transition-all duration-300 border-l-4 border-l-transparent hover:border-l-[var(--admin-accent)] active:scale-[0.99] space-y-3"
+                className={`admin-card p-4 hover:border-[var(--admin-border-strong)] cursor-pointer transition-all duration-300 border-l-4 border-l-transparent hover:border-l-[var(--admin-accent)] active:scale-[0.99] space-y-3 ${getCardColorClass(order.status)}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3 min-w-0">
@@ -235,7 +283,7 @@ export function InquiriesTable({
                       </p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-[var(--admin-text-tertiary)] shrink-0">
+                  <span className="text-[10px] text-[var(--admin-text-tertiary)] shrink-0">
                     {dateStr}
                   </span>
                 </div>
@@ -306,7 +354,7 @@ export function InquiriesTable({
                     </span>
                   </div>
 
-                  <span className="font-mono font-bold text-[12px] text-[var(--admin-accent)]">
+                  <span className="font-bold text-[12px] text-[var(--admin-accent)]">
                     {order.quotation?.total > 0
                       ? `₹${order.quotation.total.toLocaleString('en-IN')}`
                       : 'Custom Quote'}
@@ -346,7 +394,7 @@ export function InquiriesTable({
                 <button
                   key={i + 1}
                   onClick={() => setPage(i + 1)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg text-[12px] font-bold font-mono transition-colors cursor-pointer ${
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg text-[12px] font-bold transition-colors cursor-pointer ${
                     page === i + 1
                       ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
                       : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] border border-transparent'

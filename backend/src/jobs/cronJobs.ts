@@ -130,9 +130,10 @@ export const initJobs = () => {
     );
   });
 
-  // Outbox Processor is now handled via BullMQ Repeatable Jobs (Distributed)
+  // Outbox Processor is handled via BullMQ Repeatable Jobs (Distributed) OR cron fallback (Local/No Redis)
   const { systemQueue, isQueuesReady } = require('./queues');
-  if (isQueuesReady()) {
+  const queueReady = isQueuesReady();
+  if (queueReady) {
     systemQueue
       .add(
         'process-outbox',
@@ -145,6 +146,14 @@ export const initJobs = () => {
       .catch((err: any) =>
         logger.error(`[CRON] Failed to register outbox repeatable job: ${err.message}`),
       );
+  } else {
+    // ⚠ CRITICAL FIX: Cron fallback when Redis is unavailable (e.g. Render free tier)
+    // Run every 10 seconds
+    cron.schedule('*/10 * * * * *', async () => {
+      const { processOutboxEvents } = require('./outboxProcessor');
+      await processOutboxEvents();
+    });
+    logger.info(`[CRON] Registered local cron fallback for outbox processor (runs every 10s)`);
   }
 
   // Webhook Dead-Letter Processor (every 5 minutes)

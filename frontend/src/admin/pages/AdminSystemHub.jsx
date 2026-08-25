@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { m as motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader, stagger } from '../components/AdminUIKit';
@@ -22,6 +22,7 @@ export default function AdminSystemHub() {
   };
 
   const activeTab = getInitialTab();
+  const [teamHeaderAction, setTeamHeaderAction] = useState(null);
 
   const handleTabChange = (tabId) => {
     const basePath = '/admin/system';
@@ -29,43 +30,53 @@ export default function AdminSystemHub() {
     navigate(newPath);
   };
 
-  const tabs = [
-    { id: 'users', label: 'Users & Roles', icon: 'groups' },
-    { id: 'notifications', label: 'Notifications', icon: 'notifications' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
-    { id: 'audit', label: 'Audit History', icon: 'history' },
-  ];
+  const getHeaderProps = () => {
+    switch (activeTab) {
+      case 'notifications':
+        return {
+          title: 'Notifications',
+          subtitle: 'System alerts, rules, and emails.',
+          icon: 'notifications',
+        };
+      case 'settings':
+        return {
+          title: 'System Settings',
+          subtitle: 'Profile, backups, and configuration.',
+          icon: 'settings',
+        };
+      case 'audit':
+        return {
+          title: 'Audit History',
+          subtitle: 'Logs, activity, and security.',
+          icon: 'history',
+        };
+      case 'users':
+      default:
+        return {
+          title: 'Active Admins',
+          subtitle: 'Manage team access and invitations.',
+          icon: 'admin_panel_settings',
+        };
+    }
+  };
+
+  const headerProps = getHeaderProps();
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <div>
         <PageHeader
-          title="System Hub"
-          subtitle="Configuration, security, team access, and notifications."
-          icon="admin_panel_settings"
+          title={headerProps.title}
+          subtitle={headerProps.subtitle}
+          icon={headerProps.icon}
+          headerAction={activeTab === 'users' ? teamHeaderAction : null}
         />
-
-        {/* Smart Filter Tabs */}
-        <div className="flex border-b border-[var(--admin-border-subtle)] overflow-x-auto no-scrollbar mt-4">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 font-semibold text-[14px] border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]'
-                  : 'border-transparent text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border-strong)]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div>
-        {activeTab === 'users' && <AdminTeam hideHeader={true} />}
+        {activeTab === 'users' && (
+          <AdminTeam hideHeader={true} setHeaderAction={setTeamHeaderAction} />
+        )}
         {activeTab === 'notifications' && <AdminNotifications hideHeader={true} />}
         {activeTab === 'settings' && <AdminSettings hideHeader={true} />}
         {activeTab === 'audit' && <AdminAuditHistory hideHeader={true} />}

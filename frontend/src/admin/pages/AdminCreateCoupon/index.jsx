@@ -124,7 +124,7 @@ export function AdminCreateCoupon() {
   );
 
   return (
-    <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0">
+    <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0 px-0 sm:px-6 md:px-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button
@@ -135,22 +135,14 @@ export function AdminCreateCoupon() {
           </button>
           <div>
             <h2 className="text-[20px] font-bold text-[var(--admin-text-primary)] leading-none mb-1.5 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[22px] text-[var(--admin-accent)]">
-                {isEdit ? 'edit_note' : 'campaign'}
-              </span>
               {isEdit ? 'Edit Campaign' : 'New Campaign'}
               <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
             </h2>
-            <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium">
-              {isEdit
-                ? 'Update coupon rules and targeting parameters'
-                : 'Create a new discount code or promotional campaign'}
-            </p>
           </div>
         </div>
       </div>
 
-      <div className="lg:hidden flex bg-[var(--admin-surface)] rounded-full p-1 border border-[var(--admin-border)] sticky top-20 z-30 shadow-sm mx-0">
+      <div className="lg:hidden flex bg-[var(--admin-surface)] rounded-full p-1 border border-[var(--admin-border)] shadow-sm mx-0">
         <button
           onClick={() => setMobileTab('form')}
           className={`flex-1 py-2 text-[12px] font-bold rounded-full transition-all ${

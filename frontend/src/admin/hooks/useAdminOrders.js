@@ -118,8 +118,8 @@ export function useAdminOrders({
           logAdminAction('UPDATE_ORDER', `Updated Order ID ${orderId} to status: ${newStatus}`);
           toast.success(`Order status updated to ${newStatus}`);
         }
-      } catch (_err) {
-        toast.error('Failed to update order status');
+      } catch (err) {
+        toast.error(err.response?.data?.message || err.message || 'Failed to update order status');
       } finally {
         if (setGlobalActionLoading) setGlobalActionLoading(false);
       }

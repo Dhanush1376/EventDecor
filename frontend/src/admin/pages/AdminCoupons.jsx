@@ -82,6 +82,7 @@ export function AdminCoupons() {
       <PageHeader
         title="Coupons & Offers"
         subtitle={`${coupons.filter((c) => c.isActive).length} active coupons in store catalog`}
+        className="pt-4 sm:pt-8"
       >
         <button
           onClick={() => navigate('/admin/coupons/create')}

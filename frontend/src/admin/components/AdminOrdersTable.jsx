@@ -1,5 +1,5 @@
 import React from 'react';
-import { EmptyState, formatCurrency, StatusBadge } from '../components/AdminUIKit';
+import { EmptyState, formatCurrency } from '../components/AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 
@@ -10,10 +10,37 @@ export function AdminOrdersTable({
   setFilterStatus,
   openOrderDrawer,
   navigate,
+  updateOrderStatus,
+  allStatuses = [],
 }) {
+  const getCardColorClass = (status) => {
+    const s = (status || '').toLowerCase();
+    switch (s) {
+      case 'delivered':
+      case 'confirmed':
+      case 'settled':
+        return '!bg-[#7a8b76]/15 border-[#7a8b76]/30'; // Sage Green
+      case 'shipped':
+      case 'out for delivery':
+      case 'processing':
+      case 'packed':
+        return '!bg-[#6b8ead]/15 border-[#6b8ead]/30'; // Slate Blue
+      case 'pending':
+      case 'payment pending':
+      case 'ready to ship':
+        return '!bg-[#c29b62]/15 border-[#c29b62]/30'; // Ochre
+      case 'cancelled':
+      case 'returned':
+      case 'refunded':
+        return '!bg-[#bc6c5c]/15 border-[#bc6c5c]/30'; // Terracotta
+      default:
+        return '!bg-[var(--admin-surface)] border-[var(--admin-border)]';
+    }
+  };
+
   return (
     <>
-      <div className="hidden md:block overflow-x-auto">
+      <div className="hidden md:block admin-card overflow-x-auto">
         <table className="admin-table w-full min-w-[900px]">
           <thead>
             <tr>
@@ -71,7 +98,7 @@ export function AdminOrdersTable({
                 return (
                   <tr
                     key={o.id}
-                    className="admin-table-row-clickable group"
+                    className={`admin-table-row-clickable group ${getCardColorClass(o.status)}`}
                     onClick={() => openOrderDrawer(o)}
                   >
                     <td className="font-semibold text-[var(--admin-text-primary)]">
@@ -159,8 +186,18 @@ export function AdminOrdersTable({
                         {o.payment}
                       </span>
                     </td>
-                    <td>
-                      <StatusBadge status={o.status} />
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <select
+                        value={o.status}
+                        onChange={(e) => updateOrderStatus(o.id, e.target.value)}
+                        className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-1 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border-strong)] bg-white/80 backdrop-blur-sm text-[var(--admin-text-primary)] cursor-pointer outline-none shadow-sm"
+                      >
+                        {allStatuses.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="hidden lg:table-cell text-[var(--admin-text-secondary)]">
                       {o.date}
@@ -217,7 +254,7 @@ export function AdminOrdersTable({
         </table>
       </div>
 
-      <div className="flex md:hidden flex-col gap-3 p-3 bg-[var(--admin-bg-subtle)]">
+      <div className="flex md:hidden flex-col gap-3 px-1 py-3">
         {filteredOrders.length === 0 ? (
           <div className="py-10 text-center flex flex-col items-center justify-center bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)]">
             <EmptyState
@@ -255,7 +292,7 @@ export function AdminOrdersTable({
               <div
                 key={o.id}
                 onClick={() => openOrderDrawer(o)}
-                className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] p-4 shadow-sm border border-[var(--admin-border)] flex flex-col gap-3 cursor-pointer hover:border-[var(--admin-border-strong)] transition-all"
+                className={`${getCardColorClass(o.status)} rounded-[var(--admin-radius-lg)] p-4 shadow-sm border flex flex-col gap-3 cursor-pointer hover:shadow-md transition-all`}
               >
                 <div className="flex justify-between items-start gap-2">
                   <div>
@@ -284,11 +321,41 @@ export function AdminOrdersTable({
                       )}
                     </div>
                   </div>
-                  <StatusBadge status={o.status} className="border-none px-2 py-1 text-[10px]" />
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <select
+                      value={o.status}
+                      onChange={(e) => updateOrderStatus(o.id, e.target.value)}
+                      className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-1 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border-strong)] bg-white/80 backdrop-blur-sm text-[var(--admin-text-primary)] cursor-pointer outline-none shadow-sm"
+                    >
+                      {allStatuses.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                <div className="pt-2 pb-2 border-y border-[var(--admin-border-subtle)]">
-                  <p className="text-[12px] text-[var(--admin-text-primary)] line-clamp-2">
+                <div className="pt-2 pb-2 border-y border-[var(--admin-border-subtle)] flex items-center gap-3">
+                  <div className="flex -space-x-2.5 overflow-hidden shrink-0">
+                    {o.items.slice(0, 3).map((item, idx) => {
+                      const imgSrc =
+                        item.image ||
+                        item.images?.[0] ||
+                        item.thumbnail ||
+                        'https://placehold.co/100x100/f3f4f6/a1a1aa?text=Image';
+                      return (
+                        <img
+                          key={idx}
+                          src={imgSrc}
+                          alt={item.name}
+                          className="inline-block h-9 w-9 rounded-[var(--admin-radius-md)] border-[1.5px] border-[var(--admin-surface)] object-cover shadow-sm bg-[var(--admin-surface-muted)] relative z-10"
+                          style={{ zIndex: 10 - idx }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <p className="text-[12px] text-[var(--admin-text-primary)] line-clamp-2 flex-1">
                     {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(', ')}
                   </p>
                 </div>

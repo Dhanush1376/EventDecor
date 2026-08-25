@@ -3,15 +3,15 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 
 export function PeriodSelector({ periods = ['weekly', 'monthly', 'yearly'], value, onChange }) {
   return (
-    <div className="flex w-full sm:w-auto bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)]">
+    <div className="flex w-max bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)] shrink-0">
       {periods.map((p) => (
         <button
           key={p}
           onClick={() => onChange(p)}
-          className={`flex-1 text-center px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold capitalize cursor-pointer transition-all min-h-0 whitespace-nowrap ${
+          className={`px-2 py-1 rounded-[var(--admin-radius-sm)] text-[10px] font-semibold capitalize cursor-pointer transition-all whitespace-nowrap ${
             value === p
               ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
-              : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+              : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
           }`}
         >
           {p}
@@ -24,21 +24,26 @@ export function PeriodSelector({ periods = ['weekly', 'monthly', 'yearly'], valu
 export function FilterBar({ filters, value, onChange, counts, className = '' }) {
   return (
     <div
-      className={`flex gap-2 overflow-x-auto pb-1 scrollbar-hide scroll-smooth admin-filter-bar ${className}`}
+      className={`flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full sm:w-auto ${className}`}
     >
       {filters.map((f) => (
         <button
           key={f}
+          type="button"
           onClick={() => onChange(f)}
-          className={`admin-filter-pill min-h-0 ${value === f ? 'admin-filter-pill-active' : ''}`}
+          className={`flex-1 sm:flex-none px-4 py-1.5 rounded-sm text-[13px] font-bold transition-all whitespace-nowrap ${
+            value === f
+              ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
+              : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
+          }`}
         >
           {f}
           {counts?.[f] !== undefined && (
             <span
-              className={`ml-1 px-1.5 py-0 rounded text-[10px] font-bold ${
+              className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                 value === f
-                  ? 'bg-white/20 text-white'
-                  : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)]'
+                  ? 'bg-[var(--admin-accent-muted)] text-[var(--admin-accent)]'
+                  : 'bg-[var(--admin-border-subtle)] text-[var(--admin-text-tertiary)]'
               }`}
             >
               {counts[f]}

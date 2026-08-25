@@ -1,9 +1,10 @@
 import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { PageHeader, stagger } from '../components/AdminUIKit';
+import { stagger } from '../components/AdminUIKit';
 import { AdminOrders } from './AdminOrders';
 import { AdminInquiries } from './AdminInquiries';
+import AdminReturnsHub from './returns/AdminReturnsHub';
 
 export default function AdminOrdersHub() {
   const location = useLocation();
@@ -12,10 +13,9 @@ export default function AdminOrdersHub() {
   // Determine initial tab based on URL path/query
   const getInitialTab = () => {
     const path = location.pathname;
-    const search = location.search;
 
     if (path.includes('/custom')) return 'custom';
-    if (search.includes('type=purchase')) return 'purchase';
+    if (path.includes('/returns')) return 'returns';
     return 'all'; // Default
   };
 
@@ -27,10 +27,10 @@ export default function AdminOrdersHub() {
     let newPath = basePath;
     let newSearch = '';
 
-    if (tabId === 'purchase') {
-      newSearch = '?type=purchase';
-    } else if (tabId === 'custom') {
+    if (tabId === 'custom') {
       newPath = `${basePath}/custom`;
+    } else if (tabId === 'returns') {
+      newPath = `${basePath}/returns`;
     }
 
     navigate({ pathname: newPath, search: newSearch });
@@ -38,8 +38,8 @@ export default function AdminOrdersHub() {
 
   const tabs = [
     { id: 'all', label: 'All Orders', icon: 'shopping_bag' },
-    { id: 'purchase', label: 'Purchase Orders', icon: 'shopping_cart' },
     { id: 'custom', label: 'Custom Orders', icon: 'architecture' },
+    { id: 'returns', label: 'Returns & Refunds', icon: 'keyboard_return' },
   ];
 
   return (
@@ -49,34 +49,7 @@ export default function AdminOrdersHub() {
       variants={stagger}
       className="flex flex-col flex-1 space-y-6 h-[calc(100vh-80px)]"
     >
-      <div>
-        <PageHeader
-          title="Orders Hub"
-          subtitle="Manage standard sales, purchase orders, and custom architectural requests."
-          icon="shopping_bag"
-          iconColor="orders"
-        />
-
-        {/* Smart Filter Tabs */}
-        <div className="flex border-b border-[var(--admin-border-subtle)] overflow-x-auto no-scrollbar mt-4">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 font-semibold text-[14px] border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]'
-                  : 'border-transparent text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border-strong)]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto relative pb-10 custom-scrollbar">
+      <div className="flex-1 relative">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -84,11 +57,11 @@ export default function AdminOrdersHub() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0"
+            className="absolute inset-0 flex flex-col"
           >
-            {activeTab === 'all' && <AdminOrders hideHeader={true} />}
-            {activeTab === 'purchase' && <AdminOrders hideHeader={true} />}
-            {activeTab === 'custom' && <AdminInquiries hideHeader={true} />}
+            {activeTab === 'all' && <AdminOrders />}
+            {activeTab === 'custom' && <AdminInquiries />}
+            {activeTab === 'returns' && <AdminReturnsHub />}
           </motion.div>
         </AnimatePresence>
       </div>

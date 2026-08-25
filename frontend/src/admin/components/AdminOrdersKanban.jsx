@@ -30,7 +30,7 @@ export function AdminOrdersKanban({
           return (
             <div
               key={status}
-              className="bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-xl)] p-3 border border-[var(--admin-border)] flex flex-col h-[400px] md:h-[600px] admin-kanban-column"
+              className="bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-xl)] p-3 border border-[var(--admin-border)] flex flex-col h-[400px] md:h-[600px] admin-kanban-column min-w-[280px] w-[320px] shrink-0 snap-start"
             >
               {/* Column Header */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--admin-border-subtle)] shrink-0 select-none">

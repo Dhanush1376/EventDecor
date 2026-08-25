@@ -110,27 +110,30 @@ export function AdminReviews() {
         title="Reviews & Testimonials"
         subtitle={`${reviews.length} total reviews · ${reviews.filter((r) => r.status === 'pending').length} pending approval payout`}
         headerAction={
-          <div className="w-full sm:max-w-md">
-            <FilterBar
-              filters={['all', 'pending', 'approved', 'rejected']}
-              value={filter}
-              onChange={setFilter}
-              className="pb-0"
-            />
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] flex items-center px-3">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Search reviews..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
+              />
+            </div>
+            <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-hidden">
+              <FilterBar
+                filters={['all', 'pending', 'approved', 'rejected']}
+                value={filter}
+                onChange={setFilter}
+                className="flex-1 min-w-0 pb-0"
+              />
+            </div>
           </div>
         }
-      >
-        {/* Dynamic Search Input */}
-        <div className="relative w-full sm:w-72">
-          <input
-            type="text"
-            placeholder="Search customer, item, or comment..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-xl px-4 py-2 text-[11px] outline-none focus:border-slate-900 transition-all font-semibold"
-          />
-        </div>
-      </PageHeader>
+      />
 
       {/* Reviews feed */}
       <motion.div variants={fadeUp} className="space-y-4">

@@ -2,7 +2,7 @@ import { m as motion } from 'framer-motion';
 
 export function WizardHeader({ steps, currentStep, setCurrentStep }) {
   return (
-    <div className="flex border-b border-[var(--admin-border-subtle)]">
+    <div className="flex border-b border-[var(--admin-border-subtle)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {steps.map((step, idx) => {
         const isActive = idx === currentStep;
         const isPast = idx < currentStep;
@@ -11,7 +11,7 @@ export function WizardHeader({ steps, currentStep, setCurrentStep }) {
             key={idx}
             type="button"
             onClick={() => setCurrentStep(idx)}
-            className={`flex-1 py-4 flex flex-col items-center justify-center gap-1 relative transition-all ${isActive ? 'bg-[var(--admin-surface)]' : 'hover:bg-[var(--admin-surface-muted)]'}`}
+            className={`flex-none sm:flex-1 shrink-0 min-w-[90px] sm:min-w-0 px-2 sm:px-4 py-4 flex flex-col items-center justify-center gap-1 relative transition-all ${isActive ? 'bg-[var(--admin-surface)]' : 'hover:bg-[var(--admin-surface-muted)]'}`}
           >
             <span
               className={`material-symbols-outlined text-[20px] transition-colors ${isActive ? 'text-[var(--admin-accent)]' : isPast ? 'text-success' : 'text-[var(--admin-text-tertiary)]'}`}

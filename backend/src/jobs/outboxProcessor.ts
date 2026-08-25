@@ -5,6 +5,8 @@ import * as Sentry from '@sentry/node';
 import { TransactionalEmailService } from '../services/TransactionalEmailService';
 import Order from '../models/Order';
 import CustomOrder from '../models/CustomOrder';
+import EventJob from '../domains/event_operations/models/EventJob';
+import ReturnRequest from '../models/ReturnRequest';
 
 /**
  * OutboxProcessor — Processes ALL outbox event types.
@@ -103,6 +105,35 @@ async function processEvent(event: any): Promise<void> {
           customOrder,
           event._id.toString(),
         );
+    } else if (eventName === 'EVENTJOB_BOOKINGINQUIRYSUBMITTED') {
+      const booking = await EventJob.findById(event.aggregateId).populate('user');
+      if (booking) {
+        await TransactionalEmailService.sendEventBookingSubmissionEmails(
+          booking,
+          (booking as any).user,
+          event._id.toString(),
+        );
+      }
+    } else if (eventName === 'RETURNREQUEST_RETURNCREATED') {
+      const returnReq = await ReturnRequest.findById(event.aggregateId).populate('userId');
+      if (returnReq) {
+        await TransactionalEmailService.sendReturnSubmittedEmails(
+          returnReq,
+          (returnReq as any).userId,
+          event._id.toString(),
+        );
+      }
+    } else if (eventName === 'RETURNREQUEST_RETURNSTATUSUPDATED') {
+      const returnReq = await ReturnRequest.findById(event.aggregateId).populate('userId');
+      if (returnReq && event.payload) {
+        await TransactionalEmailService.sendReturnStatusUpdateEmails(
+          returnReq,
+          (returnReq as any).userId,
+          event.payload.previousStatus,
+          event.payload.status || event.payload.newStatus,
+          event._id.toString(),
+        );
+      }
     }
   } catch (emailErr) {
     logger.error(`[OUTBOX] Failed to send transactional email for ${eventName}:`, emailErr);

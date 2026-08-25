@@ -676,7 +676,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                         className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2.5 p-3 sm:p-0 bg-[var(--admin-surface)] sm:bg-transparent border border-[var(--admin-border-subtle)] sm:border-0 rounded-xl"
                       >
                         <div className="flex items-center gap-2 flex-1">
-                          <div className="w-6 h-6 rounded-lg bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] flex items-center justify-center font-mono text-[11px] font-bold shrink-0">
+                          <div className="w-6 h-6 rounded-lg bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] flex items-center justify-center text-[11px] font-bold shrink-0">
                             {String(idx + 1).padStart(2, '0')}
                           </div>
                           <input
@@ -695,7 +695,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                         </div>
                         <div className="flex items-center gap-2 pl-8 sm:pl-0">
                           <div className="relative flex-1 sm:w-28 shrink-0">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-mono text-[var(--admin-text-secondary)]">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--admin-text-secondary)]">
                               ₹
                             </span>
                             <input
@@ -712,7 +712,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                                 });
                               }}
                               placeholder="Price"
-                              className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input font-mono text-right text-[12px] py-1.5"
+                              className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input text-right text-[12px] py-1.5"
                             />
                           </div>
                           <button
@@ -753,7 +753,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                         Taxes (₹)
                       </label>
                       <div className="relative">
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-mono text-[var(--admin-text-secondary)]">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--admin-text-secondary)]">
                           ₹
                         </span>
                         <input
@@ -765,7 +765,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                               tax: e.target.value === '' ? '' : Number(e.target.value),
                             }))
                           }
-                          className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input font-mono text-right text-[12px]"
+                          className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input text-right text-[12px]"
                         />
                       </div>
                     </div>
@@ -774,7 +774,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                         Shipping & Setup (₹)
                       </label>
                       <div className="relative">
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-mono text-[var(--admin-text-secondary)]">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--admin-text-secondary)]">
                           ₹
                         </span>
                         <input
@@ -790,7 +790,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                               shipping: e.target.value === '' ? '' : Number(e.target.value),
                             }))
                           }
-                          className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input font-mono text-right text-[12px]"
+                          className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] admin-input text-right text-[12px]"
                         />
                       </div>
                     </div>
@@ -812,7 +812,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
                   <div className="pt-3 border-t border-dashed border-[var(--admin-border)] space-y-1">
                     <div className="flex justify-between items-center font-bold text-[13px] pt-1 text-[var(--admin-text-primary)]">
                       <span>Grand Total:</span>
-                      <span className="font-mono text-[15px] text-[var(--admin-accent)]">
+                      <span className="text-[15px] font-bold text-[var(--admin-accent)]">
                         ₹{liveQuoteTotal.toLocaleString('en-IN')}
                       </span>
                     </div>

@@ -224,11 +224,11 @@ export function AdminPolicyEditor() {
   return (
     <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button
             onClick={handleCancelAction}
-            className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm"
+            className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] transition-colors shadow-sm"
           >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
@@ -245,20 +245,16 @@ export function AdminPolicyEditor() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleAiAutoFillClick}
             disabled={isGenerating}
-            className="admin-btn h-10 px-4 flex items-center gap-2 rounded-[var(--admin-radius-md)] bg-[#c4a87c] text-white hover:bg-[#b3976b] transition-colors font-bold"
+            className="admin-btn h-9 px-4 flex items-center gap-1.5 rounded-[var(--admin-radius-md)] bg-[#c4a87c] text-white hover:bg-[#b3976b] transition-colors font-bold text-[13px] shadow-sm"
           >
-            <span
-              className={`material-symbols-outlined text-[18px] ${isGenerating ? 'animate-spin' : ''}`}
-            >
-              {isGenerating ? 'sync' : 'auto_awesome'}
-            </span>
-            <span className="hidden sm:inline">
-              {isGenerating ? 'Generating...' : 'AI Auto-Fill'}
-            </span>
+            {isGenerating && (
+              <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
+            )}
+            <span>{isGenerating ? 'Generating...' : 'AI FILL'}</span>
           </button>
         </div>
       </div>
@@ -284,7 +280,7 @@ export function AdminPolicyEditor() {
         {/* Main Column */}
         <div className="lg:col-span-8 space-y-6">
           {/* General Info */}
-          <div className="admin-card p-6 md:p-8 space-y-6">
+          <div className="admin-card p-4 sm:p-6 md:p-8 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
                 <label className="admin-label">
@@ -357,7 +353,7 @@ export function AdminPolicyEditor() {
           </div>
 
           {/* Dynamic Content Builder */}
-          <div className="admin-card p-6 md:p-8 space-y-4">
+          <div className="admin-card p-4 sm:p-6 md:p-8 space-y-4">
             <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] tracking-tight mb-2 flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px]">article</span>
               Policy Content
@@ -370,11 +366,11 @@ export function AdminPolicyEditor() {
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   key={index}
-                  className="p-5 border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] bg-[var(--admin-surface)] relative group shadow-sm transition-all hover:border-[var(--admin-border)]"
+                  className="p-3 sm:p-5 border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] bg-[var(--admin-surface)] relative group shadow-sm transition-all hover:border-[var(--admin-border)]"
                 >
                   <button
                     onClick={() => removeSet(index)}
-                    className="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] text-[var(--admin-error)] opacity-0 group-hover:opacity-100 transition-all hover:bg-[var(--admin-error)] hover:text-white hover:border-transparent rounded-full shadow-sm z-10"
+                    className="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] text-[var(--admin-error)] transition-all hover:bg-[var(--admin-error)] hover:text-white hover:border-transparent rounded-full shadow-sm z-10"
                     title="Remove Set"
                   >
                     <span className="material-symbols-outlined text-[16px]">close</span>

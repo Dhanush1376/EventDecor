@@ -537,7 +537,9 @@ const AdminReturnDetail = () => {
                             <p className="text-xs text-admin-text-muted font-medium mb-0.5">
                               UPI ID
                             </p>
-                            <p className="text-sm font-mono text-admin-text">{request.upiId}</p>
+                            <p className="text-sm text-[var(--admin-text-primary)]">
+                              {request.upiId}
+                            </p>
                           </div>
                         )}
                       </div>

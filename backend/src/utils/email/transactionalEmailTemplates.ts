@@ -329,3 +329,150 @@ export const buildInquiryAdminEmail = (inquiry: any) => {
     html: getLuxuryEmailWrapper('Admin Alert', body),
   };
 };
+
+// --- Event Booking Templates ---
+
+export const buildEventBookingCustomerEmail = (booking: any, user: any) => {
+  const customerName = user?.name || booking.user?.name || 'Valued Guest';
+  const eventDateStr = booking.date
+    ? new Date(booking.date).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : 'To be confirmed';
+
+  const rows: { label: string; value: string }[] = [
+    { label: 'Booking ID', value: escapeHtml(booking.bookingId || 'Pending') },
+    { label: 'Event Title', value: escapeHtml(booking.title || 'Event Booking') },
+    { label: 'Event Type', value: escapeHtml(booking.eventType || 'N/A') },
+    { label: 'Date', value: escapeHtml(eventDateStr) },
+  ];
+  if (booking.venue?.name) rows.push({ label: 'Venue', value: escapeHtml(booking.venue.name) });
+  if (booking.venue?.address)
+    rows.push({ label: 'Address', value: escapeHtml(booking.venue.address) });
+
+  const preheader = `Your event booking request has been received.`;
+  const body = `
+    <h2>Your Event Booking is Received</h2>
+    <p>Dear ${escapeHtml(customerName)},</p>
+    <p>Thank you for choosing Siri Arts & Crafts. Your event booking request has been successfully submitted. Our team is reviewing your requirements and will get back to you shortly.</p>
+
+    <h3 style="color: #111827;">Booking Details</h3>
+    ${dataTable(rows)}
+
+    ${button('View Your Bookings', '#')}
+  `;
+  return {
+    subject: `Event Booking Request Received`,
+    html: getLuxuryEmailWrapper('Booking Confirmed', body, undefined, preheader),
+  };
+};
+
+export const buildEventBookingAdminEmail = (booking: any, user: any) => {
+  const customerName = user?.name || booking.user?.name || 'Unknown';
+  const customerEmail = user?.email || booking.user?.email || 'Unknown';
+  const eventDateStr = booking.date
+    ? new Date(booking.date).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : 'Not specified';
+
+  const rows: { label: string; value: string }[] = [
+    { label: 'Booking ID', value: escapeHtml(booking.bookingId || 'Pending') },
+    { label: 'Customer', value: escapeHtml(customerName) },
+    { label: 'Email', value: escapeHtml(customerEmail) },
+    { label: 'Event Title', value: escapeHtml(booking.title || 'Event Booking') },
+    { label: 'Event Type', value: escapeHtml(booking.eventType || 'N/A') },
+    { label: 'Date', value: escapeHtml(eventDateStr) },
+  ];
+  if (booking.venue?.name) rows.push({ label: 'Venue', value: escapeHtml(booking.venue.name) });
+  if (booking.venue?.address)
+    rows.push({ label: 'Address', value: escapeHtml(booking.venue.address) });
+  if (booking.venue?.city) rows.push({ label: 'City', value: escapeHtml(booking.venue.city) });
+
+  const body = `
+    <h2>New Event Booking Request</h2>
+    <p>A new event booking inquiry has been submitted on the platform.</p>
+
+    ${dataTable(rows)}
+
+    ${button('Manage Bookings', '#')}
+  `;
+  return {
+    subject: `[NEW BOOKING] ${escapeHtml(customerName)} - ${escapeHtml(booking.title || 'Event')}`,
+    html: getLuxuryEmailWrapper('Admin Alert', body),
+  };
+};
+
+// --- Return/Exchange Templates ---
+
+export const buildReturnCreatedCustomerEmail = (returnRequest: any, user: any) => {
+  const customerName = user?.name || 'Valued Customer';
+  const isExchange = returnRequest.returnType === 'exchange';
+
+  const rows: { label: string; value: string }[] = [
+    { label: 'Request ID', value: escapeHtml(returnRequest.returnId || returnRequest._id) },
+    { label: 'Type', value: isExchange ? 'Exchange' : 'Return' },
+    { label: 'Items', value: `${returnRequest.items?.length || 0} item(s)` },
+    { label: 'Status', value: escapeHtml(returnRequest.status || 'Submitted') },
+  ];
+
+  const preheader = `Your ${isExchange ? 'exchange' : 'return'} request has been submitted.`;
+  const body = `
+    <h2>${isExchange ? 'Exchange' : 'Return'} Request Submitted</h2>
+    <p>Dear ${escapeHtml(customerName)},</p>
+    <p>We've received your ${isExchange ? 'exchange' : 'return'} request and our team will review it shortly.</p>
+
+    ${dataTable(rows)}
+
+    ${button('Track Your Request', '#')}
+  `;
+  return {
+    subject: `${isExchange ? 'Exchange' : 'Return'} Request Received - ${escapeHtml(returnRequest.returnId || '')}`,
+    html: getLuxuryEmailWrapper(
+      `${isExchange ? 'Exchange' : 'Return'} Request`,
+      body,
+      undefined,
+      preheader,
+    ),
+  };
+};
+
+export const buildReturnStatusUpdateEmail = (
+  returnRequest: any,
+  user: any,
+  previousStatus: string,
+  newStatus: string,
+) => {
+  const customerName = user?.name || 'Valued Customer';
+  const isExchange = returnRequest.returnType === 'exchange';
+
+  const rows: { label: string; value: string }[] = [
+    { label: 'Request ID', value: escapeHtml(returnRequest.returnId || returnRequest._id) },
+    { label: 'Previous Status', value: escapeHtml(previousStatus) },
+    { label: 'New Status', value: escapeHtml(newStatus) },
+  ];
+
+  const preheader = `Status update for your ${isExchange ? 'exchange' : 'return'} request.`;
+  const body = `
+    <h2>${isExchange ? 'Exchange' : 'Return'} Status Update</h2>
+    <p>Dear ${escapeHtml(customerName)},</p>
+    <p>The status of your ${isExchange ? 'exchange' : 'return'} request has been updated.</p>
+
+    ${dataTable(rows)}
+
+    ${button('View Details', '#')}
+  `;
+  return {
+    subject: `${isExchange ? 'Exchange' : 'Return'} Update: ${escapeHtml(newStatus)} - ${escapeHtml(returnRequest.returnId || '')}`,
+    html: getLuxuryEmailWrapper(
+      `${isExchange ? 'Exchange' : 'Return'} Update`,
+      body,
+      undefined,
+      preheader,
+    ),
+  };
+};

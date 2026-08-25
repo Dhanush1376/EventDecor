@@ -25,13 +25,7 @@ export const navSections = [
         keywords: 'sales, checkout, delivery',
         domain: 'orders',
       },
-      {
-        label: 'Purchase Orders',
-        icon: 'shopping_cart',
-        path: '/admin/orders?type=purchase',
-        keywords: 'buy, purchase, sales',
-        domain: 'orders',
-      },
+
       {
         label: 'Custom Orders',
         icon: 'architecture',
@@ -267,7 +261,7 @@ export const navSections = [
     roles: ['owner'],
     items: [
       {
-        label: 'Users',
+        label: 'Active Admins',
         icon: 'groups',
         path: '/admin/system/users',
         keywords: 'staff, employees, access, permissions',

@@ -32,13 +32,13 @@ const ROLE_WEIGHTS = {
   user: 0,
 };
 
-export function AdminTeam({ hideHeader }) {
+export function AdminTeam({ hideHeader = false, setHeaderAction }) {
   const { user: currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState([]);
   const [invites, setInvites] = useState([]);
   const [history, setHistory] = useState([]);
-  const [activeTab, setActiveTab] = useState('roster'); // roster, pending, history
+  const [activeTab, setActiveTab] = useState('active'); // active, pending, history
 
   // Modal Invitation Drawer
   const [locationParam] = useState(
@@ -246,6 +246,33 @@ export function AdminTeam({ hideHeader }) {
     (role) => !['user', 'customer'].includes(role) && canAssignRole(role),
   );
 
+  useEffect(() => {
+    if (hideHeader && setHeaderAction) {
+      setHeaderAction(
+        <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
+          <FilterBar
+            filters={['active', 'pending', 'history']}
+            value={activeTab}
+            onChange={setActiveTab}
+            className="flex-1 min-w-0"
+          />
+          <button
+            onClick={() => setIsInviteOpen(true)}
+            className="px-4 bg-[var(--admin-accent)] hover:brightness-110 text-white rounded-md flex items-center gap-2 justify-center cursor-pointer transition-all active:scale-95 shadow-sm shrink-0 h-[32px] sm:h-auto"
+          >
+            <span className="material-symbols-outlined text-[18px]">person_add</span>
+            <span className="text-[13px] font-bold">Invite Member</span>
+          </button>
+        </div>,
+      );
+    }
+    return () => {
+      if (hideHeader && setHeaderAction) {
+        setHeaderAction(null);
+      }
+    };
+  }, [hideHeader, setHeaderAction, activeTab, members.length, invites.length, history.length]);
+
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       {!hideHeader && (
@@ -253,60 +280,35 @@ export function AdminTeam({ hideHeader }) {
           title="Team Workspace & Authorization"
           subtitle="Manage team access and invitations"
           headerAction={
-            <div className="w-full sm:max-w-md">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
               <FilterBar
-                filters={['roster', 'pending', 'history']}
+                filters={['active', 'pending', 'history']}
                 value={activeTab}
                 onChange={setActiveTab}
-                className="pb-0 border-b border-[var(--admin-border-subtle)]"
-                formatLabel={(id) => {
-                  if (id === 'roster') return `Active Roster (${members.length})`;
-                  if (id === 'pending') return `Pending Invites (${invites.length})`;
-                  if (id === 'history') return `Invitation History (${history.length})`;
-                  return id;
-                }}
+                className="flex-1 min-w-0"
               />
+              <button
+                onClick={() => setIsInviteOpen(true)}
+                className="px-4 bg-[var(--admin-accent)] hover:brightness-110 text-white rounded-md flex items-center gap-2 justify-center cursor-pointer transition-all active:scale-95 shadow-sm shrink-0 h-[32px] sm:h-auto"
+              >
+                <span className="material-symbols-outlined text-[18px]">person_add</span>
+                <span className="text-[13px] font-bold">Invite Member</span>
+              </button>
             </div>
           }
-        >
-          <button onClick={() => setIsInviteOpen(true)} className="admin-btn admin-btn-primary h-9">
-            <span className="material-symbols-outlined text-[16px]">person_add</span>
-            Invite Team Member
-          </button>
-        </PageHeader>
+        />
       )}
 
-      {hideHeader && (
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <div className="w-full sm:max-w-md">
-            <FilterBar
-              filters={['roster', 'pending', 'history']}
-              value={activeTab}
-              onChange={setActiveTab}
-              className="pb-0 border-b border-[var(--admin-border-subtle)]"
-              formatLabel={(id) => {
-                if (id === 'roster') return `Active Roster (${members.length})`;
-                if (id === 'pending') return `Pending Invites (${invites.length})`;
-                if (id === 'history') return `Invitation History (${history.length})`;
-                return id;
-              }}
-            />
-          </div>
-          <button onClick={() => setIsInviteOpen(true)} className="admin-btn admin-btn-primary h-9">
-            <span className="material-symbols-outlined text-[16px]">person_add</span>
-            Invite Team Member
-          </button>
-        </div>
-      )}
+      {/* When hideHeader is true, the actions are lifted to AdminSystemHub via setHeaderAction above */}
 
       {loading ? (
         <SkeletonDashboard />
       ) : (
         <AnimatePresence mode="wait">
-          {/* Roster Tab */}
-          {activeTab === 'roster' && (
+          {/* Active Tab */}
+          {activeTab === 'active' && (
             <motion.div
-              key="roster"
+              key="active"
               initial="hidden"
               animate="show"
               exit="hidden"
@@ -347,6 +349,10 @@ export function AdminTeam({ hideHeader }) {
                                 src={m.avatar}
                                 alt={m.name}
                                 className="w-14 h-14 rounded-[var(--admin-radius-lg)] object-cover shadow-sm border border-[var(--admin-border-subtle)]"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name || 'U')}&background=F4F1EA&color=3E3832&size=128&font-size=0.4`;
+                                }}
                               />
                             ) : (
                               <div className="w-14 h-14 rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] flex items-center justify-center shadow-sm">

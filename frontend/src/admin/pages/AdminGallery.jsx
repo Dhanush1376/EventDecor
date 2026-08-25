@@ -236,20 +236,22 @@ export function AdminGallery() {
       {/* ─── Filters ─── */}
       <motion.div variants={fadeUp} className="space-y-4">
         {/* Search & Type Filter Row */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="admin-search-wrapper w-full md:flex-1 md:max-w-[320px]">
-            <span className="material-symbols-outlined admin-search-icon text-[18px]">search</span>
+        <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full">
+          <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] flex items-center px-3">
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+              search
+            </span>
             <input
               type="text"
               placeholder="Search by title, event, tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="admin-input h-9 w-full text-[12px]"
+              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
             />
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
-            <div className="flex bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)] shrink-0">
+          <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-hidden">
+            <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full sm:w-auto">
               {[
                 { id: 'All', label: 'All Items' },
                 { id: 'inspiration', label: 'Inspirations' },
@@ -258,10 +260,10 @@ export function AdminGallery() {
                 <button
                   key={t.id}
                   onClick={() => setTypeFilter(t.id)}
-                  className={`px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold cursor-pointer transition-all ${
+                  className={`flex-1 sm:flex-none px-4 py-1 rounded-sm text-[13px] font-bold transition-all whitespace-nowrap ${
                     typeFilter === t.id
-                      ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
-                      : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+                      ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
                   }`}
                 >
                   {t.label}

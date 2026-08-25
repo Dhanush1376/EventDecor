@@ -143,6 +143,7 @@ export const updateStatusSchema = z.object({
     .object({
       status: z.enum(
         [
+          'Payment Pending',
           'Pending',
           'Confirmed',
           'Packed',

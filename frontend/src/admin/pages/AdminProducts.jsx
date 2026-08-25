@@ -11,7 +11,6 @@ import {
   PageHeader,
   StatusBadge,
   EmptyState,
-  MobileFilterDrawer,
   SkeletonTable,
   AdminToggle,
   formatCurrency,
@@ -45,10 +44,10 @@ export function AdminProducts() {
   const [activeTab, setActiveTab] = useState('products'); // 'products', 'categories', 'inventory'
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const [sortBy, setSortBy] = useState('newest');
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [viewMode, setViewMode] = useState('table');
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, type: 'soft', product: null });
   const [isDeleting, setIsDeleting] = useState(false);
@@ -267,7 +266,7 @@ export function AdminProducts() {
   };
 
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    let result = products.filter((p) => {
       const matchCategory = selectedCategory === 'All' || p.category === selectedCategory;
       const matchStatus = selectedStatus === 'All' || p.status === selectedStatus;
       const matchLowStock = showLowStockOnly ? p.stock <= 5 : true;
@@ -277,7 +276,14 @@ export function AdminProducts() {
         p.id.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCategory && matchStatus && matchLowStock && matchSearch;
     });
-  }, [products, selectedCategory, selectedStatus, searchQuery, showLowStockOnly]);
+
+    if (sortBy === 'price-asc') result.sort((a, b) => a.price - b.price);
+    else if (sortBy === 'price-desc') result.sort((a, b) => b.price - a.price);
+    else if (sortBy === 'stock-asc') result.sort((a, b) => a.stock - b.stock);
+    else if (sortBy === 'stock-desc') result.sort((a, b) => b.stock - a.stock);
+
+    return result;
+  }, [products, selectedCategory, selectedStatus, searchQuery, showLowStockOnly, sortBy]);
 
   const toggleSelect = (id) =>
     setSelectedProducts((prev) =>
@@ -299,44 +305,10 @@ export function AdminProducts() {
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
-      {/* Header with Tabs */}
+      {/* Header */}
       <PageHeader
-        title={
-          <div className="flex flex-col gap-3 w-full">
-            <div className="flex items-center justify-between">
-              <span>Products & Inventory</span>
-              <button
-                onClick={() => setIsMobileFilterOpen(true)}
-                className="md:hidden flex items-center justify-center w-8 h-8 rounded-full bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-border)] transition-colors relative shrink-0"
-              >
-                <span className="material-symbols-outlined text-[18px]">tune</span>
-                {(selectedCategory !== 'All' || selectedStatus !== 'All' || showLowStockOnly) && (
-                  <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[var(--admin-accent)] border border-[var(--admin-surface)]" />
-                )}
-              </button>
-            </div>
-            {/* Tabs */}
-            <div className="flex items-center gap-6 border-b border-[var(--admin-border-subtle)] mt-1">
-              {['products', 'inventory', 'categories'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => {
-                    setActiveTab(tab);
-                    setSearchQuery('');
-                  }}
-                  className={`pb-3 text-[13px] font-bold tracking-wide capitalize border-b-2 transition-colors ${
-                    activeTab === tab
-                      ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]'
-                      : 'border-transparent text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                  }`}
-                >
-                  {tab === 'inventory' ? 'Inventory Levels' : tab}
-                </button>
-              ))}
-            </div>
-          </div>
-        }
-        subtitle=""
+        title="Products"
+        subtitle="Manage your products catalog"
         icon="inventory_2"
         iconColor="products"
       >
@@ -574,43 +546,35 @@ export function AdminProducts() {
             )}
           </AnimatePresence>
 
-          <motion.div
-            variants={fadeUp}
-            className="admin-card p-2 sm:p-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2"
-          >
-            {/* Mobile Search */}
-            <div className="flex md:hidden w-full">
-              <div className="admin-search-wrapper w-full">
-                <span className="material-symbols-outlined admin-search-icon">search</span>
-                <input
-                  type="text"
-                  placeholder="Search by name or ID..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="admin-input h-9 w-full"
-                />
-              </div>
+          <div className="flex flex-row items-stretch gap-2 shrink-0 w-full overflow-x-auto no-scrollbar pb-1 sm:pb-0 -mx-1 px-1 mb-6">
+            {/* Search Bar */}
+            <div className="relative shrink-0 flex-1 min-w-[220px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 flex flex-col justify-center">
+              <span
+                className="material-symbols-outlined absolute left-2 text-[var(--admin-text-tertiary)] pointer-events-none z-10"
+                style={{ fontSize: '14px', top: '50%', transform: 'translateY(-50%)' }}
+              >
+                search
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name or ID..."
+                className="w-full h-full min-h-[32px] pl-7 pr-2 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] text-[12px] font-semibold text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] focus:outline-none transition-all m-0"
+              />
             </div>
 
-            {/* Desktop Search & Filters */}
-            <div className="hidden md:flex items-center gap-1.5 flex-1 min-w-0">
-              <div className="admin-search-wrapper flex-1 min-w-[200px] max-w-[300px]">
-                <span className="material-symbols-outlined admin-search-icon">search</span>
-                <input
-                  type="text"
-                  placeholder="Search by name or ID..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="admin-input h-9 w-full"
-                />
-              </div>
+            {/* Separator */}
+            <div className="w-[1px] bg-[var(--admin-border-subtle)] shrink-0 my-1"></div>
 
-              {activeTab === 'products' && (
-                <>
+            {/* Categories & Statuses (Products Tab Only) */}
+            {activeTab === 'products' && (
+              <>
+                <div className="relative shrink-0 w-[150px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 flex flex-col justify-center">
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="admin-input h-9 min-h-0 text-[11px] sm:text-[12px] font-semibold py-0 px-2 cursor-pointer flex-1 min-w-0 md:flex-initial md:min-w-[150px]"
+                    className="w-full h-full min-h-[32px] pl-2 pr-7 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] text-[11px] font-semibold text-[var(--admin-text-primary)] focus:outline-none appearance-none cursor-pointer transition-all m-0"
                   >
                     <option value="All">All Categories</option>
                     {productCategories.map((c) => (
@@ -619,88 +583,132 @@ export function AdminProducts() {
                       </option>
                     ))}
                   </select>
+                  <span
+                    className="material-symbols-outlined absolute right-2 text-[14px] text-[var(--admin-text-tertiary)] pointer-events-none z-10"
+                    style={{ top: '50%', transform: 'translateY(-50%)' }}
+                  >
+                    expand_more
+                  </span>
+                </div>
+
+                <div className="relative shrink-0 w-[130px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 flex flex-col justify-center">
                   <select
                     value={selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="admin-input h-9 min-h-0 text-[11px] sm:text-[12px] font-semibold py-0 px-2 cursor-pointer flex-1 min-w-0 md:flex-initial md:min-w-[130px]"
+                    className="w-full h-full min-h-[32px] pl-2 pr-7 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] text-[11px] font-semibold text-[var(--admin-text-primary)] focus:outline-none appearance-none cursor-pointer transition-all m-0"
                   >
                     <option value="All">All Statuses</option>
                     <option value="active">Active</option>
                     <option value="low_stock">Low Stock</option>
                     <option value="out_of_stock">Out of Stock</option>
                   </select>
-                </>
-              )}
+                  <span
+                    className="material-symbols-outlined absolute right-2 text-[14px] text-[var(--admin-text-tertiary)] pointer-events-none z-10"
+                    style={{ top: '50%', transform: 'translateY(-50%)' }}
+                  >
+                    expand_more
+                  </span>
+                </div>
 
-              {activeTab === 'inventory' && (
-                <div className="flex items-center gap-2 ml-2">
+                <div className="relative shrink-0 w-[150px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 flex flex-col justify-center">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full h-full min-h-[32px] pl-2 pr-7 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] text-[11px] font-semibold text-[var(--admin-text-primary)] focus:outline-none appearance-none cursor-pointer transition-all m-0"
+                  >
+                    <option value="newest">Sort: Newest</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="stock-asc">Stock: Low to High</option>
+                    <option value="stock-desc">Stock: High to Low</option>
+                  </select>
+                  <span
+                    className="material-symbols-outlined absolute right-2 text-[14px] text-[var(--admin-text-tertiary)] pointer-events-none z-10"
+                    style={{ top: '50%', transform: 'translateY(-50%)' }}
+                  >
+                    expand_more
+                  </span>
+                </div>
+              </>
+            )}
+
+            {/* Inventory Low Stock Toggle */}
+            {activeTab === 'inventory' && (
+              <div className="flex bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 flex-col justify-center shrink-0">
+                <div className="flex items-center gap-2 h-full min-h-[32px] px-2 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)]">
                   <AdminToggle
                     checked={showLowStockOnly}
                     onChange={() => setShowLowStockOnly(!showLowStockOnly)}
                   />
-                  <span className="text-[12px] font-bold text-[var(--admin-text-secondary)]">
+                  <span className="text-[11px] font-semibold text-[var(--admin-text-primary)] whitespace-nowrap">
                     Low Stock Only
                   </span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            <div className="flex items-center gap-2 shrink-0">
-              {selectedProducts.length > 0 && (
-                <div className="flex items-center gap-2 mr-2 border-r border-[var(--admin-border-subtle)] pr-4 h-9">
-                  <span className="admin-badge admin-badge-neutral h-full px-3 flex items-center justify-center font-bold text-[11px] hidden sm:inline-flex bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]">
+            {/* Desktop Bulk Actions */}
+            {selectedProducts.length > 0 && (
+              <>
+                <div className="w-[1px] bg-[var(--admin-border-subtle)] shrink-0 my-1"></div>
+                <div className="flex items-stretch gap-1.5 shrink-0 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5">
+                  <span className="admin-badge admin-badge-neutral px-3 flex items-center justify-center font-bold text-[11px] hidden sm:inline-flex bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] text-[var(--admin-text-secondary)] m-0">
                     {selectedProducts.length} SELECTED
                   </span>
                   <button
                     onClick={handleBulkDeactivateProducts}
-                    className="admin-btn h-full bg-amber-500 text-white hover:bg-amber-600 border-none px-3 text-[12px] font-bold shadow-sm flex items-center gap-1.5"
+                    className="admin-btn bg-amber-500 text-white hover:bg-amber-600 border-none px-2 text-[11px] font-bold shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] flex items-center gap-1 min-h-[32px]"
                   >
-                    <span className="material-symbols-outlined text-[16px]">block</span>
+                    <span className="material-symbols-outlined text-[14px]">block</span>
                     Deactivate
                   </button>
                   <button
                     onClick={handleBulkDelete}
-                    className="admin-btn h-full bg-[var(--admin-error)] text-white hover:opacity-90 border-none px-3 text-[12px] font-bold shadow-sm flex items-center gap-1.5"
+                    className="admin-btn bg-[var(--admin-error)] text-white hover:opacity-90 border-none px-2 text-[11px] font-bold shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] flex items-center gap-1 min-h-[32px]"
                   >
-                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                    <span className="material-symbols-outlined text-[14px]">delete</span>
                     Delete
                   </button>
                   <button
                     onClick={() => setSelectedProducts([])}
-                    className="admin-btn-outline h-full w-9 p-0 flex items-center justify-center shadow-sm"
+                    className="admin-btn-outline w-7 p-0 flex items-center justify-center bg-[var(--admin-surface)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] border border-[var(--admin-border-subtle)] min-h-[32px]"
                     title="Clear Selection"
                   >
-                    <span className="material-symbols-outlined text-[18px]">close</span>
+                    <span className="material-symbols-outlined text-[16px]">close</span>
                   </button>
                 </div>
-              )}
+              </>
+            )}
 
-              {activeTab === 'products' && (
-                <div className="flex bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 shadow-sm shrink-0">
+            {/* View Toggle */}
+            {activeTab === 'products' && (
+              <>
+                <div className="w-[1px] bg-[var(--admin-border-subtle)] shrink-0 my-1 hidden md:block"></div>
+                <div className="hidden md:flex bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 shrink-0">
                   <button
                     onClick={() => setViewMode('table')}
-                    className={`hidden md:flex items-center justify-center w-8 h-7.5 rounded-[var(--admin-radius-md)] transition-all shrink-0 ${
+                    className={`flex items-center justify-center px-1.5 transition-all shrink-0 rounded-[var(--admin-radius-sm)] min-h-[32px] ${
                       viewMode === 'table'
-                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border-subtle)]'
-                        : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                        : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
                     }`}
                   >
                     <span className="material-symbols-outlined text-[16px]">view_list</span>
                   </button>
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`hidden md:flex items-center justify-center w-8 h-7.5 rounded-[var(--admin-radius-md)] transition-all shrink-0 ${
+                    className={`flex items-center justify-center px-1.5 transition-all shrink-0 rounded-[var(--admin-radius-sm)] min-h-[32px] ${
                       viewMode === 'grid'
-                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border-subtle)]'
-                        : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                        : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
                     }`}
                   >
                     <span className="material-symbols-outlined text-[16px]">grid_view</span>
                   </button>
                 </div>
-              )}
-            </div>
-          </motion.div>
+              </>
+            )}
+          </div>
 
           <AnimatePresence mode="wait">
             {dataLoading ? (
@@ -802,12 +810,11 @@ export function AdminProducts() {
                           </th>
                         )}
                         <th>Product</th>
-                        {activeTab === 'products' && (
-                          <th className="hidden md:table-cell">Category</th>
-                        )}
+                        <th className="hidden md:table-cell">Category</th>
                         {activeTab === 'products' && <th>Price</th>}
                         <th className="hidden lg:table-cell">Status</th>
-                        <th>Stock Level</th>
+                        <th className="text-center">Stock Level</th>
+                        {activeTab === 'inventory' && <th className="text-center">Sold</th>}
                         {activeTab === 'inventory' && (
                           <th className="text-right pr-6">Fast Action</th>
                         )}
@@ -851,11 +858,9 @@ export function AdminProducts() {
                               </div>
                             </div>
                           </td>
-                          {activeTab === 'products' && (
-                            <td className="hidden md:table-cell text-[var(--admin-text-secondary)] font-medium text-[12px]">
-                              {p.category}
-                            </td>
-                          )}
+                          <td className="hidden md:table-cell text-[var(--admin-text-secondary)] font-medium text-[12px]">
+                            {p.category}
+                          </td>
                           {activeTab === 'products' && (
                             <td className="font-bold text-[var(--admin-text-primary)] text-[13px]">
                               {formatCurrency(p.price)}
@@ -880,11 +885,11 @@ export function AdminProducts() {
                           </td>
                           <td onClick={(e) => activeTab === 'inventory' && e.stopPropagation()}>
                             {activeTab === 'inventory' ? (
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 justify-center">
                                 <input
                                   type="number"
                                   min="0"
-                                  className="admin-input w-20 h-8 text-[12px] font-bold text-center p-1 bg-[var(--admin-surface)]"
+                                  className="admin-input !w-24 !max-w-[96px] h-8 text-[13px] font-bold text-center p-1 bg-[var(--admin-surface)]"
                                   defaultValue={p.stock}
                                   onBlur={(e) => {
                                     if (e.target.value !== String(p.stock)) {
@@ -920,6 +925,11 @@ export function AdminProducts() {
                               </span>
                             )}
                           </td>
+                          {activeTab === 'inventory' && (
+                            <td className="text-center font-bold text-[var(--admin-text-primary)] text-[13px]">
+                              {p.soldCount || p.sold || 0}
+                            </td>
+                          )}
                           {activeTab === 'inventory' && (
                             <td className="text-right pr-6" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-2">
@@ -1061,92 +1071,6 @@ export function AdminProducts() {
               </motion.div>
             )}
           </AnimatePresence>
-
-          <MobileFilterDrawer
-            isOpen={isMobileFilterOpen}
-            onClose={() => setIsMobileFilterOpen(false)}
-            title="Filter Products"
-          >
-            <div className="space-y-4">
-              {activeTab === 'inventory' && (
-                <div className="flex items-center gap-2 bg-[var(--admin-surface-muted)] p-3 rounded-[var(--admin-radius-md)] border border-[var(--admin-border-subtle)]">
-                  <AdminToggle
-                    checked={showLowStockOnly}
-                    onChange={() => setShowLowStockOnly(!showLowStockOnly)}
-                  />
-                  <span className="text-[12px] font-bold text-[var(--admin-text-primary)]">
-                    Show Low Stock Only
-                  </span>
-                </div>
-              )}
-
-              <div>
-                <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
-                  Search
-                </label>
-                <div className="admin-search-wrapper w-full">
-                  <span className="material-symbols-outlined admin-search-icon">search</span>
-                  <input
-                    type="text"
-                    placeholder="Search products by name or ID..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="admin-input w-full"
-                  />
-                </div>
-              </div>
-
-              {activeTab === 'products' && (
-                <>
-                  <div>
-                    <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
-                      Category
-                    </label>
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="admin-input"
-                    >
-                      <option value="All">All Categories</option>
-                      {productCategories.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
-                      Status
-                    </label>
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="admin-input"
-                    >
-                      <option value="All">All Statuses</option>
-                      <option value="active">Active</option>
-                      <option value="low_stock">Low Stock</option>
-                      <option value="out_of_stock">Out of Stock</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              <div className="pt-4 flex items-center justify-between">
-                <button
-                  onClick={() => {
-                    setSelectedCategory('All');
-                    setSelectedStatus('All');
-                    setShowLowStockOnly(false);
-                  }}
-                  className="text-[12px] font-bold text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
-                >
-                  Clear Filters
-                </button>
-              </div>
-            </div>
-          </MobileFilterDrawer>
         </>
       )}
 

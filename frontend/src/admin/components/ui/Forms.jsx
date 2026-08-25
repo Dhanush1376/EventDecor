@@ -189,7 +189,7 @@ export function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={handleToggle}
-        className={`w-full admin-input flex items-center justify-between transition-colors text-left ${
+        className={`w-full admin-input !bg-[var(--admin-surface-muted)] flex items-center justify-between transition-colors text-left ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-[var(--admin-border-strong)]'
         }`}
       >

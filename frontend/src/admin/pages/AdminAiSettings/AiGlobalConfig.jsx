@@ -98,7 +98,7 @@ const AiGlobalConfig = ({ settings, providers, onRefresh }) => {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8">
+    <div className="bg-white rounded-md border border-[var(--admin-border-subtle)] p-6 md:p-8">
       <div className="mb-8">
         <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
           <span className="material-symbols-outlined text-[20px] text-gray-400">route</span>
@@ -268,7 +268,7 @@ const AiGlobalConfig = ({ settings, providers, onRefresh }) => {
                     onChange={handleChange}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--admin-accent)]"></div>
                 </div>
                 <div>
                   <span className="text-sm font-bold text-gray-900 block mb-0.5">
@@ -289,7 +289,7 @@ const AiGlobalConfig = ({ settings, providers, onRefresh }) => {
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 bg-black text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 bg-[var(--admin-accent)] text-white px-6 py-2.5 rounded-md text-[13px] font-bold hover:brightness-110 transition-all active:scale-95 shadow-sm disabled:opacity-50"
           >
             {saving ? (
               <>

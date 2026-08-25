@@ -92,7 +92,7 @@ const AiProviderList = ({ providers, onEdit, onRefresh }) => {
 
   if (!providers || providers.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+      <div className="bg-white rounded-md border border-gray-200 p-12 text-center">
         <span className="material-symbols-outlined text-4xl text-gray-300 mb-3">storage</span>
         <h3 className="text-lg font-medium text-gray-900 mb-1">No AI Providers Configured</h3>
         <p className="text-sm text-gray-500">
@@ -104,7 +104,7 @@ const AiProviderList = ({ providers, onEdit, onRefresh }) => {
 
   return (
     <>
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
