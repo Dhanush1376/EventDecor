@@ -8,6 +8,7 @@ import {
   User,
   CalendarDays,
   LogOut,
+  Bell,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -49,6 +50,7 @@ export function Sidebar() {
   else if (path.includes('/shopping-bag')) activeTab = 'shopping-bag';
   else if (path.includes('/wallet')) activeTab = 'loyalty';
   else if (path.includes('/returns')) activeTab = 'returns';
+  else if (path.includes('/notifications')) activeTab = 'notifications';
   else if (path.includes('/profile')) activeTab = 'profile';
 
   const handleTabClick = (tabName, route) => {
@@ -261,6 +263,21 @@ export function Sidebar() {
           >
             <span>Profile Settings</span>
             <ChevronRight className="text-xs" strokeWidth={1.5} />
+          </motion.button>
+
+          <motion.button
+            role="tab"
+            aria-selected={activeTab === 'notifications'}
+            whileHover={{ x: 3 }}
+            onClick={() => handleTabClick('notifications', '/dashboard/notifications')}
+            className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
+              activeTab === 'notifications'
+                ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
+                : 'text-on-surface hover:bg-surface-container-low'
+            }`}
+          >
+            <span>Notifications</span>
+            <Bell className="text-xs text-primary" strokeWidth={1.5} />
           </motion.button>
 
           <motion.button

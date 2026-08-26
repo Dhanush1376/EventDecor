@@ -130,22 +130,23 @@ export function AdminTopBar() {
                 ))}
           </div>
 
-          {/* Search Trigger — Desktop */}
+          {/* Search Trigger — Responsive */}
           <div
             onClick={() => setSearchPaletteOpen(true)}
-            className="hidden md:flex items-center gap-3 h-[38px] px-3.5 rounded-[var(--admin-radius-full)] cursor-pointer transition-colors hover:border-[var(--admin-border)] select-none ml-2 w-full max-w-[360px]"
+            className="flex items-center gap-2 md:gap-3 h-[32px] md:h-[38px] px-2.5 md:px-3.5 rounded-[var(--admin-radius-full)] cursor-pointer transition-colors hover:border-[var(--admin-border)] select-none ml-1 md:ml-2 flex-1 w-full max-w-[200px] sm:max-w-[320px] lg:max-w-[500px]"
             style={{
               background: 'var(--admin-surface-muted)',
               border: '1px solid var(--admin-border-subtle)',
             }}
           >
-            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)] font-light">
+            <span className="material-symbols-outlined text-[16px] md:text-[18px] text-[var(--admin-text-secondary)] font-light shrink-0">
               search
             </span>
-            <span className="text-[13px] text-[var(--admin-text-secondary)] flex-1 truncate font-medium">
-              Search products, orders, customers...
+            <span className="text-[12px] md:text-[13px] text-[var(--admin-text-secondary)] flex-1 truncate font-medium">
+              <span className="hidden md:inline">Search products, orders, customers...</span>
+              <span className="md:hidden">Search...</span>
             </span>
-            <div className="flex items-center gap-1.5">
+            <div className="hidden md:flex items-center gap-1.5 shrink-0">
               <kbd className="w-[22px] h-[22px] flex items-center justify-center bg-white rounded shadow-sm text-[12px] font-sans text-[var(--admin-text-primary)] border border-black/5 font-semibold">
                 ⌘
               </kbd>
@@ -158,15 +159,6 @@ export function AdminTopBar() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Mobile Search Button */}
-          <button
-            onClick={() => setSearchPaletteOpen(true)}
-            className="md:hidden admin-btn-icon min-h-0 p-2"
-            aria-label="Open Search"
-          >
-            <span className="material-symbols-outlined text-[20px]">search</span>
-          </button>
-
           {/* Auto-Publish Toggle — Desktop */}
           <div className="hidden xl:flex items-center gap-2 px-1 py-1.5 select-none">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--admin-text-secondary)]">

@@ -8,7 +8,7 @@ import { releaseStalePendingRentals } from './rentalCronJobs';
 import { PaymentReconciliationService } from '../services/paymentReconciliationService';
 import { checkCloudinaryCdn } from '../utils/cdnHealth';
 import { getAdminEmails } from '../config/adminConfig';
-import { recommendationQueue } from './queues';
+import { recommendationQueue, isQueuesReady } from './queues';
 import { InventoryService } from '../services/InventoryService';
 import { WebhookDeadLetterService } from '../services/WebhookDeadLetterService';
 import { initHealthMonitorJob } from './healthMonitorJob';
@@ -23,8 +23,59 @@ import { runDeadDataScan } from './deadDataDetector';
 import { CatalogHealthJob } from './catalogHealthJob';
 
 export const initJobs = () => {
+  // ═══════════════════════════════════════════════════════════════════════
+  // CRITICAL: Outbox processor ALWAYS runs regardless of ENABLE_CRON.
+  // This is what processes transactional emails, admin notifications,
+  // loyalty rewards, etc. Without this, outbox events sit PENDING forever.
+  // ═══════════════════════════════════════════════════════════════════════
+  try {
+    const { systemQueue, isQueuesReady } = require('./queues');
+    const queueReady = isQueuesReady();
+    if (queueReady && process.env.ENABLE_WORKERS !== 'false') {
+      systemQueue
+        .add(
+          'process-outbox',
+          {},
+          {
+            repeat: { every: 10000 },
+            jobId: 'repeatable-outbox-processor',
+          },
+        )
+        .catch((err: any) =>
+          logger.error(`[CRON] Failed to register outbox repeatable job: ${err.message}`),
+        );
+      logger.info('[CRON] Outbox processor registered via BullMQ repeatable job (every 10s)');
+    } else {
+      // Cron fallback when Redis is unavailable — runs every 10 seconds
+      cron.schedule('*/10 * * * * *', async () => {
+        const { processOutboxEvents } = require('./outboxProcessor');
+        await processOutboxEvents();
+      });
+      logger.info('[CRON] Outbox processor registered via local cron fallback (every 10s)');
+    }
+  } catch (err: any) {
+    logger.error(`[CRON] Failed to initialize outbox processor: ${err.message}`);
+    // Last resort fallback: register local cron
+    cron.schedule('*/10 * * * * *', async () => {
+      const { processOutboxEvents } = require('./outboxProcessor');
+      await processOutboxEvents();
+    });
+    logger.info('[CRON] Outbox processor registered via emergency cron fallback (every 10s)');
+  }
+
+  // Also process the existing backlog of PENDING events immediately on startup
+  setImmediate(async () => {
+    try {
+      const { processOutboxEvents } = require('./outboxProcessor');
+      await processOutboxEvents();
+      logger.info('[STARTUP] Processed backlog of pending outbox events');
+    } catch (err: any) {
+      logger.error(`[STARTUP] Failed to process outbox backlog: ${err.message}`);
+    }
+  });
+
   if (process.env.ENABLE_CRON === 'false') {
-    logger.info('? Background cron jobs are disabled locally (ENABLE_CRON=false)');
+    logger.info('⏸ Non-critical background cron jobs are disabled locally (ENABLE_CRON=false)');
     return;
   }
 
@@ -130,31 +181,8 @@ export const initJobs = () => {
     );
   });
 
-  // Outbox Processor is handled via BullMQ Repeatable Jobs (Distributed) OR cron fallback (Local/No Redis)
-  const { systemQueue, isQueuesReady } = require('./queues');
-  const queueReady = isQueuesReady();
-  if (queueReady) {
-    systemQueue
-      .add(
-        'process-outbox',
-        {},
-        {
-          repeat: { every: 10000 }, // Every 10 seconds
-          jobId: 'repeatable-outbox-processor',
-        },
-      )
-      .catch((err: any) =>
-        logger.error(`[CRON] Failed to register outbox repeatable job: ${err.message}`),
-      );
-  } else {
-    // ⚠ CRITICAL FIX: Cron fallback when Redis is unavailable (e.g. Render free tier)
-    // Run every 10 seconds
-    cron.schedule('*/10 * * * * *', async () => {
-      const { processOutboxEvents } = require('./outboxProcessor');
-      await processOutboxEvents();
-    });
-    logger.info(`[CRON] Registered local cron fallback for outbox processor (runs every 10s)`);
-  }
+  // NOTE: Outbox Processor is now registered in the always-on section
+  // at the top of initJobs(), regardless of ENABLE_CRON.
 
   // Webhook Dead-Letter Processor (every 5 minutes)
   cron.schedule('*/5 * * * *', async () => {

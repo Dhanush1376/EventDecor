@@ -18,6 +18,13 @@ import { useAdminCMS } from '../hooks/useAdminCMS';
 import { useAdminProducts } from '../hooks/useAdminProducts';
 import { useAdminOrders } from '../hooks/useAdminOrders';
 
+const extractTimestamp = (id) => {
+  if (typeof id === 'string' && id.length === 24) {
+    return new Date(parseInt(id.substring(0, 8), 16) * 1000).toISOString();
+  }
+  return new Date().toISOString();
+};
+
 const mapDbNotificationToFrontend = (n) => ({
   id: n._id || n.id,
   title: n.title,
@@ -36,6 +43,7 @@ const mapDbNotificationToFrontend = (n) => ({
       ' ' +
       new Date(n.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })
     : 'Just now',
+  timestamp: n.createdAt || n.timestamp || extractTimestamp(n._id || n.id),
   actionLink: n.actionLink,
   rawNotification: n,
 });
@@ -229,6 +237,27 @@ export function AdminProvider({ children }) {
       await notificationService.markAdminAlertRead(notifId);
     } catch (err) {
       logger.warn('Failed to mark notification read on backend:', err);
+    }
+  }, []);
+
+  const markNotificationUnread = useCallback(async (notifId) => {
+    setNotifications((prev) => prev.map((n) => (n.id === notifId ? { ...n, read: false } : n)));
+    try {
+      // Best effort backend call if route exists, mostly relying on local state for UX
+      await notificationService.markAdminAlertUnread?.(notifId);
+    } catch (err) {
+      logger.warn('Failed to mark notification unread on backend:', err);
+    }
+  }, []);
+
+  const deleteNotification = useCallback(async (notifId) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== notifId));
+    try {
+      await notificationService.deleteAdminAlert(notifId);
+      toast.success('Alert dismissed');
+    } catch (err) {
+      logger.warn('Failed to dismiss alert on backend:', err);
+      toast.error('Failed to dismiss alert');
     }
   }, []);
 
@@ -446,6 +475,8 @@ export function AdminProvider({ children }) {
         notifications,
         unreadNotifications,
         markNotificationRead,
+        markNotificationUnread,
+        deleteNotification,
         markAllNotificationsRead,
         dashboardStats,
         refreshDashboard,

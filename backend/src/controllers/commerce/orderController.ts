@@ -244,3 +244,32 @@ export const getOrderTimeline = asyncHandler(async (req: Request, res: Response)
   const timeline = await OrderTimelineService.getOrderTimeline(orderId);
   res.status(200).json(new ApiResponse(true, 'Order timeline fetched successfully', timeline));
 });
+
+export const softDeleteOrder = asyncHandler(async (req: Request, res: Response) => {
+  const orderId = req.params.id;
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    throw new ApiError(404, 'Order not found');
+  }
+
+  // SoftDeletePlugin will automatically intercept this and move it to the RecycleBin
+  await (order as any).softDelete(req.user, 'Deleted by admin');
+
+  if (req.user && req.user.role !== 'user') {
+    await AdminAuditService.logAction({
+      actorId: req.user.id,
+      actorEmail: req.user.email || 'unknown',
+      actorRole: req.user.role,
+      method: req.method,
+      path: req.originalUrl,
+      entityType: 'Order',
+      entityId: order.id,
+      action: 'soft_delete',
+      previousValue: null,
+      newValue: { status: 'deleted' },
+    });
+  }
+
+  res.status(200).json(new ApiResponse(true, 'Order moved to recycle bin successfully'));
+});

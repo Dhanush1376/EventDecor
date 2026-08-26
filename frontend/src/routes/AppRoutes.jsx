@@ -10,6 +10,7 @@ import { NavigationOrchestrator } from '../components/ui/NavigationOrchestrator'
 import { ScrollManager } from '../components/ui/ScrollManager';
 import { MaintenanceGate } from '../components/ui/MaintenanceGate';
 import { MaintenanceBanner } from '../components/MaintenanceBanner';
+import { GlobalToaster } from '../components/ui/GlobalToaster';
 
 const GlobalTracker = lazy(() =>
   import('../components/ui/GlobalTracker').then((m) => ({ default: m.GlobalTracker })),
@@ -276,6 +277,8 @@ export function AppRoutes() {
       <NavigationOrchestrator />
       <ScrollManager />
       <MaintenanceBanner />
+      <GlobalToaster />
+
       <Suspense fallback={null}>
         <GlobalTracker />
         <PwaUpdatePrompt />

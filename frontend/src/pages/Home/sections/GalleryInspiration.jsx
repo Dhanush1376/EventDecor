@@ -4,7 +4,6 @@ import { m as motion } from 'framer-motion';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 import { SectionHeader } from '../../../components/shared/SectionHeader';
 import { MandalaArtDecor } from '../../../components/ui/MandalaArtDecor';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
@@ -51,7 +50,7 @@ export function GalleryInspiration({ previewContent }) {
   }, [rawGalleryItems, galleryPreview]);
 
   if (galleryPreview?.isVisible === false) return null;
-  if (!galleryLoading && !cmsLoading && !isError && galleryItems.length === 0) return null;
+  if (isError || (!galleryLoading && !cmsLoading && galleryItems.length === 0)) return null;
   if (cmsLoading || galleryLoading) {
     return (
       <section className="h1-section relative isolate" id="h1-inspiration">
@@ -93,14 +92,6 @@ export function GalleryInspiration({ previewContent }) {
           className="mb-10"
         />
 
-        {isError && (
-          <HomeSectionState
-            title="Gallery inspiration could not be loaded"
-            message="Retry the gallery request or check the gallery API."
-            icon="error"
-            onRetry={refetch}
-          />
-        )}
         {!isError && galleryItems.length > 0 && (
           <div className="columns-2 lg:columns-3 lg:columns-4 gap-3 lg:gap-5.5 space-y-3 lg:space-y-5.5 relative z-10">
             {galleryItems.map((item, idx) => (

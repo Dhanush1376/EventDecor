@@ -2,15 +2,7 @@ import { createAdminNotification, sendDirectEmail } from '../notificationService
 import { IReturnRequest } from '../../models/ReturnRequest';
 import User from '../../models/User';
 import ExchangeRequest from '../../models/ExchangeRequest';
-import {
-  buildReturnSubmittedCustomerEmail,
-  buildReturnApprovedCustomerEmail,
-  buildReturnRejectedCustomerEmail,
-  buildExchangeSubmittedCustomerEmail,
-  buildExchangePaymentVerifiedEmail,
-  buildExchangeApprovedCustomerEmail,
-  buildExchangeRejectedCustomerEmail,
-} from '../../utils/email/returnExchangeEmailTemplates';
+
 import logger from '../../config/logger';
 
 export class ReturnNotificationService {
@@ -26,9 +18,6 @@ export class ReturnNotificationService {
     try {
       const user = await this.getUser(returnRequest.userId.toString());
       const isExchange = returnRequest.returnType === 'exchange';
-      const exchangeDetails = isExchange
-        ? await this.getExchangeDetails(returnRequest._id.toString())
-        : null;
 
       const isHighValue = (returnRequest.refundBreakdown?.grandTotal ?? 0) > 5000;
       const isHighRisk = (returnRequest.fraudScore ?? 0) > 50;
@@ -52,29 +41,7 @@ export class ReturnNotificationService {
       });
 
       if (user?.email) {
-        // Send email to customer
-        let customerEmailContent;
-        if (isExchange) {
-          customerEmailContent = buildExchangeSubmittedCustomerEmail(
-            returnRequest,
-            exchangeDetails,
-            user,
-          );
-        } else {
-          customerEmailContent = buildReturnSubmittedCustomerEmail(returnRequest, user);
-        }
-
-        await sendDirectEmail({
-          email: user.email,
-          subject: customerEmailContent.subject,
-          customHtml: customerEmailContent.html,
-          type: 'order',
-          action: `${isExchange ? 'exchange' : 'return'}_request_submitted`,
-          notificationKey: `${isExchange ? 'EXCHANGE' : 'RETURN'}_SUBMITTED:${returnRequest.returnId}:CUSTOMER`,
-        });
-
-        // Send email to admin (e.g. support@siriartsandcrafts.com or active admins - here we just log or if there is an admin email list we can send. For now we will rely on the dashboard notification as before, but the plan asked for an admin email too. We'll send it to a default admin or assume notificationService handles admin broadcast if we just use a generic address. Wait, previous code didn't actually send an admin email, it sent the customer email inside `notifyAdminNewReturn` by mistake! Let's just fix the customer email part, and optionally send admin email if configured.)
-        // In the interest of time, we'll focus on the customer email fixes as that's the core issue.
+        // Customer email is handled by the outbox processor for RETURNREQUEST_RETURNCREATED
       }
     } catch (error) {
       logger.error(`Error in notifyAdminNewReturn for ${returnRequest.returnId}:`, error);
@@ -86,84 +53,31 @@ export class ReturnNotificationService {
       const user = await this.getUser(returnRequest.userId.toString());
       if (!user?.email) return;
 
-      const isExchange = returnRequest.returnType === 'exchange';
-      const exchangeDetails = isExchange
-        ? await this.getExchangeDetails(returnRequest._id.toString())
-        : null;
-
-      let emailContent;
-      if (isExchange) {
-        emailContent = buildExchangeApprovedCustomerEmail(returnRequest, exchangeDetails, user);
-      } else {
-        emailContent = buildReturnApprovedCustomerEmail(returnRequest, user);
-      }
-
-      await sendDirectEmail({
-        email: user.email,
-        subject: emailContent.subject,
-        customHtml: emailContent.html,
-        type: 'order',
-        action: `${isExchange ? 'exchange' : 'return'}_request_approved`,
-        notificationKey: `${isExchange ? 'EXCHANGE' : 'RETURN'}_APPROVED:${returnRequest.returnId}:CUSTOMER`,
-      });
+      // Customer email is handled by the outbox processor for RETURNREQUEST_RETURNSTATUSUPDATED
     } catch (error) {
       logger.error(`Error in notifyCustomerReturnApproved for ${returnRequest.returnId}:`, error);
     }
   }
 
-  static async notifyCustomerReturnRejected(returnRequest: IReturnRequest) {
+  static async notifyCustomerReturnRejected(returnRequest: IReturnRequest, _reason?: string) {
     try {
       const user = await this.getUser(returnRequest.userId.toString());
       if (!user?.email) return;
 
-      const isExchange = returnRequest.returnType === 'exchange';
-
-      let emailContent;
-      if (isExchange) {
-        emailContent = buildExchangeRejectedCustomerEmail(returnRequest, user);
-      } else {
-        emailContent = buildReturnRejectedCustomerEmail(returnRequest, user);
-      }
-
-      await sendDirectEmail({
-        email: user.email,
-        subject: emailContent.subject,
-        customHtml: emailContent.html,
-        type: 'order',
-        action: `${isExchange ? 'exchange' : 'return'}_request_rejected`,
-        notificationKey: `${isExchange ? 'EXCHANGE' : 'RETURN'}_REJECTED:${returnRequest.returnId}:CUSTOMER`,
-      });
+      // Customer email is handled by the outbox processor for RETURNREQUEST_RETURNSTATUSUPDATED
     } catch (error) {
       logger.error(`Error in notifyCustomerReturnRejected for ${returnRequest.returnId}:`, error);
     }
   }
 
-  static async notifyCustomerExchangePaymentVerified(returnRequestId: any) {
+  static async notifyCustomerExchangeVerified(returnRequest: IReturnRequest) {
     try {
-      // Need to fetch full return request here
-      const ReturnRequest = require('../../models/ReturnRequest').default;
-      const returnRequest = await ReturnRequest.findById(returnRequestId).lean();
-      if (!returnRequest) return;
-
       const user = await this.getUser(returnRequest.userId.toString());
       if (!user?.email) return;
 
-      const exchangeDetails = await this.getExchangeDetails(returnRequest._id.toString());
-      const emailContent = buildExchangePaymentVerifiedEmail(returnRequest, exchangeDetails, user);
-
-      await sendDirectEmail({
-        email: user.email,
-        subject: emailContent.subject,
-        customHtml: emailContent.html,
-        type: 'order',
-        action: `exchange_payment_verified`,
-        notificationKey: `EXCHANGE_PAYMENT_VERIFIED:${returnRequest.returnId}:CUSTOMER`,
-      });
+      // Customer email is handled by the outbox processor for RETURNREQUEST_RETURNSTATUSUPDATED
     } catch (error) {
-      logger.error(
-        `Error in notifyCustomerExchangePaymentVerified for returnRequest ${returnRequestId}:`,
-        error,
-      );
+      logger.error(`Error in notifyCustomerExchangeVerified for ${returnRequest.returnId}:`, error);
     }
   }
 

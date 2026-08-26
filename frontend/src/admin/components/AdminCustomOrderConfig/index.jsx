@@ -317,16 +317,16 @@ export function AdminCustomOrderConfig() {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
           <div className="xl:col-span-8 space-y-4">
             {/* SUB-TABS (Forms vs Workflows) */}
-            <div className="flex border-b border-[var(--admin-border)] gap-6">
+            <div className="flex border-b border-[var(--admin-border)] gap-4 sm:gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <button
                 onClick={() => setActiveSectionTab('forms')}
-                className={`pb-3 text-[13px] font-bold uppercase tracking-wider transition-all border-b-2 ${activeSectionTab === 'forms' ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]' : 'border-transparent text-black/50 hover:text-black'}`}
+                className={`shrink-0 whitespace-nowrap pb-3 text-[12px] sm:text-[13px] font-bold uppercase tracking-wider transition-all border-b-2 ${activeSectionTab === 'forms' ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]' : 'border-transparent text-black/50 hover:text-black'}`}
               >
                 Form Builder
               </button>
               <button
                 onClick={() => setActiveSectionTab('workflows')}
-                className={`pb-3 text-[13px] font-bold uppercase tracking-wider transition-all border-b-2 ${activeSectionTab === 'workflows' ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]' : 'border-transparent text-black/50 hover:text-black'}`}
+                className={`shrink-0 whitespace-nowrap pb-3 text-[12px] sm:text-[13px] font-bold uppercase tracking-wider transition-all border-b-2 ${activeSectionTab === 'workflows' ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]' : 'border-transparent text-black/50 hover:text-black'}`}
               >
                 Lifecycle Workflows
               </button>

@@ -381,7 +381,7 @@ class OtpAuthService {
       }
 
       try {
-        const { createAdminNotification } = require('../controllers/adminNotificationController');
+        const { createAdminNotification } = require('./notificationService');
         createAdminNotification({
           title: 'New User Registration',
           message: `${user.name || user.email} just registered on the platform.`,

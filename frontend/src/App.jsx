@@ -1,7 +1,5 @@
 import React, { Suspense, useState, useEffect } from 'react';
-import { LazyMotion, domAnimation, m } from 'framer-motion';
-import toast, { Toaster, ToastBar, useToasterStore } from 'react-hot-toast';
-import debounce from 'lodash.debounce';
+import { LazyMotion, domAnimation } from 'framer-motion';
 
 import { AppProviders } from './providers/AppProviders';
 import { AppRoutes } from './routes/AppRoutes';
@@ -20,16 +18,6 @@ import { AuthModals } from './components/auth/AuthModals';
 
 function App() {
   const [isMounted, setIsMounted] = useState(false);
-  const [toastPosition, setToastPosition] = useState('bottom-right');
-  const { toasts } = useToasterStore();
-
-  useEffect(() => {
-    const TOAST_LIMIT = 3;
-    toasts
-      .filter((t) => t.visible)
-      .filter((_, i) => i >= TOAST_LIMIT)
-      .forEach((t) => toast.remove(t.id));
-  }, [toasts]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -43,15 +31,7 @@ function App() {
     prefetchManager.setQueryClient(queryClient);
     const unsubscribe = subscribeToQueryCache(queryClient);
 
-    const handleResize = debounce(() => {
-      setToastPosition(window.innerWidth < 1024 ? 'top-center' : 'bottom-right');
-    }, 250);
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
     return () => {
-      window.removeEventListener('resize', handleResize);
-      handleResize.cancel();
       unsubscribe();
     };
   }, []);
@@ -71,51 +51,6 @@ function App() {
           <Suspense fallback={null}>
             <SlowConnectionBanner />
           </Suspense>
-        )}
-
-        {isMounted && (
-          <div className="toaster-container">
-            <Toaster
-              position={toastPosition}
-              containerStyle={{
-                top: toastPosition === 'top-center' ? '80px' : 20,
-              }}
-              toastOptions={{
-                duration: 3500,
-                style: {
-                  background: 'rgba(255, 255, 255, 0.4)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.6)',
-                  color: '#000000',
-                  fontSize: '12px',
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: '700',
-                  borderRadius: 'var(--radius-full)',
-                  padding: '12px 24px',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.4)',
-                },
-                success: { iconTheme: { primary: '#16a34a', secondary: '#ffffff' } },
-              }}
-            >
-              {(t) => (
-                <m.div
-                  drag="y"
-                  dragConstraints={{ top: 0, bottom: 0 }}
-                  dragElastic={0.4}
-                  onDragEnd={(_, info) => {
-                    if (info.offset.y < -20) {
-                      toast.dismiss(t.id);
-                    }
-                  }}
-                  style={{ touchAction: 'none', cursor: 'grab' }}
-                  whileTap={{ cursor: 'grabbing' }}
-                >
-                  <ToastBar toast={t} />
-                </m.div>
-              )}
-            </Toaster>
-          </div>
         )}
 
         {isMounted && <AuthModals />}

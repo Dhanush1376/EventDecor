@@ -8,8 +8,7 @@ import { PageHeader, stagger } from '../../components/AdminUIKit';
 // Tabs
 import { DashboardTab } from './tabs/DashboardTab';
 import { BookingsTab } from './tabs/BookingsTab';
-import { CalendarTab } from './tabs/CalendarTab';
-import { InventoryTab } from './tabs/InventoryTab';
+
 import { ShowcasesTab } from './tabs/ShowcasesTab';
 
 export function AdminEvents() {
@@ -79,8 +78,6 @@ export function AdminEvents() {
     { id: 'dashboard', label: 'Overview', icon: 'dashboard' },
     { id: 'bookings', label: 'Bookings', icon: 'assignment' },
     { id: 'showcases', label: 'Showcase', icon: 'redeem' },
-    { id: 'inventory', label: 'Inventory', icon: 'inventory' },
-    { id: 'calendar', label: 'Calendar', icon: 'calendar_month' },
   ];
 
   return (
@@ -90,30 +87,31 @@ export function AdminEvents() {
         subtitle={`${bookings.length} active event bookings recorded`}
         icon="event"
         iconColor="orders"
-      >
-        <button
-          onClick={() => navigate('/admin/showcases/add')}
-          className="admin-btn admin-btn-primary h-9"
-        >
-          <span className="material-symbols-outlined text-[16px]">add</span>
-          Add Showcase
-        </button>
-      </PageHeader>
+        headerAction={
+          <button
+            onClick={() => navigate('/admin/showcases/add')}
+            className="admin-btn admin-btn-primary h-9 w-full sm:w-auto px-4 flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            Add Showcase
+          </button>
+        }
+      />
 
       {/* Smart Filter Tabs */}
-      <div className="flex border-b border-[var(--admin-border-subtle)] overflow-x-auto no-scrollbar mt-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full sm:w-max mb-6">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-6 py-4 font-semibold text-[14px] border-b-2 transition-colors whitespace-nowrap ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-1.5 rounded-sm text-[12px] sm:text-[13px] font-bold transition-all whitespace-nowrap ${
               activeTab === tab.id
-                ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]'
-                : 'border-transparent text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border-strong)]'
+                ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
+                : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
-            {tab.label}
+            <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+            <span>{tab.label}</span>
           </button>
         ))}
       </div>
@@ -131,10 +129,6 @@ export function AdminEvents() {
         )}
         {activeTab === 'bookings' && (
           <BookingsTab bookings={bookings} loadingBookings={loadingBookings} />
-        )}
-        {activeTab === 'calendar' && <CalendarTab bookings={bookings} />}
-        {activeTab === 'inventory' && (
-          <InventoryTab inventoryItems={inventoryItems} operationsLoading={operationsLoading} />
         )}
         {activeTab === 'showcases' && (
           <ShowcasesTab

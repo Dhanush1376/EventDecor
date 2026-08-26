@@ -24,11 +24,22 @@ export function ConsentPopup() {
   const [showConfigure, setShowConfigure] = useState(false);
 
   useEffect(() => {
-    const consentLogged = safeLocalStorage.getItem('siri_arts_consent_logged');
+    let consentLogged = null;
+    try {
+      consentLogged =
+        localStorage.getItem('siri_arts_consent_logged') ||
+        safeLocalStorage.getItem('siri_arts_consent_logged');
+      if (!consentLogged && document.cookie.includes('siri_arts_consent_logged=')) {
+        const match = document.cookie.match(new RegExp('(^| )siri_arts_consent_logged=([^;]+)'));
+        if (match) consentLogged = decodeURIComponent(match[2]);
+      }
+    } catch (e) {
+      logger.warn('Failed to read consent from storage', e);
+    }
+
     if (!consentLogged) {
       // Show consent after user's first interaction (scroll/click/touch) + 1s buffer,
       // or after 20s fallback — whichever comes first.
-      // This respects the critical first-impression trust formation window.
       let interactionTimer = null;
       let fallbackTimer = null;
       let fired = false;
@@ -98,7 +109,14 @@ export function ConsentPopup() {
           personalizedRecommendations: finalPrefs.personalizedRecommendations,
         };
 
-        safeLocalStorage.setItem('siri_arts_consent_logged', JSON.stringify(finalPrefs));
+        const prefString = JSON.stringify(finalPrefs);
+        try {
+          localStorage.setItem('siri_arts_consent_logged', prefString);
+          safeLocalStorage.setItem('siri_arts_consent_logged', prefString);
+          document.cookie = `siri_arts_consent_logged=${encodeURIComponent(prefString)}; path=/; max-age=31536000; SameSite=Lax`;
+        } catch (e) {
+          logger.warn('Storage disabled or full', e);
+        }
         setPreferences(finalPrefs);
 
         if (finalPrefs.personalizedRecommendations || finalPrefs.marketingEmails) {

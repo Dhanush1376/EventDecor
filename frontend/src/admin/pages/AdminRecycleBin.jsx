@@ -478,15 +478,68 @@ const AdminRecycleBin = () => {
   // ── Render ──
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
-      <PageHeader
-        title="Recycle Bin"
-        icon="delete_sweep"
-        iconColor="danger"
-        mobileRow={true}
-        headerAction={
-          <div className="flex items-center gap-2">
+      <PageHeader title="Recycle Bin" icon="delete_sweep" iconColor="danger" mobileRow={true} />
+
+      <motion.div variants={fadeUp}>{renderStats()}</motion.div>
+
+      <motion.div
+        variants={fadeUp}
+        className="flex flex-col sm:flex-row items-stretch gap-2 w-full mb-6"
+      >
+        <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] flex items-center px-3">
+          <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+            search
+          </span>
+          <input
+            type="text"
+            placeholder="Search deleted items..."
+            onChange={handleSearchChange}
+            className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-10"
+          />
+        </div>
+        <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+          <div className="relative flex items-stretch shrink-0">
+            <select
+              className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none min-w-0 max-w-[150px] truncate"
+              value={filters.entityType}
+              onChange={(e) => handleFilterChange('entityType', e.target.value)}
+            >
+              <option value="all">All Types</option>
+              <option value="Product">Products</option>
+              <option value="Category">Categories</option>
+              <option value="Order">Orders</option>
+              <option value="Review">Reviews</option>
+              <option value="Gallery">Gallery</option>
+            </select>
+            <span
+              className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"
+              style={{ top: '50%', transform: 'translateY(-50%)' }}
+            >
+              expand_more
+            </span>
+          </div>
+          <div className="relative flex items-stretch shrink-0">
+            <select
+              className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none min-w-0 max-w-[160px] truncate"
+              value={filters.timeRange}
+              onChange={(e) => handleFilterChange('timeRange', e.target.value)}
+            >
+              <option value="">Any Time</option>
+              <option value="today">Deleted Today</option>
+              <option value="7days">Deleted Last 7 Days</option>
+              <option value="expiring_soon">Expiring Soon (3d)</option>
+              <option value="expired">Expired</option>
+            </select>
+            <span
+              className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"
+              style={{ top: '50%', transform: 'translateY(-50%)' }}
+            >
+              expand_more
+            </span>
+          </div>
+          <div className="flex items-center gap-1 shrink-0 lg:ml-auto">
             <button
-              className="admin-btn admin-btn-outline h-9 px-3 flex items-center justify-center gap-2 shrink-0 text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+              className="px-3 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded border border-[var(--admin-border)] flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 gap-1.5 font-semibold text-[13px] h-10 sm:h-10"
               onClick={() => recycleBinApi.exportAuditLogs()}
               title="Export Logs"
             >
@@ -495,7 +548,7 @@ const AdminRecycleBin = () => {
             </button>
             {isOwner && (
               <button
-                className="admin-btn admin-btn-danger h-9 px-3 flex items-center justify-center gap-2 shrink-0 text-white"
+                className="px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded border border-red-200 flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 gap-1.5 font-semibold text-[13px] h-10 sm:h-10 dark:bg-red-950/30 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/50"
                 onClick={() => setEmptyBinModal(true)}
                 title="Empty Bin"
               >
@@ -504,48 +557,6 @@ const AdminRecycleBin = () => {
               </button>
             )}
           </div>
-        }
-      />
-
-      <motion.div variants={fadeUp}>{renderStats()}</motion.div>
-
-      <motion.div
-        variants={fadeUp}
-        className="admin-card p-3 sm:p-4 flex flex-col lg:flex-row items-center gap-3 sm:gap-4"
-      >
-        <div className="admin-search-wrapper w-full lg:max-w-md">
-          <span className="material-symbols-outlined admin-search-icon">search</span>
-          <input
-            type="text"
-            placeholder="Search deleted items..."
-            onChange={handleSearchChange}
-            className="admin-input h-10 w-full"
-          />
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto lg:ml-auto">
-          <select
-            className="admin-input h-10 text-[13px] font-semibold cursor-pointer w-full sm:w-auto sm:min-w-[150px]"
-            value={filters.entityType}
-            onChange={(e) => handleFilterChange('entityType', e.target.value)}
-          >
-            <option value="all">All Types</option>
-            <option value="Product">Products</option>
-            <option value="Category">Categories</option>
-            <option value="Order">Orders</option>
-            <option value="Review">Reviews</option>
-            <option value="Gallery">Gallery</option>
-          </select>
-          <select
-            className="admin-input h-10 text-[13px] font-semibold cursor-pointer w-full sm:w-auto sm:min-w-[160px]"
-            value={filters.timeRange}
-            onChange={(e) => handleFilterChange('timeRange', e.target.value)}
-          >
-            <option value="">Any Time</option>
-            <option value="today">Deleted Today</option>
-            <option value="7days">Deleted Last 7 Days</option>
-            <option value="expiring_soon">Expiring Soon (3d)</option>
-            <option value="expired">Expired</option>
-          </select>
         </div>
       </motion.div>
 

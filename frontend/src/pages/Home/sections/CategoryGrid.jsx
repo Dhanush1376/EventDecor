@@ -4,7 +4,6 @@ import { SectionHeader } from '../../../components/shared/SectionHeader';
 import { MandalaElement } from '../../../components/ui/MandalaElement';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 
 import React from 'react';
 
@@ -56,15 +55,8 @@ export const CategoryGrid = React.memo(function CategoryGrid({ previewContent })
     displayCategories = config.categories;
   }
 
-  // Ensure there are categories to display
   if (!displayCategories || displayCategories.length === 0) {
-    return (
-      <HomeSectionState
-        title={`No categories found for ${config.sectionTitle || 'Categories'}`}
-        message="Configure categories in the admin dashboard."
-        icon="category"
-      />
-    );
+    return null;
   }
 
   return (

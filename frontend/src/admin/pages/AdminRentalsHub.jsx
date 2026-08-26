@@ -42,7 +42,7 @@ export default function AdminRentalsHub() {
       initial="hidden"
       animate="show"
       variants={stagger}
-      className="flex flex-col flex-1 space-y-6 h-[calc(100vh-80px)]"
+      className="flex flex-col flex-1 space-y-6 min-h-screen"
     >
       <div>
         <PageHeader
@@ -50,28 +50,37 @@ export default function AdminRentalsHub() {
           subtitle="Track rental inventory, calendar availability, and due returns."
           icon="car_rental"
           iconColor="info"
-        />
-
-        {/* Smart Filter Tabs */}
-        <div className="flex border-b border-[var(--admin-border-subtle)] overflow-x-auto no-scrollbar mt-4">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 font-semibold text-[14px] border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]'
-                  : 'border-transparent text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border-strong)]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        >
+          {/* Sleek Modern Tabs (Moved inside PageHeader to appear on the right) */}
+          <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border-subtle)] shadow-sm shrink-0 w-full sm:w-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`relative flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 sm:px-3 py-2 sm:py-1.5 rounded text-[12px] font-bold tracking-wide transition-all duration-300 whitespace-nowrap ${
+                    isActive
+                      ? 'bg-white text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border-subtle)]'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-black/5 border border-transparent'
+                  }`}
+                >
+                  <span
+                    className={`material-symbols-outlined text-[16px] transition-colors duration-300 ${
+                      isActive ? 'text-[var(--admin-accent)]' : 'text-[var(--admin-text-tertiary)]'
+                    }`}
+                  >
+                    {tab.icon}
+                  </span>
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </PageHeader>
       </div>
 
-      <div className="flex-1 overflow-y-auto relative pb-10 custom-scrollbar">
+      <div className="flex-1 relative pb-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -79,7 +88,7 @@ export default function AdminRentalsHub() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0"
+            className="w-full"
           >
             {activeTab === 'active' && <AdminRentalOrders hideHeader={true} />}
             {activeTab === 'calendar' && <AdminRentalCalendar hideHeader={true} />}

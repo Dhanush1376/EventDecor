@@ -15,7 +15,7 @@ import { InquiryDetailDrawer } from '../components/inquiries/InquiryDetailDrawer
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 export function AdminInquiries({ hideHeader = false }) {
-  const { searchQuery } = useAdmin();
+  const { searchQuery, setSearchQuery } = useAdmin();
   const queryClient = useQueryClient();
 
   // Workspace tabs: 'active' (Orders List), 'config' (Edit Form Options)
@@ -112,31 +112,46 @@ export function AdminInquiries({ hideHeader = false }) {
               subtitle="Manage custom requests and quotations."
               icon="architecture"
               iconColor="custom"
-              headerAction={
-                <div className="flex items-center bg-[var(--admin-surface-muted)] p-0.5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] w-max">
-                  <button
-                    onClick={() => setCurrentWorkspace('active')}
-                    className={`px-4 py-1.5 rounded-[var(--admin-radius-sm)] text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
-                      currentWorkspace === 'active'
-                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
-                        : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
-                    }`}
-                  >
-                    Orders List
-                  </button>
-                  <button
-                    onClick={() => setCurrentWorkspace('config')}
-                    className={`px-4 py-1.5 rounded-[var(--admin-radius-sm)] text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
-                      currentWorkspace === 'config'
-                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
-                        : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
-                    }`}
-                  >
-                    Storefront Config
-                  </button>
-                </div>
-              }
             />
+            <motion.div
+              variants={fadeUp}
+              className="flex flex-col sm:flex-row items-stretch gap-2 w-full mt-6 mb-6"
+            >
+              <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] flex items-center px-3">
+                <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+                  search
+                </span>
+                <input
+                  type="text"
+                  value={searchQuery || ''}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search inquiries..."
+                  className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-10"
+                />
+              </div>
+              <div className="flex items-center gap-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] p-1 w-full sm:w-max shrink-0">
+                <button
+                  onClick={() => setCurrentWorkspace('active')}
+                  className={`flex-1 sm:flex-none px-2 sm:px-4 py-1.5 rounded-sm text-[11px] sm:text-[12px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center justify-center ${
+                    currentWorkspace === 'active'
+                      ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
+                  }`}
+                >
+                  Orders List
+                </button>
+                <button
+                  onClick={() => setCurrentWorkspace('config')}
+                  className={`flex-1 sm:flex-none px-2 sm:px-4 py-1.5 rounded-sm text-[11px] sm:text-[12px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center justify-center ${
+                    currentWorkspace === 'config'
+                      ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
+                  }`}
+                >
+                  Storefront Config
+                </button>
+              </div>
+            </motion.div>
           </div>
 
           <div className="flex-1 overflow-y-auto scrollbar-hide space-y-6 pb-10">

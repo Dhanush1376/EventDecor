@@ -382,15 +382,15 @@ export function AdminSettings({ hideHeader }) {
           subtitle="Configure platform preferences"
           icon="settings"
           actions={
-            <div className="flex flex-col sm:flex-row gap-3 min-w-[300px]">
-              <div className="relative flex-1">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-tertiary)] text-[20px]">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto min-w-[300px]">
+              <div className="relative flex-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] flex items-center px-3">
+                <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
                   search
                 </span>
                 <input
                   type="text"
                   placeholder="Search settings..."
-                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] text-[var(--admin-text-primary)] pl-10 pr-4 py-2.5 rounded-[var(--admin-radius-sm)] focus:border-[var(--admin-accent)] outline-none text-[14px] shadow-sm transition-all placeholder:text-[var(--admin-text-tertiary)] hover:border-[var(--admin-border-strong)]"
+                  className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
                 />
               </div>
             </div>

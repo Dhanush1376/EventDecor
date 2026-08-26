@@ -1,8 +1,7 @@
 import logger from '../config/logger';
 import { getActiveAdminEmailsFromDB } from '../config/adminConfig';
 import crypto from 'crypto';
-import { emailQueue, isQueuesReady, usingFallback } from '../jobs/queues';
-import { emailQueue as fallbackQueue } from './emailQueueService';
+import { generateInvoicePDF } from '../utils/pdfGenerator';
 import {
   buildOrderConfirmationCustomerEmail,
   buildOrderConfirmationAdminEmail,
@@ -31,13 +30,14 @@ export class TransactionalEmailService {
     type: 'order' | 'system' | 'engagement',
     action: string,
     notificationKey: string,
+    attachments?: { filename: string; content: Buffer | string; contentType?: string }[],
   ) {
     if (!to) {
       logger.warn(`[EMAIL TRACE][ENQUEUE] skipped — no recipient for action=${action}`);
       return;
     }
 
-    const emailOptions = {
+    const emailOptions: any = {
       email: to,
       subject,
       customHtml: html,
@@ -46,32 +46,22 @@ export class TransactionalEmailService {
       notificationKey, // For DB-level idempotency
     };
 
-    const queueReady = isQueuesReady();
-    logger.info(
-      `[EMAIL TRACE][ENQUEUE][05] enqueue requested key=${notificationKey} queueReady=${queueReady} usingFallback=${usingFallback} queueType=${queueReady && !usingFallback ? 'bullmq' : 'fallback'}`,
-    );
+    if (attachments && attachments.length > 0) {
+      emailOptions.attachments = attachments;
+    }
+
+    logger.info(`[EMAIL TRACE] Sending email directly (bypassing queue) for ${action} to ${to}`);
 
     try {
-      if (queueReady) {
-        // Queue-level idempotency
-        const job = await emailQueue.add('sendEmail', emailOptions, { jobId: notificationKey });
-        logger.info(
-          `[EMAIL TRACE][ENQUEUE][06] queue.add returned jobId=${(job as any)?.id ?? 'NONE'} name=${(job as any)?.name ?? 'NONE'}`,
-        );
-      } else {
-        // Fallback for local dev without Redis
-        logger.info(
-          `[EMAIL TRACE][ENQUEUE][06] using emailQueueService fallback (direct processor)`,
-        );
-        fallbackQueue.enqueue(emailOptions);
-      }
+      const { sendDirectEmailProcessor } = require('./notificationService');
+      // Await synchronous delivery to guarantee the mail is pushed to SMTP
+      await sendDirectEmailProcessor(emailOptions);
     } catch (err: any) {
       logger.error(
-        `[TransactionalEmailService] Failed to enqueue email for ${action}: ${err?.message}`,
+        `[TransactionalEmailService] Failed to send email for ${action}: ${err?.message}`,
         err,
       );
-      // MINIMAL FIX: Route to fallback queue if BullMQ add fails (matches OTP behavior)
-      fallbackQueue.enqueue(emailOptions);
+      throw err; // Let OutboxProcessor handle the retry logic
     }
   }
 
@@ -119,6 +109,45 @@ export class TransactionalEmailService {
       const { subject, html } = buildOrderConfirmationCustomerEmail(order, user);
       const customerHash = this.hashEmail(customerEmail);
       const notificationKey = `ORDER_CREATED:${eventId}:CUSTOMER:${customerHash}`;
+
+      let attachments: any[] = [];
+      try {
+        const orderData = {
+          orderId: order.orderUuid || order.orderNumber || order._id.toString(),
+          date: order.createdAt || new Date(),
+          customerName: user?.name || order.shippingAddress?.name || 'Customer',
+          shippingAddress: order.shippingAddress
+            ? `${order.shippingAddress.name}, ${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.pincode}`
+            : 'Not Provided',
+          items: order.items.map((i: any) => ({
+            name: i.title || i.name || 'Item',
+            quantity: i.quantity || 1,
+            price: i.price || 0,
+          })),
+          subtotal: order.subtotal || 0,
+          shipping: order.shippingFee || order.courierCharges || 0,
+          total: order.total || 0,
+          store: order.store,
+          invoice: order.invoice,
+        };
+        const pdfBuffer = await generateInvoicePDF(orderData);
+        attachments = [
+          {
+            filename: `Invoice_${orderData.orderId}.pdf`,
+            content: pdfBuffer,
+            contentType: 'application/pdf',
+          },
+        ];
+        logger.info(
+          `[TransactionalEmailService] Successfully generated invoice PDF for ${order._id}`,
+        );
+      } catch (pdfErr) {
+        logger.error(
+          `[TransactionalEmailService] Failed to generate invoice PDF for ${order._id}:`,
+          pdfErr,
+        );
+      }
+
       await this.enqueueEmail(
         customerEmail,
         subject,
@@ -126,6 +155,7 @@ export class TransactionalEmailService {
         'order',
         'order_confirmation_customer',
         notificationKey,
+        attachments,
       );
     }
 
@@ -167,6 +197,9 @@ export class TransactionalEmailService {
         notificationKey,
       );
     }
+
+    // Admins only receive website notifications for status changes to prevent email spam.
+    // The notification is handled by the outbox processor.
   }
 
   public static async sendPaymentFailedEmail(

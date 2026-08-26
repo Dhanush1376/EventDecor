@@ -3,11 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { customerIntelligenceService } from '../../../services/domainServices';
 import { useAuth } from '../../../context/AuthContext';
-import Mail from 'lucide-react/dist/esm/icons/mail';
-import Phone from 'lucide-react/dist/esm/icons/phone';
-import MapPin from 'lucide-react/dist/esm/icons/map-pin';
-import Award from 'lucide-react/dist/esm/icons/award';
-import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
+import { PageHeader } from '../../components/AdminUIKit';
 import { getAccessToken } from '../../../services/api';
 import { acquireAdminSocket, releaseAdminSocket } from '../../services/adminSocket';
 
@@ -133,27 +129,17 @@ export default function CustomerProfile360({ customerId: propCustomerId, onClose
 
   return (
     <div className="p-6 max-w-[1600px] mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        {onClose ? (
-          <button
-            onClick={onClose}
-            className="admin-btn-icon w-10 h-10 p-0 text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] shrink-0"
-          >
-            <ArrowLeft size={20} strokeWidth={2.5} />
-          </button>
-        ) : (
-          <button
-            onClick={() => navigate('/admin/customers')}
-            className="admin-btn-icon w-10 h-10 p-0 text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] shrink-0"
-          >
-            <ArrowLeft size={20} strokeWidth={2.5} />
-          </button>
-        )}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 leading-tight">Customer Profile</h1>
-          <p className="text-sm text-gray-500">Everything you need to know about this customer.</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Customer Profile"
+        subtitle="Everything you need to know about this customer."
+        icon="person"
+        iconColor="users"
+        backButton={
+          onClose
+            ? { label: 'Back', path: null }
+            : { label: 'Back to Customers', path: '/admin/customers' }
+        }
+      />
 
       {/* HORIZONTAL HEADER */}
       <div className="admin-card p-4 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -175,21 +161,25 @@ export default function CustomerProfile360({ customerId: propCustomerId, onClose
             </h2>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 mt-2 text-sm text-[var(--admin-text-secondary)]">
               <span className="flex items-center gap-1.5">
-                <Mail className="w-4 h-4 shrink-0" /> {identity.email || 'No email'}
+                <span className="material-symbols-outlined text-[16px]">mail</span>{' '}
+                {identity.email || 'No email'}
               </span>
               <span className="flex items-center gap-1.5">
-                <Phone className="w-4 h-4 shrink-0" /> {identity.phone || 'No phone'}
+                <span className="material-symbols-outlined text-[16px]">phone</span>{' '}
+                {identity.phone || 'No phone'}
               </span>
               <span className="flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 shrink-0" /> {identity.location || 'Unknown location'}
+                <span className="material-symbols-outlined text-[16px]">location_on</span>{' '}
+                {identity.location || 'Unknown location'}
               </span>
             </div>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3">
-              <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border-strong)] uppercase tracking-wider">
+              <span className="admin-badge admin-badge-neutral text-[10px] uppercase font-bold tracking-wider">
                 {profile.segment || 'Unsegmented'}
               </span>
-              <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-light)] flex items-center gap-1 uppercase tracking-wider">
-                <Award className="w-3.5 h-3.5" /> Tier: {identity.loyaltyTier || 'Standard'}
+              <span className="admin-badge admin-badge-success text-[10px] uppercase font-bold tracking-wider flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">stars</span> Tier:{' '}
+                {identity.loyaltyTier || 'Standard'}
               </span>
             </div>
           </div>
@@ -229,11 +219,11 @@ export default function CustomerProfile360({ customerId: propCustomerId, onClose
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`
-                    whitespace-nowrap py-4 px-5 border-b-2 font-semibold text-sm transition-colors focus:outline-none
+                    whitespace-nowrap py-3.5 px-5 border-b-[2px] font-bold text-[12px] uppercase tracking-wider transition-colors focus:outline-none
                     ${
                       activeTab === tab.id
-                        ? 'border-[var(--admin-accent)] text-[var(--admin-accent)] bg-white'
-                        : 'border-transparent text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-gray-100/50'
+                        ? 'border-[var(--admin-accent)] text-[var(--admin-accent)] bg-[var(--admin-surface)]'
+                        : 'border-transparent text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)]'
                     }
                   `}
                 >
@@ -244,7 +234,7 @@ export default function CustomerProfile360({ customerId: propCustomerId, onClose
           </nav>
         </div>
 
-        <div className="p-6 flex-1 bg-white">
+        <div className="p-6 flex-1 bg-[var(--admin-surface)]">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

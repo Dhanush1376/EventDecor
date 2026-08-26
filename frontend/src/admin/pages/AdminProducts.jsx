@@ -347,23 +347,23 @@ export function AdminProducts() {
           ) : (
             <div className="admin-card divide-y divide-[var(--admin-border-subtle)] p-0">
               {/* Category Filters Header */}
-              <div className="p-3 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--admin-border-subtle)]">
-                <div className="flex bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)] overflow-x-auto hide-scrollbar">
+              <div className="p-3 flex items-center justify-between gap-3 border-b border-[var(--admin-border-subtle)]">
+                <div className="flex items-center gap-1 p-0.5 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] min-w-0">
                   {['All', 'product', 'gallery', 'event'].map((t) => (
                     <button
                       key={t}
                       onClick={() => setCategoryTypeFilter(t)}
-                      className={`px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold cursor-pointer transition-all capitalize whitespace-nowrap ${
+                      className={`px-2.5 py-1 rounded-sm text-[11px] font-bold cursor-pointer transition-all capitalize whitespace-nowrap shrink-0 ${
                         categoryTypeFilter === t
-                          ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
-                          : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+                          ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
+                          : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
                       }`}
                     >
                       {t === 'All' ? 'All Types' : t}
                     </button>
                   ))}
                 </div>
-                <span className="text-[11px] text-[var(--admin-text-tertiary)] font-medium shrink-0">
+                <span className="text-[11px] text-[var(--admin-text-tertiary)] font-medium shrink-0 whitespace-nowrap">
                   {filteredCategories.length} categories
                 </span>
               </div>
@@ -546,13 +546,9 @@ export function AdminProducts() {
             )}
           </AnimatePresence>
 
-          <div className="flex flex-row items-stretch gap-2 shrink-0 w-full overflow-x-auto no-scrollbar pb-1 sm:pb-0 -mx-1 px-1 mb-6">
-            {/* Search Bar */}
-            <div className="relative shrink-0 flex-1 min-w-[220px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 flex flex-col justify-center">
-              <span
-                className="material-symbols-outlined absolute left-2 text-[var(--admin-text-tertiary)] pointer-events-none z-10"
-                style={{ fontSize: '14px', top: '50%', transform: 'translateY(-50%)' }}
-              >
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto mb-6">
+            <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] flex items-center px-3">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
                 search
               </span>
               <input
@@ -560,154 +556,140 @@ export function AdminProducts() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by name or ID..."
-                className="w-full h-full min-h-[32px] pl-7 pr-2 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] text-[12px] font-semibold text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] focus:outline-none transition-all m-0"
+                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-10"
               />
             </div>
-
-            {/* Separator */}
-            <div className="w-[1px] bg-[var(--admin-border-subtle)] shrink-0 my-1"></div>
-
-            {/* Categories & Statuses (Products Tab Only) */}
-            {activeTab === 'products' && (
-              <>
-                <div className="relative shrink-0 w-[150px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 flex flex-col justify-center">
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full h-full min-h-[32px] pl-2 pr-7 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] text-[11px] font-semibold text-[var(--admin-text-primary)] focus:outline-none appearance-none cursor-pointer transition-all m-0"
-                  >
-                    <option value="All">All Categories</option>
-                    {productCategories.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                  <span
-                    className="material-symbols-outlined absolute right-2 text-[14px] text-[var(--admin-text-tertiary)] pointer-events-none z-10"
-                    style={{ top: '50%', transform: 'translateY(-50%)' }}
-                  >
-                    expand_more
-                  </span>
-                </div>
-
-                <div className="relative shrink-0 w-[130px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 flex flex-col justify-center">
-                  <select
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="w-full h-full min-h-[32px] pl-2 pr-7 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] text-[11px] font-semibold text-[var(--admin-text-primary)] focus:outline-none appearance-none cursor-pointer transition-all m-0"
-                  >
-                    <option value="All">All Statuses</option>
-                    <option value="active">Active</option>
-                    <option value="low_stock">Low Stock</option>
-                    <option value="out_of_stock">Out of Stock</option>
-                  </select>
-                  <span
-                    className="material-symbols-outlined absolute right-2 text-[14px] text-[var(--admin-text-tertiary)] pointer-events-none z-10"
-                    style={{ top: '50%', transform: 'translateY(-50%)' }}
-                  >
-                    expand_more
-                  </span>
-                </div>
-
-                <div className="relative shrink-0 w-[150px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 flex flex-col justify-center">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full h-full min-h-[32px] pl-2 pr-7 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] text-[11px] font-semibold text-[var(--admin-text-primary)] focus:outline-none appearance-none cursor-pointer transition-all m-0"
-                  >
-                    <option value="newest">Sort: Newest</option>
-                    <option value="price-asc">Price: Low to High</option>
-                    <option value="price-desc">Price: High to Low</option>
-                    <option value="stock-asc">Stock: Low to High</option>
-                    <option value="stock-desc">Stock: High to Low</option>
-                  </select>
-                  <span
-                    className="material-symbols-outlined absolute right-2 text-[14px] text-[var(--admin-text-tertiary)] pointer-events-none z-10"
-                    style={{ top: '50%', transform: 'translateY(-50%)' }}
-                  >
-                    expand_more
-                  </span>
-                </div>
-              </>
-            )}
-
-            {/* Inventory Low Stock Toggle */}
-            {activeTab === 'inventory' && (
-              <div className="flex bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 flex-col justify-center shrink-0">
-                <div className="flex items-center gap-2 h-full min-h-[32px] px-2 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)]">
+            <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+              {activeTab === 'products' && (
+                <>
+                  <div className="relative flex items-stretch shrink-0">
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none min-w-0 max-w-[130px] truncate"
+                    >
+                      <option value="All">Category</option>
+                      {productCategories.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                    <span
+                      className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"
+                      style={{ top: '50%', transform: 'translateY(-50%)' }}
+                    >
+                      expand_more
+                    </span>
+                  </div>
+                  <div className="relative flex items-stretch shrink-0">
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none min-w-0 max-w-[110px] truncate"
+                    >
+                      <option value="All">Status</option>
+                      <option value="active">Active</option>
+                      <option value="low_stock">Low Stock</option>
+                      <option value="out_of_stock">Out of Stock</option>
+                    </select>
+                    <span
+                      className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"
+                      style={{ top: '50%', transform: 'translateY(-50%)' }}
+                    >
+                      expand_more
+                    </span>
+                  </div>
+                  <div className="relative flex items-stretch shrink-0">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none min-w-0 max-w-[120px] truncate"
+                    >
+                      <option value="newest">Newest</option>
+                      <option value="price-asc">Price (Low-High)</option>
+                      <option value="price-desc">Price (High-Low)</option>
+                      <option value="stock-asc">Stock (Low-High)</option>
+                      <option value="stock-desc">Stock (High-Low)</option>
+                    </select>
+                    <span
+                      className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"
+                      style={{ top: '50%', transform: 'translateY(-50%)' }}
+                    >
+                      expand_more
+                    </span>
+                  </div>
+                </>
+              )}
+              {activeTab === 'inventory' && (
+                <div className="flex items-center gap-2 px-3 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] h-10 sm:h-10 shrink-0">
                   <AdminToggle
                     checked={showLowStockOnly}
                     onChange={() => setShowLowStockOnly(!showLowStockOnly)}
+                    size="sm"
                   />
-                  <span className="text-[11px] font-semibold text-[var(--admin-text-primary)] whitespace-nowrap">
-                    Low Stock Only
+                  <span className="text-[13px] font-semibold text-[var(--admin-text-primary)] whitespace-nowrap">
+                    Low Stock
                   </span>
                 </div>
-              </div>
-            )}
-
-            {/* Desktop Bulk Actions */}
-            {selectedProducts.length > 0 && (
-              <>
-                <div className="w-[1px] bg-[var(--admin-border-subtle)] shrink-0 my-1"></div>
-                <div className="flex items-stretch gap-1.5 shrink-0 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5">
-                  <span className="admin-badge admin-badge-neutral px-3 flex items-center justify-center font-bold text-[11px] hidden sm:inline-flex bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] text-[var(--admin-text-secondary)] m-0">
-                    {selectedProducts.length} SELECTED
+              )}
+              {selectedProducts.length > 0 && (
+                <div className="flex items-center gap-1 shrink-0 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] p-1 h-10 sm:h-10">
+                  <span className="px-2 font-bold text-[11px] text-[var(--admin-text-secondary)]">
+                    {selectedProducts.length} SEL
                   </span>
-                  <button
-                    onClick={handleBulkDeactivateProducts}
-                    className="admin-btn bg-amber-500 text-white hover:bg-amber-600 border-none px-2 text-[11px] font-bold shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] flex items-center gap-1 min-h-[32px]"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">block</span>
-                    Deactivate
-                  </button>
-                  <button
-                    onClick={handleBulkDelete}
-                    className="admin-btn bg-[var(--admin-error)] text-white hover:opacity-90 border-none px-2 text-[11px] font-bold shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] flex items-center gap-1 min-h-[32px]"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">delete</span>
-                    Delete
-                  </button>
+                  <div className="flex items-center gap-1 h-full">
+                    <button
+                      onClick={handleBulkDeactivateProducts}
+                      className="px-3 h-8 rounded-sm bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-bold flex items-center gap-1.5 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">block</span>
+                      <span className="hidden sm:inline">Deactivate</span>
+                    </button>
+                    <button
+                      onClick={handleBulkDelete}
+                      className="px-3 h-8 rounded-sm bg-[var(--admin-error)] hover:opacity-90 text-white text-[12px] font-bold flex items-center gap-1.5 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                      <span className="hidden sm:inline">Delete</span>
+                    </button>
+                  </div>
                   <button
                     onClick={() => setSelectedProducts([])}
-                    className="admin-btn-outline w-7 p-0 flex items-center justify-center bg-[var(--admin-surface)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] border border-[var(--admin-border-subtle)] min-h-[32px]"
+                    className="w-6 h-8 flex items-center justify-center rounded text-[var(--admin-text-tertiary)] hover:bg-[var(--admin-border-subtle)]"
                     title="Clear Selection"
                   >
                     <span className="material-symbols-outlined text-[16px]">close</span>
                   </button>
                 </div>
-              </>
-            )}
-
-            {/* View Toggle */}
-            {activeTab === 'products' && (
-              <>
-                <div className="w-[1px] bg-[var(--admin-border-subtle)] shrink-0 my-1 hidden md:block"></div>
-                <div className="hidden md:flex bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 shrink-0">
+              )}
+              {activeTab === 'products' && (
+                <div className="hidden md:flex items-center gap-1 shrink-0 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] p-1 h-10 sm:h-10">
                   <button
                     onClick={() => setViewMode('table')}
-                    className={`flex items-center justify-center px-1.5 transition-all shrink-0 rounded-[var(--admin-radius-sm)] min-h-[32px] ${
+                    className={`w-[30px] h-[30px] rounded-sm flex items-center justify-center transition-all ${
                       viewMode === 'table'
-                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                        ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
                         : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
                     }`}
+                    title="Table View"
                   >
-                    <span className="material-symbols-outlined text-[16px]">view_list</span>
+                    <span className="material-symbols-outlined text-[18px]">view_list</span>
                   </button>
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`flex items-center justify-center px-1.5 transition-all shrink-0 rounded-[var(--admin-radius-sm)] min-h-[32px] ${
+                    className={`w-[30px] h-[30px] rounded-sm flex items-center justify-center transition-all ${
                       viewMode === 'grid'
-                        ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                        ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
                         : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
                     }`}
+                    title="Grid View"
                   >
-                    <span className="material-symbols-outlined text-[16px]">grid_view</span>
+                    <span className="material-symbols-outlined text-[18px]">grid_view</span>
                   </button>
                 </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
 
           <AnimatePresence mode="wait">
@@ -793,7 +775,7 @@ export function AdminProducts() {
                 className="admin-card p-0 overflow-hidden"
               >
                 <div className="overflow-x-auto">
-                  <table className="admin-table w-full min-w-[900px]">
+                  <table className="admin-table w-full min-w-[500px] md:min-w-[700px] lg:min-w-[900px]">
                     <thead>
                       <tr>
                         {activeTab === 'products' && (
@@ -810,8 +792,8 @@ export function AdminProducts() {
                           </th>
                         )}
                         <th>Product</th>
-                        <th className="hidden md:table-cell">Category</th>
                         {activeTab === 'products' && <th>Price</th>}
+                        <th>Category</th>
                         <th className="hidden lg:table-cell">Status</th>
                         <th className="text-center">Stock Level</th>
                         {activeTab === 'inventory' && <th className="text-center">Sold</th>}
@@ -841,31 +823,34 @@ export function AdminProducts() {
                             </td>
                           )}
                           <td>
-                            <div className="flex items-center gap-3 pl-2">
+                            <div className="flex items-center gap-2 pl-1">
                               <img
                                 onError={handleImageError}
                                 src={p.image}
                                 alt={p.name}
-                                className="w-10 h-10 rounded-[var(--admin-radius-md)] object-cover border border-[var(--admin-border-subtle)] shrink-0"
+                                className="w-9 h-9 rounded-[var(--admin-radius-md)] object-cover border border-[var(--admin-border-subtle)] shrink-0"
                               />
-                              <div>
-                                <p className="font-semibold text-[var(--admin-text-primary)] text-[12px] group-hover:text-[var(--admin-accent)] transition-colors">
+                              <div className="min-w-0 max-w-[130px] sm:max-w-[200px] md:max-w-[250px] lg:max-w-[300px]">
+                                <p
+                                  className="font-semibold text-[var(--admin-text-primary)] text-[12px] group-hover:text-[var(--admin-accent)] transition-colors truncate"
+                                  title={p.name}
+                                >
                                   {p.name}
                                 </p>
-                                <p className="text-[10px] text-[var(--admin-text-tertiary)] font-medium uppercase tracking-wider mt-0.5">
+                                <p className="text-[10px] text-[var(--admin-text-tertiary)] font-medium uppercase tracking-wider mt-0.5 truncate">
                                   ID: {p.id.substring(p.id.length - 8)}
                                 </p>
                               </div>
                             </div>
-                          </td>
-                          <td className="hidden md:table-cell text-[var(--admin-text-secondary)] font-medium text-[12px]">
-                            {p.category}
                           </td>
                           {activeTab === 'products' && (
                             <td className="font-bold text-[var(--admin-text-primary)] text-[13px]">
                               {formatCurrency(p.price)}
                             </td>
                           )}
+                          <td className="text-[var(--admin-text-secondary)] font-medium text-[12px]">
+                            {p.category}
+                          </td>
                           <td className="hidden lg:table-cell">
                             <div className="flex items-center gap-3">
                               <StatusBadge status={statusLabels[p.status] || p.status} />

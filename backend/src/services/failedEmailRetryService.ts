@@ -14,7 +14,9 @@ export class FailedEmailRetryService {
 
     if (existing) {
       existing.lastError = errorMessage;
-      existing.nextRetryAt = new Date(Date.now() + RETRY_DELAYS_MS[Math.min(existing.attempts, RETRY_DELAYS_MS.length - 1)]);
+      existing.nextRetryAt = new Date(
+        Date.now() + RETRY_DELAYS_MS[Math.min(existing.attempts, RETRY_DELAYS_MS.length - 1)],
+      );
       await existing.save();
       logger.warn(`[EMAIL DLQ] Updated pending retry for ${options.email} (${options.action})`);
       return existing;
@@ -70,7 +72,7 @@ export class FailedEmailRetryService {
           await job.save();
           failed++;
           logger.warn(
-            `[EMAIL DLQ] Retry ${job.attempts}/${job.maxAttempts} failed for ${options.email}: ${job.lastError}`
+            `[EMAIL DLQ] Retry ${job.attempts}/${job.maxAttempts} failed for ${options.email}: ${job.lastError}`,
           );
         }
       }
@@ -81,7 +83,7 @@ export class FailedEmailRetryService {
 
   private static async alertAdminExhausted(options: EmailOptions, errorMessage: string) {
     try {
-      const { createAdminNotification } = require('../controllers/adminNotificationController');
+      const { createAdminNotification } = require('./notificationService');
       await createAdminNotification({
         title: 'Transactional email failed',
         message: `Could not deliver "${options.action}" to ${options.email} after ${3} retries. Error: ${errorMessage}`,

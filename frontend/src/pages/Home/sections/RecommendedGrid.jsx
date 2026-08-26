@@ -1,7 +1,6 @@
 import { SectionHeader } from '../../../components/shared/SectionHeader';
 import { ProductCard } from '../../../components/shared/ProductCard';
 import { MandalaElement } from '../../../components/ui/MandalaElement';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 import { useProducts } from '../../../hooks/useProductQueries';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import React from 'react';
@@ -73,24 +72,8 @@ export function RecommendedGrid({ previewContent }) {
   }
 
   const products = data?.data || data?.products || data?.items || (Array.isArray(data) ? data : []);
-  if (isError) {
-    return (
-      <HomeSectionState
-        title="Recommendations could not be loaded"
-        message="Retry the personalized recommendation request."
-        icon="error"
-        onRetry={refetch}
-      />
-    );
-  }
-  if (!products || products.length === 0) {
-    return (
-      <HomeSectionState
-        title={`No products available for ${config.sectionTitle || 'Recommended For You'}`}
-        message="Check back soon for new arrivals."
-        icon="inventory_2"
-      />
-    );
+  if (isError || !products || products.length === 0) {
+    return null;
   }
 
   return (

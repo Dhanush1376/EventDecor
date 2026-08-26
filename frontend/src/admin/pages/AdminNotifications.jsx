@@ -1,5 +1,5 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { SkeletonDashboard } from '../components/AdminUIKit';
+import { SkeletonDashboard, PageHeader, FilterBar } from '../components/AdminUIKit';
 import { useState, useMemo } from 'react';
 import { useAdmin } from '../context/AdminContext';
 import { useNavigate } from 'react-router-dom';
@@ -14,30 +14,117 @@ const listContainer = {
   },
 };
 
-const typeIcons = {
-  order: 'shopping_bag',
-  booking: 'event',
-  stock: 'warning',
-  review: 'star',
-  payment: 'payments',
-  system: 'report',
-};
-
-const typeColors = {
-  order:
-    'bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]',
-  booking:
-    'bg-[var(--admin-surface-muted)] text-[var(--admin-accent)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]',
-  stock: 'bg-[var(--admin-error-light)] text-[var(--admin-error)] border-none hover:opacity-90',
-  review:
-    'bg-[var(--admin-warning-light)] text-[var(--admin-warning)] border-none hover:opacity-90',
-  payment:
-    'bg-[var(--admin-success-light)] text-[var(--admin-success)] border-none hover:opacity-90',
-  custom_request:
-    'bg-[var(--admin-surface-muted)] text-[var(--admin-accent)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]',
-  inquiry:
-    'bg-[var(--admin-surface-muted)] text-[var(--admin-accent)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]',
-  system: 'bg-[var(--admin-error-light)] text-[var(--admin-error)] border-none hover:opacity-90',
+const cardStyles = {
+  order: {
+    icon: 'shopping_bag',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    iconBg: 'bg-blue-100 text-blue-700',
+    accent: 'bg-blue-500',
+    actionBtn:
+      'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-600/20 border-transparent',
+    ghostBtn: 'text-blue-600 hover:bg-blue-100',
+    hover: 'hover:border-blue-300 hover:shadow-blue-100',
+  },
+  booking: {
+    icon: 'event',
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
+    iconBg: 'bg-purple-100 text-purple-700',
+    accent: 'bg-purple-500',
+    actionBtn:
+      'bg-purple-600 text-white hover:bg-purple-700 shadow-sm shadow-purple-600/20 border-transparent',
+    ghostBtn: 'text-purple-600 hover:bg-purple-100',
+    hover: 'hover:border-purple-300 hover:shadow-purple-100',
+  },
+  custom_request: {
+    icon: 'event',
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
+    iconBg: 'bg-purple-100 text-purple-700',
+    accent: 'bg-purple-500',
+    actionBtn:
+      'bg-purple-600 text-white hover:bg-purple-700 shadow-sm shadow-purple-600/20 border-transparent',
+    ghostBtn: 'text-purple-600 hover:bg-purple-100',
+    hover: 'hover:border-purple-300 hover:shadow-purple-100',
+  },
+  inquiry: {
+    icon: 'event',
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
+    iconBg: 'bg-purple-100 text-purple-700',
+    accent: 'bg-purple-500',
+    actionBtn:
+      'bg-purple-600 text-white hover:bg-purple-700 shadow-sm shadow-purple-600/20 border-transparent',
+    ghostBtn: 'text-purple-600 hover:bg-purple-100',
+    hover: 'hover:border-purple-300 hover:shadow-purple-100',
+  },
+  stock: {
+    icon: 'warning',
+    bg: 'bg-rose-50',
+    border: 'border-rose-200',
+    iconBg: 'bg-rose-100 text-rose-700',
+    accent: 'bg-rose-500',
+    actionBtn:
+      'bg-rose-600 text-white hover:bg-rose-700 shadow-sm shadow-rose-600/20 border-transparent',
+    ghostBtn: 'text-rose-600 hover:bg-rose-100',
+    hover: 'hover:border-rose-300 hover:shadow-rose-100',
+  },
+  system: {
+    icon: 'report',
+    bg: 'bg-rose-50',
+    border: 'border-rose-200',
+    iconBg: 'bg-rose-100 text-rose-700',
+    accent: 'bg-rose-500',
+    actionBtn:
+      'bg-rose-600 text-white hover:bg-rose-700 shadow-sm shadow-rose-600/20 border-transparent',
+    ghostBtn: 'text-rose-600 hover:bg-rose-100',
+    hover: 'hover:border-rose-300 hover:shadow-rose-100',
+  },
+  review: {
+    icon: 'star',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    iconBg: 'bg-amber-100 text-amber-700',
+    accent: 'bg-amber-500',
+    actionBtn:
+      'bg-amber-600 text-white hover:bg-amber-700 shadow-sm shadow-amber-600/20 border-transparent',
+    ghostBtn: 'text-amber-600 hover:bg-amber-100',
+    hover: 'hover:border-amber-300 hover:shadow-amber-100',
+  },
+  user: {
+    icon: 'star',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    iconBg: 'bg-amber-100 text-amber-700',
+    accent: 'bg-amber-500',
+    actionBtn:
+      'bg-amber-600 text-white hover:bg-amber-700 shadow-sm shadow-amber-600/20 border-transparent',
+    ghostBtn: 'text-amber-600 hover:bg-amber-100',
+    hover: 'hover:border-amber-300 hover:shadow-amber-100',
+  },
+  payment: {
+    icon: 'payments',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-200',
+    iconBg: 'bg-emerald-100 text-emerald-700',
+    accent: 'bg-emerald-500',
+    actionBtn:
+      'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm shadow-emerald-600/20 border-transparent',
+    ghostBtn: 'text-emerald-600 hover:bg-emerald-100',
+    hover: 'hover:border-emerald-300 hover:shadow-emerald-100',
+  },
+  default: {
+    icon: 'notifications',
+    bg: 'bg-slate-50',
+    border: 'border-slate-200',
+    iconBg: 'bg-slate-100 text-slate-700',
+    accent: 'bg-slate-500',
+    actionBtn:
+      'bg-slate-700 text-white hover:bg-slate-800 shadow-sm shadow-slate-700/20 border-transparent',
+    ghostBtn: 'text-slate-600 hover:bg-slate-200',
+    hover: 'hover:border-slate-300 hover:shadow-slate-100',
+  },
 };
 
 export function AdminNotifications({ hideHeader }) {
@@ -45,14 +132,25 @@ export function AdminNotifications({ hideHeader }) {
     notifications,
     unreadNotifications: unreadCount,
     markNotificationRead,
+    markNotificationUnread,
+    deleteNotification,
     markAllNotificationsRead,
     dataLoading,
   } = useAdmin();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleMarkRead = (id) => {
-    markNotificationRead(id);
+  const handleToggleRead = (n) => {
+    if (n.read) {
+      markNotificationUnread(n.id);
+    } else {
+      markNotificationRead(n.id);
+    }
+  };
+
+  const handleDelete = (id) => {
+    deleteNotification(id);
   };
 
   const handleMarkAllRead = () => {
@@ -67,19 +165,26 @@ export function AdminNotifications({ hideHeader }) {
   const filteredNotifications = useMemo(() => {
     let list = notifications;
     if (activeTab === 'unread') {
-      return list.filter((n) => !n.read);
-    }
-    if (activeTab === 'all') {
-      return list;
-    }
-    // Map booking tab to include custom requests and inquiries
-    if (activeTab === 'booking') {
-      return list.filter(
+      list = list.filter((n) => !n.read);
+    } else if (activeTab === 'booking') {
+      list = list.filter(
         (n) => n.type === 'booking' || n.type === 'custom_request' || n.type === 'inquiry',
       );
+    } else if (activeTab !== 'all') {
+      list = list.filter((n) => n.type === activeTab);
     }
-    return list.filter((n) => n.type === activeTab);
-  }, [notifications, activeTab]);
+
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      list = list.filter(
+        (n) =>
+          (n.title && n.title.toLowerCase().includes(lowerQuery)) ||
+          (n.message && n.message.toLowerCase().includes(lowerQuery)),
+      );
+    }
+
+    return list;
+  }, [notifications, activeTab, searchQuery]);
 
   if (dataLoading) {
     return (
@@ -94,104 +199,62 @@ export function AdminNotifications({ hideHeader }) {
       initial="hidden"
       animate="show"
       variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      className="max-w-[1000px] mx-auto space-y-6  text-[var(--admin-text-primary)]"
+      className="max-w-[1440px] mx-auto space-y-6  text-[var(--admin-text-primary)]"
     >
       {/* Header Block */}
       {!hideHeader && (
-        <motion.div
-          variants={fadeUp}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-        >
-          <div>
-            <h2 className="text-[26px] font-bold  text-[var(--admin-text-primary)]">
-              Notification Center
-            </h2>
-            <p className="text-[13px] text-[var(--admin-text-tertiary)] mt-0.5">
-              {unreadCount > 0 ? (
-                <span className="text-[var(--admin-text-primary)] font-bold">
-                  {unreadCount} actionable alerts needing response
-                </span>
-              ) : (
-                <span className="text-[var(--admin-success)] font-bold">
-                  All caught up! No pending alerts
-                </span>
+        <PageHeader
+          title="Notification Center"
+          badge={unreadCount > 0 ? unreadCount : null}
+          subtitle={
+            unreadCount > 0
+              ? `${unreadCount} actionable alerts needing response`
+              : 'All caught up! No pending alerts'
+          }
+          icon="notifications"
+          actionRowMobile={true}
+          headerAction={
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllRead}
+                  className="admin-btn h-10 sm:h-8 admin-btn-outline px-3 flex items-center gap-1.5 rounded-md border border-[var(--admin-border)] shrink-0 font-bold text-[12px]"
+                >
+                  <span className="material-symbols-outlined text-[16px]">done_all</span>
+                  <span className="hidden sm:inline whitespace-nowrap">Mark All Read</span>
+                </button>
               )}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllRead}
-                className="admin-btn admin-btn-outline h-9 px-4 text-[12px] font-bold uppercase tracking-wider flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[16px]">done_all</span>
-                Mark All Read
-              </button>
-            )}
-          </div>
-        </motion.div>
+            </div>
+          }
+        />
       )}
 
-      {/* Tabs Filter Bar */}
-      <motion.div
-        variants={fadeUp}
-        className="flex border-b border-[var(--admin-border)] overflow-x-auto gap-4 scrollbar-none"
-      >
-        {[
-          { id: 'all', label: 'All Alerts', count: notifications.length },
-          { id: 'unread', label: 'Unread', count: unreadCount },
-          {
-            id: 'order',
-            label: 'Orders',
-            count: notifications.filter((n) => n.type === 'order').length,
-          },
-          {
-            id: 'booking',
-            label: 'Consults',
-            count: notifications.filter(
-              (n) => n.type === 'booking' || n.type === 'custom_request' || n.type === 'inquiry',
-            ).length,
-          },
-          {
-            id: 'payment',
-            label: 'Payments',
-            count: notifications.filter((n) => n.type === 'payment').length,
-          },
-          {
-            id: 'review',
-            label: 'Reviews',
-            count: notifications.filter((n) => n.type === 'review' || n.type === 'user').length,
-          },
-          {
-            id: 'system',
-            label: 'System',
-            count: notifications.filter((n) => n.type === 'system').length,
-          },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`pb-3 text-[13px] font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all shrink-0 relative ${
-              activeTab === tab.id
-                ? 'border-[var(--admin-accent)] text-[var(--admin-text-primary)]'
-                : 'border-transparent text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
-            }`}
-          >
-            {tab.label}
-            {tab.count > 0 && (
-              <span
-                className={`ml-1.5 px-2 py-0.5 rounded-full text-[11px] sm:text-[11px] font-bold ${
-                  activeTab === tab.id
-                    ? 'bg-[var(--admin-accent)] text-white'
-                    : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)]'
-                }`}
-              >
-                {tab.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </motion.div>
+      {/* Filters & Search Bar */}
+      <div className="mb-4">
+        <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full">
+          <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] flex items-center px-3">
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+              search
+            </span>
+            <input
+              type="text"
+              placeholder="Search alerts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
+            />
+          </div>
+
+          <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-hidden">
+            <FilterBar
+              filters={['all', 'unread', 'order', 'booking', 'payment', 'review', 'system']}
+              value={activeTab}
+              onChange={setActiveTab}
+              className="flex-1 min-w-0"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Alerts Grid List */}
       <motion.div variants={listContainer} className="space-y-3">
@@ -237,17 +300,7 @@ export function AdminNotifications({ hideHeader }) {
                           ? 'View Users'
                           : 'Open Details';
 
-              // Map backend type cleanly to available icons
-              const uiType =
-                n.type === 'custom_request'
-                  ? 'booking'
-                  : n.type === 'inquiry'
-                    ? 'booking'
-                    : n.type === 'user'
-                      ? 'review'
-                      : typeIcons[n.type]
-                        ? n.type
-                        : 'system';
+              const typeStyle = cardStyles[n.type] || cardStyles.default;
 
               return (
                 <motion.div
@@ -255,65 +308,93 @@ export function AdminNotifications({ hideHeader }) {
                   key={n.id}
                   variants={fadeUp}
                   exit={{ opacity: 0, x: -50 }}
-                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border transition-all ${
+                  className={`relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-lg border transition-all ${typeStyle.hover} ${
                     !n.read
-                      ? 'bg-[var(--admin-surface)] border-[var(--admin-border)] shadow-md shadow-primary/2'
-                      : 'bg-[var(--admin-bg-subtle)] border-[var(--admin-border-subtle)] opacity-75 hover:opacity-100'
+                      ? `${typeStyle.bg} ${typeStyle.border} shadow-sm pl-6`
+                      : `bg-[var(--admin-bg-subtle)] border-[var(--admin-border-subtle)] opacity-75 grayscale-[0.5] hover:grayscale-0 hover:opacity-100 pl-6`
                   }`}
                 >
+                  {/* Unread Left Border Thick Line */}
+                  {!n.read && (
+                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${typeStyle.accent}`} />
+                  )}
+
                   <div className="flex items-start gap-4 flex-1 min-w-0">
                     {/* Circle Icon Indicator */}
                     <div
-                      className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border transition-transform hover:scale-105 duration-300 ${typeColors[uiType] || typeColors.order}`}
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border border-transparent transition-transform hover:scale-105 duration-300 ${typeStyle.iconBg}`}
                     >
                       <span className="material-symbols-outlined text-[20px]">
-                        {typeIcons[uiType] || typeIcons.order}
+                        {typeStyle.icon}
                       </span>
                     </div>
 
-                    {/* Details Column */}
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-semibold text-[var(--admin-text-main)] mb-1">
-                          {n.title || ''}
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h4
+                          className={`text-[14px] font-bold truncate ${!n.read ? 'text-[var(--admin-text-primary)]' : 'text-[var(--admin-text-secondary)]'}`}
+                        >
+                          {n.title}
                         </h4>
                         {!n.read && (
-                          <span className="flex h-2 w-2 relative shrink-0">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--admin-accent)] opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--admin-accent)]"></span>
+                          <span className="px-1.5 py-0.5 rounded border border-[var(--admin-accent)] bg-[var(--admin-accent-muted)] text-[var(--admin-accent)] text-[9px] font-black uppercase tracking-widest leading-none">
+                            New
                           </span>
                         )}
                       </div>
-                      <p className="text-[12px] text-[var(--admin-text-secondary)] leading-relaxed font-medium">
+                      <p
+                        className={`text-[13px] leading-relaxed line-clamp-2 ${!n.read ? 'text-[var(--admin-text-secondary)] font-medium' : 'text-[var(--admin-text-tertiary)]'}`}
+                      >
                         {n.message}
                       </p>
-                      <p className="text-[11px] text-[var(--admin-text-tertiary)] font-mono">
-                        {formattedDate} • {n.time}
-                      </p>
+                      <div className="flex items-center gap-3 mt-2 text-[11px] font-bold text-[var(--admin-text-tertiary)] tracking-wider uppercase">
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[12px]">schedule</span>
+                          {n.timestamp
+                            ? new Date(n.timestamp).toLocaleString('en-US', {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              })
+                            : n.time || 'Just now'}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Actions Column */}
-                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                  <div className="flex items-center gap-1 self-end sm:self-center shrink-0">
                     {n.actionLink && (
                       <button
                         onClick={() => navigate(n.actionLink)}
-                        className="admin-btn admin-btn-outline admin-btn-sm h-8 px-3 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider border-[var(--admin-border)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)]"
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] transition-colors cursor-pointer"
                       >
-                        {actionLabel}
-                        <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+                        <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                       </button>
                     )}
 
-                    {!n.read && (
-                      <button
-                        onClick={() => handleMarkRead(n.id)}
-                        className="p-2.5 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] rounded-xl cursor-pointer transition-all flex items-center justify-center"
-                        title="Mark as Read"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">done</span>
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleToggleRead(n)}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                        !n.read
+                          ? 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-success)] hover:bg-[var(--admin-success-light)]'
+                          : 'text-[var(--admin-success)] hover:text-[var(--admin-text-tertiary)] hover:bg-[var(--admin-surface-hover)]'
+                      }`}
+                      title={!n.read ? 'Mark as Read' : 'Mark as Unread'}
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        {!n.read ? 'mark_email_read' : 'mark_email_unread'}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(n.id)}
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] transition-colors cursor-pointer"
+                      title="Delete Notification"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
                   </div>
                 </motion.div>
               );

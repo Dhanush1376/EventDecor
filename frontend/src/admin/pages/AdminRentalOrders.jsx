@@ -7,11 +7,10 @@ import {
   PageHeader,
   EmptyState,
   SkeletonTable,
-  FilterBar,
   formatCurrency,
   fadeUp,
   stagger,
-  PeriodSelector,
+  StatCard,
 } from '../components/AdminUIKit';
 import { isWithinPeriod } from '../utils/dateFilters';
 
@@ -174,96 +173,117 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
         </PageHeader>
       )}
 
-      <div className="flex items-center justify-between w-full mt-[-8px]">
-        <PeriodSelector
-          value={dateFilter}
-          onChange={setDateFilter}
-          periods={['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year']}
-        />
-        {hideHeader && (
-          <button
-            onClick={downloadExcel}
-            className="admin-btn-icon text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
-            title="Export to Excel"
-          >
-            <span className="material-symbols-outlined text-[24px]">download</span>
-          </button>
-        )}
-      </div>
-
       {/* Real-time Rental Financial & Operations Ledger */}
-      <motion.div variants={fadeUp} className="admin-card overflow-hidden text-left relative p-0">
-        <div className="absolute top-0 left-0 w-full h-[3px] bg-[var(--admin-border-strong)] z-10" />
-        <div className="grid grid-cols-2 md:grid-cols-4 bg-[var(--admin-surface)]">
-          <div className="p-5 space-y-1 border-r border-b md:border-b-0 border-[var(--admin-border-subtle)]">
-            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
-              Total Rental Volume
-            </span>
-            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-              {formatCurrency(rentalStats.totalVolume)}
-            </p>
-            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
-              Gross rental value
-            </span>
-          </div>
-          <div className="p-5 space-y-1 border-b md:border-b-0 md:border-r border-[var(--admin-border-subtle)]">
-            <span className="text-[10px] text-[var(--admin-warning)] font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[var(--admin-warning)] animate-pulse" />
-              Deposits Held
-            </span>
-            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-              {formatCurrency(rentalStats.depositsHeld)}
-            </p>
-            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
-              Awaiting return/inspection
-            </span>
-          </div>
-          <div className="p-5 space-y-1 border-r border-[var(--admin-border-subtle)]">
-            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
-              Active Rentals
-            </span>
-            <p className="text-[14px] font-bold text-[var(--admin-info)]">
-              {rentalStats.activeRentals}
-            </p>
-            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
-              Currently with customers
-            </span>
-          </div>
-          <div className="p-5 space-y-1 bg-[var(--admin-success-light)] border-l-0">
-            <span className="text-[10px] text-[var(--admin-success)] font-bold uppercase tracking-wider">
-              Deposits Refunded
-            </span>
-            <p className="text-[14px] font-bold text-[var(--admin-success)]">
-              {formatCurrency(rentalStats.depositsRefunded)}
-            </p>
-            <span className="text-[10px] text-[var(--admin-success)] opacity-80 mt-1 block">
-              Successfully returned
-            </span>
-          </div>
-        </div>
+      <motion.div variants={fadeUp} className="admin-grid-stats">
+        <StatCard
+          icon="account_balance_wallet"
+          label="Total Rental Volume"
+          value={formatCurrency(rentalStats.totalVolume)}
+          change="Gross rental value"
+          changeType="neutral"
+          domainColor="revenue"
+        />
+        <StatCard
+          icon="lock"
+          label="Deposits Held"
+          value={formatCurrency(rentalStats.depositsHeld)}
+          change="Awaiting return/inspection"
+          changeType="down"
+          domainColor="danger"
+        />
+        <StatCard
+          icon="local_shipping"
+          label="Active Rentals"
+          value={rentalStats.activeRentals}
+          change="Currently with customers"
+          changeType="neutral"
+          domainColor="info"
+        />
+        <StatCard
+          icon="check_circle"
+          label="Deposits Refunded"
+          value={formatCurrency(rentalStats.depositsRefunded)}
+          change="Successfully returned"
+          changeType="up"
+          domainColor="success"
+        />
       </motion.div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="w-full sm:max-w-md">
-          <FilterBar
-            filters={['All', ...allStatuses]}
-            value={filterStatus}
-            onChange={setFilterStatus}
-            counts={statusCounts}
-          />
+      {/* Unified Toolbar */}
+      <div className="flex flex-col sm:flex-row items-stretch justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
+          {/* Search Box */}
+          <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] flex items-center px-3 min-h-[48px]">
+            <span className="material-symbols-outlined text-[20px] text-[var(--admin-text-tertiary)] shrink-0">
+              search
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search rentals..."
+              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full"
+            />
+          </div>
+
+          <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {/* Status Dropdown */}
+            <div className="relative flex-1 sm:flex-none items-stretch">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-3 pr-8 appearance-none w-full sm:min-w-[150px] min-h-[48px]"
+              >
+                <option value="All">All Statuses</option>
+                {allStatuses.map((s) => (
+                  <option key={s} value={s}>
+                    {s.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </option>
+                ))}
+              </select>
+              <span
+                className="material-symbols-outlined absolute right-2 text-[18px] text-[var(--admin-text-tertiary)] pointer-events-none"
+                style={{ top: '50%', transform: 'translateY(-50%)' }}
+              >
+                expand_more
+              </span>
+            </div>
+
+            {/* Time Filter Dropdown */}
+            <div className="relative flex-1 sm:flex-none items-stretch">
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-3 pr-8 appearance-none w-full sm:min-w-[130px] min-h-[48px]"
+              >
+                {['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year'].map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+              <span
+                className="material-symbols-outlined absolute right-2 text-[18px] text-[var(--admin-text-tertiary)] pointer-events-none"
+                style={{ top: '50%', transform: 'translateY(-50%)' }}
+              >
+                expand_more
+              </span>
+            </div>
+          </div>
         </div>
-        <div className="w-full sm:max-w-xs relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-tertiary)] text-[18px]">
-            search
-          </span>
-          <input
-            type="text"
-            placeholder="Search rentals..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="admin-input !pl-10 py-2 w-full text-[12px]"
-          />
-        </div>
+
+        {/* Export Button */}
+        {hideHeader && (
+          <div className="flex items-stretch gap-2 w-full sm:w-auto shrink-0">
+            <button
+              onClick={downloadExcel}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-black px-4 rounded font-bold uppercase tracking-wider text-[11px] border border-black/10 shadow-sm hover:bg-black/5 transition-all min-h-[48px]"
+            >
+              <span className="material-symbols-outlined text-[18px]">download</span>
+              Export Excel
+            </button>
+          </div>
+        )}
       </div>
 
       <AnimatePresence mode="wait">
@@ -278,7 +298,7 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
             animate="show"
             exit="hidden"
             variants={fadeUp}
-            className="admin-card"
+            className="admin-card p-0"
           >
             <div className="overflow-x-auto">
               <table className="admin-table w-full min-w-[900px]">

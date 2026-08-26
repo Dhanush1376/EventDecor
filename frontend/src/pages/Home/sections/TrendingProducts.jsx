@@ -3,7 +3,6 @@ import { CarouselWrapper } from '../../../components/shared/CarouselWrapper';
 import { ProductCard } from '../../../components/shared/ProductCard';
 import { MandalaElement } from '../../../components/ui/MandalaElement';
 import { MandalaArtDecor } from '../../../components/ui/MandalaArtDecor';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 import { useTrendingRecommendations } from '../../../hooks/useRecommendationQueries';
 import { useProducts } from '../../../hooks/useProductQueries';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
@@ -95,24 +94,8 @@ export const TrendingProducts = React.memo(function TrendingProducts({ previewCo
   }
 
   // const products = trendingProducts; // removed as products is already defined above
-  if (isError) {
-    return (
-      <HomeSectionState
-        title="Trending products could not be loaded"
-        message="Retry the recommendation request or check the recommendation API."
-        icon="error"
-        onRetry={refetch}
-      />
-    );
-  }
-  if (!products || products.length === 0) {
-    return (
-      <HomeSectionState
-        title={`No products available for ${config.sectionTitle || 'Trending Now'}`}
-        message="Check back soon for new arrivals."
-        icon="inventory_2"
-      />
-    );
+  if (isError || !products || products.length === 0) {
+    return null;
   }
 
   return (

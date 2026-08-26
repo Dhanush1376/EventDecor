@@ -168,16 +168,8 @@ export const adminUpdateStatus = asyncHandler(async (req: Request, res: Response
     logger.error('Failed to log admin audit event:', auditErr);
   }
 
-  // WF-06: Send status change email
-  try {
-    await CustomOrderMailService.sendStatusChangeEmail(
-      finalOrder,
-      prevStatus,
-      (finalOrder._id as any).toString(),
-    );
-  } catch (emailErr) {
-    logger.error('Failed to send status change email:', emailErr);
-  }
+  // WF-06: Email and notification handled by outbox event triggers in customOrderWorkflowController
+  // where OutboxEvent is created.
 
   // Emit socket event to customer
   try {

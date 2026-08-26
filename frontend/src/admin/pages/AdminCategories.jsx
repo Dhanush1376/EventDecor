@@ -141,10 +141,7 @@ export function AdminCategories() {
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
-      <PageHeader
-        title="Manage Categories"
-        subtitle={`${categories.length} categories cataloged · Group products, blueprints, and highlights`}
-      >
+      <PageHeader title="Manage Categories" subtitle={`${categories.length} categories cataloged`}>
         <button
           onClick={() => navigate('/admin/categories/add')}
           className="admin-btn admin-btn-primary h-9"
@@ -177,23 +174,23 @@ export function AdminCategories() {
           className="admin-card divide-y divide-[var(--admin-border-subtle)] p-0"
         >
           {/* Filters Header */}
-          <div className="p-3 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--admin-border-subtle)]">
-            <div className="flex bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)] overflow-x-auto hide-scrollbar">
+          <div className="p-3 flex items-center justify-between gap-3 border-b border-[var(--admin-border-subtle)]">
+            <div className="flex items-center gap-1 p-0.5 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] min-w-0">
               {['All', 'product', 'gallery', 'event'].map((t) => (
                 <button
                   key={t}
                   onClick={() => setTypeFilter(t)}
-                  className={`px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-semibold cursor-pointer transition-all capitalize whitespace-nowrap ${
+                  className={`px-2.5 py-1 rounded-sm text-[11px] font-bold cursor-pointer transition-all capitalize whitespace-nowrap shrink-0 ${
                     typeFilter === t
-                      ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
-                      : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+                      ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
                   }`}
                 >
                   {t === 'All' ? 'All Types' : t}
                 </button>
               ))}
             </div>
-            <span className="text-[11px] text-[var(--admin-text-tertiary)] font-medium shrink-0">
+            <span className="text-[11px] text-[var(--admin-text-tertiary)] font-medium shrink-0 whitespace-nowrap">
               {filteredCategories.length} categories
             </span>
           </div>

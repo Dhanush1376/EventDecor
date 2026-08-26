@@ -121,7 +121,7 @@ export class CustomOrderService {
 
     // Admin real-time notification
     try {
-      const { createAdminNotification } = require('../controllers/adminNotificationController');
+      const { createAdminNotification } = require('./notificationService');
       await createAdminNotification({
         title: 'New Custom Order Request',
         message: `${order.customerName || 'A customer'} submitted a custom ${order.occasion || 'event'} order request.`,
@@ -255,7 +255,7 @@ export class CustomOrderService {
 
     // Admin notification
     try {
-      const { createAdminNotification } = require('../controllers/adminNotificationController');
+      const { createAdminNotification } = require('./notificationService');
       await createAdminNotification({
         title: 'New Product Customization',
         message: `${order.customerName} wants to customize "${product.title}"`,

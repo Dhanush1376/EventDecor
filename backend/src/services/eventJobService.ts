@@ -409,11 +409,24 @@ export class EventJobService {
       logger.debug('Could not emit booking status socket event:', socketErr);
     }
 
-    const { EventJobMailService } = require('../services/eventBookingMailService');
-    EventJobMailService.sendStatusUpdateEmail(booking, oldStatus, status).catch((err: any) => {
+    try {
+      await OutboxEvent.create({
+        aggregateId: booking._id.toString(),
+        aggregateType: 'EventJob',
+        eventType: 'BookingStatusUpdated',
+        payload: {
+          bookingId: booking._id.toString(),
+          userId: (booking.user as any)?._id?.toString() || booking.user?.toString(),
+          oldStatus: oldStatus,
+          newStatus: status,
+        },
+      });
+    } catch (err: any) {
       const logger = require('../config/logger').default;
-      logger.error('Failed to dispatch status update email to customer:', err);
-    });
+      logger.error('Failed to create outbox event for booking status update:', err);
+    }
+
+    // Email notification is handled by the outbox processor for EVENTJOB_BOOKINGSTATUSUPDATED
 
     return booking;
   }

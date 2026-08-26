@@ -583,7 +583,12 @@ export const createAdminNotification = async (payload: {
     await notification.save();
 
     // Emit via WebSocket to all connected admins instantly
-    socketEmitAdminNotificationHandler(notification);
+    try {
+      const { emitAdminNotification } = require('../socket');
+      emitAdminNotification(notification);
+    } catch (e) {
+      logger.warn('Failed to dynamically load emitAdminNotification', e);
+    }
 
     return notification;
   } catch (error) {

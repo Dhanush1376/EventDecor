@@ -3,7 +3,15 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IAdminNotification extends Document {
   title: string;
   message: string;
-  type: 'order' | 'custom_request' | 'payment' | 'inquiry' | 'user' | 'system';
+  type:
+    | 'order'
+    | 'custom_request'
+    | 'payment'
+    | 'inquiry'
+    | 'user'
+    | 'system'
+    | 'booking'
+    | 'return';
   actionLink?: string;
   isRead: boolean;
   metadata?: Record<string, any>;
@@ -11,32 +19,44 @@ export interface IAdminNotification extends Document {
   updatedAt: Date;
 }
 
-const AdminNotificationSchema = new Schema<IAdminNotification>({
-  title: {
-    type: String,
-    required: true,
+const AdminNotificationSchema = new Schema<IAdminNotification>(
+  {
+    title: {
+      type: String,
+      required: true,
+    },
+    message: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: [
+        'order',
+        'custom_request',
+        'payment',
+        'inquiry',
+        'user',
+        'system',
+        'booking',
+        'return',
+      ],
+      required: true,
+    },
+    actionLink: {
+      type: String,
+    },
+    isRead: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    metadata: {
+      type: Schema.Types.Mixed,
+    },
   },
-  message: {
-    type: String,
-    required: true,
-  },
-  type: {
-    type: String,
-    enum: ['order', 'custom_request', 'payment', 'inquiry', 'user', 'system'],
-    required: true,
-  },
-  actionLink: {
-    type: String,
-  },
-  isRead: {
-    type: Boolean,
-    default: false,
-    index: true,
-  },
-  metadata: {
-    type: Schema.Types.Mixed,
-  },
-}, { timestamps: true });
+  { timestamps: true },
+);
 
 // High-Performance Production Indexes
 AdminNotificationSchema.index({ isRead: 1, createdAt: -1 });

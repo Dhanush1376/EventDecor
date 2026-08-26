@@ -233,8 +233,26 @@ export class PaymentVerificationService {
               gatewayResponse: fetchedPayment,
             },
           ]);
+
+          await OutboxEvent.create({
+            aggregateId: attempt.orderData.pendingOrderId.toString(),
+            aggregateType:
+              attempt.type === 'purchase'
+                ? 'Order'
+                : attempt.type === 'rental'
+                  ? 'RentalOrder'
+                  : 'EventJob',
+            eventType: 'PaymentFailed',
+            payload: {
+              razorpayPaymentId: razorpay_payment_id,
+              reason: !isSignatureValid ? 'tampered_signature' : 'invalid_amount_or_status',
+            },
+          });
         } catch (auditErr) {
-          logger.error('Failed to save PaymentEvent audit after rollback:', auditErr);
+          logger.error(
+            'Failed to save PaymentEvent audit and OutboxEvent after rollback:',
+            auditErr,
+          );
         }
 
         if (fetchedPayment && fetchedPayment.status === 'captured') {

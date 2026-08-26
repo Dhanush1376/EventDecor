@@ -9,6 +9,25 @@ export const notificationService = {
     const response = await api.get(`/notifications/consent/${token}`);
     return response.data;
   },
+
+  // CUSTOMER Notification Methods
+  getMyNotifications: async (params) => {
+    const response = await api.get('/notification-center', { params });
+    return response.data;
+  },
+  markNotificationRead: async (id) => {
+    const response = await api.patch(`/notification-center/${id}/read`);
+    return response.data;
+  },
+  markAllNotificationsRead: async () => {
+    const response = await api.post('/notification-center/mark-all-read');
+    return response.data;
+  },
+  archiveNotification: async (id) => {
+    const response = await api.patch(`/notification-center/${id}/archive`);
+    return response.data;
+  },
+
   // ADMIN Campaign Methods
   createCampaign: async (campaignData) => {
     const response = await api.post('/notifications/admin/campaigns', campaignData);

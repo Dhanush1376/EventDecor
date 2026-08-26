@@ -13,9 +13,9 @@ import {
   MapPin,
   LogOut,
   Menu,
-  X,
   ShoppingBag,
   ChevronDown,
+  X,
 } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SiriLogo } from '../ui/SiriLogo';
@@ -501,108 +501,110 @@ export function TopNavbar() {
                     <LogIn size={24} strokeWidth={1.5} />
                   </button>
                 ) : (
-                  <div className="relative hidden lg:block">
-                    <button
-                      onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                      aria-expanded={isProfileDropdownOpen}
-                      aria-haspopup="true"
-                      onMouseEnter={() =>
-                        prefetchManager.prefetchRoute('/dashboard', { kind: 'hover' })
-                      }
-                      className={`${isTransparent ? 'border border-white/20 hover:bg-white/10 text-white' : 'border border-outline-variant/40 hover:border-primary/40 hover:bg-primary/5 text-on-surface hover:text-primary'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
-                      aria-label="User Dropdown"
-                    >
-                      <span
-                        className={`text-[11px] uppercase font-bold tracking-wider ${isTransparent ? 'text-white' : 'text-primary'}`}
+                  <div className="relative hidden lg:flex items-center gap-4">
+                    <div className="relative">
+                      <button
+                        onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                        aria-expanded={isProfileDropdownOpen}
+                        aria-haspopup="true"
+                        onMouseEnter={() =>
+                          prefetchManager.prefetchRoute('/dashboard', { kind: 'hover' })
+                        }
+                        className={`${isTransparent ? 'border border-white/20 hover:bg-white/10 text-white' : 'border border-outline-variant/40 hover:border-primary/40 hover:bg-primary/5 text-on-surface hover:text-primary'} transition-all duration-300 hover:scale-110 flex items-center justify-center w-10 h-10 rounded-full relative group cursor-pointer min-h-0 icon-button-touch-target flex-shrink-0 aspect-square`}
+                        aria-label="User Dropdown"
                       >
-                        {user?.name?.substring(0, 2) || user?.email?.substring(0, 2) || 'U'}
-                      </span>
-                      {hasPendingInvite && (
-                        <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm" />
-                      )}
-                    </button>
+                        <span
+                          className={`text-[11px] uppercase font-bold tracking-wider ${isTransparent ? 'text-white' : 'text-primary'}`}
+                        >
+                          {user?.name?.substring(0, 2) || user?.email?.substring(0, 2) || 'U'}
+                        </span>
+                        {hasPendingInvite && (
+                          <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm" />
+                        )}
+                      </button>
 
-                    <AnimatePresence>
-                      {isProfileDropdownOpen && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-40"
-                            onClick={() => setIsProfileDropdownOpen(false)}
-                          />
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
-                            className="absolute right-0 mt-2 w-52 bg-white/95 backdrop-blur-2xl border border-outline-variant/30 rounded-2xl shadow-xl py-2.5 z-50 overflow-hidden"
-                          >
-                            <div className="px-4 py-2 border-b border-outline-variant/10 mb-1">
-                              <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider truncate">
-                                {user?.name || 'Customer'}
-                              </p>
-                              <p className="text-[9px] text-on-surface-variant/50 truncate font-light tracking-wide">
-                                {user?.email}
-                              </p>
-                            </div>
-
-                            {hasPendingInvite && (
-                              <div className="px-4 py-2 bg-rose-50 border-b border-rose-100 text-[10px] text-rose-600 font-bold flex items-center gap-1.5 animate-pulse">
-                                <Info size={15} strokeWidth={1.5} />
-                                <span>Pending Admin Invitation</span>
+                      <AnimatePresence>
+                        {isProfileDropdownOpen && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-40"
+                              onClick={() => setIsProfileDropdownOpen(false)}
+                            />
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 10 }}
+                              className="absolute right-0 mt-2 w-52 bg-white/95 backdrop-blur-2xl border border-outline-variant/30 rounded-2xl shadow-xl py-2.5 z-50 overflow-hidden"
+                            >
+                              <div className="px-4 py-2 border-b border-outline-variant/10 mb-1">
+                                <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider truncate">
+                                  {user?.name || 'Customer'}
+                                </p>
+                                <p className="text-[9px] text-on-surface-variant/50 truncate font-light tracking-wide">
+                                  {user?.email}
+                                </p>
                               </div>
-                            )}
 
-                            {adminRoles.includes(user?.role) && (
+                              {hasPendingInvite && (
+                                <div className="px-4 py-2 bg-rose-50 border-b border-rose-100 text-[10px] text-rose-600 font-bold flex items-center gap-1.5 animate-pulse">
+                                  <Info size={15} strokeWidth={1.5} />
+                                  <span>Pending Admin Invitation</span>
+                                </div>
+                              )}
+
+                              {adminRoles.includes(user?.role) && (
+                                <Link
+                                  to="/admin"
+                                  onClick={() => setIsProfileDropdownOpen(false)}
+                                  className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors font-bold border-b border-outline-variant/10 mb-1.5 pb-2"
+                                >
+                                  <Settings size={17} strokeWidth={1.5} />
+                                  <span>Admin Portal</span>
+                                </Link>
+                              )}
+
                               <Link
-                                to="/admin"
+                                to="/dashboard?tab=profile"
                                 onClick={() => setIsProfileDropdownOpen(false)}
-                                className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors font-bold border-b border-outline-variant/10 mb-1.5 pb-2"
+                                className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
                               >
-                                <Settings size={17} strokeWidth={1.5} />
-                                <span>Admin Portal</span>
+                                <User size={17} strokeWidth={1.5} />
+                                <span>My Profile</span>
                               </Link>
-                            )}
 
-                            <Link
-                              to="/dashboard?tab=profile"
-                              onClick={() => setIsProfileDropdownOpen(false)}
-                              className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
-                            >
-                              <User size={17} strokeWidth={1.5} />
-                              <span>My Profile</span>
-                            </Link>
+                              <Link
+                                to="/dashboard?tab=orders"
+                                onClick={() => setIsProfileDropdownOpen(false)}
+                                className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
+                              >
+                                <Package size={17} strokeWidth={1.5} />
+                                <span>Orders</span>
+                              </Link>
 
-                            <Link
-                              to="/dashboard?tab=orders"
-                              onClick={() => setIsProfileDropdownOpen(false)}
-                              className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
-                            >
-                              <Package size={17} strokeWidth={1.5} />
-                              <span>Orders</span>
-                            </Link>
+                              <Link
+                                to="/dashboard?tab=addresses"
+                                onClick={() => setIsProfileDropdownOpen(false)}
+                                className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
+                              >
+                                <MapPin size={17} strokeWidth={1.5} />
+                                <span>Addresses</span>
+                              </Link>
 
-                            <Link
-                              to="/dashboard?tab=addresses"
-                              onClick={() => setIsProfileDropdownOpen(false)}
-                              className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-on-surface hover:bg-primary/5 hover:text-primary transition-colors font-bold"
-                            >
-                              <MapPin size={17} strokeWidth={1.5} />
-                              <span>Addresses</span>
-                            </Link>
-
-                            <button
-                              onClick={() => {
-                                setIsProfileDropdownOpen(false);
-                                logout();
-                              }}
-                              className="w-full flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-error hover:bg-error/5 transition-colors font-bold border-t border-outline-variant/10 mt-1.5 pt-2 cursor-pointer"
-                            >
-                              <LogOut size={17} strokeWidth={1.5} />
-                              <span>Logout</span>
-                            </button>
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
+                              <button
+                                onClick={() => {
+                                  setIsProfileDropdownOpen(false);
+                                  logout();
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wider text-error hover:bg-error/5 transition-colors font-bold border-t border-outline-variant/10 mt-1.5 pt-2 cursor-pointer"
+                              >
+                                <LogOut size={17} strokeWidth={1.5} />
+                                <span>Logout</span>
+                              </button>
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                 )}
               </div>

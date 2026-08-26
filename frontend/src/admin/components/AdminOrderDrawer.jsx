@@ -3,6 +3,7 @@ import { m as motion } from 'framer-motion';
 import { formatCurrency } from '../components/AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
+import { DeleteConfirmModal } from './ui/DeleteConfirmModal';
 
 const slideDrawer = {
   hidden: { x: '100%', opacity: 0 },
@@ -19,8 +20,18 @@ export function AdminOrderDrawer({
   setOrderNoteDraft,
   handleSaveNoteDraft,
   updateOrderStatus,
+  deleteOrder,
   navigate,
 }) {
+  const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+
+  const handleDelete = async () => {
+    const success = await deleteOrder(selectedOrder.id);
+    if (success) {
+      setShowDeleteModal(false);
+      setIsDrawerOpen(false);
+    }
+  };
   return (
     <>
       <motion.div
@@ -51,9 +62,20 @@ export function AdminOrderDrawer({
               #{selectedOrder.id.toUpperCase()}
             </p>
           </div>
-          <button onClick={() => setIsDrawerOpen(false)} className="admin-btn-icon">
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {['Cancelled', 'Returned', 'Refunded', 'Exchanged'].includes(selectedOrder.status) && (
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="admin-btn-icon hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)]"
+                title="Move to Recycle Bin"
+              >
+                <span className="material-symbols-outlined text-[20px]">delete</span>
+              </button>
+            )}
+            <button onClick={() => setIsDrawerOpen(false)} className="admin-btn-icon">
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          </div>
         </div>
 
         {/* Drawer Scroll Body */}
@@ -340,6 +362,18 @@ export function AdminOrderDrawer({
           </div>
         </div>
       </motion.aside>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Move Order to Recycle Bin"
+        productTitle={`Order #${selectedOrder.id.substring(selectedOrder.id.length - 8).toUpperCase()}`}
+        message="This order will be moved to the Recycle Bin. You can restore it within the retention period or permanently delete it."
+        confirmText="Move to Recycle Bin"
+        isRecycleBinAction={true}
+      />
     </>
   );
 }

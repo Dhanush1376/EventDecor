@@ -595,6 +595,7 @@ export function CartView({ isEmbedded = false }) {
           setCouponError={setCouponError}
           activeCoupons={activeCoupons}
           actualSubtotal={actualSubtotal}
+          items={items}
         />
       </>
     </Profiler>

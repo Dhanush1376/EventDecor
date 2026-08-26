@@ -24,7 +24,7 @@ export function PeriodSelector({ periods = ['weekly', 'monthly', 'yearly'], valu
 export function FilterBar({ filters, value, onChange, counts, className = '' }) {
   return (
     <div
-      className={`flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full sm:w-auto ${className}`}
+      className={`flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full sm:w-auto ${className}`}
     >
       {filters.map((f) => (
         <button

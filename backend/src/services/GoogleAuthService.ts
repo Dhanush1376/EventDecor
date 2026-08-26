@@ -188,7 +188,7 @@ class GoogleAuthService {
       }
 
       try {
-        const { createAdminNotification } = require('../controllers/adminNotificationController');
+        const { createAdminNotification } = require('./notificationService');
         createAdminNotification({
           title: 'New User Registration (Google)',
           message: `${user.name || user.email} registered via Google OAuth.`,

@@ -6,7 +6,6 @@ import { MandalaElement } from '../../../components/ui/MandalaElement';
 import { CloudinaryImage } from '../../../components/ui/CloudinaryImage';
 import { useState } from 'react';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 import { useShowcases } from '../../../hooks/useShowcaseQueries';
 
 /**
@@ -66,13 +65,7 @@ export function ShopByOccasion({ previewContent }) {
     });
 
   if (!occasions || occasions.length === 0) {
-    return (
-      <HomeSectionState
-        title={`No occasions available for ${config.sectionTitle || 'Shop By Occasion'}`}
-        message="Configure showcases in the admin dashboard."
-        icon="celebration"
-      />
-    );
+    return null;
   }
 
   const handleDragStart = () => {
@@ -203,7 +196,7 @@ export function ShopByOccasion({ previewContent }) {
                   >
                     <div className="flex items-end justify-between gap-4 w-full">
                       <div className="flex flex-col items-start text-left min-w-0 flex-1">
-                        <h3 className="font-serif text-[20px] sm:text-[22px] text-white font-normal tracking-wide leading-tight drop-shadow-md break-words">
+                        <h3 className="font-serif text-[16px] sm:text-[18px] text-white font-normal leading-tight drop-shadow-md break-words">
                           {occasion.label}
                         </h3>
                       </div>
@@ -211,7 +204,7 @@ export function ShopByOccasion({ previewContent }) {
                       {/* Simple minimal arrow, no circles or borders */}
                       <div className="flex-shrink-0 text-white flex items-center justify-center transition-transform duration-500 group-hover:translate-x-2">
                         <ArrowRight
-                          className="text-[28px] sm:text-[32px] font-light"
+                          className="text-[22px] sm:text-[24px] font-light"
                           strokeWidth={1.5}
                         />
                       </div>
@@ -252,11 +245,11 @@ export function ShopByOccasion({ previewContent }) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-all duration-700 rounded-b-[32px]"></div>
 
             <div className="absolute inset-0 flex flex-col justify-end p-8">
-              {/* Contracted Horizontal Text (Visible when contracted) */}
-              <div className="absolute inset-0 flex flex-col justify-end items-center p-6 pb-12 pointer-events-none group-hover:opacity-0 transition-opacity duration-300 z-10">
-                <span className="text-white/95 font-serif text-center text-sm lg:text-base xl:text-lg uppercase tracking-[0.15em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] line-clamp-3 leading-relaxed max-w-[90%]">
+              {/* Contracted Text (Visible when contracted) */}
+              <div className="absolute inset-0 flex flex-col justify-end items-start p-6 pb-8 pointer-events-none group-hover:opacity-0 transition-opacity duration-300 z-10">
+                <h3 className="font-serif text-[18px] lg:text-[20px] xl:text-[22px] text-white leading-tight drop-shadow-md font-normal min-w-0 break-words w-full">
                   {occasion.label}
-                </span>
+                </h3>
               </div>
 
               {/* Expanded Content (Visible on hover) */}

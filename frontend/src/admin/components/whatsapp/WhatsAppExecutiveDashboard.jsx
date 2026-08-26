@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import whatsappAutomationService from '../../services/whatsappAutomationService';
+import { StatCard } from '../AdminUIKit';
 
 const WhatsAppExecutiveDashboard = () => {
   const [metrics, setMetrics] = useState({
@@ -43,18 +44,20 @@ const WhatsAppExecutiveDashboard = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div className="admin-card p-6 flex justify-between items-center bg-[var(--admin-surface)] rounded-xl shadow-sm border border-[var(--admin-border-subtle)]">
         <div>
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Today's Analytics</h2>
-          <p className="text-[13px] text-gray-500 mt-1 font-medium">
+          <h2 className="text-[18px] font-bold text-[var(--admin-text-primary)] mb-1">
+            Today's Analytics
+          </h2>
+          <p className="text-[13px] text-[var(--admin-text-secondary)]">
             Simple overview of your WhatsApp notification delivery.
           </p>
         </div>
         <button
           onClick={fetchMetrics}
-          className="admin-btn-secondary py-2 text-[13px] flex items-center gap-2"
+          className="admin-btn admin-btn-outline h-10 px-4 flex items-center gap-2"
         >
           <span className="material-symbols-outlined text-[16px]">refresh</span>
           Refresh
@@ -62,49 +65,47 @@ const WhatsAppExecutiveDashboard = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-          <h3 className="text-[12px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Notifications Sent
-          </h3>
-          <div className="text-4xl font-black text-blue-600">
-            {metrics.totalExecutions.toLocaleString()}
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-          <h3 className="text-[12px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Delivered
-          </h3>
-          <div className="text-4xl font-black text-green-600">
-            {metrics.completedExecutions.toLocaleString()}
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-          <h3 className="text-[12px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Failed
-          </h3>
-          <div className="text-4xl font-black text-red-600">
-            {metrics.failedExecutions.toLocaleString()}
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-          <h3 className="text-[12px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Success Rate
-          </h3>
-          <div className="text-4xl font-black text-gray-900">{metrics.completionRate}%</div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-          <h3 className="text-[12px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-            Average Delivery Time
-          </h3>
-          <div className="text-4xl font-black text-gray-900">
-            {(metrics.avgLatencyMs / 1000).toFixed(1)} sec
-          </div>
-        </div>
+      <div className="admin-grid-stats">
+        <StatCard
+          icon="send"
+          label="Notifications Sent"
+          value={metrics.totalExecutions.toLocaleString()}
+          change=""
+          changeType="neutral"
+          domainColor="settings"
+        />
+        <StatCard
+          icon="done_all"
+          label="Delivered"
+          value={metrics.completedExecutions.toLocaleString()}
+          change=""
+          changeType="neutral"
+          domainColor="success"
+        />
+        <StatCard
+          icon="error"
+          label="Failed"
+          value={metrics.failedExecutions.toLocaleString()}
+          change=""
+          changeType="neutral"
+          domainColor="danger"
+        />
+        <StatCard
+          icon="monitoring"
+          label="Success Rate"
+          value={`${metrics.completionRate}%`}
+          change=""
+          changeType="neutral"
+          domainColor="users"
+        />
+        <StatCard
+          icon="timer"
+          label="Avg Delivery Time"
+          value={`${(metrics.avgLatencyMs / 1000).toFixed(1)}s`}
+          change=""
+          changeType="neutral"
+          domainColor="revenue"
+        />
       </div>
     </div>
   );

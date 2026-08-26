@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import AdminNotification from '../../models/AdminNotification';
 import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
@@ -11,9 +11,21 @@ import { setPaginationHeaders } from '../../utils/paginationHeaders';
 export const getAdminNotifications = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip } = getPaginationOptions(req.query);
 
+  const query: any = {};
+  if (req.query.type && req.query.type !== 'all') {
+    query.type = req.query.type;
+  }
+  if (req.query.unreadOnly === 'true') {
+    query.isRead = false;
+  }
+  if (req.query.search) {
+    const searchRegex = new RegExp(req.query.search as string, 'i');
+    query.$or = [{ title: searchRegex }, { message: searchRegex }];
+  }
+
   const [notifications, total, unreadCount] = await Promise.all([
-    AdminNotification.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-    AdminNotification.countDocuments(),
+    AdminNotification.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    AdminNotification.countDocuments(query),
     AdminNotification.countDocuments({ isRead: false }),
   ]);
 

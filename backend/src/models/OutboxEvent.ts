@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import logger from '../config/logger';
 
 export interface IOutboxEvent extends Document {
   aggregateId: string;
@@ -31,6 +32,39 @@ const OutboxEventSchema: Schema = new Schema(
 
 OutboxEventSchema.index({ status: 1, createdAt: 1 });
 OutboxEventSchema.index({ aggregateId: 1, aggregateType: 1 });
+
+/**
+ * POST-SAVE HOOK: Inline Outbox Processing
+ *
+ * This is the CRITICAL fix for the entire notification/email system.
+ *
+ * WHY THIS EXISTS:
+ * - OTP emails work because they call sendDirectEmail() directly
+ * - All other transactional emails (orders, bookings, returns, etc.) are
+ *   routed through the Outbox pattern: business code creates an OutboxEvent,
+ *   and a cron processor picks it up and fires emails/notifications.
+ * - But ENABLE_CRON=false disables the cron processor entirely.
+ * - Without this hook, outbox events sit as PENDING forever.
+ *
+ * HOW IT WORKS:
+ * - After every OutboxEvent document is saved, we schedule inline processing
+ *   using setImmediate() so it runs after the current MongoDB transaction commits.
+ * - The outbox processor handles emails, admin notifications, loyalty, refunds, etc.
+ * - If processing fails, it's logged and the event stays PENDING for cron retry.
+ * - This makes the system work WITHOUT cron AND without Redis.
+ */
+OutboxEventSchema.post('save', function (doc: any) {
+  if (doc.status !== 'PENDING') return; // Only process new/pending events
+
+  setImmediate(async () => {
+    try {
+      const { processOutboxEventById } = require('../jobs/outboxProcessor');
+      await processOutboxEventById(doc._id.toString());
+    } catch (err: any) {
+      logger.error(`[OUTBOX-HOOK] Failed to inline-process event ${doc._id}: ${err?.message}`);
+    }
+  });
+});
 
 const OutboxEvent = mongoose.model<IOutboxEvent>('OutboxEvent', OutboxEventSchema);
 export default OutboxEvent;

@@ -221,20 +221,26 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
           </div>
 
           <div className="text-right w-[45%]">
-            <h2 className="text-[12px] sm:text-lg lg:text-2xl font-black uppercase tracking-wider text-[#1f2937]">
-              TAX INVOICE
-            </h2>
+            {invoiceNumber !== 'Not Generated' && (
+              <h2 className="text-[12px] sm:text-lg lg:text-2xl font-black uppercase tracking-wider text-[#1f2937]">
+                TAX INVOICE
+              </h2>
+            )}
             <div className="text-[7px] sm:text-[9px] lg:text-[11px] text-[#4b5563] mt-1.5 lg:mt-3 space-y-0.5 lg:space-y-1">
-              <p>
-                Invoice No: <strong className="text-black font-mono">{invoiceNumber}</strong>
-              </p>
+              {invoiceNumber !== 'Not Generated' && (
+                <p>
+                  Invoice No: <strong className="text-black font-mono">{invoiceNumber}</strong>
+                </p>
+              )}
               <p className="hidden sm:block">
                 Order Ref: <span className="font-mono">{orderId.substring(0, 12)}...</span>
               </p>
-              <p>Invoice Date: {invoiceDate}</p>
-              <p>
-                Payment: <strong className="text-black uppercase">{paymentMode}</strong>
-              </p>
+              {invoiceDate !== 'N/A' && <p>Invoice Date: {invoiceDate}</p>}
+              {paymentMode !== 'N/A' && (
+                <p>
+                  Payment: <strong className="text-black uppercase">{paymentMode}</strong>
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -443,50 +449,48 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           {/* Tax Breakdown Table */}
           <div className="p-2 lg:p-4 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl w-full sm:max-w-[50%] print:bg-white print:border-none print:p-0">
-            <h4 className="font-black text-[7px] lg:text-[9px] uppercase tracking-widest text-[#374151] border-b border-[#e5e7eb] pb-1 mb-1.5 lg:mb-2">
-              GST Tax Assessment
-            </h4>
-            {hasTaxSnapshot ? (
-              <table className="w-full text-[7px] lg:text-[10px]">
-                <tbody>
-                  <tr>
-                    <td className="py-0.5 lg:py-1 text-[#4b5563]">Taxable Basic Value:</td>
-                    <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
-                      {currency}
-                      {taxableAmount.toFixed(2)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="py-0.5 lg:py-1 text-[#4b5563]">
-                      Integrated SGST ({sgstPercent}%):
-                    </td>
-                    <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
-                      {currency}
-                      {sgst.toFixed(2)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="py-0.5 lg:py-1 text-[#4b5563]">
-                      Integrated CGST ({cgstPercent}%):
-                    </td>
-                    <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
-                      {currency}
-                      {cgst.toFixed(2)}
-                    </td>
-                  </tr>
-                  <tr className="border-t border-dashed border-[#d1d5db] font-bold font-mono">
-                    <td className="pt-1 lg:pt-2 text-[#1f2937]">Total Taxes (Inclusive):</td>
-                    <td className="text-right pt-1 lg:pt-2 text-black font-black">
-                      {currency}
-                      {totalTax.toFixed(2)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            ) : (
-              <p className="text-[#9ca3af] text-[8px] lg:text-[10px] italic">
-                Tax breakdown not available for this order.
-              </p>
+            {hasTaxSnapshot && (
+              <>
+                <h4 className="font-black text-[7px] lg:text-[9px] uppercase tracking-widest text-[#374151] border-b border-[#e5e7eb] pb-1 mb-1.5 lg:mb-2">
+                  GST Tax Assessment
+                </h4>
+                <table className="w-full text-[7px] lg:text-[10px]">
+                  <tbody>
+                    <tr>
+                      <td className="py-0.5 lg:py-1 text-[#4b5563]">Taxable Basic Value:</td>
+                      <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
+                        {currency}
+                        {taxableAmount.toFixed(2)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="py-0.5 lg:py-1 text-[#4b5563]">
+                        Integrated SGST ({sgstPercent}%):
+                      </td>
+                      <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
+                        {currency}
+                        {sgst.toFixed(2)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="py-0.5 lg:py-1 text-[#4b5563]">
+                        Integrated CGST ({cgstPercent}%):
+                      </td>
+                      <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
+                        {currency}
+                        {cgst.toFixed(2)}
+                      </td>
+                    </tr>
+                    <tr className="border-t border-dashed border-[#d1d5db] font-bold font-mono">
+                      <td className="pt-1 lg:pt-2 text-[#1f2937]">Total Taxes (Inclusive):</td>
+                      <td className="text-right pt-1 lg:pt-2 text-black font-black">
+                        {currency}
+                        {totalTax.toFixed(2)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </>
             )}
           </div>
 
@@ -494,14 +498,18 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
           <div className="flex justify-between items-center w-full sm:w-[45%]">
             <div className="space-y-0.5 lg:space-y-1">
               <h3 className="font-black text-[#1f2937] text-[7px] lg:text-[10px] uppercase tracking-wider mb-1 lg:mb-2">
-                Dispatch Audit
+                Order Tracking
               </h3>
-              <p className="text-[7px] lg:text-[11px] text-[#4b5563]">
-                Carrier: <strong className="text-black font-semibold">{courierPartner}</strong>
-              </p>
-              <p className="text-[7px] lg:text-[11px] text-[#4b5563]">
-                AWB: <strong className="text-black font-mono font-bold">{trackingNumber}</strong>
-              </p>
+              {courierPartner !== 'Not Yet Dispatched' && (
+                <p className="text-[7px] lg:text-[11px] text-[#4b5563]">
+                  Carrier: <strong className="text-black font-semibold">{courierPartner}</strong>
+                </p>
+              )}
+              {trackingNumber !== 'Pending' && (
+                <p className="text-[7px] lg:text-[11px] text-[#4b5563]">
+                  AWB: <strong className="text-black font-mono font-bold">{trackingNumber}</strong>
+                </p>
+              )}
               <div className="pt-1 lg:pt-3">
                 <Suspense
                   fallback={

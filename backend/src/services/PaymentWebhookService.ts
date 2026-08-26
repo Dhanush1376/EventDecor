@@ -203,12 +203,36 @@ export class PaymentWebhookService {
             { $set: { status: 'processed', updatedAt: new Date() } },
           ).session(session);
 
-          // eslint-disable-next-line unused-imports/no-unused-vars
           const attempt = await PaymentAttempt.findOneAndUpdate(
             { razorpayOrderId: razorpay_order_id, status: 'initiated' },
             { $set: { status: 'failed' } },
             { session, returnDocument: 'after' },
           );
+
+          if (attempt && attempt.orderData && attempt.orderData.pendingOrderId) {
+            await OutboxEvent.create(
+              [
+                {
+                  aggregateId: attempt.orderData.pendingOrderId.toString(),
+                  aggregateType:
+                    attempt.type === 'purchase'
+                      ? 'Order'
+                      : attempt.type === 'rental'
+                        ? 'RentalOrder'
+                        : 'EventJob',
+                  eventType: 'PaymentFailed',
+                  payload: {
+                    razorpayPaymentId: paymentEntity?.id,
+                    reason:
+                      paymentEntity.error_description ||
+                      paymentEntity.error_code ||
+                      'webhook_failure',
+                  },
+                },
+              ],
+              { session },
+            );
+          }
 
           await session.commitTransaction();
         } catch (err) {

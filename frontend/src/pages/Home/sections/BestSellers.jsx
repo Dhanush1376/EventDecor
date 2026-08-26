@@ -2,7 +2,6 @@ import { SectionHeader } from '../../../components/shared/SectionHeader';
 import { CarouselWrapper } from '../../../components/shared/CarouselWrapper';
 import { ProductCard } from '../../../components/shared/ProductCard';
 import { MandalaElement } from '../../../components/ui/MandalaElement';
-import { HomeSectionState } from '../../../components/homepage/HomeSectionState';
 import { useProducts } from '../../../hooks/useProductQueries';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 
@@ -55,24 +54,8 @@ export function BestSellers({ previewContent }) {
   }
 
   const products = data?.data || data?.products || data?.items || (Array.isArray(data) ? data : []);
-  if (isError) {
-    return (
-      <HomeSectionState
-        title="Featured products could not be loaded"
-        message="Retry the product request or check the product API."
-        icon="error"
-        onRetry={refetch}
-      />
-    );
-  }
-  if (!products || products.length === 0) {
-    return (
-      <HomeSectionState
-        title={`No products available for ${config.sectionTitle || 'Featured Products'}`}
-        message="Check back soon for new arrivals."
-        icon="inventory_2"
-      />
-    );
+  if (isError || !products || products.length === 0) {
+    return null;
   }
 
   return (

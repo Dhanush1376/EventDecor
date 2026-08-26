@@ -2,6 +2,7 @@ import React from 'react';
 import { EmptyState, formatCurrency } from '../components/AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
+import { DeleteConfirmModal } from './ui/DeleteConfirmModal';
 
 export function AdminOrdersTable({
   filteredOrders,
@@ -11,8 +12,19 @@ export function AdminOrdersTable({
   openOrderDrawer,
   navigate,
   updateOrderStatus,
+  deleteOrder,
   allStatuses = [],
 }) {
+  const [orderToDelete, setOrderToDelete] = React.useState(null);
+
+  const handleDelete = async () => {
+    if (!orderToDelete) return;
+    const success = await deleteOrder(orderToDelete.id);
+    if (success) {
+      setOrderToDelete(null);
+    }
+  };
+
   const getCardColorClass = (status) => {
     const s = (status || '').toLowerCase();
     switch (s) {
@@ -244,6 +256,15 @@ export function AdminOrdersTable({
                         >
                           <WhatsAppIcon className="w-[16px] h-[16px]" />
                         </a>
+                        {['Cancelled', 'Returned', 'Refunded', 'Exchanged'].includes(o.status) && (
+                          <button
+                            onClick={() => setOrderToDelete(o)}
+                            className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)]"
+                            title="Move to Recycle Bin"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -368,12 +389,25 @@ export function AdminOrdersTable({
                     <span className="admin-badge admin-badge-neutral text-[9px] uppercase font-bold tracking-wider">
                       {o.payment}
                     </span>
+                    {['Cancelled', 'Returned', 'Refunded', 'Exchanged'].includes(o.status) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOrderToDelete(o);
+                        }}
+                        className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)]"
+                        title="Move to Recycle Bin"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         openOrderDrawer(o);
                       }}
                       className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                      title="More Options"
                     >
                       <span className="material-symbols-outlined text-[18px]">more_vert</span>
                     </button>
@@ -384,6 +418,21 @@ export function AdminOrdersTable({
           })
         )}
       </div>
+
+      <DeleteConfirmModal
+        isOpen={!!orderToDelete}
+        onClose={() => setOrderToDelete(null)}
+        onConfirm={handleDelete}
+        title="Move Order to Recycle Bin"
+        productTitle={
+          orderToDelete
+            ? `Order #${orderToDelete.id.substring(orderToDelete.id.length - 8).toUpperCase()}`
+            : ''
+        }
+        message="This order will be moved to the Recycle Bin. You can restore it within the retention period or permanently delete it."
+        confirmText="Move to Recycle Bin"
+        isRecycleBinAction={true}
+      />
     </>
   );
 }

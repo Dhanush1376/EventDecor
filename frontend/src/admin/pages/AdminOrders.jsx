@@ -13,7 +13,6 @@ import {
   formatCurrency,
   fadeUp,
   stagger,
-  PeriodSelector,
 } from '../components/AdminUIKit';
 import { useDraft } from '../hooks/useDraft';
 import { SkeletonList } from '../components/ui/Skeletons';
@@ -30,8 +29,15 @@ const slideDrawer = {
 
 export function AdminOrders({ hideHeader = false }) {
   const navigate = useNavigate();
-  const { orders, dataLoading, updateOrderStatus, updateOrderNotes, searchQuery, setSearchQuery } =
-    useAdmin();
+  const {
+    orders,
+    dataLoading,
+    updateOrderStatus,
+    updateOrderNotes,
+    deleteOrder,
+    searchQuery,
+    setSearchQuery,
+  } = useAdmin();
 
   const {
     viewMode,
@@ -151,19 +157,17 @@ export function AdminOrders({ hideHeader = false }) {
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="flex flex-col h-full">
       {!hideHeader && (
-        <div className="shrink-0 pb-6">
+        <div className="shrink-0 pb-2">
           <PageHeader
             title="Orders"
+            subtitle="Manage and track customer orders"
             icon="shopping_bag"
             iconColor="orders"
             mobileRow={false}
             headerAction={
-              <div className="flex flex-wrap items-center gap-3 shrink-0 w-full pb-1 sm:pb-0">
-                <div className="relative shrink-0 w-[180px] sm:w-[220px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-lg)] p-0.5 flex flex-col justify-center">
-                  <span
-                    className="material-symbols-outlined absolute left-2 text-[var(--admin-text-tertiary)] pointer-events-none z-10"
-                    style={{ fontSize: '14px', top: '50%', transform: 'translateY(-50%)' }}
-                  >
+              <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-3">
+                  <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
                     search
                   </span>
                   <input
@@ -171,50 +175,47 @@ export function AdminOrders({ hideHeader = false }) {
                     value={searchQuery || ''}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search orders..."
-                    className="w-full h-full min-h-[24px] pl-7 pr-2 bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] rounded-[var(--admin-radius-sm)] text-[12px] font-semibold text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] focus:outline-none transition-all m-0"
+                    className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
                   />
                 </div>
-                <div className="w-[1px] h-6 bg-[var(--admin-border-subtle)] shrink-0 hidden sm:block"></div>
-                <div className="shrink-0 origin-left flex items-stretch">
-                  <PeriodSelector
+                <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-hidden">
+                  <FilterBar
+                    filters={['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year']}
                     value={dateFilter}
                     onChange={setDateFilter}
-                    periods={['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year']}
+                    className="flex-1 min-w-0"
                   />
-                </div>
-                <div className="w-[1px] h-6 bg-[var(--admin-border-subtle)] shrink-0 hidden sm:block"></div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <div className="flex items-center bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)]">
+                  <div className="flex items-center gap-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-1">
                     <button
                       onClick={() => setViewMode('table')}
-                      className={`p-0.5 rounded-[var(--admin-radius-sm)] cursor-pointer transition-all flex items-center justify-center ${
+                      className={`w-8 h-8 rounded-sm flex items-center justify-center transition-all ${
                         viewMode === 'table'
-                          ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                          ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
                           : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
                       }`}
                       title="Table View"
                     >
-                      <span className="material-symbols-outlined text-[16px]">view_list</span>
+                      <span className="material-symbols-outlined text-[18px]">view_list</span>
                     </button>
                     <button
                       onClick={() => setViewMode('kanban')}
-                      className={`p-0.5 rounded-[var(--admin-radius-sm)] cursor-pointer transition-all flex items-center justify-center ${
+                      className={`w-8 h-8 rounded-sm flex items-center justify-center transition-all ${
                         viewMode === 'kanban'
-                          ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
+                          ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
                           : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
                       }`}
                       title="Kanban View"
                     >
-                      <span className="material-symbols-outlined text-[16px]">view_kanban</span>
+                      <span className="material-symbols-outlined text-[18px]">view_kanban</span>
                     </button>
                   </div>
                   <button
                     onClick={handleExportCSV}
-                    className="flex items-center justify-center px-2 py-1 rounded-[var(--admin-radius-lg)] text-[var(--admin-text-primary)] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] shadow-sm border border-[var(--admin-border-strong)] transition-all active:scale-95 cursor-pointer shrink-0"
+                    className="px-3 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0 gap-1.5 font-semibold text-[13px]"
                     title="Export CSV"
                   >
-                    <span className="material-symbols-outlined text-[14px]">download</span>
-                    <span className="text-[10px] font-semibold hidden sm:inline ml-1">Export</span>
+                    <span className="material-symbols-outlined text-[18px]">download</span>
+                    <span className="hidden sm:inline">Export</span>
                   </button>
                 </div>
               </div>
@@ -335,6 +336,7 @@ export function AdminOrders({ hideHeader = false }) {
                 openOrderDrawer={openOrderDrawer}
                 navigate={navigate}
                 updateOrderStatus={updateOrderStatus}
+                deleteOrder={deleteOrder}
                 allStatuses={allStatuses}
               />
             </motion.div>
@@ -371,6 +373,7 @@ export function AdminOrders({ hideHeader = false }) {
               setOrderNoteDraft={setOrderNoteDraft}
               handleSaveNoteDraft={handleSaveNoteDraft}
               updateOrderStatus={updateOrderStatus}
+              deleteOrder={deleteOrder}
               navigate={navigate}
             />
           )}

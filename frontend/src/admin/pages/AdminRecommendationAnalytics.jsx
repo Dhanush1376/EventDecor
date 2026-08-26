@@ -33,13 +33,15 @@ export function AdminRecommendationAnalytics() {
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
-        const [overviewRes, ctrRes, trendingRes, interestsRes, conversionRes] = await Promise.all([
-          api.get('/analytics/recommendations/overview'),
-          api.get('/analytics/recommendations/ctr?days=7'),
-          api.get('/analytics/recommendations/trending-history?limit=1'),
-          api.get('/analytics/recommendations/user-interests'),
-          api.get('/analytics/recommendations/conversion-impact'),
-        ]);
+        const [overviewRes, ctrRes, trendingRes, interestsRes, conversionRes, execRes] =
+          await Promise.all([
+            api.get('/analytics/recommendations/overview'),
+            api.get('/analytics/recommendations/ctr?days=7'),
+            api.get('/analytics/recommendations/trending-history?limit=1'),
+            api.get('/analytics/recommendations/user-interests'),
+            api.get('/analytics/recommendations/conversion-impact'),
+            api.get('/customer-intelligence/executive-summary'),
+          ]);
 
         const aggregatedStats = {
           engagementMetrics: {
@@ -64,6 +66,9 @@ export function AdminRecommendationAnalytics() {
                 _id: item.category,
                 count: item.score,
               })) || [],
+          },
+          generalMetrics: {
+            websiteVisitors: execRes.data?.data?.snapshot?.metrics?.activeCustomers || 0,
           },
         };
 
@@ -107,7 +112,7 @@ export function AdminRecommendationAnalytics() {
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader
-        title="AI Engine Analytics"
+        title="Recommendation Analytics"
         subtitle="Insights into Hybrid Recommendation performance & User Behavior"
       />
 
@@ -152,10 +157,10 @@ export function AdminRecommendationAnalytics() {
           color="var(--admin-success)"
         />
         <StatCard
-          icon="trending_up"
-          label="Top Trending"
-          value={stats.trendingMetrics?.topCategories?.[0]?._id || 'N/A'}
-          change={stats.trendingMetrics?.topCategories?.[0]?._id ? 'Updated' : ''}
+          icon="groups"
+          label="Website Visitors"
+          value={stats.generalMetrics?.websiteVisitors || 0}
+          change=""
           changeType="neutral"
           color="var(--admin-warning)"
         />

@@ -22,7 +22,7 @@ export const submitInquiry = asyncHandler(async (req: Request, res: Response) =>
 
   // 3. Real-time Admin Notification
   try {
-    const { createAdminNotification } = require('./adminNotificationController');
+    const { createAdminNotification } = require('../../services/notificationService');
     createAdminNotification({
       title: 'New Inquiry Received',
       message: `${inquiry.name || 'Someone'} submitted a new inquiry: "${(inquiry.message || '').substring(0, 80)}..."`,

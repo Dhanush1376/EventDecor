@@ -176,11 +176,43 @@ export function useAdminOrders({
     }
   }, []);
 
+  const deleteOrder = useCallback(
+    async (orderId) => {
+      if (activeRole === 'viewer') {
+        toast.error('Viewer Role: Write operations are restricted!');
+        return false;
+      }
+      if (safetyLock) {
+        toast.error('Safety Lock Active: Write operations are globally blocked!');
+        return false;
+      }
+
+      try {
+        if (setGlobalActionLoading) setGlobalActionLoading(true);
+        if (setGlobalActionMessage) setGlobalActionMessage('Moving order to recycle bin...');
+
+        await orderService.softDelete(orderId);
+
+        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        logAdminAction('SOFT_DELETE_ORDER', `Moved order ${orderId} to recycle bin`);
+        toast.success('Order moved to recycle bin');
+        return true;
+      } catch (_err) {
+        toast.error('Failed to move order to recycle bin');
+        return false;
+      } finally {
+        if (setGlobalActionLoading) setGlobalActionLoading(false);
+      }
+    },
+    [activeRole, safetyLock, logAdminAction, setGlobalActionLoading, setGlobalActionMessage],
+  );
+
   return {
     orders,
     setOrders,
     updateOrderStatus,
     updateOrderNotes,
+    deleteOrder,
     refreshOrders,
     mapDbOrderToFrontend,
   };

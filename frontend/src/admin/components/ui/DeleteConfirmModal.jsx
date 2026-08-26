@@ -1,7 +1,16 @@
 import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 
-export function DeleteConfirmModal({ isOpen, onClose, onConfirm, productTitle, isDeleting }) {
+export function DeleteConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  productTitle,
+  isDeleting,
+  title = 'Move to Recycle Bin',
+  message = 'This item will be moved to the Recycle Bin and hidden from the storefront. You can restore it within 30 days or permanently delete it.',
+  confirmText = 'Move to Recycle Bin',
+}) {
   if (!isOpen) return null;
 
   return (
@@ -21,20 +30,18 @@ export function DeleteConfirmModal({ isOpen, onClose, onConfirm, productTitle, i
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-md bg-surface border border-outline-variant/30 rounded-3xl shadow-2xl overflow-hidden"
+          className="relative w-full max-w-md bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-xl)] shadow-[var(--admin-shadow-2xl)] overflow-hidden"
         >
           {/* Header */}
-          <div className="p-6 pb-4 border-b border-outline-variant/20 flex items-center justify-between">
-            <div className="flex items-center gap-3 text-error">
-              <span className="material-symbols-outlined text-[24px]">delete</span>
-              <h3 className="font-display text-[18px] font-medium text-on-surface">
-                Move to Recycle Bin
-              </h3>
+          <div className="p-5 pb-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between bg-[var(--admin-bg-subtle)]">
+            <div className="flex items-center gap-2 text-[var(--admin-error)]">
+              <span className="material-symbols-outlined text-[20px]">delete</span>
+              <h3 className="text-[16px] font-bold text-[var(--admin-text-primary)]">{title}</h3>
             </div>
             <button
               onClick={onClose}
               disabled={isDeleting}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors disabled:opacity-50"
+              className="admin-btn-icon text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] disabled:opacity-50"
             >
               <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
@@ -42,44 +49,40 @@ export function DeleteConfirmModal({ isOpen, onClose, onConfirm, productTitle, i
 
           {/* Content */}
           <div className="p-6 space-y-4">
-            <p className="text-on-surface-variant text-[14px] leading-relaxed">
+            <p className="text-[var(--admin-text-secondary)] text-[14px] leading-relaxed">
               Are you sure you want to move{' '}
-              <strong className="text-on-surface font-semibold">{productTitle}</strong> to the
-              recycle bin?
+              <strong className="text-[var(--admin-text-primary)] font-bold">
+                {productTitle || 'this item'}
+              </strong>{' '}
+              to the recycle bin?
             </p>
-            <div className="bg-error-container/20 border border-error/20 p-4 rounded-xl flex items-start gap-3 text-error">
-              <span className="material-symbols-outlined text-[20px] shrink-0 mt-0.5">info</span>
-              <div className="text-[13px] leading-relaxed">
-                <p>This product will be moved to the Recycle Bin and hidden from the storefront.</p>
-                <p className="mt-1 font-medium">
-                  You can restore it within 30 days or permanently delete it.
-                </p>
+
+            {message && (
+              <div className="bg-[var(--admin-error-light)] border border-[var(--admin-error)]/20 p-4 rounded-[var(--admin-radius-md)] flex items-start gap-3 text-[var(--admin-error)]">
+                <span className="material-symbols-outlined text-[18px] shrink-0 mt-0.5">info</span>
+                <div className="text-[12px] leading-relaxed font-medium">{message}</div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Footer */}
-          <div className="p-6 pt-4 bg-surface-variant/30 flex items-center justify-end gap-3">
-            <button
-              onClick={onClose}
-              disabled={isDeleting}
-              className="px-5 py-2.5 rounded-full font-label-sm text-[11px] uppercase tracking-widest font-bold text-on-surface hover:bg-surface-variant transition-colors disabled:opacity-50"
-            >
+          <div className="p-5 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-end gap-3">
+            <button onClick={onClose} disabled={isDeleting} className="admin-btn admin-btn-outline">
               Cancel
             </button>
             <button
               onClick={onConfirm}
               disabled={isDeleting}
-              className="px-6 py-2.5 rounded-full bg-error text-onError font-label-sm text-[11px] uppercase tracking-widest font-bold shadow-md shadow-error/20 hover:bg-error/90 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="admin-btn bg-[var(--admin-error)] text-white hover:bg-[var(--admin-error)]/90 border-transparent shadow-sm flex items-center gap-2"
             >
               {isDeleting ? (
                 <>
-                  <div className="w-3.5 h-3.5 border-2 border-onError/30 border-t-onError rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   <span>Moving...</span>
                 </>
               ) : (
                 <>
-                  <span>Move to Recycle Bin</span>
+                  <span>{confirmText}</span>
                 </>
               )}
             </button>

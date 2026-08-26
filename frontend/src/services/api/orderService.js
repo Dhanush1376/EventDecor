@@ -66,4 +66,9 @@ export const orderService = {
     const response = await api.patch(`/orders/${id}/notes`, { notes });
     return response.data;
   },
+
+  softDelete: async (id) => {
+    const response = await api.delete(`/orders/${id}`);
+    return response.data;
+  },
 };

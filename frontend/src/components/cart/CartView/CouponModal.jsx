@@ -13,6 +13,7 @@ export function CouponModal({
   setCouponError,
   activeCoupons,
   actualSubtotal,
+  items = [],
 }) {
   if (typeof document === 'undefined') return null;
 
@@ -105,16 +106,41 @@ export function CouponModal({
                   ) : (
                     <div className="space-y-3">
                       {activeCoupons.map((c) => {
-                        const isUnlocked = actualSubtotal >= c.minOrderAmount;
+                        const isUnlockedAmount = actualSubtotal >= c.minOrderAmount;
+                        let isUnlocked = isUnlockedAmount;
+                        let lockReason = '';
                         const needMore = c.minOrderAmount - actualSubtotal;
+
+                        if (!isUnlockedAmount) {
+                          lockReason = `Add ₹${needMore.toLocaleString()} more to unlock`;
+                        } else if (
+                          c.targetType === 'categories' &&
+                          c.targetCategories?.length > 0
+                        ) {
+                          const hasValidCategory = items?.some((item) =>
+                            c.targetCategories.includes(item.category || item.primaryCategory),
+                          );
+                          if (!hasValidCategory) {
+                            isUnlocked = false;
+                            lockReason = `Only valid for categories: ${c.targetCategories.join(', ')}`;
+                          }
+                        } else if (c.targetType === 'products' && c.targetProductIds?.length > 0) {
+                          const hasValidProduct = items?.some((item) =>
+                            c.targetProductIds.includes(item.id || item._id || item.productId),
+                          );
+                          if (!hasValidProduct) {
+                            isUnlocked = false;
+                            lockReason = `Not valid for items in your cart`;
+                          }
+                        }
 
                         return (
                           <div
                             key={c._id || c.id}
-                            className={`bg-surface-container-lowest border rounded-2xl p-4 transition-all duration-300 flex flex-col gap-3 ${
+                            className={`border rounded-2xl p-4 transition-all duration-300 flex flex-col gap-3 relative overflow-hidden ${
                               isUnlocked
-                                ? 'border-outline-variant/60 hover:border-on-surface/30'
-                                : 'border-outline-variant/30 opacity-70'
+                                ? 'bg-surface-container-lowest border-outline-variant/60 hover:border-on-surface/30'
+                                : 'bg-surface-container-high/30 border-outline-variant/20 opacity-50 grayscale pointer-events-none'
                             }`}
                           >
                             <div className="flex justify-between items-start gap-4">
@@ -150,9 +176,7 @@ export function CouponModal({
 
                             <div className="flex items-center justify-between border-t border-outline-variant/30 pt-3 mt-1">
                               {!isUnlocked ? (
-                                <p className="text-[10px] text-red-500 font-medium">
-                                  Add ₹{needMore.toLocaleString()} more to unlock
-                                </p>
+                                <p className="text-[10px] text-red-500 font-medium">{lockReason}</p>
                               ) : (
                                 <p className="text-[10px] text-green-600 font-medium flex items-center gap-1">
                                   <CheckCircle2 className="text-[12px]" strokeWidth={1.5} />

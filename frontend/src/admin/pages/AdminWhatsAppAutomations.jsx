@@ -49,22 +49,31 @@ export const AdminWhatsAppAutomations = () => {
     <div className="admin-page-container">
       <PageHeader title="WhatsApp Automation Center" icon="chat" />
 
-      {/* Tabs */}
-      <div className="flex border-b border-[var(--admin-border)] mb-6 overflow-x-auto custom-scrollbar">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-3 flex items-center gap-2 whitespace-nowrap transition-colors border-b-2 ${
-              activeTab === tab.id
-                ? 'border-[var(--admin-accent)] text-[var(--admin-accent)] font-semibold'
-                : 'border-transparent text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
-            <span className="text-[14px]">{tab.label}</span>
-          </button>
-        ))}
+      {/* Sleek Modern Tabs */}
+      <div className="flex items-center gap-1.5 p-1.5 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border-subtle)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mb-6 shadow-sm">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded text-[13px] font-bold tracking-wide transition-all duration-300 ${
+                isActive
+                  ? 'bg-white text-[var(--admin-text-primary)] shadow-md border border-[var(--admin-border-subtle)]'
+                  : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-black/5 border border-transparent'
+              }`}
+            >
+              <span
+                className={`material-symbols-outlined text-[18px] transition-colors duration-300 ${
+                  isActive ? 'text-[var(--admin-accent)]' : 'text-[var(--admin-text-tertiary)]'
+                }`}
+              >
+                {tab.icon}
+              </span>
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Content */}
