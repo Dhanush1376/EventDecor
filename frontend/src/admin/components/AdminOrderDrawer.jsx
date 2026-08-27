@@ -4,12 +4,31 @@ import { formatCurrency } from '../components/AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 import { DeleteConfirmModal } from './ui/DeleteConfirmModal';
+import { returnService } from '../../services/api/returnService';
+import toast from 'react-hot-toast';
 
 const slideDrawer = {
   hidden: { x: '100%', opacity: 0 },
   show: { x: 0, opacity: 1 },
   exit: { x: '100%', opacity: 0 },
 };
+
+const RETURN_STATUSES = [
+  'submitted',
+  'approved',
+  'return_courier_assigned',
+  'return_picked_up',
+  'return_in_transit',
+  'return_received',
+  'inspection_started',
+  'inspection_completed',
+  'refund_initiated',
+  'refund_completed',
+  'completed',
+  'rejected',
+  'cancelled',
+];
+const EXCHANGE_STATUSES = ['pending_stock', 'reserved', 'shipped', 'delivered'];
 
 export function AdminOrderDrawer({
   selectedOrder,
@@ -24,6 +43,48 @@ export function AdminOrderDrawer({
   navigate,
 }) {
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [localReturns, setLocalReturns] = React.useState([]);
+  const [localExchanges, setLocalExchanges] = React.useState([]);
+
+  React.useEffect(() => {
+    if (selectedOrderData) {
+      setLocalReturns(selectedOrderData.returns || []);
+      setLocalExchanges(selectedOrderData.exchanges || []);
+    } else {
+      setLocalReturns(selectedOrder.returns || []);
+      setLocalExchanges(selectedOrder.exchanges || []);
+    }
+  }, [selectedOrderData, selectedOrder]);
+
+  const handleUpdateReturnStatus = async (returnId, newStatus) => {
+    try {
+      const res = await returnService.transitionReturnStatus(returnId, { status: newStatus });
+      if (res.data?.success) {
+        toast.success(`Return updated to ${newStatus.replace(/_/g, ' ')}`);
+        setLocalReturns((prev) =>
+          prev.map((r) => (r._id === returnId ? { ...r, status: newStatus } : r)),
+        );
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update return status');
+    }
+  };
+
+  const handleUpdateExchangeStatus = async (exchangeId, newStatus) => {
+    try {
+      const res = await returnService.transitionExchangeReplacement(exchangeId, {
+        status: newStatus,
+      });
+      if (res.data?.success) {
+        toast.success(`Exchange updated to ${newStatus.replace(/_/g, ' ')}`);
+        setLocalExchanges((prev) =>
+          prev.map((e) => (e._id === exchangeId ? { ...e, replacementStatus: newStatus } : e)),
+        );
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update exchange status');
+    }
+  };
 
   const handleDelete = async () => {
     const success = await deleteOrder(selectedOrder.id);
@@ -321,6 +382,48 @@ export function AdminOrderDrawer({
 
         {/* Drawer Footer Controls */}
         <div className="p-5 bg-[var(--admin-surface-muted)] border-t border-[var(--admin-border)] shrink-0 flex flex-col gap-4 text-left admin-drawer-footer">
+          {/* Returns & Exchanges Management */}
+          {(localReturns.length > 0 || localExchanges.length > 0) && (
+            <div className="flex-1 space-y-3 pb-3 border-b border-[var(--admin-border-subtle)]">
+              {localReturns.map((r) => (
+                <div key={r._id} className="w-full">
+                  <label className="text-[10px] font-bold text-yellow-600 uppercase tracking-wider block mb-1">
+                    Return Status ({r.returnId || 'Active'})
+                  </label>
+                  <select
+                    value={r.status}
+                    onChange={(e) => handleUpdateReturnStatus(r._id, e.target.value)}
+                    className="admin-input font-bold"
+                  >
+                    {RETURN_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s.replace(/_/g, ' ')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+              {localExchanges.map((e) => (
+                <div key={e._id} className="w-full">
+                  <label className="text-[10px] font-bold text-blue-600 uppercase tracking-wider block mb-1">
+                    Exchange Status ({e.exchangeId || 'Active'})
+                  </label>
+                  <select
+                    value={e.replacementStatus || 'pending_stock'}
+                    onChange={(ev) => handleUpdateExchangeStatus(e._id, ev.target.value)}
+                    className="admin-input font-bold"
+                  >
+                    {EXCHANGE_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s.replace(/_/g, ' ')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex-1">
             <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
               Direct Status Override

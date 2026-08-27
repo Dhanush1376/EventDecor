@@ -109,6 +109,7 @@ export interface IOrder extends ISoftDeleted {
   returnRequestIds?: mongoose.Types.ObjectId[];
   refundStatus?: 'none' | 'partial' | 'full';
   hasActiveReturn?: boolean;
+  hasActiveExchange?: boolean;
   orderNumber?: string;
   orderUuid?: string;
   packageIds?: mongoose.Types.ObjectId[];

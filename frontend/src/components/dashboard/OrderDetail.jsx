@@ -22,6 +22,7 @@ import { OptimizedImage } from '../ui/OptimizedImage';
 import { useRazorpay } from '../../hooks/useRazorpay';
 import toast from 'react-hot-toast';
 import { useUserSocket } from '../../context/UserSocketProvider';
+import { ReturnExchangeSection } from './ReturnExchangeSection';
 
 const GPSMap = React.lazy(() => import('../../pages/GPSMapLazy'));
 
@@ -771,6 +772,8 @@ export function OrderDetail() {
           </div>
         </div>
       </div>
+
+      <ReturnExchangeSection orderId={order._id} />
     </div>
   );
 }

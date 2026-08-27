@@ -22,6 +22,7 @@ export function useAdminCMS({
   setAutoPublish,
   setGlobalActionLoading,
   setGlobalActionMessage,
+  setGlobalActionSuccess,
 }) {
   const [customCategories, setCustomCategories] = useState(initialCustomCategories);
   const [websiteContent, setWebsiteContent] = useState(initialWebsiteContent);
@@ -321,20 +322,34 @@ export function useAdminCMS({
 
       if (failedSections.length > 0) {
         toast.error(`Failed to publish: ${failedSections.join(',')}`);
+        if (setGlobalActionLoading) {
+          setGlobalActionLoading(false);
+          setGlobalActionMessage('');
+        }
       } else {
         setPublishToast('All content published!');
-        toast.success('All content published! (Changes may take 1-2 mins to reflect)');
+        if (setGlobalActionLoading && typeof setGlobalActionSuccess === 'function') {
+          setGlobalActionSuccess(true);
+          setGlobalActionMessage('Published successfully!');
+          setTimeout(() => {
+            setGlobalActionSuccess(false);
+            setGlobalActionLoading(false);
+            setGlobalActionMessage('');
+          }, 1500);
+        } else if (setGlobalActionLoading) {
+          setGlobalActionLoading(false);
+          setGlobalActionMessage('');
+        }
       }
       setTimeout(() => setPublishToast(null), 3000);
     } catch (_err) {
       toast.error('Failed to publish all content');
-    } finally {
       if (setGlobalActionLoading) {
         setGlobalActionLoading(false);
         setGlobalActionMessage('');
       }
     }
-  }, [websiteContent, setGlobalActionLoading, setGlobalActionMessage]);
+  }, [websiteContent, setGlobalActionLoading, setGlobalActionMessage, setGlobalActionSuccess]);
 
   const resetContent = useCallback((section) => {
     setWebsiteContent((prev) => ({

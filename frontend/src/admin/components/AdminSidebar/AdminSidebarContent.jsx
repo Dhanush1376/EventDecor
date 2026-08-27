@@ -177,7 +177,7 @@ export function AdminSidebarContent({
                             title={!sidebarOpen ? item.label : ''}
                             className={`flex items-center gap-3 lg:gap-2.5 px-3 py-2.5 lg:py-2 rounded-[var(--admin-radius-md)] text-[14px] lg:text-[13px] font-medium transition-all duration-150 group relative min-h-[44px] lg:min-h-[36px] ${
                               isActive
-                                ? 'text-[var(--admin-accent-text)] font-semibold'
+                                ? 'text-[var(--admin-text-primary)] font-bold'
                                 : 'text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-hover)] hover:text-[var(--admin-text-primary)]'
                             } ${!sidebarOpen ? 'justify-center px-2' : ''}`}
                           >

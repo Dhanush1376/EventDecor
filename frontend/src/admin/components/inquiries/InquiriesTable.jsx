@@ -307,15 +307,30 @@ export function InquiriesTable({
                       )}
                     </div>
                   </div>
-                  <div className="min-w-0">
-                    <span className="text-[9px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block">
-                      Product Type
-                    </span>
-                    <span className="text-[var(--admin-text-secondary)] truncate block">
-                      {order.productType}
-                    </span>
+                  <div className="min-w-0 flex flex-col items-end justify-center">
+                    {order.productSnapshot?.imageSrc || order.inspirationImages?.[0] ? (
+                      <img
+                        src={order.productSnapshot?.imageSrc || order.inspirationImages?.[0]}
+                        alt="Product"
+                        className="w-10 h-10 object-cover rounded-md border border-[var(--admin-border-subtle)]"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-md bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] flex items-center justify-center">
+                        <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-tertiary)]">
+                          image
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {order.customRequirements && (
+                  <div className="bg-[var(--admin-surface-muted)] p-2 rounded-md border border-[var(--admin-border-subtle)]">
+                    <p className="text-[10px] text-[var(--admin-text-secondary)] italic line-clamp-2">
+                      "{order.customRequirements}"
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between gap-2 pt-1">
                   <div className="flex items-center gap-2">

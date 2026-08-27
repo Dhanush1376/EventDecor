@@ -445,7 +445,7 @@ export function LocationSelectorModal({
             animate={inline ? false : { opacity: 1, scale: 1, y: 0 }}
             exit={inline ? false : { opacity: 0, scale: 0.9, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className={`relative bg-[#FCFAF6] border border-[#C4A87C]/30 w-full font-body overflow-hidden flex flex-col z-10 ${
+            className={`relative bg-[#FCFAF6] border border-[#826237]/30 w-full font-body overflow-hidden flex flex-col z-10 ${
               inline
                 ? 'rounded-2xl flex-1 min-h-[400px]'
                 : 'max-w-2xl rounded-[2.5rem] shadow-2xl max-h-[90vh]'
@@ -510,7 +510,7 @@ export function LocationSelectorModal({
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur-md border border-[#C4A87C]/20 rounded-2xl shadow-xl overflow-hidden max-h-56 overflow-y-auto z-[999] divide-y divide-black/5"
+                      className="absolute left-0 right-0 top-full mt-2 bg-white/95 backdrop-blur-md border border-[#826237]/20 rounded-2xl shadow-xl overflow-hidden max-h-56 overflow-y-auto z-[999] divide-y divide-black/5"
                     >
                       {isLoadingSuggestions && (
                         <div className="p-4 text-center text-xs text-black/40 flex items-center justify-center gap-2">
@@ -538,7 +538,7 @@ export function LocationSelectorModal({
               </div>
 
               {/* Live Interactive Map Canvas */}
-              <div className="relative flex-1 rounded-[2rem] overflow-hidden border border-[#C4A87C]/20 bg-stone-100 shadow-inner h-[280px] min-h-[250px]">
+              <div className="relative flex-1 rounded-[2rem] overflow-hidden border border-[#826237]/20 bg-stone-100 shadow-inner h-[280px] min-h-[250px]">
                 {isMapLoading && (
                   <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-3">
                     <div className="skeleton-box inline-block w-10 h-10 rounded-md" />
@@ -557,7 +557,7 @@ export function LocationSelectorModal({
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-[#FAF6F0] p-4.5 rounded-[1.5rem] border border-[#C4A87C]/20 flex flex-col sm:flex-row gap-3 items-start justify-between relative overflow-hidden"
+                  className="bg-[#FAF6F0] p-4.5 rounded-[1.5rem] border border-[#826237]/20 flex flex-col sm:flex-row gap-3 items-start justify-between relative overflow-hidden"
                 >
                   <div className="space-y-1 z-10 flex-1">
                     <span className="font-label text-[8px] uppercase tracking-widest text-[var(--color-gold-dark)] font-bold block mb-1">

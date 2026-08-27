@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAdmin } from '../context/AdminContext';
 
 import { useDraft } from '../hooks/useDraft';
-import { SkeletonDashboard, PublishBar } from '../components/AdminUIKit';
+import { SkeletonDashboard, PublishBar, PageHeader } from '../components/AdminUIKit';
 import { HomePageControllerEditor } from '../components/cms/HomePageControllerEditor';
 import { GalleryPortfolioEditor } from '../components/cms/GalleryPortfolioEditor';
 import { AboutPageDetailsEditor } from '../components/cms/AboutPageDetailsEditor';
@@ -61,7 +61,7 @@ const CMS_SIDEBAR = [
     ],
   },
   {
-    title: 'SEO & Branding',
+    title: 'SEO',
     items: [
       { id: 'seo-center', label: 'SEO Settings', icon: 'search', desc: 'Search result metadata' },
       { id: 'navigation', label: 'Header & Footer', icon: 'menu', desc: 'Logo tagline & bio' },
@@ -221,45 +221,32 @@ export function AdminContent() {
       ) : (
         <>
           {/* Sleek Minimal Command Header */}
-          <motion.div
-            variants={fadeUp}
-            className="flex flex-col sm:flex-row sm:items-center justify-between pb-4.5 border-b border-[var(--admin-border)] gap-4"
+          <PageHeader
+            title="Storefront CMS Editor"
+            subtitle="Website Layout & Theme Styling"
+            icon="web"
+            iconColor="primary"
           >
-            <div>
-              <h2 className="text-[22px] font-bold text-[var(--admin-text-primary)] tracking-tight">
-                Storefront CMS Editor
-              </h2>
-              <div className="flex items-center gap-3 mt-1">
-                <p className="text-[10px] text-[var(--admin-text-secondary)] tracking-wide">
-                  Website Layout & Theme Styling
-                </p>
-                <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 flex-nowrap sm:w-auto justify-end shrink-0">
+            <div className="flex items-center gap-4 flex-nowrap w-full sm:w-auto justify-between sm:justify-end shrink-0">
+              <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
               <button
                 onClick={handlePublishAll}
-                className="flex items-center gap-2 px-4 bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] hover:bg-[var(--admin-accent-hover)] rounded-full transition-all duration-300 text-[11px] font-bold uppercase tracking-[0.2em] cursor-pointer shadow-[var(--admin-shadow-sm)] hover:shadow-[var(--admin-shadow-md)] hover:-translate-y-0.5 active:scale-95 shrink-0 border border-transparent hover:border-[var(--admin-accent)]/40 h-[34px]"
+                className="admin-btn admin-btn-primary h-[46px] flex-1 sm:flex-none px-5 rounded text-[13px] justify-center"
               >
-                <span className="material-symbols-outlined text-[14px] font-bold">publish</span>
-                <span>Publish</span>
+                <span className="material-symbols-outlined text-[16px]">publish</span>
+                Publish Live
               </button>
             </div>
-          </motion.div>
+          </PageHeader>
 
           {/* 2-Column Luxury Workspace Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-[230px_1fr] xl:grid-cols-[240px_1fr] gap-6 items-start">
             {/* Mobile Navigation Header: Horizontal Scrollable Swipe Hub (Mobile Only) */}
-            <div className="block lg:hidden space-y-3.5 bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-4 shadow-[var(--admin-shadow-xs)]">
+            <div className="block lg:hidden space-y-3.5 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] p-4 shadow-[var(--admin-shadow-xs)]">
               {/* Main Category Groups */}
               <div
                 ref={categoryScrollRef}
-                className="flex items-center gap-1.5 overflow-x-auto pb-1.5 border-b border-[var(--admin-border-subtle)] scrollbar-hide"
-                style={{
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                  WebkitOverflowScrolling: 'touch',
-                }}
+                className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] overflow-x-auto no-scrollbar mb-2 h-[46px]"
               >
                 {CMS_SIDEBAR.map((cat) => {
                   const isGroupActive = cat.items.some((item) => item.id === activeSection);
@@ -267,14 +254,11 @@ export function AdminContent() {
                     <button
                       key={cat.title}
                       type="button"
-                      onClick={() => {
-                        // Instantly set active section to the first item under this category group
-                        setActiveSection(cat.items[0].id);
-                      }}
-                      className={`px-3.5 py-1.5 rounded-xl text-[11px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] transition-all duration-300 shrink-0 cursor-pointer border ${
+                      onClick={() => setActiveSection(cat.items[0].id)}
+                      className={`flex-1 sm:flex-none px-4 h-full rounded-sm text-[13px] font-bold uppercase transition-all flex items-center justify-center whitespace-nowrap shrink-0 ${
                         isGroupActive
-                          ? 'text-[var(--admin-text-inverse)] bg-[var(--admin-text-primary)] border-[var(--admin-text-primary)] shadow-[var(--admin-shadow-sm)] active-category'
-                          : 'text-[var(--admin-text-secondary)] bg-[var(--admin-bg-subtle)]/40 border-[var(--admin-border)] hover:bg-[var(--admin-surface)] hover:text-[var(--admin-text-primary)]'
+                          ? 'bg-white text-[var(--admin-accent)] shadow-sm'
+                          : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
                       }`}
                     >
                       {cat.title}
@@ -286,12 +270,7 @@ export function AdminContent() {
               {/* Sub-item Nodes */}
               <div
                 ref={subitemScrollRef}
-                className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-hide"
-                style={{
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                  WebkitOverflowScrolling: 'touch',
-                }}
+                className="flex items-center gap-2 overflow-x-auto py-1 no-scrollbar"
               >
                 {CMS_SIDEBAR.map((cat) => {
                   const isGroupActive = cat.items.some((item) => item.id === activeSection);
@@ -304,24 +283,14 @@ export function AdminContent() {
                         key={item.id}
                         type="button"
                         onClick={() => setActiveSection(item.id)}
-                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all duration-200 shrink-0 border ${
+                        className={`flex items-center gap-2 px-4 h-[38px] rounded-md transition-all shrink-0 border text-[12px] font-bold uppercase whitespace-nowrap ${
                           isActive
-                            ? 'bg-[var(--admin-accent-subtle)] border-transparent text-[var(--admin-accent)] font-semibold active-subitem'
-                            : 'bg-[var(--admin-surface)]/60 border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-primary)]'
+                            ? 'bg-[var(--admin-accent)] border-[var(--admin-accent)] text-[var(--admin-text-inverse)] shadow-sm'
+                            : 'bg-[var(--admin-surface)] border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-text-primary)]'
                         }`}
                       >
-                        <span
-                          className={`material-symbols-outlined text-[13px] block transition-colors duration-200 ${
-                            isActive
-                              ? 'text-[var(--admin-accent)]'
-                              : 'text-[var(--admin-text-secondary)]/60'
-                          }`}
-                        >
-                          {item.icon}
-                        </span>
-                        <span className="text-[11px] sm:text-[11px] font-semibold uppercase tracking-wider">
-                          {item.label}
-                        </span>
+                        <span className="material-symbols-outlined text-[16px]">{item.icon}</span>
+                        {item.label}
                       </button>
                     );
                   });
@@ -332,7 +301,7 @@ export function AdminContent() {
             {/* Column 1: Sidebar Drawer Accordion (Desktop Only) */}
             <motion.div
               variants={fadeUp}
-              className="hidden lg:block bg-[var(--admin-surface)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-3.5 lg:sticky lg:top-24 lg:space-y-4.5 shadow-[var(--admin-shadow-sm)]"
+              className="hidden lg:block bg-[var(--admin-surface)] rounded-md border border-[var(--admin-border)] p-3.5 lg:sticky lg:top-24 lg:space-y-4.5 shadow-[var(--admin-shadow-sm)]"
             >
               {CMS_SIDEBAR.map((cat) => (
                 <div key={cat.title} className="space-y-1.5">
@@ -362,16 +331,16 @@ export function AdminContent() {
                               onClick={() => {
                                 setActiveSection(item.id);
                               }}
-                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left cursor-pointer transition-all duration-200 border ${
+                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-left cursor-pointer transition-all duration-200 border ${
                                 isActive
-                                  ? 'bg-[var(--admin-accent-subtle)] border-transparent text-[var(--admin-accent)] font-semibold'
+                                  ? 'bg-[var(--admin-accent)] border-transparent text-[var(--admin-text-inverse)] font-bold shadow-sm'
                                   : 'text-[var(--admin-text-secondary)] border-transparent hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-primary)]'
                               }`}
                             >
                               <span
                                 className={`material-symbols-outlined text-[16px] block transition-colors duration-200 ${
                                   isActive
-                                    ? 'text-[var(--admin-accent)] font-semibold'
+                                    ? 'text-[var(--admin-text-inverse)] font-bold'
                                     : 'text-[var(--admin-text-secondary)]/70'
                                 }`}
                               >

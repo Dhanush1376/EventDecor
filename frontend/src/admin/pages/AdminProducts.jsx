@@ -307,20 +307,41 @@ export function AdminProducts() {
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       {/* Header */}
       <PageHeader
-        title="Products"
-        subtitle="Manage your products catalog"
-        icon="inventory_2"
+        title={activeTab === 'inventory' ? 'Inventory' : 'Products'}
+        subtitle={
+          activeTab === 'inventory'
+            ? 'Manage stock levels and tracking'
+            : 'Manage your products catalog'
+        }
+        icon={activeTab === 'inventory' ? 'warehouse' : 'inventory_2'}
         iconColor="products"
       >
-        <button
-          onClick={() =>
-            navigate(activeTab === 'categories' ? '/admin/categories/add' : '/admin/products/add')
-          }
-          className="admin-btn admin-btn-primary h-9 mt-4 sm:mt-0"
-        >
-          <span className="material-symbols-outlined text-[16px]">add</span>
-          {activeTab === 'categories' ? 'Add Category' : 'Add Product'}
-        </button>
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto mt-4 sm:mt-0">
+          <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] flex-1 sm:flex-none h-[46px]">
+            {['products', 'inventory'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 sm:flex-none px-2 sm:px-4 h-full rounded-sm text-[13px] font-bold capitalize transition-all flex items-center justify-center whitespace-nowrap ${
+                  activeTab === tab
+                    ? 'bg-white text-[var(--admin-accent)] shadow-sm'
+                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() =>
+              navigate(activeTab === 'categories' ? '/admin/categories/add' : '/admin/products/add')
+            }
+            className="admin-btn admin-btn-primary flex-1 sm:flex-none h-[46px] px-2 sm:px-5 rounded text-[13px] justify-center whitespace-nowrap"
+          >
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            {activeTab === 'categories' ? 'Add Category' : 'Add Product'}
+          </button>
+        </div>
       </PageHeader>
 
       {/* Main Content Area */}
@@ -546,8 +567,10 @@ export function AdminProducts() {
             )}
           </AnimatePresence>
 
-          <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto mb-6">
-            <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] flex items-center px-3">
+          <div
+            className={`flex items-stretch gap-2 w-full mb-6 ${activeTab === 'inventory' ? 'flex-row' : 'flex-col sm:flex-row'}`}
+          >
+            <div className="relative flex-1 min-w-0 sm:w-64 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] flex items-center px-3">
               <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
                 search
               </span>
@@ -556,10 +579,10 @@ export function AdminProducts() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by name or ID..."
-                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-10"
+                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-10 min-w-0"
               />
             </div>
-            <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+            <div className="flex items-stretch gap-2 min-w-0 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
               {activeTab === 'products' && (
                 <>
                   <div className="relative flex items-stretch shrink-0">
@@ -792,11 +815,12 @@ export function AdminProducts() {
                           </th>
                         )}
                         <th>Product</th>
+                        {activeTab === 'inventory' && <th className="text-center">Stock Level</th>}
+                        {activeTab === 'inventory' && <th className="text-center">Sold</th>}
                         {activeTab === 'products' && <th>Price</th>}
                         <th>Category</th>
                         <th className="hidden lg:table-cell">Status</th>
-                        <th className="text-center">Stock Level</th>
-                        {activeTab === 'inventory' && <th className="text-center">Sold</th>}
+                        {activeTab === 'products' && <th className="text-center">Stock Level</th>}
                         {activeTab === 'inventory' && (
                           <th className="text-right pr-6">Fast Action</th>
                         )}
@@ -843,33 +867,8 @@ export function AdminProducts() {
                               </div>
                             </div>
                           </td>
-                          {activeTab === 'products' && (
-                            <td className="font-bold text-[var(--admin-text-primary)] text-[13px]">
-                              {formatCurrency(p.price)}
-                            </td>
-                          )}
-                          <td className="text-[var(--admin-text-secondary)] font-medium text-[12px]">
-                            {p.category}
-                          </td>
-                          <td className="hidden lg:table-cell">
-                            <div className="flex items-center gap-3">
-                              <StatusBadge status={statusLabels[p.status] || p.status} />
-                              <div onClick={(e) => e.stopPropagation()}>
-                                <AdminToggle
-                                  checked={p.status !== 'inactive' && p.status !== 'draft'}
-                                  onChange={() => {
-                                    const newStatus =
-                                      p.status === 'inactive' || p.status === 'draft'
-                                        ? 'active'
-                                        : 'inactive';
-                                    if (updateProductStatus) updateProductStatus(p.id, newStatus);
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </td>
-                          <td onClick={(e) => activeTab === 'inventory' && e.stopPropagation()}>
-                            {activeTab === 'inventory' ? (
+                          {activeTab === 'inventory' && (
+                            <td onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center gap-2 justify-center">
                                 <input
                                   type="number"
@@ -896,7 +895,40 @@ export function AdminProducts() {
                                   </span>
                                 )}
                               </div>
-                            ) : (
+                            </td>
+                          )}
+                          {activeTab === 'inventory' && (
+                            <td className="text-center font-bold text-[var(--admin-text-primary)] text-[13px]">
+                              {p.soldCount || p.sold || 0}
+                            </td>
+                          )}
+                          {activeTab === 'products' && (
+                            <td className="font-bold text-[var(--admin-text-primary)] text-[13px]">
+                              {formatCurrency(p.price)}
+                            </td>
+                          )}
+                          <td className="text-[var(--admin-text-secondary)] font-medium text-[12px]">
+                            {p.category}
+                          </td>
+                          <td className="hidden lg:table-cell">
+                            <div className="flex items-center gap-3">
+                              <StatusBadge status={statusLabels[p.status] || p.status} />
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <AdminToggle
+                                  checked={p.status !== 'inactive' && p.status !== 'draft'}
+                                  onChange={() => {
+                                    const newStatus =
+                                      p.status === 'inactive' || p.status === 'draft'
+                                        ? 'active'
+                                        : 'inactive';
+                                    if (updateProductStatus) updateProductStatus(p.id, newStatus);
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          {activeTab === 'products' && (
+                            <td>
                               <span
                                 className={`font-semibold text-[12px] ${
                                   p.stock === 0
@@ -908,11 +940,6 @@ export function AdminProducts() {
                               >
                                 {p.stock} units
                               </span>
-                            )}
-                          </td>
-                          {activeTab === 'inventory' && (
-                            <td className="text-center font-bold text-[var(--admin-text-primary)] text-[13px]">
-                              {p.soldCount || p.sold || 0}
                             </td>
                           )}
                           {activeTab === 'inventory' && (

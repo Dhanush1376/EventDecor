@@ -30,11 +30,11 @@ export function MediaLibraryEditor() {
         {mediaFiles.map((f) => (
           <div
             key={f.id}
-            className="p-3 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] flex items-center justify-between gap-4 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300"
+            className="p-3 bg-[var(--admin-surface)] rounded-md border border-[var(--admin-border)] flex items-center justify-between gap-4 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300"
           >
             <div className="flex items-center gap-3.5">
               <div
-                className="w-11 h-11 rounded-xl bg-cover bg-center shrink-0 border border-[var(--admin-border-subtle)] shadow-inner"
+                className="w-11 h-11 rounded-md bg-cover bg-center shrink-0 border border-[var(--admin-border-subtle)] shadow-inner"
                 style={{ backgroundImage: `url(${f.url})` }}
               />
               <div>

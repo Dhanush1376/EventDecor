@@ -23,6 +23,7 @@ function BaseOptimizedImage({
   eager = false,
   skipObserver = false,
   priority,
+  quality,
   ...props
 }) {
   const [isLoaded, setIsLoaded] = useState(eager || loading === 'eager');
@@ -96,13 +97,13 @@ function BaseOptimizedImage({
 
   const { optimizedUrl, autoSrcSet } = useMemo(() => {
     const isData = src && (src.startsWith('data:') || src.startsWith('blob:'));
-    let url = isData ? src : src ? getOptimizedUrl(src, width, height) : '';
+    let url = isData ? src : src ? getOptimizedUrl(src, width, height, quality) : '';
     if (retryCount > 0 && url && !isData) {
       url += (url.includes('?') ? '&' : '?') + `retry=${retryCount}`;
     }
-    const srcSet = isData || !src ? null : getSrcSet(src, width);
+    const srcSet = isData || !src ? null : getSrcSet(src, width, quality);
     return { optimizedUrl: url, autoSrcSet: srcSet };
-  }, [src, width, height, retryCount]);
+  }, [src, width, height, retryCount, quality]);
 
   const { hasPositioning, isImageAutoHeight, hasObjectFit } = useMemo(
     () => ({

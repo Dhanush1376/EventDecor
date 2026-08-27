@@ -259,15 +259,12 @@ export const buildOrderConfirmationAdminEmail = (order: any) => {
 
 export const buildOrderStatusChangeEmail = (order: any, oldStatus: string, newStatus: string) => {
   const orderId = order.orderUuid || order.orderNumber || order._id;
-  const preheader = `Status update for order #${orderId}: ${newStatus}`;
-
+  const preheader = `Your order #${orderId} is now ${newStatus}`;
   const invoiceLink = `<div style="text-align: center; margin-bottom: 24px;">${textLink('Download Invoice PDF', `${getBackendUrl()}/api/v1/documents/invoice/${order._id}`)}</div>`;
-
   const body = `
     <h2>Order Status Update</h2>
-    <p>The status of your order <strong>#${orderId}</strong> has been updated to <strong>${escapeHtml(newStatus)}</strong>.</p>
-    
-    ${statusTimelineBlock(order.statusHistory)}
+    <p>Dear ${escapeHtml(order.shippingAddress?.name || 'Customer')},</p>
+    <p>The status of your order <strong>#${escapeHtml(orderId)}</strong> has been updated to <strong>${escapeHtml(newStatus)}</strong>.</p>
     
     ${dataTable([
       { label: 'Previous Status', value: escapeHtml(oldStatus) },
@@ -279,6 +276,10 @@ export const buildOrderStatusChangeEmail = (order: any, oldStatus: string, newSt
         ? [{ label: 'Courier', value: escapeHtml(order.courierPartner) }]
         : []),
     ])}
+    
+    <h3 style="margin-top: 32px; color: #111827;">Order Summary</h3>
+    ${itemsTable(order.items)}
+    ${totalsSummary(order.subtotal, order.shippingFee || order.courierCharges || 0, order.tax?.totalTax || 0, order.total, order.discount || 0)}
     
     ${order.trackingNumber ? button('Track Shipment', `${getFrontendUrl()}/tracking?order=${orderId}`) : ''}
     
@@ -505,7 +506,7 @@ export const buildEventBookingAdminEmail = (booking: any, user: any) => {
 
 // --- Return/Exchange Templates ---
 
-export const buildReturnCreatedCustomerEmail = (returnRequest: any, user: any) => {
+export const buildReturnCreatedCustomerEmail = (returnRequest: any, order: any, user: any) => {
   const customerName = user?.name || 'Valued Customer';
   const isExchange = returnRequest.returnType === 'exchange';
   const requestId = returnRequest.returnId || returnRequest._id;
@@ -525,6 +526,22 @@ export const buildReturnCreatedCustomerEmail = (returnRequest: any, user: any) =
 
     ${dataTable(rows)}
 
+    ${
+      order
+        ? `
+    <h3 style="margin-top: 32px; color: #111827;">Order Summary</h3>
+    ${itemsTable(order.items)}
+    ${totalsSummary(
+      order.subtotal,
+      order.shippingFee || order.courierCharges || 0,
+      order.tax?.totalTax || 0,
+      order.total,
+      order.discount || 0,
+    )}
+    `
+        : ''
+    }
+
     ${button('Track Your Request', `${getFrontendUrl()}/dashboard/returns`)}
   `;
   return {
@@ -540,6 +557,7 @@ export const buildReturnCreatedCustomerEmail = (returnRequest: any, user: any) =
 
 export const buildReturnStatusUpdateEmail = (
   returnRequest: any,
+  order: any,
   user: any,
   previousStatus: string,
   newStatus: string,
@@ -561,6 +579,22 @@ export const buildReturnStatusUpdateEmail = (
     <p>The status of your ${isExchange ? 'exchange' : 'return'} request <strong>#${escapeHtml(requestId)}</strong> has been updated to <strong>${escapeHtml(newStatus)}</strong>.</p>
 
     ${dataTable(rows)}
+
+    ${
+      order
+        ? `
+    <h3 style="margin-top: 32px; color: #111827;">Order Summary</h3>
+    ${itemsTable(order.items)}
+    ${totalsSummary(
+      order.subtotal,
+      order.shippingFee || order.courierCharges || 0,
+      order.tax?.totalTax || 0,
+      order.total,
+      order.discount || 0,
+    )}
+    `
+        : ''
+    }
 
     ${button('View Details', `${getFrontendUrl()}/dashboard/returns`)}
   `;

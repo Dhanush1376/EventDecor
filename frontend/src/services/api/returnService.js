@@ -29,6 +29,9 @@ export const returnService = {
 
   completeReturn: (id) => api.post(`/returns/admin/${id}/complete`),
 
+  transitionExchangeReplacement: (id, data) =>
+    api.patch(`/returns/admin/exchanges/${id}/transition`, data),
+
   getAllExchanges: (params) => api.get('/exchanges/admin/all', { params }),
 
   getRefundStats: () => api.get('/returns/admin/refunds/stats'),
@@ -74,6 +77,8 @@ export const returnService = {
   addConversationMessage: (id, data) => api.post(`/returns/${id}/message`, data),
 
   cancelReturn: (id) => api.post(`/returns/${id}/cancel`),
+
+  updateRefundMethod: (id, data) => api.patch(`/returns/${id}/refund-method`, data),
 
   createExchange: (data) => api.post('/exchanges', data),
 

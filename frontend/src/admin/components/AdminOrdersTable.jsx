@@ -25,7 +25,14 @@ export function AdminOrdersTable({
     }
   };
 
-  const getCardColorClass = (status) => {
+  const getCardColorClass = (status, cardState = 'normal') => {
+    if (cardState === 'return_active' || cardState === 'return_and_exchange_active') {
+      return '!bg-yellow-500/10 border-yellow-500/30';
+    }
+    if (cardState === 'exchange_active') {
+      return '!bg-blue-500/10 border-blue-500/30';
+    }
+
     const s = (status || '').toLowerCase();
     switch (s) {
       case 'delivered':
@@ -110,7 +117,7 @@ export function AdminOrdersTable({
                 return (
                   <tr
                     key={o.id}
-                    className={`admin-table-row-clickable group ${getCardColorClass(o.status)}`}
+                    className={`admin-table-row-clickable group ${getCardColorClass(o.status, o.cardState)}`}
                     onClick={() => openOrderDrawer(o)}
                   >
                     <td className="font-semibold text-[var(--admin-text-primary)]">
@@ -148,39 +155,35 @@ export function AdminOrdersTable({
                         </span>
                       </div>
                     </td>
-                    <td className="hidden md:table-cell max-w-[250px]">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex -space-x-2.5 overflow-hidden shrink-0 group-hover:-space-x-1 transition-all duration-300">
-                          {o.items.slice(0, 3).map((item, idx) => {
-                            const imgSrc =
-                              item.image ||
-                              item.images?.[0] ||
-                              item.thumbnail ||
-                              'https://placehold.co/100x100/f3f4f6/a1a1aa?text=Image';
-                            return (
+                    <td className="hidden md:table-cell max-w-[300px] py-3 pr-4">
+                      <div className="flex flex-col gap-2.5">
+                        {o.items.map((item, idx) => {
+                          const imgSrc =
+                            item.image ||
+                            item.images?.[0] ||
+                            item.thumbnail ||
+                            'https://placehold.co/100x100/f3f4f6/a1a1aa?text=Image';
+                          return (
+                            <div key={idx} className="flex items-center gap-2.5">
                               <img
-                                key={idx}
                                 src={imgSrc}
                                 alt={item.name}
-                                className="inline-block h-9 w-9 rounded-[var(--admin-radius-md)] border-[1.5px] border-[var(--admin-surface)] object-cover shadow-sm bg-[var(--admin-surface-muted)] relative z-10 transition-transform"
-                                style={{ zIndex: 10 - idx }}
+                                className="h-9 w-9 rounded-[var(--admin-radius-md)] border-[1.5px] border-[var(--admin-surface)] object-cover shadow-sm bg-[var(--admin-surface-muted)] shrink-0"
                               />
-                            );
-                          })}
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span
-                            className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate"
-                            title={o.items[0]?.name}
-                          >
-                            {o.items[0]?.name || 'Unknown Item'}
-                          </span>
-                          <span className="text-[10px] font-semibold text-[var(--admin-text-tertiary)] truncate mt-0.5">
-                            {o.items.length > 1
-                              ? `+ ${o.items.length - 1} other item${o.items.length > 2 ? 's' : ''}`
-                              : `x${o.items[0]?.quantity || o.items[0]?.qty || 1}`}
-                          </span>
-                        </div>
+                              <div className="flex flex-col min-w-0">
+                                <span
+                                  className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate"
+                                  title={item.name}
+                                >
+                                  {item.name || 'Unknown Item'}
+                                </span>
+                                <span className="text-[10px] font-semibold text-[var(--admin-text-tertiary)] mt-0.5">
+                                  x{item.quantity || item.qty || 1}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </td>
                     <td className="font-bold text-[var(--admin-text-primary)]">
@@ -313,7 +316,7 @@ export function AdminOrdersTable({
               <div
                 key={o.id}
                 onClick={() => openOrderDrawer(o)}
-                className={`${getCardColorClass(o.status)} rounded-[var(--admin-radius-lg)] p-4 shadow-sm border flex flex-col gap-3 cursor-pointer hover:shadow-md transition-all`}
+                className={`${getCardColorClass(o.status, o.cardState)} rounded-[var(--admin-radius-lg)] p-4 shadow-sm border flex flex-col gap-3 cursor-pointer hover:shadow-md transition-all`}
               >
                 <div className="flex justify-between items-start gap-2">
                   <div>

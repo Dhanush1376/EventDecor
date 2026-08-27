@@ -2,6 +2,10 @@ import { createAdminNotification, sendDirectEmail } from '../notificationService
 import { IReturnRequest } from '../../models/ReturnRequest';
 import User from '../../models/User';
 import ExchangeRequest from '../../models/ExchangeRequest';
+import {
+  buildRefundInitiatedCustomerEmail,
+  buildRefundCompletedCustomerEmail,
+} from '../../utils/email/returnExchangeEmailTemplates';
 
 import logger from '../../config/logger';
 
@@ -97,10 +101,11 @@ export class ReturnNotificationService {
   static async notifyCustomerRefundInitiated(returnRequest: IReturnRequest) {
     const user = await this.getUser(returnRequest.userId.toString());
     if (user?.email) {
+      const emailContent = buildRefundInitiatedCustomerEmail(returnRequest, user);
       await sendDirectEmail({
         email: user.email,
-        subject: `Refund Initiated for Return - ${returnRequest.returnId}`,
-        customHtml: `<h1>Refund Initiated</h1><p>A refund of ₹${returnRequest.refundBreakdown?.grandTotal} has been initiated.</p>`,
+        subject: emailContent.subject,
+        customHtml: emailContent.html,
         type: 'order',
         action: 'return_refund_initiated',
       });
@@ -110,10 +115,11 @@ export class ReturnNotificationService {
   static async notifyCustomerRefundCompleted(returnRequest: IReturnRequest) {
     const user = await this.getUser(returnRequest.userId.toString());
     if (user?.email) {
+      const emailContent = buildRefundCompletedCustomerEmail(returnRequest, user);
       await sendDirectEmail({
         email: user.email,
-        subject: `Refund Completed - ${returnRequest.returnId}`,
-        customHtml: `<h1>Refund Completed</h1><p>Your refund of ₹${returnRequest.refundBreakdown?.grandTotal} has been completed.</p>`,
+        subject: emailContent.subject,
+        customHtml: emailContent.html,
         type: 'order',
         action: 'return_refund_completed',
       });

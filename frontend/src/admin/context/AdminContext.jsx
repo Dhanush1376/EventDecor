@@ -80,10 +80,12 @@ export function AdminProvider({ children }) {
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
   const [globalActionLoading, setGlobalActionLoading] = useState(false);
   const [globalActionMessage, setGlobalActionMessage] = useState('');
+  const [globalActionSuccess, setGlobalActionSuccess] = useState(false);
 
   const security = useAdminSecurity({
     setGlobalActionLoading,
     setGlobalActionMessage,
+    setGlobalActionSuccess,
   });
   const cms = useAdminCMS({
     activeRole: security.activeRole,
@@ -97,6 +99,7 @@ export function AdminProvider({ children }) {
     setAutoPublish: security.setAutoPublish,
     setGlobalActionLoading,
     setGlobalActionMessage,
+    setGlobalActionSuccess,
   });
 
   const productsHook = useAdminProducts({
@@ -489,6 +492,8 @@ export function AdminProvider({ children }) {
         setGlobalActionLoading,
         globalActionMessage,
         setGlobalActionMessage,
+        globalActionSuccess,
+        setGlobalActionSuccess,
         themeMode,
         lastDataRefresh,
 

@@ -145,6 +145,7 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
                 loading={idx === 0 ? 'eager' : 'lazy'}
                 width={1200}
                 sizes="(max-width: 640px) 100vw, 50vw"
+                quality="auto:best"
               />
             </div>
           ))}

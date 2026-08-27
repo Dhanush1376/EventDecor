@@ -136,7 +136,7 @@ export function EventDetailSkeleton() {
             </div>
 
             {/* Features Highlight */}
-            <div className="p-6 rounded-[2rem] border border-[#C4A87C]/20 bg-[#FAF6F0] space-y-4">
+            <div className="p-6 rounded-[2rem] border border-[#826237]/20 bg-[#FAF6F0] space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <Skeleton className="w-4 h-4 rounded-full" />
                 <Skeleton className="h-[10px] w-56 rounded-full" />
@@ -173,7 +173,7 @@ export function EventDetailSkeleton() {
 
           {/* Right Column (Customizer Form) */}
           <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-6">
-            <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border border-[#C4A87C]/20 p-6 lg:p-8 space-y-6 shadow-sm">
+            <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border border-[#826237]/20 p-6 lg:p-8 space-y-6 shadow-sm">
               <div className="flex justify-between pb-4 border-b border-black/5">
                 <div className="flex flex-col gap-2">
                   <Skeleton className="h-[14px] w-24 rounded-full" />

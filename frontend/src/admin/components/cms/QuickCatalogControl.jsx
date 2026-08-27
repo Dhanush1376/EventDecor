@@ -15,13 +15,13 @@ export function QuickCatalogControl() {
         {products?.slice(0, 8).map((prd) => (
           <div
             key={prd.id}
-            className="p-3 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] flex items-center justify-between gap-3 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300"
+            className="p-3 bg-[var(--admin-surface)] rounded-md border border-[var(--admin-border)] flex items-center justify-between gap-3 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300"
           >
             <div className="flex items-center gap-3">
               <img
                 src={prd.image}
                 alt={prd.name}
-                className="w-10 h-10 object-cover rounded-xl border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] shrink-0"
+                className="w-10 h-10 object-cover rounded-md border border-[var(--admin-border-subtle)] shadow-[var(--admin-shadow-xs)] shrink-0"
               />
               <div>
                 <span className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1 leading-tight">

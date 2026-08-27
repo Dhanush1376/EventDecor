@@ -34,12 +34,12 @@ export function ShopPageEditor({ content, onUpdate }) {
 
       <div className="space-y-8">
         {/* Hero Section Banner */}
-        <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-3xl shadow-sm relative overflow-hidden group">
+        <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-md shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
             <span className="material-symbols-outlined text-[150px]">storefront</span>
           </div>
           <div className="relative z-10 space-y-6">
-            <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
+            <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
               1. Hero Section Setup
             </span>
 
@@ -53,7 +53,7 @@ export function ShopPageEditor({ content, onUpdate }) {
                   onChange={(e) =>
                     onUpdate('shopPage', { hero: { ...hero, title: e.target.value } })
                   }
-                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                   placeholder="e.g. Heritage Collection"
                 />
               </AdminField>
@@ -67,7 +67,7 @@ export function ShopPageEditor({ content, onUpdate }) {
                   onChange={(e) =>
                     onUpdate('shopPage', { hero: { ...hero, subtitle: e.target.value } })
                   }
-                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                   placeholder="e.g. Curated Artisanship"
                 />
               </AdminField>
@@ -83,12 +83,12 @@ export function ShopPageEditor({ content, onUpdate }) {
                   onUpdate('shopPage', { hero: { ...hero, description: e.target.value } })
                 }
                 rows={3}
-                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                 placeholder="Describe your collections here..."
               />
             </AdminField>
 
-            <div className="bg-[var(--admin-surface-muted)] p-5 rounded-2xl border border-[var(--admin-border-subtle)] mt-2">
+            <div className="bg-[var(--admin-surface-muted)] p-5 rounded-md border border-[var(--admin-border-subtle)] mt-2">
               <ImageUpload
                 label="Hero Background Image"
                 value={hero.backgroundImage || ''}
@@ -102,13 +102,13 @@ export function ShopPageEditor({ content, onUpdate }) {
         </div>
 
         {/* Promo Banner Settings */}
-        <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-3xl shadow-sm relative overflow-hidden group">
+        <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-md shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:-rotate-6">
             <span className="material-symbols-outlined text-[150px]">campaign</span>
           </div>
           <div className="relative z-10 space-y-6">
             <div className="flex items-center justify-between border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
-              <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block">
+              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block">
                 2. Promo Banner Settings
               </span>
               <div className="flex items-center gap-3 bg-[var(--admin-surface-muted)] px-3 py-1.5 rounded-full border border-[var(--admin-border)] shadow-[var(--admin-shadow-xs)] transition-colors hover:border-[var(--admin-accent)]/50">
@@ -134,7 +134,7 @@ export function ShopPageEditor({ content, onUpdate }) {
                 {/* None Option */}
                 <div
                   onClick={() => onUpdate('shopPage', { promo: { ...promo, linkedCouponId: '' } })}
-                  className={`relative p-5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center justify-center text-center min-h-[110px] group ${
+                  className={`relative p-5 rounded-md border transition-all cursor-pointer flex flex-col items-center justify-center text-center min-h-[110px] group ${
                     !promo.linkedCouponId
                       ? 'bg-[var(--admin-accent-subtle)] border-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
                       : 'bg-[var(--admin-surface-muted)] border-[var(--admin-border)] hover:border-[var(--admin-text-tertiary)] opacity-70 hover:opacity-100'
@@ -172,7 +172,7 @@ export function ShopPageEditor({ content, onUpdate }) {
                           promo: { ...promo, linkedCouponId: c._id || c.code },
                         })
                       }
-                      className={`relative p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-center min-h-[110px] overflow-hidden group ${
+                      className={`relative p-5 rounded-md border transition-all cursor-pointer flex flex-col justify-center min-h-[110px] overflow-hidden group ${
                         isSelected
                           ? 'bg-[var(--admin-accent-subtle)] border-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
                           : 'bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]/50 hover:shadow-sm'

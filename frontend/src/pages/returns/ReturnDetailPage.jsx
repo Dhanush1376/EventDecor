@@ -8,6 +8,7 @@ import { ReturnExchangeSkeleton } from '../../components/ui/skeletons/PageSkelet
 import { SEO } from '../../components/seo/SEO';
 import ReturnTimeline from './components/ReturnTimeline';
 import RefundBreakdownCard from './components/RefundBreakdownCard';
+import RefundDestinationModal from './components/RefundDestinationModal';
 import { useUserSocket } from '../../context/UserSocketProvider';
 
 export const ReturnDetailPage = () => {
@@ -15,6 +16,7 @@ export const ReturnDetailPage = () => {
   const navigate = useNavigate();
   const [returnRequest, setReturnRequest] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
 
   const socket = useUserSocket();
 
@@ -167,6 +169,23 @@ export const ReturnDetailPage = () => {
             }
           />
 
+          {returnRequest.status === 'inspection_passed' &&
+            returnRequest.returnType !== 'exchange' && (
+              <div className="bg-primary/10 rounded-2xl border border-primary/20 p-5 shadow-sm text-center">
+                <h3 className="font-bold text-primary mb-2">Refund Ready</h3>
+                <p className="text-sm text-on-surface-variant mb-4">
+                  Your return has passed inspection. Please choose where you'd like your refund to
+                  go.
+                </p>
+                <button
+                  onClick={() => setIsRefundModalOpen(true)}
+                  className="w-full py-3 bg-primary hover:bg-primary/90 text-on-primary font-bold uppercase tracking-widest text-xs rounded-xl shadow-sm transition-all"
+                >
+                  Claim Refund
+                </button>
+              </div>
+            )}
+
           <div className="bg-surface rounded-2xl border border-outline-variant/40 p-5 shadow-sm">
             <h3 className="font-semibold text-on-surface mb-4 flex items-center gap-2">
               <Truck className="text-[18px]" strokeWidth={1.5} />
@@ -209,6 +228,16 @@ export const ReturnDetailPage = () => {
           </div>
         </div>
       </div>
+
+      <RefundDestinationModal
+        isOpen={isRefundModalOpen}
+        onClose={() => setIsRefundModalOpen(false)}
+        returnRequest={returnRequest}
+        onComplete={(updatedReq) => {
+          setReturnRequest(updatedReq);
+          setIsRefundModalOpen(false);
+        }}
+      />
     </div>
   );
 };

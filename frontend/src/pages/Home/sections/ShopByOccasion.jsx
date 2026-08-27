@@ -176,6 +176,7 @@ export function ShopByOccasion({ previewContent }) {
                         containerClassName="absolute inset-0 w-full h-full"
                         sizes="(max-width: 640px) 75vw, (max-width: 768px) 50vw, 350px"
                         width={350}
+                        quality="auto:good"
                       />
                     ) : (
                       <div className="w-full h-full bg-surface-container-high" aria-hidden="true" />
@@ -234,6 +235,7 @@ export function ShopByOccasion({ previewContent }) {
                 containerClassName="absolute inset-0 w-full h-full"
                 sizes="(max-width: 1024px) 100vw, 300px"
                 width={350}
+                quality="auto:good"
               />
             ) : (
               <div

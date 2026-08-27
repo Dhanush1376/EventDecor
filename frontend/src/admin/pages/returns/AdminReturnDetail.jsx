@@ -6,8 +6,7 @@ import { format } from 'date-fns';
 import { useReturnManagement } from '../../hooks/useReturnManagement';
 import { handleImageError } from '../../../utils/media/imageUtils';
 import { PLACEHOLDER_IMAGES } from '../../../constants/placeholderImages';
-import Check from 'lucide-react/dist/esm/icons/check';
-import X from 'lucide-react/dist/esm/icons/x';
+// Removed lucide-react direct imports in favor of material-symbols-outlined
 import {
   PageHeader,
   StatusBadge,
@@ -18,13 +17,14 @@ import {
 const TIMELINE_STAGES = [
   { id: 'submitted', label: 'Submitted' },
   { id: 'approved', label: 'Approved' },
-  { id: 'pickup_assigned', label: 'Pickup Assigned' },
-  { id: 'pickup_accepted', label: 'Pickup Accepted' },
-  { id: 'picked_up', label: 'Picked Up' },
-  { id: 'reached_warehouse', label: 'Reached Warehouse' },
+  { id: 'return_courier_assigned', label: 'Courier Assigned' },
+  { id: 'return_picked_up', label: 'Picked Up' },
+  { id: 'return_in_transit', label: 'In Transit' },
+  { id: 'return_received', label: 'Warehouse Received' },
   { id: 'inspection_started', label: 'Inspection Started' },
-  { id: 'inspection_passed', label: 'Inspection Passed' },
-  { id: 'refund_triggered', label: 'Refund Triggered' },
+  { id: 'inspection_completed', label: 'Inspection Completed' },
+  { id: 'refund_initiated', label: 'Refund Initiated' },
+  { id: 'refund_completed', label: 'Refund Completed' },
   { id: 'completed', label: 'Completed' },
 ];
 
@@ -115,7 +115,7 @@ const AdminReturnDetail = () => {
     <div className="admin-page-container">
       <PageHeader
         title={`Return Request ${request.returnId}`}
-        subtitle={`Requested on ${format(new Date(request.createdAt), 'MMM dd, yyyy HH:mm')}`}
+        subtitle={`Requested on ${request.createdAt ? format(new Date(request.createdAt), 'MMM dd, yyyy HH:mm') : 'Unknown Date'}`}
         backButton={{ path: '/admin/returns/requests', label: 'Back to Requests' }}
         headerAction={
           <div className="flex gap-2">
@@ -411,12 +411,23 @@ const AdminReturnDetail = () => {
                           <span>
                             {item.inspectionResult.originalProduct ? (
                               <span className="inline-flex items-center gap-1">
-                                <Check className="w-3.5 h-3.5 text-green-500" aria-hidden="true" />{' '}
+                                <span
+                                  className="material-symbols-outlined text-[14px] text-green-500"
+                                  aria-hidden="true"
+                                >
+                                  check
+                                </span>{' '}
                                 Yes
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1">
-                                <X className="w-3.5 h-3.5 text-red-500" aria-hidden="true" /> No
+                                <span
+                                  className="material-symbols-outlined text-[14px] text-red-500"
+                                  aria-hidden="true"
+                                >
+                                  close
+                                </span>{' '}
+                                No
                               </span>
                             )}
                           </span>
@@ -426,12 +437,23 @@ const AdminReturnDetail = () => {
                           <span>
                             {item.inspectionResult.accessoriesPresent ? (
                               <span className="inline-flex items-center gap-1">
-                                <Check className="w-3.5 h-3.5 text-green-500" aria-hidden="true" />{' '}
+                                <span
+                                  className="material-symbols-outlined text-[14px] text-green-500"
+                                  aria-hidden="true"
+                                >
+                                  check
+                                </span>{' '}
                                 Yes
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1">
-                                <X className="w-3.5 h-3.5 text-red-500" aria-hidden="true" /> No
+                                <span
+                                  className="material-symbols-outlined text-[14px] text-red-500"
+                                  aria-hidden="true"
+                                >
+                                  close
+                                </span>{' '}
+                                No
                               </span>
                             )}
                           </span>
@@ -441,12 +463,22 @@ const AdminReturnDetail = () => {
                           <span>
                             {item.inspectionResult.packagingIntact ? (
                               <span className="inline-flex items-center gap-1">
-                                <Check className="w-3.5 h-3.5 text-green-500" aria-hidden="true" />{' '}
+                                <span
+                                  className="material-symbols-outlined text-[14px] text-green-500"
+                                  aria-hidden="true"
+                                >
+                                  check
+                                </span>{' '}
                                 Intact
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1">
-                                <X className="w-3.5 h-3.5 text-red-500" aria-hidden="true" />{' '}
+                                <span
+                                  className="material-symbols-outlined text-[14px] text-red-500"
+                                  aria-hidden="true"
+                                >
+                                  close
+                                </span>{' '}
                                 Damaged
                               </span>
                             )}
@@ -457,12 +489,23 @@ const AdminReturnDetail = () => {
                           <span>
                             {item.inspectionResult.workingCondition ? (
                               <span className="inline-flex items-center gap-1">
-                                <Check className="w-3.5 h-3.5 text-green-500" aria-hidden="true" />{' '}
+                                <span
+                                  className="material-symbols-outlined text-[14px] text-green-500"
+                                  aria-hidden="true"
+                                >
+                                  check
+                                </span>{' '}
                                 Yes
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1">
-                                <X className="w-3.5 h-3.5 text-red-500" aria-hidden="true" /> No
+                                <span
+                                  className="material-symbols-outlined text-[14px] text-red-500"
+                                  aria-hidden="true"
+                                >
+                                  close
+                                </span>{' '}
+                                No
                               </span>
                             )}
                           </span>
@@ -733,11 +776,15 @@ const AdminReturnDetail = () => {
             <div className="admin-card-body text-xs text-admin-text-muted space-y-2">
               <div className="flex justify-between">
                 <span>Created:</span>
-                <span>{format(new Date(request.createdAt), 'PP pp')}</span>
+                <span>
+                  {request.createdAt ? format(new Date(request.createdAt), 'PP pp') : 'N/A'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Last Updated:</span>
-                <span>{format(new Date(request.updatedAt), 'PP pp')}</span>
+                <span>
+                  {request.updatedAt ? format(new Date(request.updatedAt), 'PP pp') : 'N/A'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Priority:</span>

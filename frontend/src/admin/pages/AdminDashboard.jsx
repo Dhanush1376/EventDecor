@@ -64,7 +64,7 @@ export function AdminDashboard() {
     dataLoading,
   } = useAdmin();
   const navigate = useNavigate();
-  const [chartPeriod, setChartPeriod] = useState('yearly');
+  const [chartPeriod, setChartPeriod] = useState('all-time');
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   // Auto-refresh dashboard data every 60 seconds
@@ -193,7 +193,7 @@ export function AdminDashboard() {
           <PeriodSelector
             value={chartPeriod}
             onChange={setChartPeriod}
-            periods={['weekly', 'monthly', 'yearly']}
+            periods={['all-time', 'today', 'weekly', 'monthly', 'yearly']}
           />
         }
       />

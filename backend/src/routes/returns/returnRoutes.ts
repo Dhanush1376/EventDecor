@@ -20,6 +20,7 @@ router.get('/order/:orderId/summary', requireAuth, returnController.getReturnFor
 router.get('/:id', requireAuth, returnController.getReturnById);
 router.post('/:id/cancel', requireAuth, returnController.cancelReturn);
 router.post('/:id/message', requireAuth, returnController.addConversationMessage);
+router.patch('/:id/refund-method', requireAuth, returnController.updateRefundMethod);
 
 // WAREHOUSE ROUTES
 router.get(

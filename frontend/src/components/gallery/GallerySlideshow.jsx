@@ -166,7 +166,7 @@ export function GallerySlideshow({
             <div className="relative w-full flex-1 flex items-center justify-center overflow-hidden min-h-0">
               {items.length === 0 ? (
                 <div className="text-center py-20 px-6 max-w-md">
-                  <SearchX className="text-[48px] text-[#C4A87C] mb-4 block" strokeWidth={1.5} />
+                  <SearchX className="text-[48px] text-[#826237] mb-4 block" strokeWidth={1.5} />
                   <h3 className="font-headline-sm text-black mb-2 font-normal">
                     No designs found.
                   </h3>

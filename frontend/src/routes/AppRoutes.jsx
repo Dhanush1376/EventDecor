@@ -140,6 +140,15 @@ const AdminOrders = lazy(() =>
 const AdminOrderDetail = lazy(() =>
   import('../admin/pages/AdminOrderDetail').then((m) => ({ default: m.AdminOrderDetail })),
 );
+const AdminReturnsHub = lazy(() => import('../admin/pages/returns/AdminReturnsHub'));
+const AdminReturnDetail = lazy(() =>
+  import('../admin/pages/returns/AdminReturnDetail').then((m) => ({
+    default: m.default || m.AdminReturnDetail,
+  })),
+);
+const AdminExchangeHub = lazy(() =>
+  import('../admin/pages/returns/AdminExchangeHub').then((m) => ({ default: m.AdminExchangeHub })),
+);
 const AdminAddEvent = lazy(() =>
   import('../admin/pages/AdminAddEvent').then((m) => ({ default: m.AdminAddEvent })),
 );
@@ -166,7 +175,7 @@ const AdminWhatsAppAutomations = lazy(() =>
 const AdminApprovalsQueue = lazy(() => import('../admin/pages/AdminApprovalsQueue'));
 
 const AdminExecutiveDashboard = lazy(() => import('../admin/pages/ExecutiveDashboard'));
-const CustomerProfile360 = lazy(() => import('../admin/pages/CustomerProfile360'));
+// const CustomerProfile360 = lazy(() => import('../admin/pages/CustomerProfile360'));
 const AdminGallery = lazy(() =>
   import('../admin/pages/AdminGallery').then((m) => ({ default: m.AdminGallery })),
 );
@@ -250,8 +259,6 @@ const AdminAiSettings = lazy(() => import('../admin/pages/AdminAiSettings'));
 const AdminServiceAreas = lazy(() => import('../admin/pages/AdminServiceAreas'));
 
 // Returns & Exchanges (Admin)
-const AdminReturnsHub = lazy(() => import('../admin/pages/returns/AdminReturnsHub'));
-const AdminReturnDetail = lazy(() => import('../admin/pages/returns/AdminReturnDetail'));
 
 const AdminSystemHub = lazy(() =>
   import('../admin/pages/AdminSystemHub').then((m) => ({ default: m.default })),
@@ -400,7 +407,7 @@ export function AppRoutes() {
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="executive" element={<AdminExecutiveDashboard />} />
 
-              <Route path="customers/:customerId" element={<CustomerProfile360 />} />
+              {/* <Route path="customers/:customerId" element={<CustomerProfile360 />} /> */}
               <Route path="gallery" element={<AdminGallery />} />
               <Route path="gallery/add" element={<AdminAddGalleryItem />} />
               <Route path="gallery/edit/:id" element={<AdminAddGalleryItem />} />
@@ -470,6 +477,7 @@ export function AppRoutes() {
 
               <Route path="returns" element={<AdminReturnsHub />} />
               <Route path="returns/requests/:id" element={<AdminReturnDetail />} />
+              <Route path="exchanges" element={<AdminExchangeHub />} />
 
               <Route path="enterprise-search" element={<AdminEnterpriseSearch />} />
 

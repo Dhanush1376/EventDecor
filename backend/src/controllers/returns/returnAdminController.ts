@@ -9,6 +9,7 @@ import logger from '../../config/logger';
 import mongoose from 'mongoose';
 import ReturnPolicy from '../../models/ReturnPolicy';
 import { ReturnStateMachine } from '../../services/returns/ReturnStateMachine';
+import { ExchangeStateMachine } from '../../services/returns/ExchangeStateMachine';
 
 /**
  * @desc    Get all returns with advanced search & pagination
@@ -26,6 +27,7 @@ export const getAllReturns = asyncHandler(async (req: Request, res: Response) =>
   if (req.query.status) query.status = req.query.status;
   if (req.query.priority) query.priority = req.query.priority;
   if (req.query.fraudScore) query.fraudScore = { $gte: Number(req.query.fraudScore) };
+  if (req.query.type) query.returnType = req.query.type;
 
   // Advanced search handling
   if (req.query.search) {
@@ -331,7 +333,7 @@ export const triggerRefund = asyncHandler(async (req: Request, res: Response) =>
 
   const returnRequest = await ReturnStateMachine.transition(
     req.params.id as string,
-    'refund_triggered',
+    'refund_initiated',
     adminId,
   );
 
@@ -452,4 +454,47 @@ export const getExchangeStats = asyncHandler(async (req: Request, res: Response)
 export const getPickupStats = asyncHandler(async (req: Request, res: Response) => {
   const data = await ReturnAnalyticsService.getPickupStats();
   res.status(200).json({ success: true, data });
+});
+
+/**
+ * @desc    Transition exchange replacement status
+ * @route   PATCH /api/v1/returns/admin/exchanges/:id/transition
+ * @access  Admin
+ */
+export const transitionExchangeReplacement = asyncHandler(async (req: Request, res: Response) => {
+  const adminId = req.user?.id;
+  const { status, metadata } = req.body;
+
+  if (!adminId) throw new ApiError(401, 'Unauthorized');
+  if (!status) throw new ApiError(400, 'Next status is required');
+
+  const exchange = await ExchangeStateMachine.transitionReplacement(
+    req.params.id as string,
+    status,
+    adminId,
+    metadata,
+  );
+
+  res.status(200).json({
+    success: true,
+    data: exchange,
+  });
+});
+
+/**
+ * @desc    Create replacement order for exchange
+ * @route   POST /api/v1/returns/admin/exchanges/:id/replacement-order
+ * @access  Admin
+ */
+export const createReplacementOrder = asyncHandler(async (req: Request, res: Response) => {
+  const adminId = req.user?.id;
+
+  if (!adminId) throw new ApiError(401, 'Unauthorized');
+
+  const order = await ExchangeStateMachine.createReplacementOrder(req.params.id as string, adminId);
+
+  res.status(201).json({
+    success: true,
+    data: order,
+  });
 });

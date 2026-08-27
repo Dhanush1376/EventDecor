@@ -29,14 +29,14 @@ export function EventBookingSuccess() {
             angle: 60,
             spread: 55,
             origin: { x: 0 },
-            colors: ['var(--color-gold-dark)', '#C4A87C', '#FFD700', '#8B0000'],
+            colors: ['var(--color-gold-dark)', '#826237', '#FFD700', '#8B0000'],
           });
           confetti({
             particleCount: 5,
             angle: 120,
             spread: 55,
             origin: { x: 1 },
-            colors: ['var(--color-gold-dark)', '#C4A87C', '#FFD700', '#8B0000'],
+            colors: ['var(--color-gold-dark)', '#826237', '#FFD700', '#8B0000'],
           });
 
           if (Date.now() < end) {
@@ -144,7 +144,7 @@ export function EventBookingSuccess() {
           </div>
 
           {/* Booking Info Box */}
-          <div className="bg-[#FAF9F6] rounded-[24px] p-6 mb-8 border border-[#C4A87C]/20">
+          <div className="bg-[#FAF9F6] rounded-[24px] p-6 mb-8 border border-[#826237]/20">
             <h3 className="font-display text-lg text-black font-bold mb-4 flex items-center gap-2">
               <Receipt className="text-primary" strokeWidth={1.5} />
               Booking Details

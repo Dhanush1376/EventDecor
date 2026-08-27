@@ -15,12 +15,12 @@ export function CustomOrdersEditor({ content, onUpdate }) {
 
       <div className="space-y-8">
         {/* Hero Section Banner */}
-        <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-3xl shadow-sm relative overflow-hidden group">
+        <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-md shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
             <span className="material-symbols-outlined text-[150px]">design_services</span>
           </div>
           <div className="relative z-10 space-y-6">
-            <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
+            <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
               1. Hero Section Setup
             </span>
 
@@ -34,7 +34,7 @@ export function CustomOrdersEditor({ content, onUpdate }) {
                   onChange={(e) =>
                     onUpdate('customOrdersPage', { hero: { ...hero, title: e.target.value } })
                   }
-                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                   placeholder="e.g. Custom Order"
                 />
               </AdminField>
@@ -48,7 +48,7 @@ export function CustomOrdersEditor({ content, onUpdate }) {
                   onChange={(e) =>
                     onUpdate('customOrdersPage', { hero: { ...hero, subtitle: e.target.value } })
                   }
-                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                   placeholder="e.g. Bespoke Event Curation"
                 />
               </AdminField>
@@ -67,7 +67,7 @@ export function CustomOrdersEditor({ content, onUpdate }) {
                   onUpdate('customOrdersPage', { hero: { ...hero, description: e.target.value } })
                 }
                 rows={3}
-                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                 placeholder="Design your custom decor, get price estimates, and track your orders."
               />
             </AdminField>

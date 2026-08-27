@@ -26,12 +26,32 @@ export function OrderCard({ order, item, itemIdx, idx }) {
     ? new Date(deliveryEntry.timestamp)
     : new Date(order.updatedAt || order.createdAt);
   const returnExpiryDate = new Date(deliveryDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+  const isNonRefundable =
+    item.isNonRefundable === true ||
+    (typeof item.productId === 'object' && item.productId?.isNonRefundable === true);
   const isReturnActive = new Date() < returnExpiryDate;
   const expiryStr = returnExpiryDate.toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   });
+
+  const getCardStyle = () => {
+    switch (order.cardState) {
+      case 'return_active':
+        return 'bg-amber-50/50 border-amber-200/50 hover:border-amber-300';
+      case 'exchange_active':
+        return 'bg-blue-50/50 border-blue-200/50 hover:border-blue-300';
+      case 'return_and_exchange_active':
+        return 'bg-gradient-to-r from-amber-50/50 to-blue-50/50 border-indigo-200/50 hover:border-indigo-300';
+      case 'return_completed':
+      case 'exchange_completed':
+      case 'all_completed':
+        return 'bg-green-50/50 border-green-200/50 hover:border-green-300';
+      default:
+        return 'bg-surface-bright border-outline-variant/30 hover:border-outline-variant';
+    }
+  };
 
   return (
     <motion.div
@@ -40,7 +60,7 @@ export function OrderCard({ order, item, itemIdx, idx }) {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={{ duration: 0.2, delay: idx * 0.02 }}
-      className="bg-surface-bright border border-outline-variant/30 rounded-lg overflow-hidden shadow-2xs hover:border-outline-variant hover:shadow-xs transition-all text-left"
+      className={`border rounded-lg overflow-hidden shadow-2xs hover:shadow-xs transition-all text-left ${getCardStyle()}`}
     >
       {/* Card Header */}
       <div className="bg-surface-container-low px-4 py-3 flex items-center justify-between border-b border-outline-variant/15 relative">
@@ -154,7 +174,18 @@ export function OrderCard({ order, item, itemIdx, idx }) {
       {order.orderStatus?.toLowerCase() === 'delivered' && (
         <div className="px-4 py-2 bg-surface-container-low/40 border-t border-outline-variant/15 flex items-center justify-between text-[10px] text-secondary font-body">
           <div className="flex items-center gap-1.5">
-            {isReturnActive ? (
+            {isNonRefundable ? (
+              <svg
+                className="w-3.5 h-3.5 text-error/70 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+            ) : isReturnActive ? (
               <svg
                 className="w-3.5 h-3.5 text-secondary/70 shrink-0"
                 fill="none"
@@ -185,12 +216,14 @@ export function OrderCard({ order, item, itemIdx, idx }) {
               </svg>
             )}
             <span>
-              {isReturnActive
-                ? `Exchange/Return window active till ${expiryStr}`
-                : `Return window closed on ${expiryStr}`}
+              {isNonRefundable
+                ? 'Return and Exchange not eligible for this product'
+                : isReturnActive
+                  ? `Exchange/Return window active till ${expiryStr}`
+                  : `Return window closed on ${expiryStr}`}
             </span>
           </div>
-          {isReturnActive && (
+          {isReturnActive && !isNonRefundable && (
             <StatusPill color="accent" className="text-[8px] px-1.5 py-0.5">
               Active
             </StatusPill>

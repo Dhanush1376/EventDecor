@@ -21,12 +21,12 @@ export function SEOCenterEditor({ content, onUpdate }) {
       />
 
       <div className="space-y-8">
-        <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-3xl shadow-sm relative overflow-hidden group">
+        <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-md shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
             <span className="material-symbols-outlined text-[150px]">search</span>
           </div>
           <div className="relative z-10 space-y-6">
-            <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
+            <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
               Search Engine Optimization
             </span>
 
@@ -38,7 +38,7 @@ export function SEOCenterEditor({ content, onUpdate }) {
                 <AdminInput
                   value={seo.globalTitle || ''}
                   onChange={(e) => onUpdate('seo', { globalTitle: e.target.value })}
-                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                   placeholder={DEFAULT_TITLE}
                 />
               </AdminField>
@@ -50,7 +50,7 @@ export function SEOCenterEditor({ content, onUpdate }) {
                 <AdminInput
                   value={seo.globalKeywords || ''}
                   onChange={(e) => onUpdate('seo', { globalKeywords: e.target.value })}
-                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                   placeholder={DEFAULT_KEYWORDS}
                 />
               </AdminField>
@@ -64,17 +64,17 @@ export function SEOCenterEditor({ content, onUpdate }) {
                 value={seo.globalDescription || ''}
                 onChange={(e) => onUpdate('seo', { globalDescription: e.target.value })}
                 rows={3}
-                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                 placeholder={DEFAULT_DESC}
               />
             </AdminField>
 
             {/* Google Search Live Preview */}
             <div className="mt-10">
-              <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
+              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block border-b border-[var(--admin-border-subtle)] pb-3 mb-6">
                 Live Search Preview
               </span>
-              <div className="border border-[#dadce0] rounded-xl bg-white p-5 max-w-2xl font-sans shadow-sm hover:shadow-md transition-shadow">
+              <div className="border border-[#dadce0] rounded-md bg-white p-5 max-w-2xl font-sans shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3 mb-2 text-[#4d5156]">
                   <div className="w-[28px] h-[28px] bg-[#f1f3f4] rounded-full flex items-center justify-center border border-[#dadce0] overflow-hidden">
                     <span className="text-[10px] font-bold text-gray-500">Siri</span>

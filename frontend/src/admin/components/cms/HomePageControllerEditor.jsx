@@ -95,8 +95,8 @@ export function HomePageControllerEditor({ content, onUpdate }) {
 
     return (
       <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider block">
+        <div className="flex justify-between items-center mb-4 gap-4">
+          <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] whitespace-nowrap">
             Product Feed
           </span>
           <AdminToggle
@@ -106,10 +106,10 @@ export function HomePageControllerEditor({ content, onUpdate }) {
           />
         </div>
         <div
-          className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin transition-all duration-300 ${isAutoMode ? 'opacity-50 pointer-events-none grayscale-[50%]' : 'opacity-100'}`}
+          className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-1 pr-2 scrollbar-thin transition-all duration-300 ${isAutoMode ? 'opacity-50 pointer-events-none grayscale-[50%]' : 'opacity-100'}`}
         >
           {!products || products.length === 0 ? (
-            <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)]">
+            <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)]">
               Loading products...
             </div>
           ) : (
@@ -129,14 +129,14 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                     }
                     updateSectionState(sectionId, 'productIds', newIds);
                   }}
-                  className={`relative p-3 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
+                  className={`relative p-3 rounded-md border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
                     isSelected
                       ? 'bg-[var(--admin-surface)] border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
                       : 'bg-[var(--admin-surface)] border-[var(--admin-border)] opacity-70 hover:opacity-100 hover:border-[var(--admin-accent)]/50 shadow-[var(--admin-shadow-xs)]'
                   }`}
                 >
                   <div
-                    className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10 transition-colors ${
+                    className={`absolute top-2 right-2 w-6 h-6 rounded-sm flex items-center justify-center z-10 transition-colors ${
                       isSelected
                         ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)]'
                         : 'bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] text-transparent group-hover:border-[var(--admin-accent)]/50'
@@ -147,7 +147,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                   <img
                     src={p.imageSrc || p.image || p.thumbnail}
                     alt={p.name || p.title}
-                    className="w-full aspect-[3/4] object-cover rounded-xl shadow-inner border border-[var(--admin-border-subtle)]"
+                    className="w-full aspect-[3/4] object-cover rounded shadow-inner border border-[var(--admin-border-subtle)]"
                   />
                   <div className="space-y-1">
                     <span className="text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1">
@@ -227,7 +227,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
     <div className="admin-card p-6 space-y-6">
       <SectionHeader
         icon="home"
-        title="Home Page Controller"
+        title="Home Page"
         description="Manage the storefront homepage layout, sections ordering, and content"
       />
 
@@ -238,25 +238,34 @@ export function HomePageControllerEditor({ content, onUpdate }) {
           ...homepageSections.map((sec) => {
             const baseId = sec.id.split('_')[0];
             switch (baseId) {
-              case 'hero': return 'Hero';
-              case 'promoBanner': return 'Promo';
-              case 'categoryGrid': return 'Categories';
-              case 'trendingProducts': return 'Trending';
-              case 'shopByOccasion': return 'Occasions';
-              case 'featuredProducts': return 'Featured';
-              case 'recommendedProducts': return 'Recommended';
-              case 'galleryInspiration': return 'Gallery';
-              default: return baseId;
+              case 'hero':
+                return 'Hero';
+              case 'promoBanner':
+                return 'Promo';
+              case 'categoryGrid':
+                return 'Categories';
+              case 'trendingProducts':
+                return 'Trending';
+              case 'shopByOccasion':
+                return 'Occasions';
+              case 'featuredProducts':
+                return 'Featured';
+              case 'recommendedProducts':
+                return 'Recommended';
+              case 'galleryInspiration':
+                return 'Gallery';
+              default:
+                return baseId;
             }
-          })
+          }),
         ].map((tab, idx) => (
           <button
             key={`${tab}-${idx}`}
             onClick={() => setActiveTab(tab.toLowerCase())}
-            className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
+            className={`px-4 py-2 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
               activeTab === tab.toLowerCase()
-                ? 'bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border-[var(--admin-accent)]/30'
-                : 'bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] border-transparent hover:bg-[var(--admin-surface-muted)]'
+                ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)] border-[var(--admin-accent)] shadow-sm'
+                : 'bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] border-transparent hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-primary)]'
             }`}
           >
             {tab}
@@ -266,7 +275,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
 
       {activeTab === 'layout' && (
         <div className="space-y-3">
-          <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block mb-4 border-b border-[var(--admin-border-subtle)] pb-2">
+          <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4 border-b border-[var(--admin-border-subtle)] pb-2">
             Section Ordering & Visibility
           </span>
           {homepageSections.map((sec, idx) => (
@@ -276,7 +285,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
               onDragStart={(e) => handleDragStart(e, idx)}
               onDragOver={(e) => handleDragOver(e, idx)}
               onDrop={(e) => handleDrop(e, idx)}
-              className={`flex items-center justify-between p-3 bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)] shadow-sm transition-all duration-300 ${draggedIdx === idx ? 'opacity-50 border-[var(--admin-accent)] scale-[0.98]' : 'opacity-100'} hover:border-[var(--admin-border-strong)]`}
+              className={`flex items-center justify-between p-3 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] shadow-sm transition-all duration-300 ${draggedIdx === idx ? 'opacity-50 border-[var(--admin-accent)] scale-[0.98]' : 'opacity-100'} hover:border-[var(--admin-border-strong)]`}
             >
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-[var(--admin-text-tertiary)] cursor-move">
@@ -315,93 +324,98 @@ export function HomePageControllerEditor({ content, onUpdate }) {
 
       {activeTab === 'hero' && (
         <div className="space-y-4">
-          <div className="flex gap-2 border-b border-[var(--admin-border-subtle)] pb-4 mb-4">
+          <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] overflow-x-auto no-scrollbar mb-4 h-[46px]">
             <button
               onClick={() => setHeroSubTab('products')}
-              className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border ${
+              className={`flex-1 sm:flex-none px-4 h-full rounded-sm text-[13px] font-bold uppercase transition-all flex items-center justify-center whitespace-nowrap shrink-0 ${
                 heroSubTab === 'products'
-                  ? 'bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border-[var(--admin-accent)]/30'
-                  : 'bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)]'
+                  ? 'bg-white text-[var(--admin-text-primary)] shadow-sm'
+                  : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
               }`}
             >
-              Hero Products ({content.hero?.productIds?.length || 0}/{products ? products.length : '0'})
+              Products ({content.hero?.productIds?.length || 0}/{products ? products.length : '0'})
             </button>
             <button
               onClick={() => setHeroSubTab('showcases')}
-              className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border ${
+              className={`flex-1 sm:flex-none px-4 h-full rounded-sm text-[13px] font-bold uppercase transition-all flex items-center justify-center whitespace-nowrap shrink-0 ${
                 heroSubTab === 'showcases'
-                  ? 'bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border-[var(--admin-accent)]/30'
-                  : 'bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)]'
+                  ? 'bg-white text-[var(--admin-text-primary)] shadow-sm'
+                  : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
               }`}
             >
-              Hero Showcases ({showcases?.filter(s => s.featured).length || 0}/{showcases ? showcases.length : '0'})
+              Showcases ({showcases?.filter((s) => s.featured).length || 0}/
+              {showcases ? showcases.length : '0'})
             </button>
           </div>
 
           {heroSubTab === 'products' && (
             <div>
-              <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block mb-4 pb-2">
+              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4 pb-2">
                 Select Hero Products
               </span>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-1 pr-2 scrollbar-thin">
                 {!products || products.length === 0 ? (
-                  <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)]">
+                  <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)]">
                     No products available to select. Check if products exist in the catalog or if
                     the API failed.
                   </div>
                 ) : (
-                  [...products].sort((a, b) => {
-                    const aSelected = (content.hero?.productIds || []).includes(a.id || a._id);
-                    const bSelected = (content.hero?.productIds || []).includes(b.id || b._id);
-                    return (bSelected ? 1 : 0) - (aSelected ? 1 : 0);
-                  }).map((prd) => {
-                    const isSelected = (content.hero?.productIds || []).includes(prd.id || prd._id);
-                    return (
-                      <div
-                        key={prd.id}
-                        onClick={() => {
-                          const currentIds = content.hero?.productIds || [];
-                          let newIds;
-                          if (isSelected) {
-                            newIds = currentIds.filter((id) => id !== prd.id);
-                          } else {
-                            newIds = [...currentIds, prd.id];
-                          }
-                          updateSectionState('hero', 'productIds', newIds);
-                        }}
-                        className={`relative p-3 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
-                          isSelected
-                            ? 'bg-[var(--admin-surface)] border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
-                            : 'bg-[var(--admin-surface)] border-[var(--admin-border)] opacity-70 hover:opacity-100 hover:border-[var(--admin-accent)]/50 shadow-[var(--admin-shadow-xs)]'
-                        }`}
-                      >
+                  [...products]
+                    .sort((a, b) => {
+                      const aSelected = (content.hero?.productIds || []).includes(a.id || a._id);
+                      const bSelected = (content.hero?.productIds || []).includes(b.id || b._id);
+                      return (bSelected ? 1 : 0) - (aSelected ? 1 : 0);
+                    })
+                    .map((prd) => {
+                      const isSelected = (content.hero?.productIds || []).includes(
+                        prd.id || prd._id,
+                      );
+                      return (
                         <div
-                          className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10 transition-colors ${
+                          key={prd.id}
+                          onClick={() => {
+                            const currentIds = content.hero?.productIds || [];
+                            let newIds;
+                            if (isSelected) {
+                              newIds = currentIds.filter((id) => id !== prd.id);
+                            } else {
+                              newIds = [...currentIds, prd.id];
+                            }
+                            updateSectionState('hero', 'productIds', newIds);
+                          }}
+                          className={`relative p-3 rounded-md border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
                             isSelected
-                              ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)]'
-                              : 'bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] text-transparent group-hover:border-[var(--admin-accent)]/50'
+                              ? 'bg-[var(--admin-surface)] border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
+                              : 'bg-[var(--admin-surface)] border-[var(--admin-border)] opacity-70 hover:opacity-100 hover:border-[var(--admin-accent)]/50 shadow-[var(--admin-shadow-xs)]'
                           }`}
                         >
-                          <span className="material-symbols-outlined text-[14px] font-bold">
-                            check
-                          </span>
+                          <div
+                            className={`absolute top-2 right-2 w-6 h-6 rounded-sm flex items-center justify-center z-10 transition-colors ${
+                              isSelected
+                                ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)]'
+                                : 'bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] text-transparent group-hover:border-[var(--admin-accent)]/50'
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[14px] font-bold">
+                              check
+                            </span>
+                          </div>
+                          <img
+                            src={prd.image}
+                            alt={prd.name}
+                            className="w-full aspect-square object-cover rounded shadow-inner border border-[var(--admin-border-subtle)]"
+                          />
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1">
+                              {prd.name}
+                            </span>
+                            <span className="text-[10px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider block">
+                              {prd.category}
+                            </span>
+                          </div>
                         </div>
-                        <img
-                          src={prd.image}
-                          alt={prd.name}
-                          className="w-full aspect-square object-cover rounded-xl shadow-inner border border-[var(--admin-border-subtle)]"
-                        />
-                        <div className="space-y-1">
-                          <span className="text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1">
-                            {prd.name}
-                          </span>
-                          <span className="text-[10px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider block">
-                            {prd.category}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })
                 )}
               </div>
             </div>
@@ -410,80 +424,82 @@ export function HomePageControllerEditor({ content, onUpdate }) {
           {/* Showcases Section */}
           {heroSubTab === 'showcases' && (
             <div>
-              <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block mb-4 pb-2">
+              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4 pb-2">
                 Select Hero Showcases
               </span>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-1 pr-2 scrollbar-thin">
                 {loadingShowcases ? (
-                  <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)]">
+                  <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)]">
                     Loading showcases...
                   </div>
                 ) : !showcases || showcases.length === 0 ? (
-                  <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)]">
+                  <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)]">
                     No showcases available. Check if they exist or API failed.
                   </div>
                 ) : (
-                  [...showcases].sort((a, b) => {
-                    const aSelected = a.featured === true;
-                    const bSelected = b.featured === true;
-                    return (bSelected ? 1 : 0) - (aSelected ? 1 : 0);
-                  }).map((sc) => {
-                    const scId = sc._id || sc.id;
-                    const isSelected = sc.featured === true;
-                    return (
-                      <div
-                        key={scId}
-                        onClick={async () => {
-                          try {
-                            const { showcaseService } =
-                              await import('../../../services/domainServices');
-                            const res = await showcaseService.update(scId, {
-                              featured: !isSelected,
-                            });
-                            if (res.success) {
-                              setShowcases((prev) =>
-                                prev.map((s) =>
-                                  (s._id || s.id) === scId ? { ...s, featured: !isSelected } : s,
-                                ),
-                              );
-                            }
-                          } catch (err) {
-                            logger.error('Failed to toggle showcase featured state', err);
-                          }
-                        }}
-                        className={`relative p-3 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
-                          isSelected
-                            ? 'bg-[var(--admin-surface)] border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
-                            : 'bg-[var(--admin-surface)] border-[var(--admin-border)] opacity-70 hover:opacity-100 hover:border-[var(--admin-accent)]/50 shadow-[var(--admin-shadow-xs)]'
-                        }`}
-                      >
+                  [...showcases]
+                    .sort((a, b) => {
+                      const aSelected = a.featured === true;
+                      const bSelected = b.featured === true;
+                      return (bSelected ? 1 : 0) - (aSelected ? 1 : 0);
+                    })
+                    .map((sc) => {
+                      const scId = sc._id || sc.id;
+                      const isSelected = sc.featured === true;
+                      return (
                         <div
-                          className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10 transition-colors ${
+                          key={scId}
+                          onClick={async () => {
+                            try {
+                              const { showcaseService } =
+                                await import('../../../services/domainServices');
+                              const res = await showcaseService.update(scId, {
+                                featured: !isSelected,
+                              });
+                              if (res.success) {
+                                setShowcases((prev) =>
+                                  prev.map((s) =>
+                                    (s._id || s.id) === scId ? { ...s, featured: !isSelected } : s,
+                                  ),
+                                );
+                              }
+                            } catch (err) {
+                              logger.error('Failed to toggle showcase featured state', err);
+                            }
+                          }}
+                          className={`relative p-3 rounded-md border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
                             isSelected
-                              ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)]'
-                              : 'bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] text-transparent group-hover:border-[var(--admin-accent)]/50'
+                              ? 'bg-[var(--admin-surface)] border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
+                              : 'bg-[var(--admin-surface)] border-[var(--admin-border)] opacity-70 hover:opacity-100 hover:border-[var(--admin-accent)]/50 shadow-[var(--admin-shadow-xs)]'
                           }`}
                         >
-                          <span className="material-symbols-outlined text-[14px] font-bold">
-                            check
-                          </span>
+                          <div
+                            className={`absolute top-2 right-2 w-6 h-6 rounded-sm flex items-center justify-center z-10 transition-colors ${
+                              isSelected
+                                ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)]'
+                                : 'bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] text-transparent group-hover:border-[var(--admin-accent)]/50'
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[14px] font-bold">
+                              check
+                            </span>
+                          </div>
+                          <img
+                            src={sc.image}
+                            alt={sc.title}
+                            className="w-full aspect-square object-cover rounded shadow-inner border border-[var(--admin-border-subtle)]"
+                          />
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1">
+                              {sc.title}
+                            </span>
+                            <span className="text-[10px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider block">
+                              {sc.category?.replace('_', ' ')}
+                            </span>
+                          </div>
                         </div>
-                        <img
-                          src={sc.image}
-                          alt={sc.title}
-                          className="w-full aspect-square object-cover rounded-xl shadow-inner border border-[var(--admin-border-subtle)]"
-                        />
-                        <div className="space-y-1">
-                          <span className="text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1">
-                            {sc.title}
-                          </span>
-                          <span className="text-[10px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider block">
-                            {sc.category?.replace('_', ' ')}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })
                 )}
               </div>
             </div>
@@ -493,7 +509,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
 
       {activeTab === 'promo' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between border border-[var(--admin-border)] px-4.5 py-3 rounded-2xl bg-[var(--admin-surface)] mt-5 h-[46px] shadow-[var(--admin-shadow-xs)]">
+          <div className="flex items-center justify-between border border-[var(--admin-border)] px-4.5 py-3 rounded-md bg-[var(--admin-surface)] mt-5 h-[46px] shadow-[var(--admin-shadow-xs)]">
             <span className="text-[11px] font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider">
               Enable Promo Banner
             </span>
@@ -517,7 +533,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                 </span>
               </div>
             ) : coupons.length === 0 ? (
-              <div className="text-center py-6 border border-dashed border-[var(--admin-border)] rounded-2xl bg-[var(--admin-surface-muted)]">
+              <div className="text-center py-6 border border-dashed border-[var(--admin-border)] rounded-md bg-[var(--admin-surface-muted)]">
                 <span className="material-symbols-outlined text-[24px] text-[var(--admin-text-tertiary)] mb-2 block">
                   local_activity
                 </span>
@@ -654,7 +670,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
 
           <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block mb-4 pb-2">
+              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4 pb-2">
                 Select Store Categories to Feature
               </span>
             </div>
@@ -684,16 +700,16 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                       }
                       updateSectionState('categoryGrid', 'categories', cats);
                     }}
-                    className={`px-4 py-2 rounded-full text-[12px] font-bold transition-all ${
+                    className={`px-4 py-2 rounded-md text-[12px] font-bold flex items-center transition-all ${
                       isSelected
-                        ? 'bg-[var(--admin-text-primary)] text-[var(--admin-surface)] shadow-md'
+                        ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)] shadow-sm'
                         : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-border)]'
                     }`}
                   >
-                    {categoryName}{' '}
+                    {categoryName}
                     {isSelected && (
-                      <span className="ml-1 material-symbols-outlined text-[14px] align-middle">
-                        check_circle
+                      <span className="ml-1.5 material-symbols-outlined text-[14px] font-bold">
+                        check
                       </span>
                     )}
                   </button>
@@ -709,7 +725,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
 
           {content.categoryGrid?.categories?.length > 0 && (
             <div className="pt-6 border-t border-[var(--admin-border-subtle)] space-y-6">
-              <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block mb-4 pb-2">
+              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4 pb-2">
                 Configure Cover Photos
               </span>
 
@@ -719,12 +735,12 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                 return (
                   <div
                     key={`cat-config-${idx}`}
-                    className="p-5 bg-[var(--admin-surface-muted)] rounded-2xl border border-[var(--admin-border)] shadow-sm space-y-4"
+                    className="p-5 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] shadow-sm space-y-4"
                   >
                     <div className="flex items-center justify-between mb-4 pb-4 border-b border-[var(--admin-border-subtle)]">
                       <div className="flex items-center gap-4 w-full pr-4">
                         {cat.image ? (
-                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[var(--admin-border)] shadow-sm shrink-0">
+                          <div className="w-12 h-12 rounded-md overflow-hidden border-2 border-[var(--admin-border)] shadow-sm shrink-0">
                             <img
                               src={cat.image}
                               alt={cat.title}
@@ -732,7 +748,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                             />
                           </div>
                         ) : (
-                          <div className="w-12 h-12 rounded-full border-2 border-dashed border-[var(--admin-border-strong)] flex items-center justify-center shrink-0 bg-[var(--admin-surface)]">
+                          <div className="w-12 h-12 rounded-md border-2 border-dashed border-[var(--admin-border-strong)] flex items-center justify-center shrink-0 bg-[var(--admin-surface)]">
                             <span className="material-symbols-outlined text-[var(--admin-text-tertiary)] text-[20px]">
                               image
                             </span>
@@ -770,7 +786,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                           cats.splice(idx, 1);
                           updateSectionState('categoryGrid', 'categories', cats);
                         }}
-                        className="text-[var(--admin-error)] bg-[var(--admin-error)]/5 hover:bg-[var(--admin-error)]/10 p-2 rounded-xl transition-colors border border-[var(--admin-error)]/20 shrink-0"
+                        className="text-[var(--admin-error)] bg-[var(--admin-error)]/5 hover:bg-[var(--admin-error)]/10 p-2 rounded-md transition-colors border border-[var(--admin-error)]/20 shrink-0"
                         title="Remove Featured Category"
                       >
                         <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -781,7 +797,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                       <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-3 block">
                         Select Cover Photo from {cat.title} Products
                       </span>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[300px] overflow-y-auto p-1 pr-2 scrollbar-thin">
                         {categoryProducts.length > 0 ? (
                           categoryProducts.map((product) => {
                             const isSelected = cat.image === product.image;
@@ -794,14 +810,14 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                                   cats[idx] = { ...cats[idx], image: product.image };
                                   updateSectionState('categoryGrid', 'categories', cats);
                                 }}
-                                className={`relative p-3 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
+                                className={`relative p-3 rounded-md border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
                                   isSelected
                                     ? 'bg-[var(--admin-surface)] border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
                                     : 'bg-[var(--admin-surface)] border-[var(--admin-border)] opacity-70 hover:opacity-100 hover:border-[var(--admin-accent)]/50 shadow-[var(--admin-shadow-xs)]'
                                 }`}
                               >
                                 <div
-                                  className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10 transition-colors ${
+                                  className={`absolute top-2 right-2 w-6 h-6 rounded-sm flex items-center justify-center z-10 transition-colors ${
                                     isSelected
                                       ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)]'
                                       : 'bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] text-transparent group-hover:border-[var(--admin-accent)]/50'
@@ -814,7 +830,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                                 <img
                                   src={product.image}
                                   alt={product.name}
-                                  className="w-full aspect-square object-cover rounded-xl shadow-inner border border-[var(--admin-border-subtle)]"
+                                  className="w-full aspect-square object-cover rounded shadow-inner border border-[var(--admin-border-subtle)]"
                                 />
                                 <div className="space-y-1">
                                   <span className="text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1">
@@ -828,7 +844,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                             );
                           })
                         ) : (
-                          <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)]">
+                          <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)]">
                             No products found in this category.
                           </div>
                         )}
@@ -887,16 +903,16 @@ export function HomePageControllerEditor({ content, onUpdate }) {
             </AdminField>
           </div>
           <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
-            <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider block mb-4">
+            <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4">
               Select Occasion Showcases
             </span>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-1 pr-2 scrollbar-thin">
               {loadingShowcases ? (
-                <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)]">
+                <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)]">
                   Loading showcases...
                 </div>
               ) : !showcases || showcases.length === 0 ? (
-                <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)]">
+                <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)]">
                   No showcases available. Check if they exist or API failed.
                 </div>
               ) : (
@@ -918,14 +934,14 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                         }
                         updateSectionState('shopByOccasion', 'selectedShowcaseIds', newIds);
                       }}
-                      className={`relative p-3 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
+                      className={`relative p-3 rounded-md border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
                         isSelected
                           ? 'bg-[var(--admin-surface)] border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
                           : 'bg-[var(--admin-surface)] border-[var(--admin-border)] opacity-70 hover:opacity-100 hover:border-[var(--admin-accent)]/50 shadow-[var(--admin-shadow-xs)]'
                       }`}
                     >
                       <div
-                        className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10 transition-colors ${
+                        className={`absolute top-2 right-2 w-6 h-6 rounded-sm flex items-center justify-center z-10 transition-colors ${
                           isSelected
                             ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)]'
                             : 'bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] text-transparent group-hover:border-[var(--admin-accent)]/50'
@@ -938,7 +954,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                       <img
                         src={sc.image}
                         alt={sc.title}
-                        className="w-full aspect-square object-cover rounded-xl shadow-inner border border-[var(--admin-border-subtle)]"
+                        className="w-full aspect-square object-cover rounded shadow-inner border border-[var(--admin-border-subtle)]"
                       />
                       <div className="space-y-1">
                         <span className="text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1">
@@ -1030,16 +1046,16 @@ export function HomePageControllerEditor({ content, onUpdate }) {
           </div>
 
           <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
-            <span className="text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-wider block mb-4">
+            <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4">
               Select Gallery Highlights
             </span>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-1 pr-2 scrollbar-thin">
               {loadingGallery ? (
-                <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)]">
+                <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)]">
                   Loading gallery items...
                 </div>
               ) : !galleryItems || galleryItems.length === 0 ? (
-                <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border)]">
+                <div className="col-span-full p-4 text-center text-[var(--admin-text-secondary)] text-[12px] bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)]">
                   No gallery items available.
                 </div>
               ) : (
@@ -1077,14 +1093,14 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                         }
                         updateSectionState('galleryInspiration', 'galleryIds', newIds);
                       }}
-                      className={`relative p-3 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
+                      className={`relative p-3 rounded-md border cursor-pointer transition-all duration-300 flex flex-col gap-3 group ${
                         isSelected
                           ? 'bg-[var(--admin-surface)] border-[var(--admin-accent)] ring-1 ring-[var(--admin-accent)] shadow-[var(--admin-shadow-sm)]'
                           : 'bg-[var(--admin-surface)] border-[var(--admin-border)] opacity-70 hover:opacity-100 hover:border-[var(--admin-accent)]/50 shadow-[var(--admin-shadow-xs)]'
                       }`}
                     >
                       <div
-                        className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10 transition-colors ${
+                        className={`absolute top-2 right-2 w-6 h-6 rounded-sm flex items-center justify-center z-10 transition-colors ${
                           isSelected
                             ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)]'
                             : 'bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] text-transparent group-hover:border-[var(--admin-accent)]/50'
@@ -1097,7 +1113,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
                       <img
                         src={gi.image || gi.images?.[0] || gi.thumbnail}
                         alt={gi.title}
-                        className="w-full aspect-square object-cover rounded-xl shadow-inner border border-[var(--admin-border-subtle)]"
+                        className="w-full aspect-square object-cover rounded shadow-inner border border-[var(--admin-border-subtle)]"
                       />
                       <div className="space-y-1">
                         <span className="text-[11px] font-bold text-[var(--admin-text-primary)] block line-clamp-1">

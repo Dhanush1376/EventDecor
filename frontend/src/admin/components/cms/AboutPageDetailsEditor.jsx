@@ -136,14 +136,14 @@ export function AboutPageDetailsEditor({ content, onUpdate }) {
         {/* Dual Leadership */}
         {ab.founders && (
           <div className="admin-card p-5 space-y-4">
-            <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block border-b border-[var(--admin-border-subtle)] pb-2 font-sans">
+            <span className="text-[11px] sm:text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block border-b border-[var(--admin-border-subtle)] pb-2 font-sans">
               3. Studio Founders & Directors
             </span>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5">
               {ab.founders.map((founder, idx) => (
                 <div
                   key={idx}
-                  className="bg-[var(--admin-surface)] p-4.5 rounded-xl border border-[var(--admin-border)] space-y-3.5 shadow-[var(--admin-shadow-xs)]"
+                  className="bg-[var(--admin-surface)] p-4.5 rounded-md border border-[var(--admin-border)] space-y-3.5 shadow-[var(--admin-shadow-xs)]"
                 >
                   <span className="text-[11px] font-semibold text-[var(--admin-text-tertiary)] uppercase tracking-widest block font-sans">
                     Founder {idx + 1}
@@ -226,7 +226,7 @@ export function AboutPageDetailsEditor({ content, onUpdate }) {
         {/* Frequently Asked Questions */}
         <div className="admin-card p-5 space-y-4">
           <div className="flex justify-between items-center border-b border-[var(--admin-border-subtle)] pb-2">
-            <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block font-sans">
+            <span className="text-[11px] sm:text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block font-sans">
               Frequently Asked Questions
             </span>
             <button
@@ -246,7 +246,7 @@ export function AboutPageDetailsEditor({ content, onUpdate }) {
             {(ab.faqs || []).map((faq, idx) => (
               <div
                 key={idx}
-                className="p-4 bg-[var(--admin-surface)]/85 backdrop-blur-md rounded-2xl border border-[var(--admin-border)] space-y-3.5 shadow-[var(--admin-shadow-xs)] transition-all duration-300"
+                className="p-4 bg-[var(--admin-surface)]/85 backdrop-blur-md rounded-md border border-[var(--admin-border)] space-y-3.5 shadow-[var(--admin-shadow-xs)] transition-all duration-300"
               >
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1 space-y-3">
@@ -294,7 +294,7 @@ export function AboutPageDetailsEditor({ content, onUpdate }) {
         {/* Policy Links */}
         <div className="admin-card p-5 space-y-4">
           <div className="flex justify-between items-center border-b border-[var(--admin-border-subtle)] pb-2">
-            <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em] block font-sans">
+            <span className="text-[11px] sm:text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block font-sans">
               Policy Links (Marquee)
             </span>
             <button
@@ -314,11 +314,11 @@ export function AboutPageDetailsEditor({ content, onUpdate }) {
             {(ab.policies || []).map((policy, idx) => (
               <div
                 key={idx}
-                className="p-4 bg-[var(--admin-surface)]/85 backdrop-blur-md rounded-2xl border border-[var(--admin-border)] flex flex-col md:flex-row items-stretch md:items-center gap-4.5 shadow-[var(--admin-shadow-xs)] transition-all duration-300"
+                className="p-4 bg-[var(--admin-surface)]/85 backdrop-blur-md rounded-md border border-[var(--admin-border)] flex flex-col md:flex-row items-stretch md:items-center gap-4.5 shadow-[var(--admin-shadow-xs)] transition-all duration-300"
               >
                 <div className="flex-1 space-y-1.5">
                   <select
-                    className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-xl px-3 py-2 text-[11px] outline-none focus:border-[var(--admin-accent)] transition-colors text-slate-700"
+                    className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded-md px-3 py-2 text-[11px] outline-none focus:border-[var(--admin-accent)] transition-colors text-slate-700"
                     value={policy.path ? policy.path.replace('/policy/', '') : ''}
                     onChange={(e) => {
                       const selectedPolicy = availablePolicies.find(

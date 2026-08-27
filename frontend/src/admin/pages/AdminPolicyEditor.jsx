@@ -249,7 +249,7 @@ export function AdminPolicyEditor() {
           <button
             onClick={handleAiAutoFillClick}
             disabled={isGenerating}
-            className="admin-btn h-9 px-4 flex items-center gap-1.5 rounded-[var(--admin-radius-md)] bg-[#c4a87c] text-white hover:bg-[#b3976b] transition-colors font-bold text-[13px] shadow-sm"
+            className="admin-btn h-9 px-4 flex items-center gap-1.5 rounded-[var(--admin-radius-md)] bg-[#826237] text-white hover:bg-[#b3976b] transition-colors font-bold text-[13px] shadow-sm"
           >
             {isGenerating && (
               <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>

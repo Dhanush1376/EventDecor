@@ -155,7 +155,7 @@ export function EventDetail() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-surface selection:bg-[#C4A87C]/30 selection:text-black"
+      className="min-h-screen bg-surface selection:bg-[#826237]/30 selection:text-black"
     >
       <SEO
         title={`${event.title} | Premium Decor`}

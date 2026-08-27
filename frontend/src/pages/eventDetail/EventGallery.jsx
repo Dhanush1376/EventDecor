@@ -95,6 +95,7 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
                 containerClassName="w-full h-full"
                 className="w-full h-full object-cover"
                 alt={`${event.title} perspective ${i + 1}`}
+                quality="auto:best"
               />
             </div>
           ))}
@@ -117,6 +118,7 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
               className="w-full h-full object-cover"
               alt={event.title}
               priority={true}
+              quality="auto:best"
             />
           </motion.div>
         </div>
@@ -192,6 +194,7 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
                     alt={`Gallery ${i}`}
                     className="max-w-full max-h-full object-contain shadow-2xl"
                     width={1280}
+                    quality="auto:best"
                   />
                 </div>
               ))}

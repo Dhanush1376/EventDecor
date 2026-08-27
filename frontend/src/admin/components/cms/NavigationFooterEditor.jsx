@@ -104,18 +104,18 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
   };
 
   const renderLinkEditor = (title, items, category) => (
-    <div className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-xl)] border border-[var(--admin-border)] p-6 space-y-5 shadow-[var(--admin-shadow-xs)] relative overflow-hidden group">
+    <div className="bg-[var(--admin-surface)] rounded-md border border-[var(--admin-border)] p-6 space-y-5 shadow-[var(--admin-shadow-sm)] relative overflow-hidden group">
       <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
         <span className="material-symbols-outlined text-[120px]">link</span>
       </div>
       <div className="relative z-10">
         <div className="flex justify-between items-center mb-6 border-b border-[var(--admin-border-subtle)] pb-3">
-          <span className="text-[12px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.18em]">
+          <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em]">
             {title}
           </span>
           <button
             onClick={() => handleAddLink(category)}
-            className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-accent)] hover:text-[var(--admin-accent)] border border-[var(--admin-accent)]/30 hover:border-[var(--admin-accent)] px-3.5 py-1.5 rounded-full bg-[var(--admin-surface)] transition-all cursor-pointer shadow-[var(--admin-shadow-xs)] hover:shadow-xs"
+            className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] hover:text-[var(--admin-text-inverse)] border border-[var(--admin-border-strong)] hover:border-[var(--admin-text-primary)] hover:bg-[var(--admin-text-primary)] px-3.5 py-1.5 rounded-md bg-[var(--admin-surface)] transition-all cursor-pointer shadow-[var(--admin-shadow-xs)] hover:shadow-sm"
           >
             + Add Link
           </button>
@@ -124,7 +124,7 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
           {items.map((link, idx) => (
             <div
               key={idx}
-              className="flex flex-col md:flex-row gap-4 items-center p-5 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-2xl hover:border-[var(--admin-border)] transition-colors"
+              className="flex flex-col md:flex-row gap-4 items-center p-5 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-md hover:border-[var(--admin-border)] transition-colors"
             >
               <div className="flex-1 w-full">
                 <span className="text-[10px] uppercase font-bold text-[var(--admin-text-secondary)] mb-1.5 block">
@@ -176,7 +176,7 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
   return (
     <div className="space-y-8">
       {/* NAVBAR EDITOR SECTION */}
-      <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-3xl shadow-sm relative overflow-hidden group">
+      <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-md shadow-sm relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
           <span className="material-symbols-outlined text-[150px]">menu</span>
         </div>
@@ -194,7 +194,7 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
                 onChange={(e) =>
                   onUpdate('navigation', { logo: { ...nav.logo, text: e.target.value } })
                 }
-                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
               />
             </AdminField>
             <AdminField label="Subtext Tagline">
@@ -203,7 +203,7 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
                 onChange={(e) =>
                   onUpdate('navigation', { logo: { ...nav.logo, tagline: e.target.value } })
                 }
-                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
               />
             </AdminField>
           </div>
@@ -213,7 +213,7 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
       </div>
 
       {/* FOOTER EDITOR SECTION */}
-      <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-3xl shadow-sm relative overflow-hidden group">
+      <div className="p-6 md:p-8 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-md shadow-sm relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
           <span className="material-symbols-outlined text-[150px]">bottom_navigation</span>
         </div>
@@ -230,7 +230,7 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
                 value={footer.description || ''}
                 onChange={(e) => onUpdate('footer', { description: e.target.value })}
                 rows={3}
-                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
               />
             </AdminField>
 
@@ -239,21 +239,21 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
                 <AdminInput
                   value={footer.phone || ''}
                   onChange={(e) => onUpdate('footer', { phone: e.target.value })}
-                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                 />
               </AdminField>
               <AdminField label="Contact Email">
                 <AdminInput
                   value={footer.email || ''}
                   onChange={(e) => onUpdate('footer', { email: e.target.value })}
-                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                 />
               </AdminField>
               <AdminField label="Copyright Notice">
                 <AdminInput
                   value={footer.copyright || ''}
                   onChange={(e) => onUpdate('footer', { copyright: e.target.value })}
-                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                  className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                 />
               </AdminField>
             </div>
@@ -271,7 +271,7 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
                         socialLinks: { ...footer.socialLinks, instagram: e.target.value },
                       })
                     }
-                    className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                    className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                   />
                 </AdminField>
                 <AdminField label="Facebook URL">
@@ -282,7 +282,7 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
                         socialLinks: { ...footer.socialLinks, facebook: e.target.value },
                       })
                     }
-                    className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                    className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                   />
                 </AdminField>
                 <AdminField label="Pinterest URL">
@@ -293,7 +293,7 @@ export function NavigationFooterEditor({ nav = {}, footer = {}, onUpdate }) {
                         socialLinks: { ...footer.socialLinks, pinterest: e.target.value },
                       })
                     }
-                    className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-xl shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
+                    className="w-full !py-3 !text-[13px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-colors"
                   />
                 </AdminField>
               </div>

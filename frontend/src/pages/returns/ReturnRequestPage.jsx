@@ -54,6 +54,34 @@ export const ReturnRequestPage = () => {
   const [upiId, setUpiId] = useState('');
   const [pickupAddress, setPickupAddress] = useState(null);
 
+  const DRAFT_KEY = `return_draft_${orderId}`;
+
+  useEffect(() => {
+    if (orderId) {
+      try {
+        const draft = localStorage.getItem(DRAFT_KEY);
+        if (draft) {
+          const parsed = JSON.parse(draft);
+          if (parsed.selectedItems) setSelectedItems(parsed.selectedItems);
+          if (parsed.refundMethod) setRefundMethod(parsed.refundMethod);
+          if (parsed.upiId) setUpiId(parsed.upiId);
+          if (parsed.step && parsed.step < 7) setStep(parsed.step);
+        }
+      } catch (e) {}
+    }
+  }, [orderId, DRAFT_KEY]);
+
+  useEffect(() => {
+    if (orderId && step < 7) {
+      try {
+        localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({ selectedItems, refundMethod, upiId, step }),
+        );
+      } catch (e) {}
+    }
+  }, [orderId, selectedItems, refundMethod, upiId, step, DRAFT_KEY]);
+
   useEffect(() => {
     if (!orderId) {
       toast.error('Order ID is missing');
@@ -163,6 +191,9 @@ export const ReturnRequestPage = () => {
 
       const res = await returnService.createReturn(payload);
       if (res.data.success) {
+        try {
+          localStorage.removeItem(DRAFT_KEY);
+        } catch (e) {}
         toast.success('Return request submitted');
         setStep(7);
       }
@@ -234,10 +265,10 @@ export const ReturnRequestPage = () => {
 
                 let eligibility = returnState?.items?.find((i) => i.productId === productId);
                 if (isNonRefundable) {
-                  eligibility = { isEligible: false, reason: 'Non-Returnable Item' };
+                  eligibility = { isEligibleForReturn: false, reason: 'Non-Returnable Item' };
                 }
 
-                const isEligible = eligibility?.isEligible ?? !isNonRefundable;
+                const isEligible = eligibility?.isEligibleForReturn ?? !isNonRefundable;
                 const isSelected = !!selectedItems[item._id];
 
                 return (
@@ -703,8 +734,8 @@ export const ReturnRequestPage = () => {
             animate="show"
             className="text-center py-10"
           >
-            <div className="w-16 h-16 bg-[#FDFBF7] text-[#2A2927] flex items-center justify-center mx-auto mb-6">
-              <Check className="text-[32px]" strokeWidth={1.5} />
+            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-green-200">
+              <Check className="text-[40px]" strokeWidth={2} />
             </div>
             <h2 className="text-[14px] font-bold uppercase tracking-widest text-[#2A2927] mb-3">
               REQUEST SUBMITTED SUCCESSFULLY
@@ -714,8 +745,8 @@ export const ReturnRequestPage = () => {
               email confirmation with tracking details.
             </p>
             <button
-              onClick={() => navigate('dashboard/returns')}
-              className="bg-[#2A2927] hover:bg-black text-white px-8 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer"
+              onClick={() => navigate('/dashboard/returns')}
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer"
             >
               TRACK RETURN STATUS <ArrowRight className="text-[14px]" strokeWidth={1.5} />
             </button>

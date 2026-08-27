@@ -5,19 +5,21 @@ import Product from '../../models/Product';
 import ApiError from '../../utils/ApiError';
 import { ReturnNotificationService } from './ReturnNotificationService';
 import { PaymentRefundService } from '../PaymentRefundService';
+import { WalletRefundService } from './WalletRefundService';
 import { ReturnEventEmitter } from './ReturnEventEmitter';
 import logger from '../../config/logger';
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   submitted: ['approved', 'rejected', 'cancelled'],
-  approved: ['pickup_assigned', 'cancelled'],
-  pickup_assigned: ['pickup_accepted', 'rejected'],
-  pickup_accepted: ['picked_up'],
-  picked_up: ['reached_warehouse'],
-  reached_warehouse: ['inspection_started'],
-  inspection_started: ['inspection_passed', 'rejected'],
-  inspection_passed: ['refund_triggered'],
-  refund_triggered: ['completed'],
+  approved: ['return_courier_assigned', 'cancelled'],
+  return_courier_assigned: ['return_picked_up', 'cancelled'],
+  return_picked_up: ['return_in_transit', 'return_received'],
+  return_in_transit: ['return_received'],
+  return_received: ['inspection_started'],
+  inspection_started: ['inspection_completed', 'rejected'],
+  inspection_completed: ['refund_initiated'],
+  refund_initiated: ['refund_completed'],
+  refund_completed: ['completed'],
 };
 
 export interface OrderReturnState {
@@ -120,7 +122,15 @@ export class ReturnStateMachine {
   ) {
     // 1. Order status updates & Inventory
     if (nextStatus === 'completed') {
-      await Order.findByIdAndUpdate(request.orderId, { orderStatus: 'Refunded' }, { session });
+      const order = await Order.findById(request.orderId).session(session || null);
+      if (order) {
+        if (request.returnType === 'exchange') {
+          order.hasActiveExchange = false;
+        } else {
+          order.hasActiveReturn = false;
+        }
+        await order.save({ session });
+      }
 
       // Release inventory for items that were restocked or quality passed
       for (const item of request.items) {
@@ -133,22 +143,64 @@ export class ReturnStateMachine {
         }
       }
     } else if (nextStatus === 'rejected' || nextStatus === 'cancelled') {
-      await Order.findByIdAndUpdate(request.orderId, { orderStatus: 'Delivered' }, { session });
+      const order = await Order.findById(request.orderId).session(session || null);
+      if (order) {
+        if (request.returnType === 'exchange') {
+          order.hasActiveExchange = false;
+        } else {
+          order.hasActiveReturn = false;
+        }
+        await order.save({ session });
+      }
     }
 
     // 2. Refund Triggering
-    if (nextStatus === 'refund_triggered' && request.refundBreakdown?.grandTotal) {
-      await PaymentRefundService.initiateAsyncRefund(
-        {
-          amount: request.refundBreakdown.grandTotal,
-          originalTransactionId: request.orderId.toString(),
-          entityType: 'Order',
-          entityId: request.orderId,
-          isPartial: true,
-          reason: `Refund for Return ${request.returnId}`,
-        },
-        session,
-      );
+    if (nextStatus === 'refund_initiated' && request.refundBreakdown?.grandTotal) {
+      if (request.refundMethod === 'wallet') {
+        // Wallet Refund (Instant/Synchronous)
+        await WalletRefundService.creditRefund(
+          {
+            returnRequestId: request._id,
+            orderId: request.orderId,
+            userId: request.userId,
+            amount: request.refundBreakdown.grandTotal,
+            reason: `Refund for Return ${request.returnId}`,
+          },
+          session,
+        );
+      } else {
+        // Razorpay Gateway Refund (Asynchronous)
+        const order = await Order.findById(request.orderId)
+          .select('razorpayPaymentId items')
+          .session(session || null);
+        if (order && order.razorpayPaymentId) {
+          let orderTotalQuantity = 0;
+          for (const item of order.items) {
+            orderTotalQuantity += item.quantity;
+          }
+          let returnTotalQuantity = 0;
+          for (const item of request.items) {
+            returnTotalQuantity += item.returnQuantity;
+          }
+          const isPartial = returnTotalQuantity < orderTotalQuantity;
+
+          await PaymentRefundService.initiateAsyncRefund(
+            {
+              amount: request.refundBreakdown.grandTotal,
+              originalTransactionId: order.razorpayPaymentId,
+              entityType: 'Order',
+              entityId: request.orderId,
+              isPartial,
+              reason: `Refund for Return ${request.returnId}`,
+            },
+            session,
+          );
+        } else {
+          logger.error(
+            `Cannot initiate refund for return ${request.returnId} - missing razorpayPaymentId on order`,
+          );
+        }
+      }
     }
   }
 
@@ -166,9 +218,9 @@ export class ReturnStateMachine {
       await ReturnNotificationService.notifyCustomerReturnApproved(request);
     } else if (nextStatus === 'rejected') {
       await ReturnNotificationService.notifyCustomerReturnRejected(request);
-    } else if (nextStatus === 'pickup_assigned') {
+    } else if (nextStatus === 'return_courier_assigned') {
       await ReturnNotificationService.notifyCustomerPickupScheduled(request);
-    } else if (nextStatus === 'refund_triggered') {
+    } else if (nextStatus === 'refund_initiated') {
       await ReturnNotificationService.notifyCustomerRefundInitiated(request);
     } else if (nextStatus === 'completed') {
       await ReturnNotificationService.notifyCustomerRefundCompleted(request);
@@ -425,8 +477,7 @@ export class ReturnStateMachine {
 
     await newRequest.save({ session });
 
-    // Execute side effects for 'submitted'
-    await this.executeSyncSideEffects(newRequest, '', 'submitted', session);
+    // Execute side effects for 'submitted' (sync side effects not needed for submitted state)
 
     setImmediate(() => {
       this.executeAsyncSideEffects(newRequest, '', 'submitted').catch((err) => {

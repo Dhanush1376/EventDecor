@@ -1,20 +1,24 @@
 import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 
-export function PeriodSelector({ periods = ['weekly', 'monthly', 'yearly'], value, onChange }) {
+export function PeriodSelector({
+  periods = ['all-time', 'today', 'weekly', 'monthly', 'yearly'],
+  value,
+  onChange,
+}) {
   return (
-    <div className="flex w-max bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] p-0.5 border border-[var(--admin-border-subtle)] shrink-0">
+    <div className="flex w-full sm:w-auto overflow-x-auto no-scrollbar bg-[var(--admin-surface-muted)] rounded-md p-0.5 border border-[var(--admin-border-subtle)] shrink-0">
       {periods.map((p) => (
         <button
           key={p}
           onClick={() => onChange(p)}
-          className={`px-2 py-1 rounded-[var(--admin-radius-sm)] text-[10px] font-semibold capitalize cursor-pointer transition-all whitespace-nowrap ${
+          className={`flex-1 sm:flex-none px-3 py-1.5 rounded-sm text-[11px] font-bold capitalize cursor-pointer transition-all whitespace-nowrap ${
             value === p
-              ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
-              : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent'
+              ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border-subtle)]'
+              : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] border border-transparent hover:bg-[var(--admin-surface)]/50'
           }`}
         >
-          {p}
+          {p.replace('-', ' ')}
         </button>
       ))}
     </div>

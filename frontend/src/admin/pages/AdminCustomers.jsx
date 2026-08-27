@@ -18,7 +18,7 @@ import { EXTERNAL_URLS } from '../../config/constants';
 import { getAccessToken } from '../../services/api';
 import { getApiRootUrl } from '../../config/apiConfig';
 import { acquireAdminSocket, releaseAdminSocket } from '../services/adminSocket';
-import CustomerProfile360 from './CustomerProfile360';
+import AdminCustomerProfileModal from '../components/AdminCustomerProfileModal';
 
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 
@@ -440,25 +440,10 @@ export function AdminCustomers() {
       {/* Slide-over Profile */}
       <AnimatePresence>
         {selectedCustomerId && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="w-full max-w-4xl h-full bg-[var(--admin-bg)] overflow-y-auto shadow-2xl"
-            >
-              <CustomerProfile360
-                customerId={selectedCustomerId}
-                onClose={() => setSelectedCustomerId(null)}
-              />
-            </motion.div>
-          </motion.div>
+          <AdminCustomerProfileModal
+            customer={customers.find((c) => c._id === selectedCustomerId)}
+            onClose={() => setSelectedCustomerId(null)}
+          />
         )}
       </AnimatePresence>
     </motion.div>

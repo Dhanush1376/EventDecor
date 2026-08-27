@@ -553,7 +553,7 @@ export function CustomThemeCard({ product }) {
     <div className="p-6 md:p-8 lg:p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5 w-full">
       <div className="relative z-10 flex flex-col md:flex-row lg:flex-col items-center justify-between lg:justify-center text-center md:text-left lg:text-center gap-5 md:gap-8 lg:gap-5 w-full">
         <div className="flex-1 lg:flex-none">
-          <h4 className="font-headline-sm mb-1 text-[#C4A87C] font-normal tracking-wide">
+          <h4 className="font-headline-sm mb-1 text-[#826237] font-normal tracking-wide">
             Need a Custom Theme?
           </h4>
           <p className="font-body-sm text-white/90 font-medium">

@@ -128,6 +128,7 @@ const OrderSchema: Schema = new Schema(
     returnRequestIds: [{ type: Schema.Types.ObjectId, ref: 'ReturnRequest' }],
     refundStatus: { type: String, enum: ['none', 'partial', 'full'], default: 'none' },
     hasActiveReturn: { type: Boolean, default: false },
+    hasActiveExchange: { type: Boolean, default: false },
     orderNumber: { type: String, index: true },
     orderUuid: { type: String, index: true },
     packageIds: [{ type: String }],

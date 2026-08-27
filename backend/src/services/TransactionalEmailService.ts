@@ -366,10 +366,19 @@ export class TransactionalEmailService {
       `[TransactionalEmailService] Dispatching return created emails for ${returnRequest._id}`,
     );
 
+    // Fetch the original order for the summary
+    let order: any = null;
+    try {
+      const Order = require('../models/Order').default;
+      order = await Order.findById(returnRequest.orderId).lean();
+    } catch (err) {
+      logger.warn(`Could not fetch order for return emails: ${err}`);
+    }
+
     // 1. Notify Customer
     const customerEmail = user?.email;
     if (customerEmail) {
-      const { subject, html } = buildReturnCreatedCustomerEmail(returnRequest, user);
+      const { subject, html } = buildReturnCreatedCustomerEmail(returnRequest, order, user);
       const customerHash = this.hashEmail(customerEmail);
       const notificationKey = `RETURN_CREATED:${eventId}:CUSTOMER:${customerHash}`;
       await this.enqueueEmail(
@@ -394,11 +403,21 @@ export class TransactionalEmailService {
       `[TransactionalEmailService] Dispatching return status update emails for ${returnRequest._id}`,
     );
 
+    // Fetch the original order for the summary
+    let order: any = null;
+    try {
+      const Order = require('../models/Order').default;
+      order = await Order.findById(returnRequest.orderId).lean();
+    } catch (err) {
+      logger.warn(`Could not fetch order for return emails: ${err}`);
+    }
+
     // 1. Notify Customer
     const customerEmail = user?.email;
     if (customerEmail) {
       const { subject, html } = buildReturnStatusUpdateEmail(
         returnRequest,
+        order,
         user,
         previousStatus,
         newStatus,

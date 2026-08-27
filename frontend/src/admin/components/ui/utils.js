@@ -36,7 +36,7 @@ export function getRelativeTime(date) {
 
 export const CHART_COLORS = [
   '#3c362a', // Deep Brown
-  '#c4a87c', // Custom Gold
+  '#826237', // Custom Gold
   '#7a8b76', // Sage
   '#bc6c5c', // Terracotta
   '#c29b62', // Ochre

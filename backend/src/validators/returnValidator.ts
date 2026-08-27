@@ -42,15 +42,15 @@ export const rejectReturnSchema = z.object({
 export const transitionStatusSchema = z.object({
   body: z.object({
     nextStatus: z.enum([
-      'submitted',
       'approved',
-      'pickup_assigned',
-      'pickup_accepted',
-      'picked_up',
-      'reached_warehouse',
+      'return_courier_assigned',
+      'return_picked_up',
+      'return_in_transit',
+      'return_received',
       'inspection_started',
-      'inspection_passed',
-      'refund_triggered',
+      'inspection_completed',
+      'refund_initiated',
+      'refund_completed',
       'completed',
       'rejected',
       'cancelled',

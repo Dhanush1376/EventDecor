@@ -183,6 +183,57 @@ export const buildReturnRejectedCustomerEmail = (returnRequest: any, user: any) 
   };
 };
 
+// --- Refund Emails ---
+
+export const buildRefundInitiatedCustomerEmail = (returnRequest: any, user: any) => {
+  const preheader = `Refund of ${formatCurrency(returnRequest.refundBreakdown?.grandTotal)} initiated for ${returnRequest.returnId}`;
+  const body = `
+    <h2>Refund Initiated</h2>
+    <p>Dear ${escapeHtml(user?.name || 'Customer')},</p>
+    <p>Your refund of <strong>${formatCurrency(returnRequest.refundBreakdown?.grandTotal)}</strong> for return request <strong>${returnRequest.returnId}</strong> has been initiated.</p>
+    
+    ${dataTable([
+      { label: 'Amount', value: formatCurrency(returnRequest.refundBreakdown?.grandTotal) },
+      {
+        label: 'Destination',
+        value: returnRequest.refundMethod === 'wallet' ? 'Store Wallet' : 'Original Payment Method',
+      },
+    ])}
+    
+    <p style="font-size: 14px; color: #6b7280;">Please note that it may take 3-5 business days for the amount to reflect in your account if processed to your original payment method. Wallet refunds are instant.</p>
+    
+    ${button('View Return Details', getFrontendUrl() + '/dashboard/returns/' + returnRequest._id)}
+  `;
+  return {
+    subject: `Refund Initiated - ${returnRequest.returnId}`,
+    html: getLuxuryEmailWrapper('Refund Initiated', body, undefined, preheader),
+  };
+};
+
+export const buildRefundCompletedCustomerEmail = (returnRequest: any, user: any) => {
+  const preheader = `Refund of ${formatCurrency(returnRequest.refundBreakdown?.grandTotal)} completed for ${returnRequest.returnId}`;
+  const body = `
+    <h2>Refund Completed</h2>
+    <p>Dear ${escapeHtml(user?.name || 'Customer')},</p>
+    <p>Your refund of <strong>${formatCurrency(returnRequest.refundBreakdown?.grandTotal)}</strong> for return request <strong>${returnRequest.returnId}</strong> has been successfully processed.</p>
+    
+    ${dataTable([
+      { label: 'Amount', value: formatCurrency(returnRequest.refundBreakdown?.grandTotal) },
+      {
+        label: 'Destination',
+        value: returnRequest.refundMethod === 'wallet' ? 'Store Wallet' : 'Original Payment Method',
+      },
+      { label: 'Status', value: 'Completed' },
+    ])}
+    
+    ${button('View Return Details', getFrontendUrl() + '/dashboard/returns/' + returnRequest._id)}
+  `;
+  return {
+    subject: `Refund Completed - ${returnRequest.returnId}`,
+    html: getLuxuryEmailWrapper('Refund Completed', body, undefined, preheader),
+  };
+};
+
 // --- Exchange Emails ---
 
 export const buildExchangeSubmittedCustomerEmail = (

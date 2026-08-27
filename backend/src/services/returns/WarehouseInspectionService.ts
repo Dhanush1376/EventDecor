@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import ReturnRequest from '../../models/ReturnRequest';
 import ApiError from '../../utils/ApiError';
+import { ReturnStateMachine } from './ReturnStateMachine';
 
 export class WarehouseInspectionService {
   /**
@@ -29,20 +30,14 @@ export class WarehouseInspectionService {
     );
 
     if (allReceived && request.status !== 'return_received') {
-      request.status = 'return_received';
-      request.sla = {
-        currentStage: 'return_received',
-        stageEnteredAt: new Date(),
-        isOverdue: false,
-        escalated: false,
-      };
-
-      request.timeline.push({
-        action: 'Warehouse Receipt',
-        description: 'All items received at warehouse',
-        performedBy: new mongoose.Types.ObjectId(adminId),
-        timestamp: new Date(),
-      });
+      await request.save(); // Save item status first
+      const updatedRequest = await ReturnStateMachine.transition(
+        returnId,
+        'return_received',
+        adminId,
+        { reason: 'All items received at warehouse' },
+      );
+      return updatedRequest;
     }
 
     await request.save();

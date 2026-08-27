@@ -77,6 +77,9 @@ const mapDbOrderToFrontend = (o) => {
     depositTotal: o.depositTotal || 0,
     isCustomOrder: o.isCustomOrder || false,
     customOrderId: o.customOrderId || null,
+    cardState: o.cardState || 'normal',
+    returns: o.returns || [],
+    exchanges: o.exchanges || [],
   };
 };
 

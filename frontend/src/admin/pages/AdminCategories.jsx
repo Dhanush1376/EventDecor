@@ -186,7 +186,7 @@ export function AdminCategories() {
                       : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
                   }`}
                 >
-                  {t === 'All' ? 'All Types' : t}
+                  {t === 'All' ? 'All ' : t}
                 </button>
               ))}
             </div>

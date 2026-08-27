@@ -30,6 +30,7 @@
     width: 100%;
     min-width: 320px;
     overflow-x: clip;
+    overscroll-behavior-y: none; /* Prevents native pull-to-refresh on mobile browsers */
     font-family: var(--font-body);
     font-variant-numeric: lining-nums tabular-nums;
   }

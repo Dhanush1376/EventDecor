@@ -6,7 +6,11 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import logger from '../../utils/core/logger';
 
-export function useAdminSecurity({ setGlobalActionLoading, setGlobalActionMessage } = {}) {
+export function useAdminSecurity({
+  setGlobalActionLoading,
+  setGlobalActionMessage,
+  setGlobalActionSuccess,
+} = {}) {
   const { logout } = useAuth();
 
   const [activeRole, setActiveRole] = useState('owner');

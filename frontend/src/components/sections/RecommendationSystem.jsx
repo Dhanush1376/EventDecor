@@ -176,14 +176,14 @@ export function RecommendationSystem({
         {!compact && !hideHeader && (
           <div className="w-full flex justify-center mb-10 lg:mb-14">
             <div className="w-full max-w-[180px] flex items-center justify-center gap-3 opacity-60">
-              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#C4A87C] to-[#C4A87C]" />
+              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#826237] to-[#826237]" />
               <span
-                className="material-symbols-outlined text-[16px] text-[#C4A87C]"
+                className="material-symbols-outlined text-[16px] text-[#826237]"
                 style={{ fontVariationSettings: "'wght' 300" }}
               >
                 local_florist
               </span>
-              <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-[#C4A87C] to-[#C4A87C]" />
+              <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-[#826237] to-[#826237]" />
             </div>
           </div>
         )}

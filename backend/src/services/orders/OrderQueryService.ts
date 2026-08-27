@@ -1,6 +1,7 @@
 import Order from '../../models/Order';
 import ApiError from '../../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../../utils/pagination';
+import { OrderCardStateService } from './OrderCardStateService';
 
 export class OrderQueryService {
   /**
@@ -30,7 +31,37 @@ export class OrderQueryService {
       Order.countDocuments(filter),
     ]);
 
-    return formatPaginationResponse(orders, total, page, limit);
+    const ReturnRequest = require('../../models/ReturnRequest').default;
+    const ExchangeRequest = require('../../models/ExchangeRequest').default;
+
+    const populatedOrders = await Promise.all(
+      orders.map(async (order: any) => {
+        order.cardState = await OrderCardStateService.getCardState(order._id);
+        order.returns = await ReturnRequest.find({
+          orderId: order._id,
+          returnType: 'return',
+        }).lean();
+
+        const exchanges = await ReturnRequest.find({
+          orderId: order._id,
+          returnType: 'exchange',
+        }).lean();
+        const exchangeIds = exchanges.map((e: any) => e._id);
+        const exchangeDetails = await ExchangeRequest.find({
+          returnRequestId: { $in: exchangeIds },
+        }).lean();
+
+        order.exchanges = exchanges.map((ex: any) => {
+          const detail = exchangeDetails.find(
+            (d: any) => d.returnRequestId.toString() === ex._id.toString(),
+          );
+          return { ...ex, exchangeDetail: detail };
+        });
+        return order;
+      }),
+    );
+
+    return formatPaginationResponse(populatedOrders, total, page, limit);
   }
 
   /**
@@ -48,6 +79,9 @@ export class OrderQueryService {
     if (role !== 'admin' && order.user?._id.toString() !== userId) {
       throw new ApiError(403, 'Not authorized to access this order');
     }
+
+    // Attach card state dynamically
+    order.cardState = await OrderCardStateService.getCardState(order._id);
     return order;
   }
 
@@ -74,7 +108,15 @@ export class OrderQueryService {
       Order.countDocuments(filter),
     ]);
 
-    return formatPaginationResponse(orders, total, page, limit);
+    // Attach card state to each order
+    const ordersWithCardState = await Promise.all(
+      orders.map(async (order: any) => {
+        order.cardState = await OrderCardStateService.getCardState(order._id);
+        return order;
+      }),
+    );
+
+    return formatPaginationResponse(ordersWithCardState, total, page, limit);
   }
 
   /**

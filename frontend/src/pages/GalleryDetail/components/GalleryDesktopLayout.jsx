@@ -68,7 +68,7 @@ export function GalleryDesktopLayout({
             <span
               className={`px-3 py-1.5 rounded-full text-[9px] uppercase tracking-[0.2em] font-extrabold shadow-lg backdrop-blur-md border ${
                 item.type === 'real-event'
-                  ? 'bg-[#C4A87C]/90 text-white border-[#C4A87C]/30'
+                  ? 'bg-[#826237]/90 text-white border-[#826237]/30'
                   : 'bg-stone-900/80 text-white border-white/15'
               }`}
             >
@@ -344,7 +344,7 @@ export function GalleryDesktopLayout({
                 <div className="p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5">
                   <div className="relative z-10 flex flex-col items-center text-center gap-5">
                     <div>
-                      <h4 className="font-headline-sm mb-1 text-[#C4A87C] font-normal tracking-wide">
+                      <h4 className="font-headline-sm mb-1 text-[#826237] font-normal tracking-wide">
                         Need a Custom Theme?
                       </h4>
                       <p className="font-body-sm text-white/90 font-medium">

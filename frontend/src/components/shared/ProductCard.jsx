@@ -277,6 +277,7 @@ export const ProductCard = React.memo(function ProductCard({
                   width={320}
                   height={400}
                   sizes={sizes}
+                  quality={itemType === 'event' ? 'auto:best' : undefined}
                 />
               </Link>
             </div>

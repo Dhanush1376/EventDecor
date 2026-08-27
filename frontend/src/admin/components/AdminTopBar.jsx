@@ -307,7 +307,7 @@ export function AdminTopBar() {
               <div
                 className="w-8 h-8 rounded-[var(--admin-radius-md)] flex items-center justify-center"
                 style={{
-                  backgroundColor: '#A07D5A', // Matches the storefront button color as requested
+                  backgroundColor: 'var(--admin-accent)',
                   boxShadow: 'var(--admin-shadow-xs)',
                 }}
               >

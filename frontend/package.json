@@ -36,6 +36,7 @@
     "lodash.debounce": "^4.0.8",
     "logrocket": "^12.1.1",
     "lucide-react": "^1.23.0",
+    "puppeteer": "^25.9.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.7",
     "react-barcode": "^1.6.1",

@@ -75,6 +75,32 @@ export const getOptimizedUrl = (url, widthOrPreset, height, quality = 'auto', fo
   let resultUrl = url;
 
   if (isCloudinary) {
+    // HIGH-PRIORITY FIX: If auto:best is requested, we strip old constraints but forcefully apply an ultra-HD transform
+    if (q === 'auto:best') {
+      const urlParts = url.split('/upload/');
+      if (urlParts.length === 2) {
+        let pathPart = urlParts[1];
+        const pathSegments = pathPart.split('/');
+        let cleanPathSegments = [];
+        let foundVersionOrFile = false;
+        for (const segment of pathSegments) {
+          if (foundVersionOrFile) {
+            cleanPathSegments.push(segment);
+          } else if (segment.match(/^v\d+$/) || !segment.includes('_') || segment.includes('.')) {
+            foundVersionOrFile = true;
+            cleanPathSegments.push(segment);
+          }
+        }
+        pathPart = cleanPathSegments.join('/');
+
+        // Force 1600px width, auto upscale, best quality, and auto format
+        const hdTransform = 'w_1600,c_scale,q_auto:best,f_auto,e_upscale,e_improve';
+        const rawUrl = `${urlParts[0]}/upload/${hdTransform}/${pathPart}`;
+        urlCache.set(cacheKey, rawUrl);
+        return rawUrl;
+      }
+    }
+
     let transform = [];
 
     // Normalize to nearest breakpoint to maximize cache hits
@@ -103,16 +129,21 @@ export const getOptimizedUrl = (url, widthOrPreset, height, quality = 'auto', fo
     const urlParts = url.split('/upload/');
     if (urlParts.length === 2) {
       let pathPart = urlParts[1];
-      const firstSlash = pathPart.indexOf('/');
-      if (firstSlash > 0) {
-        const potentialTransforms = pathPart.substring(0, firstSlash);
-        if (potentialTransforms.includes('_') && !potentialTransforms.startsWith('v')) {
-          pathPart = pathPart.substring(firstSlash + 1);
+      // Strip all existing transformation segments until we hit the version string (v+digits) or the filename
+      const pathSegments = pathPart.split('/');
+      let cleanPathSegments = [];
+      let foundVersionOrFile = false;
+      for (const segment of pathSegments) {
+        if (foundVersionOrFile) {
+          cleanPathSegments.push(segment);
+        } else if (segment.match(/^v\d+$/) || !segment.includes('_') || segment.includes('.')) {
+          // If it looks like a version string (v12345), or has no underscores (folders without transforms), or has a dot (filename)
+          foundVersionOrFile = true;
+          cleanPathSegments.push(segment);
         }
       }
+      pathPart = cleanPathSegments.join('/');
 
-      // We removed the hardcoded c_fill,h_750 here because it aggressively crops and zooms
-      // hero images and tall banners on large desktop breakpoints, breaking visual immutability.
       const transformStrFinal = transformStr;
 
       resultUrl = `${urlParts[0]}/upload/${transformStrFinal}/${pathPart}`;
@@ -200,22 +231,18 @@ export const getSrcSet = (url, maxWidth = null, quality = 'auto', format = 'auto
   const effectiveMaxWidth = maxWidth && maxWidth > 1536 ? 1536 : maxWidth;
 
   let derivedQuality = 'auto:good';
+  const breakpoints = [240, 320, 400, 500, 640, 800, 1024, 1280, 1536, 1920];
+
   if (effectiveMaxWidth && effectiveMaxWidth <= 200) {
-    validWidths = [effectiveMaxWidth, effectiveMaxWidth * 2];
+    validWidths = breakpoints.filter((w) => w <= 400); // Up to 2x
     derivedQuality = 'auto:low';
-  } else if (effectiveMaxWidth && effectiveMaxWidth <= 320) {
-    validWidths = [320, 480];
-    derivedQuality = 'auto:good';
   } else if (effectiveMaxWidth && effectiveMaxWidth <= 360) {
-    validWidths = [360, 480];
+    validWidths = breakpoints.filter((w) => w <= 800); // Up to ~2x+
     derivedQuality = 'auto:good';
   } else if (effectiveMaxWidth && effectiveMaxWidth <= 600) {
-    // Tighter cap for eco tier - target 480px max retina
-    const maxRetina = 480;
-    validWidths = [240, 320, 360, 400, 480, 500].filter((w) => w <= maxRetina);
-    derivedQuality = 'auto:eco';
+    validWidths = breakpoints.filter((w) => w <= 1280); // Up to ~2x
+    derivedQuality = 'auto:good';
   } else {
-    const breakpoints = [240, 320, 400, 500, 640, 800, 1024, 1280, 1536];
     validWidths = effectiveMaxWidth
       ? breakpoints.filter((w) => w <= effectiveMaxWidth * 2) // Cap at retina width
       : breakpoints;

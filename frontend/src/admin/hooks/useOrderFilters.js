@@ -13,8 +13,6 @@ export const allStatuses = [
   'Out for Delivery',
   'Delivered',
   'Cancelled',
-  'Returned',
-  'Refunded',
 ];
 
 export const statusIcons = {
@@ -27,8 +25,6 @@ export const statusIcons = {
   'Out for Delivery': 'directions_run',
   Delivered: 'verified',
   Cancelled: 'cancel',
-  Returned: 'keyboard_return',
-  Refunded: 'payments',
 };
 
 export function useOrderFilters(orders, searchQuery) {

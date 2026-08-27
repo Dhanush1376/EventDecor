@@ -29,7 +29,7 @@ export function PublisherVersionsEditor() {
         {versions.map((v) => (
           <div
             key={v.id}
-            className="p-4.5 bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] flex items-center justify-between gap-4.5 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300"
+            className="p-4.5 bg-[var(--admin-surface)] rounded-md border border-[var(--admin-border)] flex items-center justify-between gap-4.5 shadow-[var(--admin-shadow-xs)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-sm)] transition-all duration-300"
           >
             <div className="space-y-1">
               <span className="text-[7.5px] bg-[var(--admin-accent)]/15 text-[var(--admin-accent)] font-semibold px-2.5 py-0.5 rounded-full font-mono w-fit block shadow-[var(--admin-shadow-xs)]">
@@ -44,7 +44,7 @@ export function PublisherVersionsEditor() {
             </div>
             <button
               onClick={() => toast.success(`Rolled back to ${v.tag}!`)}
-              className="px-4 py-2 rounded-xl text-[11px] sm:text-[11px] sm:text-[11px] font-semibold border border-[var(--admin-border)] hover:border-[var(--admin-accent)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] cursor-pointer shadow-[var(--admin-shadow-xs)] transition-all active:scale-95"
+              className="px-4 py-2 rounded-md text-[11px] sm:text-[11px] sm:text-[11px] font-semibold border border-[var(--admin-border)] hover:border-[var(--admin-accent)] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] cursor-pointer shadow-[var(--admin-shadow-xs)] transition-all active:scale-95"
             >
               Restore
             </button>

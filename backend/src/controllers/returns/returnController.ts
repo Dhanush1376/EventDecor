@@ -3,9 +3,10 @@ import { Request, Response } from 'express';
 import asyncHandler from '../../utils/asyncHandler';
 import { ReturnService } from '../../services/returns/ReturnService';
 import ReturnRequest from '../../models/ReturnRequest';
-import '../../models/Order';
+import Order from '../../models/Order';
 import '../../models/Product';
 import ApiError from '../../utils/ApiError';
+import { ReturnStateMachine } from '../../services/returns/ReturnStateMachine';
 
 /**
  * @desc    Create a return request (multi-item)
@@ -29,6 +30,8 @@ export const createReturn = asyncHandler(async (req: Request, res: Response) => 
     idempotencyKey,
   );
 
+  await Order.findByIdAndUpdate(orderId, { hasActiveReturn: true });
+
   res.status(201).json({
     success: true,
     data: returnRequest,
@@ -50,10 +53,23 @@ export const getMyReturns = asyncHandler(async (req: Request, res: Response) => 
     .populate('items.productId', 'title imageSrc')
     .lean();
 
+  const ExchangeRequest = require('../../models/ExchangeRequest').default;
+  const validReturns = [];
+
+  for (const ret of returns) {
+    if (ret.returnType === 'exchange') {
+      const exchange = await ExchangeRequest.findOne({ returnRequestId: ret._id }).lean();
+      if (exchange && exchange.paymentStatus === 'pending') {
+        continue; // Skip abandoned exchanges
+      }
+    }
+    validReturns.push(ret);
+  }
+
   res.status(200).json({
     success: true,
     data: {
-      returns,
+      returns: validReturns,
     },
   });
 });
@@ -165,7 +181,6 @@ export const cancelReturn = asyncHandler(async (req: Request, res: Response) => 
   }
 
   // Use ReturnStateMachine to transition so side effects (like unlocking items) run
-  const { ReturnStateMachine } = require('../../services/returns/ReturnStateMachine');
   const updatedRequest = await ReturnStateMachine.transition(
     returnRequest._id.toString(),
     'cancelled',
@@ -211,5 +226,41 @@ export const getReturnForOrder = asyncHandler(async (req: Request, res: Response
   res.status(200).json({
     success: true,
     data: { returns, exchanges },
+  });
+});
+
+/**
+ * @desc    Update refund destination and trigger refund
+ * @route   PATCH /api/v1/returns/:id/refund-method
+ * @access  Private
+ */
+export const updateRefundMethod = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { refundMethod } = req.body;
+  const userId = req.user?.id;
+
+  if (!userId) throw new ApiError(401, 'Unauthorized');
+
+  const returnRequest = await ReturnRequest.findOne({ _id: id, userId });
+  if (!returnRequest) throw new ApiError(404, 'Return request not found');
+
+  if (returnRequest.status !== 'inspection_completed') {
+    throw new ApiError(400, `Cannot trigger refund from status: ${returnRequest.status}`);
+  }
+
+  returnRequest.refundMethod = refundMethod;
+  await returnRequest.save();
+
+  // Trigger state transition to refund_initiated
+  const updatedReturn = await ReturnStateMachine.transition(
+    id as string,
+    'refund_initiated',
+    userId, // Customer initiating
+    { source: 'customer_selected_destination' },
+  );
+
+  res.status(200).json({
+    success: true,
+    data: updatedReturn,
   });
 });

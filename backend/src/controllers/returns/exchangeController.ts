@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import asyncHandler from '../../utils/asyncHandler';
 import { ExchangeService } from '../../services/returns/ExchangeService';
 import ExchangeRequest from '../../models/ExchangeRequest';
+import Order from '../../models/Order';
 import ApiError from '../../utils/ApiError';
 
 /**
@@ -36,6 +37,10 @@ export const createExchange = asyncHandler(async (req: Request, res: Response) =
       refundMethod,
     );
 
+  if (amountToPay === 0) {
+    await Order.findByIdAndUpdate(orderId, { hasActiveExchange: true });
+  }
+
   res.status(201).json({
     success: true,
     data: {
@@ -68,7 +73,12 @@ export const getMyExchanges = asyncHandler(async (req: Request, res: Response) =
       },
     },
     { $unwind: '$returnRequest' },
-    { $match: { 'returnRequest.userId': userId } },
+    {
+      $match: {
+        'returnRequest.userId': new (require('mongoose').Types.ObjectId)(userId),
+        paymentStatus: { $ne: 'pending' },
+      },
+    },
   ]);
 
   res.status(200).json({
@@ -154,11 +164,17 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
 
   await exchangeRequest.save();
 
+  // Lock the order now that payment is verified
+  const returnReq = await require('../../models/ReturnRequest')
+    .default.findById(exchangeRequest.returnRequestId)
+    .lean();
+  if (returnReq) {
+    await Order.findByIdAndUpdate(returnReq.orderId, { hasActiveExchange: true });
+  }
+
   // Trigger side effects: Send Payment Verified Email
   const { ReturnNotificationService } = require('../../services/returns/ReturnNotificationService');
-  await ReturnNotificationService.notifyCustomerExchangePaymentVerified(
-    exchangeRequest.returnRequestId,
-  );
+  await ReturnNotificationService.notifyCustomerExchangeVerified(exchangeRequest.returnRequestId);
 
   res.status(200).json({ success: true, message: 'Payment verified successfully' });
 });

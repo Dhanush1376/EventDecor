@@ -67,7 +67,7 @@ export function ContactInfoEditor({ content, onUpdate }) {
         </div>
 
         {/* Timings */}
-        <div className="bg-[var(--admin-surface)] p-4.5 rounded-2xl border border-[var(--admin-border)] space-y-3 mt-4 shadow-[var(--admin-shadow-xs)]">
+        <div className="bg-[var(--admin-surface)] p-4.5 rounded-md border border-[var(--admin-border)] space-y-3 mt-4 shadow-[var(--admin-shadow-xs)]">
           <span className="text-[11px] sm:text-[11px] font-semibold text-[var(--admin-accent)] uppercase tracking-[0.15em] block font-sans">
             Studio Business Hours
           </span>
@@ -80,7 +80,7 @@ export function ContactInfoEditor({ content, onUpdate }) {
                 className="!py-2 !text-[11px] sm:text-[11px] bg-[var(--admin-surface)] border-[var(--admin-border)]"
               />
             </AdminField>
-            <div className="p-3 bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border-subtle)] flex items-center justify-center text-center">
+            <div className="p-3 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border-subtle)] flex items-center justify-center text-center">
               <span className="text-[11px] text-[var(--admin-text-tertiary)] font-light leading-normal">
                 Rendered across the responsive helpline and custom booking panels.
               </span>
