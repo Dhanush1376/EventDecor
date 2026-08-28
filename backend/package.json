@@ -84,7 +84,7 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/winston-syslog": "^2.4.4",
-    "eslint": "^10.6.0",
+    "eslint": "^10.9.1",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.7.0",
     "mongodb-memory-server": "^11.2.0",
