@@ -70,7 +70,7 @@ export const ReturnDetailPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <SEO title={`Return Details ${returnRequest.returnId} | EventDecor`} />
+      <SEO title={`Return Details ${returnRequest.returnId} | Siri Arts & Crafts`} noindex />
 
       <div className="mb-6 flex items-center justify-between">
         <div>

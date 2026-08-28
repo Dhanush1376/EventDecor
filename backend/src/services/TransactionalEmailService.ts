@@ -53,7 +53,7 @@ export class TransactionalEmailService {
     logger.info(`[EMAIL TRACE] Sending email directly (bypassing queue) for ${action} to ${to}`);
 
     try {
-      const { sendDirectEmailProcessor } = require('./notificationService');
+      const { sendDirectEmailProcessor } = await import('./notificationService.js');
       // Await synchronous delivery to guarantee the mail is pushed to SMTP
       await sendDirectEmailProcessor(emailOptions);
     } catch (err: any) {
@@ -405,11 +405,17 @@ export class TransactionalEmailService {
 
     // Fetch the original order for the summary
     let order: any = null;
+    let exchange: any = null;
     try {
       const Order = require('../models/Order').default;
       order = await Order.findById(returnRequest.orderId).lean();
+
+      if (returnRequest.returnType === 'exchange') {
+        const ExchangeRequest = require('../models/ExchangeRequest').default;
+        exchange = await ExchangeRequest.findOne({ returnRequestId: returnRequest._id }).lean();
+      }
     } catch (err) {
-      logger.warn(`Could not fetch order for return emails: ${err}`);
+      logger.warn(`Could not fetch order/exchange for return emails: ${err}`);
     }
 
     // 1. Notify Customer
@@ -421,6 +427,7 @@ export class TransactionalEmailService {
         user,
         previousStatus,
         newStatus,
+        exchange,
       );
       const customerHash = this.hashEmail(customerEmail);
       const notificationKey = `RETURN_STATUS_UPDATED:${eventId}:CUSTOMER:${customerHash}`;

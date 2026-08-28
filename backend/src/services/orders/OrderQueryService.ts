@@ -108,10 +108,35 @@ export class OrderQueryService {
       Order.countDocuments(filter),
     ]);
 
+    const ReturnRequest = require('../../models/ReturnRequest').default;
+    const ExchangeRequest = require('../../models/ExchangeRequest').default;
+
     // Attach card state to each order
     const ordersWithCardState = await Promise.all(
       orders.map(async (order: any) => {
         order.cardState = await OrderCardStateService.getCardState(order._id);
+
+        order.returns = await ReturnRequest.find({
+          orderId: order._id,
+          returnType: 'return',
+        }).lean();
+
+        const exchanges = await ReturnRequest.find({
+          orderId: order._id,
+          returnType: 'exchange',
+        }).lean();
+        const exchangeIds = exchanges.map((e: any) => e._id);
+        const exchangeDetails = await ExchangeRequest.find({
+          returnRequestId: { $in: exchangeIds },
+        }).lean();
+
+        order.exchanges = exchanges.map((ex: any) => {
+          const detail = exchangeDetails.find(
+            (d: any) => d.returnRequestId.toString() === ex._id.toString(),
+          );
+          return { ...ex, exchangeDetail: detail };
+        });
+
         return order;
       }),
     );

@@ -12,8 +12,9 @@ import {
 import { getOptimizedUrl } from '../../utils/media/imageUtils';
 
 const DEFAULT_DESCRIPTION =
-  'Discover masterfully crafted luxury event decor pieces that honor ancient Indian traditions with contemporary luxury sensibilities. Bespoke Mandaps, Artisanal Art, and Heritage Decor.';
-const DEFAULT_TITLE = 'Siri Arts & Crafts — Luxury Event Decor & Artisanal Heritage';
+  'Shop premium handcrafted wedding decor, pooja essentials, floral decorations, event styling, and personalized gifts at Siri Arts & Crafts.';
+const DEFAULT_TITLE =
+  'Siri Arts & Crafts — Handcrafted Wedding Decor, Event Decorations & Custom Gifts';
 const priceValidUntilDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   .toISOString()
   .split('T')[0];
@@ -227,7 +228,7 @@ export function SEO({
       <meta name="author" content={siteName} />
 
       {noindex ? (
-        <meta name="robots" content="noindex, nofollow" />
+        <meta name="robots" content="noindex, follow" />
       ) : (
         <meta
           name="robots"
@@ -279,7 +280,41 @@ export function SEO({
       <script type="application/ld+json">{JSON.stringify(organizationSchema)}</script>
       <script type="application/ld+json">{JSON.stringify(websiteSchema)}</script>
       {isHomePage && (
-        <script type="application/ld+json">{JSON.stringify(localBusinessSchema)}</script>
+        <>
+          <script type="application/ld+json">{JSON.stringify(localBusinessSchema)}</script>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'ItemList',
+              itemListElement: [
+                {
+                  '@type': 'SiteNavigationElement',
+                  position: 1,
+                  name: 'Shop',
+                  url: `${siteUrl}/collections`,
+                },
+                {
+                  '@type': 'SiteNavigationElement',
+                  position: 2,
+                  name: 'Event Decorations',
+                  url: `${siteUrl}/events`,
+                },
+                {
+                  '@type': 'SiteNavigationElement',
+                  position: 3,
+                  name: 'Custom Orders',
+                  url: `${siteUrl}/custom-orders`,
+                },
+                {
+                  '@type': 'SiteNavigationElement',
+                  position: 4,
+                  name: 'Contact',
+                  url: `${siteUrl}/contact`,
+                },
+              ],
+            })}
+          </script>
+        </>
       )}
       {schema && <script type="application/ld+json">{JSON.stringify(schema)}</script>}
       {breadcrumbSchema && (

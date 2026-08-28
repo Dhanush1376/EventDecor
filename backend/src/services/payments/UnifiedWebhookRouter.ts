@@ -35,7 +35,7 @@ export class UnifiedWebhookRouter {
    * Uses indexed lookups on all three collections.
    */
   static async identifyEntity(razorpayOrderId: string): Promise<{
-    entityType: 'Order' | 'EventJob' | 'RentalOrder' | 'PaymentAttempt' | null;
+    entityType: 'Order' | 'EventJob' | 'RentalOrder' | 'PaymentAttempt' | 'ExchangeRequest' | null;
     entityId: string | null;
   }> {
     // Check PaymentAttempt first (for new uncreated orders)
@@ -60,6 +60,15 @@ export class UnifiedWebhookRouter {
     const rental = await RentalOrder.findOne({ razorpayOrderId }).select('_id').lean();
     if (rental) {
       return { entityType: 'RentalOrder', entityId: rental._id.toString() };
+    }
+
+    // Check ExchangeRequest
+    const ExchangeRequest = require('../../models/ExchangeRequest').default;
+    const exchange = await ExchangeRequest.findOne({ additionalPaymentId: razorpayOrderId })
+      .select('_id')
+      .lean();
+    if (exchange) {
+      return { entityType: 'ExchangeRequest', entityId: exchange._id.toString() };
     }
 
     return { entityType: null, entityId: null };
@@ -156,6 +165,17 @@ export class UnifiedWebhookRouter {
             entityId!,
           );
           break;
+        case 'ExchangeRequest': {
+          const { ExchangeWebhookHandler } = require('../returns/ExchangeWebhookHandler');
+          result = await ExchangeWebhookHandler.handleWebhookEvent(
+            event,
+            body,
+            signature,
+            eventId,
+            entityId!,
+          );
+          break;
+        }
         default:
           logger.error(`[UNIFIED WEBHOOK] Unknown entity type: ${entityType}`);
           result = { status: 200, message: 'Unknown entity type' };

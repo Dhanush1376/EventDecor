@@ -16,7 +16,6 @@ export async function generateSitemap(): Promise<string> {
   try {
     const today = new Date().toISOString().split('T')[0];
 
-    // 1. Core static routes definition
     const staticRoutes = [
       { loc: '', changefreq: 'daily', priority: '1.0' },
       { loc: '/collections', changefreq: 'daily', priority: '0.9' },
@@ -31,10 +30,13 @@ export async function generateSitemap(): Promise<string> {
       { loc: '/custom-orders', changefreq: 'monthly', priority: '0.8' },
       { loc: '/events', changefreq: 'weekly', priority: '0.8' },
       { loc: '/showcases', changefreq: 'weekly', priority: '0.7' },
-      { loc: '/shipping', changefreq: 'monthly', priority: '0.4' },
-      { loc: '/returns', changefreq: 'monthly', priority: '0.4' },
-      { loc: '/privacy', changefreq: 'yearly', priority: '0.3' },
-      { loc: '/terms', changefreq: 'yearly', priority: '0.3' },
+      { loc: '/policy/shipping-policy', changefreq: 'monthly', priority: '0.4' },
+      { loc: '/policy/return-policy', changefreq: 'monthly', priority: '0.4' },
+      { loc: '/policy/exchange-policy', changefreq: 'monthly', priority: '0.4' },
+      { loc: '/policy/refund-policy', changefreq: 'monthly', priority: '0.4' },
+      { loc: '/policy/cancellation-policy', changefreq: 'monthly', priority: '0.4' },
+      { loc: '/policy/privacy-policy', changefreq: 'yearly', priority: '0.3' },
+      { loc: '/policy/terms-and-conditions', changefreq: 'yearly', priority: '0.3' },
     ];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;

@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
+import { ArrowLeftRight, CornerDownLeft } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useDashboard } from '../../context/DashboardContext';
 import { OptimizedImage, StatusPill } from '../ui';
+import storeSettingsService from '../../services/api/storeSettingsService';
 
 export function OrderCard({ order, item, itemIdx, idx }) {
   const { setSelectedOrderId, setSelectedOrderItemIndex, setReviewingProduct } = useDashboard();
@@ -9,6 +12,29 @@ export function OrderCard({ order, item, itemIdx, idx }) {
     item.title ||
     (typeof item.productId === 'object' ? item.productId?.title : null) ||
     'Artisanal Piece';
+
+  const formatStatus = (statusStr) => {
+    if (!statusStr) return '';
+    return statusStr
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const pId = typeof item.productId === 'object' ? item.productId?._id : item.productId;
+  const prodVariant = item.variant || 'Default';
+
+  const matchingReturn = order.returns?.find(
+    (r) =>
+      !['cancelled', 'rejected'].includes(r.status) &&
+      r.items.some((i) => i.productId === pId && (i.variant || 'Default') === prodVariant),
+  );
+
+  const matchingExchange = order.exchanges?.find(
+    (e) =>
+      !['cancelled', 'rejected'].includes(e.status) &&
+      e.items.some((i) => i.productId === pId && (i.variant || 'Default') === prodVariant),
+  );
   const prodPrice =
     item.price || (typeof item.productId === 'object' ? item.productId?.price : 0) || 0;
   const prodImage =
@@ -20,12 +46,30 @@ export function OrderCard({ order, item, itemIdx, idx }) {
       ? item.productId?.imageSrc || item.productId?.images?.[0]
       : null) ||
     'https://res.cloudinary.com/drxgnnzeb/image/upload/v1785779448/siri-arts-crafts/zqqwwbsrjpb7bqcrl24l.png';
-  const prodVariant = item.variant || 'Default';
+  const { data: settingsData } = useQuery({
+    queryKey: ['storeSettings', 'public'],
+    queryFn: async () => {
+      const data = await storeSettingsService.getPublicSettings();
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const settings = settingsData || {};
+
   const deliveryEntry = order.statusHistory?.find((h) => h.status?.toLowerCase() === 'delivered');
   const deliveryDate = deliveryEntry
     ? new Date(deliveryEntry.timestamp)
     : new Date(order.updatedAt || order.createdAt);
-  const returnExpiryDate = new Date(deliveryDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+  const windowDays =
+    item.product?.returnSettings?.returnWindowDays ||
+    item.product?.returnSettings?.returnWindow ||
+    (typeof item.productId === 'object' && item.productId?.returnSettings?.returnWindowDays) ||
+    (typeof item.productId === 'object' && item.productId?.returnSettings?.returnWindow) ||
+    settings?.returnsExchanges?.returnWindowDays ||
+    14;
+
+  const returnExpiryDate = new Date(deliveryDate.getTime() + windowDays * 24 * 60 * 60 * 1000);
   const isNonRefundable =
     item.isNonRefundable === true ||
     (typeof item.productId === 'object' && item.productId?.isNonRefundable === true);
@@ -37,20 +81,7 @@ export function OrderCard({ order, item, itemIdx, idx }) {
   });
 
   const getCardStyle = () => {
-    switch (order.cardState) {
-      case 'return_active':
-        return 'bg-amber-50/50 border-amber-200/50 hover:border-amber-300';
-      case 'exchange_active':
-        return 'bg-blue-50/50 border-blue-200/50 hover:border-blue-300';
-      case 'return_and_exchange_active':
-        return 'bg-gradient-to-r from-amber-50/50 to-blue-50/50 border-indigo-200/50 hover:border-indigo-300';
-      case 'return_completed':
-      case 'exchange_completed':
-      case 'all_completed':
-        return 'bg-green-50/50 border-green-200/50 hover:border-green-300';
-      default:
-        return 'bg-surface-bright border-outline-variant/30 hover:border-outline-variant';
-    }
+    return 'bg-surface-bright border-outline-variant/30 hover:border-outline-variant';
   };
 
   return (
@@ -79,40 +110,63 @@ export function OrderCard({ order, item, itemIdx, idx }) {
           <span className="absolute top-3 left-3 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
         )}
         <div className="flex items-center gap-2 pl-3">
-          {order.orderStatus?.toLowerCase() === 'delivered' ? (
-            <svg
-              className="w-4 h-4 text-primary shrink-0"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125a1.125 1.125 0 001.125-1.125V9.75M8.25 18.75a1.5 1.5 0 01-3 0M21 12h-5.25m0 0V5.25A2.25 2.25 0 0013.5 3h-9A2.25 2.25 0 002.25 5.25v9a2.25 2.25 0 002.25 2.25m12-4.5V9.75A2.25 2.25 0 0014.25 7.5H12"
-              />
-            </svg>
-          ) : (
-            <svg
-              className="w-4 h-4 text-primary shrink-0"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-          )}
+          {(() => {
+            if (matchingExchange)
+              return <ArrowLeftRight className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />;
+            if (matchingReturn)
+              return <CornerDownLeft className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />;
+            if (order.orderStatus?.toLowerCase() === 'delivered')
+              return (
+                <svg
+                  className="w-4 h-4 text-primary shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125a1.125 1.125 0 001.125-1.125V9.75M8.25 18.75a1.5 1.5 0 01-3 0M21 12h-5.25m0 0V5.25A2.25 2.25 0 0013.5 3h-9A2.25 2.25 0 002.25 5.25v9a2.25 2.25 0 002.25 2.25m12-4.5V9.75A2.25 2.25 0 0014.25 7.5H12"
+                  />
+                </svg>
+              );
+            return (
+              <svg
+                className="w-4 h-4 text-primary shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            );
+          })()}
           <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface">
-            {order.orderStatus?.toLowerCase() === 'delivered'
-              ? 'Delivered'
-              : order.orderStatus || 'Confirmed'}
+            {(() => {
+              if (matchingExchange) {
+                if (matchingExchange.status === 'submitted') return 'Exchange Requested';
+                if (matchingExchange.status === 'completed') return 'Exchange Completed';
+                return formatStatus(matchingExchange.status);
+              }
+              if (matchingReturn) {
+                if (matchingReturn.status === 'submitted') return 'Return Requested';
+                if (matchingReturn.status === 'completed') return 'Return Completed';
+                return formatStatus(matchingReturn.status);
+              }
+
+              return order.orderStatus?.toLowerCase() === 'delivered'
+                ? 'Delivered'
+                : order.orderStatus || 'Confirmed';
+            })()}
           </span>
           <span className="text-[9px] text-secondary font-light">
             on{' '}
-            {new Date(order.updatedAt || order.createdAt).toLocaleDateString('en-IN', {
+            {new Date(
+              (matchingExchange || matchingReturn)?.updatedAt || order.updatedAt || order.createdAt,
+            ).toLocaleDateString('en-IN', {
               day: 'numeric',
               month: 'short',
             })}
@@ -233,7 +287,16 @@ export function OrderCard({ order, item, itemIdx, idx }) {
 
       {/* Quick Review Prompt */}
       {order.orderStatus?.toLowerCase() === 'delivered' && (
-        <div className="px-4 py-2.5 bg-amber-50/50 border-t border-dashed border-[#8c7335]/10 flex flex-wrap items-center justify-between gap-2 text-[10px]">
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            setReviewingProduct({
+              productId: item.productId?._id || item.productId,
+              productTitle: prodTitle,
+            });
+          }}
+          className="px-4 py-2.5 bg-amber-50/50 border-t border-dashed border-[#8c7335]/10 flex flex-wrap items-center justify-between gap-2 text-[10px] cursor-pointer hover:bg-amber-100/60 transition-colors group"
+        >
           <div className="flex items-center gap-1.5 text-[#8c7335] font-medium">
             <svg
               className="w-3 h-3 text-[#8c7335] fill-[#8c7335] shrink-0"
@@ -246,21 +309,14 @@ export function OrderCard({ order, item, itemIdx, idx }) {
           </div>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
-              <button
+              <span
                 key={star}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setReviewingProduct({
-                    productId: item.productId?._id || item.productId,
-                    productTitle: prodTitle,
-                  });
-                }}
-                className="text-[#8c7335] hover:text-amber-500 transition-colors p-0.5 cursor-pointer bg-transparent border-0 outline-0 flex items-center justify-center"
+                className="text-[#8c7335] group-hover:text-amber-500 transition-colors p-0.5 flex items-center justify-center"
               >
                 <svg className="w-3 h-3 fill-current shrink-0" viewBox="0 0 24 24">
                   <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                 </svg>
-              </button>
+              </span>
             ))}
           </div>
         </div>

@@ -235,7 +235,7 @@ export const ReturnRequestPage = () => {
 
   return (
     <div className="max-w-2xl text-left text-[11px] py-5">
-      <SEO title="Return Request | EventDecor" />
+      <SEO title="Return Request | Siri Arts & Crafts" noindex />
 
       {step < 7 && renderStepIndicator()}
 

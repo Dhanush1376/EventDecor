@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import ReturnRequest, { IReturnRequest } from '../../models/ReturnRequest';
+import ExchangeRequest from '../../models/ExchangeRequest';
 import Order from '../../models/Order';
 import Product from '../../models/Product';
 import ApiError from '../../utils/ApiError';
@@ -18,7 +19,8 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   return_received: ['inspection_started'],
   inspection_started: ['inspection_completed', 'rejected'],
   inspection_completed: ['refund_initiated'],
-  refund_initiated: ['refund_completed'],
+  refund_initiated: ['refund_completed', 'refund_failed'],
+  refund_failed: ['refund_initiated'],
   refund_completed: ['completed'],
 };
 
@@ -70,6 +72,42 @@ export class ReturnStateMachine {
       throw new ApiError(400, `Invalid transition from ${currentStatus} to ${nextStatus}`);
     }
 
+    // FINANCIAL INVARIANT: Block logistics transitions for exchanges with unsettled payments
+    if (request.returnType === 'exchange') {
+      const exchange = await ExchangeRequest.findOne({
+        returnRequestId: request._id,
+      }).session(session || null);
+
+      if (exchange) {
+        const isLogisticsTransition = [
+          'return_courier_assigned',
+          'return_picked_up',
+          'return_in_transit',
+          'return_received',
+          'inspection_started',
+          'inspection_completed',
+          'refund_initiated',
+          'refund_completed',
+          'completed',
+        ].includes(nextStatus);
+
+        if (isLogisticsTransition) {
+          // 1. collect_payment -> HARD BLOCK until payment_paid
+          if (
+            exchange.differenceAction === 'collect_payment' &&
+            exchange.paymentStatus !== 'payment_paid'
+          ) {
+            throw new ApiError(
+              400,
+              `Cannot proceed: Additional payment of ₹${exchange.priceDifference} is required and has not been received.`,
+            );
+          }
+          // 2. refund_difference -> NO BLOCK (refund happens in parallel/asynchronously)
+          // 3. direct_exchange -> NO BLOCK (no financial prerequisite)
+        }
+      }
+    }
+
     // Update status
     request.status = nextStatus as any;
 
@@ -107,8 +145,9 @@ export class ReturnStateMachine {
   }
 
   static validateTransition(currentStatus: string, nextStatus: string): boolean {
-    const allowed = VALID_TRANSITIONS[currentStatus];
-    return allowed ? allowed.includes(nextStatus) : false;
+    const allowedNext = VALID_TRANSITIONS[currentStatus];
+    if (!allowedNext) return false;
+    return allowedNext.includes(nextStatus);
   }
 
   /**
@@ -155,50 +194,73 @@ export class ReturnStateMachine {
     }
 
     // 2. Refund Triggering
-    if (nextStatus === 'refund_initiated' && request.refundBreakdown?.grandTotal) {
-      if (request.refundMethod === 'wallet') {
-        // Wallet Refund (Instant/Synchronous)
-        await WalletRefundService.creditRefund(
-          {
-            returnRequestId: request._id,
-            orderId: request.orderId,
-            userId: request.userId,
-            amount: request.refundBreakdown.grandTotal,
-            reason: `Refund for Return ${request.returnId}`,
-          },
-          session,
-        );
-      } else {
-        // Razorpay Gateway Refund (Asynchronous)
-        const order = await Order.findById(request.orderId)
-          .select('razorpayPaymentId items')
-          .session(session || null);
-        if (order && order.razorpayPaymentId) {
-          let orderTotalQuantity = 0;
-          for (const item of order.items) {
-            orderTotalQuantity += item.quantity;
-          }
-          let returnTotalQuantity = 0;
-          for (const item of request.items) {
-            returnTotalQuantity += item.returnQuantity;
-          }
-          const isPartial = returnTotalQuantity < orderTotalQuantity;
+    if (nextStatus === 'refund_initiated') {
+      let refundAmount = 0;
 
-          await PaymentRefundService.initiateAsyncRefund(
+      if (request.returnType === 'exchange') {
+        const exchange = await ExchangeRequest.findOne({ returnRequestId: request._id }).session(
+          session || null,
+        );
+        if (exchange && exchange.differenceAction === 'refund_difference') {
+          refundAmount = exchange.priceDifference;
+        }
+      } else if (request.refundBreakdown?.grandTotal) {
+        refundAmount = request.refundBreakdown.grandTotal;
+      }
+
+      if (refundAmount > 0) {
+        const actualMethod = request.executedRefundMethod || request.refundMethod;
+
+        request.executedRefundMethod = actualMethod;
+        await request.save({ session });
+
+        if (actualMethod === 'wallet') {
+          // Wallet Refund (Instant/Synchronous)
+          await WalletRefundService.creditRefund(
             {
-              amount: request.refundBreakdown.grandTotal,
-              originalTransactionId: order.razorpayPaymentId,
-              entityType: 'Order',
-              entityId: request.orderId,
-              isPartial,
-              reason: `Refund for Return ${request.returnId}`,
+              returnRequestId: request._id,
+              orderId: request.orderId,
+              userId: request.userId,
+              amount: refundAmount,
+              reason: `Refund for ${request.returnType === 'exchange' ? 'Exchange' : 'Return'} ${request.returnId}`,
             },
             session,
           );
+
+          // The controller (returnAdminController) will handle transitioning to refund_completed and completed synchronously within the same transaction.
         } else {
-          logger.error(
-            `Cannot initiate refund for return ${request.returnId} - missing razorpayPaymentId on order`,
-          );
+          // Razorpay Gateway Refund (Asynchronous)
+          const order = await Order.findById(request.orderId)
+            .select('razorpayPaymentId items')
+            .session(session || null);
+          if (order && order.razorpayPaymentId) {
+            let orderTotalQuantity = 0;
+            for (const item of order.items) {
+              orderTotalQuantity += item.quantity;
+            }
+            let returnTotalQuantity = 0;
+            for (const item of request.items) {
+              returnTotalQuantity += item.returnQuantity;
+            }
+            const isPartial = returnTotalQuantity < orderTotalQuantity;
+
+            await PaymentRefundService.initiateAsyncRefund(
+              {
+                amount: refundAmount,
+                originalTransactionId: order.razorpayPaymentId,
+                entityType: 'Order',
+                entityId: request.orderId,
+                isPartial,
+                reason: `Refund for ${request.returnType === 'exchange' ? 'Exchange' : 'Return'} ${request.returnId}`,
+                returnRequestId: request._id,
+              },
+              session,
+            );
+          } else {
+            logger.error(
+              `Cannot initiate refund for ${request.returnId} - missing razorpayPaymentId on order`,
+            );
+          }
         }
       }
     }

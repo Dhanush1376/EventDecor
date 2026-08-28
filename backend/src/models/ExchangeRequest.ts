@@ -29,7 +29,7 @@ export interface IExchangeRequest extends ISoftDeleted {
 
   priceDifference: number;
   differenceAction: 'collect_payment' | 'refund_difference' | 'direct_exchange';
-  paymentStatus: 'pending' | 'completed' | 'failed' | 'not_applicable';
+  paymentStatus: 'payment_required' | 'payment_paid' | 'failed' | 'not_applicable';
   additionalPaymentId?: string;
   additionalRefundId?: mongoose.Types.ObjectId;
 
@@ -106,7 +106,7 @@ const ExchangeRequestSchema = new Schema<IExchangeRequest>(
     },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'completed', 'failed', 'not_applicable'],
+      enum: ['payment_required', 'payment_paid', 'failed', 'not_applicable'],
       default: 'not_applicable',
     },
     additionalPaymentId: { type: String },

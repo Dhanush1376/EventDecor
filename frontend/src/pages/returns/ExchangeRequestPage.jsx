@@ -249,7 +249,7 @@ export const ExchangeRequestPage = () => {
 
   return (
     <div className="max-w-2xl mx-auto py-5 text-left text-[11px] text-on-surface">
-      <SEO title="Exchange Item | EventDecor" />
+      <SEO title="Exchange Item | Siri Arts & Crafts" noindex />
 
       {step < 4 && renderStepIndicator()}
 

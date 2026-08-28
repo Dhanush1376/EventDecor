@@ -33,6 +33,7 @@ export function DashboardLayout() {
       <SEO
         title="Your Premium Studio Account"
         description="Manage your Siri Arts & Crafts profile parameters, live orders, dynamic shipping addresses, wishlist collections, and personalized newsletter configurations."
+        noindex
       />
 
       <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop">

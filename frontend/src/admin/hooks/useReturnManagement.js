@@ -1,13 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import returnService from '../../services/api/returnService';
-import { useAdmin } from '../context/AdminContext';
+import toast from 'react-hot-toast';
 
 /**
  * Hook for managing return logic in the Admin Panel
  */
 export const useReturnManagement = () => {
-  const { showSnackbar } = useAdmin();
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -31,7 +29,7 @@ export const useReturnManagement = () => {
   const handleError = (err) => {
     const msg = err.response?.data?.message || err.message || 'An error occurred';
     setError(msg);
-    showSnackbar(msg, 'error');
+    toast.error(msg);
     setLoading(false);
     throw err;
   };
@@ -47,13 +45,18 @@ export const useReturnManagement = () => {
       handleError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSnackbar]);
+  }, []);
 
   const fetchReturnsList = useCallback(
     async (params = {}) => {
       setLoading(true);
       try {
-        const response = await returnService.getAllReturns({ page: 1, limit: 20, ...params });
+        const response = await returnService.getAllReturns({
+          page: 1,
+          limit: 20,
+          type: 'return',
+          ...params,
+        });
         setReturnsList(response.data.data);
         setPagination(response.data.pagination);
         setLoading(false);
@@ -63,7 +66,7 @@ export const useReturnManagement = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [showSnackbar],
+    [],
   );
 
   const fetchExchangesList = useCallback(
@@ -80,7 +83,7 @@ export const useReturnManagement = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [showSnackbar],
+    [],
   );
 
   const fetchReturnDetails = useCallback(
@@ -96,14 +99,14 @@ export const useReturnManagement = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [showSnackbar],
+    [],
   );
 
   const approveReturn = async (id) => {
     setLoading(true);
     try {
       await returnService.approveReturn(id);
-      showSnackbar('Return request approved successfully', 'success');
+      toast.success('Return request approved successfully');
       // Refresh current details if looking at one
       if (currentReturn && currentReturn.request._id === id) {
         await fetchReturnDetails(id);
@@ -119,7 +122,7 @@ export const useReturnManagement = () => {
     setLoading(true);
     try {
       await returnService.rejectReturn(id, data);
-      showSnackbar('Return request rejected', 'success');
+      toast.success('Return request rejected');
       if (currentReturn && currentReturn.request._id === id) {
         await fetchReturnDetails(id);
       } else {
@@ -134,7 +137,7 @@ export const useReturnManagement = () => {
     setLoading(true);
     try {
       await returnService.transitionStatus(id, data);
-      showSnackbar('Status updated successfully', 'success');
+      toast.success('Status updated successfully');
       if (currentReturn && currentReturn.request._id === id) {
         await fetchReturnDetails(id);
       } else {
@@ -145,11 +148,11 @@ export const useReturnManagement = () => {
     }
   };
 
-  const triggerRefund = async (id) => {
+  const triggerRefund = async (id, method) => {
     setLoading(true);
     try {
-      await returnService.triggerRefund(id);
-      showSnackbar('Refund triggered successfully', 'success');
+      await returnService.triggerRefund(id, method);
+      toast.success('Refund triggered successfully');
       if (currentReturn && currentReturn.request._id === id) {
         await fetchReturnDetails(id);
       } else {
@@ -164,7 +167,7 @@ export const useReturnManagement = () => {
     setLoading(true);
     try {
       await returnService.addInternalNote(id, noteData);
-      showSnackbar('Internal note added', 'success');
+      toast.success('Internal note added');
       if (currentReturn && currentReturn.request._id === id) {
         await fetchReturnDetails(id);
       } else {
@@ -178,8 +181,8 @@ export const useReturnManagement = () => {
   const schedulePickup = async (id, data) => {
     setLoading(true);
     try {
-      await returnService.schedulePickup(id, data);
-      showSnackbar('Pickup scheduled successfully', 'success');
+      await returnService.assignPickup(id, data);
+      toast.success('Pickup scheduled successfully');
       if (currentReturn && currentReturn.request._id === id) {
         await fetchReturnDetails(id);
       } else {
@@ -194,7 +197,7 @@ export const useReturnManagement = () => {
     setLoading(true);
     try {
       await returnService.completeReturn(id);
-      showSnackbar('Return completed successfully', 'success');
+      toast.success('Return completed successfully');
       if (currentReturn && currentReturn.request._id === id) {
         await fetchReturnDetails(id);
       } else {
@@ -221,7 +224,7 @@ export const useReturnManagement = () => {
     setLoading(true);
     try {
       const response = await returnService.bulkAction({ action, ids, data });
-      showSnackbar(response.data.message, 'success');
+      toast.success(response.data.message || 'Operation successful');
       await fetchReturnsList(); // Refresh list
     } catch (err) {
       handleError(err);
@@ -239,7 +242,7 @@ export const useReturnManagement = () => {
       handleError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSnackbar]);
+  }, []);
 
   const fetchPickupList = useCallback(
     async (params = {}) => {
@@ -254,7 +257,7 @@ export const useReturnManagement = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [showSnackbar],
+    [],
   );
 
   const fetchFraudAlerts = useCallback(
@@ -270,7 +273,7 @@ export const useReturnManagement = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [showSnackbar],
+    [],
   );
 
   const fetchHighRiskCustomers = useCallback(
@@ -286,7 +289,7 @@ export const useReturnManagement = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [showSnackbar],
+    [],
   );
 
   const fetchAnalytics = useCallback(
@@ -302,7 +305,7 @@ export const useReturnManagement = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [showSnackbar],
+    [],
   );
 
   const [enterpriseAnalytics, setEnterpriseAnalytics] = useState(null);
@@ -318,7 +321,7 @@ export const useReturnManagement = () => {
       handleError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSnackbar]);
+  }, []);
 
   const fetchReturnSettings = useCallback(async () => {
     setLoading(true);
@@ -331,14 +334,14 @@ export const useReturnManagement = () => {
       handleError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSnackbar]);
+  }, []);
 
   const saveReturnSettings = async (data) => {
     setLoading(true);
     try {
       const response = await returnService.updateReturnSettings(data);
       setReturnSettings(response.data.data);
-      showSnackbar('Settings updated successfully', 'success');
+      toast.success('Settings updated successfully');
       setLoading(false);
       return response.data.data;
     } catch (err) {
@@ -357,7 +360,7 @@ export const useReturnManagement = () => {
       handleError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSnackbar]);
+  }, []);
 
   const fetchExchangeStats = useCallback(async () => {
     setLoading(true);
@@ -370,7 +373,7 @@ export const useReturnManagement = () => {
       handleError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSnackbar]);
+  }, []);
 
   const fetchPickupStats = useCallback(async () => {
     setLoading(true);
@@ -383,7 +386,7 @@ export const useReturnManagement = () => {
       handleError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSnackbar]);
+  }, []);
 
   // Handle real-time socket events for returns
   useEffect(() => {

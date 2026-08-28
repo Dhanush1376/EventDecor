@@ -313,6 +313,9 @@ export class PaymentWebhookService {
     if (event === 'refund.processed' || event === 'refund.failed') {
       const refundEntity = body.payload?.refund?.entity;
       const razorpay_payment_id = refundEntity?.payment_id;
+      const razorpay_refund_id = refundEntity?.id;
+      const refund_record_id = refundEntity?.notes?.refundRecordId;
+
       if (razorpay_payment_id) {
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -336,6 +339,65 @@ export class PaymentWebhookService {
               ],
               { session },
             );
+
+            // 1. Process RefundRecord based on webhook
+            const RefundRecord = require('../models/RefundRecord').default;
+            let refundRecord = null;
+            if (refund_record_id) {
+              refundRecord = await RefundRecord.findById(refund_record_id).session(session);
+            } else if (razorpay_refund_id) {
+              refundRecord = await RefundRecord.findOne({
+                razorpayRefundId: razorpay_refund_id,
+              }).session(session);
+            }
+
+            if (refundRecord) {
+              // 2. Idempotency Check
+              if (refundRecord.status !== 'completed' && refundRecord.status !== 'failed') {
+                refundRecord.status = event === 'refund.processed' ? 'completed' : 'failed';
+                refundRecord.completedAt = new Date();
+                refundRecord.razorpayRefundId = razorpay_refund_id;
+
+                if (refundEntity?.acquirer_data?.arn) {
+                  refundRecord.bankReference = refundEntity.acquirer_data.arn;
+                }
+
+                if (event === 'refund.failed') {
+                  refundRecord.errorDetails = 'Razorpay webhook reported refund failure';
+                }
+
+                await refundRecord.save({ session });
+
+                // 3. Auto-transition Return Request
+                if (refundRecord.returnRequestId) {
+                  const { ReturnStateMachine } = require('./returns/ReturnStateMachine');
+                  if (event === 'refund.processed') {
+                    await ReturnStateMachine.transition(
+                      refundRecord.returnRequestId.toString(),
+                      'refund_completed',
+                      'system',
+                      undefined,
+                      session,
+                    );
+                    await ReturnStateMachine.transition(
+                      refundRecord.returnRequestId.toString(),
+                      'completed',
+                      'system',
+                      undefined,
+                      session,
+                    );
+                  } else if (event === 'refund.failed') {
+                    await ReturnStateMachine.transition(
+                      refundRecord.returnRequestId.toString(),
+                      'refund_failed',
+                      'system',
+                      undefined,
+                      session,
+                    );
+                  }
+                }
+              }
+            }
 
             if (event === 'refund.processed') {
               if (PaymentStateMachine.canTransition(order.paymentStatus as any, 'refunded')) {

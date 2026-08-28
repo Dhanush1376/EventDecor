@@ -94,6 +94,9 @@ export class ReturnService {
       const order = await Order.findById(orderId).session(session);
       if (!order) throw new ApiError(404, 'Order not found');
 
+      order.hasActiveReturn = true;
+      await order.save({ session });
+
       // Calculate refund breakdown
       this.calculateRefund(returnRequest, order);
 

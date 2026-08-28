@@ -1,11 +1,8 @@
-import { createAdminNotification, sendDirectEmail } from '../notificationService';
+import { createAdminNotification } from '../notificationService';
+import OutboxEvent from '../../models/OutboxEvent';
 import { IReturnRequest } from '../../models/ReturnRequest';
 import User from '../../models/User';
 import ExchangeRequest from '../../models/ExchangeRequest';
-import {
-  buildRefundInitiatedCustomerEmail,
-  buildRefundCompletedCustomerEmail,
-} from '../../utils/email/returnExchangeEmailTemplates';
 
 import logger from '../../config/logger';
 
@@ -76,53 +73,53 @@ export class ReturnNotificationService {
 
   static async notifyCustomerExchangeVerified(returnRequest: IReturnRequest) {
     try {
-      const user = await this.getUser(returnRequest.userId.toString());
-      if (!user?.email) return;
-
-      // Customer email is handled by the outbox processor for RETURNREQUEST_RETURNSTATUSUPDATED
+      await OutboxEvent.create({
+        aggregateId: returnRequest._id.toString(),
+        aggregateType: 'ReturnRequest',
+        eventType: 'RETURNREQUEST_EXCHANGE_PAYMENT_VERIFIED',
+        payload: { returnId: returnRequest._id.toString() },
+      });
     } catch (error) {
       logger.error(`Error in notifyCustomerExchangeVerified for ${returnRequest.returnId}:`, error);
     }
   }
 
   static async notifyCustomerPickupScheduled(returnRequest: IReturnRequest) {
-    const user = await this.getUser(returnRequest.userId.toString());
-    if (user?.email) {
-      await sendDirectEmail({
-        email: user.email,
-        subject: `Pickup Scheduled for ${returnRequest.returnType === 'exchange' ? 'Exchange' : 'Return'} - ${returnRequest.returnId}`,
-        customHtml: `<h1>Pickup Scheduled</h1><p>Your pickup is scheduled for ${returnRequest.pickup?.scheduledDate}.</p>`,
-        type: 'order',
-        action: 'return_pickup_scheduled',
+    try {
+      await OutboxEvent.create({
+        aggregateId: returnRequest._id.toString(),
+        aggregateType: 'ReturnRequest',
+        eventType: 'RETURNREQUEST_RETURNSTATUSUPDATED',
+        payload: { status: 'return_courier_assigned' },
       });
+    } catch (error) {
+      logger.error(`Error in notifyCustomerPickupScheduled for ${returnRequest.returnId}:`, error);
     }
   }
 
   static async notifyCustomerRefundInitiated(returnRequest: IReturnRequest) {
-    const user = await this.getUser(returnRequest.userId.toString());
-    if (user?.email) {
-      const emailContent = buildRefundInitiatedCustomerEmail(returnRequest, user);
-      await sendDirectEmail({
-        email: user.email,
-        subject: emailContent.subject,
-        customHtml: emailContent.html,
-        type: 'order',
-        action: 'return_refund_initiated',
+    try {
+      await OutboxEvent.create({
+        aggregateId: returnRequest._id.toString(),
+        aggregateType: 'ReturnRequest',
+        eventType: 'RETURNREQUEST_RETURNSTATUSUPDATED',
+        payload: { status: 'refund_initiated' },
       });
+    } catch (error) {
+      logger.error(`Error in notifyCustomerRefundInitiated for ${returnRequest.returnId}:`, error);
     }
   }
 
   static async notifyCustomerRefundCompleted(returnRequest: IReturnRequest) {
-    const user = await this.getUser(returnRequest.userId.toString());
-    if (user?.email) {
-      const emailContent = buildRefundCompletedCustomerEmail(returnRequest, user);
-      await sendDirectEmail({
-        email: user.email,
-        subject: emailContent.subject,
-        customHtml: emailContent.html,
-        type: 'order',
-        action: 'return_refund_completed',
+    try {
+      await OutboxEvent.create({
+        aggregateId: returnRequest._id.toString(),
+        aggregateType: 'ReturnRequest',
+        eventType: 'RETURNREQUEST_RETURNSTATUSUPDATED',
+        payload: { status: 'completed' },
       });
+    } catch (error) {
+      logger.error(`Error in notifyCustomerRefundCompleted for ${returnRequest.returnId}:`, error);
     }
   }
 

@@ -111,6 +111,16 @@ export class ExchangeStateMachine {
         throw new ApiError(400, 'Replacement order already exists');
       }
 
+      if (
+        exchange.differenceAction === 'collect_payment' &&
+        exchange.paymentStatus !== 'payment_paid'
+      ) {
+        throw new ApiError(
+          400,
+          'Cannot create replacement order until the price difference payment is completed by the customer.',
+        );
+      }
+
       const returnReq = exchange.returnRequestId as any; // populated
       const originalOrder = await Order.findById(returnReq.orderId).session(session);
       if (!originalOrder) throw new ApiError(404, 'Original order not found');

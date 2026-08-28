@@ -250,13 +250,16 @@ export class LoyaltyService {
       // 1. Calculate Siri Coins points earned
       const coinsEarned = Math.round(order.subtotal * settings.loyalty.coinsPerRupee);
 
-      // 2. Calculate Cashback percentage based on loyalty tier
-      const currentTier =
-        settings.loyalty.tiers.find((t: any) => t.name === user.loyaltyTier) ||
-        (settings.loyalty.tiers.length > 0 ? settings.loyalty.tiers[0] : { cashbackRate: 0.02 });
-      const cashbackRate = currentTier.cashbackRate;
+      // 2. Calculate Cashback percentage randomly between 1% and 4% (1 decimal place)
+      const randomPercent = Math.round((Math.random() * (4.0 - 1.0) + 1.0) * 10) / 10;
+      const cashbackRate = randomPercent / 100;
 
-      const cashbackEarned = Math.round((order.total || totalSpend) * cashbackRate);
+      let cashbackEarned = Math.round((order.total || totalSpend) * cashbackRate);
+
+      // Limit cashback to a maximum of 40 INR per order
+      if (cashbackEarned > 40) {
+        cashbackEarned = 40;
+      }
 
       // Atomically credit siriCoins and walletBalance without read-modify-write saves
       await User.findByIdAndUpdate(
@@ -284,7 +287,7 @@ export class LoyaltyService {
               type: 'credit',
               amount: cashbackEarned,
               source: 'purchase_cashback',
-              description: `Earned ${Math.round(cashbackRate * 100)}% Siri Cashback on order #${order.invoiceNumber || orderId}`,
+              description: `Earned ${randomPercent}% Siri Cashback on order #${order.invoiceNumber || orderId}`,
               orderId: order._id,
               status: 'active',
             },

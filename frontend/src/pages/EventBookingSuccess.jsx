@@ -104,7 +104,8 @@ export function EventBookingSuccess() {
     <div className="bg-[#fcfbf9] min-h-screen pt-24 lg:pt-32 pb-24 text-on-surface font-body relative overflow-hidden">
       <SEO
         title={`Booking Confirmed | Siri Arts & Crafts`}
-        description="Your luxury event setup has been reserved."
+        description="Your event decoration booking has been confirmed."
+        noindex
       />
       <MandalaArtDecor
         variant={1}

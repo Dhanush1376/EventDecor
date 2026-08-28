@@ -76,7 +76,6 @@ export const getMyExchanges = asyncHandler(async (req: Request, res: Response) =
     {
       $match: {
         'returnRequest.userId': new (require('mongoose').Types.ObjectId)(userId),
-        paymentStatus: { $ne: 'pending' },
       },
     },
   ]);
@@ -104,7 +103,7 @@ export const getAllExchanges = asyncHandler(async (req: Request, res: Response) 
       select: 'status returnId orderId userId',
       populate: { path: 'userId', select: 'name email phone' },
     })
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: -1, _id: -1 })
     .skip(skip)
     .limit(limit);
 
@@ -150,11 +149,11 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
     throw new ApiError(404, 'Exchange request not found for this payment');
   }
 
-  if (exchangeRequest.paymentStatus === 'completed') {
+  if (exchangeRequest.paymentStatus === 'payment_paid') {
     return res.status(200).json({ success: true, message: 'Payment already verified' });
   }
 
-  exchangeRequest.paymentStatus = 'completed';
+  exchangeRequest.paymentStatus = 'payment_paid';
   // inspectionStatus remains 'pending' - admin must explicitly approve
 
   exchangeRequest.timeline.push({

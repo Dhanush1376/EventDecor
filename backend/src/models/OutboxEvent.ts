@@ -58,7 +58,7 @@ OutboxEventSchema.post('save', function (doc: any) {
 
   setImmediate(async () => {
     try {
-      const { processOutboxEventById } = require('../jobs/outboxProcessor');
+      const { processOutboxEventById } = await import('../jobs/outboxProcessor.js');
       await processOutboxEventById(doc._id.toString());
     } catch (err: any) {
       logger.error(`[OUTBOX-HOOK] Failed to inline-process event ${doc._id}: ${err?.message}`);

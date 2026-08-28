@@ -1,7 +1,9 @@
 User-agent: *
 Disallow: /admin/
-Disallow: /dashboard
-Disallow: /checkout
-Disallow: /cart
-Disallow: /auth
+Disallow: /dashboard/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /wishlist/
+Disallow: /track/
+Disallow: /accept-invite/
 Sitemap: https://siriartsandcrafts.com/sitemap.xml

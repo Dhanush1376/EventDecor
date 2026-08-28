@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import asyncHandler from '../../utils/asyncHandler';
 import ReturnRequest from '../../models/ReturnRequest';
+import Order from '../../models/Order';
+import ExchangeRequest from '../../models/ExchangeRequest';
+import RefundRecord from '../../models/RefundRecord';
 import { ReturnService } from '../../services/returns/ReturnService';
 import { ReturnAnalyticsService } from '../../services/returns/ReturnAnalyticsService';
 import { FraudDetectionService } from '../../services/returns/FraudDetectionService';
@@ -41,9 +44,9 @@ export const getAllReturns = asyncHandler(async (req: Request, res: Response) =>
 
   const returns = await ReturnRequest.find(query)
     .populate('userId', 'name email phone')
-    .populate('orderId', 'orderStatus paymentStatus')
+    .populate('orderId', 'orderStatus paymentStatus shippingAddress')
     .populate('items.productId', 'title imageSrc')
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: -1, _id: -1 })
     .skip(skip)
     .limit(limit);
 
@@ -69,7 +72,7 @@ export const getAllReturns = asyncHandler(async (req: Request, res: Response) =>
 export const getReturnDetails = asyncHandler(async (req: Request, res: Response) => {
   const returnRequest = await ReturnRequest.findById(req.params.id)
     .populate('userId', 'name email phone avatar')
-    .populate('orderId', 'paymentStatus orderStatus total items')
+    .populate('orderId', 'paymentStatus orderStatus total items shippingAddress')
     .populate('items.productId', 'title imageSrc')
     .populate('assignedStaff', 'name email');
 
@@ -77,15 +80,24 @@ export const getReturnDetails = asyncHandler(async (req: Request, res: Response)
     throw new ApiError(404, 'Return request not found');
   }
 
+  // Fetch exchange details if applicable
+  let exchangeDetails = null;
+  if (returnRequest.returnType === 'exchange') {
+    const ExchangeRequest = require('../../models/ExchangeRequest').default;
+    exchangeDetails = await ExchangeRequest.findOne({ returnRequestId: returnRequest._id });
+  }
+
   // Add user profile stats (fraud score, total orders, etc)
-  const userStats = await FraudDetectionService.getUserReturnProfile(
-    returnRequest.userId.toString(),
-  );
+  const userIdStr = returnRequest.userId?._id
+    ? returnRequest.userId._id.toString()
+    : returnRequest.userId?.toString();
+  const userStats = userIdStr ? await FraudDetectionService.getUserReturnProfile(userIdStr) : null;
 
   res.status(200).json({
     success: true,
     data: {
       request: returnRequest,
+      exchangeDetails,
       userStats,
     },
   });
@@ -331,16 +343,101 @@ export const triggerRefund = asyncHandler(async (req: Request, res: Response) =>
   const adminId = req.user?.id;
   if (!adminId) throw new ApiError(401, 'Unauthorized');
 
-  const returnRequest = await ReturnStateMachine.transition(
-    req.params.id as string,
-    'refund_initiated',
-    adminId,
-  );
+  const method = req.body.method;
+  if (!['wallet', 'original'].includes(method)) {
+    throw new ApiError(400, 'Invalid refund method specified');
+  }
 
-  res.status(200).json({
-    success: true,
-    data: returnRequest,
-  });
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const returnReq = await ReturnRequest.findById(req.params.id).session(session);
+    if (!returnReq) throw new ApiError(404, 'Return request not found');
+
+    if (returnReq.status !== 'inspection_completed') {
+      throw new ApiError(
+        400,
+        `Cannot process refund in ${returnReq.status} state. Expected inspection_completed.`,
+      );
+    }
+
+    const order = await Order.findById(returnReq.orderId).session(session);
+    if (!order) throw new ApiError(404, 'Order not found');
+
+    if (method === 'original' && order.paymentMethod === 'cod') {
+      throw new ApiError(
+        400,
+        'Cannot refund to original payment method for COD orders. Please select wallet.',
+      );
+    }
+
+    let refundAmount = 0;
+    if (returnReq.returnType === 'exchange') {
+      const exchange = await ExchangeRequest.findOne({ returnRequestId: returnReq._id }).session(
+        session,
+      );
+      if (exchange && exchange.differenceAction === 'refund_difference') {
+        refundAmount = exchange.priceDifference;
+      }
+    } else {
+      const { ReturnService } = require('../../services/returns/ReturnService');
+      ReturnService.calculateRefund(returnReq, order);
+      refundAmount = returnReq.refundBreakdown?.grandTotal || 0;
+    }
+
+    if (refundAmount <= 0) {
+      throw new ApiError(400, 'Refund amount must be greater than 0');
+    }
+
+    const existingRefund = await RefundRecord.findOne({
+      returnRequestId: returnReq._id,
+      status: { $in: ['pending', 'processing', 'completed'] },
+    }).session(session);
+    if (existingRefund) {
+      throw new ApiError(400, 'Refund has already been initiated or completed for this return.');
+    }
+
+    returnReq.executedRefundMethod = method as any;
+    await returnReq.save({ session });
+
+    let returnRequest = await ReturnStateMachine.transition(
+      req.params.id as string,
+      'refund_initiated',
+      adminId,
+      undefined,
+      session,
+    );
+
+    if (method === 'wallet') {
+      returnRequest = await ReturnStateMachine.transition(
+        req.params.id as string,
+        'refund_completed',
+        adminId,
+        undefined,
+        session,
+      );
+      returnRequest = await ReturnStateMachine.transition(
+        req.params.id as string,
+        'completed',
+        adminId,
+        undefined,
+        session,
+      );
+    }
+
+    await session.commitTransaction();
+
+    res.status(200).json({
+      success: true,
+      data: returnRequest,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 });
 
 /**

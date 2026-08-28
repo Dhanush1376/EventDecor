@@ -5,6 +5,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
+import { SEO } from '../components/seo/SEO';
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
@@ -81,6 +82,7 @@ export function AcceptInvite() {
 
   return (
     <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center py-20 px-4 font-body">
+      <SEO title="Accept Invitation | Siri Arts & Crafts" noindex />
       <motion.div
         initial="hidden"
         animate="show"

@@ -59,6 +59,7 @@ export interface IReturnRequest extends ISoftDeleted {
     | 'inspection_completed'
     | 'refund_initiated'
     | 'refund_completed'
+    | 'refund_failed'
     | 'completed'
     | 'rejected'
     | 'cancelled';
@@ -79,6 +80,7 @@ export interface IReturnRequest extends ISoftDeleted {
   };
 
   refundMethod?: 'original' | 'wallet' | 'store_credit';
+  executedRefundMethod?: 'original' | 'wallet' | 'store_credit';
   upiId?: string;
   refundRecordId?: mongoose.Types.ObjectId;
 
@@ -213,6 +215,7 @@ const ReturnRequestSchema = new Schema<IReturnRequest>(
         'inspection_completed',
         'refund_initiated',
         'refund_completed',
+        'refund_failed',
         'completed',
         'rejected',
         'cancelled',
@@ -236,6 +239,7 @@ const ReturnRequestSchema = new Schema<IReturnRequest>(
     },
 
     refundMethod: { type: String, enum: ['original', 'wallet', 'store_credit'] },
+    executedRefundMethod: { type: String, enum: ['original', 'wallet', 'store_credit'] },
     upiId: { type: String },
     refundRecordId: { type: Schema.Types.ObjectId, ref: 'RefundRecord' },
 

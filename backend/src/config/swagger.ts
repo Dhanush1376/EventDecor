@@ -10,7 +10,9 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:5000/api/v1',
+        url: process.env.BACKEND_URL
+          ? `${process.env.BACKEND_URL}/api/v1`
+          : 'http://localhost:5000/api/v1',
         description: 'Development Server',
       },
     ],

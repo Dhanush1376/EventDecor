@@ -146,13 +146,29 @@ export function AdminOrdersTable({
                     </td>
                     <td>
                       <div className="flex flex-col">
-                        <span className="font-semibold text-[var(--admin-text-primary)]">
-                          {o.customer}
+                        <span
+                          className="font-semibold text-[var(--admin-text-primary)] truncate max-w-[150px]"
+                          title={o.customer || o.shippingAddress?.name || 'User'}
+                        >
+                          {o.customer || o.shippingAddress?.name || 'User'}
                         </span>
                         <span className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5 flex items-center gap-1">
                           <span className="material-symbols-outlined text-[12px]">call</span>
-                          {o.phone}
+                          {o.phone || o.shippingAddress?.phone || 'N/A'}
                         </span>
+                        {(o.address || o.shippingAddress?.address) && (
+                          <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1.5 flex items-start gap-1 leading-tight max-w-[150px]">
+                            <span className="material-symbols-outlined text-[11px] mt-0.5 shrink-0">
+                              location_on
+                            </span>
+                            <span className="truncate whitespace-normal line-clamp-2">
+                              {o.address || o.shippingAddress?.address}
+                              {o.shippingAddress?.city || o.city
+                                ? `, ${o.shippingAddress?.city || o.city}`
+                                : ''}
+                            </span>
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="hidden md:table-cell max-w-[300px] py-3 pr-4">
@@ -259,7 +275,9 @@ export function AdminOrdersTable({
                         >
                           <WhatsAppIcon className="w-[16px] h-[16px]" />
                         </a>
-                        {['Cancelled', 'Returned', 'Refunded', 'Exchanged'].includes(o.status) && (
+                        {['Cancelled', 'Returned', 'Refunded', 'Exchanged', 'Delivered'].includes(
+                          o.status,
+                        ) && (
                           <button
                             onClick={() => setOrderToDelete(o)}
                             className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)]"
@@ -328,19 +346,38 @@ export function AdminOrdersTable({
                         <span className="w-2 h-2 rounded-full bg-[var(--admin-accent)] animate-pulse" />
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] block">
-                        {o.customer}
-                      </span>
-                      {o.orderType && o.orderType !== 'purchase' && (
-                        <span
-                          className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                            o.orderType === 'rental'
-                              ? 'bg-indigo-100 text-indigo-700'
-                              : 'bg-purple-100 text-purple-700'
-                          }`}
-                        >
-                          {o.orderType}
+                    <div className="flex flex-col gap-1 mt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] truncate max-w-[150px]">
+                          {o.customer || o.shippingAddress?.name || 'User'}
+                        </span>
+                        {o.orderType && o.orderType !== 'purchase' && (
+                          <span
+                            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                              o.orderType === 'rental'
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : 'bg-purple-100 text-purple-700'
+                            }`}
+                          >
+                            {o.orderType}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-[var(--admin-text-tertiary)] flex items-center gap-0.5 ml-1">
+                          <span className="material-symbols-outlined text-[10px]">call</span>
+                          {o.phone || o.shippingAddress?.phone || 'N/A'}
+                        </span>
+                      </div>
+                      {(o.address || o.shippingAddress?.address) && (
+                        <span className="text-[10px] text-[var(--admin-text-secondary)] flex items-start gap-1 leading-tight">
+                          <span className="material-symbols-outlined text-[10px] mt-0.5 shrink-0">
+                            location_on
+                          </span>
+                          <span className="truncate whitespace-normal line-clamp-1">
+                            {o.address || o.shippingAddress?.address}
+                            {o.shippingAddress?.city || o.city
+                              ? `, ${o.shippingAddress?.city || o.city}`
+                              : ''}
+                          </span>
                         </span>
                       )}
                     </div>
@@ -392,7 +429,9 @@ export function AdminOrdersTable({
                     <span className="admin-badge admin-badge-neutral text-[9px] uppercase font-bold tracking-wider">
                       {o.payment}
                     </span>
-                    {['Cancelled', 'Returned', 'Refunded', 'Exchanged'].includes(o.status) && (
+                    {['Cancelled', 'Returned', 'Refunded', 'Exchanged', 'Delivered'].includes(
+                      o.status,
+                    ) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

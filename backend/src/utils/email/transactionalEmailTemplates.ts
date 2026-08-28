@@ -1,55 +1,18 @@
-import { getLuxuryEmailWrapper } from './emailTemplates';
+import {
+  getLuxuryEmailWrapper,
+  formatCurrency,
+  escapeHtml,
+  button,
+  dataTable,
+} from './emailTemplates';
 import { getFrontendUrl } from '../getFrontendUrl';
 import { getBackendUrl } from '../getBackendUrl';
-
-// --- Shared Components ---
-
-const formatCurrency = (amount: number) => `₹${Number(amount || 0).toLocaleString('en-IN')}`;
-
-const escapeHtml = (unsafe: any) => {
-  if (!unsafe) return '';
-  return String(unsafe)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-};
-
-const button = (text: string, url: string) => `
-  <div style="margin: 32px 0; text-align: center;">
-    <a href="${url}" style="background-color: #111827; color: #ffffff; padding: 12px 24px; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 6px; display: inline-block;">
-      ${text}
-    </a>
-  </div>
-`;
 
 const textLink = (text: string, url: string) => `
   <a href="${url}" style="color: #4f46e5; text-decoration: underline; font-size: 14px; font-weight: 500;">
     ${text}
   </a>
 `;
-
-const dataTable = (rows: { label: string; value: string }[]) => {
-  const rowsHtml = rows
-    .map(
-      (r) => `
-    <tr>
-      <td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 40%;">${r.label}</td>
-      <td style="padding: 8px 0; color: #111827; font-size: 14px; font-weight: 500;">${r.value}</td>
-    </tr>
-  `,
-    )
-    .join('');
-
-  return `
-    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <table style="width: 100%; border-collapse: collapse;">
-        ${rowsHtml}
-      </table>
-    </div>
-  `;
-};
 
 const itemsTable = (items: any[]) => {
   const itemsHtml = items
@@ -153,37 +116,6 @@ const addressBlock = (title: string, address: any) => {
   `;
 };
 
-const statusTimelineBlock = (history: any[]) => {
-  if (!history || history.length === 0) return '';
-
-  const timelineHtml = history
-    .map((item, index) => {
-      const isLast = index === history.length - 1;
-      const date = item.timestamp ? new Date(item.timestamp).toLocaleString('en-IN') : '';
-      return `
-      <div style="display: flex; margin-bottom: ${isLast ? '0' : '16px'};">
-        <div style="margin-right: 16px; display: flex; flex-direction: column; align-items: center;">
-          <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${isLast ? '#4f46e5' : '#d1d5db'};"></div>
-          ${!isLast ? '<div style="width: 2px; flex-grow: 1; background-color: #e5e7eb; margin-top: 4px;"></div>' : ''}
-        </div>
-        <div>
-          <div style="font-weight: ${isLast ? '600' : '500'}; color: ${isLast ? '#111827' : '#6b7280'}; font-size: 14px;">${escapeHtml(item.status)}</div>
-          <div style="color: #9ca3af; font-size: 12px; margin-top: 2px;">${escapeHtml(date)}</div>
-          ${item.note && isLast ? `<div style="color: #4b5563; font-size: 13px; margin-top: 4px; background-color: #f3f4f6; padding: 8px; border-radius: 4px;">${escapeHtml(item.note)}</div>` : ''}
-        </div>
-      </div>
-    `;
-    })
-    .join('');
-
-  return `
-    <div style="margin-bottom: 32px; padding: 20px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
-      <h3 style="color: #111827; font-size: 16px; margin-top: 0; margin-bottom: 16px;">Order History</h3>
-      ${timelineHtml}
-    </div>
-  `;
-};
-
 // --- Order Templates ---
 
 export const buildOrderConfirmationCustomerEmail = (order: any, user: any) => {
@@ -251,8 +183,14 @@ export const buildOrderConfirmationAdminEmail = (order: any) => {
     
     ${button('View Order in Admin', `${getFrontendUrl()}/admin/orders/${order._id}`)}
   `;
+  const itemTitle =
+    order.items && order.items.length > 0 ? order.items[0].title || order.items[0].name : 'Items';
+  const moreCount = order.items && order.items.length > 1 ? ` +${order.items.length - 1} more` : '';
+  const productName = `${itemTitle}${moreCount}`;
+  const customerName = order.shippingAddress?.name || order.user?.name || 'A customer';
+
   return {
-    subject: `[NEW ORDER] #${orderId} - ${formatCurrency(order.total)}`,
+    subject: `[New Order] ${productName} placed by ${customerName}`,
     html: getLuxuryEmailWrapper('Admin Alert', body),
   };
 };
@@ -527,17 +465,29 @@ export const buildReturnCreatedCustomerEmail = (returnRequest: any, order: any, 
     ${dataTable(rows)}
 
     ${
-      order
+      returnRequest && returnRequest.items && returnRequest.items.length > 0
         ? `
-    <h3 style="margin-top: 32px; color: #111827;">Order Summary</h3>
-    ${itemsTable(order.items)}
-    ${totalsSummary(
-      order.subtotal,
-      order.shippingFee || order.courierCharges || 0,
-      order.tax?.totalTax || 0,
-      order.total,
-      order.discount || 0,
+    <h3 style="margin-top: 32px; color: #111827;">${isExchange ? 'Exchange' : 'Return'} Summary</h3>
+    ${itemsTable(
+      returnRequest.items.map((item: any) => ({
+        imageSrc: item.imageSrc || item.productId?.imageSrc,
+        title: item.title || item.productId?.title,
+        quantity: item.returnQuantity,
+        price: item.unitPrice,
+        variant: item.variant,
+      })),
     )}
+    ${
+      !isExchange &&
+      (returnRequest.refundBreakdown?.grandTotal !== undefined ||
+        returnRequest.refundAmount !== undefined)
+        ? `
+        <div style="text-align: right; padding-top: 16px; font-size: 16px; border-top: 2px solid #e5e7eb; margin-top: 16px;">
+          <strong style="color: #111827;">Total Refund: </strong><span style="font-family: monospace; color: #111827; font-weight: 700;">${formatCurrency(returnRequest.refundBreakdown?.grandTotal ?? returnRequest.refundAmount ?? 0)}</span>
+        </div>
+        `
+        : ''
+    }
     `
         : ''
     }
@@ -561,45 +511,90 @@ export const buildReturnStatusUpdateEmail = (
   user: any,
   previousStatus: string,
   newStatus: string,
+  exchange?: any,
 ) => {
   const customerName = user?.name || 'Valued Customer';
   const isExchange = returnRequest.returnType === 'exchange';
   const requestId = returnRequest.returnId || returnRequest._id;
 
+  const formatStatus = (statusStr: string) => {
+    if (!statusStr) return '';
+    return statusStr
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const rows: { label: string; value: string }[] = [
     { label: 'Request ID', value: escapeHtml(requestId) },
-    { label: 'Previous Status', value: escapeHtml(previousStatus) },
-    { label: 'New Status', value: escapeHtml(newStatus) },
+    { label: 'Previous Status', value: formatStatus(previousStatus) },
+    { label: 'New Status', value: formatStatus(newStatus) },
   ];
+
+  if (isExchange && exchange && exchange.paymentStatus) {
+    rows.push({
+      label: 'Payment Status',
+      value: exchange.paymentStatus.replace('_', ' ').toUpperCase(),
+    });
+  }
 
   const preheader = `Status update for your ${isExchange ? 'exchange' : 'return'} request #${requestId}.`;
   const body = `
     <h2>${isExchange ? 'Exchange' : 'Return'} Status Update</h2>
     <p>Dear ${escapeHtml(customerName)},</p>
-    <p>The status of your ${isExchange ? 'exchange' : 'return'} request <strong>#${escapeHtml(requestId)}</strong> has been updated to <strong>${escapeHtml(newStatus)}</strong>.</p>
+    <p>The status of your ${isExchange ? 'exchange' : 'return'} request <strong>#${escapeHtml(requestId)}</strong> has been updated to <strong>${formatStatus(newStatus)}</strong>.</p>
+    
+    ${
+      isExchange &&
+      exchange?.differenceAction === 'collect_payment' &&
+      exchange.paymentStatus === 'payment_required' &&
+      ['approved'].includes(newStatus)
+        ? `
+      <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin-bottom: 24px;">
+        <p style="margin: 0; color: #b45309; font-weight: bold;">Action Required: Payment Needed</p>
+        <p style="margin: 8px 0 0 0; color: #92400e; font-size: 14px;">
+          An additional payment of <strong>₹${exchange.priceDifference}</strong> is required to proceed with your exchange. 
+          Please visit your dashboard to complete the payment. Your pickup will be scheduled once payment is received.
+        </p>
+      </div>
+      `
+        : ''
+    }
 
     ${dataTable(rows)}
 
     ${
-      order
+      returnRequest && returnRequest.items && returnRequest.items.length > 0
         ? `
-    <h3 style="margin-top: 32px; color: #111827;">Order Summary</h3>
-    ${itemsTable(order.items)}
-    ${totalsSummary(
-      order.subtotal,
-      order.shippingFee || order.courierCharges || 0,
-      order.tax?.totalTax || 0,
-      order.total,
-      order.discount || 0,
+    <h3 style="margin-top: 32px; color: #111827;">${isExchange ? 'Exchange' : 'Return'} Summary</h3>
+    ${itemsTable(
+      returnRequest.items.map((item: any) => ({
+        imageSrc: item.imageSrc || item.productId?.imageSrc,
+        title: item.title || item.productId?.title,
+        quantity: item.returnQuantity,
+        price: item.unitPrice,
+        variant: item.variant,
+      })),
     )}
+    ${
+      !isExchange &&
+      (returnRequest.refundBreakdown?.grandTotal !== undefined ||
+        returnRequest.refundAmount !== undefined)
+        ? `
+        <div style="text-align: right; padding-top: 16px; font-size: 16px; border-top: 2px solid #e5e7eb; margin-top: 16px;">
+          <strong style="color: #111827;">Total Refund: </strong><span style="font-family: monospace; color: #111827; font-weight: 700;">${formatCurrency(returnRequest.refundBreakdown?.grandTotal ?? returnRequest.refundAmount ?? 0)}</span>
+        </div>
+        `
+        : ''
+    }
     `
         : ''
     }
 
-    ${button('View Details', `${getFrontendUrl()}/dashboard/returns`)}
+    ${button('Track Your Request', `${getFrontendUrl()}/dashboard/returns`)}
   `;
   return {
-    subject: `Your ${isExchange ? 'Exchange' : 'Return'} Request #${escapeHtml(requestId)} is now ${escapeHtml(newStatus)}`,
+    subject: `Your ${isExchange ? 'Exchange' : 'Return'} Request #${escapeHtml(requestId)} is now ${formatStatus(newStatus)}`,
     html: getLuxuryEmailWrapper(
       `${isExchange ? 'Exchange' : 'Return'} Update`,
       body,

@@ -45,11 +45,21 @@ export class OrderNotificationService {
         generatePdf: true,
       });
 
+      const itemTitle = order.items && order.items.length > 0 ? order.items[0].title : 'Items';
+      const moreCount =
+        order.items && order.items.length > 1 ? ` +${order.items.length - 1} more` : '';
+      const productName = `${itemTitle}${moreCount}`;
+      const customerName =
+        user.name ||
+        (typeof order.shippingAddress === 'object' ? order.shippingAddress.name : '') ||
+        'A customer';
+      const adminSubject = `[New Order] ${productName} placed by ${customerName}`;
+
       // Dispatch to admins
       if (adminEmails && adminEmails.length > 0) {
         await emailQueue.add('adminOrderAlertEmail', {
           to: adminEmails[0],
-          subject: `New Order: #${order._id} (₹${order.total})`,
+          subject: adminSubject,
           template: 'order-confirmation',
           context,
           generatePdf: true,
@@ -58,7 +68,7 @@ export class OrderNotificationService {
 
       // Admin UI Notification
       await notificationQueue.add('adminNotification', {
-        title: order.paymentMethod === 'cod' ? 'New COD Order' : 'New Online Payment Order',
+        title: adminSubject,
         message: `${user.name || 'A customer'} placed a new order (₹${order.total}).`,
         type: 'order',
         actionLink: `/admin/orders/${order._id}`,

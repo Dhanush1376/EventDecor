@@ -1,6 +1,6 @@
 import { Tag } from 'lucide-react';
 import { m as motion } from 'framer-motion';
-import { Helmet } from 'react-helmet-async';
+import { SEO } from '../components/seo/SEO';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { couponService } from '../services/domainServices';
@@ -53,10 +53,11 @@ export function Coupons() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)] pt-32 pb-20 px-6">
-      <Helmet>
-        <title>Active Offers & Coupons | Siri Arts & Crafts</title>
-        <meta name="description" content="Discover our latest offers and discount coupons." />
-      </Helmet>
+      <SEO
+        title="Active Offers & Coupons | Siri Arts & Crafts"
+        description="Discover our latest offers and discount coupons."
+        noindex
+      />
 
       <div className="max-w-[1200px] mx-auto">
         <div className="text-center mb-16">

@@ -344,8 +344,9 @@ export function EventBookingWizard() {
   return (
     <div className="bg-[#fcfbf9] min-h-screen text-on-surface pt-20 lg:pt-32 pb-24 relative overflow-hidden font-body">
       <SEO
-        title="Luxury Event Decor Booking | Guided Studio Wizard"
-        description="Configure and blueprint your milestone ceremonies with our guided luxury booking wizard."
+        title="Event Decoration Booking | Siri Arts & Crafts"
+        description="Book your event decoration with our guided booking wizard."
+        noindex
       />
 
       <MandalaArtDecor

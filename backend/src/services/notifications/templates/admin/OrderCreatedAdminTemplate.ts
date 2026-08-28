@@ -1,4 +1,5 @@
 import { MetadataGrid, InvoiceTable, CTAButton } from '../../components';
+import { getFrontendUrl } from '../../../../utils/getFrontendUrl';
 
 export const OrderCreatedAdminTemplate = (data: any) => {
   const {
@@ -51,14 +52,19 @@ export const OrderCreatedAdminTemplate = (data: any) => {
     ${InvoiceTable(productRows, orderDetails.subtotal, orderDetails.tax || 0, orderDetails.total)}
 
     <div style="margin-top: 32px; display: flex; gap: 12px;">
-      ${CTAButton('View Order', `/admin/orders/${orderDetails.id}`, 'primary')}
-      ${CTAButton('View Customer', `/admin/customers/${customerInfo.id}`, 'secondary')}
+      ${CTAButton('View Order', `${getFrontendUrl()}/admin/orders/${orderDetails.id}`, 'primary')}
+      ${CTAButton('View Customer', `${getFrontendUrl()}/admin/customers/${customerInfo.id}`, 'secondary')}
     </div>
   `;
 
+  const itemTitle = products && products.length > 0 ? products[0].name : 'Items';
+  const moreCount = products && products.length > 1 ? ` +${products.length - 1} more` : '';
+  const productName = `${itemTitle}${moreCount}`;
+  const customerName = customerInfo.name || 'A customer';
+
   return {
     html: content,
-    subject: `New Order: #${orderDetails.id} (₹${orderDetails.total})`,
+    subject: `[New Order] ${productName} placed by ${customerName}`,
     preheader: `Order ID: ${orderDetails.id} | LTV: ₹${customerStats.lifetimeSpend}`,
   };
 };

@@ -276,7 +276,10 @@ export class OrderCheckoutService {
       const requiresApproval = ruleResult.requiresApproval;
       // -------------------------------
 
-      if (isCod) {
+      const isInstantWallet = !isCod && total === 0 && walletDeduction > 0;
+      const isInstantCheckout = isCod || isInstantWallet;
+
+      if (isInstantCheckout) {
         // FOR COD: Perform all actual database mutations (Coupon, Wallet, Order)
         if (couponValid && couponDoc) {
           await Coupon.findByIdAndUpdate(
@@ -321,15 +324,17 @@ export class OrderCheckoutService {
           walletDeduction,
           total,
           couponCode: couponValid ? couponCode.toUpperCase() : undefined,
-          paymentMethod: 'cod',
-          paymentStatus: 'Pending COD',
+          paymentMethod: isCod ? 'cod' : 'wallet',
+          paymentStatus: isCod ? 'Pending COD' : 'Paid',
           orderStatus: requiresApproval ? 'Pending Approval' : 'Confirmed',
           statusHistory: [
             {
               status: requiresApproval ? 'Pending Approval' : 'Confirmed',
               note: requiresApproval
                 ? 'Order requires manual approval based on business rules'
-                : 'Cash on Delivery order successfully placed',
+                : isCod
+                  ? 'Cash on Delivery order successfully placed'
+                  : 'Order successfully placed and fully paid using wallet balance',
             },
           ],
           reservationIds,
@@ -423,24 +428,24 @@ export class OrderCheckoutService {
           logger.warn('Failed to emit admin order_update event for COD order', e);
         }
 
-        const resultCod = { order, type: 'cod' };
+        const resultInstant = { order, type: isCod ? 'cod' : 'wallet', isInstantCheckout: true };
         await OrderIdempotencyManager.cacheResponseAndReleaseLock(
           userId,
           idempotencyKey,
-          resultCod,
+          resultInstant,
         );
 
-        // Fire WhatsApp Notification for COD Order
+        // Fire WhatsApp Notification for Order
         try {
           const {
             WhatsAppTriggers,
           } = require('../../domains/notifications/whatsapp/whatsappTriggerHooks');
           await WhatsAppTriggers.onOrderCreated(order);
         } catch (e) {
-          logger.error('Failed to trigger WhatsApp COD notification', e);
+          logger.error('Failed to trigger WhatsApp notification', e);
         }
 
-        return resultCod;
+        return resultInstant;
       } else {
         // FOR RAZORPAY: Do NOT save the Order, do NOT increment coupon usage, do NOT deduct wallet.
         // We only reserve the inventory (already done above with TTL) and create a PaymentAttempt.

@@ -89,8 +89,8 @@ export function EventShowcases() {
   return (
     <div className="bg-surface min-h-screen font-body">
       <SEO
-        title={`${eventsPageContent.hero.title} | Siri Arts & Crafts`}
-        description={eventsPageContent.hero.description}
+        title="Event Decorations | Siri Arts & Crafts"
+        description="Explore our stunning handcrafted event decorations, wedding mandaps, pooja setups, and floral styling."
       />
 
       <ShowcaseHero eventsPageContent={eventsPageContent} />

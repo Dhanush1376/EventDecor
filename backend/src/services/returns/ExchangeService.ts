@@ -134,7 +134,8 @@ export class ExchangeService {
         exchangeType,
         priceDifference,
         differenceAction,
-        paymentStatus: differenceAction === 'collect_payment' ? 'pending' : 'not_applicable',
+        paymentStatus:
+          differenceAction === 'collect_payment' ? 'payment_required' : 'not_applicable',
         replacementStatus: 'pending_stock',
         timeline: [
           {

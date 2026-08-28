@@ -20,12 +20,17 @@ export const ConfirmProvider = ({ children }) => {
     confirmText: 'Confirm',
     cancelText: 'Cancel',
     type: 'warning', // 'warning', 'danger', 'info'
+    isPrompt: false,
+    promptPlaceholder: '',
   });
+
+  const [inputValue, setInputValue] = useState('');
 
   const resolver = useRef(null);
 
   const confirm = useCallback((options) => {
     return new Promise((resolve) => {
+      setInputValue('');
       setConfirmState({
         isOpen: true,
         title: options.title || 'Please Confirm',
@@ -33,6 +38,8 @@ export const ConfirmProvider = ({ children }) => {
         confirmText: options.confirmText || 'Confirm',
         cancelText: options.cancelText || 'Cancel',
         type: options.type || 'warning',
+        isPrompt: !!options.isPrompt,
+        promptPlaceholder: options.promptPlaceholder || 'Enter value...',
       });
       resolver.current = resolve;
     });
@@ -41,10 +48,10 @@ export const ConfirmProvider = ({ children }) => {
   const handleConfirm = useCallback(() => {
     setConfirmState((prev) => ({ ...prev, isOpen: false }));
     if (resolver.current) {
-      resolver.current(true);
+      resolver.current(confirmState.isPrompt ? inputValue : true);
       resolver.current = null;
     }
-  }, []);
+  }, [confirmState.isPrompt, inputValue]);
 
   const handleCancel = useCallback(() => {
     setConfirmState((prev) => ({ ...prev, isOpen: false }));
@@ -57,7 +64,13 @@ export const ConfirmProvider = ({ children }) => {
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
-      <ConfirmModal {...confirmState} onConfirm={handleConfirm} onCancel={handleCancel} />
+      <ConfirmModal
+        {...confirmState}
+        inputValue={inputValue}
+        setInputValue={setInputValue}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
     </ConfirmContext.Provider>
   );
 };
@@ -69,6 +82,10 @@ const ConfirmModal = ({
   confirmText,
   cancelText,
   type,
+  isPrompt,
+  promptPlaceholder,
+  inputValue,
+  setInputValue,
   onConfirm,
   onCancel,
 }) => {
@@ -165,6 +182,26 @@ const ConfirmModal = ({
               >
                 {message}
               </p>
+
+              {isPrompt && (
+                <div className="mt-4">
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder={promptPlaceholder}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') onConfirm();
+                    }}
+                    className={`w-full px-3 py-2 border rounded-md outline-none transition-colors ${
+                      isAdmin
+                        ? 'bg-[var(--admin-surface)] border-[var(--admin-border)] focus:border-blue-500 text-[var(--admin-text-primary)] text-sm'
+                        : 'bg-surface border-outline-variant focus:border-primary text-on-surface'
+                    }`}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Footer */}

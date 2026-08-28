@@ -56,25 +56,25 @@ export function AdminOrdersKanban({
                     <div
                       key={o.id}
                       onClick={() => openOrderDrawer(o)}
-                      className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] p-4 border border-[var(--admin-border)] shadow-[var(--admin-shadow-sm)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-md)] transition-all duration-200 cursor-pointer group text-left flex flex-col"
+                      className="bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] p-4 border border-[var(--admin-border)] shadow-[var(--admin-shadow-sm)] hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-md)] transition-all duration-200 cursor-pointer group text-left flex flex-col relative overflow-hidden"
                     >
+                      {o.orderType && o.orderType !== 'purchase' && (
+                        <div className="absolute top-0 left-0 w-12 h-12 pointer-events-none z-10 overflow-hidden rounded-tl-[var(--admin-radius-lg)]">
+                          <div
+                            className={`absolute top-2 -left-7 w-24 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wider ${
+                              o.orderType === 'rental' ? 'bg-indigo-500' : 'bg-purple-500'
+                            }`}
+                          >
+                            {o.orderType}
+                          </div>
+                        </div>
+                      )}
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="text-[12px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)] transition-colors">
                               #{o.id.substring(o.id.length - 8).toUpperCase()}
                             </span>
-                            {o.orderType && o.orderType !== 'purchase' && (
-                              <span
-                                className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                                  o.orderType === 'rental'
-                                    ? 'bg-indigo-100 text-indigo-700'
-                                    : 'bg-purple-100 text-purple-700'
-                                }`}
-                              >
-                                {o.orderType}
-                              </span>
-                            )}
                           </div>
                           <p className="text-[11px] font-medium text-[var(--admin-text-secondary)] mt-0.5 truncate max-w-[120px]">
                             {o.customer}

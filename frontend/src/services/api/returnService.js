@@ -17,7 +17,7 @@ export const returnService = {
 
   transitionStatus: (id, data) => api.patch(`/returns/admin/${id}/transition`, data),
 
-  triggerRefund: (id) => api.post(`/returns/admin/${id}/refund`),
+  triggerRefund: (id, method) => api.post(`/returns/admin/${id}/refund`, { method }),
 
   addInternalNote: (id, data) => api.post(`/returns/admin/${id}/notes`, data),
 

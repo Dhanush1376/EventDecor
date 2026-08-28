@@ -26,6 +26,7 @@ function DashboardIndex() {
   if (tab === 'preferences') return <Navigate to="settings" replace />;
   if (tab === 'wishlist') return <Navigate to="/wishlist" replace />;
   if (tab === 'loyalty') return <Navigate to="wallet" replace />;
+  if (tab === 'notifications') return <Navigate to="notifications" replace />;
 
   return (
     <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[50vh] hidden lg:flex">

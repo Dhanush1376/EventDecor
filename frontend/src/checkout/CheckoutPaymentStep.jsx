@@ -113,7 +113,9 @@ export default function CheckoutPaymentStep() {
     if (totalsError) return 'Pricing Load Error';
 
     if (paymentOption === 'razorpay') {
-      return `Pay ₹${backendTotals.total.toLocaleString('en-IN')}`;
+      return backendTotals.total === 0
+        ? 'Place Order (Fully Paid)'
+        : `Pay ₹${backendTotals.total.toLocaleString('en-IN')}`;
     }
 
     // COD payment option selected
@@ -310,13 +312,17 @@ export default function CheckoutPaymentStep() {
 
             <div className="flex-1">
               <span className="text-[12px] font-semibold text-on-surface flex items-center gap-2">
-                Secure Online Payment (Razorpay)
+                {backendTotals.total === 0
+                  ? '100% Wallet Payment'
+                  : 'Secure Online Payment (Razorpay)'}
                 <span className="bg-primary/10 text-primary border border-primary/30 text-[8px] px-1.5 py-0.5 rounded-sm font-extrabold uppercase tracking-wider">
                   Recommended
                 </span>
               </span>
               <p className="text-[10px] text-secondary mt-1 leading-relaxed">
-                Pay securely using UPI, Credit/Debit Card, or Netbanking.
+                {backendTotals.total === 0
+                  ? 'Your wallet balance covers the entire order amount.'
+                  : 'Pay securely using UPI, Credit/Debit Card, or Netbanking.'}
               </p>
             </div>
           </div>

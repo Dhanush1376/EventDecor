@@ -189,8 +189,8 @@ export function ProductListing() {
     <Profiler id="ProductListing" onRender={logRenderMetrics}>
       <div className="bg-surface min-h-screen">
         <SEO
-          title="Heritage Collection | Premium Handcrafted Indian Decor"
-          description="Explore Siri Arts & Crafts' exclusive e-commerce boutique of traditional Telugu wedding presentation trays, custom pooja accessories, and handcrafted decors."
+          title="Shop | Siri Arts & Crafts"
+          description="Shop premium handcrafted wedding decor, pooja essentials, floral decorations, and personalized gifts."
         />
 
         <ProductListingHeader

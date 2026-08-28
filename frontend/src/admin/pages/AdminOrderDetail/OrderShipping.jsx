@@ -11,7 +11,7 @@ export function OrderShipping({ order }) {
       <div className="flex items-center gap-3 mb-6 pb-5 border-b border-[var(--admin-border-subtle)]">
         <div className="w-12 h-12 rounded-[var(--admin-radius-md)] bg-[var(--admin-bg-subtle)] flex items-center justify-center border border-[var(--admin-border)] shrink-0">
           <span className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-            {order.customer
+            {(order.customer || order.shippingAddress?.name || 'User')
               .split(' ')
               .filter(Boolean)
               .map((n) => n[0])
@@ -22,10 +22,13 @@ export function OrderShipping({ order }) {
         </div>
         <div>
           <p className="text-[14px] font-bold text-[var(--admin-text-primary)] leading-tight">
-            {order.customer}
+            {order.customer || order.shippingAddress?.name}
           </p>
           <p className="text-[12px] text-[var(--admin-text-tertiary)] font-medium mt-1">
-            {order.email}
+            {order.email ||
+              order.shippingAddress?.email ||
+              order.user?.email ||
+              'No email provided'}
           </p>
         </div>
       </div>
@@ -37,7 +40,7 @@ export function OrderShipping({ order }) {
           </span>
           <div>
             <span className="block text-[13px] font-medium text-[var(--admin-text-primary)]">
-              {order.phone}
+              {order.phone || order.shippingAddress?.phone || 'No phone provided'}
             </span>
             {order.shippingAddress?.alternatePhone && (
               <span className="block text-[11px] text-[var(--admin-text-secondary)] mt-1 font-medium">
@@ -51,7 +54,17 @@ export function OrderShipping({ order }) {
             location_on
           </span>
           <div className="leading-relaxed text-[13px] text-[var(--admin-text-secondary)] font-medium">
-            <span className="block">{order.address}</span>
+            <span className="block">
+              {order.shippingAddress?.address || order.address}
+              {order.shippingAddress?.locality && <>, {order.shippingAddress.locality}</>}
+              {order.shippingAddress?.city && (
+                <>
+                  <br />
+                  {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
+                  {order.shippingAddress.pincode}
+                </>
+              )}
+            </span>
             {order.shippingAddress?.landmark && (
               <span className="block text-[11px] mt-1.5 text-[var(--admin-text-primary)] font-bold">
                 Landmark: {order.shippingAddress.landmark}

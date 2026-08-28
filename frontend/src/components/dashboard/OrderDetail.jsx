@@ -40,6 +40,7 @@ export function OrderDetail() {
   const { resumePayment } = useRazorpay();
   const [isResuming, setIsResuming] = React.useState(false);
   const [returnRequest, setReturnRequest] = React.useState(null);
+  const [exchangeDetails, setExchangeDetails] = React.useState(null);
   const activeStepRef = React.useRef(null);
 
   const socket = useUserSocket();
@@ -60,9 +61,10 @@ export function OrderDetail() {
       try {
         const { returnService } = await import('../../services/api/returnService');
         const res = await returnService.getMyReturns();
+        let activeReturn = null;
         if (res.data?.success) {
           const returns = res.data.data.returns || res.data.data || [];
-          const activeReturn = returns.find(
+          activeReturn = returns.find(
             (r) =>
               (typeof r.orderId === 'object' ? r.orderId._id || r.orderId.id : r.orderId) ===
                 (order._id || order.id) &&
@@ -73,6 +75,22 @@ export function OrderDetail() {
               ),
           );
           setReturnRequest(activeReturn || null);
+        }
+
+        if (activeReturn && activeReturn.returnType === 'exchange') {
+          const exRes = await returnService.getMyExchanges();
+          if (exRes.data?.success) {
+            const exchanges = exRes.data.data.exchanges || exRes.data.data || [];
+            const activeEx = exchanges.find(
+              (e) =>
+                (typeof e.returnRequestId === 'object'
+                  ? e.returnRequestId._id
+                  : e.returnRequestId) === activeReturn._id,
+            );
+            setExchangeDetails(activeEx || null);
+          }
+        } else {
+          setExchangeDetails(null);
         }
       } catch (err) {
         console.error('Failed to load return details', err);
@@ -251,59 +269,131 @@ export function OrderDetail() {
   }
 
   if (returnRequest) {
+    const isExchange = returnRequest.returnType === 'exchange';
+    const isRequestRejected = returnRequest.status === 'rejected';
+
+    // Step 1: Submitted
     journeySteps.push({
-      title: 'Return Request Submitted',
+      title: isExchange ? 'Exchange Request Submitted' : 'Return Request Submitted',
       description: 'Request is under review by our team',
       timestamp: new Date(returnRequest.createdAt),
       status: 'completed',
-      icon: 'assignment_return',
-      color: 'blue',
+      icon: isExchange ? 'change_circle' : 'assignment_return',
+      color: isExchange ? 'indigo' : 'blue',
     });
 
-    const isReturnRejected = returnRequest.status === 'rejected';
-    const isReturnApproved = [
-      'approved',
-      'pickup_assigned',
-      'pickup_accepted',
-      'picked_up',
-      'reached_warehouse',
-      'inspection_started',
-      'inspection_passed',
-      'refund_triggered',
-      'completed',
-    ].includes(returnRequest.status);
-
-    journeySteps.push({
-      title: isReturnRejected ? 'Return Request Rejected' : 'Return Approved & Pickup',
-      description: isReturnRejected
-        ? 'Return request was declined'
-        : 'Approved for pickup from your location',
-      status: isReturnRejected ? 'error' : isReturnApproved ? 'completed' : 'pending',
-      icon: isReturnRejected ? 'cancel' : 'thumb_up',
-      color: isReturnRejected ? 'red' : 'amber',
-    });
-
-    if (!isReturnRejected) {
-      const isQCPassed = ['inspection_passed', 'refund_triggered', 'completed'].includes(
-        returnRequest.status,
-      );
+    if (isRequestRejected) {
       journeySteps.push({
-        title: 'Return Quality Check',
-        description: 'Item successfully inspected at warehouse',
-        status: isQCPassed ? 'completed' : 'pending',
+        title: 'Request Rejected',
+        description: returnRequest.approvalNotes || 'Request was declined after review',
+        status: 'error',
+        icon: 'cancel',
+        color: 'red',
+      });
+    } else {
+      // Step 2: Approved
+      const isApproved = [
+        'approved',
+        'return_courier_assigned',
+        'return_picked_up',
+        'return_in_transit',
+        'return_received',
+        'inspection_started',
+        'inspection_completed',
+        'refund_initiated',
+        'refund_completed',
+        'completed',
+      ].includes(returnRequest.status);
+
+      journeySteps.push({
+        title: isExchange ? 'Exchange Approved' : 'Return Approved',
+        description: isApproved ? 'Approved by our team' : 'Pending approval',
+        status: isApproved ? 'completed' : 'pending',
+        icon: 'thumb_up',
+        color: 'amber',
+        isExchangeApprovalStep: isExchange,
+      });
+
+      // Step 3: Pickup Scheduled
+      const isPickupScheduled = [
+        'return_courier_assigned',
+        'return_picked_up',
+        'return_in_transit',
+        'return_received',
+        'inspection_started',
+        'inspection_completed',
+        'refund_initiated',
+        'refund_completed',
+        'completed',
+      ].includes(returnRequest.status);
+
+      const isPaymentRequired = isExchange && exchangeDetails?.paymentStatus === 'payment_required';
+      const isLocked = isPaymentRequired && !isPickupScheduled;
+
+      journeySteps.push({
+        title: 'Pickup Scheduled',
+        description: isPickupScheduled
+          ? 'Courier partner assigned for pickup'
+          : isLocked
+            ? 'Waiting for payment completion'
+            : 'Awaiting courier assignment',
+        status: isPickupScheduled ? 'completed' : 'pending',
+        icon: 'local_shipping',
+        color: 'blue',
+        locked: isLocked,
+      });
+
+      // Step 4: Quality Check
+      const isQC = [
+        'inspection_started',
+        'inspection_completed',
+        'refund_initiated',
+        'refund_completed',
+        'completed',
+      ].includes(returnRequest.status);
+
+      journeySteps.push({
+        title: 'Quality Check',
+        description: isQC
+          ? 'Item successfully inspected at warehouse'
+          : 'Awaiting warehouse inspection',
+        status: isQC ? 'completed' : 'pending',
         icon: 'fact_check',
         color: 'emerald',
       });
 
-      const isRefundedStatus = ['refund_triggered', 'completed'].includes(returnRequest.status);
-      journeySteps.push({
-        title: 'Refund Processed',
-        description: `Amount credited via ${returnRequest.refundMethod || 'Original Method'}`,
-        timestamp: returnRequest.status === 'completed' ? new Date(returnRequest.updatedAt) : null,
-        status: isRefundedStatus ? 'completed' : 'pending',
-        icon: 'account_balance_wallet',
-        color: 'emerald',
-      });
+      // Step 5: Resolution
+      if (isExchange) {
+        const isDispatched =
+          ['reserved', 'shipped', 'delivered'].includes(exchangeDetails?.replacementStatus) ||
+          returnRequest.status === 'completed';
+        journeySteps.push({
+          title: 'Replacement Dispatched',
+          description: isDispatched
+            ? 'Your replacement item is on the way!'
+            : 'Pending stock allocation',
+          timestamp: isDispatched
+            ? new Date(exchangeDetails?.updatedAt || returnRequest.updatedAt)
+            : null,
+          status: isDispatched ? 'completed' : 'pending',
+          icon: 'local_shipping',
+          color: 'blue',
+        });
+      } else {
+        const isRefundedStatus = ['refund_initiated', 'refund_completed', 'completed'].includes(
+          returnRequest.status,
+        );
+        journeySteps.push({
+          title: 'Refund Processed',
+          description: isRefundedStatus
+            ? `Amount credited via ${returnRequest.refundMethod || 'Original Method'}`
+            : 'Awaiting refund processing',
+          timestamp: isRefundedStatus ? new Date(returnRequest.updatedAt) : null,
+          status: isRefundedStatus ? 'completed' : 'pending',
+          icon: 'account_balance_wallet',
+          color: 'emerald',
+        });
+      }
     }
   } else {
     if (isReturned) {
@@ -405,6 +495,8 @@ export function OrderDetail() {
         </div>
       </div>
 
+      <ReturnExchangeSection orderId={order._id} />
+
       {/* Dynamic Timeline Tracker */}
       <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs relative overflow-hidden">
         {/* Subtle background glow */}
@@ -487,6 +579,71 @@ export function OrderDetail() {
                         })}
                       </span>
                     )}
+
+                    {/* Exchange Payment Sub-Card */}
+                    {step.isExchangeApprovalStep &&
+                      exchangeDetails &&
+                      exchangeDetails.differenceAction &&
+                      exchangeDetails.differenceAction !== 'direct_exchange' && (
+                        <div className="mt-3 p-3 rounded bg-surface border border-outline-variant/30 shadow-sm">
+                          {exchangeDetails.differenceAction === 'collect_payment' && (
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-secondary uppercase tracking-widest font-semibold">
+                                  {exchangeDetails.paymentStatus === 'payment_paid'
+                                    ? '✓ Additional payment received'
+                                    : 'Additional payment required'}
+                                </span>
+                                <span className="text-[11px] font-bold text-on-surface">
+                                  ₹{exchangeDetails.priceDifference}
+                                </span>
+                              </div>
+
+                              {exchangeDetails.paymentStatus === 'payment_required' && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsResuming(true);
+                                    resumePayment(
+                                      exchangeDetails.additionalPaymentId,
+                                      exchangeDetails.priceDifference,
+                                    ).finally(() => setIsResuming(false));
+                                  }}
+                                  disabled={isResuming}
+                                  className="w-full mt-1 py-1.5 bg-primary text-on-primary rounded text-[9px] font-bold uppercase tracking-widest hover:bg-primary/90 transition-colors flex items-center justify-center gap-1"
+                                >
+                                  {isResuming
+                                    ? 'Processing...'
+                                    : `Pay ₹${exchangeDetails.priceDifference}`}
+                                </button>
+                              )}
+
+                              {exchangeDetails.paymentStatus === 'payment_paid' && (
+                                <div className="text-[9px] text-emerald-600 font-bold uppercase tracking-widest mt-1">
+                                  Payment Paid
+                                </div>
+                              )}
+
+                              {exchangeDetails.paymentStatus === 'failed' && (
+                                <div className="text-[9px] text-red-600 font-bold uppercase tracking-widest mt-1">
+                                  Payment Failed
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {exchangeDetails.differenceAction === 'refund_difference' && (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[10px] text-secondary uppercase tracking-widest font-semibold">
+                                ₹{exchangeDetails.priceDifference} refund to wallet
+                              </span>
+                              <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-widest">
+                                Processing
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                   </div>
                 </div>
               );
@@ -772,8 +929,6 @@ export function OrderDetail() {
           </div>
         </div>
       </div>
-
-      <ReturnExchangeSection orderId={order._id} />
     </div>
   );
 }

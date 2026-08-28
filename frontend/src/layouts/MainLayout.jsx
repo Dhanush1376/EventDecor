@@ -107,7 +107,7 @@ export function MainLayout() {
           </AuthGate>
         </ErrorBoundary>
       </main>
-      {pathname !== '/cart' && <Footer />}
+      {pathname !== '/cart' && !pathname.startsWith('/dashboard') && <Footer />}
       <BottomNav />
       <Suspense fallback={null}>
         <FloatingOfferCard />

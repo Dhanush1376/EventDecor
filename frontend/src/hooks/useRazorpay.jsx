@@ -129,6 +129,14 @@ export const useRazorpay = () => {
         onError?.(response);
         return finalize();
       }
+      if (response.data.isInstantCheckout) {
+        showPremiumToast(
+          'Order successfully placed and fully paid using wallet balance!',
+          'success',
+        );
+        onSuccess(response.data.order);
+        return finalize();
+      }
 
       const { razorpayOrder } = response.data;
       if (!razorpayOrder?.id || !razorpayOrder?.amount || !razorpayOrder?.currency) {

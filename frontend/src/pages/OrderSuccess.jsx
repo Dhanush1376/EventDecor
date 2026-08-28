@@ -264,7 +264,7 @@ export function OrderSuccess() {
       animate={{ opacity: 1 }}
       className="bg-surface-container-low min-h-screen relative pt-12 pb-32 font-body selection:bg-primary/20"
     >
-      <SEO title="Order Success | Siri Arts & Crafts" />
+      <SEO title="Order Success | Siri Arts & Crafts" noindex />
 
       {/* CSS Stylesheet Inject for Clean Receipt Printing */}
       <style>

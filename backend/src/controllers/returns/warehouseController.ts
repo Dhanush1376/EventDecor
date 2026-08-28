@@ -63,7 +63,7 @@ export const getInspectionQueue = asyncHandler(async (req: Request, res: Respons
     'items.warehouseStatus': { $in: ['pending', 'received'] },
   })
     .populate('orderId', 'orderStatus')
-    .sort({ createdAt: 1 }); // Oldest first
+    .sort({ createdAt: 1, _id: 1 }); // Oldest first
 
   res.status(200).json({
     success: true,

@@ -35,11 +35,9 @@ export class WalletRefundService {
       throw new ApiError(400, 'Refund amount must be greater than zero.');
     }
 
-    // 1. Idempotency Check: Prevent duplicate wallet credits for the same return
     const existingTransaction = await WalletTransaction.findOne({
       source: 'refund',
-      orderId,
-      description: { $regex: new RegExp(returnRequestId.toString(), 'i') },
+      returnRequestId: returnRequestId,
     }).session(session || null);
 
     if (existingTransaction) {
@@ -71,6 +69,7 @@ export class WalletRefundService {
       source: 'refund',
       description: transactionDesc,
       orderId,
+      returnRequestId,
       balanceBefore,
       balanceAfter,
       status: 'active',

@@ -74,6 +74,7 @@ export function EventCustomerDashboard({
           <SEO
             title="My Events Workspace | Siri Arts & Crafts"
             description="Track your live event timelines, coordinate theme palette adjustments, and manage payments."
+            noindex
           />
           <MandalaArtDecor
             variant={2}

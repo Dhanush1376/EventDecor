@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import asyncHandler from '../../utils/asyncHandler';
 import { ReturnService } from '../../services/returns/ReturnService';
 import ReturnRequest from '../../models/ReturnRequest';
-import Order from '../../models/Order';
+
 import '../../models/Product';
 import ApiError from '../../utils/ApiError';
 import { ReturnStateMachine } from '../../services/returns/ReturnStateMachine';
@@ -30,8 +30,7 @@ export const createReturn = asyncHandler(async (req: Request, res: Response) => 
     idempotencyKey,
   );
 
-  await Order.findByIdAndUpdate(orderId, { hasActiveReturn: true });
-
+  // hasActiveReturn is updated within the transaction in ReturnService
   res.status(201).json({
     success: true,
     data: returnRequest,
@@ -48,23 +47,12 @@ export const getMyReturns = asyncHandler(async (req: Request, res: Response) => 
   if (!userId) throw new ApiError(401, 'Unauthorized');
 
   const returns = await ReturnRequest.find({ userId })
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: -1, _id: -1 })
     .populate('orderId', 'orderStatus paymentStatus total trackingNumber')
     .populate('items.productId', 'title imageSrc')
     .lean();
 
-  const ExchangeRequest = require('../../models/ExchangeRequest').default;
-  const validReturns = [];
-
-  for (const ret of returns) {
-    if (ret.returnType === 'exchange') {
-      const exchange = await ExchangeRequest.findOne({ returnRequestId: ret._id }).lean();
-      if (exchange && exchange.paymentStatus === 'pending') {
-        continue; // Skip abandoned exchanges
-      }
-    }
-    validReturns.push(ret);
-  }
+  const validReturns = returns; // Return all, including payment_required, so storefront can show 'Pay Now'
 
   res.status(200).json({
     success: true,
@@ -176,7 +164,7 @@ export const cancelReturn = asyncHandler(async (req: Request, res: Response) => 
     throw new ApiError(404, 'Return request not found');
   }
 
-  if (!['submitted', 'approved'].includes(returnRequest.status)) {
+  if (!['submitted', 'approved', 'return_courier_assigned'].includes(returnRequest.status)) {
     throw new ApiError(400, `Cannot cancel a return that is in ${returnRequest.status} stage`);
   }
 
@@ -230,7 +218,7 @@ export const getReturnForOrder = asyncHandler(async (req: Request, res: Response
 });
 
 /**
- * @desc    Update refund destination and trigger refund
+ * @desc    Update refund destination preference (does not execute refund)
  * @route   PATCH /api/v1/returns/:id/refund-method
  * @access  Private
  */
@@ -249,18 +237,17 @@ export const updateRefundMethod = asyncHandler(async (req: Request, res: Respons
   }
 
   returnRequest.refundMethod = refundMethod;
-  await returnRequest.save();
 
-  // Trigger state transition to refund_initiated
-  const updatedReturn = await ReturnStateMachine.transition(
-    id as string,
-    'refund_initiated',
-    userId, // Customer initiating
-    { source: 'customer_selected_destination' },
-  );
+  returnRequest.timeline.push({
+    action: 'Refund Method Updated',
+    description: `Customer selected refund method: ${refundMethod}`,
+    timestamp: new Date(),
+  });
+
+  await returnRequest.save();
 
   res.status(200).json({
     success: true,
-    data: updatedReturn,
+    data: returnRequest,
   });
 });

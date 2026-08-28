@@ -263,16 +263,14 @@ export class OrderValidationService {
     // Estimate Siri Coins
     const coinsToEarn = Math.round(subtotal * settings.loyalty.coinsPerRupee);
 
-    // Estimate Cashback percentage based on membership tier
-    let cashbackRate = 0;
-    const tierConfig = settings.loyalty.tiers.find((t) => t.name === loyaltyTier);
-    if (tierConfig) {
-      cashbackRate = tierConfig.cashbackRate;
-    } else if (settings.loyalty.tiers.length > 0) {
-      cashbackRate = settings.loyalty.tiers[0].cashbackRate; // Default to first tier if not found
-    }
+    // Generate a random cashback percentage between 1% and 4% (1 decimal place)
+    const randomPercent = Math.round((Math.random() * (4.0 - 1.0) + 1.0) * 10) / 10;
+    const cashbackRate = randomPercent / 100;
 
     let estimatedCashback = Math.round(total * cashbackRate);
+    if (estimatedCashback > 40) {
+      estimatedCashback = 40;
+    }
 
     // Dynamic Coupon Cashback Integration
     if (couponValid) {

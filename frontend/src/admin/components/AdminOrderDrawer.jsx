@@ -124,7 +124,9 @@ export function AdminOrderDrawer({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {['Cancelled', 'Returned', 'Refunded', 'Exchanged'].includes(selectedOrder.status) && (
+            {['Cancelled', 'Returned', 'Refunded', 'Exchanged', 'Delivered'].includes(
+              selectedOrder.status,
+            ) && (
               <button
                 onClick={() => setShowDeleteModal(true)}
                 className="admin-btn-icon hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)]"

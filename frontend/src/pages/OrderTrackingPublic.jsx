@@ -51,7 +51,7 @@ export function OrderTrackingPublic() {
   if (error || !order) {
     return (
       <div className="min-h-screen bg-surface-bright flex flex-col items-center justify-center p-6 text-center">
-        <SEO title="Tracking Error | Siri Arts & Crafts" />
+        <SEO title="Tracking Error | Siri Arts & Crafts" noindex />
         <Truck className="text-[64px] text-red-400 mb-4 animate-bounce" strokeWidth={1.5} />
         <h2 className="font-body text-xl font-bold text-on-surface mb-2">
           Tracking Record Unreachable
@@ -73,6 +73,7 @@ export function OrderTrackingPublic() {
     <div className="min-h-screen bg-surface-bright py-12 px-4 sm:px-6 relative overflow-hidden">
       <SEO
         title={`Track Dispatch #${order._id.substring(0, 8).toUpperCase()} | Siri Arts & Crafts`}
+        noindex
       />
 
       {/* Decorative Brand Mandala */}

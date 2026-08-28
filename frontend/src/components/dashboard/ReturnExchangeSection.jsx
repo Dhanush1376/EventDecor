@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CornerDownLeft, ArrowLeftRight, ChevronDown, ArrowRight } from 'lucide-react';
+import { CornerDownLeft, ArrowLeftRight, ChevronDown, ArrowRight, ArrowDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { returnService } from '../../services/api/returnService';
 
@@ -31,25 +31,27 @@ export function ReturnExchangeSection({ orderId }) {
 
           if (exchangesRes.data?.success) {
             const allExchanges = exchangesRes.data.data.exchanges || exchangesRes.data.data || [];
-            const validExchanges = allExchanges.filter((e) => e.paymentStatus !== 'pending');
-            setExchanges(
-              validExchanges.filter((e) => {
-                const retId =
-                  typeof e.returnRequestId === 'object' ? e.returnRequestId.orderId : null;
-                // If populated:
-                if (retId === orderId) return true;
-                // If not populated, rely on the matched returns
-                // Wait, matchedReturns has returnType !== 'exchange' now!
-                // So we need to look in allReturns instead.
-                const correspondingReturn = allReturns.find((r) => r._id === e.returnRequestId);
-                return (
-                  correspondingReturn &&
-                  (typeof correspondingReturn.orderId === 'object'
-                    ? correspondingReturn.orderId._id || correspondingReturn.orderId.id
-                    : correspondingReturn.orderId) === orderId
-                );
-              }),
-            );
+            const validExchanges = allExchanges;
+            const finalExchanges = validExchanges.filter((e) => {
+              const retId =
+                typeof e.returnRequestId === 'object' ? e.returnRequestId.orderId : null;
+              if (retId === orderId) return true;
+              const correspondingReturn = allReturns.find((r) => r._id === e.returnRequestId);
+              return (
+                correspondingReturn &&
+                (typeof correspondingReturn.orderId === 'object'
+                  ? correspondingReturn.orderId._id || correspondingReturn.orderId.id
+                  : correspondingReturn.orderId) === orderId
+              );
+            });
+            setExchanges(finalExchanges);
+
+            // Auto-open if there are requests
+            if (finalExchanges.length > 0) {
+              setOpenSection('exchanges');
+            } else if (matchedReturns.length > 0) {
+              setOpenSection('returns');
+            }
           }
         }
       } catch (err) {
@@ -110,12 +112,6 @@ export function ReturnExchangeSection({ orderId }) {
                             </span>
                           </div>
                         </div>
-                        <Link
-                          to={`/dashboard/returns/${r._id}`}
-                          className="text-[9px] font-bold uppercase tracking-widest text-primary hover:underline flex items-center gap-1"
-                        >
-                          Track Return <ArrowRight className="text-[10px]" />
-                        </Link>
                       </div>
 
                       <div className="text-[10px] text-on-surface mb-3 flex gap-2 overflow-x-auto pb-2">
@@ -130,7 +126,12 @@ export function ReturnExchangeSection({ orderId }) {
                               className="w-10 h-10 object-cover rounded"
                             />
                             <div>
-                              <div className="font-bold truncate max-w-[100px]">{item.title}</div>
+                              <div
+                                className="font-bold truncate text-[11px] mb-0.5"
+                                title={item.title}
+                              >
+                                {item.title}
+                              </div>
                               <div className="text-secondary">Qty: {item.returnQuantity}</div>
                             </div>
                           </div>
@@ -142,7 +143,7 @@ export function ReturnExchangeSection({ orderId }) {
                           <span className="text-secondary">
                             Refund Amount:{' '}
                             <strong className="text-on-surface">
-                              ₹{r.refundBreakdown.grandTotal}
+                              ₹{Math.round(r.refundBreakdown.grandTotal).toLocaleString('en-IN')}
                             </strong>
                           </span>
                           <span className="text-secondary">
@@ -208,34 +209,68 @@ export function ReturnExchangeSection({ orderId }) {
                         </div>
                       </div>
 
-                      <div className="text-[10px] text-on-surface mb-3 flex items-center gap-3">
-                        <div className="flex gap-2 items-center border border-outline-variant/20 rounded p-2 flex-1">
-                          <img
-                            src={e.originalItem.imageSrc || 'https://via.placeholder.com/40'}
-                            alt={e.originalItem.title}
-                            className="w-10 h-10 object-cover rounded"
-                          />
-                          <div>
-                            <div className="font-bold truncate max-w-[120px]">
+                      <div className="text-[10px] text-on-surface mb-5 mt-4 flex flex-col sm:flex-row items-center gap-3 sm:gap-0 relative">
+                        {/* Returning Item */}
+                        <div className="flex gap-3 items-center border border-outline-variant/30 rounded-lg p-3 w-full sm:flex-1 bg-surface-bright shadow-sm relative z-0">
+                          <div className="relative shrink-0">
+                            <img
+                              src={e.originalItem.imageSrc || 'https://via.placeholder.com/40'}
+                              alt={e.originalItem.title}
+                              className="w-12 h-12 object-cover rounded-md border border-outline-variant/20"
+                            />
+                            <div className="absolute -top-2 -right-2 bg-red-100 text-red-700 text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase shadow-sm">
+                              Return
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div
+                              className="font-bold text-on-surface truncate text-[12px] mb-0.5"
+                              title={e.originalItem.title}
+                            >
                               {e.originalItem.title}
                             </div>
-                            <div className="text-secondary text-[9px] uppercase">Returning</div>
+                            <div className="text-secondary text-[9px] uppercase tracking-wider font-semibold">
+                              Returning
+                            </div>
                           </div>
                         </div>
 
-                        <ArrowRight className="text-secondary shrink-0" size={16} />
-
-                        <div className="flex gap-2 items-center border border-blue-200 rounded p-2 flex-1 bg-blue-50/30">
-                          <img
-                            src={e.replacementItem.imageSrc || 'https://via.placeholder.com/40'}
-                            alt={e.replacementItem.title}
-                            className="w-10 h-10 object-cover rounded"
+                        {/* Separator / Arrow */}
+                        <div className="flex items-center justify-center bg-white rounded-full w-8 h-8 shrink-0 border-[1.5px] border-blue-200 text-blue-500 z-10 -my-4 sm:my-0 sm:-mx-4 shadow-sm relative">
+                          <ArrowRight
+                            className="hidden sm:block text-[14px]"
+                            size={16}
+                            strokeWidth={2.5}
                           />
-                          <div>
-                            <div className="font-bold text-blue-900 truncate max-w-[120px]">
+                          <ArrowDown
+                            className="block sm:hidden text-[14px]"
+                            size={16}
+                            strokeWidth={2.5}
+                          />
+                        </div>
+
+                        {/* Receiving Item */}
+                        <div className="flex gap-3 items-center border border-blue-200/60 rounded-lg p-3 w-full sm:flex-1 bg-blue-50/40 shadow-sm relative z-0">
+                          <div className="relative shrink-0">
+                            <img
+                              src={e.replacementItem.imageSrc || 'https://via.placeholder.com/40'}
+                              alt={e.replacementItem.title}
+                              className="w-12 h-12 object-cover rounded-md border border-blue-200/50"
+                            />
+                            <div className="absolute -top-2 -right-2 bg-blue-100 text-blue-700 text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase shadow-sm">
+                              New
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div
+                              className="font-bold text-blue-950 truncate text-[12px] mb-0.5"
+                              title={e.replacementItem.title}
+                            >
                               {e.replacementItem.title}
                             </div>
-                            <div className="text-blue-700 text-[9px] uppercase">Receiving</div>
+                            <div className="text-blue-700 text-[9px] uppercase tracking-wider font-semibold">
+                              Receiving
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -247,11 +282,57 @@ export function ReturnExchangeSection({ orderId }) {
                             {e.trackingNumber || 'Pending'}
                           </strong>
                         </span>
-                        <span className="text-secondary">
+                        <span className="text-secondary flex items-center gap-2">
                           Payment Diff:{' '}
                           <strong className="text-on-surface">
-                            ₹{e.priceDifference} ({e.paymentStatus})
+                            ₹{Math.round(e.priceDifference || 0).toLocaleString('en-IN')} (
+                            {e.paymentStatus === 'payment_required'
+                              ? 'Payment Required'
+                              : e.paymentStatus}
+                            )
                           </strong>
+                          {e.paymentStatus === 'payment_required' && e.additionalPaymentId && (
+                            <button
+                              onClick={async () => {
+                                const loadRazorpay = () =>
+                                  new Promise((resolve) => {
+                                    const script = document.createElement('script');
+                                    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                                    script.onload = () => resolve(true);
+                                    script.onerror = () => resolve(false);
+                                    document.body.appendChild(script);
+                                  });
+                                const isLoaded = await loadRazorpay();
+                                if (!isLoaded) return alert('Failed to load payment gateway');
+                                const options = {
+                                  key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+                                  amount: Math.round(e.priceDifference * 100),
+                                  currency: 'INR',
+                                  name: 'Event Decor',
+                                  description: 'Exchange Price Difference',
+                                  order_id: e.additionalPaymentId,
+                                  handler: async function (response) {
+                                    try {
+                                      await returnService.verifyExchangePayment({
+                                        razorpayOrderId: response.razorpay_order_id,
+                                        razorpayPaymentId: response.razorpay_payment_id,
+                                        razorpaySignature: response.razorpay_signature,
+                                      });
+                                      window.location.reload();
+                                    } catch (err) {
+                                      alert('Payment verification failed');
+                                    }
+                                  },
+                                  theme: { color: '#2A2927' },
+                                };
+                                const rzp = new window.Razorpay(options);
+                                rzp.open();
+                              }}
+                              className="bg-[#2A2927] text-white px-3 py-1 rounded text-[9px] font-bold uppercase tracking-widest hover:bg-black transition-colors ml-2 cursor-pointer"
+                            >
+                              Pay Now
+                            </button>
+                          )}
                         </span>
                       </div>
                     </div>

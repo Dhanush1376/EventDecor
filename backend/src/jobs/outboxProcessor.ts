@@ -109,6 +109,18 @@ export async function processEvent(event: any): Promise<void> {
           order.user,
           event._id.toString(),
         );
+    } else if (eventName === 'ORDER_REFUNDCOMPLETED') {
+      const order = await Order.findById(event.aggregateId).populate('user');
+      if (order && order.user && (order.user as any).email) {
+        const { sendDirectEmail } = require('../services/notificationService');
+        await sendDirectEmail({
+          email: (order.user as any).email,
+          subject: `Refund Processed Successfully - Order #${(order as any).orderId || order._id}`,
+          customHtml: `<h1>Refund Processed</h1><p>Your refund of ₹${event.payload?.amount || ''} has been successfully processed via Razorpay. It should reflect in your account shortly.</p>`,
+          type: 'order',
+          action: 'order_refund_completed',
+        });
+      }
     } else if (eventName === 'ORDER_ORDERSTATUSUPDATED') {
       const order = await Order.findById(event.aggregateId).populate('user');
       if (order && event.payload) {
@@ -162,6 +174,29 @@ export async function processEvent(event: any): Promise<void> {
           event.payload.status || event.payload.newStatus,
           event._id.toString(),
         );
+      }
+    } else if (eventName === 'RETURNREQUEST_WALLETREFUNDCOMPLETED') {
+      const returnReq = await ReturnRequest.findById(event.aggregateId).populate('userId');
+      if (returnReq) {
+        const {
+          ReturnNotificationService,
+        } = require('../services/returns/ReturnNotificationService');
+        await ReturnNotificationService.notifyCustomerRefundCompleted(returnReq);
+      }
+    } else if (eventName === 'RETURNREQUEST_EXCHANGE_PAYMENT_VERIFIED') {
+      const returnReq = await ReturnRequest.findById(event.aggregateId).populate('userId');
+      if (returnReq) {
+        const user = (returnReq as any).userId;
+        if (user && user.email) {
+          const { sendDirectEmail } = require('../services/notificationService');
+          await sendDirectEmail({
+            email: user.email,
+            subject: `Payment Received for Exchange - ${returnReq.returnId}`,
+            customHtml: `<h1>Payment Received</h1><p>We have successfully received your payment for the exchange price difference. Your replacement order will be processed shortly.</p>`,
+            type: 'order',
+            action: 'exchange_payment_verified',
+          });
+        }
       }
     } else if (eventName === 'ORDER_PAYMENTFAILED') {
       const order = await Order.findById(event.aggregateId).populate('user');
@@ -433,7 +468,12 @@ export async function processEvent(event: any): Promise<void> {
             message: `Your ${returnReq.returnType} request ${returnReq.returnId || returnReq._id} has been submitted.`,
             type: 'order',
             actionUrl: `/dashboard/orders/${returnReq.orderId}`,
-            metadata: { outboxEventId: event._id.toString(), returnId: returnReq._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              returnId: returnReq._id.toString(),
+              entityId: returnReq.returnId,
+              imageSrc: returnReq.items?.[0]?.imageSrc,
+            },
           };
         }
       } else if (eventName === 'RETURNREQUEST_RETURNSTATUSUPDATED') {
@@ -450,7 +490,12 @@ export async function processEvent(event: any): Promise<void> {
             message: `Your ${returnReq.returnType} request ${returnReq.returnId || returnReq._id} is now ${event.payload.status || event.payload.newStatus}.`,
             type: 'order',
             actionUrl: `/dashboard/orders/${returnReq.orderId}`,
-            metadata: { outboxEventId: event._id.toString(), returnId: returnReq._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              returnId: returnReq._id.toString(),
+              entityId: returnReq.returnId,
+              imageSrc: returnReq.items?.[0]?.imageSrc,
+            },
           };
         }
       } else if (eventName === 'ORDER_PAYMENTCAPTURED') {
@@ -543,7 +588,7 @@ export async function processEvent(event: any): Promise<void> {
   }
 
   if (eventName.endsWith('_REFUNDREQUESTED')) {
-    const { PaymentRefundService } = require('../services/PaymentRefundService');
+    const { PaymentRefundService } = await import('../services/PaymentRefundService.js');
     const { amount, reason, razorpayPaymentId } = event.payload;
     try {
       await PaymentRefundService.initiateAsyncRefund({
@@ -563,7 +608,7 @@ export async function processEvent(event: any): Promise<void> {
 
   if (eventName === 'SYSTEM_NOTIFICATIONQUEUED') {
     if (event.payload && event.payload.emailOptions) {
-      const { sendDirectEmailProcessor } = require('../services/notificationService');
+      const { sendDirectEmailProcessor } = await import('../services/notificationService.js');
       await sendDirectEmailProcessor(event.payload.emailOptions);
     }
   }

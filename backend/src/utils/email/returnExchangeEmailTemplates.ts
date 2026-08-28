@@ -1,46 +1,11 @@
-import { getLuxuryEmailWrapper } from './emailTemplates';
+import {
+  getLuxuryEmailWrapper,
+  formatCurrency,
+  escapeHtml,
+  button,
+  dataTable,
+} from './emailTemplates';
 import { getFrontendUrl } from '../getFrontendUrl';
-
-const formatCurrency = (amount: number) => `₹${Number(amount || 0).toLocaleString('en-IN')}`;
-
-const escapeHtml = (unsafe: any) => {
-  if (!unsafe) return '';
-  return String(unsafe)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-};
-
-const button = (text: string, url: string) => `
-  <div style="margin: 32px 0; text-align: center;">
-    <a href="${url}" style="background-color: #111827; color: #ffffff; padding: 12px 24px; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 6px; display: inline-block;">
-      ${text}
-    </a>
-  </div>
-`;
-
-const dataTable = (rows: { label: string; value: string }[]) => {
-  const rowsHtml = rows
-    .map(
-      (r) => `
-    <tr>
-      <td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 40%;">${r.label}</td>
-      <td style="padding: 8px 0; color: #111827; font-size: 14px; font-weight: 500;">${r.value}</td>
-    </tr>
-  `,
-    )
-    .join('');
-
-  return `
-    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <table style="width: 100%; border-collapse: collapse;">
-        ${rowsHtml}
-      </table>
-    </div>
-  `;
-};
 
 const itemsTable = (items: any[]) => {
   const itemsHtml = items
