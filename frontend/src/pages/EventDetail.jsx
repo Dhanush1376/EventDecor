@@ -1,6 +1,6 @@
 import { ChevronRight, Star } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SEO } from '../components/seo/SEO';
 import { EventDetailSkeleton } from '../components/ui/Skeleton';
@@ -31,7 +31,8 @@ import { ProductCard } from '../components/shared/ProductCard';
 
 export function EventDetail() {
   const { id } = useParams();
-  const { isAuthenticated, runProtectedAction } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, runProtectedAction } = useAuth();
   const { toggleItem, isWishlisted } = useWishlist();
 
   const [event, setEvent] = useState(null);
@@ -46,7 +47,8 @@ export function EventDetail() {
     event,
     isAuthenticated,
     runProtectedAction,
-    () => (window.location.href = '/events'),
+    navigate,
+    user,
   );
   const { state: bookingState, actions: bookingActions } = bookingForm;
 

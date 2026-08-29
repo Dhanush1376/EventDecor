@@ -14,8 +14,16 @@ import {
   adminUpdateNotes,
   initializeBookingCheckout,
   verifyBookingCheckout,
+  initializeMilestonePayment,
+  adminRecordPayment,
+  adminDeletePayment,
 } from '../../controllers/events/eventBookingController';
 import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
+import {
+  getServiceableLocations,
+  getLocationDetails,
+  estimateTravelExpense,
+} from '../../controllers/events/serviceabilityController';
 import { validate } from '../../middleware/validateMiddleware';
 import { validateRequest } from '../../middleware/zodValidationMiddleware';
 import { initializeCheckoutSchema } from '../../validators/eventBookingSchemas';
@@ -73,8 +81,30 @@ router.patch(
   validate,
   adminUpdateNotes,
 );
+router.patch(
+  '/:id/admin-payment',
+  requireAuth,
+  requireAdmin,
+  ...eventBookingIdParam,
+  validate,
+  adminRecordPayment,
+);
+router.delete(
+  '/:id/admin-payment/:transactionId',
+  requireAuth,
+  requireAdmin,
+  ...eventBookingIdParam, // valid ID param
+  validate,
+  adminDeletePayment,
+);
 
 // Client Endpoints
+
+// Public Serviceability API
+router.get('/serviceability/locations', getServiceableLocations);
+router.get('/serviceability/:locationCode', getLocationDetails);
+router.post('/travel-expense/estimate', estimateTravelExpense);
+
 router.post(
   '/checkout/initialize',
   requireAuth,
@@ -83,6 +113,13 @@ router.post(
   initializeBookingCheckout,
 );
 router.post('/checkout/verify', requireAuth, verifyBookingCheckout);
+router.post(
+  '/:id/payment/initialize',
+  requireAuth,
+  ...eventBookingIdParam,
+  validate,
+  initializeMilestonePayment,
+);
 router.post(
   '/',
   requireAuth,

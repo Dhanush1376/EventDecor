@@ -74,7 +74,7 @@ export const ProductListingGrid = React.memo(
             <div className="flex items-center justify-between mb-6 lg:mb-10">
               <div className="flex flex-col gap-1">
                 <h2 className="font-headline-md text-on-surface font-normal text-[24px] lg:text-[32px]">
-                  The Artisan Collection
+                  Shop
                 </h2>
                 <p className="font-body-md text-on-surface-variant/60 font-medium">
                   {totalCount} unique pieces designed for you

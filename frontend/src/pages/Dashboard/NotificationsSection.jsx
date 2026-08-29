@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Check, Box, Calendar, CreditCard, Settings, Clock, ArrowRight } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/domainServices';
 import { useDashboard } from '../../context/DashboardContext';
 import { toast } from 'react-hot-toast';

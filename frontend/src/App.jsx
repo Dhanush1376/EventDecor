@@ -16,6 +16,8 @@ hydrateQueryClientCache(queryClient);
 
 import { AuthModals } from './components/auth/AuthModals';
 
+import { GlobalNotificationToast } from './components/ui/GlobalNotificationToast';
+
 function App() {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -54,6 +56,8 @@ function App() {
         )}
 
         {isMounted && <AuthModals />}
+
+        {isMounted && <GlobalNotificationToast />}
 
         <AppRoutes />
       </AppProviders>

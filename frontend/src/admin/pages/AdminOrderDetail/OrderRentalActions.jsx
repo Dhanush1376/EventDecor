@@ -5,11 +5,11 @@ export function OrderRentalActions({ order, updateOrderStatus }) {
   return (
     <div className="space-y-3">
       {(order.orderType === 'rental' || order.items?.some((i) => i.type === 'rental')) && (
-        <div className="admin-card p-5 bg-[#8c7335]/5 border border-[#8c7335]/20 mb-4 shadow-none">
-          <h3 className="text-[12px] font-bold text-[#8c7335] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+        <div className="p-3 sm:p-4 bg-[#8c7335]/5 border border-[#8c7335]/20 rounded-xl mb-4">
+          <label className="text-[11px] font-bold text-[#8c7335] uppercase tracking-wider mb-3 flex items-center gap-1.5 block">
             <span className="material-symbols-outlined text-[16px]">sell</span>
             Rental Actions
-          </h3>
+          </label>
           <div className="space-y-2">
             <button
               onClick={() => toast.success('Return approved')}

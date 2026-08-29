@@ -1,21 +1,21 @@
 import React from 'react';
-import { m as motion } from 'framer-motion';
-import { fadeUp } from '../../components/AdminUIKit';
 import Barcode from 'react-barcode';
 import { QRCodeSVG } from 'qrcode.react';
 
 export function OrderLogistics({ order, trackingQR }) {
   return (
-    <motion.div variants={fadeUp} className="admin-card p-6 relative overflow-hidden">
+    <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl relative overflow-hidden">
       {/* Top accent */}
       <div className="absolute top-0 left-0 w-full h-1 bg-[var(--admin-text-primary)]"></div>
 
-      <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-5 flex items-center justify-between">
-        <span>Enterprise Logistics</span>
+      <div className="flex items-center justify-between mb-4">
+        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
+          Enterprise Logistics
+        </label>
         <span className="text-[10px] bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] px-2 py-0.5 rounded-[var(--admin-radius-sm)] font-bold uppercase tracking-wider border border-[var(--admin-border-subtle)]">
           {order.courierPartner || 'Standard Courier'}
         </span>
-      </h2>
+      </div>
 
       <div className="space-y-3 mb-6 bg-[var(--admin-surface-muted)] p-5 rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
         <div className="flex justify-between items-center text-[12px]">
@@ -56,6 +56,6 @@ export function OrderLogistics({ order, trackingQR }) {
         </span>
         <QRCodeSVG value={trackingQR} size={110} level="M" />
       </div>
-    </motion.div>
+    </div>
   );
 }

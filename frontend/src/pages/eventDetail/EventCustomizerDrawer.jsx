@@ -1,4 +1,4 @@
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, X, Calendar, ChevronDown } from 'lucide-react';
 import React from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { EVENT_TYPES } from '../../config/constants';
@@ -37,13 +37,13 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                   Customize Your Order
                 </h3>
                 <p className="text-[9px] text-black/50 uppercase tracking-widest font-bold font-label">
-                  Step {state.customizerStep} of 4
+                  Step {state.customizerStep} of 3
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-1 mr-4">
-                {[1, 2, 3, 4].map((stepNum) => (
+                {[1, 2, 3].map((stepNum) => (
                   <div
                     key={stepNum}
                     className={`w-4 h-4 rounded-full flex items-center justify-center font-display text-[8px] font-bold ${
@@ -75,17 +75,23 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                   <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
                     Select Your Occasion *
                   </label>
-                  <select
-                    value={state.eventType}
-                    onChange={(e) => actions.setEventType(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium"
-                  >
-                    {EVENT_TYPES.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.label}
+                  <div className="relative">
+                    <select
+                      value={state.eventType}
+                      onChange={(e) => actions.setEventType(e.target.value)}
+                      className="w-full px-4 pr-10 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium appearance-none"
+                    >
+                      <option value="" disabled>
+                        Select Your Occasion...
                       </option>
-                    ))}
-                  </select>
+                      {EVENT_TYPES.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/50 pointer-events-none" />
+                  </div>
                 </div>
 
                 {state.eventType === 'other' && (
@@ -102,31 +108,31 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
-                      Ceremony Date *
-                    </label>
+                <div className="space-y-1">
+                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
+                    Contact Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="e.g. 9876543210"
+                    value={state.contactPhone || ''}
+                    onChange={(e) => actions.setContactPhone(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
+                    Ceremony Date *
+                  </label>
+                  <div className="relative">
                     <input
                       type="date"
                       value={state.bookingDate}
                       onChange={(e) => actions.setBookingDate(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium"
+                      className="w-full px-4 pr-10 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium appearance-none uppercase relative z-10 bg-transparent"
                     />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
-                      Rental Days
-                    </label>
-                    <select
-                      value={state.rentalDurationDays}
-                      onChange={(e) => actions.setRentalDurationDays(Number(e.target.value))}
-                      className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium"
-                    >
-                      <option value={1}>1 Day Setup</option>
-                      <option value={2}>2 Days Setup</option>
-                      <option value={3}>3 Days Setup</option>
-                    </select>
+                    <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-black/50 pointer-events-none z-0" />
                   </div>
                 </div>
 
@@ -149,60 +155,63 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                     </button>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* STEP 2: Timings */}
-            {state.customizerStep === 2 && (
-              <div className="space-y-4 pt-2">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 mt-2">
                   <div className="space-y-1">
                     <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
                       Start Time
                     </label>
-                    <select
-                      value={state.startTime}
-                      onChange={(e) => actions.setStartTime(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium"
-                    >
-                      <option value="06:00 AM">06:00 AM</option>
-                      <option value="09:00 AM">09:00 AM</option>
-                      <option value="12:00 PM">12:00 PM</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={state.startTime}
+                        onChange={(e) => actions.setStartTime(e.target.value)}
+                        className="w-full px-4 pr-10 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium appearance-none"
+                      >
+                        <option value="06:00 AM">06:00 AM</option>
+                        <option value="09:00 AM">09:00 AM</option>
+                        <option value="12:00 PM">12:00 PM</option>
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/50 pointer-events-none" />
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
                       End Time
                     </label>
-                    <select
-                      value={state.endTime}
-                      onChange={(e) => actions.setEndTime(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium"
-                    >
-                      <option value="01:00 PM">01:00 PM</option>
-                      <option value="05:00 PM">05:00 PM</option>
-                      <option value="09:00 PM">09:00 PM</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={state.endTime}
+                        onChange={(e) => actions.setEndTime(e.target.value)}
+                        className="w-full px-4 pr-10 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium appearance-none"
+                      >
+                        <option value="01:00 PM">01:00 PM</option>
+                        <option value="05:00 PM">05:00 PM</option>
+                        <option value="09:00 PM">09:00 PM</option>
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/50 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 mt-2">
                   <label className="font-label text-[9px] uppercase tracking-widest text-black/45 font-bold block">
                     Placement Destination
                   </label>
-                  <select
-                    value={state.placementPreference}
-                    onChange={(e) => actions.setPlacementPreference(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium"
-                  >
-                    <option value="Side-Stage Showcase Corner">Side-Stage Showcase Corner</option>
-                    <option value="Entrance Presentation Desk">Entrance Presentation Desk</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={state.placementPreference}
+                      onChange={(e) => actions.setPlacementPreference(e.target.value)}
+                      className="w-full px-4 pr-10 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium appearance-none"
+                    >
+                      <option value="Side-Stage Showcase Corner">Side-Stage Showcase Corner</option>
+                      <option value="Entrance Presentation Desk">Entrance Presentation Desk</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/50 pointer-events-none" />
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* STEP 3: Venue */}
-            {state.customizerStep === 3 && (
+            {/* STEP 2: Venue */}
+            {state.customizerStep === 2 && (
               <div className="space-y-4 pt-2 flex-1 flex flex-col min-h-[400px]">
                 <div className="flex gap-2">
                   <button
@@ -292,12 +301,6 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                   </div>
                 )}
 
-                {state.venueDetails && !state.isManualLocationInput && (
-                  <div className="bg-[#FAF6F0] p-4 rounded-2xl border border-black/10 text-xs font-semibold">
-                    {state.venueDetails.name} <br /> {state.venueDetails.address}
-                  </div>
-                )}
-
                 <textarea
                   placeholder="Arrangement Notes..."
                   value={state.customNote}
@@ -307,25 +310,58 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
               </div>
             )}
 
-            {/* STEP 4: Review */}
-            {state.customizerStep === 4 && (
+            {/* STEP 3: Review */}
+            {state.customizerStep === 3 && (
               <div className="space-y-4 pt-2">
                 <div className="bg-stone-50 p-4 rounded-2xl border border-black/5 space-y-3">
                   <span className="font-label text-[9px] uppercase tracking-widest text-black/40 font-bold block">
                     Booking Summary
                   </span>
-                  <div className="grid grid-cols-2 gap-y-2.5 gap-x-2 text-[11px] font-semibold text-stone-700">
-                    <div>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-[11px] font-semibold text-stone-700">
+                    <div className="col-span-2 sm:col-span-1">
                       <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
-                        Date
+                        Occasion
                       </span>
-                      <span className="text-black">{state.bookingDate}</span>
+                      <span className="text-black">
+                        {state.eventType === 'other'
+                          ? state.customOccasion
+                          : EVENT_TYPES.find((t) => t.id === state.eventType)?.label ||
+                            state.eventType ||
+                            'Not Selected'}
+                      </span>
                     </div>
-                    <div>
+                    <div className="col-span-2 sm:col-span-1">
                       <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
-                        Duration
+                        Ceremony Date
                       </span>
-                      <span className="text-black">{state.rentalDurationDays} Days</span>
+                      <span className="text-black">{state.bookingDate || 'Not Selected'}</span>
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
+                        Timings
+                      </span>
+                      <span className="text-black">
+                        {state.startTime} - {state.endTime}
+                      </span>
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
+                        Setup & Placement
+                      </span>
+                      <span className="text-black">
+                        {state.isOutdoor ? 'Outdoor' : 'Indoor'} • {state.placementPreference}
+                      </span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-[9px] uppercase tracking-wider text-black/35 font-bold block">
+                        Venue Address
+                      </span>
+                      <span className="text-black leading-tight block mt-0.5">
+                        {state.isManualLocationInput
+                          ? `${state.manualVenueName ? state.manualVenueName + ', ' : ''}${state.manualAddress}, ${state.manualCity}`.trim() ||
+                            'Manual Entry'
+                          : state.venueDetails?.address || 'Map Selection'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -344,8 +380,8 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
           </div>
 
           {/* Footer Actions */}
-          <div className="p-4 lg:p-6 bg-white border-t border-black/5 shrink-0 flex gap-3 z-10 rounded-b-[2.5rem]">
-            {state.customizerStep > 1 && (
+          <div className="p-4 lg:p-6 bg-white border-t border-black/5 shrink-0 flex gap-2 z-10 rounded-b-[2.5rem]">
+            {state.customizerStep > 1 && state.customizerStep < 3 && (
               <button
                 onClick={() => actions.setCustomizerStep(state.customizerStep - 1)}
                 className="flex-1 border border-black/10 py-3 rounded-full text-xs font-bold"
@@ -353,20 +389,40 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                 Back
               </button>
             )}
-            {state.customizerStep < 4 ? (
+
+            {state.customizerStep < 3 ? (
               <button
-                onClick={() => actions.setCustomizerStep(state.customizerStep + 1)}
+                onClick={() => {
+                  if (state.customizerStep === 1 && !actions.validateStep1()) return;
+                  if (state.customizerStep === 2 && !actions.validateStep2()) return;
+                  actions.setCustomizerStep(state.customizerStep + 1);
+                }}
                 className="flex-[2] bg-black text-white py-3 rounded-full text-xs font-bold"
               >
-                Next Step
+                {state.customizerStep === 2 ? 'Save Venue & Next' : 'Next Step'}
               </button>
             ) : (
-              <button
-                onClick={actions.handleBookRental}
-                className="flex-[2] bg-black text-white hover:bg-stone-900 transition-all active:scale-95 shadow-md py-3 rounded-full text-xs font-bold cursor-pointer"
-              >
-                Pay Advance to Book
-              </button>
+              // Step 3 Footer: 3 Buttons
+              <>
+                <button
+                  onClick={() => actions.setCustomizerStep(2)}
+                  className="px-4 border border-black/10 bg-stone-50 hover:bg-stone-100 py-3 rounded-full text-[11px] font-bold text-stone-600 transition-colors"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={actions.handleReserveOnly}
+                  className="flex-[1] border border-black text-black hover:bg-black/5 transition-all active:scale-95 shadow-sm py-3 rounded-full text-[11px] font-bold cursor-pointer"
+                >
+                  Reserve Only
+                </button>
+                <button
+                  onClick={actions.handleBookRental}
+                  className="flex-[1.5] bg-black text-white hover:bg-stone-900 transition-all active:scale-95 shadow-md py-3 rounded-full text-[11px] font-bold cursor-pointer"
+                >
+                  Pay Now
+                </button>
+              </>
             )}
           </div>
         </motion.div>

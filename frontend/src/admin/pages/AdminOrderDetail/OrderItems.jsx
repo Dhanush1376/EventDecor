@@ -1,11 +1,12 @@
 import React from 'react';
-import { m as motion } from 'framer-motion';
-import { fadeUp, formatCurrency } from '../../components/AdminUIKit';
+import { formatCurrency } from '../../components/AdminUIKit';
 
 export function OrderItems({ order }) {
   return (
-    <motion.div variants={fadeUp} className="admin-card p-6">
-      <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-5">Order Items</h2>
+    <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
+      <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-3 block">
+        Order Items
+      </label>
       <div className="space-y-3">
         {order.items.map((item, i) => (
           <div
@@ -94,6 +95,6 @@ export function OrderItems({ order }) {
           {formatCurrency(order.total)}
         </span>
       </div>
-    </motion.div>
+    </div>
   );
 }

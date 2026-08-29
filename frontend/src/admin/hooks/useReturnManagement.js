@@ -44,7 +44,6 @@ export const useReturnManagement = () => {
     } catch (err) {
       handleError(err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchReturnsList = useCallback(
@@ -65,7 +64,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [],
   );
 
@@ -82,7 +81,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [],
   );
 
@@ -98,7 +97,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [],
   );
 
@@ -241,7 +240,6 @@ export const useReturnManagement = () => {
     } catch (err) {
       handleError(err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPickupList = useCallback(
@@ -256,7 +254,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [],
   );
 
@@ -272,7 +270,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [],
   );
 
@@ -288,7 +286,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [],
   );
 
@@ -304,7 +302,7 @@ export const useReturnManagement = () => {
         handleError(err);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [],
   );
 
@@ -320,7 +318,6 @@ export const useReturnManagement = () => {
     } catch (err) {
       handleError(err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchReturnSettings = useCallback(async () => {
@@ -333,7 +330,6 @@ export const useReturnManagement = () => {
     } catch (err) {
       handleError(err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveReturnSettings = async (data) => {
@@ -359,7 +355,6 @@ export const useReturnManagement = () => {
     } catch (err) {
       handleError(err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchExchangeStats = useCallback(async () => {
@@ -372,7 +367,6 @@ export const useReturnManagement = () => {
     } catch (err) {
       handleError(err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPickupStats = useCallback(async () => {
@@ -385,7 +379,6 @@ export const useReturnManagement = () => {
     } catch (err) {
       handleError(err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle real-time socket events for returns

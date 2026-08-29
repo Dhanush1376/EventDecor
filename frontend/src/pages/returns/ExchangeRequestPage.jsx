@@ -33,11 +33,15 @@ export const ExchangeRequestPage = () => {
 
   const [step, setStep] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [exchangeReason, setExchangeReason] = useState('');
+  const [exchangeReasonOther, setExchangeReasonOther] = useState('');
   const [exchangeType, setExchangeType] = useState('same');
   const [replacementProduct, setReplacementProduct] = useState(null);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [pickupAddress, setPickupAddress] = useState(null);
   const [pendingPayment, setPendingPayment] = useState(null);
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   const { diff, effectivePaidPrice } = React.useMemo(() => {
     if (exchangeType !== 'different_product' || !replacementProduct || !selectedItem || !order)
@@ -59,7 +63,7 @@ export const ExchangeRequestPage = () => {
 
   const [refundMethod, setRefundMethod] = useState('original');
 
-  const stepsList = ['SELECT ITEM', 'EXCHANGE PREFERENCES'];
+  const stepsList = ['SELECT ITEM', 'REASON', 'EXCHANGE PREFERENCES'];
   if (Math.abs(diff) > 0) stepsList.push('PRICE ADJUSTMENT');
   stepsList.push('VERIFY & SUBMIT');
   const totalSteps = stepsList.length;
@@ -67,7 +71,7 @@ export const ExchangeRequestPage = () => {
   useEffect(() => {
     if (!orderId) {
       toast.error('Order ID is missing');
-      navigate('dashboard/orders');
+      navigate('/dashboard/orders');
       return;
     }
 
@@ -120,12 +124,24 @@ export const ExchangeRequestPage = () => {
     setStep(2);
   };
 
+  const handleNextReason = () => {
+    if (!exchangeReason) {
+      toast.error('Please select a reason for exchange');
+      return;
+    }
+    if (exchangeReason === 'Other' && !exchangeReasonOther.trim()) {
+      toast.error('Please provide details for the exchange reason');
+      return;
+    }
+    setStep(3);
+  };
+
   const handleNext2 = () => {
     if (exchangeType === 'different_product' && !replacementProduct) {
       toast.error('Please select a replacement product');
       return;
     }
-    setStep(3);
+    setStep(4);
   };
 
   const loadRazorpay = () => {
@@ -199,7 +215,9 @@ export const ExchangeRequestPage = () => {
             ? replacementProduct._id
             : selectedItem.productId._id || selectedItem.productId,
         exchangeType: exchangeType === 'different_product' ? 'different_product' : 'variant',
-        quantity: 1,
+        quantity: quantity,
+        reason: exchangeReason === 'Other' ? exchangeReasonOther : exchangeReason,
+        idempotencyKey,
         refundMethod: diff < 0 ? refundMethod : undefined,
       };
 
@@ -303,6 +321,40 @@ export const ExchangeRequestPage = () => {
                     >
                       CURRENT VARIANT: {item.variant || 'DEFAULT'}
                     </p>
+                    {selectedItem?._id === item._id && (
+                      <div className="mt-4 flex items-center gap-3 bg-black/20 p-2 rounded-xl inline-flex w-auto border border-white/10">
+                        <span className="text-[9px] font-bold text-white uppercase tracking-widest pl-2">
+                          QTY:
+                        </span>
+                        <div className="flex items-center bg-white/10 rounded-full">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setQuantity(Math.max(1, quantity - 1));
+                            }}
+                            className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-full transition-colors cursor-pointer border-0"
+                          >
+                            -
+                          </button>
+                          <span className="text-[10px] font-bold text-white w-6 text-center leading-none">
+                            {quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setQuantity(Math.min(item.quantity || 1, quantity + 1));
+                            }}
+                            className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-full transition-colors cursor-pointer border-0"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </label>
               ))}
@@ -319,8 +371,88 @@ export const ExchangeRequestPage = () => {
           </motion.div>
         )}
 
-        {/* STEP 2 */}
+        {/* STEP 2 - REASON */}
         {step === 2 && (
+          <motion.div
+            key="step2"
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+            className="space-y-4"
+          >
+            <div className="pb-5 mb-5 border-b border-outline-variant/20">
+              <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
+                <Info className="text-[12px]" strokeWidth={1.5} />
+                EXCHANGE REASON
+              </h2>
+            </div>
+
+            <div className="space-y-3">
+              {[
+                'Wrong size / fit',
+                'Product damaged on arrival',
+                'Product defective / not working',
+                'Product not as described',
+                'Need a different variant',
+                'Other',
+              ].map((reason) => (
+                <label
+                  key={reason}
+                  className={`flex items-start p-4 border rounded-[16px] transition-all cursor-pointer ${exchangeReason === reason ? 'bg-[#2A2927] border-[#2A2927] text-white shadow-sm' : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'}`}
+                >
+                  <input
+                    type="radio"
+                    name="exchangeReason"
+                    className="hidden"
+                    checked={exchangeReason === reason}
+                    onChange={() => setExchangeReason(reason)}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h3
+                      className={`font-bold uppercase tracking-widest text-[10px] ${exchangeReason === reason ? 'text-white' : 'text-[#2A2927]'}`}
+                    >
+                      {reason.toUpperCase()}
+                    </h3>
+                  </div>
+                </label>
+              ))}
+
+              {exchangeReason === 'Other' && (
+                <div className="mt-4">
+                  <label className="block text-[9px] font-bold uppercase tracking-widest text-secondary mb-2">
+                    Tell us more
+                  </label>
+                  <textarea
+                    value={exchangeReasonOther}
+                    onChange={(e) => setExchangeReasonOther(e.target.value)}
+                    placeholder="Please explain the reason for exchange..."
+                    className="w-full bg-[#FDFBF7] border border-outline-variant/30 rounded-[12px] p-4 text-[11px] text-[#2A2927] focus:outline-none focus:border-[#D4AF37] transition-colors resize-none"
+                    rows={3}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="pt-5 flex justify-between items-center border-t border-outline-variant/20 mt-8">
+              <button
+                onClick={() => setStep(1)}
+                className="bg-transparent border border-outline-variant/30 text-[#2A2927] px-6 py-2.5 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center transition-all hover:bg-surface-variant/30 cursor-pointer"
+              >
+                BACK
+              </button>
+              <button
+                onClick={handleNextReason}
+                className="bg-[#2A2927] hover:bg-black text-white px-6 py-2.5 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-sm transition-all border-0 cursor-pointer"
+              >
+                CONTINUE <ArrowRight className="text-[14px]" strokeWidth={1.5} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* STEP 3 - EXCHANGE PREFERENCES */}
+        {step === 3 && (
           <motion.div
             key="step2"
             variants={fadeUp}
@@ -495,7 +627,7 @@ export const ExchangeRequestPage = () => {
 
             <div className="pt-5 flex justify-between items-center border-t border-outline-variant/20 mt-8">
               <button
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className="bg-transparent border border-outline-variant/30 text-[#2A2927] px-6 py-2.5 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center transition-all hover:bg-surface-variant/30 cursor-pointer"
               >
                 BACK
@@ -511,8 +643,8 @@ export const ExchangeRequestPage = () => {
           </motion.div>
         )}
 
-        {/* STEP 3 (Conditional) - PRICE ADJUSTMENT */}
-        {step === 3 && Math.abs(diff) > 0 && (
+        {/* STEP 4 (Conditional) - PRICE ADJUSTMENT */}
+        {step === 4 && Math.abs(diff) > 0 && (
           <motion.div
             key="step3"
             variants={fadeUp}
@@ -616,7 +748,7 @@ export const ExchangeRequestPage = () => {
 
             <div className="pt-5 flex justify-between items-center border-t border-outline-variant/20 mt-8">
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 className="bg-transparent border border-outline-variant/30 text-[#2A2927] px-6 py-2.5 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center transition-all hover:bg-surface-variant/30 cursor-pointer"
               >
                 BACK
@@ -723,7 +855,7 @@ export const ExchangeRequestPage = () => {
               receive an email confirmation with tracking details.
             </p>
             <button
-              onClick={() => navigate('dashboard/orders')}
+              onClick={() => navigate('/dashboard/orders')}
               className="bg-[#2A2927] hover:bg-black text-white px-8 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer"
             >
               BACK TO ORDERS <ArrowRight className="text-[14px]" strokeWidth={1.5} />

@@ -1,4 +1,4 @@
-import { X, CloudUpload, LineChart } from 'lucide-react';
+import { X, CloudUpload, LineChart, Calendar } from 'lucide-react';
 import { m as motion } from 'framer-motion';
 import { OptimizedImage } from '../../../components/ui/OptimizedImage';
 import toast from 'react-hot-toast';
@@ -11,8 +11,7 @@ export function CustomizerDrawer({
   setSelectedShowcase,
   customInclusions,
   setCustomInclusions,
-  rentalDurationDays,
-  setRentalDurationDays,
+
   selectedPaletteColor,
   setSelectedPaletteColor,
   placementPreference,
@@ -99,26 +98,15 @@ export function CustomizerDrawer({
               <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
                 Ceremony Date *
               </label>
-              <input
-                type="date"
-                value={bookingDate}
-                onChange={(e) => setBookingDate(e.target.value)}
-                className="w-full min-w-0 overflow-hidden px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="font-label text-[8px] uppercase tracking-widest text-black/50 font-bold block">
-                Rental Days
-              </label>
-              <select
-                value={rentalDurationDays}
-                onChange={(e) => setRentalDurationDays(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
-              >
-                <option value={1}>1 Day Setup (Standard)</option>
-                <option value={2}>2 Days Setup (Ceremony + Return)</option>
-                <option value={3}>3 Days Setup (Extensive)</option>
-              </select>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={bookingDate}
+                  onChange={(e) => setBookingDate(e.target.value)}
+                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium appearance-none uppercase relative z-10 bg-transparent"
+                />
+                <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-black/50 pointer-events-none z-0" />
+              </div>
             </div>
           </div>
 

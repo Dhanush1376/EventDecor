@@ -271,10 +271,11 @@ export function OrderDetail() {
   if (returnRequest) {
     const isExchange = returnRequest.returnType === 'exchange';
     const isRequestRejected = returnRequest.status === 'rejected';
+    const isRequestCancelled = returnRequest.status === 'cancelled';
 
     // Step 1: Submitted
     journeySteps.push({
-      title: isExchange ? 'Exchange Request Submitted' : 'Return Request Submitted',
+      title: isExchange ? 'Exchange Submitted' : 'Return Request Submitted',
       description: 'Request is under review by our team',
       timestamp: new Date(returnRequest.createdAt),
       status: 'completed',
@@ -284,8 +285,16 @@ export function OrderDetail() {
 
     if (isRequestRejected) {
       journeySteps.push({
-        title: 'Request Rejected',
+        title: isExchange ? 'Exchange Rejected' : 'Request Rejected',
         description: returnRequest.approvalNotes || 'Request was declined after review',
+        status: 'error',
+        icon: 'cancel',
+        color: 'red',
+      });
+    } else if (isRequestCancelled) {
+      journeySteps.push({
+        title: isExchange ? 'Exchange Cancelled' : 'Request Cancelled',
+        description: 'This request has been cancelled.',
         status: 'error',
         icon: 'cancel',
         color: 'red',
@@ -314,7 +323,7 @@ export function OrderDetail() {
         isExchangeApprovalStep: isExchange,
       });
 
-      // Step 3: Pickup Scheduled
+      // Step 3: Pickup
       const isPickupScheduled = [
         'return_courier_assigned',
         'return_picked_up',
@@ -330,13 +339,36 @@ export function OrderDetail() {
       const isPaymentRequired = isExchange && exchangeDetails?.paymentStatus === 'payment_required';
       const isLocked = isPaymentRequired && !isPickupScheduled;
 
+      let pickupTitle = 'Pickup Scheduled';
+      let pickupDesc = isPickupScheduled
+        ? 'A courier has been assigned to collect your item'
+        : isLocked
+          ? 'Waiting for payment completion'
+          : 'Awaiting courier assignment';
+
+      if (['return_picked_up'].includes(returnRequest.status)) {
+        pickupTitle = 'Item Picked Up';
+        pickupDesc = 'Your item has been collected';
+      } else if (['return_in_transit'].includes(returnRequest.status)) {
+        pickupTitle = 'Item In Transit';
+        pickupDesc = 'Your returned item is on its way to our facility';
+      } else if (
+        [
+          'return_received',
+          'inspection_started',
+          'inspection_completed',
+          'refund_initiated',
+          'refund_completed',
+          'completed',
+        ].includes(returnRequest.status)
+      ) {
+        pickupTitle = 'Item Received';
+        pickupDesc = "We've received your item";
+      }
+
       journeySteps.push({
-        title: 'Pickup Scheduled',
-        description: isPickupScheduled
-          ? 'Courier partner assigned for pickup'
-          : isLocked
-            ? 'Waiting for payment completion'
-            : 'Awaiting courier assignment',
+        title: pickupTitle,
+        description: pickupDesc,
         status: isPickupScheduled ? 'completed' : 'pending',
         icon: 'local_shipping',
         color: 'blue',
@@ -364,20 +396,51 @@ export function OrderDetail() {
 
       // Step 5: Resolution
       if (isExchange) {
-        const isDispatched =
-          ['reserved', 'shipped', 'delivered'].includes(exchangeDetails?.replacementStatus) ||
-          returnRequest.status === 'completed';
+        const repStatus = exchangeDetails?.replacementStatus || 'pending_stock';
+        const isCompleted = returnRequest.status === 'completed';
+        const isDispatched = ['shipped', 'delivered'].includes(repStatus) || isCompleted;
+        const isStarted = ['reserved', 'shipped', 'delivered'].includes(repStatus) || isCompleted;
+
+        let repTitle = 'Replacement Preparing';
+        let repDesc = 'Your replacement item is being prepared';
+        let repIcon = 'inventory_2';
+        let repColor = 'blue';
+        let trackingMeta = null;
+
+        if (repStatus === 'reserved') {
+          repTitle = 'Replacement Reserved';
+          repDesc = 'Your replacement item has been reserved';
+        } else if (repStatus === 'shipped') {
+          repTitle = 'Replacement Dispatched';
+          repDesc = 'Your replacement item has been shipped';
+          repIcon = 'local_shipping';
+          if (exchangeDetails?.trackingNumber) {
+            trackingMeta = {
+              awb: exchangeDetails.trackingNumber,
+              courier: exchangeDetails.courierPartner,
+            };
+          }
+        } else if (repStatus === 'delivered') {
+          repTitle = 'Replacement Delivered';
+          repDesc = 'Your replacement item has been delivered';
+          repIcon = 'done_all';
+        } else if (isCompleted) {
+          repTitle = 'Exchange Completed';
+          repDesc = 'Your exchange has been successfully completed';
+          repIcon = 'check_circle';
+          repColor = 'emerald';
+        }
+
         journeySteps.push({
-          title: 'Replacement Dispatched',
-          description: isDispatched
-            ? 'Your replacement item is on the way!'
-            : 'Pending stock allocation',
-          timestamp: isDispatched
+          title: repTitle,
+          description: repDesc,
+          timestamp: isStarted
             ? new Date(exchangeDetails?.updatedAt || returnRequest.updatedAt)
             : null,
-          status: isDispatched ? 'completed' : 'pending',
-          icon: 'local_shipping',
-          color: 'blue',
+          status: isStarted ? 'completed' : 'pending',
+          icon: repIcon,
+          color: repColor,
+          tracking: trackingMeta,
         });
       } else {
         const isRefundedStatus = ['refund_initiated', 'refund_completed', 'completed'].includes(
@@ -625,8 +688,27 @@ export function OrderDetail() {
                               )}
 
                               {exchangeDetails.paymentStatus === 'failed' && (
-                                <div className="text-[9px] text-red-600 font-bold uppercase tracking-widest mt-1">
-                                  Payment Failed
+                                <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-outline-variant/20">
+                                  <div className="text-[9px] text-red-600 font-bold uppercase tracking-widest">
+                                    Payment Failed
+                                  </div>
+                                  <p className="text-[9px] text-secondary">
+                                    We couldn't confirm your payment.
+                                  </p>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setIsResuming(true);
+                                      resumePayment(
+                                        exchangeDetails.additionalPaymentId,
+                                        exchangeDetails.priceDifference,
+                                      ).finally(() => setIsResuming(false));
+                                    }}
+                                    disabled={isResuming}
+                                    className="w-full py-1.5 bg-surface-container-low hover:bg-surface-variant text-on-surface rounded text-[9px] font-bold uppercase tracking-widest border border-outline-variant/50 transition-colors"
+                                  >
+                                    {isResuming ? 'Processing...' : 'Retry Payment'}
+                                  </button>
                                 </div>
                               )}
                             </div>
@@ -635,10 +717,16 @@ export function OrderDetail() {
                           {exchangeDetails.differenceAction === 'refund_difference' && (
                             <div className="flex flex-col gap-1">
                               <span className="text-[10px] text-secondary uppercase tracking-widest font-semibold">
-                                ₹{exchangeDetails.priceDifference} refund to wallet
+                                {['completed', 'refund_completed'].includes(returnRequest.status)
+                                  ? `✓ ₹${exchangeDetails.priceDifference} credited to your wallet`
+                                  : `₹${exchangeDetails.priceDifference} refund to wallet`}
                               </span>
-                              <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-widest">
-                                Processing
+                              <span
+                                className={`text-[9px] font-bold uppercase tracking-widest ${['completed', 'refund_completed'].includes(returnRequest.status) ? 'text-emerald-600' : 'text-blue-600'}`}
+                              >
+                                {['completed', 'refund_completed'].includes(returnRequest.status)
+                                  ? 'Refund Complete'
+                                  : 'Pending'}
                               </span>
                             </div>
                           )}

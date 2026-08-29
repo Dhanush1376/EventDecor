@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import mongoose from 'mongoose';
 
 import { PaymentVerificationService } from '../../src/services/PaymentVerificationService';
+import { TransactionalEmailService } from '../../src/services/TransactionalEmailService';
 import { RazorpayGateway } from '../../src/utils/payment/RazorpayGateway';
 import User from '../../src/models/User';
 import Product from '../../src/models/Product';
@@ -106,6 +107,7 @@ const mockGatewayPayment = (overrides: Record<string, any> = {}) => {
 describe('PaymentVerificationService.verifyPayment (integration)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.spyOn(TransactionalEmailService, 'sendPaymentFailedEmail').mockResolvedValue(undefined);
   });
   afterEach(() => {
     vi.restoreAllMocks();

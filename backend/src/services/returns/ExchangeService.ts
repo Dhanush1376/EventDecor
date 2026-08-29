@@ -18,6 +18,7 @@ export class ExchangeService {
     replacementProductId: string,
     exchangeType: 'size' | 'color' | 'variant' | 'different_product',
     quantity: number,
+    reason: string,
     pickupAddress?: any,
     idempotencyKey?: string,
     refundMethod?: 'original' | 'wallet' | 'store_credit',
@@ -81,7 +82,7 @@ export class ExchangeService {
             {
               productId: originalProductId,
               returnQuantity: quantity,
-              reason: `Exchange for ${replacementProduct.title}`,
+              reason: reason || `Exchange for ${replacementProduct.title}`,
               refundMethod: differenceAction === 'refund_difference' ? refundMethod : undefined,
             },
           ],

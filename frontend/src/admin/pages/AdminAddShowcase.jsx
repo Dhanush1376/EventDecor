@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { SkeletonForm } from '../components/AdminUIKit';
+import { SkeletonWizard } from '../components/AdminUIKit';
 import { ProductCard } from '../../components/shared/ProductCard';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
@@ -146,8 +146,8 @@ export function AdminAddShowcase() {
 
   if (isLoading) {
     return (
-      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 p-6">
-        <SkeletonForm fields={6} />
+      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0 px-2 sm:px-4">
+        <SkeletonWizard steps={WIZARD_STEPS.length} />
       </div>
     );
   }

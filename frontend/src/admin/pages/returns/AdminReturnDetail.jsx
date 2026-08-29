@@ -14,7 +14,6 @@ import {
   EmptyState,
   SkeletonDashboard,
   stagger,
-  fadeUp,
 } from '../../components/AdminUIKit';
 
 const TIMELINE_STAGES = [

@@ -1,6 +1,4 @@
 import React from 'react';
-import { m as motion } from 'framer-motion';
-import { fadeUp } from '../../components/AdminUIKit';
 
 const allStatuses = [
   'Pending',
@@ -32,10 +30,10 @@ const statusIcons = {
 
 export function OrderStatusTimeline({ order, updateOrderStatus }) {
   return (
-    <motion.div variants={fadeUp} className="admin-card p-6">
-      <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-4">
-        Update Logistics Status
-      </h2>
+    <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
+      <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-3 block">
+        Status Timeline
+      </label>
       <div className="flex flex-wrap gap-2">
         {allStatuses.map((s) => (
           <button
@@ -85,7 +83,7 @@ export function OrderStatusTimeline({ order, updateOrderStatus }) {
           },
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

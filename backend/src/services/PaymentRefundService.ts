@@ -3,7 +3,7 @@ import RefundRecord from '../models/RefundRecord';
 import logger from '../config/logger';
 import { RazorpayGateway } from '../utils/payment/RazorpayGateway';
 import ApiError from '../utils/ApiError';
-import { refundQueue } from '../jobs/queues';
+import { refundQueue, isQueuesReady } from '../jobs/queues';
 import OutboxEvent from '../models/OutboxEvent';
 import { AlertingService } from './AlertingService';
 
@@ -47,7 +47,6 @@ export class PaymentRefundService {
 
     const [refundRecord] = await RefundRecord.create([refundOptions], { session });
 
-    const { isQueuesReady } = require('../jobs/queues');
     if (isQueuesReady()) {
       await refundQueue.add('processRefund', { refundRecordId: refundRecord._id });
       logger.info(`[REFUND] Enqueued async refund job for RefundRecord ${refundRecord._id}`);
@@ -253,7 +252,7 @@ export class PaymentRefundService {
     });
 
     let processed = 0;
-    const { isQueuesReady } = require('../jobs/queues');
+
     if (isQueuesReady()) {
       for (const refund of stuckRefunds) {
         await refundQueue.add('processRefund', { refundRecordId: refund._id });

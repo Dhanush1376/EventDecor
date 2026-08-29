@@ -4,6 +4,7 @@ import {
   escapeHtml,
   button,
   dataTable,
+  getPrimaryEntityName,
 } from './emailTemplates';
 import { getFrontendUrl } from '../getFrontendUrl';
 import { getBackendUrl } from '../getBackendUrl';
@@ -116,6 +117,186 @@ const addressBlock = (title: string, address: any) => {
   `;
 };
 
+// --- Event Booking Reusable Components ---
+
+export const formatBookingStatus = (statusStr: string) => {
+  if (!statusStr) return 'Unknown';
+  return statusStr
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+export const buildStatusBadge = (status: string) => {
+  let bgColor = '#e2e8f0'; // slate-200
+  let textColor = '#475569'; // slate-600
+
+  const s = status.toLowerCase();
+  if (['confirmed', 'completed', 'paid'].includes(s)) {
+    bgColor = '#dcfce7'; // green-100
+    textColor = '#166534'; // green-800
+  } else if (
+    [
+      'payment_pending',
+      'pending_payment',
+      'payment_processing',
+      'advance_payment',
+      'partial',
+    ].includes(s)
+  ) {
+    bgColor = '#fef9c3'; // yellow-100
+    textColor = '#854d0e'; // yellow-800
+  } else if (['cancelled', 'failed', 'refunded'].includes(s)) {
+    bgColor = '#fee2e2'; // red-100
+    textColor = '#991b1b'; // red-800
+  } else if (['team_assigned', 'setup_in_progress', 'execution'].includes(s)) {
+    bgColor = '#dbeafe'; // blue-100
+    textColor = '#1e40af'; // blue-800
+  }
+
+  return `<span style="display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; background-color: ${bgColor}; color: ${textColor}; text-transform: uppercase; letter-spacing: 0.05em;">${formatBookingStatus(status)}</span>`;
+};
+
+export const buildBookingReferenceCard = (bookingId: string, status: string) => `
+  <div style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 32px; text-align: center; background-color: #f9fafb;">
+    <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Booking ID</p>
+    <p style="margin: 0 0 20px 0; font-size: 24px; color: #111827; font-weight: 700; font-family: monospace; letter-spacing: 1px;">${escapeHtml(bookingId)}</p>
+    <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Current Status</p>
+    <div style="margin: 0;">${buildStatusBadge(status)}</div>
+  </div>
+`;
+
+export const buildEventDetailsCard = (booking: any) => {
+  const rows = [];
+
+  if (booking.title || booking.eventType) {
+    rows.push({ label: 'Event', value: escapeHtml(booking.title || booking.eventType) });
+  }
+
+  if (booking.date) {
+    rows.push({
+      label: 'Date',
+      value: new Date(booking.date).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }),
+    });
+  }
+
+  if (booking.timing && booking.timing.start && booking.timing.end) {
+    rows.push({
+      label: 'Time',
+      value: `${escapeHtml(booking.timing.start)} - ${escapeHtml(booking.timing.end)}`,
+    });
+  }
+
+  if (booking.venue && (booking.venue.name || booking.venue.address || booking.venue.city)) {
+    const venueParts = [booking.venue.name, booking.venue.city || booking.venue.address].filter(
+      Boolean,
+    );
+    rows.push({ label: 'Location', value: escapeHtml(venueParts.join(', ')) });
+  }
+
+  if (booking.eventPackage && booking.eventPackage.title) {
+    rows.push({ label: 'Package', value: escapeHtml(booking.eventPackage.title) });
+  }
+
+  if (booking.guestCount) {
+    rows.push({ label: 'Guests', value: String(booking.guestCount) });
+  }
+
+  return `
+    <h3 style="color: #111827; margin-bottom: 16px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Event Details</h3>
+    ${dataTable(rows)}
+  `;
+};
+
+export const buildBookingPaymentSummary = (pricing: any) => {
+  if (!pricing) return '';
+
+  let html = `<h3 style="color: #111827; margin-top: 32px; margin-bottom: 16px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Payment Summary</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">`;
+
+  if (pricing.rentalFee) {
+    html += `<tr>
+      <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: left; width: 70%;">Event Amount</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(pricing.rentalFee)}</td>
+    </tr>`;
+  }
+
+  if (pricing.setupCharges) {
+    html += `<tr>
+      <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: left;">Setup Charges</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(pricing.setupCharges)}</td>
+    </tr>`;
+  }
+
+  if (pricing.addOnCharges) {
+    html += `<tr>
+      <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: left;">Add-on Charges</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(pricing.addOnCharges)}</td>
+    </tr>`;
+  }
+
+  if (pricing.travelExpenseTotal || pricing.transportationCost) {
+    const travel = pricing.travelExpenseTotal || pricing.transportationCost;
+    html += `<tr>
+      <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: left;">Travel Charges</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(travel)}</td>
+    </tr>`;
+  }
+
+  html += `
+    <tr style="border-top: 1px solid #e5e7eb;">
+      <td style="padding: 12px 0 6px 0; font-size: 15px; font-weight: 600; color: #111827; text-align: left;">Total</td>
+      <td style="padding: 12px 0 6px 0; font-size: 15px; font-weight: 600; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(pricing.totalPrice || 0)}</td>
+    </tr>`;
+
+  if (pricing.depositAmount) {
+    html += `<tr>
+      <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: left;">Deposit Amount</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(pricing.depositAmount)}</td>
+    </tr>`;
+  }
+
+  const paidAmount = (pricing.totalPrice || 0) - (pricing.pendingBalance || 0);
+  if (paidAmount > 0) {
+    html += `<tr>
+      <td style="padding: 6px 0; font-size: 14px; color: #059669; font-weight: 600; text-align: left;">Paid</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #059669; font-weight: 600; text-align: right; font-family: monospace;">${formatCurrency(paidAmount)}</td>
+    </tr>`;
+  }
+
+  if (pricing.pendingBalance > 0) {
+    html += `<tr>
+      <td style="padding: 6px 0; font-size: 14px; color: #dc2626; font-weight: 600; text-align: left;">Pending Balance</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #dc2626; font-weight: 600; text-align: right; font-family: monospace;">${formatCurrency(pricing.pendingBalance)}</td>
+    </tr>`;
+  }
+
+  html += `</table>`;
+  return html;
+};
+
+export const buildNextStepsSection = (stepsHtml: string) => `
+  <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; margin-top: 32px; margin-bottom: 32px;">
+    <h3 style="color: #1e3a8a; margin: 0 0 8px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">What Happens Next</h3>
+    <div style="color: #334155; font-size: 14px; line-height: 1.5; margin: 0;">
+      ${stepsHtml}
+    </div>
+  </div>
+`;
+
+export const buildSupportSection = () => `
+  <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+    <h3 style="color: #111827; margin: 0 0 12px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">Need Help?</h3>
+    <p style="color: #4b5563; font-size: 14px; line-height: 1.5; margin: 0;">
+      If you have any questions or need to make changes to your booking, please reply directly to this email or contact our support team at <a href="mailto:support@siriartsandcrafts.com" style="color: #4f46e5; text-decoration: none;">support@siriartsandcrafts.com</a>.
+    </p>
+  </div>
+`;
+
 // --- Order Templates ---
 
 export const buildOrderConfirmationCustomerEmail = (order: any, user: any) => {
@@ -125,9 +306,16 @@ export const buildOrderConfirmationCustomerEmail = (order: any, user: any) => {
   // Create a link to the invoice if it's generated
   const invoiceLink = `<div style="text-align: center; margin-bottom: 24px;">${textLink('Download Invoice PDF', `${getBackendUrl()}/api/v1/documents/invoice/${order._id}`)}</div>`;
 
+  const primaryItem = getPrimaryEntityName(order.items);
+  const headingText = primaryItem
+    ? `Your ${escapeHtml(primaryItem)} Order Is Confirmed`
+    : 'Your Order Is Confirmed';
+
   const body = `
-    <h2>Thank you for your order, ${escapeHtml(user?.name || order.shippingAddress?.name || 'Customer')}!</h2>
-    <p>We've received your order <strong>#${orderId}</strong> and are getting it ready for shipment.</p>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Order #${escapeHtml(orderId)}</p>
+    <p>Dear ${escapeHtml(user?.name || order.shippingAddress?.name || 'Customer')},</p>
+    <p>We've received your order and are getting it ready for shipment.</p>
     
     <h3 style="margin-top: 32px; color: #111827;">Order Summary</h3>
     ${itemsTable(order.items)}
@@ -199,10 +387,17 @@ export const buildOrderStatusChangeEmail = (order: any, oldStatus: string, newSt
   const orderId = order.orderUuid || order.orderNumber || order._id;
   const preheader = `Your order #${orderId} is now ${newStatus}`;
   const invoiceLink = `<div style="text-align: center; margin-bottom: 24px;">${textLink('Download Invoice PDF', `${getBackendUrl()}/api/v1/documents/invoice/${order._id}`)}</div>`;
+
+  const primaryItem = getPrimaryEntityName(order.items);
+  const headingText = primaryItem
+    ? `Your ${escapeHtml(primaryItem)} is now ${escapeHtml(newStatus)}`
+    : `Your Order is now ${escapeHtml(newStatus)}`;
+
   const body = `
-    <h2>Order Status Update</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Order #${escapeHtml(orderId)}</p>
     <p>Dear ${escapeHtml(order.shippingAddress?.name || 'Customer')},</p>
-    <p>The status of your order <strong>#${escapeHtml(orderId)}</strong> has been updated to <strong>${escapeHtml(newStatus)}</strong>.</p>
+    <p>The status of your order has been updated to <strong>${escapeHtml(newStatus)}</strong>.</p>
     
     ${dataTable([
       { label: 'Previous Status', value: escapeHtml(oldStatus) },
@@ -234,9 +429,16 @@ export const buildOrderStatusChangeEmail = (order: any, oldStatus: string, newSt
 export const buildPaymentFailedEmail = (order: any, reason: string) => {
   const orderId = order.orderUuid || order.orderNumber || order._id;
   const preheader = `Payment failed for order #${orderId}`;
+
+  const primaryItem = getPrimaryEntityName(order.items);
+  const headingText = primaryItem
+    ? `Payment Failed for Your ${escapeHtml(primaryItem)}`
+    : 'Payment Failed';
+
   const body = `
-    <h2 style="color: #dc2626;">Payment Failed</h2>
-    <p>We were unable to process the payment for your order <strong>#${orderId}</strong>.</p>
+    <h2 style="color: #dc2626;">${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Order #${escapeHtml(orderId)}</p>
+    <p>We were unable to process the payment for your order.</p>
     
     ${dataTable([
       { label: 'Reason', value: escapeHtml(reason) },
@@ -258,10 +460,15 @@ export const buildPaymentFailedEmail = (order: any, reason: string) => {
 export const buildCustomOrderCustomerEmail = (order: any) => {
   const orderId = order.orderUuid || order.customOrderId || order._id;
   const preheader = `We've received your custom design request.`;
+
+  const customName = order.productType || order.occasion || 'Custom Design';
+  const headingText = `Your ${escapeHtml(customName)} Request is Received`;
+
   const body = `
-    <h2>Your Custom Design Request Received</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Request #${escapeHtml(orderId)}</p>
     <p>Dear ${escapeHtml(order.customerName || 'Valued Guest')},</p>
-    <p>Thank you for trusting Siri Arts & Crafts. Our design team is reviewing your requirements for <strong>#${escapeHtml(orderId)}</strong> and will reach out shortly.</p>
+    <p>Thank you for trusting Siri Arts & Crafts. Our design team is reviewing your requirements and will reach out shortly.</p>
     
     ${dataTable([
       { label: 'Occasion', value: escapeHtml(order.occasion || 'N/A') },
@@ -312,10 +519,15 @@ export const buildCustomOrderAdminEmail = (order: any) => {
 export const buildCustomOrderStatusChangeEmail = (order: any, previousStatus: string) => {
   const orderId = order.orderUuid || order.customOrderId || order._id;
   const preheader = `Status update for your custom order: ${order.status}`;
+
+  const customName = order.productType || order.occasion || 'Custom Design';
+  const headingText = `Your ${escapeHtml(customName)} is now ${escapeHtml(order.status)}`;
+
   const body = `
-    <h2>Status Update</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Request #${escapeHtml(orderId)}</p>
     <p>Dear ${escapeHtml(order.customerName)},</p>
-    <p>The status of your custom order <strong>#${escapeHtml(orderId)}</strong> has been updated to <strong>${escapeHtml(order.status)}</strong>.</p>
+    <p>The status of your custom order has been updated to <strong>${escapeHtml(order.status)}</strong>.</p>
     
     ${dataTable([
       { label: 'Previous Status', value: escapeHtml(previousStatus) },
@@ -365,79 +577,87 @@ export const buildInquiryAdminEmail = (inquiry: any) => {
 
 // --- Event Booking Templates ---
 
-export const buildEventBookingCustomerEmail = (booking: any, user: any) => {
+export const buildEventBookingInquiryEmail = (booking: any, user: any) => {
   const customerName = user?.name || booking.user?.name || 'Valued Guest';
   const bookingId = booking.bookingId || booking._id;
-  const eventDateStr = booking.date
-    ? new Date(booking.date).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
-    : 'To be confirmed';
 
-  const rows: { label: string; value: string }[] = [
-    { label: 'Booking ID', value: escapeHtml(bookingId) },
-    { label: 'Event Title', value: escapeHtml(booking.title || 'Event Booking') },
-    { label: 'Event Type', value: escapeHtml(booking.eventType || 'N/A') },
-    { label: 'Date', value: escapeHtml(eventDateStr) },
-  ];
-  if (booking.venue?.name) rows.push({ label: 'Venue', value: escapeHtml(booking.venue.name) });
-  if (booking.venue?.address)
-    rows.push({ label: 'Address', value: escapeHtml(booking.venue.address) });
+  const preheader = `Your event booking request for ${booking.title || 'your event'} has been received.`;
 
-  const preheader = `Your event booking request #${bookingId} has been received.`;
-  const body = `
-    <h2>Your Event Booking is Received</h2>
-    <p>Dear ${escapeHtml(customerName)},</p>
-    <p>Thank you for choosing Siri Arts & Crafts. Your event booking request <strong>#${escapeHtml(bookingId)}</strong> has been successfully submitted. Our team is reviewing your requirements and will get back to you shortly.</p>
-
-    <h3 style="color: #111827;">Booking Details</h3>
-    ${dataTable(rows)}
-
-    ${button('View Your Bookings', `${getFrontendUrl()}/dashboard/events`)}
+  const nextStepsHtml = `
+    <ul style="margin: 0; padding-left: 20px;">
+      <li style="margin-bottom: 8px;">Our team is reviewing your event details.</li>
+      <li style="margin-bottom: 8px;">We will contact you if we need any additional information.</li>
+      <li>You will receive an update once your booking request is confirmed.</li>
+    </ul>
   `;
+
+  const body = `
+    <h2>Booking Request Received</h2>
+    <p>Dear ${escapeHtml(customerName)},</p>
+    <p>Thank you for choosing Siri Arts & Crafts. Your event booking request has been successfully submitted. Our team will review your requirements and get back to you shortly.</p>
+    
+    ${buildBookingReferenceCard(bookingId, booking.status || 'inquiry')}
+    ${buildEventDetailsCard(booking)}
+    ${buildNextStepsSection(nextStepsHtml)}
+    ${button('View Dashboard', `${getFrontendUrl()}/dashboard/events`)}
+    ${buildSupportSection()}
+  `;
+
   return {
-    subject: `Event Booking Request Received — #${bookingId}`,
+    subject: `Booking Request Received — #${escapeHtml(bookingId)}`,
+    html: getLuxuryEmailWrapper('Inquiry Received', body, undefined, preheader),
+  };
+};
+
+export const buildEventBookingConfirmedEmail = (booking: any, user: any) => {
+  const customerName = user?.name || booking.user?.name || 'Valued Guest';
+  const bookingId = booking.bookingId || booking._id;
+
+  const preheader = `Your event booking for ${booking.title || 'your event'} is confirmed!`;
+
+  const nextStepsHtml = `
+    <ul style="margin: 0; padding-left: 20px;">
+      <li style="margin-bottom: 8px;">Your date has been successfully reserved in our calendar.</li>
+      <li style="margin-bottom: 8px;">Our artisans will begin preparing for your event.</li>
+      <li>Log in to your dashboard to chat with your assigned team and review layout checklists.</li>
+    </ul>
+  `;
+
+  const body = `
+    <h2>Your Booking Is Confirmed!</h2>
+    <p>Dear ${escapeHtml(customerName)},</p>
+    <p>We are thrilled to let you know that your booking is fully confirmed. We've received your payment and have reserved the date for your special event.</p>
+    
+    ${buildBookingReferenceCard(bookingId, booking.status || 'confirmed')}
+    ${buildEventDetailsCard(booking)}
+    ${buildBookingPaymentSummary(booking.pricing)}
+    ${buildNextStepsSection(nextStepsHtml)}
+    ${button('Open Live Workspace', `${getFrontendUrl()}/dashboard/events`)}
+    ${buildSupportSection()}
+  `;
+
+  return {
+    subject: `Your Event Booking Is Confirmed — #${escapeHtml(bookingId)}`,
     html: getLuxuryEmailWrapper('Booking Confirmed', body, undefined, preheader),
   };
 };
 
 export const buildEventBookingAdminEmail = (booking: any, user: any) => {
   const customerName = user?.name || booking.user?.name || 'Unknown';
-  const customerEmail = user?.email || booking.user?.email || 'Unknown';
   const bookingId = booking.bookingId || booking._id;
-  const eventDateStr = booking.date
-    ? new Date(booking.date).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
-    : 'Not specified';
-
-  const rows: { label: string; value: string }[] = [
-    { label: 'Booking ID', value: escapeHtml(bookingId) },
-    { label: 'Customer', value: escapeHtml(customerName) },
-    { label: 'Email', value: escapeHtml(customerEmail) },
-    { label: 'Event Title', value: escapeHtml(booking.title || 'Event Booking') },
-    { label: 'Event Type', value: escapeHtml(booking.eventType || 'N/A') },
-    { label: 'Date', value: escapeHtml(eventDateStr) },
-  ];
-  if (booking.venue?.name) rows.push({ label: 'Venue', value: escapeHtml(booking.venue.name) });
-  if (booking.venue?.address)
-    rows.push({ label: 'Address', value: escapeHtml(booking.venue.address) });
-  if (booking.venue?.city) rows.push({ label: 'City', value: escapeHtml(booking.venue.city) });
 
   const body = `
-    <h2>New Event Booking Request: #${bookingId}</h2>
-    <p>A new event booking inquiry has been submitted on the platform.</p>
-
-    ${dataTable(rows)}
-
+    <h2>New Event Booking Request</h2>
+    <p>A new event booking inquiry has been submitted by ${escapeHtml(customerName)}.</p>
+    
+    ${buildBookingReferenceCard(bookingId, booking.status || 'inquiry')}
+    ${buildEventDetailsCard(booking)}
+    
     ${button('Manage Booking', `${getFrontendUrl()}/admin/bookings/${booking._id}`)}
   `;
+
   return {
-    subject: `[NEW BOOKING] #${bookingId} from ${escapeHtml(customerName)}`,
+    subject: `[NEW BOOKING] ${escapeHtml(booking.title || 'Event Booking')} from ${escapeHtml(customerName)}`,
     html: getLuxuryEmailWrapper('Admin Alert', body),
   };
 };
@@ -457,10 +677,18 @@ export const buildReturnCreatedCustomerEmail = (returnRequest: any, order: any, 
   ];
 
   const preheader = `Your ${isExchange ? 'exchange' : 'return'} request #${requestId} has been submitted.`;
+
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
+  const actionText = isExchange ? 'Exchange Request Received' : 'Return Request Received';
+  const headingText = primaryItem
+    ? `${escapeHtml(primaryItem)} — ${actionText}`
+    : `Your ${actionText}`;
+
   const body = `
-    <h2>${isExchange ? 'Exchange' : 'Return'} Request Submitted</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Request #${escapeHtml(requestId)}</p>
     <p>Dear ${escapeHtml(customerName)},</p>
-    <p>We've received your ${isExchange ? 'exchange' : 'return'} request <strong>#${escapeHtml(requestId)}</strong> and our team will review it shortly.</p>
+    <p>We've received your ${isExchange ? 'exchange' : 'return'} request and our team will review it shortly.</p>
 
     ${dataTable(rows)}
 
@@ -539,10 +767,18 @@ export const buildReturnStatusUpdateEmail = (
   }
 
   const preheader = `Status update for your ${isExchange ? 'exchange' : 'return'} request #${requestId}.`;
+
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
+  const actionText = isExchange ? 'Exchange Update' : 'Return Update';
+  const headingText = primaryItem
+    ? `${escapeHtml(primaryItem)} — ${actionText}`
+    : `Your ${actionText}`;
+
   const body = `
-    <h2>${isExchange ? 'Exchange' : 'Return'} Status Update</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Request #${escapeHtml(requestId)}</p>
     <p>Dear ${escapeHtml(customerName)},</p>
-    <p>The status of your ${isExchange ? 'exchange' : 'return'} request <strong>#${escapeHtml(requestId)}</strong> has been updated to <strong>${formatStatus(newStatus)}</strong>.</p>
+    <p>The status of your ${isExchange ? 'exchange' : 'return'} request has been updated to <strong>${formatStatus(newStatus)}</strong>.</p>
     
     ${
       isExchange &&
@@ -601,5 +837,103 @@ export const buildReturnStatusUpdateEmail = (
       undefined,
       preheader,
     ),
+  };
+};
+
+export const buildEventBookingStatusUpdateEmail = (
+  booking: any,
+  user: any,
+  oldStatus: string,
+  newStatus: string,
+) => {
+  const customerName = user?.name || booking.user?.name || 'Valued Guest';
+  const bookingId = booking.bookingId || booking._id;
+  const preheader = `Update on your event booking: ${booking.title || 'your event'}`;
+
+  let subject = `Booking Update — #${escapeHtml(bookingId)}`;
+  let title = 'Booking Status Update';
+  let nextStepsHtml = `
+    <ul style="margin: 0; padding-left: 20px;">
+      <li>Log in to your dashboard to view the latest updates on your booking.</li>
+    </ul>
+  `;
+
+  // Customizations based on newStatus
+  const s = newStatus.toLowerCase();
+  if (s === 'team_assigned') {
+    subject = `Team Assigned — Event Booking #${escapeHtml(bookingId)}`;
+    title = 'Team Assigned';
+    nextStepsHtml = `
+      <ul style="margin: 0; padding-left: 20px;">
+        <li style="margin-bottom: 8px;">Our artisans have been assigned to your event.</li>
+        <li>Log in to your dashboard to chat live with your team and review layout checklists.</li>
+      </ul>
+    `;
+  } else if (s === 'setup_in_progress') {
+    subject = `Setup Started — Event Booking #${escapeHtml(bookingId)}`;
+    title = 'Setup In Progress';
+    nextStepsHtml = `
+      <ul style="margin: 0; padding-left: 20px;">
+        <li style="margin-bottom: 8px;">Our team has started the setup process for your event!</li>
+        <li>Track real-time progress via your live workspace dashboard.</li>
+      </ul>
+    `;
+  } else if (s === 'execution') {
+    subject = `Event In Progress — #${escapeHtml(bookingId)}`;
+    title = 'Event In Progress';
+  } else if (s === 'completed') {
+    subject = `Event Completed — #${escapeHtml(bookingId)}`;
+    title = 'Event Completed';
+    nextStepsHtml = `
+      <ul style="margin: 0; padding-left: 20px;">
+        <li style="margin-bottom: 8px;">We hope your event was a spectacular success!</li>
+        <li>We'd love to hear your feedback on your dashboard.</li>
+      </ul>
+    `;
+  } else if (s === 'cancelled' || s === 'failed') {
+    subject = `Event Booking ${formatBookingStatus(s)} — #${escapeHtml(bookingId)}`;
+    title = `Booking ${formatBookingStatus(s)}`;
+    nextStepsHtml = `
+      <ul style="margin: 0; padding-left: 20px;">
+        <li>Please contact support if you need any assistance or clarification regarding this cancellation.</li>
+      </ul>
+    `;
+  } else if (s === 'payment_pending' || s === 'pending_payment') {
+    subject = `Payment Pending — Event Booking #${escapeHtml(bookingId)}`;
+    title = 'Payment Pending';
+    nextStepsHtml = `
+      <ul style="margin: 0; padding-left: 20px;">
+        <li>Please complete your payment via your dashboard to secure your booking date.</li>
+      </ul>
+    `;
+  }
+
+  const body = `
+    <h2>${title}</h2>
+    
+    <p>Dear ${escapeHtml(customerName)},</p>
+    <p>There has been an update regarding your event booking <strong>"${escapeHtml(booking.title || 'Event Booking')}"</strong>.</p>
+    
+    ${buildBookingReferenceCard(bookingId, newStatus)}
+    
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 22px; margin-bottom: 24px; text-align: center;">
+      <span style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 8px;">Timeline Shift</span>
+      <div style="display: inline-block; padding: 8px 16px; background-color: #e2e8f0; border-radius: 20px; font-size: 12px; color: #64748b; text-decoration: line-through; margin-right: 8px;">
+        ${escapeHtml(oldStatus.toUpperCase().replace(/_/g, ' '))}
+      </div>
+      <span style="font-size: 14px; color: #0f172a; vertical-align: middle; font-weight: bold;">➔</span>
+      <div style="display: inline-block; padding: 8px 16px; background-color: #0f172a; border-radius: 20px; font-size: 12px; color: #ffffff; font-weight: bold; margin-left: 8px;">
+        ${escapeHtml(newStatus.toUpperCase().replace(/_/g, ' '))}
+      </div>
+    </div>
+    
+    ${buildNextStepsSection(nextStepsHtml)}
+    ${button('Open Live Workspace', `${getFrontendUrl()}/dashboard/events`)}
+    ${buildSupportSection()}
+  `;
+
+  return {
+    subject,
+    html: getLuxuryEmailWrapper(title, body, undefined, preheader),
   };
 };

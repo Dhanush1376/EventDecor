@@ -192,7 +192,7 @@ export function EventBookingSuccess() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to={`/dashboard?tab=bookings`}
+              to="/dashboard/events"
               className="bg-black text-white px-8 py-3.5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:scale-105 transition-all text-center"
             >
               Track in Dashboard
@@ -201,7 +201,7 @@ export function EventBookingSuccess() {
               to="/"
               className="bg-primary/5 text-primary border border-primary/20 px-8 py-3.5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold hover:bg-primary hover:text-white transition-all text-center"
             >
-              Back to Home
+              Return to Storefront
             </Link>
           </div>
         </motion.div>

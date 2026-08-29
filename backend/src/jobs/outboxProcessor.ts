@@ -147,9 +147,22 @@ export async function processEvent(event: any): Promise<void> {
           event._id.toString(),
         );
     } else if (eventName === 'EVENTJOB_BOOKINGINQUIRYSUBMITTED') {
-      const booking = await EventJob.findById(event.aggregateId).populate('user');
+      const booking = await EventJob.findById(event.aggregateId)
+        .populate('user')
+        .populate('eventPackage');
       if (booking) {
         await TransactionalEmailService.sendEventBookingSubmissionEmails(
+          booking,
+          (booking as any).user,
+          event._id.toString(),
+        );
+      }
+    } else if (eventName === 'EVENTJOB_BOOKINGCONFIRMED') {
+      const booking = await EventJob.findById(event.aggregateId)
+        .populate('user')
+        .populate('eventPackage');
+      if (booking) {
+        await TransactionalEmailService.sendEventBookingConfirmedEmails(
           booking,
           (booking as any).user,
           event._id.toString(),
@@ -211,13 +224,12 @@ export async function processEvent(event: any): Promise<void> {
     } else if (eventName === 'EVENTJOB_BOOKINGSTATUSUPDATED') {
       const booking = await EventJob.findById(event.aggregateId).populate('user');
       if (booking && event.payload) {
-        // Need to add this method to TransactionalEmailService first!
-        // We will just call the legacy service directly here to keep things simple for booking status
-        const { EventJobMailService } = require('../services/eventBookingMailService');
-        await EventJobMailService.sendStatusUpdateEmail(
+        await TransactionalEmailService.sendEventBookingStatusUpdateEmail(
           booking,
+          (booking as any).user,
           event.payload.oldStatus,
           event.payload.newStatus,
+          event._id.toString(),
         );
       }
     }
@@ -280,6 +292,17 @@ export async function processEvent(event: any): Promise<void> {
           await createAdminNotification({
             title: 'New Booking Request',
             message: `${(booking as any).user?.name || 'A customer'} submitted a booking for ${booking.title}.`,
+            type: 'booking',
+            actionLink: `/admin/bookings`,
+            metadata: { outboxEventId: event._id.toString() },
+          });
+        }
+      } else if (eventName === 'EVENTJOB_BOOKINGCONFIRMED') {
+        const booking = await EventJob.findById(event.aggregateId).populate('user');
+        if (booking) {
+          await createAdminNotification({
+            title: 'Booking Confirmed',
+            message: `Booking ${booking.bookingId || booking._id} for ${booking.title} has been confirmed.`,
             type: 'booking',
             actionLink: `/admin/bookings`,
             metadata: { outboxEventId: event._id.toString() },
@@ -432,6 +455,22 @@ export async function processEvent(event: any): Promise<void> {
               event: 'BOOKING_CREATED',
               title: 'Booking Request Received',
               message: `Your event booking request has been received.`,
+              type: 'booking',
+              actionUrl: `/events/dashboard`,
+              metadata: { outboxEventId: event._id.toString(), bookingId: booking._id.toString() },
+            };
+          }
+        }
+      } else if (eventName === 'EVENTJOB_BOOKINGCONFIRMED') {
+        const booking = await EventJob.findById(event.aggregateId);
+        if (booking) {
+          targetUserId = (booking as any).user?.toString();
+          if (targetUserId) {
+            customerNotificationPayload = {
+              user: targetUserId,
+              event: 'BOOKING_UPDATED',
+              title: 'Booking Confirmed',
+              message: `Your booking ${booking.bookingId || booking._id} has been confirmed!`,
               type: 'booking',
               actionUrl: `/events/dashboard`,
               metadata: { outboxEventId: event._id.toString(), bookingId: booking._id.toString() },

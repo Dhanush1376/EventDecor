@@ -9,13 +9,13 @@ import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
 import { getPaginationOptions, formatPaginationResponse } from '../../utils/pagination';
 import { ADMIN_ROLES } from '../../config/adminConfig';
-import { EventJobService } from '../../services/eventJobService';
+import { EventBookingManagementService } from '../../services/eventBooking/EventBookingManagementService';
 import { EventJobCheckoutService } from '../../services/eventBooking/EventJobCheckoutService';
 
 // 1. Submit Event Booking Inquiry (Customer)
 export const submitEventJob = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
-  const { booking } = await EventJobService.createBooking(userId as string, req.body);
+  const { booking } = await EventBookingManagementService.createInquiry(userId as string, req.body);
   res
     .status(201)
     .json(new ApiResponse(true, 'Your luxury event design has been submitted!', booking));
@@ -249,7 +249,7 @@ export const customerSubmitPayment = asyncHandler(async (req: Request, res: Resp
     throw new ApiError(401, 'Authentication credentials missing.');
   }
 
-  const booking = await EventJobService.customerSubmitPayment(
+  const booking = await EventBookingManagementService.customerSubmitPayment(
     req.params.id as string,
     userId,
     amount,
@@ -344,14 +344,21 @@ export const adminUpdateStatus = asyncHandler(async (req: Request, res: Response
   const { status } = req.body;
   const adminId = (req as any).user.id;
 
-  const booking = await EventJobService.adminUpdateStatus(req.params.id as string, status, adminId);
+  const booking = await EventBookingManagementService.adminUpdateStatus(
+    req.params.id as string,
+    status,
+    adminId,
+  );
 
   res.status(200).json(new ApiResponse(true, 'Timeline status updated', booking));
 });
 
 // 9. Admin Refines Quotation Estimates
 export const adminUpdateQuotation = asyncHandler(async (req: Request, res: Response) => {
-  const booking = await EventJobService.adminUpdateQuotation(req.params.id as string, req.body);
+  const booking = await EventBookingManagementService.adminUpdateQuotation(
+    req.params.id as string,
+    req.body,
+  );
 
   res
     .status(200)
@@ -405,4 +412,43 @@ export const adminUpdateNotes = asyncHandler(async (req: Request, res: Response)
   }
 
   res.status(200).json(new ApiResponse(true, 'Curators operational log notes saved', booking));
+});
+
+// 12. Initialize Milestone Payment
+export const initializeMilestonePayment = asyncHandler(async (req: Request, res: Response) => {
+  const { amount } = req.body;
+  const userId = (req as any).user?.id;
+  const result = await EventJobCheckoutService.initializeMilestonePayment(
+    req.params.id as string,
+    userId,
+    amount,
+  );
+  res.status(200).json(new ApiResponse(true, 'Milestone payment initialized', result));
+});
+
+// 13. Admin Record Offline Payment
+export const adminRecordPayment = asyncHandler(async (req: Request, res: Response) => {
+  const { amount, transactionId, status, note } = req.body;
+  const booking = await EventBookingManagementService.customerSubmitPayment(
+    req.params.id as string,
+    (req as any).user.id,
+    amount,
+    transactionId || 'OFFLINE',
+    note || 'Admin recorded offline payment',
+  );
+  if (status === 'success') {
+    // If it's recorded as success, force the status
+    booking.pricing.paymentStatus = booking.pricing.pendingBalance === 0 ? 'paid' : 'partial';
+    await booking.save();
+  }
+  res.status(200).json(new ApiResponse(true, 'Offline payment recorded', booking));
+});
+
+// 14. Admin Delete Payment
+export const adminDeletePayment = asyncHandler(async (_req: Request, _res: Response) => {
+  // Not fully supported in the new canonical service, but we can do a hacky remove or just return 400 for now.
+  throw new ApiError(
+    400,
+    'Deleting recorded payments is not supported via this API. Issue a refund instead.',
+  );
 });

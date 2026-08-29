@@ -5,16 +5,14 @@ import { motion } from 'framer-motion';
 import { SEO } from '../../components/seo/SEO';
 import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
 import { DashboardSkeleton } from '../../components/ui/Skeleton';
-import { MobileChatDrawer } from '../../components/dashboard/MobileChatDrawer';
 import { PaymentModal } from '../../components/dashboard/PaymentModal';
-import { DesktopChatWindow } from '../../components/dashboard/DesktopChatWindow';
 
 import { useDashboardData } from './hooks/useDashboardData';
 import { BookingList } from './components/BookingList';
 import { BookingCard } from './components/BookingCard';
 import { BookingDetailsCard } from './components/BookingDetailsCard';
-import { LogisticsCard } from './components/LogisticsCard';
 import { TimelineTracker } from './components/TimelineTracker';
+import { LogisticsCard } from './components/LogisticsCard';
 import { QuotationCard } from './components/QuotationCard';
 
 export function EventCustomerDashboard({
@@ -26,21 +24,13 @@ export function EventCustomerDashboard({
     bookings,
     selectedBooking,
     loading,
-    chatMessage,
-    setChatMessage,
-    chatEndRef,
     isPaymentModalOpen,
     setIsPaymentModalOpen,
     paymentAmount,
     setPaymentAmount,
     paymentNote,
     setPaymentNote,
-    isTimelineExpanded,
-    setIsTimelineExpanded,
-    isMobileChatOpen,
-    setIsMobileChatOpen,
     handleApproveQuote,
-    handleSendChat,
     handleProcessPayment,
     handleSelectBooking,
     currentStatusIndex,
@@ -65,8 +55,8 @@ export function EventCustomerDashboard({
     <div
       className={
         isEmbedded
-          ? 'text-on-surface font-body'
-          : 'bg-[#fbf9f6] min-h-screen text-on-surface pt-20 lg:pt-32 pb-24 relative overflow-hidden font-body'
+          ? 'text-on-surface font-body pb-32'
+          : 'bg-[#fbf9f6] min-h-screen text-on-surface pt-20 lg:pt-32 pb-40 relative overflow-hidden font-body'
       }
     >
       {!isEmbedded && (
@@ -204,16 +194,15 @@ export function EventCustomerDashboard({
                   )}
                   <BookingDetailsCard
                     selectedBooking={selectedBooking}
-                    setIsMobileChatOpen={setIsMobileChatOpen}
+                    currentStatusIndex={currentStatusIndex}
                   />
-
-                  <LogisticsCard selectedBooking={selectedBooking} />
 
                   <TimelineTracker
                     currentStatusIndex={currentStatusIndex}
-                    isTimelineExpanded={isTimelineExpanded}
-                    setIsTimelineExpanded={setIsTimelineExpanded}
+                    selectedBooking={selectedBooking}
                   />
+
+                  <LogisticsCard selectedBooking={selectedBooking} />
 
                   <QuotationCard
                     selectedBooking={selectedBooking}
@@ -222,30 +211,11 @@ export function EventCustomerDashboard({
                     setIsPaymentModalOpen={setIsPaymentModalOpen}
                   />
                 </div>
-
-                <DesktopChatWindow
-                  selectedBooking={selectedBooking}
-                  chatMessage={chatMessage}
-                  setChatMessage={setChatMessage}
-                  handleSendChat={handleSendChat}
-                  chatEndRef={chatEndRef}
-                />
               </div>
             )}
           </div>
         )}
       </div>
-
-      <MobileChatDrawer
-        isMobileChatOpen={isMobileChatOpen}
-        setIsMobileChatOpen={setIsMobileChatOpen}
-        selectedBooking={selectedBooking}
-        chatHistory={selectedBooking?.chatHistory}
-        chatMessage={chatMessage}
-        setChatMessage={setChatMessage}
-        handleSendChat={handleSendChat}
-        chatEndRef={chatEndRef}
-      />
 
       <PaymentModal
         isPaymentModalOpen={isPaymentModalOpen}

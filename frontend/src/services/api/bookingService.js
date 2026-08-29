@@ -45,6 +45,7 @@ export const bookingService = {
     const response = await api.patch(`/event-bookings/${id}/status`, { status });
     return response.data;
   },
+
   adminUpdateQuotation: async (id, pricingData) => {
     const response = await api.patch(`/event-bookings/${id}/quotation`, pricingData);
     return response.data;
@@ -56,5 +57,24 @@ export const bookingService = {
   adminUpdateNotes: async (id, adminNotes) => {
     const response = await api.patch(`/event-bookings/${id}/notes`, { adminNotes });
     return response.data;
+  },
+  adminRecordPayment: async (bookingId, paymentData) => {
+    try {
+      const response = await api.patch(`/event-bookings/${bookingId}/admin-payment`, paymentData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  adminDeletePayment: async (bookingId, transactionId) => {
+    try {
+      const response = await api.delete(
+        `/event-bookings/${bookingId}/admin-payment/${transactionId}`,
+      );
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 };

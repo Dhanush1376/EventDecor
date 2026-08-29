@@ -34,6 +34,25 @@ export function useProductValidation({
       if (formData.stock === '' || Number(formData.stock) < 0)
         errors.stock = 'Enter stock quantity';
     }
+    if (currentStep === 4) {
+      if (formData.returnSettings?.isReturnable) {
+        if (
+          !formData.returnSettings?.returnWindowDays ||
+          formData.returnSettings.returnWindowDays < 1
+        ) {
+          errors.returnWindowDays = 'Return window (days) is required when returns are enabled';
+        }
+      }
+      if (formData.returnSettings?.isExchangeable) {
+        if (
+          !formData.returnSettings?.exchangeWindowDays ||
+          formData.returnSettings.exchangeWindowDays < 1
+        ) {
+          errors.exchangeWindowDays =
+            'Exchange window (days) is required when exchanges are enabled';
+        }
+      }
+    }
     return errors;
   };
 

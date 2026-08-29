@@ -18,6 +18,13 @@ export const escapeHtml = (unsafe: any) => {
     .replace(/'/g, '&#039;');
 };
 
+export const getPrimaryEntityName = (items: any[]): string | null => {
+  if (!items || !Array.isArray(items) || items.length === 0) return null;
+  if (items.length === 1)
+    return items[0].title || items[0].name || items[0].productId?.title || null;
+  return null;
+};
+
 export const button = (text: string, url: string) => `
   <div style="margin: 32px 0; text-align: center;">
     <a href="${url}" style="background-color: #111827; color: #ffffff; padding: 12px 24px; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 6px; display: inline-block;">

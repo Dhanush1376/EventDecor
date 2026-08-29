@@ -3,7 +3,6 @@ import {
   ShoppingBag,
   ChevronRight,
   PackageCheck,
-  Compass,
   CornerDownLeft,
   User,
   CalendarDays,
@@ -14,6 +13,7 @@ import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDashboard } from '../../context/DashboardContext';
 import { OptimizedImage } from '../ui';
+import { useState, useEffect } from 'react';
 
 export function Sidebar() {
   const navigate = useNavigate();
@@ -57,6 +57,18 @@ export function Sidebar() {
     navigate(route);
     setMobileShowContent(true);
   };
+
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail?.hasUnread !== undefined) {
+        setHasUnreadNotifications(e.detail.hasUnread);
+      }
+    };
+    window.addEventListener('notifications_status_changed', handler);
+    return () => window.removeEventListener('notifications_status_changed', handler);
+  }, []);
 
   return (
     <div
@@ -175,7 +187,7 @@ export function Sidebar() {
             }`}
           >
             <div className="flex items-center gap-2">
-              <span>My Order History</span>
+              <span>My Orders</span>
               {hasRecentOrderUpdates && (
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
               )}
@@ -205,22 +217,17 @@ export function Sidebar() {
 
           <motion.button
             role="tab"
-            aria-selected={activeTab === 'custom'}
+            aria-selected={activeTab === 'bookings'}
             whileHover={{ x: 3 }}
-            onClick={() => handleTabClick('custom', '/dashboard/custom-orders')}
+            onClick={() => handleTabClick('bookings', '/dashboard/events')}
             className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-              activeTab === 'custom'
+              activeTab === 'bookings'
                 ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
                 : 'text-on-surface hover:bg-surface-container-low'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <span>My Custom Orders</span>
-              {hasRecentCustomUpdates && (
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-              )}
-            </div>
-            <Compass className="text-xs text-secondary" strokeWidth={1.5} />
+            <span>My Event Bookings</span>
+            <CalendarDays className="text-xs text-[var(--color-gold-dark)]" strokeWidth={1.5} />
           </motion.button>
 
           <motion.button
@@ -276,23 +283,13 @@ export function Sidebar() {
                 : 'text-on-surface hover:bg-surface-container-low'
             }`}
           >
-            <span>Notifications</span>
+            <div className="flex items-center gap-2">
+              <span>Notifications</span>
+              {hasUnreadNotifications && (
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
+              )}
+            </div>
             <Bell className="text-xs text-primary" strokeWidth={1.5} />
-          </motion.button>
-
-          <motion.button
-            role="tab"
-            aria-selected={activeTab === 'bookings'}
-            whileHover={{ x: 3 }}
-            onClick={() => handleTabClick('bookings', '/dashboard/events')}
-            className={`w-full text-left px-8 py-2.5 font-medium text-[12px] flex items-center justify-between transition-colors cursor-pointer outline-none ${
-              activeTab === 'bookings'
-                ? 'text-primary font-bold bg-primary/5 border-l-2 border-primary'
-                : 'text-on-surface hover:bg-surface-container-low'
-            }`}
-          >
-            <span>My Event Bookings</span>
-            <CalendarDays className="text-xs text-[var(--color-gold-dark)]" strokeWidth={1.5} />
           </motion.button>
 
           <motion.button

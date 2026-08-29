@@ -3,7 +3,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { InvoiceTemplate } from '../../../components/ui';
-import { SkeletonDashboard, stagger, fadeUp } from '../../components/AdminUIKit';
+import { SkeletonDashboard, stagger } from '../../components/AdminUIKit';
 import { OrderHeader } from './OrderHeader';
 import { OrderStatusTimeline } from './OrderStatusTimeline';
 import OrderTimeline from '../../components/OrderTimeline';
@@ -114,34 +114,57 @@ export function AdminOrderDetail() {
           onViewInvoice={() => setShowStickerModal(true)}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-          {/* Main Content */}
-          <div className="space-y-6">
-            <OrderStatusTimeline order={order} updateOrderStatus={updateOrderStatus} />
-            <motion.div variants={fadeUp} className="admin-card p-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="bg-[var(--admin-surface)] border-y border-[var(--admin-border)] sm:border sm:rounded-[var(--admin-radius-xl)] sm:shadow-[var(--admin-shadow-xs)] p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 -mx-4 sm:mx-0">
+            {/* Status Timeline */}
+            <div className="space-y-4">
+              <OrderStatusTimeline order={order} updateOrderStatus={updateOrderStatus} />
+            </div>
+
+            {/* Rich Event Timeline */}
+            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
               <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-[18px]">history</span>
                 Rich Event Timeline
               </h2>
-              <OrderTimeline orderId={order.rawOrder?._id || order.id} />
-            </motion.div>
-            <OrderSettlement
-              order={order}
-              updateOrderStatus={updateOrderStatus}
-              settlementCharges={settlementCharges}
-              setSettlementCharges={setSettlementCharges}
-            />
-            <OrderReturnCard order={order} />
-            <OrderItems order={order} />
-          </div>
+              <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
+                <OrderTimeline orderId={order.rawOrder?._id || order.id} />
+              </div>
+            </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <OrderLogistics order={order} trackingQR={trackingQR} />
-            <OrderShipping order={order} />
-            <motion.div variants={fadeUp} className="space-y-3">
+            {/* Order Settlement */}
+            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
+              <OrderSettlement
+                order={order}
+                updateOrderStatus={updateOrderStatus}
+                settlementCharges={settlementCharges}
+                setSettlementCharges={setSettlementCharges}
+              />
+            </div>
+
+            {/* Order Return Card */}
+            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
+              <OrderReturnCard order={order} />
+            </div>
+
+            {/* Order Items */}
+            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
+              <OrderItems order={order} />
+            </div>
+
+            {/* Logistics & Shipping */}
+            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
+              <OrderLogistics order={order} trackingQR={trackingQR} />
+            </div>
+
+            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
+              <OrderShipping order={order} />
+            </div>
+
+            {/* Rental Actions */}
+            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
               <OrderRentalActions order={order} updateOrderStatus={updateOrderStatus} />
-            </motion.div>
+            </div>
           </div>
         </div>
       </motion.div>

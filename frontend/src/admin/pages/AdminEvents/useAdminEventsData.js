@@ -98,13 +98,31 @@ export function useAdminEventsData() {
     try {
       const res = await showcaseService.update(id, { featured: !currentFeatured });
       if (res.success) {
-        toast.success(`Showcase ${currentFeatured ? 'removed from' : 'marked as'} featured`);
         setShowcases((prev) =>
-          prev.map((sc) => ((sc._id || sc.id) === id ? { ...sc, featured: !currentFeatured } : sc)),
+          prev.map((sc) =>
+            sc._id === id || sc.id === id ? { ...sc, featured: !currentFeatured } : sc,
+          ),
         );
+        toast.success(`Showcase ${!currentFeatured ? 'Featured' : 'Unfeatured'}`);
       }
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to toggle featured status.'));
+      toast.error(getErrorMessage(err, 'Failed to update featured status.'));
+    }
+  };
+
+  const toggleShowcaseActive = async (id, currentActive) => {
+    try {
+      const res = await showcaseService.update(id, { isActive: !currentActive });
+      if (res.success) {
+        setShowcases((prev) =>
+          prev.map((sc) =>
+            sc._id === id || sc.id === id ? { ...sc, isActive: !currentActive } : sc,
+          ),
+        );
+        toast.success(`Showcase ${!currentActive ? 'Activated' : 'Deactivated'}`);
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update showcase status.'));
     }
   };
 
@@ -184,5 +202,6 @@ export function useAdminEventsData() {
     inventoryItems,
     operationsLoading,
     toggleShowcaseFeatured,
+    toggleShowcaseActive,
   };
 }

@@ -334,7 +334,11 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                       </tr>
                     ) : (
                       returnsList.map((req) => (
-                        <tr key={req._id} className={`group ${getCardColorClass(req)}`}>
+                        <tr
+                          key={req._id}
+                          className={`group ${getCardColorClass(req)} cursor-pointer`}
+                          onClick={() => navigate(`/admin/returns/requests/${req._id}`)}
+                        >
                           <td className="pl-5 relative overflow-hidden font-semibold text-[var(--admin-text-primary)]">
                             {(req.sla?.isOverdue ||
                               req.priority === 'critical' ||
@@ -395,6 +399,15 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                                   req.userId?.phone ||
                                   req.orderId?.shippingAddress?.phone ||
                                   'N/A'}
+                              </span>
+                              <span
+                                className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5 flex items-center gap-1 truncate max-w-[150px]"
+                                title={
+                                  req.userId?.email || req.orderId?.shippingAddress?.email || 'N/A'
+                                }
+                              >
+                                <span className="material-symbols-outlined text-[12px]">mail</span>
+                                {req.userId?.email || req.orderId?.shippingAddress?.email || 'N/A'}
                               </span>
                               {(req.pickup?.address?.addressLine1 ||
                                 req.pickup?.address?.addressString ||

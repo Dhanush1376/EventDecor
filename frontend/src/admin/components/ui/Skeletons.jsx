@@ -162,3 +162,81 @@ export function SkeletonDashboard() {
     </div>
   );
 }
+
+export function SkeletonWizard({ steps = 4, className = '' }) {
+  return (
+    <div className={`space-y-6 admin-animate-in ${className}`} aria-busy="true">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <AdminSkeleton className="w-10 h-10 rounded-full shrink-0" />
+          <div>
+            <AdminSkeleton className="w-32 h-4 mb-2 rounded" />
+            <AdminSkeleton className="w-48 h-3 rounded" />
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <AdminSkeleton className="w-24 h-8 rounded-full hidden md:block" />
+          <AdminSkeleton className="w-40 h-8 rounded-full hidden md:block" />
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="admin-card p-4 hidden lg:block overflow-x-auto">
+        <div className="flex items-center justify-between min-w-[700px] px-2">
+          {Array.from({ length: steps }).map((_, i) => (
+            <React.Fragment key={i}>
+              <div className="flex items-center gap-2">
+                <AdminSkeleton className="w-8 h-8 rounded-xl shrink-0" />
+                <div className="space-y-1">
+                  <AdminSkeleton className="w-12 h-2.5 rounded" />
+                  <AdminSkeleton className="w-20 h-3 rounded" />
+                </div>
+              </div>
+              {i < steps - 1 && <AdminSkeleton className="flex-1 h-[2px] mx-4 rounded-full" />}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      <div className="lg:hidden admin-card p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <AdminSkeleton className="w-10 h-10 rounded-xl shrink-0" />
+          <div className="space-y-1">
+            <AdminSkeleton className="w-16 h-2 rounded" />
+            <AdminSkeleton className="w-24 h-3 rounded" />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Form Area */}
+      <div className="admin-card p-5 sm:p-8 space-y-8">
+        <div className="space-y-2">
+          <AdminSkeleton className="w-48 h-6 rounded" />
+          <AdminSkeleton className="w-64 h-3 rounded" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <AdminSkeleton className="w-24 h-3 rounded" />
+            <AdminSkeleton className="w-full h-11 rounded-[var(--admin-radius-lg)]" />
+          </div>
+          <div className="space-y-2">
+            <AdminSkeleton className="w-32 h-3 rounded" />
+            <AdminSkeleton className="w-full h-11 rounded-[var(--admin-radius-lg)]" />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <AdminSkeleton className="w-24 h-3 rounded" />
+          <AdminSkeleton className="w-full h-32 rounded-[var(--admin-radius-lg)]" />
+        </div>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--admin-border-subtle)]">
+          <AdminSkeleton className="w-24 h-10 rounded-[var(--admin-radius-lg)]" />
+          <AdminSkeleton className="w-32 h-10 rounded-[var(--admin-radius-lg)]" />
+        </div>
+      </div>
+    </div>
+  );
+}

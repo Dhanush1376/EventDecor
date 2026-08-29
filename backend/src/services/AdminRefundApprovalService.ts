@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import RefundRecord from '../models/RefundRecord';
 import AdminAuditLog from '../models/AdminAuditLog';
 import ApiError from '../utils/ApiError';
+import { refundQueue, isQueuesReady } from '../jobs/queues';
 import { PaymentRefundService } from './PaymentRefundService';
 import logger from '../config/logger';
 import { createAdminNotification } from './notificationService';
@@ -72,7 +73,6 @@ export class AdminRefundApprovalService {
     await refund.save();
 
     // Enqueue for processing
-    const { isQueuesReady, refundQueue } = require('../jobs/queues');
     if (isQueuesReady()) {
       await refundQueue.add('processRefund', { refundRecordId: refund._id });
     } else {

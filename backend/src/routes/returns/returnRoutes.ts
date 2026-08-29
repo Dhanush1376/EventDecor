@@ -131,6 +131,20 @@ router.get(
   returnAdminController.getPickupStats,
 );
 
+// Admin Exchange Management
+router.patch(
+  '/admin/exchanges/:id/transition',
+  requireAuth,
+  authorize('super_admin', 'main_admin', 'admin', 'editor'),
+  returnAdminController.transitionExchangeReplacement,
+);
+router.post(
+  '/admin/exchanges/:id/replacement-order',
+  requireAuth,
+  authorize('super_admin', 'main_admin', 'admin'),
+  returnAdminController.createReplacementOrder,
+);
+
 // Parameterized routes MUST be at the bottom
 router.get(
   '/admin/:id',

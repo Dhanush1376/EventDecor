@@ -188,6 +188,14 @@ const initializeNonCriticalServices = async (httpServer: Server) => {
       logger.error(`[STARTUP] Jobs initialization error: ${err.message}`);
     }
 
+    // 7.a Seed Serviceability data
+    try {
+      const { seedServiceability } = require('./src/scripts/seedServiceability');
+      await seedServiceability();
+    } catch (err: any) {
+      logger.error(`[STARTUP] Serviceability seeding error: ${err.message}`);
+    }
+
     // 8. Auto-generate sitemap
     generateSitemap().catch((err: any) =>
       logger.error(`[BOOT SITEMAP] Initial sitemap generation failed: ${err.message}`),

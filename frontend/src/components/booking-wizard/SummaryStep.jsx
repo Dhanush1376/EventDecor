@@ -1,7 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { m as motion } from 'framer-motion';
+import api from '../../services/api';
+import { Truck } from 'lucide-react';
 
 export function SummaryStep({ formData, activePackage }) {
+  const [travelExpense, setTravelExpense] = useState(null);
+  const [loadingExpense, setLoadingExpense] = useState(false);
+
+  useEffect(() => {
+    const fetchTravelExpense = async () => {
+      if (!formData.venue.state) return;
+      setLoadingExpense(true);
+      try {
+        const { data } = await api.post('/event-bookings/travel-expense/estimate', {
+          locationCode: formData.venue.state,
+          city: formData.venue.city,
+          address: formData.venue.address,
+        });
+        setTravelExpense(data.data);
+      } catch (err) {
+        console.error('Failed to fetch travel expense estimate', err);
+      } finally {
+        setLoadingExpense(false);
+      }
+    };
+    fetchTravelExpense();
+  }, [formData.venue.state, formData.venue.city, formData.venue.address]);
+
+  const basePrice = formData.eventPackageId
+    ? activePackage
+      ? parseInt(activePackage.pricing?.replace(/[^0-9]/g, '') || activePackage.basePrice || 35000)
+      : 35000
+    : 25000;
+
+  const addOnsTotal = formData.selectedAddons?.reduce((acc, curr) => acc + curr.price, 0) || 0;
+  const travelTotal = travelExpense?.totalTravelExpense || 0;
+
+  const totalPrice = basePrice + addOnsTotal + travelTotal;
+  const advanceDeposit = Math.round(totalPrice * 0.5);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -52,7 +89,10 @@ export function SummaryStep({ formData, activePackage }) {
             </div>
             <div className="flex justify-between">
               <span className="text-black/45">Destination Address:</span>
-              <span className="text-black font-semibold text-right truncate max-w-[180px]">
+              <span
+                className="text-black font-semibold text-right truncate max-w-[180px]"
+                title={`${formData.venue.address || ''}, ${formData.venue.city || ''}, ${formData.venue.state || ''}`}
+              >
                 {formData.venue.address || 'Not Entered'}
               </span>
             </div>
@@ -91,15 +131,7 @@ export function SummaryStep({ formData, activePackage }) {
           <div className="space-y-3 text-xs">
             <div className="flex justify-between">
               <span className="text-black/50">Decor Setup & Rental Fee:</span>
-              <span className="text-black font-semibold">
-                ₹
-                {(formData.eventPackageId
-                  ? activePackage
-                    ? parseInt(activePackage.pricing.replace(/[^0-9]/g, '')) || 35000
-                    : 35000
-                  : 25000
-                ).toLocaleString('en-IN')}
-              </span>
+              <span className="text-black font-semibold">₹{basePrice.toLocaleString('en-IN')}</span>
             </div>
             {formData.selectedAddons?.map((addon) => (
               <div key={addon.name} className="flex justify-between">
@@ -109,11 +141,28 @@ export function SummaryStep({ formData, activePackage }) {
                 </span>
               </div>
             ))}
-            <div className="flex justify-between">
-              <span className="text-black/50">+ Transportation & Setup:</span>
-              <span className="text-primary font-bold tracking-wider uppercase">
-                Calculated after admin review
+
+            <div className="flex justify-between items-start pt-2 border-t border-black/5 border-dashed">
+              <span className="text-black/50 flex items-center gap-1.5 mt-0.5">
+                <Truck className="w-3.5 h-3.5" /> Travel & Logistics:
               </span>
+              {loadingExpense ? (
+                <span className="text-black/30 font-medium italic animate-pulse">
+                  Calculating...
+                </span>
+              ) : travelExpense ? (
+                <div className="text-right">
+                  <span className="text-black font-semibold block">
+                    ₹{travelExpense.totalTravelExpense.toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-[9px] text-black/40 block mt-0.5 max-w-[150px] leading-tight">
+                    {travelExpense.actualDistanceKm} km ({travelExpense.freeTravelDistanceKm} km
+                    free) • ₹{travelExpense.perKmRate}/km
+                  </span>
+                </div>
+              ) : (
+                <span className="text-red-500 font-medium italic">Unavailable</span>
+              )}
             </div>
 
             <div className="border-t border-black/5 pt-4 flex justify-between items-end">
@@ -121,18 +170,7 @@ export function SummaryStep({ formData, activePackage }) {
                 Total Initial Price:
               </span>
               <span className="font-display text-xl text-black font-bold italic line-through opacity-50">
-                ₹
-                {(
-                  (formData.eventPackageId
-                    ? activePackage
-                      ? parseInt(
-                          activePackage.pricing?.replace(/[^0-9]/g, '') ||
-                            activePackage.basePrice ||
-                            35000,
-                        )
-                      : 35000
-                    : 25000) + formData.selectedAddons?.reduce((acc, curr) => acc + curr.price, 0)
-                ).toLocaleString('en-IN')}
+                ₹{totalPrice.toLocaleString('en-IN')}
               </span>
             </div>
             <div className="flex justify-between items-end mt-1">
@@ -140,20 +178,7 @@ export function SummaryStep({ formData, activePackage }) {
                 Advance Deposit to Reserve (50%):
               </span>
               <span className="font-display text-2xl text-primary font-bold italic">
-                ₹
-                {Math.round(
-                  ((formData.eventPackageId
-                    ? activePackage
-                      ? parseInt(
-                          activePackage.pricing?.replace(/[^0-9]/g, '') ||
-                            activePackage.basePrice ||
-                            35000,
-                        )
-                      : 35000
-                    : 25000) +
-                    formData.selectedAddons?.reduce((acc, curr) => acc + curr.price, 0)) *
-                    0.5,
-                ).toLocaleString('en-IN')}
+                ₹{advanceDeposit.toLocaleString('en-IN')}
               </span>
             </div>
           </div>

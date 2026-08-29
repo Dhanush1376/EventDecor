@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
 import { customerIntelligenceService, orderService } from '../../services/domainServices';
 import { formatCurrency } from './AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';

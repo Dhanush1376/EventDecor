@@ -6,6 +6,9 @@ export interface IBookingPayment {
   transactionId?: string;
   status: 'pending' | 'success' | 'failed';
   note?: string;
+  paymentMethod?: string;
+  source?: 'online' | 'manual';
+  recordedBy?: string;
 }
 
 export interface IBookingChat {
@@ -57,6 +60,7 @@ export interface IEventJob extends Document {
   eventType: string;
   date: Date;
   bookingDateStr?: string;
+  contactPhone?: string;
   normalizedVenueAddress?: string;
   rentalDurationDays?: number;
   timing: {
@@ -84,8 +88,18 @@ export interface IEventJob extends Document {
   pricing: {
     rentalFee: number;
     setupCharges: number;
-    transportationCost: number;
+    transportationCost: number; // Legacy, but keeping for backward compatibility
     addOnCharges: number;
+
+    // Travel Expense Snapshot
+    travelBaseFee?: number;
+    travelFreeDistanceKm?: number;
+    travelChargeableDistanceKm?: number;
+    travelPerKmRate?: number;
+    travelDistanceCharge?: number;
+    travelStateSurcharge?: number;
+    travelExpenseTotal?: number;
+
     depositAmount: number;
     totalPrice: number;
     pendingBalance: number;
@@ -132,6 +146,9 @@ const BookingPaymentSchema = new Schema({
   transactionId: { type: String },
   status: { type: String, enum: ['pending', 'success', 'failed'], default: 'success' },
   note: { type: String },
+  paymentMethod: { type: String, default: 'razorpay' },
+  source: { type: String, enum: ['online', 'manual'], default: 'online' },
+  recordedBy: { type: String },
 });
 
 const BookingAddonSchema = new Schema({
@@ -208,8 +225,18 @@ const EventJobSchema: Schema = new Schema(
     pricing: {
       rentalFee: { type: Number, default: 0 },
       setupCharges: { type: Number, default: 0 },
-      transportationCost: { type: Number, default: 0 },
+      transportationCost: { type: Number, default: 0 }, // Legacy
       addOnCharges: { type: Number, default: 0 },
+
+      // Travel Expense Snapshot
+      travelBaseFee: { type: Number, default: 0 },
+      travelFreeDistanceKm: { type: Number, default: 0 },
+      travelChargeableDistanceKm: { type: Number, default: 0 },
+      travelPerKmRate: { type: Number, default: 0 },
+      travelDistanceCharge: { type: Number, default: 0 },
+      travelStateSurcharge: { type: Number, default: 0 },
+      travelExpenseTotal: { type: Number, default: 0 },
+
       depositAmount: { type: Number, default: 0 },
       totalPrice: { type: Number, default: 0 },
       pendingBalance: { type: Number, default: 0 },

@@ -1,8 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CornerDownLeft, ArrowLeftRight, ChevronDown, ArrowRight, ArrowDown } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { returnService } from '../../services/api/returnService';
+
+const formatReplacementStatus = (status) => {
+  switch (status) {
+    case 'pending_stock':
+      return 'Replacement Preparing';
+    case 'reserved':
+      return 'Stock Reserved';
+    case 'shipped':
+      return 'Shipped';
+    case 'delivered':
+      return 'Delivered';
+    case 'inspection_pending':
+      return 'Quality Check Pending';
+    case 'inspection_passed':
+      return 'Quality Check Passed';
+    default:
+      return status?.replace(/_/g, ' ') || 'Unknown';
+  }
+};
+
+const formatPaymentStatus = (status) => {
+  switch (status) {
+    case 'payment_required':
+      return 'Payment Required';
+    case 'payment_paid':
+      return 'Paid';
+    case 'failed':
+      return 'Payment Failed';
+    case 'not_applicable':
+      return 'No Additional Payment';
+    default:
+      return status?.replace(/_/g, ' ') || 'Unknown';
+  }
+};
 
 export function ReturnExchangeSection({ orderId }) {
   const [returns, setReturns] = useState([]);
@@ -203,7 +236,7 @@ export function ReturnExchangeSection({ orderId }) {
                           <div className="text-[10px] text-secondary">
                             Replacement Status:{' '}
                             <span className="font-bold text-blue-600">
-                              {e.replacementStatus?.replace(/_/g, ' ').toUpperCase()}
+                              {formatReplacementStatus(e.replacementStatus).toUpperCase()}
                             </span>
                           </div>
                         </div>
@@ -277,19 +310,25 @@ export function ReturnExchangeSection({ orderId }) {
 
                       <div className="pt-3 border-t border-outline-variant/20 flex justify-between items-center text-[10px]">
                         <span className="text-secondary">
-                          Tracking:{' '}
-                          <strong className="text-on-surface">
-                            {e.trackingNumber || 'Pending'}
-                          </strong>
+                          {e.trackingNumber ? (
+                            <>
+                              Courier:{' '}
+                              <strong className="text-on-surface">
+                                {e.courierPartner || 'Assigned'}
+                              </strong>
+                              {' | '}
+                              Tracking:{' '}
+                              <strong className="text-on-surface">{e.trackingNumber}</strong>
+                            </>
+                          ) : (
+                            <span>Tracking will appear once shipped.</span>
+                          )}
                         </span>
                         <span className="text-secondary flex items-center gap-2">
                           Payment Diff:{' '}
                           <strong className="text-on-surface">
                             ₹{Math.round(e.priceDifference || 0).toLocaleString('en-IN')} (
-                            {e.paymentStatus === 'payment_required'
-                              ? 'Payment Required'
-                              : e.paymentStatus}
-                            )
+                            {formatPaymentStatus(e.paymentStatus)})
                           </strong>
                           {e.paymentStatus === 'payment_required' && e.additionalPaymentId && (
                             <button

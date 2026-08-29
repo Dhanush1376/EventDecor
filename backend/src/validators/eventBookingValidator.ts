@@ -13,6 +13,13 @@ const BOOKING_STATUSES = [
   'active',
   'pickup_scheduled',
   'completed',
+  'pending_payment',
+  'payment_processing',
+  'draft',
+  'execution',
+  'cancelled',
+  'refunded',
+  'failed',
 ] as const;
 
 export const submitEventJobValidator = [

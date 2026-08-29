@@ -1,28 +1,139 @@
 import { m as motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
 import {
   StatusBadge,
+  StatCard,
   SkeletonDashboard,
   EmptyState,
   formatCurrency,
   fadeUp,
 } from '../../../components/AdminUIKit';
+import { ManualPaymentModal } from '../../../components/ui/ManualPaymentModal';
+import { bookingService } from '../../../../services/domainServices';
+import toast from 'react-hot-toast';
+import { getErrorMessage } from '../../../../utils/core/errorHelpers';
 
-export function BookingsTab({ bookings, loadingBookings }) {
+export function BookingsTab({
+  bookings,
+  loadingBookings,
+  totalContractVal,
+  outstandingBal,
+  activeBookingsCount,
+  upcomingSetupsCount,
+}) {
   const navigate = useNavigate();
+  const [selectedPaymentBooking, setSelectedPaymentBooking] = useState(null);
+
+  const handleDeletePayment = async (booking, transactionId) => {
+    if (!window.confirm('Are you sure you want to undo this payment?')) return;
+    try {
+      const res = await bookingService.adminDeletePayment(booking._id || booking.id, transactionId);
+      if (res.success) {
+        toast.success('Payment successfully undone.');
+        window.location.reload();
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to undo payment.'));
+    }
+  };
+
+  const getUrgencyCardClass = (date) => {
+    if (!date)
+      return 'bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDate = new Date(date);
+    const diffTime = eventDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0)
+      return 'bg-[var(--admin-surface-muted)] border-[var(--admin-border)] opacity-60';
+    if (diffDays >= 0 && diffDays <= 7) return '!bg-[var(--admin-error)]/10 border-transparent';
+    if (diffDays > 7 && diffDays <= 30) return '!bg-[var(--admin-warning)]/15 border-transparent';
+    return 'bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]';
+  };
+
+  const getUrgencyRowClass = (date) => {
+    if (!date) return '';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDate = new Date(date);
+    const diffTime = eventDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0)
+      return 'opacity-60 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)]';
+    if (diffDays >= 0 && diffDays <= 7)
+      return '!bg-[var(--admin-error)]/10 hover:!bg-[var(--admin-error)]/20';
+    if (diffDays > 7 && diffDays <= 30)
+      return '!bg-[var(--admin-warning)]/15 hover:!bg-[var(--admin-warning)]/25';
+    return '';
+  };
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [urgencyFilter, setUrgencyFilter] = useState('all');
+  const [paymentFilter, setPaymentFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
+
+  const filteredBookings = useMemo(() => {
+    let result = [...bookings];
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (b) =>
+          b.bookingId?.toLowerCase().includes(q) ||
+          b._id?.toLowerCase().includes(q) ||
+          b.user?.name?.toLowerCase().includes(q) ||
+          b.contactPhone?.toLowerCase().includes(q) ||
+          b.title?.toLowerCase().includes(q) ||
+          b.venue?.address?.toLowerCase().includes(q),
+      );
+    }
+
+    if (urgencyFilter !== 'all') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      result = result.filter((b) => {
+        if (!b.date) return false;
+        const eventDate = new Date(b.date);
+        const diffTime = eventDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (urgencyFilter === 'critical') return diffDays >= 0 && diffDays <= 7;
+        if (urgencyFilter === 'high') return diffDays > 7 && diffDays <= 30;
+        if (urgencyFilter === 'normal') return diffDays > 30;
+        if (urgencyFilter === 'past') return diffDays < 0;
+        return true;
+      });
+    }
+
+    if (paymentFilter !== 'all') {
+      result = result.filter((b) => b.pricing?.paymentStatus === paymentFilter);
+    }
+
+    result.sort((a, b) => {
+      if (sortBy === 'newest') {
+        return new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date);
+      } else if (sortBy === 'upcoming') {
+        return new Date(a.date) - new Date(b.date);
+      }
+      return 0;
+    });
+
+    return result;
+  }, [bookings, searchQuery, urgencyFilter, paymentFilter, sortBy]);
 
   return (
-    <motion.div
-      key="bookings"
-      initial="hidden"
-      animate="show"
-      variants={fadeUp}
-      className="admin-card overflow-hidden"
-    >
+    <motion.div key="bookings" initial="hidden" animate="show" variants={fadeUp}>
       {loadingBookings ? (
-        <SkeletonDashboard />
+        <div className="admin-card overflow-hidden">
+          <SkeletonDashboard />
+        </div>
       ) : bookings.length === 0 ? (
-        <div className="py-16 flex justify-center bg-[var(--admin-surface)]">
+        <div className="admin-card overflow-hidden py-16 flex justify-center bg-[var(--admin-surface)]">
           <EmptyState
             icon="event_busy"
             title="No Bookings Yet"
@@ -30,90 +141,427 @@ export function BookingsTab({ bookings, loadingBookings }) {
           />
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="admin-table w-full min-w-[800px]">
-            <thead>
-              <tr>
-                <th>Customer Details</th>
-                <th>Event Type</th>
-                <th>Date & Venue</th>
-                <th>Total Price</th>
-                <th>Booking Status</th>
-                <th className="text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookings.map((b) => (
-                <tr
-                  key={b._id || b.id}
-                  className="admin-table-row-clickable"
-                  onClick={() => navigate(`/admin/events/${b._id || b.id}`)}
+        <>
+          <div className="admin-grid-stats mb-6">
+            <StatCard
+              icon="account_balance_wallet"
+              label="Total Bookings Value"
+              value={formatCurrency(totalContractVal)}
+              change="Active Bookings"
+              changeType="up"
+              color="var(--admin-info)"
+            />
+            <StatCard
+              icon="pending_actions"
+              label="Pending Payments"
+              value={formatCurrency(outstandingBal)}
+              change="To Collect"
+              changeType="up"
+              color="var(--admin-warning)"
+            />
+            <StatCard
+              icon="event_available"
+              label="Setups Today"
+              value={activeBookingsCount}
+              change="Live Events"
+              changeType="up"
+              color="var(--admin-success)"
+            />
+            <StatCard
+              icon="edit_calendar"
+              label="Upcoming Setups"
+              value={upcomingSetupsCount}
+              change="Scheduled"
+              changeType="up"
+              color="var(--admin-accent)"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full mb-6">
+            <div className="relative flex-1 min-w-0 sm:w-64 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] flex items-center px-3">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Search by ID, customer, phone, or title..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-10 min-w-0"
+              />
+            </div>
+            <div className="flex items-stretch gap-2 min-w-0 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+              <div className="relative flex items-stretch shrink-0 flex-1 lg:flex-none">
+                <select
+                  value={urgencyFilter}
+                  onChange={(e) => setUrgencyFilter(e.target.value)}
+                  className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 w-full appearance-none min-w-[130px] truncate"
                 >
-                  <td>
-                    <div className="space-y-0.5">
-                      <span className="text-[12px] font-bold text-[var(--admin-text-primary)] block">
-                        {b.user?.name || 'Anonymous Client'}
-                      </span>
-                      <span className="text-[11px] text-[var(--admin-text-tertiary)] block">
-                        {b.user?.phone || 'No contact'}
-                      </span>
+                  <option value="all">All Urgencies</option>
+                  <option value="critical">Critical (≤ 7 Days)</option>
+                  <option value="high">High (8-30 Days)</option>
+                  <option value="normal">Normal (&gt; 30 Days)</option>
+                  <option value="past">Past Events</option>
+                </select>
+                <span
+                  className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"
+                  style={{ top: '50%', transform: 'translateY(-50%)' }}
+                >
+                  expand_more
+                </span>
+              </div>
+              <div className="relative flex items-stretch shrink-0 flex-1 lg:flex-none">
+                <select
+                  value={paymentFilter}
+                  onChange={(e) => setPaymentFilter(e.target.value)}
+                  className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 w-full appearance-none min-w-[120px] truncate"
+                >
+                  <option value="all">All Payments</option>
+                  <option value="unpaid">Unpaid</option>
+                  <option value="partial">Partial</option>
+                  <option value="paid">Paid</option>
+                </select>
+                <span
+                  className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"
+                  style={{ top: '50%', transform: 'translateY(-50%)' }}
+                >
+                  expand_more
+                </span>
+              </div>
+              <div className="relative flex items-stretch shrink-0 flex-1 lg:flex-none">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 w-full appearance-none min-w-[130px] truncate"
+                >
+                  <option value="newest">Newest Added</option>
+                  <option value="upcoming">Upcoming Event</option>
+                </select>
+                <span
+                  className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"
+                  style={{ top: '50%', transform: 'translateY(-50%)' }}
+                >
+                  expand_more
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {filteredBookings.length === 0 ? (
+            <div className="admin-card overflow-hidden py-16 flex justify-center bg-[var(--admin-surface)]">
+              <EmptyState
+                icon="search_off"
+                title="No results found"
+                description="Try adjusting your filters or search query."
+              />
+            </div>
+          ) : (
+            <>
+              {/* Mobile Card Layout */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
+                {filteredBookings.map((b) => (
+                  <div
+                    key={b._id || b.id}
+                    onClick={() => navigate(`/admin/events/${b._id || b.id}`)}
+                    className={`border rounded-xl p-4 shadow-[var(--admin-shadow-sm)] flex flex-col gap-4 cursor-pointer transition-colors ${getUrgencyCardClass(b.date)}`}
+                  >
+                    {/* Header: Customer and Status */}
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+                          #{b.bookingId || b._id?.toString().substring(0, 8)}
+                        </span>
+                        <span className="text-[14px] font-bold text-[var(--admin-text-primary)] block truncate">
+                          {b.user?.name || 'Anonymous Client'}
+                        </span>
+                        <span className="text-[12px] text-[var(--admin-text-secondary)] block truncate">
+                          {b.contactPhone || b.user?.phone || 'No contact'}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <StatusBadge status={b.status.replace('_', '')} />
+                        <span
+                          className={`text-[12px] font-bold uppercase tracking-wider ${b.pricing?.paymentStatus === 'paid' ? 'text-[var(--admin-success)]' : 'text-[var(--admin-warning)]'}`}
+                        >
+                          {b.pricing?.paymentStatus}
+                        </span>
+                      </div>
                     </div>
-                  </td>
-                  <td>
-                    <div className="space-y-1">
-                      <span className="admin-badge admin-badge-neutral text-[9px] uppercase font-bold">
-                        {b.eventType}
-                      </span>
-                      <h4 className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate max-w-[150px]">
-                        {b.title}
-                      </h4>
+
+                    {/* Event Info */}
+                    <div className="flex gap-3 bg-[var(--admin-bg-subtle)] p-3 rounded-lg border border-[var(--admin-border-subtle)]">
+                      {b.eventPackage?.image || b.inspirationImages?.[0] ? (
+                        <div className="w-14 h-14 rounded-md overflow-hidden flex-shrink-0 border border-[var(--admin-border)] bg-[var(--admin-surface-muted)]">
+                          <img
+                            src={b.eventPackage?.image || b.inspirationImages?.[0]}
+                            alt={b.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 rounded-md bg-[var(--admin-surface-hover)] flex items-center justify-center flex-shrink-0 border border-[var(--admin-border)]">
+                          <span className="text-gray-400 material-symbols-outlined text-xl">
+                            image
+                          </span>
+                        </div>
+                      )}
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <span className="admin-badge admin-badge-neutral text-[9px] uppercase font-bold inline-block mb-0.5 truncate max-w-full">
+                          {b.eventType}
+                        </span>
+                        <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)] truncate">
+                          {b.title}
+                        </h4>
+                        <span className="text-[12px] font-bold text-[var(--admin-text-primary)] block">
+                          {formatCurrency(b.pricing?.totalPrice)}
+                        </span>
+                      </div>
                     </div>
-                  </td>
-                  <td>
-                    <div className="space-y-0.5">
-                      <span className="text-[12px] font-bold text-[var(--admin-text-primary)] block">
-                        {new Date(b.date).toLocaleDateString('en-IN', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </span>
-                      <span className="text-[11px] text-[var(--admin-text-tertiary)] truncate max-w-[180px] block">
-                        {b.venue?.address}
-                      </span>
+
+                    {/* Date & Venue */}
+                    <div className="grid grid-cols-2 gap-3 bg-[var(--admin-bg-subtle)] p-3 rounded-lg border border-[var(--admin-border-subtle)]">
+                      <div>
+                        <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+                          Date & Time
+                        </span>
+                        <span className="text-[12px] font-medium text-[var(--admin-text-primary)] block">
+                          {new Date(b.date).toLocaleDateString('en-IN', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </span>
+                        {b.timing?.start && (
+                          <span className="text-[11px] text-[var(--admin-text-secondary)] block mt-0.5">
+                            {b.timing.start} {b.timing.end ? `- ${b.timing.end}` : ''}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+                          Venue
+                        </span>
+                        <span className="text-[11px] text-[var(--admin-text-secondary)] line-clamp-2 leading-tight">
+                          {b.venue?.address || 'Not specified'}
+                        </span>
+                      </div>
                     </div>
-                  </td>
-                  <td>
-                    <div className="space-y-0.5">
-                      <span className="text-[12px] font-bold text-[var(--admin-text-primary)] block">
-                        {formatCurrency(b.pricing?.totalPrice)}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider ${b.pricing?.paymentStatus === 'paid' ? 'text-[var(--admin-success)]' : 'text-[var(--admin-warning)]'}`}
+
+                    {/* Action */}
+                    <div className="flex gap-2 w-full mt-1">
+                      {b.pricing?.paymentStatus !== 'paid' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPaymentBooking(b);
+                          }}
+                          className="flex-1 admin-btn admin-btn-outline h-9 text-[12px] flex items-center justify-center gap-1.5"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">payments</span>
+                          Pay
+                        </button>
+                      )}
+                      {(() => {
+                        const latestManualPayment = (b.payments || [])
+                          .filter((p) => p.source === 'manual')
+                          .sort((x, y) => new Date(y.date) - new Date(x.date))[0];
+                        if (!latestManualPayment) return null;
+                        return (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeletePayment(b, latestManualPayment.transactionId);
+                            }}
+                            title="Undo Recent Manual Payment"
+                            className="admin-btn admin-btn-outline h-9 w-9 p-0 flex items-center justify-center shrink-0 border-[var(--admin-error)] text-[var(--admin-error)] hover:bg-[var(--admin-error)]/10"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">undo</span>
+                          </button>
+                        );
+                      })()}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/admin/events/${b._id || b.id}`);
+                        }}
+                        className="flex-1 admin-btn admin-btn-outline h-9 text-[12px]"
                       >
-                        {b.pricing?.paymentStatus}
-                      </span>
+                        Manage Booking
+                      </button>
                     </div>
-                  </td>
-                  <td>
-                    <StatusBadge status={b.status.replace('_', '')} />
-                  </td>
-                  <td className="text-right">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/admin/events/${b._id || b.id}`);
-                      }}
-                      className="admin-btn admin-btn-outline h-8 min-h-0 text-[10px] px-3 py-0"
-                    >
-                      Manage
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table Layout */}
+              <div className="hidden md:block overflow-x-auto admin-card overflow-hidden">
+                <table className="admin-table w-full min-w-[800px]">
+                  <thead>
+                    <tr>
+                      <th>Customer Details</th>
+                      <th>Event Type</th>
+                      <th>Date & Venue</th>
+                      <th>Total Price</th>
+                      <th>Booking Status</th>
+                      <th className="text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredBookings.map((b) => (
+                      <tr
+                        key={b._id || b.id}
+                        className={`admin-table-row-clickable ${getUrgencyRowClass(b.date)}`}
+                        onClick={() => navigate(`/admin/events/${b._id || b.id}`)}
+                      >
+                        <td>
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+                              #{b.bookingId || b._id?.toString().substring(0, 8)}
+                            </span>
+                            <span className="text-[12px] font-bold text-[var(--admin-text-primary)] block truncate">
+                              {b.user?.name || 'Anonymous Client'}
+                            </span>
+                            <span className="text-[11px] text-[var(--admin-text-tertiary)] block">
+                              {b.contactPhone || b.user?.phone || 'No contact'}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-3">
+                            {b.eventPackage?.image || b.inspirationImages?.[0] ? (
+                              <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 border border-[var(--admin-border)] bg-[var(--admin-surface-muted)]">
+                                <img
+                                  src={b.eventPackage?.image || b.inspirationImages?.[0]}
+                                  alt={b.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-10 h-10 rounded-md bg-[var(--admin-surface-hover)] flex items-center justify-center flex-shrink-0 border border-[var(--admin-border)]">
+                                <span className="text-gray-400 material-symbols-outlined text-sm">
+                                  image
+                                </span>
+                              </div>
+                            )}
+                            <div className="space-y-1">
+                              <span className="admin-badge admin-badge-neutral text-[9px] uppercase font-bold">
+                                {b.eventType}
+                              </span>
+                              <h4 className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate max-w-[150px]">
+                                {b.title}
+                              </h4>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="space-y-0.5">
+                            <span className="text-[12px] font-bold text-[var(--admin-text-primary)] block">
+                              {new Date(b.date).toLocaleDateString('en-IN', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </span>
+                            {b.timing?.start && (
+                              <span className="text-[10px] text-[var(--admin-text-secondary)] font-medium block mt-0.5 mb-0.5">
+                                {b.timing.start} {b.timing.end ? `- ${b.timing.end}` : ''}
+                              </span>
+                            )}
+                            <span className="text-[11px] text-[var(--admin-text-tertiary)] truncate max-w-[180px] block">
+                              {b.venue?.address}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="space-y-0.5 relative group">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] block">
+                                {formatCurrency(b.pricing?.totalPrice)}
+                              </span>
+                              {b.pricing?.paymentStatus !== 'paid' && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedPaymentBooking(b);
+                                  }}
+                                  title="Record Manual Payment"
+                                  className="admin-btn admin-btn-outline h-7 px-2 py-0 text-[10px] flex items-center justify-center gap-1 min-h-0 shrink-0"
+                                >
+                                  <span className="material-symbols-outlined text-[12px]">
+                                    payments
+                                  </span>
+                                  Pay
+                                </button>
+                              )}
+                              {(() => {
+                                const latestManualPayment = (b.payments || [])
+                                  .filter((p) => p.source === 'manual')
+                                  .sort((x, y) => new Date(y.date) - new Date(x.date))[0];
+                                if (!latestManualPayment) return null;
+                                return (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeletePayment(b, latestManualPayment.transactionId);
+                                    }}
+                                    title="Undo Recent Manual Payment"
+                                    className="admin-btn-icon w-7 h-7 min-h-0 bg-[var(--admin-error)]/10 text-[var(--admin-error)] hover:bg-[var(--admin-error)]/20 border border-[var(--admin-error)] shrink-0"
+                                  >
+                                    <span className="material-symbols-outlined text-[14px]">
+                                      undo
+                                    </span>
+                                  </button>
+                                );
+                              })()}
+                            </div>
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider ${
+                                b.pricing?.paymentStatus === 'paid'
+                                  ? 'text-[var(--admin-success)]'
+                                  : b.pricing?.paymentStatus === 'partial'
+                                    ? 'text-[var(--admin-warning)]'
+                                    : 'text-[var(--admin-error)]'
+                              }`}
+                            >
+                              {b.pricing?.paymentStatus}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <StatusBadge status={b.status.replace('_', '')} />
+                        </td>
+                        <td className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/admin/events/${b._id || b.id}`);
+                              }}
+                              className="admin-btn admin-btn-outline h-8 min-h-0 text-[10px] px-3 py-0 shrink-0"
+                            >
+                              Manage
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {selectedPaymentBooking && (
+        <ManualPaymentModal
+          booking={selectedPaymentBooking}
+          onClose={() => setSelectedPaymentBooking(null)}
+          onSuccess={() => {
+            setSelectedPaymentBooking(null);
+            window.location.reload(); // Simple refresh to show updated data
+          }}
+        />
       )}
     </motion.div>
   );

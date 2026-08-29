@@ -30,13 +30,24 @@ export function LocationSelectorModal({
     if (inline && selectedLocation) {
       onLocationSelect(selectedLocation);
     }
-  }, [selectedLocation, inline, onLocationSelect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLocation, inline]);
 
   const mapInstanceRef = useRef(null);
   const markerInstanceRef = useRef(null);
   const resizeObserverRef = useRef(null);
   const mapContainerRef = useRef(null);
   const timeoutRef = useRef(null);
+  const cardRef = useRef(null);
+
+  // Auto-scroll to card when location is selected
+  useEffect(() => {
+    if (selectedLocation && cardRef.current && inline) {
+      setTimeout(() => {
+        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [selectedLocation, inline]);
 
   // Default coordinate center (Ongole, Andhra Pradesh, India)
   const DEFAULT_LAT = 15.506;
@@ -291,37 +302,46 @@ export function LocationSelectorModal({
     loadLeafletEngine();
   };
 
+  const searchTimeoutRef = useRef(null);
+
   // Address Search Autocomplete (OSM Nominatim)
-  const handleSearchChange = async (e) => {
+  const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
 
-    if (query.trim().length < 3) {
+    if (query.trim().length < 1) {
       setSuggestions([]);
       return;
     }
 
     setIsLoadingSuggestions(true);
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=in&limit=5`,
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestions(
-          data.map((item) => ({
-            displayName: item.display_name,
-            lat: Number(item.lat),
-            lon: Number(item.lon),
-            raw: item,
-          })),
-        );
-      }
-    } catch (err) {
-      logger.error('Autocomplete fetching error', err);
-    } finally {
-      setIsLoadingSuggestions(false);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=in&limit=5`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setSuggestions(
+            data.map((item) => ({
+              displayName: item.display_name,
+              lat: Number(item.lat),
+              lon: Number(item.lon),
+              raw: item,
+            })),
+          );
+        }
+      } catch (err) {
+        logger.error('Autocomplete fetching error', err);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    }, 600); // 600ms debounce
   };
 
   // Select search suggestion
@@ -445,10 +465,10 @@ export function LocationSelectorModal({
             animate={inline ? false : { opacity: 1, scale: 1, y: 0 }}
             exit={inline ? false : { opacity: 0, scale: 0.9, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className={`relative bg-[#FCFAF6] border border-[#826237]/30 w-full font-body overflow-hidden flex flex-col z-10 ${
+            className={`relative bg-[#FCFAF6] border border-[#826237]/30 w-full font-body flex flex-col z-10 ${
               inline
-                ? 'rounded-2xl flex-1 min-h-[400px]'
-                : 'max-w-2xl rounded-[2.5rem] shadow-2xl max-h-[90vh]'
+                ? 'rounded-2xl'
+                : 'max-w-2xl rounded-[2.5rem] shadow-2xl max-h-[90vh] overflow-hidden'
             }`}
           >
             {/* Elegant Header Banner */}
@@ -476,7 +496,9 @@ export function LocationSelectorModal({
             )}
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-4 flex-1 flex flex-col min-h-[400px]">
+            <div
+              className={`p-6 space-y-4 flex flex-col ${inline ? '' : 'overflow-y-auto flex-1 min-h-[400px]'}`}
+            >
               {/* Autocomplete Search Bar */}
               <div className="relative z-30 w-full">
                 <Search
@@ -555,6 +577,7 @@ export function LocationSelectorModal({
               {/* Location Card Metadata Visualizer */}
               {selectedLocation && (
                 <motion.div
+                  ref={cardRef}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-[#FAF6F0] p-4.5 rounded-[1.5rem] border border-[#826237]/20 flex flex-col sm:flex-row gap-3 items-start justify-between relative overflow-hidden"

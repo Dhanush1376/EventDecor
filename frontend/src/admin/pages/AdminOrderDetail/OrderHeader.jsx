@@ -8,12 +8,12 @@ export function OrderHeader({ order, navigate, onPrintInvoice, onViewInvoice }) 
   return (
     <motion.div
       variants={fadeUp}
-      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      className="flex flex-col sm:flex-row sm:items-start justify-between gap-4"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         <button
           onClick={() => navigate('/admin/orders')}
-          className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]"
+          className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] shrink-0 mt-1"
         >
           <span className="material-symbols-outlined text-[20px]">arrow_back</span>
         </button>

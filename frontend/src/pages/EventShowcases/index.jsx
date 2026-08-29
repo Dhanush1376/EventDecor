@@ -67,8 +67,6 @@ export function EventShowcases() {
     setSelectedShowcase,
     customInclusions,
     setCustomInclusions,
-    rentalDurationDays,
-    setRentalDurationDays,
     selectedPaletteColor,
     setSelectedPaletteColor,
     placementPreference,
@@ -146,6 +144,9 @@ export function EventShowcases() {
                 <h2 className="font-headline-md text-on-surface font-normal text-[24px] lg:text-[32px]">
                   Event Design Packages
                 </h2>
+                <p className="font-body-md text-on-surface-variant/60 font-medium">
+                  {totalCount} unique pieces designed for you
+                </p>
               </div>
             </div>
 
@@ -250,8 +251,6 @@ export function EventShowcases() {
           setSelectedShowcase={setSelectedShowcase}
           customInclusions={customInclusions}
           setCustomInclusions={setCustomInclusions}
-          rentalDurationDays={rentalDurationDays}
-          setRentalDurationDays={setRentalDurationDays}
           selectedPaletteColor={selectedPaletteColor}
           setSelectedPaletteColor={setSelectedPaletteColor}
           placementPreference={placementPreference}

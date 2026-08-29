@@ -87,13 +87,31 @@ export class EventJobStateMachine {
   /**
    * Transition the booking's status.
    */
-  static transition(booking: any, newStatus: EventJobStatus, note: string, updatedBy?: string) {
+  static transition(
+    booking: any,
+    newStatus: EventJobStatus,
+    note: string,
+    updatedBy?: string,
+    isAdminOverride: boolean = false,
+  ) {
     if (!this.canTransition(booking, newStatus)) {
-      const workflow = this.determineWorkflow(booking);
-      throw new ApiError(
-        400,
-        `Invalid event booking state transition in ${workflow} workflow: from '${booking.status}' to '${newStatus}'`,
-      );
+      let canOverride = isAdminOverride;
+
+      // Even if admin overrides, we strictly enforce that 'confirmed' requires payment
+      if (isAdminOverride && newStatus === 'confirmed') {
+        const paymentStatus = booking.pricing?.paymentStatus;
+        if (paymentStatus !== 'paid' && paymentStatus !== 'partial') {
+          canOverride = false;
+        }
+      }
+
+      if (!canOverride) {
+        const workflow = this.determineWorkflow(booking);
+        throw new ApiError(
+          400,
+          `Invalid event booking state transition in ${workflow} workflow: from '${booking.status}' to '${newStatus}'. If transitioning to Confirmed, payment must be verified first.`,
+        );
+      }
     }
 
     booking.statusHistory = booking.statusHistory || [];

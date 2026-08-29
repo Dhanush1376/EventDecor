@@ -13,16 +13,14 @@ export function LogisticsCard({ selectedBooking }) {
       <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-center">
         <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
           <Truck className="text-[14px]" strokeWidth={1.5} />
-          Logistics & Crew Roster
+          Logistics & Team Details
         </h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-secondary">
             <Wrench className="text-[16px]" strokeWidth={1.5} />
-            <span className="text-[9px] uppercase tracking-widest font-bold">
-              Decoration Setup Schedule
-            </span>
+            <span className="text-[9px] uppercase tracking-widest font-bold">Setup Time</span>
           </div>
           <span className="text-[12px] text-on-surface font-semibold block">
             {selectedBooking.setupTiming
@@ -30,16 +28,14 @@ export function LogisticsCard({ selectedBooking }) {
                   dateStyle: 'medium',
                   timeStyle: 'short',
                 })
-              : 'Pending Logistics Finalization'}
+              : 'To Be Decided'}
           </span>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-secondary">
             <Truck className="text-[16px]" strokeWidth={1.5} />
-            <span className="text-[9px] uppercase tracking-widest font-bold">
-              Prop Pickup & Disassembly
-            </span>
+            <span className="text-[9px] uppercase tracking-widest font-bold">Pickup Time</span>
           </div>
           <span className="text-[12px] text-on-surface font-semibold block">
             {selectedBooking.pickupTiming
@@ -47,14 +43,14 @@ export function LogisticsCard({ selectedBooking }) {
                   dateStyle: 'medium',
                   timeStyle: 'short',
                 })
-              : 'Pending Logistics Finalization'}
+              : 'To Be Decided'}
           </span>
         </div>
 
         {selectedBooking.assignedTeam?.length > 0 && (
           <div className="sm:col-span-2 space-y-3 pt-4 border-t border-outline-variant/20 mt-2">
             <span className="text-[9px] uppercase tracking-widest text-secondary font-bold block">
-              Assigned Setup Team
+              Your Event Team
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {selectedBooking.assignedTeam.map((team, idx) => (

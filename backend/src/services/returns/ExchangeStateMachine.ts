@@ -3,6 +3,8 @@ import ExchangeRequest from '../../models/ExchangeRequest';
 import Order from '../../models/Order';
 import ApiError from '../../utils/ApiError';
 import { ReturnStateMachine } from './ReturnStateMachine';
+import { ReturnNotificationService } from './ReturnNotificationService';
+import logger from '../../config/logger';
 
 const VALID_EXCHANGE_TRANSITIONS: Record<string, string[]> = {
   pending_stock: ['reserved', 'cancelled'],
@@ -81,6 +83,26 @@ export class ExchangeStateMachine {
       }
 
       await session.commitTransaction();
+
+      // Async Side Effects
+      if (nextStatus === 'shipped') {
+        const underlyingReturn = await mongoose
+          .model('ReturnRequest')
+          .findById(exchange.returnRequestId);
+        if (underlyingReturn) {
+          setImmediate(() => {
+            ReturnNotificationService.notifyCustomerReplacementShipped(
+              underlyingReturn as any,
+            ).catch((err) =>
+              logger.error(
+                `Failed to notify customer for shipped replacement ${exchange._id}`,
+                err,
+              ),
+            );
+          });
+        }
+      }
+
       return exchange;
     } catch (error) {
       await session.abortTransaction();

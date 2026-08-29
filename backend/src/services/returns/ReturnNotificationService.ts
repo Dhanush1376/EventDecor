@@ -84,6 +84,48 @@ export class ReturnNotificationService {
     }
   }
 
+  static async notifyCustomerExchangeApproved(returnRequest: IReturnRequest) {
+    try {
+      await OutboxEvent.create({
+        aggregateId: returnRequest._id.toString(),
+        aggregateType: 'ReturnRequest',
+        eventType: 'RETURNREQUEST_EXCHANGE_APPROVED',
+        payload: { returnId: returnRequest._id.toString() },
+      });
+    } catch (error) {
+      logger.error(`Error in notifyCustomerExchangeApproved for ${returnRequest.returnId}:`, error);
+    }
+  }
+
+  static async notifyCustomerExchangeRejected(returnRequest: IReturnRequest) {
+    try {
+      await OutboxEvent.create({
+        aggregateId: returnRequest._id.toString(),
+        aggregateType: 'ReturnRequest',
+        eventType: 'RETURNREQUEST_EXCHANGE_REJECTED',
+        payload: { returnId: returnRequest._id.toString() },
+      });
+    } catch (error) {
+      logger.error(`Error in notifyCustomerExchangeRejected for ${returnRequest.returnId}:`, error);
+    }
+  }
+
+  static async notifyCustomerReplacementShipped(returnRequest: IReturnRequest) {
+    try {
+      await OutboxEvent.create({
+        aggregateId: returnRequest._id.toString(),
+        aggregateType: 'ReturnRequest',
+        eventType: 'RETURNREQUEST_REPLACEMENT_SHIPPED',
+        payload: { returnId: returnRequest._id.toString() },
+      });
+    } catch (error) {
+      logger.error(
+        `Error in notifyCustomerReplacementShipped for ${returnRequest.returnId}:`,
+        error,
+      );
+    }
+  }
+
   static async notifyCustomerPickupScheduled(returnRequest: IReturnRequest) {
     try {
       await OutboxEvent.create({

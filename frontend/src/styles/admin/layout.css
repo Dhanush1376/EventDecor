@@ -47,7 +47,7 @@
 }
 
 .admin-section-root .admin-table tbody tr {
-  border-bottom: 1px solid var(--admin-border-subtle);
+  border-bottom: 1px solid var(--admin-border-strong);
   transition: background var(--admin-duration-fast) var(--admin-ease);
 }
 
@@ -61,6 +61,10 @@
 
 .admin-section-root .admin-table tbody tr.admin-table-row-clickable {
   cursor: pointer;
+}
+
+.admin-section-root .admin-table tbody tr.admin-table-row-clickable:hover {
+  background: var(--admin-surface-muted);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

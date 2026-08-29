@@ -81,6 +81,11 @@ export const registerApiRoutes = (
     noCacheMiddleware,
     lazyRouter('./admin/operationsCenterRoutes'),
   );
+  apiRouter.use(
+    '/admin/serviceability',
+    noCacheMiddleware,
+    lazyRouter('./admin/serviceabilityRoutes'),
+  );
   apiRouter.use('/returns', noCacheMiddleware, lazyRouter('./returns/returnRoutes'));
   apiRouter.use('/exchanges', noCacheMiddleware, lazyRouter('./returns/exchangeRoutes'));
   apiRouter.use('/recommendations', lazyRouter('./discovery/recommendationRoutes'));

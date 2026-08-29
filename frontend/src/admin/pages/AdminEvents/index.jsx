@@ -8,7 +8,7 @@ import { PageHeader, stagger } from '../../components/AdminUIKit';
 // Tabs
 import { DashboardTab } from './tabs/DashboardTab';
 import { BookingsTab } from './tabs/BookingsTab';
-
+import { CalendarTab } from './tabs/CalendarTab';
 import { ShowcasesTab } from './tabs/ShowcasesTab';
 
 export function AdminEvents() {
@@ -33,6 +33,7 @@ export function AdminEvents() {
     inventoryItems,
     operationsLoading,
     toggleShowcaseFeatured,
+    toggleShowcaseActive,
   } = useAdminEventsData();
 
   // Category Modal States
@@ -76,6 +77,7 @@ export function AdminEvents() {
 
   const tabs = [
     { id: 'dashboard', label: 'Overview', icon: 'dashboard' },
+    { id: 'calendar', label: 'Calendar', icon: 'calendar_month' },
     { id: 'bookings', label: 'Bookings', icon: 'assignment' },
     { id: 'showcases', label: 'Showcase', icon: 'redeem' },
   ];
@@ -88,33 +90,34 @@ export function AdminEvents() {
         icon="event"
         iconColor="orders"
         headerAction={
-          <button
-            onClick={() => navigate('/admin/showcases/add')}
-            className="admin-btn admin-btn-primary h-9 w-full sm:w-auto px-4 flex items-center justify-center gap-2"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            Add Showcase
-          </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] overflow-x-auto sm:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full sm:w-max h-10">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 h-full rounded-sm text-[12px] sm:text-[13px] font-bold transition-all whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'bg-[var(--admin-surface)] text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => navigate('/admin/showcases/add')}
+              className="admin-btn admin-btn-primary h-10 w-full sm:w-auto px-4 flex items-center justify-center gap-2 shrink-0"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Add Showcase
+            </button>
+          </div>
         }
       />
-
-      {/* Smart Filter Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full sm:w-max mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-1.5 rounded-sm text-[12px] sm:text-[13px] font-bold transition-all whitespace-nowrap ${
-              activeTab === tab.id
-                ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
-                : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
-            <span>{tab.label}</span>
-          </button>
-        ))}
-      </div>
 
       <AnimatePresence mode="wait">
         {activeTab === 'dashboard' && (
@@ -128,14 +131,23 @@ export function AdminEvents() {
           />
         )}
         {activeTab === 'bookings' && (
-          <BookingsTab bookings={bookings} loadingBookings={loadingBookings} />
+          <BookingsTab
+            bookings={bookings}
+            loadingBookings={loadingBookings}
+            totalContractVal={totalContractVal}
+            outstandingBal={outstandingBal}
+            activeBookingsCount={activeBookingsCount}
+            upcomingSetupsCount={upcomingSetupsCount}
+          />
         )}
+        {activeTab === 'calendar' && <CalendarTab bookings={bookings} />}
         {activeTab === 'showcases' && (
           <ShowcasesTab
             showcases={showcases}
             loadingShowcases={loadingShowcases}
             handleDeleteShowcase={handleDeleteShowcase}
             toggleShowcaseFeatured={toggleShowcaseFeatured}
+            toggleShowcaseActive={toggleShowcaseActive}
           />
         )}
       </AnimatePresence>

@@ -18,7 +18,7 @@ export function EventBookingCard({
       <div className="p-6 rounded-3xl bg-[#2A2825] text-white relative overflow-hidden shadow-lg border border-white/5">
         <div className="relative z-10 flex flex-col items-center text-center gap-5">
           <div>
-            <h4 className="font-headline-sm mb-1 text-[#826237] font-normal tracking-wide">
+            <h4 className="font-headline-sm mb-1 text-white font-normal tracking-wide">
               Need a Custom Theme?
             </h4>
             <p className="font-body-sm text-white/90 font-medium">

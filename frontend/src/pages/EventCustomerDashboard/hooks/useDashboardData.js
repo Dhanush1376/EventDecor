@@ -3,7 +3,6 @@ import { bookingService } from '../../../services/domainServices';
 import toast from 'react-hot-toast';
 import logger from '../../../utils/core/logger';
 import { loadRazorpayScript } from '../../../pages/eventDetail/useEventBookingForm';
-import { STATUS_STEPS } from '../constants';
 
 export function useDashboardData(isEmbedded = false) {
   const [bookings, setBookings] = useState([]);
@@ -205,7 +204,13 @@ export function useDashboardData(isEmbedded = false) {
     try {
       const res = await bookingService.getById(b._id || b.id);
       if (res.success) {
-        setSelectedBooking(res.data);
+        setSelectedBooking({
+          ...res.data,
+          eventPackage: res.data.eventPackage || b.eventPackage,
+          inspirationImages: res.data.inspirationImages?.length
+            ? res.data.inspirationImages
+            : b.inspirationImages,
+        });
       }
     } catch (err) {
       logger.error(err);
@@ -214,9 +219,36 @@ export function useDashboardData(isEmbedded = false) {
     }
   };
 
-  const currentStatusIndex = selectedBooking
-    ? STATUS_STEPS.findIndex((s) => s.id === selectedBooking.status)
-    : 0;
+  const getPhaseIndex = (status) => {
+    switch (status) {
+      case 'inquiry':
+        return 0;
+      case 'booking':
+      case 'draft':
+      case 'quotation_sent':
+      case 'pending_payment':
+      case 'advance_payment':
+      case 'payment_processing':
+        return 1;
+      case 'confirmed':
+      case 'material_planning':
+      case 'production':
+      case 'packing':
+      case 'dispatch':
+        return 2;
+      case 'team_assigned':
+      case 'setup_in_progress':
+      case 'execution':
+        return 3;
+      case 'final_settlement':
+      case 'completed':
+        return 4;
+      default:
+        return 0;
+    }
+  };
+
+  const currentStatusIndex = selectedBooking ? getPhaseIndex(selectedBooking.status) : 0;
 
   return {
     bookings,

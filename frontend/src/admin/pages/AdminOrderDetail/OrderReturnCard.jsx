@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { m as motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { StatusBadge, fadeUp } from '../../components/AdminUIKit';
+import { StatusBadge } from '../../components/AdminUIKit';
 import { useReturnManagement } from '../../hooks/useReturnManagement';
 
 export const OrderReturnCard = ({ order }) => {
@@ -24,7 +23,7 @@ export const OrderReturnCard = ({ order }) => {
 
   if (loading) {
     return (
-      <div className="admin-card p-6 animate-pulse mt-6">
+      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl animate-pulse">
         <div className="h-6 bg-[var(--admin-border)] rounded w-1/4 mb-4"></div>
         <div className="h-4 bg-[var(--admin-border)] rounded w-1/2 mb-2"></div>
         <div className="h-4 bg-[var(--admin-border)] rounded w-1/3"></div>
@@ -39,19 +38,16 @@ export const OrderReturnCard = ({ order }) => {
   }
 
   return (
-    <motion.div
-      variants={fadeUp}
-      className="admin-card p-0 overflow-hidden mt-6 border-l-4 border-l-[var(--admin-warning)]"
-    >
-      <div className="p-4 sm:p-5 border-b border-[var(--admin-border)] flex items-center justify-between bg-[var(--admin-surface)]">
+    <div className="p-0 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl overflow-hidden border-l-4 border-l-[var(--admin-warning)]">
+      <div className="p-4 sm:p-5 border-b border-[var(--admin-border)] flex items-center justify-between">
         <div>
-          <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px] text-[var(--admin-warning)]">
+          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider flex items-center gap-2 mb-1 block">
+            <span className="material-symbols-outlined text-[16px] text-[var(--admin-warning)]">
               keyboard_return
             </span>
             Returns & Exchanges
-          </h3>
-          <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">
+          </label>
+          <p className="text-[11px] text-[var(--admin-text-tertiary)]">
             Active reverse logistics for this order
           </p>
         </div>
@@ -104,6 +100,6 @@ export const OrderReturnCard = ({ order }) => {
           </div>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 };

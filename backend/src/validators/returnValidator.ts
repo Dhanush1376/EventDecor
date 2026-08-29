@@ -65,6 +65,7 @@ export const createExchangeSchema = z.object({
     replacementProductId: z.string().min(1, 'Replacement Product ID is required'),
     exchangeType: z.enum(['size', 'color', 'variant', 'different_product']),
     quantity: z.number().int().min(1, 'Quantity must be at least 1'),
+    reason: z.string().min(1, 'Reason is required'),
     pickupAddress: z.any().optional(),
     idempotencyKey: z.string().optional(),
     refundMethod: z.enum(['original', 'wallet', 'store_credit']).optional(),

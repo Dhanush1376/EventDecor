@@ -4,6 +4,7 @@ import {
   escapeHtml,
   button,
   dataTable,
+  getPrimaryEntityName,
 } from './emailTemplates';
 import { getFrontendUrl } from '../getFrontendUrl';
 
@@ -42,10 +43,16 @@ const itemsTable = (items: any[]) => {
 
 export const buildReturnSubmittedCustomerEmail = (returnRequest: any, user: any) => {
   const preheader = `We've received your return request ${returnRequest.returnId}`;
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
+  const headingText = primaryItem
+    ? `${escapeHtml(primaryItem)} — Return Request Received`
+    : 'Return Request Received';
+
   const body = `
-    <h2>Return Request Received</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Return #${escapeHtml(returnRequest.returnId)}</p>
     <p>Dear ${escapeHtml(user?.name || 'Customer')},</p>
-    <p>We've received your return request <strong>${returnRequest.returnId}</strong>. Our team will review the request and keep you updated.</p>
+    <p>We've received your return request. Our team will review the request and keep you updated.</p>
     
     ${dataTable([
       { label: 'Status', value: 'Pending Review' },
@@ -86,10 +93,16 @@ export const buildReturnApprovedCustomerEmail = (returnRequest: any, user: any) 
     );
   }
 
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
+  const headingText = primaryItem
+    ? `${escapeHtml(primaryItem)} — Return Request Approved`
+    : 'Return Request Approved';
+
   const body = `
-    <h2>Return Request Approved</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Return #${escapeHtml(returnRequest.returnId)}</p>
     <p>Dear ${escapeHtml(user?.name || 'Customer')},</p>
-    <p>Good news! Your return request <strong>${returnRequest.returnId}</strong> has been approved.</p>
+    <p>Good news! Your return request has been approved.</p>
     
     ${dataTable([
       { label: 'Status', value: 'Approved' },
@@ -125,10 +138,16 @@ export const buildReturnApprovedCustomerEmail = (returnRequest: any, user: any) 
 
 export const buildReturnRejectedCustomerEmail = (returnRequest: any, user: any) => {
   const preheader = `Update on your return request ${returnRequest.returnId}`;
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
+  const headingText = primaryItem
+    ? `${escapeHtml(primaryItem)} — Return Request Update`
+    : 'Update on Return Request';
+
   const body = `
-    <h2>Update on Return Request</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Return #${escapeHtml(returnRequest.returnId)}</p>
     <p>Dear ${escapeHtml(user?.name || 'Customer')},</p>
-    <p>We've reviewed your return request <strong>${returnRequest.returnId}</strong>. Unfortunately, we are unable to approve it.</p>
+    <p>We've reviewed your return request. Unfortunately, we are unable to approve it.</p>
     
     ${dataTable([
       { label: 'Status', value: 'Rejected' },
@@ -152,10 +171,16 @@ export const buildReturnRejectedCustomerEmail = (returnRequest: any, user: any) 
 
 export const buildRefundInitiatedCustomerEmail = (returnRequest: any, user: any) => {
   const preheader = `Refund of ${formatCurrency(returnRequest.refundBreakdown?.grandTotal)} initiated for ${returnRequest.returnId}`;
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
+  const headingText = primaryItem
+    ? `Refund for Your ${escapeHtml(primaryItem)}`
+    : 'Refund Initiated';
+
   const body = `
-    <h2>Refund Initiated</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Return #${escapeHtml(returnRequest.returnId)}</p>
     <p>Dear ${escapeHtml(user?.name || 'Customer')},</p>
-    <p>Your refund of <strong>${formatCurrency(returnRequest.refundBreakdown?.grandTotal)}</strong> for return request <strong>${returnRequest.returnId}</strong> has been initiated.</p>
+    <p>Your refund of <strong>${formatCurrency(returnRequest.refundBreakdown?.grandTotal)}</strong> has been initiated.</p>
     
     ${dataTable([
       { label: 'Amount', value: formatCurrency(returnRequest.refundBreakdown?.grandTotal) },
@@ -177,10 +202,16 @@ export const buildRefundInitiatedCustomerEmail = (returnRequest: any, user: any)
 
 export const buildRefundCompletedCustomerEmail = (returnRequest: any, user: any) => {
   const preheader = `Refund of ${formatCurrency(returnRequest.refundBreakdown?.grandTotal)} completed for ${returnRequest.returnId}`;
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
+  const headingText = primaryItem
+    ? `Refund for Your ${escapeHtml(primaryItem)} Completed`
+    : 'Refund Completed';
+
   const body = `
-    <h2>Refund Completed</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Return #${escapeHtml(returnRequest.returnId)}</p>
     <p>Dear ${escapeHtml(user?.name || 'Customer')},</p>
-    <p>Your refund of <strong>${formatCurrency(returnRequest.refundBreakdown?.grandTotal)}</strong> for return request <strong>${returnRequest.returnId}</strong> has been successfully processed.</p>
+    <p>Your refund of <strong>${formatCurrency(returnRequest.refundBreakdown?.grandTotal)}</strong> has been successfully processed.</p>
     
     ${dataTable([
       { label: 'Amount', value: formatCurrency(returnRequest.refundBreakdown?.grandTotal) },
@@ -242,10 +273,16 @@ export const buildExchangeSubmittedCustomerEmail = (
     );
   }
 
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
+  const headingText = primaryItem
+    ? `${escapeHtml(primaryItem)} — Exchange Request Received`
+    : 'Exchange Request Received';
+
   const body = `
-    <h2>Exchange Request Received</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Exchange #${escapeHtml(returnRequest.returnId)}</p>
     <p>Dear ${escapeHtml(user?.name || 'Customer')},</p>
-    <p>We've received your exchange request <strong>${returnRequest.returnId}</strong>. ${diffAction === 'collect_payment' ? 'Additional payment is required before it can be submitted for review.' : 'Our team will review the request and keep you updated.'}</p>
+    <p>We've received your exchange request. ${diffAction === 'collect_payment' ? 'Additional payment is required before it can be submitted for review.' : 'Our team will review the request and keep you updated.'}</p>
     
     ${dataTable([
       {
@@ -287,10 +324,16 @@ export const buildExchangePaymentVerifiedEmail = (
 ) => {
   const preheader = `Payment verified for exchange request ${returnRequest.returnId}`;
 
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
+  const headingText = primaryItem
+    ? `${escapeHtml(primaryItem)} — Exchange Payment Received`
+    : 'Exchange Payment Received';
+
   const body = `
-    <h2>Exchange Payment Received</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Exchange #${escapeHtml(returnRequest.returnId)}</p>
     <p>Dear ${escapeHtml(user?.name || 'Customer')},</p>
-    <p>We've successfully verified your payment of ${formatCurrency(exchangeDetails?.priceDifference)} for exchange request <strong>${returnRequest.returnId}</strong>.</p>
+    <p>We've successfully verified your payment of ${formatCurrency(exchangeDetails?.priceDifference)} for your exchange request.</p>
     
     ${dataTable([
       { label: 'Status', value: 'Pending Review' },
@@ -333,10 +376,16 @@ export const buildExchangeApprovedCustomerEmail = (
     );
   }
 
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
+  const headingText = primaryItem
+    ? `${escapeHtml(primaryItem)} — Exchange Request Approved`
+    : 'Exchange Request Approved';
+
   const body = `
-    <h2>Exchange Request Approved</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Exchange #${escapeHtml(returnRequest.returnId)}</p>
     <p>Dear ${escapeHtml(user?.name || 'Customer')},</p>
-    <p>Good news! Your exchange request <strong>${returnRequest.returnId}</strong> has been approved.</p>
+    <p>Good news! Your exchange request has been approved.</p>
     
     ${dataTable([{ label: 'Status', value: 'Approved' }])}
     
@@ -366,10 +415,16 @@ export const buildExchangeApprovedCustomerEmail = (
 
 export const buildExchangeRejectedCustomerEmail = (returnRequest: any, user: any) => {
   const preheader = `Update on your exchange request ${returnRequest.returnId}`;
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
+  const headingText = primaryItem
+    ? `${escapeHtml(primaryItem)} — Exchange Request Update`
+    : 'Update on Exchange Request';
+
   const body = `
-    <h2>Update on Exchange Request</h2>
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Exchange #${escapeHtml(returnRequest.returnId)}</p>
     <p>Dear ${escapeHtml(user?.name || 'Customer')},</p>
-    <p>We've reviewed your exchange request <strong>${returnRequest.returnId}</strong>. Unfortunately, we are unable to approve it.</p>
+    <p>We've reviewed your exchange request. Unfortunately, we are unable to approve it.</p>
     
     ${dataTable([
       { label: 'Status', value: 'Rejected' },

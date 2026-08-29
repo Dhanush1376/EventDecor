@@ -7,6 +7,7 @@ import {
   formatCurrency,
   fadeUp,
 } from '../../../components/AdminUIKit';
+import AdminServiceability from '../../AdminServiceability';
 
 export function DashboardTab({
   bookings,
@@ -17,6 +18,32 @@ export function DashboardTab({
   upcomingSetupsCount,
 }) {
   const navigate = useNavigate();
+
+  const categoryStats = (() => {
+    const counts = {};
+    bookings.forEach((b) => {
+      const type = b.eventType || 'Other';
+      counts[type] = (counts[type] || 0) + 1;
+    });
+
+    const colors = [
+      'var(--admin-accent)',
+      'var(--admin-text-primary)',
+      'var(--admin-warning)',
+      'var(--admin-success)',
+      '#3b82f6',
+      'var(--admin-text-tertiary)',
+    ];
+
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([type, count], idx) => ({
+        label: type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+        count,
+        color: colors[idx % colors.length],
+      }));
+  })();
 
   return (
     <motion.div
@@ -100,55 +127,39 @@ export function DashboardTab({
 
         <ChartCard title="Occasion Category Distributions">
           <div className="space-y-4 mt-4">
-            {[
-              {
-                label: 'Wedding Ceremony',
-                count: bookings.filter((b) => b.eventType === 'wedding').length,
-                color: 'var(--admin-accent)',
-              },
-              {
-                label: 'Engagement Ceremony',
-                count: bookings.filter((b) => b.eventType === 'engagement').length,
-                color: 'var(--admin-text-primary)',
-              },
-              {
-                label: 'Haldi & Mehndi',
-                count: bookings.filter((b) => b.eventType === 'haldi').length,
-                color: 'var(--admin-warning)',
-              },
-              {
-                label: 'Reception Gala',
-                count: bookings.filter((b) => b.eventType === 'reception').length,
-                color: 'var(--admin-success)',
-              },
-              {
-                label: 'Puja Decor',
-                count: bookings.filter((b) => b.eventType === 'festival').length,
-                color: 'var(--admin-text-secondary)',
-              },
-            ].map((cat, idx) => {
-              const pct = bookings.length > 0 ? (cat.count / bookings.length) * 100 : 0;
-              return (
-                <div key={idx} className="space-y-1.5">
-                  <div className="flex justify-between text-[11px] font-bold">
-                    <span className="text-[var(--admin-text-secondary)]">{cat.label}</span>
-                    <span className="text-[var(--admin-text-primary)]">
-                      {cat.count} Setups ({Math.round(pct)}%)
-                    </span>
+            {categoryStats.length === 0 ? (
+              <div className="text-[12px] text-[var(--admin-text-tertiary)] py-4 text-center">
+                No occasion data available yet.
+              </div>
+            ) : (
+              categoryStats.map((cat, idx) => {
+                const pct = bookings.length > 0 ? (cat.count / bookings.length) * 100 : 0;
+                return (
+                  <div key={idx} className="space-y-1.5">
+                    <div className="flex justify-between text-[11px] font-bold">
+                      <span className="text-[var(--admin-text-secondary)]">{cat.label}</span>
+                      <span className="text-[var(--admin-text-primary)]">
+                        {cat.count} Setups ({Math.round(pct)}%)
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-[var(--admin-surface-muted)] rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        className="h-full rounded-full"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 w-full bg-[var(--admin-surface-muted)] rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      className="h-full rounded-full"
-                      style={{ backgroundColor: cat.color }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </ChartCard>
+      </div>
+
+      <div className="pt-6 border-t border-[var(--admin-border-subtle)] mt-8">
+        <AdminServiceability />
       </div>
     </motion.div>
   );

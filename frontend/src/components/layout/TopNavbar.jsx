@@ -297,6 +297,7 @@ export function TopNavbar() {
   const navLinks = [
     { label: 'Home', href: '/', mobileOnly: true },
     ...dbLinks,
+    { label: 'My Orders', href: '/dashboard/orders', mobileOnly: true },
     { label: 'Contact Us', href: '/contact', mobileOnly: true },
   ];
 
@@ -654,7 +655,7 @@ export function TopNavbar() {
             >
               {/* Minimal Header */}
               <div className="flex justify-between items-center mb-12 px-2">
-                <SiriLogo size="32px" />
+                <SiriLogo size="42px" />
                 <button
                   onClick={() => setIsOpen(false)}
                   className="w-10 h-10 flex items-center justify-center text-on-surface hover:text-primary transition-colors cursor-pointer"

@@ -12,11 +12,15 @@ import {
   buildCustomOrderStatusChangeEmail,
   buildInquiryCustomerEmail,
   buildInquiryAdminEmail,
-  buildEventBookingCustomerEmail,
+  buildEventBookingInquiryEmail,
+  buildEventBookingConfirmedEmail,
   buildEventBookingAdminEmail,
+  buildEventBookingStatusUpdateEmail,
   buildReturnCreatedCustomerEmail,
   buildReturnStatusUpdateEmail,
 } from '../utils/email/transactionalEmailTemplates';
+
+import { sendDirectEmailProcessor } from './notificationService';
 
 export class TransactionalEmailService {
   /**
@@ -53,7 +57,6 @@ export class TransactionalEmailService {
     logger.info(`[EMAIL TRACE] Sending email directly (bypassing queue) for ${action} to ${to}`);
 
     try {
-      const { sendDirectEmailProcessor } = await import('./notificationService.js');
       // Await synchronous delivery to guarantee the mail is pushed to SMTP
       await sendDirectEmailProcessor(emailOptions);
     } catch (err: any) {
@@ -328,12 +331,14 @@ export class TransactionalEmailService {
   // ==========================================
 
   public static async sendEventBookingSubmissionEmails(booking: any, user: any, eventId: string) {
-    logger.info(`[TransactionalEmailService] Dispatching event booking emails for ${booking._id}`);
+    logger.info(
+      `[TransactionalEmailService] Dispatching event booking inquiry emails for ${booking._id}`,
+    );
 
     // 1. Notify Customer
     const customerEmail = user?.email || booking.user?.email;
     if (customerEmail) {
-      const { subject, html } = buildEventBookingCustomerEmail(booking, user);
+      const { subject, html } = buildEventBookingInquiryEmail(booking, user);
       const customerHash = this.hashEmail(customerEmail);
       const notificationKey = `EVENT_BOOKING_CREATED:${eventId}:CUSTOMER:${customerHash}`;
       await this.enqueueEmail(
@@ -355,6 +360,28 @@ export class TransactionalEmailService {
       eventId,
       'EVENT_BOOKING_CREATED',
     );
+  }
+
+  public static async sendEventBookingConfirmedEmails(booking: any, user: any, eventId: string) {
+    logger.info(
+      `[TransactionalEmailService] Dispatching event booking confirmed emails for ${booking._id}`,
+    );
+
+    // 1. Notify Customer
+    const customerEmail = user?.email || booking.user?.email;
+    if (customerEmail) {
+      const { subject, html } = buildEventBookingConfirmedEmail(booking, user);
+      const customerHash = this.hashEmail(customerEmail);
+      const notificationKey = `EVENT_BOOKING_CONFIRMED:${eventId}:CUSTOMER:${customerHash}`;
+      await this.enqueueEmail(
+        customerEmail,
+        subject,
+        html,
+        'order',
+        'event_booking_customer',
+        notificationKey,
+      );
+    }
   }
 
   // ==========================================
@@ -437,6 +464,39 @@ export class TransactionalEmailService {
         html,
         'order',
         'return_status_customer',
+        notificationKey,
+      );
+    }
+  }
+
+  public static async sendEventBookingStatusUpdateEmail(
+    booking: any,
+    user: any,
+    oldStatus: string,
+    newStatus: string,
+    eventId: string,
+  ) {
+    logger.info(
+      `[TransactionalEmailService] Dispatching event booking status update emails for ${booking._id}`,
+    );
+
+    const customerEmail = user?.email || booking?.user?.email;
+    if (customerEmail) {
+      const { subject, html } = buildEventBookingStatusUpdateEmail(
+        booking,
+        user,
+        oldStatus,
+        newStatus,
+      );
+      const customerHash = this.hashEmail(customerEmail);
+      const notificationKey = `EVENT_BOOKING_STATUS_UPDATED:${eventId}:CUSTOMER:${customerHash}`;
+
+      await this.enqueueEmail(
+        customerEmail,
+        subject,
+        html,
+        'order',
+        'event_booking_status_updated',
         notificationKey,
       );
     }

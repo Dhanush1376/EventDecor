@@ -7,7 +7,7 @@ import { ProductSeoStep } from './steps/ProductSeoStep';
 import { ProductPricingStep } from './steps/ProductPricingStep';
 import { ProductReturnStep } from './steps/ProductReturnStep';
 import { ProductReviewStep } from './steps/ProductReviewStep';
-import { SkeletonForm } from '../components/AdminUIKit';
+import { SkeletonWizard } from '../components/AdminUIKit';
 import { LivePreviewCard } from '../components/LivePreviewCard';
 import { AiCurationOverlay } from '../components/AiCurationOverlay';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
@@ -159,8 +159,8 @@ export function AdminAddProduct({ editId }) {
 
   if (isLoading && isEditMode && !formData.title) {
     return (
-      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 p-6">
-        <SkeletonForm fields={6} />
+      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0 px-2 sm:px-4">
+        <SkeletonWizard steps={WIZARD_STEPS.length} />
       </div>
     );
   }

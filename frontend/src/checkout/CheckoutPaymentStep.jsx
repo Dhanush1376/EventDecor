@@ -140,11 +140,6 @@ export default function CheckoutPaymentStep() {
       return;
     }
 
-    if (!needByDate) {
-      toast.error('Please select a Required Delivery Date before proceeding.');
-      return;
-    }
-
     if (paymentOption === 'razorpay') {
       handleConfirmOrder();
     } else {
@@ -222,15 +217,18 @@ export default function CheckoutPaymentStep() {
         </div>
       )}
 
-      {/* Required By Date Input */}
+      {/* Preferred Delivery Date Input */}
       <div className="py-4 sm:py-6 mb-2 border-b border-black/5 pr-4 sm:pr-0">
         <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider flex items-center gap-2 mb-4">
           <span className="material-symbols-outlined text-[18px] text-primary">calendar_clock</span>
-          Required Delivery Date
+          Target Delivery Date{' '}
+          <span className="text-[10px] text-secondary font-medium tracking-normal normal-case">
+            (Optional)
+          </span>
         </h2>
         <div className="flex flex-col gap-1.5">
           <label className="text-[11px] font-bold text-secondary uppercase tracking-wider">
-            When do you need these items? <span className="text-error">*</span>
+            By when do you need this order?
           </label>
           <input
             type="date"
@@ -238,10 +236,9 @@ export default function CheckoutPaymentStep() {
             value={needByDate || ''}
             onChange={(e) => setNeedByDate(e.target.value)}
             className="w-full max-w-sm p-3 rounded-xl border border-outline-variant/60 bg-surface-bright focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-xs font-semibold text-on-surface"
-            required
           />
           <p className="text-[10px] text-secondary mt-1">
-            Helps us prioritize your order preparation.
+            Let us know your preferred timeline and we will try our best to deliver by that time.
           </p>
         </div>
       </div>

@@ -178,3 +178,6 @@ rewrite_commits.py
 rewrite_dependabot.py
 filter-commits.sh
 private-ops-repository
+backend/tests/manual/
+backend/backfill_notifications.ts
+scanDeps.js

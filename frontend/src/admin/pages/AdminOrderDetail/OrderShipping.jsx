@@ -1,13 +1,11 @@
 import React from 'react';
-import { m as motion } from 'framer-motion';
-import { fadeUp } from '../../components/AdminUIKit';
 
 export function OrderShipping({ order }) {
   return (
-    <motion.div variants={fadeUp} className="admin-card p-6">
-      <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-5">
+    <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
+      <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-3 block">
         Shipping Destination
-      </h2>
+      </label>
       <div className="flex items-center gap-3 mb-6 pb-5 border-b border-[var(--admin-border-subtle)]">
         <div className="w-12 h-12 rounded-[var(--admin-radius-md)] bg-[var(--admin-bg-subtle)] flex items-center justify-center border border-[var(--admin-border)] shrink-0">
           <span className="text-[14px] font-bold text-[var(--admin-text-primary)]">
@@ -104,6 +102,6 @@ export function OrderShipping({ order }) {
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

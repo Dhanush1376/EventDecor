@@ -1,6 +1,36 @@
 import { PartyPopper } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { StatusPill, OptimizedImage } from '../../../components/ui';
+import { STATUS_STEPS } from '../constants';
+
+const getPhaseIndex = (status) => {
+  switch (status) {
+    case 'inquiry':
+      return 0;
+    case 'booking':
+    case 'draft':
+    case 'quotation_sent':
+    case 'pending_payment':
+    case 'advance_payment':
+    case 'payment_processing':
+      return 1;
+    case 'confirmed':
+    case 'material_planning':
+    case 'production':
+    case 'packing':
+    case 'dispatch':
+      return 2;
+    case 'team_assigned':
+    case 'setup_in_progress':
+    case 'execution':
+      return 3;
+    case 'final_settlement':
+    case 'completed':
+      return 4;
+    default:
+      return 0;
+  }
+};
 
 export function BookingCard({ booking, idx, onClick }) {
   const eventDate = new Date(booking.date).toLocaleDateString('en-IN', {
@@ -55,7 +85,9 @@ export function BookingCard({ booking, idx, onClick }) {
             </svg>
           )}
           <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface">
-            {booking.status?.replace('_', ' ') || 'Confirmed'}
+            {STATUS_STEPS[getPhaseIndex(booking.status)]?.label ||
+              booking.status?.replace('_', ' ') ||
+              'Confirmed'}
           </span>
           <span className="text-[9px] text-secondary font-light">on {eventDate}</span>
         </div>

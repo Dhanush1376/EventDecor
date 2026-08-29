@@ -14,6 +14,9 @@ import PaymentAudit from '../../models/PaymentAudit';
 import { EventJobStateMachine } from './EventJobStateMachine';
 import { EventResourcePlanningService } from './EventResourcePlanningService';
 import PaymentAttempt from '../../models/PaymentAttempt';
+import Serviceability from '../../models/Serviceability';
+import { TravelDistanceService } from './TravelDistanceService';
+import { TravelExpenseService } from './TravelExpenseService';
 
 export class EventJobCheckoutService {
   static async initializeBookingCheckout(userId: string, data: any) {
@@ -60,7 +63,63 @@ export class EventJobCheckoutService {
       item.price = canonicalPrice;
       return acc + canonicalPrice;
     }, 0);
-    const totalPrice = basePrice + addOnCharges;
+
+    // =========================================================================
+    // STRICT TRAVEL EXPENSE VALIDATION (SERVER-AUTHORITATIVE)
+    // =========================================================================
+    let travelExpenseSnapshot = {
+      travelBaseFee: 0,
+      travelFreeDistanceKm: 0,
+      travelChargeableDistanceKm: 0,
+      travelPerKmRate: 0,
+      travelDistanceCharge: 0,
+      travelStateSurcharge: 0,
+      travelExpenseTotal: 0,
+    };
+
+    if (venue && venue.state) {
+      const locationCode = venue.state;
+      const serviceability = await Serviceability.findOne({ locationCode });
+
+      if (!serviceability) {
+        throw new ApiError(
+          400,
+          "We're sorry! Our event decoration services are currently unavailable at this location. Please select another serviceable location or contact our team for assistance.",
+        );
+      }
+
+      if (!serviceability.enabled) {
+        throw new ApiError(
+          400,
+          "We're sorry! Our event decoration services are currently unavailable at this location. Please select another serviceable location or contact our team for assistance.",
+        );
+      }
+
+      // Calculate distance based on the city/address
+      const destination =
+        `${venue.address || ''}, ${venue.city || ''}, ${serviceability.locationName}, India`.trim();
+      const distanceKm = await TravelDistanceService.calculateDistance(destination);
+
+      const expense = TravelExpenseService.calculate(
+        distanceKm,
+        serviceability.baseTravelFee,
+        serviceability.freeTravelDistanceKm,
+        serviceability.perKmRate,
+        serviceability.stateSurcharge,
+      );
+
+      travelExpenseSnapshot = {
+        travelBaseFee: expense.baseTravelFee,
+        travelFreeDistanceKm: expense.freeTravelDistanceKm,
+        travelChargeableDistanceKm: expense.chargeableDistanceKm,
+        travelPerKmRate: expense.perKmRate,
+        travelDistanceCharge: expense.distanceCharge,
+        travelStateSurcharge: expense.stateSurcharge,
+        travelExpenseTotal: expense.totalTravelExpense,
+      };
+    }
+
+    const totalPrice = basePrice + addOnCharges + travelExpenseSnapshot.travelExpenseTotal;
     const depositAmount = Math.round(totalPrice * 0.5);
 
     const bookingId = await generateUniqueBookingId();
@@ -148,6 +207,7 @@ export class EventJobCheckoutService {
               setupCharges: 0,
               transportationCost: 0,
               addOnCharges,
+              ...travelExpenseSnapshot,
               depositAmount,
               totalPrice,
               pendingBalance: totalPrice,
@@ -585,5 +645,41 @@ export class EventJobCheckoutService {
     }
 
     return booking;
+  }
+
+  static async initializeMilestonePayment(bookingId: string, userId: string, amount: number) {
+    const booking = await EventJob.findById(bookingId);
+    if (!booking) {
+      throw new ApiError(404, 'Booking not found');
+    }
+
+    // Convert to strings to ensure matching (in case they are ObjectId objects)
+    if (String(booking.user) !== String(userId)) {
+      throw new ApiError(403, 'Unauthorized access to this booking');
+    }
+
+    if (!amount || amount <= 0) {
+      throw new ApiError(400, 'Invalid payment amount specified');
+    }
+
+    // Initialize razorpay order
+    const rzpOrder = await RazorpayGateway.createOrder({
+      amount: Math.round(amount * 100),
+      currency: 'INR',
+      receipt: `receipt_milestone_${booking._id.toString().substring(0, 10)}`,
+      notes: {
+        bookingId: booking._id.toString(),
+        userId: userId,
+        type: 'milestone_payment',
+      },
+    });
+
+    return {
+      bookingId: booking._id,
+      razorpayOrderId: rzpOrder.id,
+      amount: amount,
+      currency: 'INR',
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID,
+    };
   }
 }

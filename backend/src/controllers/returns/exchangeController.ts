@@ -18,7 +18,9 @@ export const createExchange = asyncHandler(async (req: Request, res: Response) =
     replacementProductId,
     exchangeType,
     quantity,
+    reason,
     pickupAddress,
+    idempotencyKey,
     refundMethod,
   } = req.body;
 
@@ -32,8 +34,9 @@ export const createExchange = asyncHandler(async (req: Request, res: Response) =
       replacementProductId,
       exchangeType,
       quantity,
+      reason,
       pickupAddress,
-      undefined, // idempotencyKey
+      idempotencyKey,
       refundMethod,
     );
 
@@ -100,7 +103,7 @@ export const getAllExchanges = asyncHandler(async (req: Request, res: Response) 
   const exchanges = await ExchangeRequest.find()
     .populate({
       path: 'returnRequestId',
-      select: 'status returnId orderId userId',
+      select: 'status returnId orderId userId items',
       populate: { path: 'userId', select: 'name email phone' },
     })
     .sort({ createdAt: -1, _id: -1 })

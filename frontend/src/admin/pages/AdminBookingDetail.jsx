@@ -1,12 +1,14 @@
-import { m as motion } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { SkeletonDashboard, fadeUp, stagger } from '../components/AdminUIKit';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import MapPin from 'lucide-react/dist/esm/icons/map-pin';
+import MessageCircle from 'lucide-react/dist/esm/icons/message-circle';
+import X from 'lucide-react/dist/esm/icons/x';
 import { bookingService, userService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import logger from '../../utils/core/logger';
 import { getErrorMessage } from '../../utils/core/errorHelpers';
+import { ManualPaymentModal } from '../components/ui/ManualPaymentModal';
 
 export function AdminBookingDetail() {
   const { bookingId } = useParams();
@@ -15,11 +17,13 @@ export function AdminBookingDetail() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Advanced States
   const [drawerStatus, setDrawerStatus] = useState('inquiry');
   const [drawerNotes, setDrawerNotes] = useState('');
   const [drawerChatMsg, setDrawerChatMsg] = useState('');
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const chatEndRef = useRef(null);
 
   const [logisticsSetup, setLogisticsSetup] = useState('');
@@ -363,320 +367,554 @@ export function AdminBookingDetail() {
     });
   };
 
+  const handleDeletePayment = async (transactionId) => {
+    if (
+      !window.confirm('Are you sure you want to delete this payment? This action cannot be undone.')
+    )
+      return;
+
+    try {
+      const res = await bookingService.adminDeletePayment(
+        selectedBooking._id || selectedBooking.id,
+        transactionId,
+      );
+      if (res.success) {
+        toast.success('Payment successfully deleted.');
+        setSelectedBooking(res.data);
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete payment.'));
+    }
+  };
+
   if (dataLoading || !selectedBooking) {
     return (
-      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 p-6">
+      <div className="max-w-[1280px] mx-auto space-y-6 pb-20">
         <SkeletonDashboard />
+        {showPaymentModal && (
+          <ManualPaymentModal
+            booking={selectedBooking}
+            onClose={() => setShowPaymentModal(false)}
+            onSuccess={(updatedBooking) => {
+              setSelectedBooking(updatedBooking);
+              setShowPaymentModal(false);
+            }}
+          />
+        )}
       </div>
     );
   }
+
+  const chatUI = (isDesktop = false) => (
+    <>
+      <div className="border-b border-[var(--admin-border-subtle)] p-4 shrink-0 flex items-center justify-between bg-[var(--admin-bg-subtle)]">
+        <div>
+          <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+            CLIENT CHAT
+          </span>
+          <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+            Customer Messages
+          </h4>
+        </div>
+        {!isDesktop && (
+          <button
+            onClick={() => setIsChatOpen(false)}
+            className="w-8 h-8 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center hover:bg-[var(--admin-surface-muted)] transition-colors"
+          >
+            <X className="w-4 h-4 text-[var(--admin-text-secondary)]" />
+          </button>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-y-auto py-5 space-y-5 px-4 custom-scrollbar flex flex-col">
+        {selectedBooking.chatHistory?.map((chat, idx) => {
+          const isAdmin = chat.sender === 'admin';
+          return (
+            <div
+              key={idx}
+              className={`flex flex-col max-w-[85%] ${isAdmin ? 'self-end text-right ml-auto' : 'self-start text-left'}`}
+            >
+              <span className="text-[9px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
+                {isAdmin ? 'You' : 'Client'}
+              </span>
+              <div
+                className={`p-3 text-[12px] leading-relaxed shadow-sm ${isAdmin ? 'bg-[var(--admin-accent)] text-white rounded-[16px] rounded-tr-[4px]' : 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] rounded-[16px] rounded-tl-[4px]'}`}
+              >
+                {chat.message}
+              </div>
+              <span className="text-[9px] font-bold text-[var(--admin-text-tertiary)] mt-1.5 block">
+                {new Date(chat.timestamp).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+            </div>
+          );
+        })}
+        <div ref={chatEndRef} />
+      </div>
+
+      <form
+        onSubmit={handleSendAdminChat}
+        className="p-4 border-t border-[var(--admin-border-subtle)] shrink-0 flex items-center gap-2 mt-auto bg-[var(--admin-surface)]"
+      >
+        <input
+          type="text"
+          placeholder="Message..."
+          value={drawerChatMsg}
+          onChange={(e) => setDrawerChatMsg(e.target.value)}
+          className="admin-input h-10 flex-1 rounded-full"
+          required
+        />
+        <button
+          type="submit"
+          className="w-10 h-10 rounded-full bg-[var(--admin-accent)] text-white flex items-center justify-center hover:bg-[var(--admin-accent-hover)] transition-all shrink-0"
+        >
+          <span className="material-symbols-outlined text-[16px]">send</span>
+        </button>
+      </form>
+    </>
+  );
 
   return (
     <motion.div
       initial="hidden"
       animate="show"
       variants={stagger}
-      className="max-w-[1280px] mx-auto space-y-6 pb-20 p-4 sm:p-0"
+      className="max-w-[1280px] mx-auto space-y-6 pb-20"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate('/admin/events')}
-            className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm"
+            onClick={() => navigate('/admin/events?tab=bookings')}
+            className="admin-btn-icon w-10 h-10 min-h-0 bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] transition-colors shadow-sm shrink-0"
           >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
           <div>
-            <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
-              EVENT BOOKING DETAILS
-            </span>
-            <h3 className="text-[20px] font-bold text-[var(--admin-text-primary)]">
-              {selectedBooking.title}
+            <h3 className="text-[20px] font-bold text-[var(--admin-text-primary)] leading-tight">
+              Event Details
             </h3>
-            <p className="text-[12px] text-[var(--admin-text-secondary)] mt-1">
-              Customer: {selectedBooking.user?.name} | {selectedBooking.user?.phone}
-            </p>
           </div>
+        </div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider hidden sm:block">
+            Customer Tracker
+          </label>
+          <select
+            value={drawerStatus}
+            onChange={(e) => handleUpdateStatus(e.target.value)}
+            className="admin-input h-10 min-w-[220px] text-[13px] border-[var(--admin-border-strong)] bg-[var(--admin-surface)] font-bold text-[var(--admin-text-primary)] shadow-sm"
+          >
+            <option value="inquiry">Phase 1: Inquiry</option>
+            <option value="pending_payment">Phase 2: Booking & Payment</option>
+            <option
+              value="confirmed"
+              disabled={selectedBooking?.pricing?.paymentStatus === 'unpaid'}
+            >
+              Phase 3: Confirmed & Planning{' '}
+              {selectedBooking?.pricing?.paymentStatus === 'unpaid' ? '(Awaiting Payment)' : ''}
+            </option>
+            <option value="setup_in_progress">Phase 4: Setup & Execution</option>
+            <option value="completed">Phase 5: Completed</option>
+          </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <motion.div variants={fadeUp} className="lg:col-span-2 space-y-6">
-          <div className="admin-card p-6 md:p-8 space-y-8">
-            <div className="space-y-2">
-              <label className="admin-label">Change Booking Status</label>
-              <select
-                value={drawerStatus}
-                onChange={(e) => handleUpdateStatus(e.target.value)}
-                className="admin-input h-10 font-bold capitalize"
-              >
-                <option value="inquiry">Inquiry Received</option>
-                <option value="review">Under Review</option>
-                <option value="confirmed">Booking Confirmed</option>
-                <option value="team_assigned">Staff Assigned</option>
-                <option value="setup_in_progress">Setup In Progress</option>
-                <option value="active">Event Active & Live</option>
-                <option value="completed">Completed & Cleaned Up</option>
-              </select>
-            </div>
-
-            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-              <span className="admin-label mb-0">Price Estimates</span>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">
-                    Theme Rental Fee (₹)
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 items-start">
+        <motion.div variants={fadeUp} className="flex-1 w-full min-w-0 space-y-6">
+          <div className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-2xl sm:rounded-[var(--admin-radius-xl)] shadow-[var(--admin-shadow-xs)] p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
+            <div className="flex flex-col gap-6 items-start">
+              <div className="flex-1 space-y-4 w-full">
+                <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
+                  <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-3 block">
+                    Customer Information
                   </label>
-                  <input
-                    type="number"
-                    value={quoteRental}
-                    onChange={(e) => setQuoteRental(e.target.value)}
-                    className="admin-input"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">
-                    Labor & Setup Charges (₹)
-                  </label>
-                  <input
-                    type="number"
-                    value={quoteSetup}
-                    onChange={(e) => setQuoteSetup(e.target.value)}
-                    className="admin-input"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">
-                    Transportation (₹)
-                  </label>
-                  <input
-                    type="number"
-                    value={quoteTransport}
-                    onChange={(e) => setQuoteTransport(e.target.value)}
-                    className="admin-input"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">
-                    Add-ons (₹)
-                  </label>
-                  <input
-                    type="number"
-                    value={quoteAddons}
-                    onChange={(e) => setQuoteAddons(e.target.value)}
-                    className="admin-input"
-                    disabled
-                  />
-                </div>
-              </div>
-              <button
-                onClick={handleUpdateQuotation}
-                className="admin-btn admin-btn-primary w-full h-10"
-              >
-                Save & Send Price Estimate
-              </button>
-            </div>
-
-            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-              <span className="admin-label mb-0">Setup & Pickup Schedule</span>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">
-                    Setup Time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={logisticsSetup}
-                    onChange={(e) => setLogisticsSetup(e.target.value)}
-                    className="admin-input"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">
-                    Pickup Time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={logisticsPickup}
-                    onChange={(e) => setLogisticsPickup(e.target.value)}
-                    className="admin-input"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-              <div className="flex items-center justify-between">
-                <span className="admin-label mb-0">Celebration Venue & Map</span>
-                <span className="admin-badge admin-badge-info">Interactive Geocoding</span>
-              </div>
-              <div className="relative w-full h-[200px] rounded-[var(--admin-radius-xl)] overflow-hidden border border-[var(--admin-border)] bg-[var(--admin-bg-subtle)]">
-                <div id="admin-leaflet-map" className="w-full h-full z-10" />
-              </div>
-              <p className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
-                <MapPin
-                  className="w-4 h-4 inline-block mr-1 text-[var(--admin-primary)]"
-                  aria-hidden="true"
-                />
-                Drag the marker or click on the map to auto-geocode fields!
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">
-                    Venue Name
-                  </label>
-                  <input
-                    type="text"
-                    value={venueName}
-                    onChange={(e) => setVenueName(e.target.value)}
-                    className="admin-input"
-                  />
-                </div>
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">
-                    Address
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={venueAddress}
-                    onChange={(e) => setVenueAddress(e.target.value)}
-                    className="admin-textarea"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">
-                    Latitude
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={venueLatitude}
-                    onChange={(e) => handleAdminCoordInputChange('lat', e.target.value)}
-                    className="admin-input font-mono"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase">
-                    Longitude
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={venueLongitude}
-                    onChange={(e) => handleAdminCoordInputChange('lng', e.target.value)}
-                    className="admin-input font-mono"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-5 border-t border-[var(--admin-border-subtle)]">
-              <span className="admin-label mb-0">Assign Staff</span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {teamMembers.map((member) => {
-                  const isAllocated = allocatedTeam.some((t) => t.name === member.name);
-                  return (
-                    <div
-                      key={member.name}
-                      onClick={() =>
-                        handleTeamMemberToggle(member.name, member.role, member.contact)
-                      }
-                      className={`p-3 rounded-[var(--admin-radius-lg)] border cursor-pointer transition-all flex justify-between items-center ${isAllocated ? 'bg-[var(--admin-surface-muted)] border-[var(--admin-border-strong)]' : 'border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)]'}`}
-                    >
-                      <div>
-                        <span className="text-[12px] font-bold text-[var(--admin-text-primary)] block">
-                          {member.name}
-                        </span>
-                        <span className="text-[10px] text-[var(--admin-text-tertiary)] block capitalize">
-                          {member.role}
-                        </span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={isAllocated}
-                        readOnly
-                        className="w-4 h-4 rounded-[4px] border-[var(--admin-border-strong)] accent-[var(--admin-accent)] cursor-pointer"
-                      />
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-[var(--admin-surface-muted)] border border-[var(--admin-border-strong)] flex items-center justify-center text-[var(--admin-text-secondary)] shrink-0">
+                      <span className="material-symbols-outlined text-[20px]">person</span>
                     </div>
-                  );
-                })}
+                    <div>
+                      <span className="text-[14px] font-bold text-[var(--admin-text-primary)] block leading-tight">
+                        {selectedBooking.user?.name || 'Unknown Customer'}
+                      </span>
+                      <span className="text-[12px] text-[var(--admin-text-secondary)] block mt-0.5">
+                        {selectedBooking.user?.email || 'No email provided'}
+                      </span>
+                    </div>
+                    <div className="ml-auto text-right">
+                      <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-0.5">
+                        Account Phone
+                      </span>
+                      <span className="text-[13px] font-medium text-[var(--admin-text-primary)]">
+                        {selectedBooking.user?.phone || 'No phone provided'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
+                  <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-3 block">
+                    Event Details
+                  </label>
+
+                  {(selectedBooking.eventPackage?.image ||
+                    selectedBooking.inspirationImages?.[0]) && (
+                    <div className="mb-5 rounded-xl overflow-hidden border border-[var(--admin-border)] h-48 sm:h-64 bg-[var(--admin-surface-muted)] relative group">
+                      <img
+                        src={
+                          selectedBooking.eventPackage?.image ||
+                          selectedBooking.inspirationImages?.[0]
+                        }
+                        alt="Event Showcase"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 flex justify-between items-end">
+                        <div>
+                          <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider block">
+                            {selectedBooking.eventPackage ? 'Selected Package' : 'Reference Image'}
+                          </span>
+                          {selectedBooking.eventPackage && (
+                            <span className="text-white font-bold text-[15px] block mt-0.5 leading-tight">
+                              {selectedBooking.eventPackage.title}
+                            </span>
+                          )}
+                        </div>
+                        {selectedBooking.eventPackage && (
+                          <button
+                            onClick={() =>
+                              window.open(`/events/${selectedBooking.eventPackage._id}`, '_blank')
+                            }
+                            className="text-[10px] bg-white/20 hover:bg-white/30 border border-white/20 text-white px-3 py-1.5 rounded-lg backdrop-blur-md transition-colors font-bold uppercase tracking-wider"
+                          >
+                            View Package
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+                        Event Type
+                      </span>
+                      <span className="text-[13px] font-medium text-[var(--admin-text-primary)] capitalize">
+                        {selectedBooking.eventType}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+                        Date
+                      </span>
+                      <span className="text-[13px] font-medium text-[var(--admin-text-primary)]">
+                        {selectedBooking.date
+                          ? new Date(selectedBooking.date).toLocaleDateString('en-IN', {
+                              weekday: 'short',
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })
+                          : 'Not specified'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+                        Timing
+                      </span>
+                      <span className="text-[13px] font-medium text-[var(--admin-text-primary)]">
+                        {selectedBooking.timing?.start || 'N/A'} -{' '}
+                        {selectedBooking.timing?.end || 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedBooking.customization?.additionalRequests && (
+                    <div className="mt-4 pt-4 border-t border-[var(--admin-border)]">
+                      <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+                        Arrangement Notes & Requests
+                      </span>
+                      <p className="text-[13px] text-[var(--admin-text-primary)] whitespace-pre-wrap">
+                        {selectedBooking.customization.additionalRequests}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="mt-4 pt-4 border-t border-[var(--admin-border)] space-y-1">
+                    <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+                      Venue Information
+                    </span>
+                    <span className="text-[13px] font-medium text-[var(--admin-text-primary)] block">
+                      {selectedBooking.venue?.name || 'Venue name not specified'}
+                    </span>
+                    <span className="text-[12px] text-[var(--admin-text-secondary)] block">
+                      {selectedBooking.venue?.address || 'Address not specified'}
+                    </span>
+                    {selectedBooking.venue?.isOutdoor && (
+                      <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider mt-2 inline-block">
+                        Outdoor Venue
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {selectedBooking.pricing && (
+                  <>
+                    <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
+                      <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-3 block">
+                        Pricing Summary
+                      </label>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-[13px]">
+                          <span className="text-[var(--admin-text-secondary)]">Rental Fee</span>
+                          <span className="font-medium text-[var(--admin-text-primary)]">
+                            ₹{selectedBooking.pricing.rentalFee?.toLocaleString('en-IN') || 0}
+                          </span>
+                        </div>
+
+                        {(selectedBooking.pricing.setupCharges || 0) +
+                          (selectedBooking.pricing.transportationCost || 0) >
+                          0 && (
+                          <div className="flex justify-between items-center text-[13px]">
+                            <span className="text-[var(--admin-text-secondary)]">
+                              Setup & Transport
+                            </span>
+                            <span className="font-medium text-[var(--admin-text-primary)]">
+                              ₹
+                              {(
+                                (selectedBooking.pricing.setupCharges || 0) +
+                                (selectedBooking.pricing.transportationCost || 0)
+                              ).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        )}
+
+                        {selectedBooking.pricing.addOnCharges > 0 && (
+                          <div className="flex justify-between items-center text-[13px]">
+                            <span className="text-[var(--admin-text-secondary)]">Add-Ons</span>
+                            <span className="font-medium text-[var(--admin-text-primary)]">
+                              ₹{selectedBooking.pricing.addOnCharges.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        )}
+
+                        {selectedBooking.pricing.travelExpenseTotal > 0 && (
+                          <div className="flex justify-between items-center text-[13px]">
+                            <span className="text-[var(--admin-text-secondary)]">
+                              Travel Expense
+                            </span>
+                            <span className="font-medium text-[var(--admin-text-primary)]">
+                              ₹{selectedBooking.pricing.travelExpenseTotal.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="border-t border-[var(--admin-border)] pt-2 mt-2 flex justify-between items-center text-[14px] font-bold text-[var(--admin-text-primary)]">
+                          <span>Total Price</span>
+                          <span>
+                            ₹
+                            {(
+                              (selectedBooking.pricing.rentalFee || 0) +
+                              (selectedBooking.pricing.setupCharges || 0) +
+                              (selectedBooking.pricing.transportationCost || 0) +
+                              (selectedBooking.pricing.addOnCharges || 0) +
+                              (selectedBooking.pricing.travelExpenseTotal || 0)
+                            ).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+
+                        {selectedBooking.pricing.depositAmount > 0 && (
+                          <div className="flex justify-between items-center text-[13px] mt-1">
+                            <span className="text-[var(--admin-text-secondary)]">
+                              Required Deposit
+                            </span>
+                            <span className="font-medium text-[var(--admin-text-secondary)]">
+                              ₹{selectedBooking.pricing.depositAmount.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="flex justify-between items-center text-[13px] mt-1">
+                          <span className="text-[var(--admin-text-secondary)]">Amount Paid</span>
+                          <span
+                            className={`font-medium ${
+                              (selectedBooking.payments || [])
+                                .filter((p) => p.status === 'success')
+                                .reduce((sum, p) => sum + (p.amount || 0), 0) > 0
+                                ? 'text-green-600'
+                                : 'text-[var(--admin-text-tertiary)]'
+                            }`}
+                          >
+                            ₹
+                            {(selectedBooking.payments || [])
+                              .filter((p) => p.status === 'success')
+                              .reduce((sum, p) => sum + (p.amount || 0), 0)
+                              .toLocaleString('en-IN')}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[13px]">
+                          <span className="text-[var(--admin-text-secondary)]">
+                            Pending Balance
+                          </span>
+                          <span className="font-medium text-orange-600">
+                            ₹
+                            {Math.max(
+                              0,
+                              (selectedBooking.pricing.rentalFee || 0) +
+                                (selectedBooking.pricing.setupCharges || 0) +
+                                (selectedBooking.pricing.transportationCost || 0) +
+                                (selectedBooking.pricing.addOnCharges || 0) -
+                                (selectedBooking.payments || [])
+                                  .filter((p) => p.status === 'success')
+                                  .reduce((sum, p) => sum + (p.amount || 0), 0),
+                            ).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment History Ledger */}
+                    {selectedBooking.payments && selectedBooking.payments.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-[var(--admin-border)]">
+                        <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
+                          Payment History
+                        </label>
+                        <div className="space-y-2">
+                          {selectedBooking.payments.map((payment, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] rounded p-2 text-[11px]"
+                            >
+                              <div className="flex justify-between items-start mb-1">
+                                <div>
+                                  <span className="font-bold text-[var(--admin-success)]">
+                                    ₹{(payment.amount || 0).toLocaleString('en-IN')}
+                                  </span>
+                                  <span className="text-[10px] text-[var(--admin-text-tertiary)] ml-2">
+                                    {new Date(payment.date).toLocaleString('en-IN', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                </div>
+                                {payment.source === 'manual' && (
+                                  <button
+                                    onClick={() => handleDeletePayment(payment.transactionId)}
+                                    className="text-[var(--admin-error)] hover:text-red-700 p-0.5"
+                                    title="Undo / Delete Payment"
+                                  >
+                                    <span className="material-symbols-outlined text-[14px]">
+                                      delete
+                                    </span>
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex justify-between items-center text-[10px]">
+                                <span className="text-[var(--admin-text-secondary)]">
+                                  <span className="uppercase font-bold">
+                                    {payment.paymentMethod || 'razorpay'}
+                                  </span>
+                                  {' • '}
+                                  {payment.source === 'manual' ? 'Manual' : 'Online'}
+                                </span>
+                                {payment.recordedBy && (
+                                  <span className="text-[var(--admin-text-tertiary)] italic">
+                                    by {payment.recordedBy}
+                                  </span>
+                                )}
+                              </div>
+                              {payment.note && (
+                                <div
+                                  className="mt-1 text-[var(--admin-text-tertiary)] text-[9px] truncate"
+                                  title={payment.note}
+                                >
+                                  Note: {payment.note}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Record Payment Action */}
+                    {selectedBooking.pricing?.paymentStatus !== 'paid' && (
+                      <div className="mt-4 pt-4 border-t border-[var(--admin-border)]">
+                        <button
+                          onClick={() => setShowPaymentModal(true)}
+                          className="w-full admin-btn admin-btn-outline h-9 text-[12px] flex items-center justify-center gap-1.5"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">payments</span>
+                          Record Manual Payment
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-
-            <button onClick={handleUpdateLogistics} className="admin-btn w-full h-11 text-[12px]">
-              Save Timeline & Staff
-            </button>
           </div>
         </motion.div>
 
-        <motion.div
-          variants={fadeUp}
-          className="bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-xl)] p-6 flex flex-col h-[600px] sticky top-24"
-        >
-          <div className="border-b border-[var(--admin-border-subtle)] pb-4 shrink-0 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
-                CLIENT CHAT
-              </span>
-              <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                Customer Messages
-              </h4>
-            </div>
-            <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">
-              forum
-            </span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto py-5 space-y-5 pr-2 custom-scrollbar flex flex-col">
-            {selectedBooking.chatHistory?.map((chat, idx) => {
-              const isAdmin = chat.sender === 'admin';
-              return (
-                <div
-                  key={idx}
-                  className={`flex flex-col max-w-[85%] ${isAdmin ? 'self-end text-right ml-auto' : 'self-start text-left'}`}
-                >
-                  <span className="text-[9px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                    {isAdmin ? 'You' : 'Client'}
-                  </span>
-                  <div
-                    className={`p-3 text-[12px] leading-relaxed shadow-sm ${isAdmin ? 'bg-[var(--admin-accent)] text-white rounded-[16px] rounded-tr-[4px]' : 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] rounded-[16px] rounded-tl-[4px]'}`}
-                  >
-                    {chat.message}
-                  </div>
-                  <span className="text-[9px] font-bold text-[var(--admin-text-tertiary)] mt-1.5 block">
-                    {new Date(chat.timestamp).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
-                </div>
-              );
-            })}
-            <div ref={chatEndRef} />
-          </div>
-
-          <form
-            onSubmit={handleSendAdminChat}
-            className="pt-4 shrink-0 flex items-center gap-2 mt-auto"
-          >
-            <input
-              type="text"
-              placeholder="Message..."
-              value={drawerChatMsg}
-              onChange={(e) => setDrawerChatMsg(e.target.value)}
-              className="admin-input h-10 flex-1 rounded-full"
-              required
-            />
-            <button
-              type="submit"
-              className="w-10 h-10 rounded-full bg-[var(--admin-accent)] text-white flex items-center justify-center hover:bg-[var(--admin-accent-hover)] transition-all shrink-0"
-            >
-              <span className="material-symbols-outlined text-[16px]">send</span>
-            </button>
-          </form>
-        </motion.div>
+        {/* Desktop Inline Chat Window */}
+        <div className="hidden lg:flex w-[400px] shrink-0 h-[calc(100vh-8rem)] sticky top-24 bg-[var(--admin-surface)] rounded-2xl shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border-subtle)] overflow-hidden flex-col">
+          {chatUI(true)}
+        </div>
       </div>
+
+      {/* Floating Action Button for Mobile/Tablet */}
+      <div className="lg:hidden">
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="fixed bottom-24 right-4 sm:bottom-10 sm:right-10 w-14 h-14 rounded-full bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white shadow-[var(--admin-shadow-md)] hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center z-40"
+        >
+          <MessageCircle className="w-6 h-6" />
+          {selectedBooking?.chatHistory?.length > 0 && (
+            <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-[var(--admin-surface)]" />
+          )}
+        </button>
+
+        {/* Chat Drawer / Modal */}
+        <AnimatePresence>
+          {isChatOpen && (
+            <div className="fixed inset-0 z-50 flex items-end justify-end pointer-events-none sm:p-8 sm:pb-28">
+              {/* Mobile Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsChatOpen(false)}
+                className="absolute inset-0 bg-black/40 sm:hidden pointer-events-auto backdrop-blur-sm"
+              />
+
+              {/* Chat Window */}
+              <motion.div
+                initial={{ y: '100%', opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: '100%', opacity: 0, scale: 0.95 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="bg-[var(--admin-surface)] w-full h-[85vh] sm:w-[400px] sm:h-[600px] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col pointer-events-auto border border-[var(--admin-border-subtle)] overflow-hidden relative z-10"
+              >
+                {chatUI(false)}
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {showPaymentModal && (
+        <ManualPaymentModal
+          booking={selectedBooking}
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={(updatedBooking) => {
+            setSelectedBooking(updatedBooking);
+            setShowPaymentModal(false);
+          }}
+        />
+      )}
     </motion.div>
   );
 }

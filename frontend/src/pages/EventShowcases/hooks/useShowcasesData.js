@@ -45,7 +45,7 @@ export function useShowcasesData() {
 
   const [selectedShowcase, setSelectedShowcase] = useState(null);
   const [customInclusions, setCustomInclusions] = useState([]);
-  const [rentalDurationDays, setRentalDurationDays] = useState(1);
+
   const [selectedPaletteColor, setSelectedPaletteColor] = useState('');
   const [placementPreference, setPlacementPreference] = useState('Side-Stage Showcase Corner');
   const [uploadedReferenceUrl, setUploadedReferenceUrl] = useState('');
@@ -265,12 +265,7 @@ export function useShowcasesData() {
       if (item.qty > item.defaultQty) return acc + (item.qty - item.defaultQty) * (basePrice * 0.1);
       return acc;
     }, 0);
-    const durationMultiplier =
-      rentalDurationDays === 1
-        ? 1
-        : rentalDurationDays === 2
-          ? 1.5
-          : 1.5 + (rentalDurationDays - 2) * 0.4;
+    const durationMultiplier = 1;
     return Math.round(Math.max(basePrice * 0.5, basePrice + itemsAdjustment) * durationMultiplier);
   };
 
@@ -303,7 +298,7 @@ export function useShowcasesData() {
         customization: {
           themeColor: `Color Profile: ${selectedPaletteColor}`,
           floralPreference: 'Matching Traditional Silk-Thread Accents',
-          additionalRequests: `Showcase Duration: ${rentalDurationDays} Days. Note: ${customNote}. Image Reference: ${uploadedReferenceUrl}`,
+          additionalRequests: `Note: ${customNote}. Image Reference: ${uploadedReferenceUrl}`,
         },
         selectedAddons: finalAddons,
       };
@@ -349,8 +344,7 @@ export function useShowcasesData() {
     setSelectedShowcase,
     customInclusions,
     setCustomInclusions,
-    rentalDurationDays,
-    setRentalDurationDays,
+
     selectedPaletteColor,
     setSelectedPaletteColor,
     placementPreference,

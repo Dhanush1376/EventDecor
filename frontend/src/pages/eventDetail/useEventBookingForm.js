@@ -16,7 +16,7 @@ export const loadRazorpayScript = () => {
   });
 };
 
-export function useEventBookingForm(event, isAuthenticated, runProtectedAction, navigate) {
+export function useEventBookingForm(event, isAuthenticated, runProtectedAction, navigate, user) {
   const [customInclusions, setCustomInclusions] = useState([]);
   const [rentalDurationDays, setRentalDurationDays] = useState(1);
   const [selectedPaletteColor, setSelectedPaletteColor] = useState('');
@@ -38,13 +38,49 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
   const [endTime, setEndTime] = useState('09:00 PM');
   const [isOutdoor, setIsOutdoor] = useState(false);
   const [customizerStep, setCustomizerStep] = useState(1);
-  const [eventType, setEventType] = useState('wedding');
+  const [eventType, setEventType] = useState('');
   const [customOccasion, setCustomOccasion] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [contactPhone, setContactPhone] = useState('');
 
-  // Initialization
+  // Sync Phone Number when user object is loaded
+  useEffect(() => {
+    if (user && user.phone) {
+      setContactPhone(user.phone);
+    }
+  }, [user]);
+
+  // Initialization & Load Draft
   useEffect(() => {
     if (event) {
+      const eventId = event._id || event.id;
+      const draftKey = `eventDecor_draft_${eventId}`;
+      const savedDraft = localStorage.getItem(draftKey);
+
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          if (parsed.customInclusions) setCustomInclusions(parsed.customInclusions);
+          if (parsed.selectedPaletteColor) setSelectedPaletteColor(parsed.selectedPaletteColor);
+          if (parsed.placementPreference) setPlacementPreference(parsed.placementPreference);
+          if (parsed.customNote) setCustomNote(parsed.customNote);
+          if (parsed.bookingDate) setBookingDate(parsed.bookingDate);
+          if (parsed.venueDetails) setVenueDetails(parsed.venueDetails);
+          if (parsed.isManualLocationInput !== undefined)
+            setIsManualLocationInput(parsed.isManualLocationInput);
+          if (parsed.guestCount) setGuestCount(parsed.guestCount);
+          if (parsed.startTime) setStartTime(parsed.startTime);
+          if (parsed.endTime) setEndTime(parsed.endTime);
+          if (parsed.isOutdoor !== undefined) setIsOutdoor(parsed.isOutdoor);
+          if (parsed.eventType) setEventType(parsed.eventType);
+          if (parsed.customOccasion) setCustomOccasion(parsed.customOccasion);
+          if (parsed.contactPhone) setContactPhone(parsed.contactPhone);
+          return;
+        } catch (e) {
+          logger.error('Failed to parse draft', e);
+        }
+      }
+
       const defaultInclusions = [
         { name: 'Traditional Backdrop Panel Setup', defaultQty: 1 },
         { name: 'Mysore Brass Urlis & Diyas', defaultQty: 2 },
@@ -65,6 +101,47 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
       }
     }
   }, [event]);
+
+  // Save Draft
+  useEffect(() => {
+    if (event) {
+      const eventId = event._id || event.id;
+      const draftKey = `eventDecor_draft_${eventId}`;
+      const draft = {
+        customInclusions,
+        selectedPaletteColor,
+        placementPreference,
+        customNote,
+        bookingDate,
+        venueDetails,
+        isManualLocationInput,
+        guestCount,
+        startTime,
+        endTime,
+        isOutdoor,
+        eventType,
+        customOccasion,
+        contactPhone,
+      };
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+    }
+  }, [
+    event,
+    customInclusions,
+    selectedPaletteColor,
+    placementPreference,
+    customNote,
+    bookingDate,
+    venueDetails,
+    isManualLocationInput,
+    guestCount,
+    startTime,
+    endTime,
+    isOutdoor,
+    eventType,
+    customOccasion,
+    contactPhone,
+  ]);
 
   // Sync Venue Details
   useEffect(() => {
@@ -120,6 +197,10 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
       toast.error('Please specify your custom occasion.');
       return false;
     }
+    if (!contactPhone || contactPhone.trim().length < 10) {
+      toast.error('Please enter a valid Phone Number.');
+      return false;
+    }
     if (!bookingDate) {
       toast.error('Please select a Ceremony Date.');
       return false;
@@ -133,7 +214,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
     return true;
   };
 
-  const validateStep3 = () => {
+  const validateStep2 = () => {
     const finalAddress = isManualLocationInput
       ? `${manualVenueName ? manualVenueName + ', ' : ''}${manualAddress} ${manualCity} ${manualState} ${manualPincode}`.trim()
       : venueDetails?.address || '';
@@ -171,6 +252,84 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
     return true;
   };
 
+  const handleReserveOnly = async () => {
+    if (!isAuthenticated) {
+      runProtectedAction(() => handleReserveOnly());
+      return;
+    }
+    if (!validateStep1()) {
+      setCustomizerStep(1);
+      return;
+    }
+    if (!validateStep2()) {
+      setCustomizerStep(2);
+      return;
+    }
+
+    const loadId = toast.loading('Reserving venue securely...');
+    try {
+      const venuePayload = isManualLocationInput
+        ? {
+            name: manualVenueName,
+            address: manualAddress,
+            city: manualCity,
+            state: manualState,
+            pincode: manualPincode,
+            country: 'India',
+            isOutdoor,
+            googleMapsLink: venueDetails?.googleMapsLink || '',
+          }
+        : {
+            name: venueDetails?.name,
+            address: venueDetails?.address,
+            city: venueDetails?.city,
+            state: venueDetails?.state,
+            pincode: venueDetails?.pincode,
+            country: venueDetails?.country || 'India',
+            latitude: venueDetails?.latitude,
+            longitude: venueDetails?.longitude,
+            googleMapsLink: venueDetails?.googleMapsLink,
+            isOutdoor,
+          };
+
+      const checkoutPayload = {
+        eventPackageId: event._id || event.id,
+        eventType: eventType === 'other' ? customOccasion : eventType,
+        title: `${event.title} Booking`,
+        date: bookingDate,
+        rentalDurationDays,
+        timing: { start: startTime, end: endTime },
+        guestCount,
+        contactPhone,
+        venue: venuePayload,
+        customization: {
+          themeColor: selectedPaletteColor || event.colorPalette?.[0] || 'Standard',
+          floralPreference: 'Standard Garlands',
+          lightingPreference: 'Standard Lighting',
+          stageSize: 'Standard',
+          additionalRequests: customNote || '',
+        },
+        selectedAddons: [],
+        inspirationImages: [],
+      };
+
+      const res = await bookingService.create(checkoutPayload);
+      if (res && res.success) {
+        localStorage.removeItem(`eventDecor_draft_${event._id || event.id}`);
+        toast.dismiss(loadId);
+        toast.success('Venue reserved successfully! Our team will contact you.');
+        setIsDrawerOpen(false);
+      } else {
+        toast.dismiss(loadId);
+        toast.error(res.message || 'Failed to reserve the venue.');
+      }
+    } catch (err) {
+      logger.error('Error reserving venue:', err);
+      toast.dismiss(loadId);
+      toast.error('Something went wrong while reserving.');
+    }
+  };
+
   const handleBookRental = async () => {
     if (!isAuthenticated) {
       runProtectedAction(() => handleBookRental());
@@ -180,8 +339,8 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
       setCustomizerStep(1);
       return;
     }
-    if (!validateStep3()) {
-      setCustomizerStep(3);
+    if (!validateStep2()) {
+      setCustomizerStep(2);
       return;
     }
 
@@ -226,6 +385,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
         rentalDurationDays,
         timing: { start: startTime, end: endTime },
         guestCount,
+        contactPhone,
         venue: venuePayload,
         customization: {
           themeColor: selectedPaletteColor || event.colorPalette?.[0] || 'Standard',
@@ -265,8 +425,10 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
               bookingId,
             });
             toast.dismiss(verifyLoadId);
-            if (verifyRes.success) {
+            if (verifyRes && verifyRes.success) {
+              localStorage.removeItem(`eventDecor_draft_${event._id || event.id}`);
               toast.success('Payment successful! Your luxury event is confirmed.');
+              setIsDrawerOpen(false);
               navigate(`/booking-success/${bookingId}`);
             } else {
               toast.error(verifyRes.message || 'Payment verification failed.');
@@ -316,6 +478,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
       eventType,
       customOccasion,
       isDrawerOpen,
+      contactPhone,
     },
     actions: {
       setCustomInclusions,
@@ -340,9 +503,13 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
       setEventType,
       setCustomOccasion,
       setIsDrawerOpen,
+      setContactPhone,
       handleManualFieldChange,
       calculateLivePrice,
       handleBookRental,
+      handleReserveOnly,
+      validateStep1,
+      validateStep2,
     },
   };
 }

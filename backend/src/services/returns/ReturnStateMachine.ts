@@ -277,9 +277,17 @@ export class ReturnStateMachine {
     if (nextStatus === 'submitted') {
       await ReturnNotificationService.notifyAdminNewReturn(request);
     } else if (nextStatus === 'approved') {
-      await ReturnNotificationService.notifyCustomerReturnApproved(request);
+      if (request.returnType === 'exchange') {
+        await ReturnNotificationService.notifyCustomerExchangeApproved(request);
+      } else {
+        await ReturnNotificationService.notifyCustomerReturnApproved(request);
+      }
     } else if (nextStatus === 'rejected') {
-      await ReturnNotificationService.notifyCustomerReturnRejected(request);
+      if (request.returnType === 'exchange') {
+        await ReturnNotificationService.notifyCustomerExchangeRejected(request);
+      } else {
+        await ReturnNotificationService.notifyCustomerReturnRejected(request);
+      }
     } else if (nextStatus === 'return_courier_assigned') {
       await ReturnNotificationService.notifyCustomerPickupScheduled(request);
     } else if (nextStatus === 'refund_initiated') {

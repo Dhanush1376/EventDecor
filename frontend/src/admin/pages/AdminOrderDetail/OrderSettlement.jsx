@@ -1,6 +1,5 @@
 import React from 'react';
-import { m as motion } from 'framer-motion';
-import { fadeUp, formatCurrency } from '../../components/AdminUIKit';
+import { formatCurrency } from '../../components/AdminUIKit';
 import { playSuccessBeep, playErrorBeep } from '../../../utils/media/audioUtils';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../../utils/core/errorHelpers';
@@ -32,7 +31,7 @@ export function OrderSettlement({
   };
 
   return (
-    <motion.div variants={fadeUp} className="admin-card p-6 relative overflow-hidden">
+    <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-1 bg-[var(--admin-warning)]"></div>
 
       <div className="flex items-center justify-between mb-4 border-b border-[var(--admin-border-subtle)] pb-4">
@@ -40,9 +39,9 @@ export function OrderSettlement({
           <span className="material-symbols-outlined text-[20px] text-[var(--admin-warning)]">
             account_balance_wallet
           </span>
-          <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+          <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block">
             COD Reconciliation & Settlement
-          </h2>
+          </label>
         </div>
         <span
           className={`admin-badge border-none font-bold text-[10px] uppercase tracking-wider h-6 px-2.5 ${
@@ -144,6 +143,6 @@ export function OrderSettlement({
           </div>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

@@ -4,12 +4,14 @@ import PaymentAudit from '../../models/PaymentAudit';
 import OutboxEvent from '../../models/OutboxEvent';
 import BookingMessage from '../../models/BookingMessage';
 import { EventJobStateMachine } from '../eventBooking/EventJobStateMachine';
+import { EventResourcePlanningService } from '../eventBooking/EventResourcePlanningService';
 import { PaymentRefundService } from '../PaymentRefundService';
+import PaymentWebhookEvent from '../../models/PaymentWebhookEvent';
 import logger from '../../config/logger';
 import * as Sentry from '@sentry/node';
 
 /**
- * EventJobWebhookHandler â€” Handles Razorpay webhook events for EventJob entities.
+ * EventJobWebhookHandler — Handles Razorpay webhook events for EventJob entities.
  *
  * PROBLEM SOLVED: If a customer's browser closes after Razorpay captures the deposit payment
  * but before the frontend calls verifyBookingCheckout, this webhook handler ensures the
@@ -133,13 +135,10 @@ export class EventJobWebhookHandler {
             { session },
           );
 
-          await mongoose
-            .model('PaymentWebhookEvent')
-            .updateOne(
-              { razorpayEventId: eventId },
-              { $set: { status: 'processed', updatedAt: new Date() } },
-            )
-            .session(session);
+          await PaymentWebhookEvent.updateOne(
+            { razorpayEventId: eventId },
+            { $set: { status: 'processed', updatedAt: new Date() } },
+          ).session(session);
 
           await session.commitTransaction();
 
@@ -165,22 +164,23 @@ export class EventJobWebhookHandler {
         }
 
         // Double booking check (same logic as verifyBookingCheckout)
-        const bDate = new Date(booking.date);
-        const startOfDay = new Date(bDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(bDate);
-        endOfDay.setHours(23, 59, 59, 999);
+        // Use Canonical Architecture for Resource Planning
+        let claimFailed = false;
+        try {
+          await EventResourcePlanningService.claimSlotAtomically(
+            new Date(booking.date),
+            booking._id.toString(),
+            session,
+          );
+        } catch (err: any) {
+          if (err.statusCode === 409) {
+            claimFailed = true;
+          } else {
+            throw err;
+          }
+        }
 
-        const slotsUsed = await EventJob.countDocuments({
-          _id: { $ne: booking._id },
-          date: { $gte: startOfDay, $lte: endOfDay },
-          status: {
-            $in: ['confirmed', 'setup_in_progress', 'payment_processing', 'team_assigned'],
-          },
-        }).session(session);
-
-        const MAX_EVENTS_PER_DAY = 3;
-        if (slotsUsed >= MAX_EVENTS_PER_DAY) {
+        if (claimFailed) {
           booking.status = 'failed';
           booking.payments?.push({
             amount: booking.pricing.depositAmount,
@@ -192,18 +192,15 @@ export class EventJobWebhookHandler {
           booking.statusHistory.push({
             status: 'failed',
             timestamp: new Date(),
-            note: 'Date fully booked â€” automatic refund initiated via webhook',
+            note: 'Date fully booked — automatic refund initiated via webhook',
             updatedBy: 'system',
           });
           await booking.save({ session });
 
-          await mongoose
-            .model('PaymentWebhookEvent')
-            .updateOne(
-              { razorpayEventId: eventId },
-              { $set: { status: 'processed', updatedAt: new Date() } },
-            )
-            .session(session);
+          await PaymentWebhookEvent.updateOne(
+            { razorpayEventId: eventId },
+            { $set: { status: 'processed', updatedAt: new Date() } },
+          ).session(session);
 
           await session.commitTransaction();
 
@@ -223,6 +220,12 @@ export class EventJobWebhookHandler {
           return { status: 200, message: 'Date fully booked, refund initiated' };
         }
 
+        booking.razorpayPaymentId = razorpay_payment_id;
+        booking.razorpaySignature = signature;
+        booking.clientApproved = true;
+        booking.pricing.paymentStatus = 'partial';
+        booking.pricing.pendingBalance = booking.pricing.totalPrice - booking.pricing.depositAmount;
+
         // SUCCESS: Confirm the booking
         EventJobStateMachine.transition(
           booking,
@@ -230,11 +233,6 @@ export class EventJobWebhookHandler {
           'Payment confirmed via Razorpay webhook',
           'system',
         );
-        booking.razorpayPaymentId = razorpay_payment_id;
-        booking.razorpaySignature = signature;
-        booking.clientApproved = true;
-        booking.pricing.paymentStatus = 'partial';
-        booking.pricing.pendingBalance = booking.pricing.totalPrice - booking.pricing.depositAmount;
 
         booking.payments?.push({
           amount: booking.pricing.depositAmount,
@@ -272,13 +270,10 @@ export class EventJobWebhookHandler {
         );
 
         // ENTERPRISE FIX: Mark webhook as processed INSIDE the transaction
-        await mongoose
-          .model('PaymentWebhookEvent')
-          .updateOne(
-            { razorpayEventId: eventId },
-            { $set: { status: 'processed', updatedAt: new Date() } },
-          )
-          .session(session);
+        await PaymentWebhookEvent.updateOne(
+          { razorpayEventId: eventId },
+          { $set: { status: 'processed', updatedAt: new Date() } },
+        ).session(session);
 
         await session.commitTransaction();
         logger.info(
@@ -338,13 +333,10 @@ export class EventJobWebhookHandler {
         }
 
         // ENTERPRISE FIX: Mark webhook as processed INSIDE the transaction
-        await mongoose
-          .model('PaymentWebhookEvent')
-          .updateOne(
-            { razorpayEventId: eventId },
-            { $set: { status: 'processed', updatedAt: new Date() } },
-          )
-          .session(session);
+        await PaymentWebhookEvent.updateOne(
+          { razorpayEventId: eventId },
+          { $set: { status: 'processed', updatedAt: new Date() } },
+        ).session(session);
 
         await session.commitTransaction();
       } catch (err) {
