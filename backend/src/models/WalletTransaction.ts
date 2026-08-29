@@ -80,7 +80,6 @@ WalletTransactionSchema.index(
 );
 
 // High-Performance Production Compound Index for User History Feed Pagination
-WalletTransactionSchema.index({ userId: 1, createdAt: -1 });
 
 // Idempotency constraint for wallet refunds: max 1 refund transaction per return request
 WalletTransactionSchema.index(

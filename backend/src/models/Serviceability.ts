@@ -27,7 +27,6 @@ const ServiceabilitySchema: Schema = new Schema(
   { timestamps: true },
 );
 
-ServiceabilitySchema.index({ locationCode: 1 });
 ServiceabilitySchema.index({ enabled: 1 });
 
 const Serviceability = mongoose.model<IServiceability>('Serviceability', ServiceabilitySchema);
