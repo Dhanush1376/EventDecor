@@ -1,9 +1,13 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 
+if (!process.env.MONGODB_URI) {
+  console.error('MONGODB_URI is required');
+  process.exit(1);
+}
+
 mongoose
-  .connect(
-    'mongodb+srv://siriadmin:Balusiri.05@cluster0.odfo3tb.mongodb.net/siri-arts-crafts?retryWrites=true&w=majority&appName=Cluster0',
-  )
+  .connect(process.env.MONGODB_URI)
   .then(async () => {
     const InAppNotification = mongoose.connection.collection('inappnotifications');
     const Order = mongoose.connection.collection('orders');
