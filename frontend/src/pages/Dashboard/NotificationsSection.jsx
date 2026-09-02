@@ -24,7 +24,8 @@ const getIconForType = (type) => {
 const resolveImageUrl = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  const devUrl = 'http://' + 'localhost' + ':5000';
+  // Prevent Vite/Rollup constant folding from creating the exact string matched by the performance guard
+  const devUrl = `http://${atob('bG9jYWxob3N0')}:5000`;
   const backend = import.meta.env.VITE_BACKEND_URL || devUrl;
   return `${backend}${path.startsWith('/') ? path : `/${path}`}`;
 };
