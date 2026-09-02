@@ -24,16 +24,16 @@ export class TransactionToFulfilmentMapper {
           break;
         case 'PACKED':
         case 'PREPARING':
-          trackingStatus = 'PACKED';
+          trackingStatus = 'PROCESSING';
           message = 'Order has been packed and is ready for dispatch.';
           break;
         case 'DISPATCHED':
         case 'IN_TRANSIT':
-          trackingStatus = 'SHIPPED';
+          trackingStatus = 'PROCESSING';
           message = 'Order has been shipped/dispatched.';
           break;
         case 'OUT_FOR_DELIVERY':
-          trackingStatus = 'OUT_FOR_DELIVERY';
+          trackingStatus = 'PROCESSING';
           message = 'Order is out for delivery.';
           break;
         case 'DELIVERED':

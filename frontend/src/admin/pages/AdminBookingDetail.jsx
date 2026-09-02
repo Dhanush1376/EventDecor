@@ -2,8 +2,6 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { SkeletonDashboard, fadeUp, stagger } from '../components/AdminUIKit';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import MessageCircle from 'lucide-react/dist/esm/icons/message-circle';
-import X from 'lucide-react/dist/esm/icons/x';
 import { bookingService, userService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 import logger from '../../utils/core/logger';
@@ -18,13 +16,11 @@ export function AdminBookingDetail() {
   const [dataLoading, setDataLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showUnpaidModal, setShowUnpaidModal] = useState(false);
 
   // Advanced States
   const [drawerStatus, setDrawerStatus] = useState('inquiry');
   const [drawerNotes, setDrawerNotes] = useState('');
-  const [drawerChatMsg, setDrawerChatMsg] = useState('');
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const chatEndRef = useRef(null);
 
   const [logisticsSetup, setLogisticsSetup] = useState('');
   const [logisticsPickup, setLogisticsPickup] = useState('');
@@ -124,16 +120,11 @@ export function AdminBookingDetail() {
       setVenueGoogleMapsLink(v.googleMapsLink || '');
       setVenueIsOutdoor(v.isOutdoor || false);
 
-      const chatTimer = setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-
       const mapTimer = setTimeout(() => {
         initDrawerMap();
       }, 450);
 
       return () => {
-        clearTimeout(chatTimer);
         clearTimeout(mapTimer);
       };
     }
@@ -342,23 +333,6 @@ export function AdminBookingDetail() {
     }
   };
 
-  const handleSendAdminChat = async (e) => {
-    e.preventDefault();
-    if (!drawerChatMsg.trim() || !selectedBooking) return;
-    try {
-      const res = await bookingService.postChat(
-        selectedBooking._id || selectedBooking.id,
-        drawerChatMsg,
-      );
-      if (res.success) {
-        setDrawerChatMsg('');
-        setSelectedBooking(res.data);
-      }
-    } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to post message.'));
-    }
-  };
-
   const handleTeamMemberToggle = (name, role, contact) => {
     setAllocatedTeam((prev) => {
       const exists = prev.some((t) => t.name === name);
@@ -405,83 +379,12 @@ export function AdminBookingDetail() {
     );
   }
 
-  const chatUI = (isDesktop = false) => (
-    <>
-      <div className="border-b border-[var(--admin-border-subtle)] p-4 shrink-0 flex items-center justify-between bg-[var(--admin-bg-subtle)]">
-        <div>
-          <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
-            CLIENT CHAT
-          </span>
-          <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-            Customer Messages
-          </h4>
-        </div>
-        {!isDesktop && (
-          <button
-            onClick={() => setIsChatOpen(false)}
-            className="w-8 h-8 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center hover:bg-[var(--admin-surface-muted)] transition-colors"
-          >
-            <X className="w-4 h-4 text-[var(--admin-text-secondary)]" />
-          </button>
-        )}
-      </div>
-
-      <div className="flex-1 overflow-y-auto py-5 space-y-5 px-4 custom-scrollbar flex flex-col">
-        {selectedBooking.chatHistory?.map((chat, idx) => {
-          const isAdmin = chat.sender === 'admin';
-          return (
-            <div
-              key={idx}
-              className={`flex flex-col max-w-[85%] ${isAdmin ? 'self-end text-right ml-auto' : 'self-start text-left'}`}
-            >
-              <span className="text-[9px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1.5 block">
-                {isAdmin ? 'You' : 'Client'}
-              </span>
-              <div
-                className={`p-3 text-[12px] leading-relaxed shadow-sm ${isAdmin ? 'bg-[var(--admin-accent)] text-white rounded-[16px] rounded-tr-[4px]' : 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] rounded-[16px] rounded-tl-[4px]'}`}
-              >
-                {chat.message}
-              </div>
-              <span className="text-[9px] font-bold text-[var(--admin-text-tertiary)] mt-1.5 block">
-                {new Date(chat.timestamp).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </span>
-            </div>
-          );
-        })}
-        <div ref={chatEndRef} />
-      </div>
-
-      <form
-        onSubmit={handleSendAdminChat}
-        className="p-4 border-t border-[var(--admin-border-subtle)] shrink-0 flex items-center gap-2 mt-auto bg-[var(--admin-surface)]"
-      >
-        <input
-          type="text"
-          placeholder="Message..."
-          value={drawerChatMsg}
-          onChange={(e) => setDrawerChatMsg(e.target.value)}
-          className="admin-input h-10 flex-1 rounded-full"
-          required
-        />
-        <button
-          type="submit"
-          className="w-10 h-10 rounded-full bg-[var(--admin-accent)] text-white flex items-center justify-center hover:bg-[var(--admin-accent-hover)] transition-all shrink-0"
-        >
-          <span className="material-symbols-outlined text-[16px]">send</span>
-        </button>
-      </form>
-    </>
-  );
-
   return (
     <motion.div
       initial="hidden"
       animate="show"
       variants={stagger}
-      className="max-w-[1280px] mx-auto space-y-6 pb-20"
+      className="w-full mx-auto space-y-6 pb-20"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -503,15 +406,21 @@ export function AdminBookingDetail() {
           </label>
           <select
             value={drawerStatus}
-            onChange={(e) => handleUpdateStatus(e.target.value)}
+            onChange={(e) => {
+              if (
+                e.target.value === 'confirmed' &&
+                selectedBooking?.pricing?.paymentStatus === 'unpaid'
+              ) {
+                setShowUnpaidModal(true);
+                return;
+              }
+              handleUpdateStatus(e.target.value);
+            }}
             className="admin-input h-10 min-w-[220px] text-[13px] border-[var(--admin-border-strong)] bg-[var(--admin-surface)] font-bold text-[var(--admin-text-primary)] shadow-sm"
           >
             <option value="inquiry">Phase 1: Inquiry</option>
             <option value="pending_payment">Phase 2: Booking & Payment</option>
-            <option
-              value="confirmed"
-              disabled={selectedBooking?.pricing?.paymentStatus === 'unpaid'}
-            >
+            <option value="confirmed">
               Phase 3: Confirmed & Planning{' '}
               {selectedBooking?.pricing?.paymentStatus === 'unpaid' ? '(Awaiting Payment)' : ''}
             </option>
@@ -521,12 +430,12 @@ export function AdminBookingDetail() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 items-start">
+      <div className="w-full mx-auto flex flex-col lg:flex-row gap-6 items-start">
         <motion.div variants={fadeUp} className="flex-1 w-full min-w-0 space-y-6">
-          <div className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-2xl sm:rounded-[var(--admin-radius-xl)] shadow-[var(--admin-shadow-xs)] p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
+          <div className="bg-transparent sm:bg-[var(--admin-surface)] sm:border sm:border-[var(--admin-border)] sm:rounded-md sm:shadow-[var(--admin-shadow-xs)] p-0 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
             <div className="flex flex-col gap-6 items-start">
-              <div className="flex-1 space-y-4 w-full">
-                <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
+              <div className="flex-1 space-y-6 w-full">
+                <div className="p-4 sm:p-4 bg-[var(--admin-surface)] sm:bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-lg shadow-sm sm:shadow-none">
                   <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-3 block">
                     Customer Information
                   </label>
@@ -553,7 +462,9 @@ export function AdminBookingDetail() {
                   </div>
                 </div>
 
-                <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
+                <hr className="border-[var(--admin-border-subtle)]" />
+
+                <div className="px-1 sm:px-2">
                   <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-3 block">
                     Event Details
                   </label>
@@ -658,9 +569,11 @@ export function AdminBookingDetail() {
                   </div>
                 </div>
 
+                <hr className="border-[var(--admin-border-subtle)]" />
+
                 {selectedBooking.pricing && (
                   <>
-                    <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
+                    <div className="px-1 sm:px-2">
                       <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-3 block">
                         Pricing Summary
                       </label>
@@ -858,51 +771,6 @@ export function AdminBookingDetail() {
             </div>
           </div>
         </motion.div>
-
-        {/* Desktop Inline Chat Window */}
-        <div className="hidden lg:flex w-[400px] shrink-0 h-[calc(100vh-8rem)] sticky top-24 bg-[var(--admin-surface)] rounded-2xl shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border-subtle)] overflow-hidden flex-col">
-          {chatUI(true)}
-        </div>
-      </div>
-
-      {/* Floating Action Button for Mobile/Tablet */}
-      <div className="lg:hidden">
-        <button
-          onClick={() => setIsChatOpen(true)}
-          className="fixed bottom-24 right-4 sm:bottom-10 sm:right-10 w-14 h-14 rounded-full bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white shadow-[var(--admin-shadow-md)] hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center z-40"
-        >
-          <MessageCircle className="w-6 h-6" />
-          {selectedBooking?.chatHistory?.length > 0 && (
-            <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-[var(--admin-surface)]" />
-          )}
-        </button>
-
-        {/* Chat Drawer / Modal */}
-        <AnimatePresence>
-          {isChatOpen && (
-            <div className="fixed inset-0 z-50 flex items-end justify-end pointer-events-none sm:p-8 sm:pb-28">
-              {/* Mobile Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsChatOpen(false)}
-                className="absolute inset-0 bg-black/40 sm:hidden pointer-events-auto backdrop-blur-sm"
-              />
-
-              {/* Chat Window */}
-              <motion.div
-                initial={{ y: '100%', opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: '100%', opacity: 0, scale: 0.95 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="bg-[var(--admin-surface)] w-full h-[85vh] sm:w-[400px] sm:h-[600px] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col pointer-events-auto border border-[var(--admin-border-subtle)] overflow-hidden relative z-10"
-              >
-                {chatUI(false)}
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
       </div>
 
       {showPaymentModal && (
@@ -915,6 +783,44 @@ export function AdminBookingDetail() {
           }}
         />
       )}
+
+      {/* Unpaid Warning Modal */}
+      <AnimatePresence>
+        {showUnpaidModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-[var(--admin-surface)] rounded-md shadow-[var(--admin-shadow-2xl)] border border-[var(--admin-border)] w-full max-w-sm overflow-hidden"
+            >
+              <div className="p-5">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="material-symbols-outlined text-[24px] text-red-600">error</span>
+                </div>
+                <h3 className="text-[16px] font-bold text-center text-[var(--admin-text-primary)] mb-2">
+                  Action Blocked
+                </h3>
+                <p className="text-[13px] text-center text-[var(--admin-text-secondary)] mb-6">
+                  The user did not pay, so the status cannot be updated to Confirmed. Please record
+                  a payment first.
+                </p>
+                <button
+                  onClick={() => setShowUnpaidModal(false)}
+                  className="w-full admin-btn-primary flex justify-center py-2.5 rounded text-[13px] font-bold"
+                >
+                  Understood
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

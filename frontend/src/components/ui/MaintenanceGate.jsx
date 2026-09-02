@@ -11,7 +11,7 @@ export function MaintenanceGate() {
   // Returning null is safer to ensure we don't flash the public store if maintenance is on.
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
+      <div className="fixed inset-0 z-[9999] overflow-hidden bg-surface flex items-center justify-center">
         <div className="w-16 h-16 rounded-full border-[1px] border-primary/30 border-t-primary animate-spin duration-1000 ease-linear" />
       </div>
     );

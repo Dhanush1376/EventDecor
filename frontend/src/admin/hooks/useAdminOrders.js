@@ -11,11 +11,18 @@ const mapDbOrderToFrontend = (o) => {
 
   // Use capitalized statuses strictly
   let fStatus = o.orderStatus || 'Pending';
-  if (fStatus === 'placed') fStatus = 'Pending';
-  else if (fStatus === 'Payment Pending') fStatus = 'Payment Pending';
+  if (fStatus === 'placed' || fStatus === 'Payment Pending') fStatus = 'Pending';
   else if (fStatus === 'confirmed') fStatus = 'Confirmed';
-  else if (fStatus === 'processing') fStatus = 'Packed';
-  else if (fStatus === 'shipped') fStatus = 'Shipped';
+  else if (
+    fStatus === 'processing' ||
+    fStatus === 'packed' ||
+    fStatus === 'Packed' ||
+    fStatus === 'shipped' ||
+    fStatus === 'Shipped' ||
+    fStatus === 'Ready to Ship' ||
+    fStatus === 'Out for Delivery'
+  )
+    fStatus = 'Processing';
   else if (fStatus === 'delivered') fStatus = 'Delivered';
   else if (fStatus === 'cancelled') fStatus = 'Cancelled';
 
@@ -130,43 +137,6 @@ export function useAdminOrders({
     [activeRole, safetyLock, logAdminAction, setGlobalActionLoading, setGlobalActionMessage],
   );
 
-  const updateOrderNotes = useCallback(
-    async (orderId, notes) => {
-      if (activeRole === 'viewer') {
-        toast.error('Viewer Role: Write operations are restricted!');
-        return;
-      }
-      if (safetyLock) {
-        toast.error('Safety Lock Active: Write operations are globally blocked!');
-        return;
-      }
-      try {
-        if (setGlobalActionLoading) {
-          setGlobalActionMessage('Updating order notes...');
-          setGlobalActionLoading(true);
-        }
-        const res = await orderService.updateNotes(orderId, notes);
-        if (res.success) {
-          setOrders((prev) =>
-            prev.map((o) => {
-              if ((o.id || o._id) === orderId) {
-                return { ...o, notes };
-              }
-              return o;
-            }),
-          );
-          logAdminAction('UPDATE_ORDER_NOTES', `Updated Order ID ${orderId} notes`);
-          toast.success('Notes updated');
-        }
-      } catch (_err) {
-        toast.error('Failed to update order notes');
-      } finally {
-        if (setGlobalActionLoading) setGlobalActionLoading(false);
-      }
-    },
-    [activeRole, safetyLock, logAdminAction, setGlobalActionLoading, setGlobalActionMessage],
-  );
-
   const refreshOrders = useCallback(async () => {
     try {
       const res = await orderService.getAll({ limit: 999999 });
@@ -214,7 +184,6 @@ export function useAdminOrders({
     orders,
     setOrders,
     updateOrderStatus,
-    updateOrderNotes,
     deleteOrder,
     refreshOrders,
     mapDbOrderToFrontend,

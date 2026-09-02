@@ -69,7 +69,7 @@ export interface IEventJob extends Document {
   };
   setupTiming?: Date;
   pickupTiming?: Date;
-  guestCount: number;
+
   venue: {
     address: string;
     name?: string;
@@ -205,7 +205,7 @@ const EventJobSchema: Schema = new Schema(
     },
     setupTiming: { type: Date },
     pickupTiming: { type: Date },
-    guestCount: { type: Number, required: true, min: 1, max: 10000 },
+
     venue: {
       address: { type: String, required: true },
       name: { type: String },

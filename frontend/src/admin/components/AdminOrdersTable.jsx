@@ -26,34 +26,23 @@ export function AdminOrdersTable({
   };
 
   const getCardColorClass = (status, cardState = 'normal') => {
-    if (cardState === 'return_active' || cardState === 'return_and_exchange_active') {
-      return '!bg-yellow-500/10 border-yellow-500/30';
-    }
-    if (cardState === 'exchange_active') {
-      return '!bg-blue-500/10 border-blue-500/30';
-    }
-
     const s = (status || '').toLowerCase();
     switch (s) {
       case 'delivered':
-      case 'confirmed':
       case 'settled':
-        return '!bg-[#7a8b76]/15 border-[#7a8b76]/30'; // Sage Green
-      case 'shipped':
-      case 'out for delivery':
+        return 'bg-green-50 border-green-200';
       case 'processing':
-      case 'packed':
-        return '!bg-[#6b8ead]/15 border-[#6b8ead]/30'; // Slate Blue
+        return 'bg-blue-50 border-blue-200';
       case 'pending':
-      case 'payment pending':
-      case 'ready to ship':
-        return '!bg-[#c29b62]/15 border-[#c29b62]/30'; // Ochre
+        return 'bg-yellow-50 border-yellow-200';
+      case 'confirmed':
+        return 'bg-purple-50 border-purple-200';
       case 'cancelled':
       case 'returned':
       case 'refunded':
-        return '!bg-[#bc6c5c]/15 border-[#bc6c5c]/30'; // Terracotta
+        return 'bg-red-50 border-red-200';
       default:
-        return '!bg-[var(--admin-surface)] border-[var(--admin-border)]';
+        return 'bg-gray-50 border-gray-200';
     }
   };
 
@@ -171,35 +160,41 @@ export function AdminOrdersTable({
                         )}
                       </div>
                     </td>
-                    <td className="hidden md:table-cell max-w-[300px] py-3 pr-4">
-                      <div className="flex flex-col gap-2.5">
-                        {o.items.map((item, idx) => {
-                          const imgSrc =
-                            item.image ||
-                            item.images?.[0] ||
-                            item.thumbnail ||
-                            'https://placehold.co/100x100/f3f4f6/a1a1aa?text=Image';
-                          return (
-                            <div key={idx} className="flex items-center gap-2.5">
+                    <td className="hidden md:table-cell max-w-[350px] py-3 pr-4">
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="flex items-center -space-x-2 shrink-0">
+                          {o.items.slice(0, 3).map((item, idx) => {
+                            const imgSrc =
+                              item.image ||
+                              item.images?.[0] ||
+                              item.thumbnail ||
+                              'https://placehold.co/100x100/f3f4f6/a1a1aa?text=Image';
+                            return (
                               <img
+                                key={idx}
                                 src={imgSrc}
                                 alt={item.name}
-                                className="h-9 w-9 rounded-[var(--admin-radius-md)] border-[1.5px] border-[var(--admin-surface)] object-cover shadow-sm bg-[var(--admin-surface-muted)] shrink-0"
+                                className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm bg-gray-100 relative"
+                                style={{ zIndex: 10 - idx }}
                               />
-                              <div className="flex flex-col min-w-0">
-                                <span
-                                  className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate"
-                                  title={item.name}
-                                >
-                                  {item.name || 'Unknown Item'}
-                                </span>
-                                <span className="text-[10px] font-semibold text-[var(--admin-text-tertiary)] mt-0.5">
-                                  x{item.quantity || item.qty || 1}
-                                </span>
-                              </div>
+                            );
+                          })}
+                          {o.items.length > 3 && (
+                            <div className="w-8 h-8 rounded-full bg-[var(--admin-surface-muted)] border-2 border-white shadow-sm flex items-center justify-center text-[10px] font-black text-[var(--admin-text-primary)] relative z-0">
+                              +{o.items.length - 3}
                             </div>
-                          );
-                        })}
+                          )}
+                        </div>
+                        <span
+                          className="text-[12.5px] font-medium text-[var(--admin-text-secondary)] leading-snug line-clamp-2"
+                          title={o.items
+                            .map((i) => `${i.name} (x${i.qty || i.quantity || 1})`)
+                            .join(', ')}
+                        >
+                          {o.items
+                            .map((i) => `${i.name} (x${i.qty || i.quantity || 1})`)
+                            .join(', ')}
+                        </span>
                       </div>
                     </td>
                     <td className="font-bold text-[var(--admin-text-primary)]">
@@ -334,124 +329,132 @@ export function AdminOrdersTable({
               <div
                 key={o.id}
                 onClick={() => openOrderDrawer(o)}
-                className={`${getCardColorClass(o.status, o.cardState)} rounded-[var(--admin-radius-lg)] p-4 shadow-sm border flex flex-col gap-3 cursor-pointer hover:shadow-md transition-all`}
+                className={`${getCardColorClass(o.status, o.cardState)} rounded-sm p-4 border-2 shadow-sm hover:border-gray-500 hover:shadow-md transition-all duration-200 cursor-pointer group text-left flex flex-col relative overflow-hidden`}
               >
-                <div className="flex justify-between items-start gap-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
-                        #{o.id.substring(o.id.length - 8).toUpperCase()}
-                      </span>
-                      {isNew && (
-                        <span className="w-2 h-2 rounded-full bg-[var(--admin-accent)] animate-pulse" />
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1 mt-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] truncate max-w-[150px]">
-                          {o.customer || o.shippingAddress?.name || 'User'}
-                        </span>
-                        {o.orderType && o.orderType !== 'purchase' && (
-                          <span
-                            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                              o.orderType === 'rental'
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'bg-purple-100 text-purple-700'
-                            }`}
-                          >
-                            {o.orderType}
-                          </span>
-                        )}
-                        <span className="text-[10px] text-[var(--admin-text-tertiary)] flex items-center gap-0.5 ml-1">
-                          <span className="material-symbols-outlined text-[10px]">call</span>
-                          {o.phone || o.shippingAddress?.phone || 'N/A'}
-                        </span>
-                      </div>
-                      {(o.address || o.shippingAddress?.address) && (
-                        <span className="text-[10px] text-[var(--admin-text-secondary)] flex items-start gap-1 leading-tight">
-                          <span className="material-symbols-outlined text-[10px] mt-0.5 shrink-0">
-                            location_on
-                          </span>
-                          <span className="truncate whitespace-normal line-clamp-1">
-                            {o.address || o.shippingAddress?.address}
-                            {o.shippingAddress?.city || o.city
-                              ? `, ${o.shippingAddress?.city || o.city}`
-                              : ''}
-                          </span>
-                        </span>
-                      )}
+                {o.orderType && o.orderType !== 'purchase' && (
+                  <div className="absolute top-0 left-0 w-12 h-12 pointer-events-none z-10 overflow-hidden rounded-tl-[var(--admin-radius-lg)]">
+                    <div
+                      className={`absolute top-2 -left-7 w-24 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wider ${
+                        o.orderType === 'rental' ? 'bg-indigo-500' : 'bg-purple-500'
+                      }`}
+                    >
+                      {o.orderType}
                     </div>
                   </div>
-                  <div onClick={(e) => e.stopPropagation()}>
+                )}
+
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[15px] font-bold text-gray-900">
+                    #{o.id.substring(o.id.length - 8).toUpperCase()}
+                  </span>
+                  <div className="relative inline-block">
                     <select
                       value={o.status}
-                      onChange={(e) => updateOrderStatus(o.id, e.target.value)}
-                      className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-1 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border-strong)] bg-white/80 backdrop-blur-sm text-[var(--admin-text-primary)] cursor-pointer outline-none shadow-sm"
+                      onChange={(e) => {
+                        updateOrderStatus(o.id, e.target.value);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="appearance-none bg-white border border-[#E0E2D9] text-gray-900 text-[10px] font-bold uppercase tracking-wider rounded-[6px] py-1.5 pl-3 pr-8 cursor-pointer shadow-sm outline-none"
                     >
-                      {allStatuses.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
+                      {allStatuses.map((st) => (
+                        <option key={st} value={st}>
+                          {st}
                         </option>
                       ))}
                     </select>
-                  </div>
-                </div>
-
-                <div className="pt-2 pb-2 border-y border-[var(--admin-border-subtle)] flex items-center gap-3">
-                  <div className="flex -space-x-2.5 overflow-hidden shrink-0">
-                    {o.items.slice(0, 3).map((item, idx) => {
-                      const imgSrc =
-                        item.image ||
-                        item.images?.[0] ||
-                        item.thumbnail ||
-                        'https://placehold.co/100x100/f3f4f6/a1a1aa?text=Image';
-                      return (
-                        <img
-                          key={idx}
-                          src={imgSrc}
-                          alt={item.name}
-                          className="inline-block h-9 w-9 rounded-[var(--admin-radius-md)] border-[1.5px] border-[var(--admin-surface)] object-cover shadow-sm bg-[var(--admin-surface-muted)] relative z-10"
-                          style={{ zIndex: 10 - idx }}
-                        />
-                      );
-                    })}
-                  </div>
-                  <p className="text-[12px] text-[var(--admin-text-primary)] line-clamp-2 flex-1">
-                    {o.items.map((i) => `${i.name} (x${i.quantity || 1})`).join(', ')}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between pt-1">
-                  <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
-                    {formatCurrency(o.total)}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="admin-badge admin-badge-neutral text-[9px] uppercase font-bold tracking-wider">
-                      {o.payment}
-                    </span>
-                    {['Cancelled', 'Returned', 'Refunded', 'Exchanged', 'Delivered'].includes(
-                      o.status,
-                    ) && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOrderToDelete(o);
-                        }}
-                        className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)]"
-                        title="Move to Recycle Bin"
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-900">
+                      <svg
+                        className="h-[14px] w-[14px]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                       >
-                        <span className="material-symbols-outlined text-[16px]">delete</span>
-                      </button>
-                    )}
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="3"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 mb-2 text-gray-800">
+                  <span className="text-[12px] font-medium uppercase tracking-wide truncate max-w-[140px]">
+                    {o.customer || o.shippingAddress?.name || 'User'}
+                  </span>
+                  <div className="flex items-center gap-1.5 text-[12px] font-medium">
+                    <span className="material-symbols-outlined text-[15px]">call</span>
+                    {(o.phone || o.shippingAddress?.phone || 'N/A').replace('+91', '').trim()}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-1.5 mb-4 text-gray-800">
+                  <span className="material-symbols-outlined text-[15px] mt-0.5 shrink-0">
+                    location_on
+                  </span>
+                  <span className="text-[11px] leading-snug line-clamp-2">
+                    {o.address || o.shippingAddress?.address || 'Address not provided'}
+                  </span>
+                </div>
+
+                <div className="border-y border-black/5 py-3 mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex items-center -space-x-1 shrink-0">
+                      {o.items.slice(0, 3).map((item, idx) => {
+                        const imgSrc =
+                          item.image || item.images?.[0] || item.thumbnail || '/placeholder.png';
+                        return (
+                          <img
+                            key={idx}
+                            src={imgSrc}
+                            alt=""
+                            className="w-[34px] h-[34px] rounded-md object-cover border border-white shadow-sm bg-gray-100 z-10"
+                            style={{ zIndex: 3 - idx }}
+                          />
+                        );
+                      })}
+                      {o.items.length > 3 && (
+                        <div className="w-[34px] h-[34px] rounded-md bg-gray-200 border border-white shadow-sm flex items-center justify-center text-[9px] font-bold z-0">
+                          +{o.items.length - 3}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-gray-800 leading-snug line-clamp-2 mt-0.5">
+                      {o.items.map((i) => `${i.name} (x${i.qty || i.quantity || 1})`).join(', ')}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-auto pt-1">
+                  <span className="text-[15px] font-bold text-gray-900">
+                    {o.total >= 1000 ? `₹${(o.total / 1000).toFixed(1)}K` : formatCurrency(o.total)}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-[4px] bg-[var(--admin-bg)] border border-[var(--admin-border)] text-gray-800 shadow-sm">
+                      {o.payment || 'COD PENDING'}
+                    </span>
+
                     <button
+                      className="text-gray-700 hover:text-red-600 transition-colors ml-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOrderToDelete(o);
+                      }}
+                      title="Delete Order"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+
+                    <button
+                      className="text-gray-700 hover:text-black transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         openOrderDrawer(o);
                       }}
-                      className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
-                      title="More Options"
                     >
-                      <span className="material-symbols-outlined text-[18px]">more_vert</span>
+                      <span className="material-symbols-outlined text-[20px]">visibility</span>
                     </button>
                   </div>
                 </div>

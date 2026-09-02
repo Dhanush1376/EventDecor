@@ -197,7 +197,9 @@ export function EventDetail() {
                   {event.category?.name ||
                     (typeof event.category === 'string' && event.category.length === 24
                       ? event.eventType
-                      : event.category) ||
+                      : typeof event.category === 'string'
+                        ? event.category.replace(/-/g, ' ')
+                        : event.category) ||
                     'Event Showcase'}
                 </span>
                 {event.rating > 0 && (
@@ -264,7 +266,9 @@ export function EventDetail() {
                       showcase.category?.name ||
                       (typeof showcase.category === 'string' && showcase.category.length === 24
                         ? showcase.eventType
-                        : showcase.category) ||
+                        : typeof showcase.category === 'string'
+                          ? showcase.category.replace(/-/g, ' ')
+                          : showcase.category) ||
                       'Showcase'
                     }
                     hideDetails={false}

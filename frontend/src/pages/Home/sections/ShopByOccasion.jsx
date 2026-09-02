@@ -175,8 +175,8 @@ export function ShopByOccasion({ previewContent }) {
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 select-none pointer-events-none"
                         containerClassName="absolute inset-0 w-full h-full"
                         sizes="(max-width: 640px) 75vw, (max-width: 768px) 50vw, 350px"
-                        width={350}
-                        quality="auto:good"
+                        width={800}
+                        quality="original"
                       />
                     ) : (
                       <div className="w-full h-full bg-surface-container-high" aria-hidden="true" />
@@ -195,20 +195,21 @@ export function ShopByOccasion({ previewContent }) {
                         : 'opacity-0 translate-y-6 pointer-events-none'
                     }`}
                   >
-                    <div className="flex items-end justify-between gap-4 w-full">
-                      <div className="flex flex-col items-start text-left min-w-0 flex-1">
-                        <h3 className="font-serif text-[16px] sm:text-[18px] text-white font-normal leading-tight drop-shadow-md break-words">
+                    <div className="flex flex-col items-start w-full">
+                      <div className="flex items-center justify-between gap-4 w-full">
+                        <h3 className="font-serif text-[16px] sm:text-[18px] text-white font-normal leading-tight drop-shadow-md truncate flex-1 text-left">
                           {occasion.label}
                         </h3>
+                        {/* Simple minimal arrow, no circles or borders */}
+                        <div className="flex-shrink-0 text-white flex items-center justify-center transition-transform duration-500 group-hover:translate-x-2">
+                          <ArrowRight
+                            className="text-[22px] sm:text-[24px] font-light"
+                            strokeWidth={1.5}
+                          />
+                        </div>
                       </div>
-
-                      {/* Simple minimal arrow, no circles or borders */}
-                      <div className="flex-shrink-0 text-white flex items-center justify-center transition-transform duration-500 group-hover:translate-x-2">
-                        <ArrowRight
-                          className="text-[22px] sm:text-[24px] font-light"
-                          strokeWidth={1.5}
-                        />
-                      </div>
+                      {/* Elegant animated underline */}
+                      <div className="h-[1px] w-1/2 bg-white/50 mt-3 transition-all duration-700 ease-out group-hover:w-full group-hover:bg-white/90 shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
                     </div>
                   </div>
                 </Link>
@@ -234,8 +235,8 @@ export function ShopByOccasion({ previewContent }) {
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 containerClassName="absolute inset-0 w-full h-full"
                 sizes="(max-width: 1024px) 100vw, 300px"
-                width={350}
-                quality="auto:good"
+                width={800}
+                quality="original"
               />
             ) : (
               <div
@@ -249,22 +250,27 @@ export function ShopByOccasion({ previewContent }) {
             <div className="absolute inset-0 flex flex-col justify-end p-8">
               {/* Contracted Text (Visible when contracted) */}
               <div className="absolute inset-0 flex flex-col justify-end items-start p-6 pb-8 pointer-events-none group-hover:opacity-0 transition-opacity duration-300 z-10">
-                <h3 className="font-serif text-[18px] lg:text-[20px] xl:text-[22px] text-white leading-tight drop-shadow-md font-normal min-w-0 break-words w-full">
+                <h3 className="font-serif text-[18px] lg:text-[20px] xl:text-[22px] text-white leading-tight drop-shadow-md font-normal min-w-0 truncate w-full">
                   {occasion.label}
                 </h3>
+                <div className="h-[1px] w-1/2 bg-white/60 mt-3 shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
               </div>
 
               {/* Expanded Content (Visible on hover) */}
-              <div className="absolute bottom-0 left-0 right-0 opacity-0 translate-y-8 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-700 delay-100 p-8 xl:p-12 flex flex-row items-end justify-between gap-6 overflow-hidden">
-                <div className="flex flex-col items-start min-w-0 flex-1 relative z-10">
-                  <h3 className="font-serif text-[24px] xl:text-[28px] text-white leading-tight drop-shadow-lg font-normal min-w-0 break-words w-full">
+              <div className="absolute bottom-0 left-0 right-0 opacity-0 translate-y-8 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-700 delay-100 p-8 xl:p-12 flex flex-col items-start overflow-hidden z-10">
+                <div className="flex flex-row items-center justify-between gap-6 w-full">
+                  <h3 className="font-serif text-[24px] xl:text-[28px] text-white leading-tight drop-shadow-lg font-normal min-w-0 truncate flex-1 text-left">
                     {occasion.label}
                   </h3>
+                  <div className="flex-shrink-0 text-white flex items-center justify-center transition-transform duration-500 group-hover:translate-x-3">
+                    <ArrowRight
+                      className="text-[36px] xl:text-[44px] font-light"
+                      strokeWidth={1.5}
+                    />
+                  </div>
                 </div>
-
-                <div className="flex-shrink-0 text-white flex items-center justify-center transition-transform duration-500 group-hover:translate-x-3 relative z-10">
-                  <ArrowRight className="text-[36px] xl:text-[44px] font-light" strokeWidth={1.5} />
-                </div>
+                {/* Elegant animated underline */}
+                <div className="h-[1px] w-1/2 bg-white/50 mt-4 transition-all duration-700 ease-out group-hover:w-full group-hover:bg-white/90 shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
               </div>
             </div>
           </Link>

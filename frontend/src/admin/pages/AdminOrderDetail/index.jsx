@@ -6,10 +6,9 @@ import { InvoiceTemplate } from '../../../components/ui';
 import { SkeletonDashboard, stagger } from '../../components/AdminUIKit';
 import { OrderHeader } from './OrderHeader';
 import { OrderStatusTimeline } from './OrderStatusTimeline';
-import OrderTimeline from '../../components/OrderTimeline';
+
 import { OrderSettlement } from './OrderSettlement';
 import { OrderItems } from './OrderItems';
-import { OrderLogistics } from './OrderLogistics';
 import { OrderShipping } from './OrderShipping';
 import { OrderRentalActions } from './OrderRentalActions';
 import { OrderReturnCard } from './OrderReturnCard';
@@ -114,56 +113,35 @@ export function AdminOrderDetail() {
           onViewInvoice={() => setShowStickerModal(true)}
         />
 
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="bg-[var(--admin-surface)] border-y border-[var(--admin-border)] sm:border sm:rounded-[var(--admin-radius-xl)] sm:shadow-[var(--admin-shadow-xs)] p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 -mx-4 sm:mx-0">
-            {/* Status Timeline */}
-            <div className="space-y-4">
+        <div className="max-w-[1400px] mx-auto w-auto">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 items-start">
+            {/* LEFT COLUMN: Operations & Timeline (2/3 Width) */}
+            <div className="xl:col-span-2 space-y-3 sm:space-y-6 lg:space-y-8">
+              {/* Status Timeline */}
               <OrderStatusTimeline order={order} updateOrderStatus={updateOrderStatus} />
+
+              {/* Order Items */}
+              <OrderItems order={order} />
             </div>
 
-            {/* Rich Event Timeline */}
-            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-              <h2 className="text-[14px] font-bold text-[var(--admin-text-primary)] mb-4 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px]">history</span>
-                Rich Event Timeline
-              </h2>
-              <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
-                <OrderTimeline orderId={order.rawOrder?._id || order.id} />
-              </div>
-            </div>
+            {/* RIGHT COLUMN: Customer, Shipping, Financials (1/3 Width Sticky Sidebar) */}
+            <div className="xl:col-span-1 space-y-3 sm:space-y-6 lg:space-y-8 sticky top-[88px]">
+              {/* Order Return Card */}
+              <OrderReturnCard order={order} />
 
-            {/* Order Settlement */}
-            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
+              {/* Rental Actions */}
+              <OrderRentalActions order={order} updateOrderStatus={updateOrderStatus} />
+
+              {/* Order Shipping / Customer Profile */}
+              <OrderShipping order={order} />
+
+              {/* Financials & Settlement */}
               <OrderSettlement
                 order={order}
                 updateOrderStatus={updateOrderStatus}
                 settlementCharges={settlementCharges}
                 setSettlementCharges={setSettlementCharges}
               />
-            </div>
-
-            {/* Order Return Card */}
-            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-              <OrderReturnCard order={order} />
-            </div>
-
-            {/* Order Items */}
-            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-              <OrderItems order={order} />
-            </div>
-
-            {/* Logistics & Shipping */}
-            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-              <OrderLogistics order={order} trackingQR={trackingQR} />
-            </div>
-
-            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-              <OrderShipping order={order} />
-            </div>
-
-            {/* Rental Actions */}
-            <div className="space-y-4 pt-5 border-t border-[var(--admin-border-subtle)]">
-              <OrderRentalActions order={order} updateOrderStatus={updateOrderStatus} />
             </div>
           </div>
         </div>

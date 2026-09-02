@@ -21,6 +21,14 @@ const getIconForType = (type) => {
   }
 };
 
+const resolveImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  const devUrl = 'http://' + 'localhost' + ':5000';
+  const backend = import.meta.env.VITE_BACKEND_URL || devUrl;
+  return `${backend}${path.startsWith('/') ? path : `/${path}`}`;
+};
+
 const formatTimeAgo = (dateString) => {
   const date = new Date(dateString);
   const now = new Date();
@@ -268,7 +276,7 @@ export function NotificationsSection() {
                       className={`w-14 h-14 lg:w-16 lg:h-16 rounded-lg shrink-0 flex items-center justify-center overflow-hidden bg-white shadow-sm border border-[#8c7335]/10`}
                     >
                       <img
-                        src={notification.metadata.imageSrc}
+                        src={resolveImageUrl(notification.metadata.imageSrc)}
                         alt="Product"
                         className="w-full h-full object-cover"
                         onError={(e) => {

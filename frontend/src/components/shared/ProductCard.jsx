@@ -274,10 +274,10 @@ export const ProductCard = React.memo(function ProductCard({
                   className="transition-all duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover/canvas:scale-110 object-cover w-full h-full"
                   loading={eager && idx === 0 ? 'eager' : 'lazy'}
                   fetchPriority={eager && idx === 0 ? 'high' : 'auto'}
-                  width={320}
-                  height={400}
+                  width={800}
+                  height={1000}
                   sizes={sizes}
-                  quality={itemType === 'event' ? 'auto:best' : undefined}
+                  quality="original"
                 />
               </Link>
             </div>
@@ -692,7 +692,7 @@ export const ProductCard = React.memo(function ProductCard({
           className={`flex items-center justify-between gap-2 ${compact ? 'mb-1.5' : 'mb-2.5 lg:mb-3'}`}
         >
           <span
-            className={`bg-surface-container-highest/40 border border-black/15 text-black/70 font-label uppercase ${compact ? 'text-[7px] tracking-[0.1em] px-1.5 py-[3px]' : 'text-[8px] lg:text-[9px] tracking-[0.15em] lg:tracking-[0.2em] px-2 py-[4px]'} rounded-md font-bold truncate min-w-0`}
+            className={`text-black/50 font-label uppercase ${compact ? 'text-[8px] tracking-[0.1em]' : 'text-[9px] lg:text-[10px] tracking-[0.2em]'} font-bold truncate min-w-0 transition-colors group-hover:text-black/80`}
           >
             {(() => {
               const displayCategory = primaryCategory?.name || category;
@@ -703,7 +703,11 @@ export const ProductCard = React.memo(function ProductCard({
               ) {
                 return 'Uncategorized';
               }
-              return displayCategory || 'Uncategorized';
+              return displayCategory
+                ? typeof displayCategory === 'string'
+                  ? displayCategory.replace(/-/g, ' ')
+                  : displayCategory
+                : 'Uncategorized';
             })()}
           </span>
 

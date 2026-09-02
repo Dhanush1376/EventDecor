@@ -15,6 +15,21 @@ import PaymentWebhookEvent from '../../src/models/PaymentWebhookEvent';
 import { PaymentVerificationService } from '../../src/services/PaymentVerificationService';
 import User from '../../src/models/User';
 
+vi.mock('../../src/utils/payment/RazorpayGateway', () => {
+  return {
+    RazorpayGateway: {
+      verifyPaymentSignature: vi.fn().mockReturnValue(true),
+      getPayment: vi.fn().mockResolvedValue({
+        id: 'pay_333',
+        order_id: 'order_333',
+        amount: 500000,
+        currency: 'INR',
+        status: 'captured',
+      }),
+    },
+  };
+});
+
 describe('Event Booking Concurrency and Idempotency Audit', () => {
   let user: any;
 
@@ -22,7 +37,7 @@ describe('Event Booking Concurrency and Idempotency Audit', () => {
     user = await User.create({
       name: 'Audit User',
       email: 'audit@example.com',
-      password: 'password123',
+      passwordHash: 'password123',
     });
   });
 
@@ -303,22 +318,6 @@ describe('Event Booking Concurrency and Idempotency Audit', () => {
       },
     };
     const signature = 'fake_sig';
-
-    // Mock Razorpay API to simulate frontend verifying directly with Razorpay
-    vi.mock('../../src/utils/payment/RazorpayGateway', () => {
-      return {
-        RazorpayGateway: {
-          verifyPaymentSignature: vi.fn().mockReturnValue(true),
-          getPayment: vi.fn().mockResolvedValue({
-            id: 'pay_333',
-            order_id: 'order_333',
-            amount: 500000,
-            currency: 'INR',
-            status: 'captured',
-          }),
-        },
-      };
-    });
 
     // Run them concurrently
     const results = await Promise.allSettled([

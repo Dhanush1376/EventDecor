@@ -20,7 +20,10 @@ export class DataEnricher {
           if (order.user) enriched.user = order.user;
         }
       } else if (eventCategory === 'booking') {
-        const booking = await EventJob.findById(aggregateId).populate('user').lean();
+        const booking = await EventJob.findById(aggregateId)
+          .populate('user')
+          .populate('eventPackage')
+          .lean();
         if (booking) {
           enriched.booking = booking;
           if (booking.user) enriched.user = booking.user;

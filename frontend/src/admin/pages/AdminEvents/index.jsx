@@ -91,12 +91,12 @@ export function AdminEvents() {
         iconColor="orders"
         headerAction={
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] overflow-x-auto sm:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full sm:w-max h-10">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] w-full sm:w-max sm:h-10">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 h-full rounded-sm text-[12px] sm:text-[13px] font-bold transition-all whitespace-nowrap ${
+                  className={`flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 h-10 sm:h-full rounded-sm text-[12px] sm:text-[13px] font-bold transition-all whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-[var(--admin-surface)] text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
                       : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'

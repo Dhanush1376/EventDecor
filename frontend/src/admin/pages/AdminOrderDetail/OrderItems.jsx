@@ -1,99 +1,128 @@
 import React from 'react';
-import { formatCurrency } from '../../components/AdminUIKit';
-
 export function OrderItems({ order }) {
   return (
-    <div className="p-3 sm:p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-xl">
-      <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-3 block">
-        Order Items
-      </label>
-      <div className="space-y-3">
-        {order.items.map((item, i) => (
+    <div className="bg-[var(--admin-surface)] rounded-xl shadow-sm border border-[var(--admin-border)] overflow-hidden">
+      <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
+        <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
+          <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
+          Order Items
+        </h3>
+        <span className="text-[12px] font-bold text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] px-3 py-1 rounded-full border border-[var(--admin-border-subtle)]">
+          {order.items?.length || 0} Items
+        </span>
+      </div>
+
+      <div className="divide-y divide-[var(--admin-border-subtle)]">
+        {order.items?.map((item, index) => (
           <div
-            key={i}
-            className="flex items-center justify-between p-4 bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] transition-colors"
+            key={index}
+            className="px-3 py-4 sm:p-5 flex flex-row gap-3 sm:gap-5 hover:bg-[var(--admin-surface-muted)] transition-colors group"
           >
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-[var(--admin-radius-md)] bg-[var(--admin-bg-subtle)] flex items-center justify-center overflow-hidden border border-[var(--admin-border)] shrink-0">
-                {item.image ? (
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="material-symbols-outlined text-[24px] text-[var(--admin-text-tertiary)]">
-                    inventory_2
-                  </span>
+            {/* Image */}
+            <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-xl bg-gray-100 border border-[var(--admin-border)] shrink-0 overflow-hidden relative shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+              {item.image ? (
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  <span className="material-symbols-outlined text-[32px]">image</span>
+                </div>
+              )}
+              {item.type && item.type.toLowerCase() !== 'purchase' && (
+                <div className="absolute top-0 right-0 bg-[var(--admin-text-primary)] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-bl-lg">
+                  {item.type}
+                </div>
+              )}
+            </div>
+
+            {/* Details */}
+            <div className="flex-1 flex flex-col justify-between">
+              <div>
+                <h4 className="text-[14px] sm:text-[15px] font-bold text-[var(--admin-text-primary)] mb-1 group-hover:text-[var(--admin-accent)] transition-colors line-clamp-2">
+                  {item.name}
+                </h4>
+                {item.type === 'rental' && item.rentalPeriod && (
+                  <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium flex items-center gap-1 mt-1">
+                    <span className="material-symbols-outlined text-[14px]">calendar_clock</span>
+                    {item.rentalPeriod.startDate} to {item.rentalPeriod.endDate}
+                  </p>
                 )}
               </div>
-              <div>
-                <p className="text-[14px] font-bold text-[var(--admin-text-primary)] leading-snug flex items-center gap-2">
-                  {item.name}
-                  {item.isNonRefundable && (
-                    <span className="text-[9px] uppercase tracking-wider font-bold bg-[#fffbeb] text-[#d97706] border border-[#fde68a] px-1.5 py-0.5 rounded-[var(--admin-radius-sm)] flex items-center gap-0.5">
-                      <span className="material-symbols-outlined text-[10px]">block</span>
-                      Non-Refundable
+
+              <div className="flex flex-wrap items-end justify-between gap-3 sm:gap-4 mt-3 sm:mt-4">
+                <div className="flex items-center text-[13px] divide-x divide-[var(--admin-border-subtle)]">
+                  <div className="flex flex-col pr-4 sm:pr-5">
+                    <span className="text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider">
+                      Price
                     </span>
-                  )}
-                </p>
-                {item.type === 'rental' && item.rentalInfo && (
-                  <div className="mt-1.5 flex items-center gap-1.5">
-                    <span className="text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
-                      <span className="material-symbols-outlined text-[10px]">event</span>
-                      {new Date(item.rentalInfo.startDate).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                      })}{' '}
-                      -{' '}
-                      {new Date(item.rentalInfo.endDate).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                      })}
+                    <span className="font-bold text-[var(--admin-text-secondary)] mt-0.5">
+                      ₹{item.price}
                     </span>
-                    {item.deposit > 0 && (
-                      <span className="text-[10px] bg-amber-50 text-amber-600 border border-amber-100 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
-                        <span className="material-symbols-outlined text-[10px]">security</span>
-                        Deposit: {formatCurrency(item.deposit)}
+                  </div>
+                  <div className="flex flex-col px-4 sm:px-5">
+                    <span className="text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider">
+                      Qty
+                    </span>
+                    <span className="font-bold text-[var(--admin-text-secondary)] mt-0.5">
+                      {item.quantity || item.qty || 1}
+                    </span>
+                  </div>
+                  {item.type === 'rental' && (
+                    <div className="flex flex-col pl-4 sm:pl-5">
+                      <span className="text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider">
+                        Deposit
                       </span>
-                    )}
-                  </div>
-                )}
-                {item.customizationNote && (
-                  <div className="mt-1.5 p-2 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] rounded text-[11px] text-[var(--admin-text-secondary)] italic">
-                    <span className="font-bold text-[var(--admin-text-primary)] not-italic mr-1">
-                      Note:
-                    </span>
-                    "{item.customizationNote}"
-                  </div>
-                )}
-                <p className="text-[12px] text-[var(--admin-text-tertiary)] font-bold mt-1">
-                  Qty: {item.qty} × {formatCurrency(item.price)}
-                </p>
+                      <span className="font-bold text-indigo-600 mt-0.5">₹{item.deposit || 0}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider block mb-0.5">
+                    Subtotal
+                  </span>
+                  <span className="text-[16px] font-black text-[var(--admin-text-primary)] font-mono">
+                    ₹{item.price * (item.quantity || item.qty || 1)}
+                  </span>
+                </div>
               </div>
             </div>
-            <span className="text-[14px] font-bold text-[var(--admin-text-primary)] shrink-0 ml-4">
-              {formatCurrency(item.qty * item.price)}
-            </span>
           </div>
         ))}
       </div>
 
-      {order.depositTotal > 0 && (
-        <div className="flex justify-between items-center mt-4 pt-4 border-t border-[var(--admin-border-subtle)]">
-          <span className="text-[14px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider flex items-center gap-1">
-            <span className="material-symbols-outlined text-[16px] text-amber-500">lock</span> Total
-            Security Deposit
-          </span>
-          <span className="text-[16px] font-bold text-amber-600">
-            {formatCurrency(order.depositTotal)}
-          </span>
+      {/* Order Totals Footer */}
+      <div className="px-3 py-4 sm:p-5 lg:p-6 bg-[var(--admin-bg-subtle)] border-t border-[var(--admin-border-subtle)]">
+        <div className="flex flex-col items-end gap-2 text-[13px] font-medium text-[var(--admin-text-secondary)]">
+          <div className="flex justify-between w-full sm:w-64">
+            <span>Subtotal</span>
+            <span className="font-bold text-[var(--admin-text-primary)]">
+              ₹
+              {order.items?.reduce(
+                (acc, item) => acc + item.price * (item.quantity || item.qty || 1),
+                0,
+              )}
+            </span>
+          </div>
+          {order.items?.some((i) => i.type === 'rental') && (
+            <div className="flex justify-between w-full sm:w-64">
+              <span>Security Deposit</span>
+              <span className="font-bold text-[var(--admin-text-primary)]">
+                ₹{order.deposit || 0}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-between w-full sm:w-64 pt-3 mt-1 border-t border-[var(--admin-border)]">
+            <span className="text-[14px] font-bold text-[var(--admin-text-primary)] uppercase">
+              Total
+            </span>
+            <span className="text-[18px] font-black text-[var(--admin-accent)] font-mono">
+              ₹{order.total}
+            </span>
+          </div>
         </div>
-      )}
-
-      <div className="flex justify-between items-center mt-4 pt-4 border-t border-[var(--admin-border-strong)]">
-        <span className="text-[16px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider">
-          Grand Total
-        </span>
-        <span className="text-[20px] font-bold text-[var(--admin-accent)]">
-          {formatCurrency(order.total)}
-        </span>
       </div>
     </div>
   );

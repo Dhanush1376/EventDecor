@@ -65,6 +65,7 @@ export function GlobalNotificationToast() {
       if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   const handleToastClick = () => {

@@ -67,35 +67,17 @@ export const codOtpVerifyValidator = [
     .withMessage('OTP must contain only numbers'),
 ];
 
-export const orderNotesValidator = [
-  body('notes')
-    .optional({ values: 'falsy' })
-    .trim()
-    .isLength({ max: 3000 })
-    .withMessage('Notes must be at most 3000 characters'),
-];
-
 export const updateStatusValidator = [
   body('status')
     .isIn([
       'Pending',
       'Confirmed',
-      'Packed',
-      'Ready to Ship',
-      'Shipped',
-      'Out for Delivery',
+      'Processing',
       'Delivered',
       'Cancelled',
       'Returned',
       'Refunded',
       'Settled',
-      'placed',
-      'confirmed',
-      'processing',
-      'shipped',
-      'delivered',
-      'cancelled',
-      'settled',
     ])
     .withMessage('Invalid order status'),
 ];

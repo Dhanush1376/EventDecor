@@ -13,7 +13,6 @@ import {
   updateOrderPublicStatus,
   sendCodOtp,
   verifyCodOtp,
-  updateOrderNotes,
   getOrderTimeline,
   softDeleteOrder,
 } from '../../controllers/commerce/orderController';
@@ -30,7 +29,6 @@ import {
   validateTotalsSchema,
   codOtpEmailBodySchema,
   codOtpVerifySchema,
-  orderNotesSchema,
 } from '../../validators/orderSchema';
 import { validateRequest } from '../../middleware/zodValidationMiddleware';
 import { idempotencyGuard } from '../../middleware/idempotencyMiddleware';
@@ -101,13 +99,6 @@ router.patch(
   requireRole([...STAFF_ROLES]),
   validateRequest(updateStatusSchema),
   updateOrderStatus,
-);
-router.patch(
-  '/:id/notes',
-  requireAuth,
-  requireRole([...STAFF_ROLES]),
-  validateRequest(orderNotesSchema),
-  updateOrderNotes,
 );
 
 router.get('/:id', requireAuth, getOrderById);

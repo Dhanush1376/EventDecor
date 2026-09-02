@@ -24,7 +24,7 @@ export const initializeCheckoutSchema = z.object({
         end: z.string().optional(),
       })
       .optional(),
-    guestCount: z.number().or(z.string()).optional(),
+
     venue: z.object({
       address: z.string().min(1, 'Venue address is required'),
       isOutdoor: z.boolean().optional(),

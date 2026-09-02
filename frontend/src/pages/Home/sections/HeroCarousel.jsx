@@ -238,7 +238,8 @@ export function HeroCarousel({ previewContent }) {
                     loading={isActive ? 'eager' : 'lazy'}
                     fetchPriority={isActive ? 'high' : 'auto'}
                     containerClassName="w-full lg:w-[60%] h-full relative z-[2] ml-auto"
-                    width={1280}
+                    width={2000}
+                    quality="original"
                     sizes="(max-width: 768px) 100vw, 60vw"
                     skipObserver={isActive}
                   />

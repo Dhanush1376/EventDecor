@@ -282,7 +282,7 @@ export async function processEvent(event: any): Promise<void> {
             title: 'New Custom Order',
             message: `${customOrder.customerName || 'A customer'} submitted a custom order request.`,
             type: 'custom_request',
-            actionLink: `/admin/custom-orders/${customOrder._id}`,
+            actionLink: `/admin/orders/custom`,
             metadata: { outboxEventId: event._id.toString() },
           });
         }
@@ -293,7 +293,7 @@ export async function processEvent(event: any): Promise<void> {
             title: 'New Booking Request',
             message: `${(booking as any).user?.name || 'A customer'} submitted a booking for ${booking.title}.`,
             type: 'booking',
-            actionLink: `/admin/bookings`,
+            actionLink: `/admin/events/${booking._id}`,
             metadata: { outboxEventId: event._id.toString() },
           });
         }
@@ -304,7 +304,7 @@ export async function processEvent(event: any): Promise<void> {
             title: 'Booking Confirmed',
             message: `Booking ${booking.bookingId || booking._id} for ${booking.title} has been confirmed.`,
             type: 'booking',
-            actionLink: `/admin/bookings`,
+            actionLink: `/admin/events/${booking._id}`,
             metadata: { outboxEventId: event._id.toString() },
           });
         }
@@ -315,7 +315,7 @@ export async function processEvent(event: any): Promise<void> {
             title: 'New Return/Exchange Request',
             message: `Return request ${returnReq.returnId || returnReq._id} created for Order ${returnReq.orderId}`,
             type: 'return',
-            actionLink: `/admin/returns/${returnReq._id}`,
+            actionLink: `/admin/returns/requests/${returnReq._id}`,
             metadata: { outboxEventId: event._id.toString() },
           });
         }
@@ -326,7 +326,7 @@ export async function processEvent(event: any): Promise<void> {
             title: 'Return Status Updated',
             message: `Return request ${returnReq.returnId || returnReq._id} status changed to ${event.payload.status || event.payload.newStatus}`,
             type: 'return',
-            actionLink: `/admin/returns/${returnReq._id}`,
+            actionLink: `/admin/returns/requests/${returnReq._id}`,
             metadata: { outboxEventId: event._id.toString() },
           });
         }
@@ -353,13 +353,13 @@ export async function processEvent(event: any): Promise<void> {
           });
         }
       } else if (eventName === 'EVENTJOB_BOOKINGSTATUSUPDATED') {
-        const booking = await EventJob.findById(event.aggregateId);
+        const booking = await EventJob.findById(event.aggregateId).populate('eventPackage');
         if (booking && event.payload) {
           await createAdminNotification({
             title: 'Booking Status Updated',
             message: `Booking ${booking.bookingId || booking._id} status changed to ${event.payload.newStatus}`,
             type: 'booking',
-            actionLink: `/admin/bookings`,
+            actionLink: `/admin/events/${booking._id}`,
             metadata: { outboxEventId: event._id.toString() },
           });
         }
@@ -405,7 +405,12 @@ export async function processEvent(event: any): Promise<void> {
             message: `Your order #${order.orderUuid || order._id} has been successfully placed.`,
             type: 'order',
             actionUrl: `/dashboard/orders/${order._id}`,
-            metadata: { outboxEventId: event._id.toString(), orderId: order._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              orderId: order._id.toString(),
+              entityId: order.orderUuid || order._id.toString(),
+              imageSrc: order.items?.[0]?.imageSrc,
+            },
           };
         }
       } else if (eventName === 'ORDER_ORDERSTATUSUPDATED') {
@@ -419,7 +424,12 @@ export async function processEvent(event: any): Promise<void> {
             message: `Your order #${order.orderUuid || order._id} is now ${event.payload.newStatus}.`,
             type: 'order',
             actionUrl: `/dashboard/orders/${order._id}`,
-            metadata: { outboxEventId: event._id.toString(), orderId: order._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              orderId: order._id.toString(),
+              entityId: order.orderUuid || order._id.toString(),
+              imageSrc: order.items?.[0]?.imageSrc,
+            },
           };
         }
       } else if (
@@ -441,12 +451,17 @@ export async function processEvent(event: any): Promise<void> {
               metadata: {
                 outboxEventId: event._id.toString(),
                 customOrderId: customOrder._id.toString(),
+                entityId: customOrder.orderId || customOrder._id.toString(),
+                imageSrc:
+                  (customOrder as any).previewImage ||
+                  customOrder.inspirationImages?.[0] ||
+                  customOrder.referenceImages?.[0],
               },
             };
           }
         }
       } else if (eventName === 'EVENTJOB_BOOKINGINQUIRYSUBMITTED') {
-        const booking = await EventJob.findById(event.aggregateId);
+        const booking = await EventJob.findById(event.aggregateId).populate('eventPackage');
         if (booking) {
           targetUserId = (booking as any).user?.toString();
           if (targetUserId) {
@@ -457,12 +472,20 @@ export async function processEvent(event: any): Promise<void> {
               message: `Your event booking request has been received.`,
               type: 'booking',
               actionUrl: `/events/dashboard`,
-              metadata: { outboxEventId: event._id.toString(), bookingId: booking._id.toString() },
+              metadata: {
+                outboxEventId: event._id.toString(),
+                bookingId: booking._id.toString(),
+                entityId: booking.bookingId || booking._id.toString(),
+                imageSrc:
+                  booking.inspirationImages?.[0] ||
+                  (booking.eventPackage as any)?.imageSrc ||
+                  (booking.eventPackage as any)?.images?.[0],
+              },
             };
           }
         }
       } else if (eventName === 'EVENTJOB_BOOKINGCONFIRMED') {
-        const booking = await EventJob.findById(event.aggregateId);
+        const booking = await EventJob.findById(event.aggregateId).populate('eventPackage');
         if (booking) {
           targetUserId = (booking as any).user?.toString();
           if (targetUserId) {
@@ -473,12 +496,20 @@ export async function processEvent(event: any): Promise<void> {
               message: `Your booking ${booking.bookingId || booking._id} has been confirmed!`,
               type: 'booking',
               actionUrl: `/events/dashboard`,
-              metadata: { outboxEventId: event._id.toString(), bookingId: booking._id.toString() },
+              metadata: {
+                outboxEventId: event._id.toString(),
+                bookingId: booking._id.toString(),
+                entityId: booking.bookingId || booking._id.toString(),
+                imageSrc:
+                  booking.inspirationImages?.[0] ||
+                  (booking.eventPackage as any)?.imageSrc ||
+                  (booking.eventPackage as any)?.images?.[0],
+              },
             };
           }
         }
       } else if (eventName === 'EVENTJOB_BOOKINGSTATUSUPDATED') {
-        const booking = await EventJob.findById(event.aggregateId);
+        const booking = await EventJob.findById(event.aggregateId).populate('eventPackage');
         if (booking && event.payload) {
           targetUserId = (booking as any).user?.toString();
           if (targetUserId) {
@@ -489,7 +520,15 @@ export async function processEvent(event: any): Promise<void> {
               message: `Your booking ${booking.bookingId || booking._id} status is now ${event.payload.newStatus}.`,
               type: 'booking',
               actionUrl: `/events/dashboard`,
-              metadata: { outboxEventId: event._id.toString(), bookingId: booking._id.toString() },
+              metadata: {
+                outboxEventId: event._id.toString(),
+                bookingId: booking._id.toString(),
+                entityId: booking.bookingId || booking._id.toString(),
+                imageSrc:
+                  booking.inspirationImages?.[0] ||
+                  (booking.eventPackage as any)?.imageSrc ||
+                  (booking.eventPackage as any)?.images?.[0],
+              },
             };
           }
         }
@@ -548,7 +587,12 @@ export async function processEvent(event: any): Promise<void> {
             message: `Payment for order #${order.orderUuid || order._id} was successful.`,
             type: 'payment',
             actionUrl: `/dashboard/orders/${order._id}`,
-            metadata: { outboxEventId: event._id.toString(), orderId: order._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              orderId: order._id.toString(),
+              entityId: order.orderUuid || order._id.toString(),
+              imageSrc: order.items?.[0]?.imageSrc,
+            },
           };
         }
       } else if (eventName === 'ORDER_PAYMENTFAILED') {
@@ -562,7 +606,12 @@ export async function processEvent(event: any): Promise<void> {
             message: `Payment for order #${order.orderUuid || order._id} failed. Please retry.`,
             type: 'payment',
             actionUrl: `/dashboard/orders/${order._id}`,
-            metadata: { outboxEventId: event._id.toString(), orderId: order._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              orderId: order._id.toString(),
+              entityId: order.orderUuid || order._id.toString(),
+              imageSrc: order.items?.[0]?.imageSrc,
+            },
           };
         }
       } else if (eventName === 'ORDER_REFUNDREQUESTED') {
@@ -576,7 +625,12 @@ export async function processEvent(event: any): Promise<void> {
             message: `A refund has been requested for your order #${order.orderUuid || order._id}.`,
             type: 'payment',
             actionUrl: `/dashboard/orders/${order._id}`,
-            metadata: { outboxEventId: event._id.toString(), orderId: order._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              orderId: order._id.toString(),
+              entityId: order.orderUuid || order._id.toString(),
+              imageSrc: order.items?.[0]?.imageSrc,
+            },
           };
         }
       }

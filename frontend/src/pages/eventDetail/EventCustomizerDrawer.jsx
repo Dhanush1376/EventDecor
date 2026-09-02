@@ -101,6 +101,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                     </label>
                     <input
                       type="text"
+                      placeholder="e.g. Baby Shower, Housewarming..."
                       value={state.customOccasion}
                       onChange={(e) => actions.setCustomOccasion(e.target.value)}
                       className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium"

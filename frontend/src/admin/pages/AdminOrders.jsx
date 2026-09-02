@@ -1,7 +1,6 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { DraftRestoreModal } from '../components/DraftRestoreModal';
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
-import { useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { playSuccessBeep, playErrorBeep } from '../../utils/media/audioUtils';
@@ -9,12 +8,10 @@ import toast from 'react-hot-toast';
 import {
   PageHeader,
   SkeletonTable,
-  FilterBar,
   formatCurrency,
   fadeUp,
   stagger,
 } from '../components/AdminUIKit';
-import { useDraft } from '../hooks/useDraft';
 import { SkeletonList } from '../components/ui/Skeletons';
 import { AdminOrdersTable } from '../components/AdminOrdersTable';
 import { AdminOrdersKanban } from '../components/AdminOrdersKanban';
@@ -57,7 +54,63 @@ export function AdminOrders({ hideHeader = false }) {
     openOrderDrawer,
     dateFilter,
     setDateFilter,
+    customDateRange,
+    setCustomDateRange,
+    paymentFilter,
+    setPaymentFilter,
+    deliveryDateFilter,
+    setDeliveryDateFilter,
+    customDeliveryRange,
+    setCustomDeliveryRange,
+    orderValueRange,
+    setOrderValueRange,
+    attentionFilter,
+    setAttentionFilter,
+    sortBy,
+    setSortBy,
+    savedView,
+    setSavedView,
   } = useOrderFilters(orders, searchQuery);
+
+  const [showFiltersMenu, setShowFiltersMenu] = useState(false);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
+  const handleSavedViewChange = (e) => {
+    const view = e.target.value;
+    setSavedView(view);
+
+    // Reset defaults first
+    setFilterStatus('All Statuses');
+    setDateFilter('All Time');
+    setPaymentFilter('All');
+    setDeliveryDateFilter('All Time');
+    setAttentionFilter('All');
+
+    if (view === "Today's Deliveries") {
+      setDeliveryDateFilter('Today');
+      setFilterStatus('Processing');
+    } else if (view === "Tomorrow's Deliveries") {
+      setDeliveryDateFilter('Tomorrow');
+      setFilterStatus('Processing');
+    } else if (view === 'Needs Attention') {
+      setAttentionFilter('Needs Attention');
+    } else if (view === 'Processing') {
+      setFilterStatus('Processing');
+    }
+  };
+
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (filterStatus !== 'All Statuses') count++;
+    if (dateFilter !== 'All Time') count++;
+    if (paymentFilter !== 'All') count++;
+    if (deliveryDateFilter !== 'All Time') count++;
+    if (attentionFilter !== 'All') count++;
+    if (orderValueRange.min !== '' || orderValueRange.max !== '') count++;
+    return count;
+  };
+
+  const activeCount = getActiveFilterCount();
 
   // Capture physical barcode scanner keyboard inputs
   useEffect(() => {
@@ -122,40 +175,15 @@ export function AdminOrders({ hideHeader = false }) {
   // Derive selected order data from orders list dynamically
   const selectedOrderData = selectedOrder ? orders.find((o) => o.id === selectedOrder.id) : null;
 
-  // Draft integration for staff note
-  const {
-    formData: orderNoteDraft,
-    setFormData: setOrderNoteDraft,
-    deleteDraft,
-    hasDraft,
-    restoreDraft,
-    discardDraft,
-    resetData,
-    showRestoreModal,
-    setShowRestoreModal,
-    blocker,
-  } = useDraft({
-    draftKey: selectedOrder ? `admin:order:note:${selectedOrder.id}` : null,
-    module: 'Orders',
-    pageTitle: 'Staff Note',
-    initialData: { text: '' },
-    enabled: !!selectedOrder,
-  });
-
-  useEffect(() => {
-    if (selectedOrder && !hasDraft) {
-      resetData({ text: selectedOrderData?.notes || '' });
-    }
-  }, [selectedOrder, selectedOrderData, hasDraft, resetData]);
-
-  const handleSaveNoteDraft = async (e) => {
-    const text = e.target.value;
-    await updateOrderNotes(selectedOrder.id, text);
-    await deleteDraft();
-  };
+  // Notes draft removed
 
   return (
-    <motion.div initial="hidden" animate="show" variants={stagger} className="flex flex-col h-full">
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+      className="absolute inset-0 flex flex-col"
+    >
       {!hideHeader && (
         <div className="shrink-0 pb-2">
           <PageHeader
@@ -175,16 +203,190 @@ export function AdminOrders({ hideHeader = false }) {
                     value={searchQuery || ''}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search orders..."
-                    className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
+                    className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10"
                   />
                 </div>
-                <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-hidden">
-                  <FilterBar
-                    filters={['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year']}
-                    value={dateFilter}
-                    onChange={setDateFilter}
-                    className="flex-1 min-w-0"
-                  />
+                <div className="flex items-stretch gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:flex-none">
+                    <button
+                      onClick={() => setShowFiltersMenu(!showFiltersMenu)}
+                      className={`w-full sm:w-auto h-full px-4 flex items-center justify-between sm:justify-center gap-2 rounded-[4px] border transition-colors ${
+                        showFiltersMenu || activeCount > 0
+                          ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-sm'
+                          : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-text-tertiary)]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 font-semibold text-[13px]">
+                        <span className="material-symbols-outlined text-[16px]">tune</span>
+                        <span>{activeCount > 0 ? `${activeCount} Filters` : 'Filters'}</span>
+                      </div>
+                      <span className="material-symbols-outlined text-[16px]">
+                        {showFiltersMenu ? 'expand_less' : 'expand_more'}
+                      </span>
+                    </button>
+
+                    <AnimatePresence>
+                      {showFiltersMenu && (
+                        <>
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowFiltersMenu(false)}
+                            className="fixed inset-0 z-[100] sm:hidden bg-black/20 backdrop-blur-sm"
+                          />
+
+                          <motion.div
+                            initial={isMobile ? { y: '100%' } : { opacity: 0, y: -10 }}
+                            animate={isMobile ? { y: 0 } : { opacity: 1, y: 0 }}
+                            exit={isMobile ? { y: '100%' } : { opacity: 0, y: -10 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                            className="fixed sm:absolute bottom-0 inset-x-0 sm:top-full sm:bottom-auto sm:right-0 sm:left-auto z-[101] sm:mt-2 w-full sm:w-[320px] bg-[var(--admin-surface)] rounded-t-2xl sm:rounded-lg shadow-[var(--admin-shadow-2xl)] border-t sm:border border-[var(--admin-border)] flex flex-col p-5 sm:p-4 text-left"
+                          >
+                            <div className="flex justify-between items-center mb-4 sm:mb-3">
+                              <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[18px]">
+                                  filter_list
+                                </span>
+                                Order Filters
+                              </h3>
+                              <button
+                                onClick={() => setShowFiltersMenu(false)}
+                                className="sm:hidden admin-btn-icon hover:bg-[var(--admin-bg-subtle)] rounded-full p-1"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">close</span>
+                              </button>
+                            </div>
+
+                            <div className="space-y-5 max-h-[60vh] overflow-y-auto scrollbar-hide">
+                              {/* Core Filters */}
+                              <div className="space-y-4 pt-2">
+                                {/* Saved Views */}
+                                <div>
+                                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                                    Saved Views (Quick Filters)
+                                  </label>
+                                  <select
+                                    value={savedView}
+                                    onChange={handleSavedViewChange}
+                                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-accent)]"
+                                  >
+                                    <option value="All Orders">View: All Orders</option>
+                                    <option value="Today's Deliveries">Today's Deliveries</option>
+                                    <option value="Tomorrow's Deliveries">
+                                      Tomorrow's Deliveries
+                                    </option>
+                                    <option value="Needs Attention">Needs Attention</option>
+                                    <option value="Processing">Processing</option>
+                                  </select>
+                                </div>
+
+                                {/* Sort */}
+                                <div>
+                                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                                    Sort By
+                                  </label>
+                                  <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
+                                  >
+                                    <option value="Newest first">Newest first</option>
+                                    <option value="Oldest first">Oldest first</option>
+                                    <option value="Delivery date ↑">Delivery date ↑</option>
+                                    <option value="Delivery date ↓">Delivery date ↓</option>
+                                    <option value="Order value ↑">Order value ↑</option>
+                                    <option value="Order value ↓">Order value ↓</option>
+                                  </select>
+                                </div>
+
+                                {/* Status */}
+                                <div>
+                                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                                    Status
+                                  </label>
+                                  <select
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value)}
+                                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
+                                  >
+                                    <option value="All Statuses">All Statuses</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Confirmed">Confirmed</option>
+                                    <option value="Processing">Processing</option>
+                                    <option value="Delivered">Delivered</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                  </select>
+                                </div>
+
+                                {/* Date */}
+                                <div>
+                                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                                    Order Date
+                                  </label>
+                                  <select
+                                    value={dateFilter}
+                                    onChange={(e) => setDateFilter(e.target.value)}
+                                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
+                                  >
+                                    <option value="All Time">All Time</option>
+                                    <option value="Today">Today</option>
+                                    <option value="Yesterday">Yesterday</option>
+                                    <option value="This Week">This Week</option>
+                                    <option value="Last 7 Days">Last 7 Days</option>
+                                    <option value="This Month">This Month</option>
+                                  </select>
+                                </div>
+
+                                {/* Payment */}
+                                <div>
+                                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                                    Payment Status
+                                  </label>
+                                  <select
+                                    value={paymentFilter}
+                                    onChange={(e) => setPaymentFilter(e.target.value)}
+                                    className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
+                                  >
+                                    <option value="All">All</option>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Failed">Failed</option>
+                                    <option value="Refunded">Refunded</option>
+                                    <option value="Partially Refunded">Partially Refunded</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 pt-4 border-t border-[var(--admin-border-subtle)] flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setFilterStatus('All Statuses');
+                                  setDateFilter('All Time');
+                                  setPaymentFilter('All');
+                                  setOrderValueRange({ min: '', max: '' });
+                                  setAttentionFilter('All');
+                                  setCustomDateRange({ from: '', to: '' });
+                                  setSavedView('All Orders');
+                                  setSortBy('Newest first');
+                                }}
+                                className="admin-btn-outline flex-1 justify-center py-2.5 rounded-lg text-[13px]"
+                              >
+                                Clear All
+                              </button>
+                              <button
+                                onClick={() => setShowFiltersMenu(false)}
+                                className="admin-btn-primary flex-1 justify-center py-2.5 rounded-lg text-[13px]"
+                              >
+                                Apply Filters
+                              </button>
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
                   <div className="flex items-center gap-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-1">
                     <button
                       onClick={() => setViewMode('table')}
@@ -277,22 +479,6 @@ export function AdminOrders({ hideHeader = false }) {
           </div>
         </motion.div>
 
-        {/* Controls row: view modes, search/filters, export buttons */}
-        {viewMode === 'table' && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="w-full flex flex-col sm:flex-row justify-between gap-4">
-              <div className="w-full">
-                <FilterBar
-                  filters={['All', ...allStatuses]}
-                  value={filterStatus}
-                  onChange={setFilterStatus}
-                  counts={statusCounts}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* CONTENT SWITCHER */}
         <AnimatePresence mode="wait">
           {dataLoading ? (
@@ -356,6 +542,7 @@ export function AdminOrders({ hideHeader = false }) {
                 statusIcons={statusIcons}
                 openOrderDrawer={openOrderDrawer}
                 updateOrderStatus={updateOrderStatus}
+                deleteOrder={deleteOrder}
               />
             </motion.div>
           )}
@@ -369,23 +556,12 @@ export function AdminOrders({ hideHeader = false }) {
               selectedOrderData={selectedOrderData}
               setIsDrawerOpen={setIsDrawerOpen}
               allStatuses={allStatuses}
-              orderNoteDraft={orderNoteDraft}
-              setOrderNoteDraft={setOrderNoteDraft}
-              handleSaveNoteDraft={handleSaveNoteDraft}
               updateOrderStatus={updateOrderStatus}
               deleteOrder={deleteOrder}
               navigate={navigate}
             />
           )}
         </AnimatePresence>
-
-        <DraftRestoreModal
-          isOpen={showRestoreModal}
-          onClose={() => setShowRestoreModal(false)}
-          onRestore={restoreDraft}
-          onDiscard={discardDraft}
-        />
-        <UnsavedChangesGuard blocker={blocker} />
       </div>
     </motion.div>
   );

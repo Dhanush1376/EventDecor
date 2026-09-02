@@ -1,4 +1,4 @@
-import { Map, X, Search, MapPin, Store } from 'lucide-react';
+import { Map, X, Search, MapPin, Store, Navigation } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
@@ -23,7 +23,7 @@ export function LocationSelectorModal({
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isMapLoading, setIsMapLoading] = useState(true);
-  const [_isDetectingGPS, setIsDetectingGPS] = useState(false);
+  const [isDetectingGPS, setIsDetectingGPS] = useState(false);
 
   // Auto-sync location in inline mode so the user doesn't have to click "Confirm Venue"
   useEffect(() => {
@@ -323,7 +323,7 @@ export function LocationSelectorModal({
     searchTimeoutRef.current = setTimeout(async () => {
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=in&limit=5`,
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=in&limit=20`,
         );
         if (response.ok) {
           const data = await response.json();
@@ -468,7 +468,7 @@ export function LocationSelectorModal({
             className={`relative bg-[#FCFAF6] border border-[#826237]/30 w-full font-body flex flex-col z-10 ${
               inline
                 ? 'rounded-2xl'
-                : 'max-w-2xl rounded-[2.5rem] shadow-2xl max-h-[90vh] overflow-hidden'
+                : 'max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden'
             }`}
           >
             {/* Elegant Header Banner */}
@@ -497,33 +497,49 @@ export function LocationSelectorModal({
 
             {/* Modal Body */}
             <div
-              className={`p-6 space-y-4 flex flex-col ${inline ? '' : 'overflow-y-auto flex-1 min-h-[400px]'}`}
+              className={`p-4 sm:p-6 space-y-4 flex flex-col ${inline ? '' : 'overflow-y-auto flex-1 min-h-0'}`}
             >
               {/* Autocomplete Search Bar */}
               <div className="relative z-30 w-full">
-                <Search
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40 text-[18px]"
-                  strokeWidth={1.5}
-                />
-                <input
-                  type="text"
-                  placeholder="Search traditional venues, halls, temples..."
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  className="w-full pl-11 pr-10 py-3 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium shadow-sm transition-all"
-                />
-                {searchQuery && (
+                <div className="flex gap-2 w-full">
+                  <div className="relative flex-1">
+                    <Search
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40 text-[18px]"
+                      strokeWidth={1.5}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Search traditional venues, halls, temples..."
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      className="w-full pl-11 pr-10 py-3 rounded-full border border-black/10 bg-white text-[16px] sm:text-xs outline-none focus:border-primary font-medium shadow-sm transition-all"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery('');
+                          setSuggestions([]);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 min-h-0 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-700"
+                      >
+                        <X className="text-[14px]" strokeWidth={1.5} />
+                      </button>
+                    )}
+                  </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSuggestions([]);
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 min-h-0 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-700"
+                    onClick={_handleUseCurrentLocation}
+                    disabled={isDetectingGPS}
+                    className="w-[46px] h-[46px] shrink-0 rounded-full border border-[#826237]/20 bg-stone-50 hover:bg-[#FAF6F0] text-primary flex items-center justify-center shadow-sm disabled:opacity-50 transition-all active:scale-95"
+                    title="Use Current Location"
                   >
-                    <X className="text-[14px]" strokeWidth={1.5} />
+                    <Navigation
+                      className={`text-[18px] ${isDetectingGPS ? 'animate-pulse' : ''}`}
+                      strokeWidth={1.5}
+                    />
                   </button>
-                )}
+                </div>
 
                 {/* Autocomplete Suggestions Box */}
                 <AnimatePresence>
@@ -544,6 +560,10 @@ export function LocationSelectorModal({
                         <button
                           key={idx}
                           type="button"
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            handleSelectSuggestion(item);
+                          }}
                           onClick={() => handleSelectSuggestion(item)}
                           className="w-full text-left px-5 py-3 hover:bg-stone-50 text-xs text-stone-700 leading-relaxed font-medium transition-colors flex items-start gap-2.5"
                         >
@@ -560,7 +580,7 @@ export function LocationSelectorModal({
               </div>
 
               {/* Live Interactive Map Canvas */}
-              <div className="relative flex-1 rounded-[2rem] overflow-hidden border border-[#826237]/20 bg-stone-100 shadow-inner h-[280px] min-h-[250px]">
+              <div className="relative flex-1 rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden border border-[#826237]/20 bg-stone-100 shadow-inner h-[200px] sm:h-[280px] min-h-[200px] sm:min-h-[250px]">
                 {isMapLoading && (
                   <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-3">
                     <div className="skeleton-box inline-block w-10 h-10 rounded-md" />
@@ -608,7 +628,7 @@ export function LocationSelectorModal({
 
             {/* Modal Footer Controls */}
             {!inline && (
-              <div className="bg-[#FAF6F0] px-6 py-5 border-t border-black/5 flex flex-col sm:flex-row gap-3 items-center justify-between">
+              <div className="bg-[#FAF6F0] px-4 sm:px-6 py-4 sm:py-5 border-t border-black/5 flex flex-col sm:flex-row gap-3 items-center justify-between shrink-0">
                 <span className="text-[10px] text-stone-500 font-light leading-relaxed max-w-xs text-center sm:text-left">
                   Ensure coordinates map accurately. You can drag the gold heritage map marker pin
                   to tweak setup logistics!

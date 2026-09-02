@@ -91,6 +91,7 @@ export default function AdminExchangeHub({ hideHeader = false }) {
   useEffect(() => {
     fetchExchanges();
     fetchDashboardStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleTransition = async (id, status) => {

@@ -3,35 +3,33 @@ import toast from 'react-hot-toast';
 import Fuse from 'fuse.js';
 import { isWithinPeriod } from '../utils/dateFilters';
 
-export const allStatuses = [
-  'Payment Pending',
-  'Pending',
-  'Confirmed',
-  'Packed',
-  'Ready to Ship',
-  'Shipped',
-  'Out for Delivery',
-  'Delivered',
-  'Cancelled',
-];
+export const allStatuses = ['Pending', 'Confirmed', 'Processing', 'Delivered', 'Cancelled'];
 
 export const statusIcons = {
-  'Payment Pending': 'hourglass_empty',
   Pending: 'schedule',
   Confirmed: 'thumb_up',
-  Packed: 'inventory_2',
-  'Ready to Ship': 'conveyor_belt',
-  Shipped: 'local_shipping',
-  'Out for Delivery': 'directions_run',
+  Processing: 'inventory_2',
   Delivered: 'verified',
   Cancelled: 'cancel',
 };
 
 export function useOrderFilters(orders, searchQuery) {
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'kanban'
-  const [filterStatus, setFilterStatus] = useState('All');
+  const [filterStatus, setFilterStatus] = useState('All Statuses');
   const [filterOrderType, setFilterOrderType] = useState('All');
+
   const [dateFilter, setDateFilter] = useState('All Time');
+  const [customDateRange, setCustomDateRange] = useState({ from: '', to: '' });
+
+  const [paymentFilter, setPaymentFilter] = useState('All');
+  const [deliveryDateFilter, setDeliveryDateFilter] = useState('All Time');
+  const [customDeliveryRange, setCustomDeliveryRange] = useState({ from: '', to: '' });
+
+  const [orderValueRange, setOrderValueRange] = useState({ min: '', max: '' });
+  const [attentionFilter, setAttentionFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('Newest first');
+
+  const [savedView, setSavedView] = useState('All Orders');
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -63,9 +61,63 @@ export function useOrderFilters(orders, searchQuery) {
 
   const filteredOrders = useMemo(() => {
     let result = orders.filter((o) => {
-      const matchStatus = filterStatus === 'All' || o.status === filterStatus;
+      // 1. Status Filter
+      const matchStatus = filterStatus === 'All Statuses' || o.status === filterStatus;
+
+      // 2. Order Type
       const matchOrderType = filterOrderType === 'All' || o.orderType === filterOrderType;
-      return matchStatus && matchOrderType;
+
+      // 3. Date Filter (Order placement date)
+      const orderDate = o.rawOrder?.createdAt || o.date;
+      const matchDate = isWithinPeriod(orderDate, dateFilter, customDateRange);
+
+      // 4. Payment Filter
+      const paymentStat = o.rawOrder?.paymentStatus || 'pending';
+      let matchPayment = true;
+      if (paymentFilter !== 'All') {
+        const lowerPaymentFilter = paymentFilter.toLowerCase();
+        if (lowerPaymentFilter === 'paid') {
+          matchPayment = paymentStat === 'paid' || paymentStat === 'captured';
+        } else {
+          matchPayment = paymentStat === lowerPaymentFilter;
+        }
+      }
+
+      // 5. Order Value Filter
+      let matchValue = true;
+      if (orderValueRange.min !== '') {
+        matchValue = matchValue && o.total >= Number(orderValueRange.min);
+      }
+      if (orderValueRange.max !== '') {
+        matchValue = matchValue && o.total <= Number(orderValueRange.max);
+      }
+
+      // 6. Attention Filter
+      let matchAttention = true;
+      if (attentionFilter === 'Needs Attention') {
+        matchAttention = o.rawOrder?.delayWarning === true || o.rawOrder?.isOnHold === true;
+      } else if (attentionFilter === 'On Hold') {
+        matchAttention = o.rawOrder?.isOnHold === true;
+      } else if (attentionFilter === 'No Issues') {
+        matchAttention = o.rawOrder?.isOnHold !== true && o.rawOrder?.delayWarning !== true;
+      }
+
+      // 7. Delivery Date Filter
+      const deliveryDate = o.rawOrder?.needByDate || o.rawOrder?.estimatedDeliveryDate;
+      let matchDeliveryDate = true;
+      if (deliveryDateFilter !== 'All Time') {
+        matchDeliveryDate = isWithinPeriod(deliveryDate, deliveryDateFilter, customDeliveryRange);
+      }
+
+      return (
+        matchStatus &&
+        matchOrderType &&
+        matchDate &&
+        matchPayment &&
+        matchValue &&
+        matchAttention &&
+        matchDeliveryDate
+      );
     });
 
     if (searchQuery && searchQuery.trim() !== '') {
@@ -77,6 +129,8 @@ export function useOrderFilters(orders, searchQuery) {
           'phone',
           'rawOrder.customerEmail',
           'items.name',
+          'items.category',
+          'items.productId',
           'rawOrder.shippingAddress.city',
           'total',
         ],
@@ -86,8 +140,51 @@ export function useOrderFilters(orders, searchQuery) {
       result = fuse.search(searchQuery).map((res) => res.item);
     }
 
+    // 8. Sorting
+    result.sort((a, b) => {
+      const dateA = new Date(a.rawOrder?.createdAt || a.date).getTime();
+      const dateB = new Date(b.rawOrder?.createdAt || b.date).getTime();
+      const valA = a.total;
+      const valB = b.total;
+      const delA = new Date(
+        a.rawOrder?.needByDate || a.rawOrder?.estimatedDeliveryDate || a.date,
+      ).getTime();
+      const delB = new Date(
+        b.rawOrder?.needByDate || b.rawOrder?.estimatedDeliveryDate || b.date,
+      ).getTime();
+
+      switch (sortBy) {
+        case 'Oldest first':
+          return dateA - dateB;
+        case 'Delivery date ↑':
+          return delA - delB;
+        case 'Delivery date ↓':
+          return delB - delA;
+        case 'Order value ↑':
+          return valA - valB;
+        case 'Order value ↓':
+          return valB - valA;
+        case 'Newest first':
+        default:
+          return dateB - dateA;
+      }
+    });
+
     return result;
-  }, [orders, filterStatus, filterOrderType, searchQuery]);
+  }, [
+    orders,
+    filterStatus,
+    filterOrderType,
+    dateFilter,
+    customDateRange,
+    paymentFilter,
+    orderValueRange,
+    attentionFilter,
+    deliveryDateFilter,
+    customDeliveryRange,
+    sortBy,
+    searchQuery,
+  ]);
 
   const statusCounts = useMemo(() => {
     const counts = { All: orders.length };
@@ -144,5 +241,21 @@ export function useOrderFilters(orders, searchQuery) {
     openOrderDrawer,
     dateFilter,
     setDateFilter,
+    customDateRange,
+    setCustomDateRange,
+    paymentFilter,
+    setPaymentFilter,
+    deliveryDateFilter,
+    setDeliveryDateFilter,
+    customDeliveryRange,
+    setCustomDeliveryRange,
+    orderValueRange,
+    setOrderValueRange,
+    attentionFilter,
+    setAttentionFilter,
+    sortBy,
+    setSortBy,
+    savedView,
+    setSavedView,
   };
 }

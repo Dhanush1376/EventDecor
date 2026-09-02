@@ -1,4 +1,4 @@
-import { m as motion } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { PageHeader, SkeletonCard, FilterBar } from '../components/AdminUIKit';
 import { useState, useEffect } from 'react';
 import { useConfirm } from '../../context/ConfirmProvider';
@@ -14,6 +14,7 @@ export function AdminReviews() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [rewardModal, setRewardModal] = useState({ isOpen: false, review: null, amount: 20 });
   const confirm = useConfirm();
 
   const fetchReviews = async () => {
@@ -39,12 +40,12 @@ export function AdminReviews() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleModerate = async (reviewId, action) => {
+  const handleModerate = async (reviewId, action, customRewardAmount = 0) => {
     const toastId = toast.loading(
       action === 'approve' ? 'Disbursing review rewards...' : 'Rejecting review...',
     );
     try {
-      const res = await loyaltyService.adminModerateReview(reviewId, action);
+      const res = await loyaltyService.adminModerateReview(reviewId, action, customRewardAmount);
       if (res.success) {
         toast.success(res.message || `Review ${action}d! `, { id: toastId, duration: 4000 });
         fetchReviews(); // Refresh feed
@@ -235,11 +236,11 @@ export function AdminReviews() {
                   {r.status === 'pending' && (
                     <>
                       <button
-                        onClick={() => handleModerate(r._id, 'approve')}
+                        onClick={() => setRewardModal({ isOpen: true, review: r, amount: 20 })}
                         className="admin-btn admin-btn-ghost admin-btn-sm group !bg-emerald-600 !text-white !border-emerald-600 !py-1.5 !px-3 !text-[11px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer rounded-lg hover:brightness-110 transition-all"
                       >
                         <span className="material-symbols-outlined text-[14px]">check</span>
-                        Approve & Pay ₹20 Reward
+                        Approve Review
                       </button>
 
                       <button
@@ -289,6 +290,95 @@ export function AdminReviews() {
           })
         )}
       </motion.div>
+
+      {/* Custom Reward Modal */}
+      <AnimatePresence>
+        {rewardModal.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setRewardModal({ ...rewardModal, isOpen: false })}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden flex flex-col z-10"
+            >
+              <div className="p-5 border-b border-[var(--admin-border)] flex items-center justify-between bg-stone-50/50">
+                <h3 className="font-bold text-[16px] text-stone-800">Reward Customer</h3>
+                <button
+                  onClick={() => setRewardModal({ ...rewardModal, isOpen: false })}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+              <div className="p-5 space-y-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-[24px] text-emerald-600">
+                      wallet
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-stone-800">
+                      {rewardModal.review?.customer?.name || 'Customer'}
+                    </p>
+                    <p className="text-[13px] text-stone-500 mt-1">
+                      Total previously spent:{' '}
+                      <span className="font-bold text-stone-700">
+                        ₹{rewardModal.review?.customer?.totalSpent || 0}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[12px] font-bold text-stone-600 uppercase tracking-wider">
+                    Reward Amount (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={rewardModal.amount}
+                    onChange={(e) =>
+                      setRewardModal({ ...rewardModal, amount: Number(e.target.value) })
+                    }
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-[14px] font-bold text-stone-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                  />
+                  <p className="text-[11px] text-stone-500 leading-relaxed mt-2">
+                    Enter the amount to credit to their wallet. Leave as 0 to just approve without a
+                    custom reward.
+                  </p>
+                </div>
+              </div>
+              <div className="p-5 border-t border-[var(--admin-border)] flex items-center justify-end gap-3 bg-stone-50/50">
+                <button
+                  onClick={() => setRewardModal({ ...rewardModal, isOpen: false })}
+                  className="px-4 py-2 text-[13px] font-bold text-stone-600 hover:text-stone-900 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    handleModerate(rewardModal.review._id, 'approve', rewardModal.amount);
+                    setRewardModal({ ...rewardModal, isOpen: false });
+                  }}
+                  className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-[13px] font-bold hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[16px]">check</span>
+                  Approve & Pay
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

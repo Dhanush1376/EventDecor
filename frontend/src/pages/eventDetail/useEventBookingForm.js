@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { bookingService } from '../../services/domainServices';
 import logger from '../../utils/core/logger';
 
-import { EVENT_TYPES, EXTERNAL_URLS } from '../../config/constants';
+import { EXTERNAL_URLS } from '../../config/constants';
 
 export const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -33,7 +33,6 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
   const [manualState, setManualState] = useState('');
   const [manualPincode, setManualPincode] = useState('');
 
-  const [guestCount, setGuestCount] = useState(100);
   const [startTime, setStartTime] = useState('09:00 AM');
   const [endTime, setEndTime] = useState('09:00 PM');
   const [isOutdoor, setIsOutdoor] = useState(false);
@@ -68,7 +67,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
           if (parsed.venueDetails) setVenueDetails(parsed.venueDetails);
           if (parsed.isManualLocationInput !== undefined)
             setIsManualLocationInput(parsed.isManualLocationInput);
-          if (parsed.guestCount) setGuestCount(parsed.guestCount);
+
           if (parsed.startTime) setStartTime(parsed.startTime);
           if (parsed.endTime) setEndTime(parsed.endTime);
           if (parsed.isOutdoor !== undefined) setIsOutdoor(parsed.isOutdoor);
@@ -92,13 +91,8 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
       );
       setSelectedPaletteColor(event.colorPalette?.[0] || '#8B0000');
 
-      const cat = event.category?.toLowerCase() || 'wedding';
-      if (EVENT_TYPES.some((t) => t.id === cat)) {
-        setEventType(cat);
-      } else {
-        setEventType('other');
-        setCustomOccasion(event.category || '');
-      }
+      setEventType('');
+      setCustomOccasion('');
     }
   }, [event]);
 
@@ -115,7 +109,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
         bookingDate,
         venueDetails,
         isManualLocationInput,
-        guestCount,
+
         startTime,
         endTime,
         isOutdoor,
@@ -134,7 +128,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
     bookingDate,
     venueDetails,
     isManualLocationInput,
-    guestCount,
+
     startTime,
     endTime,
     isOutdoor,
@@ -299,7 +293,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
         date: bookingDate,
         rentalDurationDays,
         timing: { start: startTime, end: endTime },
-        guestCount,
+
         contactPhone,
         venue: venuePayload,
         customization: {
@@ -384,7 +378,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
         date: bookingDate,
         rentalDurationDays,
         timing: { start: startTime, end: endTime },
-        guestCount,
+
         contactPhone,
         venue: venuePayload,
         customization: {
@@ -470,7 +464,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
       manualCity,
       manualState,
       manualPincode,
-      guestCount,
+
       startTime,
       endTime,
       isOutdoor,
@@ -495,7 +489,7 @@ export function useEventBookingForm(event, isAuthenticated, runProtectedAction, 
       setManualCity,
       setManualState,
       setManualPincode,
-      setGuestCount,
+
       setStartTime,
       setEndTime,
       setIsOutdoor,

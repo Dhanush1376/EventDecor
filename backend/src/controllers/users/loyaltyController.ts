@@ -2,7 +2,11 @@ import { Request, Response } from 'express';
 import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
+import mongoose from 'mongoose';
 import Review from '../../models/Review';
+import Order from '../../models/Order';
+import User from '../../models/User';
+import WalletTransaction from '../../models/WalletTransaction';
 import { LoyaltyService } from '../../services/loyaltyService';
 import { getPaginationOptions, formatPaginationResponse } from '../../utils/pagination';
 import { updateProductRating } from '../products/reviewController';
@@ -73,6 +77,23 @@ export const getAdminReviews = asyncHandler(async (req: Request, res: Response) 
     Review.countDocuments(filter),
   ]);
 
+  if (reviews.length > 0) {
+    const customerIds = [
+      ...new Set(reviews.filter((r) => r.customer).map((r) => r.customer._id.toString())),
+    ];
+    const objectIds = customerIds.map((id) => new mongoose.Types.ObjectId(id));
+    const totalSpentData = await Order.aggregate([
+      { $match: { user: { $in: objectIds }, orderStatus: 'Delivered' } },
+      { $group: { _id: '$user', totalSpent: { $sum: '$total' } } },
+    ]);
+    const totalSpentMap = new Map(totalSpentData.map((d) => [d._id.toString(), d.totalSpent]));
+    reviews.forEach((r: any) => {
+      if (r.customer) {
+        r.customer.totalSpent = totalSpentMap.get(r.customer._id.toString()) || 0;
+      }
+    });
+  }
+
   res
     .status(200)
     .json(
@@ -85,7 +106,7 @@ export const getAdminReviews = asyncHandler(async (req: Request, res: Response) 
 });
 
 export const moderateReview = asyncHandler(async (req: Request, res: Response) => {
-  const { reviewId, action } = req.body; // action: 'approve' | 'reject'
+  const { reviewId, action, customRewardAmount } = req.body; // action: 'approve' | 'reject'
 
   if (!reviewId || !['approve', 'reject'].includes(action)) {
     throw new ApiError(400, 'Review ID and valid action are required');
@@ -109,16 +130,42 @@ export const moderateReview = asyncHandler(async (req: Request, res: Response) =
       await updateProductRating(review.product);
     }
 
-    const { RuleEngine } = require('../../services/RuleEngine');
-    const userForRule = await require('../../models/User').default.findById(review.customer).lean();
+    let message = 'Review successfully approved! Dynamic rules evaluated.';
 
-    try {
-      await RuleEngine.evaluateTrigger('on_review', { user: userForRule, review });
-    } catch (ruleErr) {
-      require('../../config/logger').default.error('Failed to evaluate review rules:', ruleErr);
+    if (customRewardAmount && typeof customRewardAmount === 'number' && customRewardAmount > 0) {
+      const user = await User.findById(review.customer);
+      if (user) {
+        const balanceBefore = user.walletBalance || 0;
+        const balanceAfter = balanceBefore + customRewardAmount;
+        user.walletBalance = balanceAfter;
+        await user.save();
+
+        await WalletTransaction.create([
+          {
+            userId: user._id,
+            type: 'credit',
+            amount: customRewardAmount,
+            source: 'review_reward',
+            description: 'Reward for approved product review (Manual)',
+            status: 'active',
+            reviewId: review._id,
+            adminId: new mongoose.Types.ObjectId((req as any).user.id),
+            balanceBefore,
+            balanceAfter,
+          },
+        ]);
+        message = `Review successfully approved! ₹${customRewardAmount} credited manually.`;
+      }
+    } else {
+      const { RuleEngine } = require('../../services/RuleEngine');
+      const userForRule = await User.findById(review.customer).lean();
+
+      try {
+        await RuleEngine.evaluateTrigger('on_review', { user: userForRule, review });
+      } catch (ruleErr) {
+        require('../../config/logger').default.error('Failed to evaluate review rules:', ruleErr);
+      }
     }
-
-    const message = 'Review successfully approved! Dynamic rules evaluated.';
 
     res.status(200).json(
       new ApiResponse(true, message, {

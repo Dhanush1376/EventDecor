@@ -6,12 +6,7 @@ import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 import { DeleteConfirmModal } from './ui/DeleteConfirmModal';
 import { returnService } from '../../services/api/returnService';
 import toast from 'react-hot-toast';
-
-const slideDrawer = {
-  hidden: { x: '100%', opacity: 0 },
-  show: { x: 0, opacity: 1 },
-  exit: { x: '100%', opacity: 0 },
-};
+import { OrderSettlement } from '../pages/AdminOrderDetail/OrderSettlement';
 
 const RETURN_STATUSES = [
   'submitted',
@@ -35,9 +30,6 @@ export function AdminOrderDrawer({
   selectedOrderData,
   setIsDrawerOpen,
   allStatuses,
-  orderNoteDraft,
-  setOrderNoteDraft,
-  handleSaveNoteDraft,
   updateOrderStatus,
   deleteOrder,
   navigate,
@@ -45,6 +37,17 @@ export function AdminOrderDrawer({
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
   const [localReturns, setLocalReturns] = React.useState([]);
   const [localExchanges, setLocalExchanges] = React.useState([]);
+  const [settlementCharges, setSettlementCharges] = React.useState(
+    selectedOrderData?.rawOrder?.courierCharges || selectedOrder.courierCharges || 150,
+  );
+
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
+  const slideDrawer = {
+    hidden: isMobile ? { y: '100%', opacity: 0 } : { x: '100%', opacity: 0 },
+    show: isMobile ? { y: 0, opacity: 1 } : { x: 0, opacity: 1 },
+    exit: isMobile ? { y: '100%', opacity: 0 } : { x: '100%', opacity: 0 },
+  };
 
   React.useEffect(() => {
     if (selectedOrderData) {
@@ -110,7 +113,7 @@ export function AdminOrderDrawer({
         exit="exit"
         variants={slideDrawer}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed right-0 top-0 h-screen w-full sm:w-[500px] z-[1000] shadow-[var(--admin-shadow-2xl)] flex flex-col overflow-hidden border-l border-[var(--admin-border)]"
+        className="fixed sm:right-0 sm:top-0 bottom-0 inset-x-0 sm:inset-x-auto h-[90vh] sm:h-screen w-full sm:w-[500px] z-[1000] shadow-[var(--admin-shadow-2xl)] flex flex-col overflow-hidden border-t sm:border-t-0 sm:border-l border-[var(--admin-border)] rounded-t-2xl sm:rounded-none"
         style={{ background: 'var(--admin-surface)' }}
       >
         {/* Drawer Header */}
@@ -170,23 +173,39 @@ export function AdminOrderDrawer({
                 <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
                   Phone
                 </p>
-                <p className="font-semibold text-[var(--admin-text-primary)]">
+                <p className="font-bold text-[var(--admin-text-primary)] flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)]">
+                    call
+                  </span>
                   {selectedOrder.phone}
                 </p>
               </div>
               <div>
-                <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
+                <p className="text-[var(--admin-text-tertiary)] font-medium mb-1 text-[10px] uppercase">
                   Payment Mode
                 </p>
-                <p className="font-semibold text-[var(--admin-text-primary)]">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold border ${
+                    selectedOrder.payment?.toLowerCase().includes('pending') ||
+                    selectedOrder.payment?.toLowerCase().includes('cod')
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  }`}
+                >
+                  {selectedOrder.payment?.toLowerCase().includes('pending') && (
+                    <span className="material-symbols-outlined text-[14px] mr-1">schedule</span>
+                  )}
                   {selectedOrder.payment}
-                </p>
+                </span>
               </div>
               <div>
                 <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
                   Invoice Date
                 </p>
-                <p className="font-semibold text-[var(--admin-text-primary)]">
+                <p className="font-bold text-[var(--admin-text-primary)] flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)]">
+                    event
+                  </span>
                   {selectedOrder.date}
                 </p>
               </div>
@@ -206,6 +225,21 @@ export function AdminOrderDrawer({
                 </div>
               )}
             </div>
+
+            {/* Delivery Address Row */}
+            <div className="pt-2 border-t border-[var(--admin-border-subtle)] mt-1">
+              <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
+                Delivery Address
+              </p>
+              <p className="font-bold text-[var(--admin-text-primary)] flex items-start gap-1.5 mt-1">
+                <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)] mt-0.5">
+                  location_on
+                </span>
+                <span className="leading-tight text-[12px]">
+                  {selectedOrder.address || 'Address not available'}
+                </span>
+              </p>
+            </div>
           </div>
 
           {/* 2. Items List */}
@@ -220,18 +254,22 @@ export function AdminOrderDrawer({
                   className="flex items-center justify-between p-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)] shadow-[var(--admin-shadow-sm)]"
                 >
                   <div className="flex items-center gap-3">
-                    {item.image && (
+                    {item.image ? (
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-10 h-10 rounded-[var(--admin-radius-md)] object-cover border border-[var(--admin-border-subtle)] shrink-0"
+                        className="w-12 h-12 rounded-[var(--admin-radius-md)] object-cover border border-[var(--admin-border)] shadow-sm shrink-0"
                       />
+                    ) : (
+                      <div className="w-12 h-12 rounded-[var(--admin-radius-md)] bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-gray-400">inventory_2</span>
+                      </div>
                     )}
                     <div>
-                      <p className="text-[12px] font-bold text-[var(--admin-text-primary)] line-clamp-1">
+                      <p className="text-[13px] font-bold text-[var(--admin-text-primary)] line-clamp-1">
                         {item.name}
                       </p>
-                      <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5">
+                      <p className="text-[11px] font-medium text-[var(--admin-text-secondary)] mt-0.5 bg-[var(--admin-surface-muted)] inline-block px-1.5 py-0.5 rounded border border-[var(--admin-border-subtle)]">
                         Qty: {item.qty || item.quantity || 1}
                       </p>
                       {item.type === 'rental' && (
@@ -326,34 +364,75 @@ export function AdminOrderDrawer({
               Delivery Timeline
             </h4>
             <div className="relative pl-6 space-y-5 border-l-2 border-[var(--admin-border)] ml-3">
-              {allStatuses.slice(0, 5).map((st, sidx) => {
+              {allStatuses.slice(0, 4).map((st, sidx) => {
                 const isDone = allStatuses.indexOf(selectedOrder.status) >= sidx;
                 const isCurrent = selectedOrder.status === st;
+
+                const STATUS_COLORS = {
+                  Pending: {
+                    border: 'border-amber-500',
+                    bg: 'bg-amber-500',
+                    text: 'text-amber-600',
+                    badgeText: 'text-amber-700',
+                    badgeBg: 'bg-amber-100',
+                    badgeBorder: 'border-amber-200',
+                  },
+                  Confirmed: {
+                    border: 'border-blue-500',
+                    bg: 'bg-blue-500',
+                    text: 'text-blue-600',
+                    badgeText: 'text-blue-700',
+                    badgeBg: 'bg-blue-100',
+                    badgeBorder: 'border-blue-200',
+                  },
+                  Processing: {
+                    border: 'border-purple-500',
+                    bg: 'bg-purple-500',
+                    text: 'text-purple-600',
+                    badgeText: 'text-purple-700',
+                    badgeBg: 'bg-purple-100',
+                    badgeBorder: 'border-purple-200',
+                  },
+                  Delivered: {
+                    border: 'border-emerald-500',
+                    bg: 'bg-emerald-500',
+                    text: 'text-emerald-600',
+                    badgeText: 'text-emerald-700',
+                    badgeBg: 'bg-emerald-100',
+                    badgeBorder: 'border-emerald-200',
+                  },
+                };
+                const colors = STATUS_COLORS[st] || {
+                  border: 'border-[var(--admin-accent)]',
+                  bg: 'bg-[var(--admin-accent)]',
+                  text: 'text-[var(--admin-accent)]',
+                  badgeText: 'text-[var(--admin-accent)]',
+                  badgeBg: 'bg-[var(--admin-accent)]/10',
+                  badgeBorder: 'border-[var(--admin-accent)]/20',
+                };
 
                 return (
                   <div key={st} className="relative flex items-center justify-between">
                     <span
-                      className={`absolute -left-[31px] w-4 h-4 rounded-full border-2 bg-[var(--admin-surface)] flex items-center justify-center transition-all ${
-                        isDone
-                          ? 'border-[var(--admin-accent)]'
-                          : 'border-[var(--admin-border-strong)]'
+                      className={`absolute -left-[31px] w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center transition-all ${
+                        isDone ? colors.border : 'border-gray-300'
                       }`}
                     >
-                      {isDone && <span className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />}
+                      {isDone && <span className={`w-2 h-2 rounded-full ${colors.bg}`} />}
                     </span>
                     <div>
                       <p
                         className={`text-[12px] font-bold ${
-                          isCurrent
-                            ? 'text-[var(--admin-accent)]'
-                            : 'text-[var(--admin-text-secondary)]'
+                          isDone ? colors.text : 'text-gray-400'
                         }`}
                       >
                         {st}
                       </p>
                     </div>
                     {isCurrent && (
-                      <span className="text-[9px] uppercase font-bold tracking-widest text-[var(--admin-accent)] bg-[var(--admin-accent)]/10 px-2 py-0.5 rounded-full animate-pulse border border-[var(--admin-accent)]/20">
+                      <span
+                        className={`text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full animate-pulse border ${colors.badgeText} ${colors.badgeBg} ${colors.badgeBorder}`}
+                      >
                         Active State
                       </span>
                     )}
@@ -363,23 +442,13 @@ export function AdminOrderDrawer({
             </div>
           </div>
 
-          {/* 4. Staff Notes Form */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block pl-1">
-              Internal Staff Notes
-            </label>
-            <textarea
-              rows={3}
-              placeholder="Type logistics references, customer specifications, or event notes..."
-              value={orderNoteDraft.text}
-              onChange={(e) => setOrderNoteDraft({ text: e.target.value })}
-              onBlur={handleSaveNoteDraft}
-              className="admin-textarea bg-[var(--admin-surface)]"
-            />
-            <p className="text-[10px] text-[var(--admin-text-tertiary)] pl-1">
-              * Note auto-saves when you click out. Visible only to studio staff.
-            </p>
-          </div>
+          {/* 4. Financial Settlement */}
+          <OrderSettlement
+            order={selectedOrderData || selectedOrder}
+            updateOrderStatus={updateOrderStatus}
+            settlementCharges={settlementCharges}
+            setSettlementCharges={setSettlementCharges}
+          />
         </div>
 
         {/* Drawer Footer Controls */}
@@ -426,8 +495,9 @@ export function AdminOrderDrawer({
             </div>
           )}
 
-          <div className="flex-1">
-            <label className="text-[10px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-2">
+          <div className="flex-1 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+            <label className="text-[10px] font-bold text-blue-800 uppercase tracking-wider block mb-2 flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">edit_note</span>
               Direct Status Override
             </label>
             <select
@@ -435,7 +505,7 @@ export function AdminOrderDrawer({
               onChange={(e) => {
                 updateOrderStatus(selectedOrder.id, e.target.value);
               }}
-              className="admin-input font-bold"
+              className="admin-input font-bold bg-white border-blue-200 text-blue-900 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
             >
               {allStatuses.map((st) => (
                 <option key={st} value={st}>
@@ -445,23 +515,24 @@ export function AdminOrderDrawer({
             </select>
           </div>
 
-          <div className="flex items-center gap-3 w-full">
+          <div className="flex items-center gap-3 w-full mt-2">
             <button
               type="button"
               onClick={() => {
                 setIsDrawerOpen(false);
                 navigate(`/admin/orders/${selectedOrder.id}`);
               }}
-              className="admin-btn admin-btn-outline flex-1 min-h-[40px]"
+              className="admin-btn bg-white border-2 border-[var(--admin-border-strong)] text-[var(--admin-text-primary)] hover:bg-gray-50 flex-1 min-h-[44px] shadow-sm font-bold"
             >
-              <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+              <span className="material-symbols-outlined text-[18px]">receipt_long</span>
               Full Details
             </button>
             <button
               type="button"
               onClick={() => setIsDrawerOpen(false)}
-              className="admin-btn flex-1 min-h-[40px]"
+              className="admin-btn bg-[var(--admin-accent)] text-white hover:opacity-90 flex-1 min-h-[44px] shadow-md font-bold text-[14px]"
             >
+              <span className="material-symbols-outlined text-[18px]">check_circle</span>
               Done
             </button>
           </div>

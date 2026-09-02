@@ -62,13 +62,9 @@ const OrderSchema: Schema = new Schema(
     orderStatus: {
       type: String,
       enum: [
-        'Payment Pending',
         'Pending',
         'Confirmed',
-        'Packed',
-        'Ready to Ship',
-        'Shipped',
-        'Out for Delivery',
+        'Processing',
         'Delivered',
         'Cancelled',
         'Returned',
@@ -77,6 +73,8 @@ const OrderSchema: Schema = new Schema(
       ],
       default: 'Pending',
     },
+    isOnHold: { type: Boolean, default: false },
+    holdReason: { type: String },
     statusHistory: [
       {
         status: { type: String, required: true },
@@ -111,7 +109,7 @@ const OrderSchema: Schema = new Schema(
     packageType: { type: String, default: 'Standard Box' },
     barcodeData: { type: String },
     qrCodeData: { type: String },
-    notes: { type: String },
+
     needByDate: { type: Date },
     idempotencyKey: { type: String, unique: true, sparse: true },
     publicTrackingToken: { type: String, select: false },

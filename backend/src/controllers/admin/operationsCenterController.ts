@@ -16,7 +16,7 @@ export const getOperationsDashboard = asyncHandler(async (req: Request, res: Res
   ] = await Promise.all([
     Transaction.countDocuments(),
     Transaction.find().sort({ createdAt: -1 }).limit(10).populate('customer', 'name email').lean(),
-    Fulfilment.countDocuments({ status: { $in: ['PENDING', 'PROCESSING', 'PACKED'] } }),
+    Fulfilment.countDocuments({ status: { $in: ['PENDING', 'PROCESSING'] } }),
     Transaction.countDocuments({ domain: 'rental', canonicalStatus: 'RENTAL_ACTIVE' }),
     Transaction.countDocuments({ domain: 'custom', canonicalStatus: 'IN_PRODUCTION' }),
     Invoice.countDocuments({ status: { $in: ['DRAFT', 'ISSUED'] } }),

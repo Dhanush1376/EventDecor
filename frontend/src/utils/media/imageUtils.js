@@ -75,6 +75,29 @@ export const getOptimizedUrl = (url, widthOrPreset, height, quality = 'auto', fo
   let resultUrl = url;
 
   if (isCloudinary) {
+    // HIGH-PRIORITY FIX: Support for 'original' quality to serve the uncompressed, unscaled raw image
+    if (q === 'original') {
+      const urlParts = url.split('/upload/');
+      if (urlParts.length === 2) {
+        let pathPart = urlParts[1];
+        const pathSegments = pathPart.split('/');
+        let cleanPathSegments = [];
+        let foundVersionOrFile = false;
+        for (const segment of pathSegments) {
+          if (foundVersionOrFile) {
+            cleanPathSegments.push(segment);
+          } else if (segment.match(/^v\d+$/) || !segment.includes('_') || segment.includes('.')) {
+            foundVersionOrFile = true;
+            cleanPathSegments.push(segment);
+          }
+        }
+        pathPart = cleanPathSegments.join('/');
+        const rawUrl = `${urlParts[0]}/upload/${pathPart}`;
+        urlCache.set(cacheKey, rawUrl);
+        return rawUrl;
+      }
+    }
+
     // HIGH-PRIORITY FIX: If auto:best is requested, we strip old constraints but forcefully apply an ultra-HD transform
     if (q === 'auto:best') {
       const urlParts = url.split('/upload/');

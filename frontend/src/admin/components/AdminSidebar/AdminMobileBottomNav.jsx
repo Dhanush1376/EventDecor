@@ -50,7 +50,7 @@ export function AdminMobileBottomNav({ isFabOpen, setIsFabOpen, fabActions }) {
 
   return (
     <>
-      {/* FAB Mobile Overlay */}
+      {/* FAB Mobile Overlay & Bottom Sheet */}
       <AnimatePresence>
         {isFabOpen && (
           <motion.div
@@ -59,8 +59,54 @@ export function AdminMobileBottomNav({ isFabOpen, setIsFabOpen, fabActions }) {
             exit={{ opacity: 0 }}
             onClick={() => setIsFabOpen(false)}
             className="fixed inset-0 z-[35] lg:hidden"
-            style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)' }}
+            style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isFabOpen && (
+          <motion.div
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+            className="fixed bottom-0 left-0 right-0 z-[38] lg:hidden bg-white rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.12)] pt-7 pb-[calc(var(--admin-bottom-nav-height,60px)+24px)] px-6 border-t border-black/5"
+            style={
+              {
+                // Add a tiny bit of padding to the top for the drag handle
+              }
+            }
+          >
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 opacity-80" />
+
+            <h3 className="text-center font-bold text-[var(--admin-text-primary)] mb-6 text-[12px] uppercase tracking-[0.15em] opacity-80">
+              Create New
+            </h3>
+
+            <div className="grid grid-cols-3 gap-y-7 gap-x-4">
+              {fabActions.map((action, i) => (
+                <motion.button
+                  key={i}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 + i * 0.04 }}
+                  onClick={() => {
+                    navigate(action.path);
+                    setIsFabOpen(false);
+                  }}
+                  className="flex flex-col items-center justify-center gap-2.5 group outline-none"
+                >
+                  <div className="w-14 h-14 rounded-[18px] bg-[var(--admin-surface-hover)] border border-[var(--admin-border-subtle)] flex items-center justify-center text-[var(--admin-text-secondary)] group-hover:bg-[var(--admin-accent)] group-hover:text-white group-hover:border-[var(--admin-accent)] transition-all duration-300 shadow-sm group-active:scale-95 group-active:shadow-inner">
+                    <span className="material-symbols-outlined text-[24px]">{action.icon}</span>
+                  </div>
+                  <span className="text-[11px] font-bold text-[var(--admin-text-secondary)] tracking-tight">
+                    {action.label}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
       <nav
@@ -82,53 +128,11 @@ export function AdminMobileBottomNav({ isFabOpen, setIsFabOpen, fabActions }) {
           if (item.isAction) {
             return (
               <div key={index} className="relative w-11 flex justify-center -translate-y-3 z-[60]">
-                <AnimatePresence>
-                  {isFabOpen && (
-                    <>
-                      {fabActions.map((action, i) => {
-                        // Stack vertically: bottom to top
-                        const x = 0;
-                        const y = -65 - i * 55;
-
-                        return (
-                          <motion.button
-                            key={i}
-                            initial={{ opacity: 0, x, y: y + 15, scale: 0.9 }}
-                            animate={{ opacity: 1, x, y, scale: 1 }}
-                            exit={{ opacity: 0, x, y: y + 15, scale: 0.9 }}
-                            transition={{ duration: 0.1, ease: 'easeOut' }}
-                            onClick={() => {
-                              navigate(action.path);
-                              setIsFabOpen(false);
-                            }}
-                            className="absolute top-1 w-10 h-10 rounded-full flex items-center justify-center shadow-[var(--admin-shadow-lg)] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:text-[var(--admin-accent)] border border-[var(--admin-border-subtle)]"
-                            style={{ left: 'calc(50% - 20px)' }}
-                            title={action.label}
-                          >
-                            <span className="material-symbols-outlined text-[18px]">
-                              {action.icon}
-                            </span>
-                            <span
-                              className="absolute left-[50px] top-1/2 -translate-y-1/2 text-[11px] font-bold whitespace-nowrap opacity-100 shadow-[var(--admin-shadow-sm)] text-[var(--admin-text-primary)]"
-                              style={{
-                                background: 'var(--admin-surface)',
-                                padding: '4px 10px',
-                                borderRadius: '16px',
-                                border: '1px solid var(--admin-border-subtle)',
-                              }}
-                            >
-                              {action.label}
-                            </span>
-                          </motion.button>
-                        );
-                      })}
-                    </>
-                  )}
-                </AnimatePresence>
+                {/* Bottom Sheet acts as FAB menu now, so we only need the toggle button here */}
 
                 <button
                   onClick={() => setIsFabOpen(!isFabOpen)}
-                  className="w-11 h-11 relative z-[61] rounded-full flex items-center justify-center shadow-[var(--admin-shadow-md)] hover:scale-105 active:scale-95 transition-all cursor-pointer min-h-0"
+                  className="w-12 h-12 relative z-[61] rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:scale-105 active:scale-95 transition-all cursor-pointer min-h-0"
                   style={{
                     background: isFabOpen ? 'var(--admin-surface)' : 'var(--admin-accent)',
                     color: isFabOpen ? 'var(--admin-accent)' : 'white',
@@ -138,8 +142,8 @@ export function AdminMobileBottomNav({ isFabOpen, setIsFabOpen, fabActions }) {
                 >
                   <motion.span
                     animate={{ rotate: isFabOpen ? 45 : 0 }}
-                    transition={{ duration: 0.1, ease: 'easeOut' }}
-                    className="material-symbols-outlined text-[20px] font-bold"
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className="material-symbols-outlined text-[24px] font-bold"
                   >
                     add
                   </motion.span>

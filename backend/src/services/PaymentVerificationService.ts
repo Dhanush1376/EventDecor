@@ -577,7 +577,7 @@ export class PaymentVerificationService {
               date: orderData.date,
               rentalDurationDays: orderData.rentalDurationDays,
               timing: orderData.timing,
-              guestCount: orderData.guestCount,
+
               venue: orderData.venue,
               customization: orderData.customization,
               selectedAddons: orderData.selectedAddons,

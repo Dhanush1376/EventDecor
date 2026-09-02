@@ -13,7 +13,7 @@ import { ManualPaymentModal } from '../../../components/ui/ManualPaymentModal';
 import { bookingService } from '../../../../services/domainServices';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../../../utils/core/errorHelpers';
-
+import { useConfirm } from '../../../../context/ConfirmProvider';
 export function BookingsTab({
   bookings,
   loadingBookings,
@@ -23,10 +23,18 @@ export function BookingsTab({
   upcomingSetupsCount,
 }) {
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const [selectedPaymentBooking, setSelectedPaymentBooking] = useState(null);
 
   const handleDeletePayment = async (booking, transactionId) => {
-    if (!window.confirm('Are you sure you want to undo this payment?')) return;
+    const isConfirmed = await confirm({
+      title: 'Undo Payment',
+      message: 'Are you sure you want to undo this payment?',
+      confirmText: 'Yes, Undo',
+      cancelText: 'Cancel',
+      type: 'danger',
+    });
+    if (!isConfirmed) return;
     try {
       const res = await bookingService.adminDeletePayment(booking._id || booking.id, transactionId);
       if (res.success) {
@@ -39,19 +47,37 @@ export function BookingsTab({
   };
 
   const getUrgencyCardClass = (date) => {
-    if (!date)
-      return 'bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]';
+    if (!date) return '';
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const eventDate = new Date(date);
     const diffTime = eventDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0)
-      return 'bg-[var(--admin-surface-muted)] border-[var(--admin-border)] opacity-60';
-    if (diffDays >= 0 && diffDays <= 7) return '!bg-[var(--admin-error)]/10 border-transparent';
-    if (diffDays > 7 && diffDays <= 30) return '!bg-[var(--admin-warning)]/15 border-transparent';
-    return 'bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]';
+    if (diffDays < 0) return 'opacity-60';
+    return '';
+  };
+
+  const getCardColorClass = (status) => {
+    const s = (status || '').toLowerCase();
+    switch (s) {
+      case 'completed':
+        return 'bg-green-50 border-green-200';
+      case 'in_progress':
+      case 'setup_in_progress':
+      case 'execution':
+        return 'bg-blue-50 border-blue-200';
+      case 'pending_payment':
+      case 'pending':
+        return 'bg-yellow-50 border-yellow-200';
+      case 'confirmed':
+        return 'bg-purple-50 border-purple-200';
+      case 'cancelled':
+      case 'failed':
+        return 'bg-red-50 border-red-200';
+      default:
+        return 'bg-gray-50 border-gray-200';
+    }
   };
 
   const getUrgencyRowClass = (date) => {
@@ -190,12 +216,12 @@ export function BookingsTab({
                 className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-10 min-w-0"
               />
             </div>
-            <div className="flex items-stretch gap-2 min-w-0 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
-              <div className="relative flex items-stretch shrink-0 flex-1 lg:flex-none">
+            <div className="grid grid-cols-3 sm:flex items-stretch gap-2 min-w-0 w-full pb-1 sm:pb-0">
+              <div className="relative flex items-stretch">
                 <select
                   value={urgencyFilter}
                   onChange={(e) => setUrgencyFilter(e.target.value)}
-                  className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 w-full appearance-none min-w-[130px] truncate"
+                  className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 w-full appearance-none truncate"
                 >
                   <option value="all">All Urgencies</option>
                   <option value="critical">Critical (≤ 7 Days)</option>
@@ -210,11 +236,11 @@ export function BookingsTab({
                   expand_more
                 </span>
               </div>
-              <div className="relative flex items-stretch shrink-0 flex-1 lg:flex-none">
+              <div className="relative flex items-stretch">
                 <select
                   value={paymentFilter}
                   onChange={(e) => setPaymentFilter(e.target.value)}
-                  className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 w-full appearance-none min-w-[120px] truncate"
+                  className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 w-full appearance-none truncate"
                 >
                   <option value="all">All Payments</option>
                   <option value="unpaid">Unpaid</option>
@@ -228,11 +254,11 @@ export function BookingsTab({
                   expand_more
                 </span>
               </div>
-              <div className="relative flex items-stretch shrink-0 flex-1 lg:flex-none">
+              <div className="relative flex items-stretch flex-1 lg:flex-none">
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 w-full appearance-none min-w-[130px] truncate"
+                  className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 w-full appearance-none truncate"
                 >
                   <option value="newest">Newest Added</option>
                   <option value="upcoming">Upcoming Event</option>
@@ -258,40 +284,107 @@ export function BookingsTab({
           ) : (
             <>
               {/* Mobile Card Layout */}
-              <div className="grid grid-cols-1 gap-4 md:hidden">
+              <div className="grid grid-cols-1 gap-5 md:hidden">
                 {filteredBookings.map((b) => (
                   <div
                     key={b._id || b.id}
                     onClick={() => navigate(`/admin/events/${b._id || b.id}`)}
-                    className={`border rounded-xl p-4 shadow-[var(--admin-shadow-sm)] flex flex-col gap-4 cursor-pointer transition-colors ${getUrgencyCardClass(b.date)}`}
+                    className={`${getCardColorClass(b.status)} rounded-lg p-5 shadow-sm border flex flex-col gap-4 cursor-pointer hover:shadow-md hover:border-gray-500 transition-all duration-200 relative overflow-hidden ${getUrgencyCardClass(b.date)}`}
                   >
-                    {/* Header: Customer and Status */}
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
+                    {/* Header: ID and Badges */}
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block">
                           #{b.bookingId || b._id?.toString().substring(0, 8)}
                         </span>
-                        <span className="text-[14px] font-bold text-[var(--admin-text-primary)] block truncate">
+                        <h3 className="text-[16px] font-bold text-[var(--admin-text-primary)] leading-tight mt-1 truncate max-w-[200px]">
                           {b.user?.name || 'Anonymous Client'}
-                        </span>
-                        <span className="text-[12px] text-[var(--admin-text-secondary)] block truncate">
+                        </h3>
+                        <span className="text-[12px] font-medium text-[var(--admin-text-secondary)]">
                           {b.contactPhone || b.user?.phone || 'No contact'}
                         </span>
                       </div>
-                      <div className="flex flex-col items-end gap-2 shrink-0">
-                        <StatusBadge status={b.status.replace('_', '')} />
+                      <div className="flex flex-col items-end gap-1.5">
+                        <div className="relative group">
+                          <select
+                            className="appearance-none text-[10px] font-bold uppercase tracking-wider pl-3 pr-8 py-1.5 rounded-md outline-none cursor-pointer border border-[var(--admin-border)] bg-white text-[var(--admin-text-primary)] shadow-sm hover:border-[var(--admin-border-strong)] transition-all"
+                            value={b.status}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={async (e) => {
+                              e.stopPropagation();
+                              const newStatus = e.target.value;
+
+                              if (newStatus !== 'pending_payment' && newStatus !== 'cancelled') {
+                                if (
+                                  !b.pricing?.paymentStatus ||
+                                  b.pricing?.paymentStatus === 'unpaid'
+                                ) {
+                                  toast.error(
+                                    'Status cannot be updated. Minimum payment must be recorded first.',
+                                  );
+                                  return;
+                                }
+                              }
+
+                              const isConfirmed = await confirm({
+                                title: 'Update Booking Status',
+                                message: `Are you sure you want to change the status to ${newStatus.replace('_', ' ').toUpperCase()}?`,
+                                confirmText: 'Yes, Update',
+                                cancelText: 'Cancel',
+                                type: 'warning',
+                              });
+
+                              if (!isConfirmed) return;
+
+                              try {
+                                const res = await bookingService.adminUpdateStatus(
+                                  b._id || b.id,
+                                  newStatus,
+                                );
+                                if (res.success) {
+                                  toast.success('Status updated successfully!');
+                                  window.location.reload();
+                                }
+                              } catch (err) {
+                                toast.error(getErrorMessage(err, 'Failed to update status'));
+                              }
+                            }}
+                          >
+                            <option value="pending_payment">PENDING PAYMENT</option>
+                            <option value="confirmed">CONFIRMED</option>
+                            <option value="setup_in_progress">IN PROGRESS</option>
+                            <option value="completed">COMPLETED</option>
+                            <option value="cancelled">CANCELLED</option>
+                          </select>
+                          <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-[var(--admin-text-primary)]">
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                          </div>
+                        </div>
                         <span
-                          className={`text-[12px] font-bold uppercase tracking-wider ${b.pricing?.paymentStatus === 'paid' ? 'text-[var(--admin-success)]' : 'text-[var(--admin-warning)]'}`}
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm ${b.pricing?.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}
                         >
-                          {b.pricing?.paymentStatus}
+                          {b.pricing?.paymentStatus || 'UNPAID'}
                         </span>
                       </div>
                     </div>
 
-                    {/* Event Info */}
-                    <div className="flex gap-3 bg-[var(--admin-bg-subtle)] p-3 rounded-lg border border-[var(--admin-border-subtle)]">
+                    <hr className="border-[var(--admin-border)] w-full" />
+
+                    {/* Event Package Snapshot */}
+                    <div className="flex gap-4 items-center">
                       {b.eventPackage?.image || b.inspirationImages?.[0] ? (
-                        <div className="w-14 h-14 rounded-md overflow-hidden flex-shrink-0 border border-[var(--admin-border)] bg-[var(--admin-surface-muted)]">
+                        <div className="w-16 h-16 rounded-md overflow-hidden shrink-0 border border-[var(--admin-border-subtle)] shadow-sm">
                           <img
                             src={b.eventPackage?.image || b.inspirationImages?.[0]}
                             alt={b.title}
@@ -299,32 +392,37 @@ export function BookingsTab({
                           />
                         </div>
                       ) : (
-                        <div className="w-14 h-14 rounded-md bg-[var(--admin-surface-hover)] flex items-center justify-center flex-shrink-0 border border-[var(--admin-border)]">
-                          <span className="text-gray-400 material-symbols-outlined text-xl">
-                            image
-                          </span>
+                        <div className="w-16 h-16 rounded-md bg-[var(--admin-surface-hover)] flex items-center justify-center shrink-0 border border-[var(--admin-border-subtle)]">
+                          <span className="text-gray-400 material-symbols-outlined">image</span>
                         </div>
                       )}
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <span className="admin-badge admin-badge-neutral text-[9px] uppercase font-bold inline-block mb-0.5 truncate max-w-full">
+                      <div className="min-w-0 flex-1 flex flex-col justify-center">
+                        <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider truncate block mb-0.5">
                           {b.eventType}
                         </span>
-                        <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)] truncate">
+                        <span className="text-[14px] font-bold text-[var(--admin-text-primary)] leading-snug line-clamp-2">
                           {b.title}
-                        </h4>
-                        <span className="text-[12px] font-bold text-[var(--admin-text-primary)] block">
+                        </span>
+                        <span className="text-[13px] font-bold text-[var(--admin-accent)] mt-1">
                           {formatCurrency(b.pricing?.totalPrice)}
                         </span>
                       </div>
                     </div>
 
-                    {/* Date & Venue */}
-                    <div className="grid grid-cols-2 gap-3 bg-[var(--admin-bg-subtle)] p-3 rounded-lg border border-[var(--admin-border-subtle)]">
-                      <div>
-                        <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
-                          Date & Time
-                        </span>
-                        <span className="text-[12px] font-medium text-[var(--admin-text-primary)] block">
+                    <hr className="border-[var(--admin-border)] w-full" />
+
+                    {/* Logistics */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)]">
+                            event
+                          </span>
+                          <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
+                            Date & Time
+                          </span>
+                        </div>
+                        <span className="text-[12px] font-semibold text-[var(--admin-text-primary)]">
                           {new Date(b.date).toLocaleDateString('en-IN', {
                             month: 'short',
                             day: 'numeric',
@@ -332,33 +430,38 @@ export function BookingsTab({
                           })}
                         </span>
                         {b.timing?.start && (
-                          <span className="text-[11px] text-[var(--admin-text-secondary)] block mt-0.5">
+                          <span className="text-[11px] text-[var(--admin-text-secondary)]">
                             {b.timing.start} {b.timing.end ? `- ${b.timing.end}` : ''}
                           </span>
                         )}
                       </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
-                          Venue
-                        </span>
-                        <span className="text-[11px] text-[var(--admin-text-secondary)] line-clamp-2 leading-tight">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-tertiary)]">
+                            location_on
+                          </span>
+                          <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
+                            Venue
+                          </span>
+                        </div>
+                        <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] line-clamp-2 leading-tight">
                           {b.venue?.address || 'Not specified'}
                         </span>
                       </div>
                     </div>
 
-                    {/* Action */}
-                    <div className="flex gap-2 w-full mt-1">
+                    {/* Actions */}
+                    <div className="flex gap-2 w-full mt-2 pt-2">
                       {b.pricing?.paymentStatus !== 'paid' && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedPaymentBooking(b);
                           }}
-                          className="flex-1 admin-btn admin-btn-outline h-9 text-[12px] flex items-center justify-center gap-1.5"
+                          className="flex-1 h-10 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 font-bold text-[13px] flex items-center justify-center gap-1.5 transition-colors"
                         >
-                          <span className="material-symbols-outlined text-[16px]">payments</span>
-                          Pay
+                          <span className="material-symbols-outlined text-[18px]">payments</span>
+                          Record Pay
                         </button>
                       )}
                       {(() => {
@@ -373,9 +476,9 @@ export function BookingsTab({
                               handleDeletePayment(b, latestManualPayment.transactionId);
                             }}
                             title="Undo Recent Manual Payment"
-                            className="admin-btn admin-btn-outline h-9 w-9 p-0 flex items-center justify-center shrink-0 border-[var(--admin-error)] text-[var(--admin-error)] hover:bg-[var(--admin-error)]/10"
+                            className="h-10 w-10 rounded-md bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center shrink-0 transition-colors"
                           >
-                            <span className="material-symbols-outlined text-[16px]">undo</span>
+                            <span className="material-symbols-outlined text-[18px]">undo</span>
                           </button>
                         );
                       })()}
@@ -384,7 +487,11 @@ export function BookingsTab({
                           e.stopPropagation();
                           navigate(`/admin/events/${b._id || b.id}`);
                         }}
-                        className="flex-1 admin-btn admin-btn-outline h-9 text-[12px]"
+                        className={`flex-1 h-10 rounded-md font-bold text-[13px] flex items-center justify-center transition-colors ${
+                          b.pricing?.paymentStatus === 'paid'
+                            ? 'bg-[var(--admin-accent)] text-white hover:bg-[var(--admin-accent-hover)]'
+                            : 'border-2 border-[var(--admin-border-strong)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)]'
+                        }`}
                       >
                         Manage Booking
                       </button>
@@ -410,7 +517,7 @@ export function BookingsTab({
                     {filteredBookings.map((b) => (
                       <tr
                         key={b._id || b.id}
-                        className={`admin-table-row-clickable ${getUrgencyRowClass(b.date)}`}
+                        className={`admin-table-row-clickable ${getCardColorClass(b.status)} hover:bg-opacity-80 transition-colors ${getUrgencyRowClass(b.date)}`}
                         onClick={() => navigate(`/admin/events/${b._id || b.id}`)}
                       >
                         <td>

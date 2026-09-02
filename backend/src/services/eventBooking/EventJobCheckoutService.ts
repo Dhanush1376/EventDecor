@@ -27,7 +27,7 @@ export class EventJobCheckoutService {
       date,
       rentalDurationDays,
       timing,
-      guestCount,
+
       venue,
       customization,
       selectedAddons,
@@ -197,7 +197,7 @@ export class EventJobCheckoutService {
             date: bDate,
             rentalDurationDays: durationDays,
             timing: timing || { start: '10:00 AM', end: '10:00 PM' },
-            guestCount: parseInt(guestCount) || 100,
+
             venue: venue || { address: 'TBD', isOutdoor: false },
             customization: customization || {},
             selectedAddons: selectedAddons || [],
@@ -269,7 +269,7 @@ export class EventJobCheckoutService {
       date: new Date(date),
       rentalDurationDays: durationDays,
       timing: timing || { start: '10:00 AM', end: '10:00 PM' },
-      guestCount: parseInt(guestCount) || 100,
+
       venue: venue || { address: 'TBD', isOutdoor: false },
       customization: customization || {},
       selectedAddons: selectedAddons || [],

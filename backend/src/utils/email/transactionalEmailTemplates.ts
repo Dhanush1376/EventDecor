@@ -15,11 +15,26 @@ const textLink = (text: string, url: string) => `
   </a>
 `;
 
+const resolveImageUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+
+  const backend = getBackendUrl();
+  const isLocal = backend.includes('localhost');
+  // For local testing, use a placeholder so the layout isn't broken with a blank box,
+  // since Gmail proxies can't access localhost.
+  if (isLocal) {
+    return 'https://placehold.co/100x100/f3f4f6/374151?text=Event+Decor';
+  }
+
+  return url.startsWith('/') ? `${backend}${url}` : `${backend}/${url}`;
+};
+
 const itemsTable = (items: any[]) => {
   const itemsHtml = items
     .map((item) => {
       const itemImage = item.imageSrc
-        ? `<img src="${escapeHtml(item.imageSrc)}" alt="${escapeHtml(item.title || item.name)}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;" />`
+        ? `<img src="${escapeHtml(resolveImageUrl(item.imageSrc))}" alt="${escapeHtml(item.title || item.name)}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;" />`
         : `<div style="width: 48px; height: 48px; background-color: #f3f4f6; border-radius: 4px; border: 1px solid #e5e7eb;"></div>`;
 
       return `
@@ -158,13 +173,57 @@ export const buildStatusBadge = (status: string) => {
 };
 
 export const buildBookingReferenceCard = (bookingId: string, status: string) => `
-  <div style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 32px; text-align: center; background-color: #f9fafb;">
-    <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Booking ID</p>
-    <p style="margin: 0 0 20px 0; font-size: 24px; color: #111827; font-weight: 700; font-family: monospace; letter-spacing: 1px;">${escapeHtml(bookingId)}</p>
-    <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Current Status</p>
-    <div style="margin: 0;">${buildStatusBadge(status)}</div>
+  <div style="margin-bottom: 32px;">
+    ${dataTable([
+      {
+        label: 'Booking ID',
+        value: `<span style="font-family: monospace; font-weight: 600; color: #111827;">${escapeHtml(bookingId)}</span>`,
+      },
+      { label: 'Status', value: buildStatusBadge(status) },
+    ])}
   </div>
 `;
+
+export const buildEventPackageItemsTable = (booking: any) => {
+  const items = [];
+
+  // Main Package
+  if (booking.eventPackage || booking.title) {
+    const pkgImage =
+      booking.eventPackage?.image ||
+      booking.eventPackage?.imageSrc ||
+      booking.eventPackage?.images?.[0] ||
+      booking.inspirationImages?.[0] ||
+      '';
+
+    items.push({
+      imageSrc: pkgImage,
+      title: booking.eventPackage?.title || booking.title || booking.eventType || 'Event Package',
+      quantity: 1,
+      price: booking.pricing?.rentalFee || booking.pricing?.totalPrice || 0,
+      variant: booking.customization?.themeColor || '',
+    });
+  }
+
+  // Addons
+  if (booking.selectedAddons && booking.selectedAddons.length > 0) {
+    booking.selectedAddons.forEach((addon: any) => {
+      items.push({
+        title: addon.name || 'Add-on',
+        quantity: addon.quantity || 1,
+        price: addon.price || 0,
+        imageSrc: '',
+      });
+    });
+  }
+
+  if (items.length === 0) return '';
+
+  return `
+    <h3 style="margin-top: 32px; color: #111827; font-size: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Package Details</h3>
+    ${itemsTable(items)}
+  `;
+};
 
 export const buildEventDetailsCard = (booking: any) => {
   const rows = [];
@@ -200,10 +259,6 @@ export const buildEventDetailsCard = (booking: any) => {
 
   if (booking.eventPackage && booking.eventPackage.title) {
     rows.push({ label: 'Package', value: escapeHtml(booking.eventPackage.title) });
-  }
-
-  if (booking.guestCount) {
-    rows.push({ label: 'Guests', value: String(booking.guestCount) });
   }
 
   return `
@@ -292,7 +347,7 @@ export const buildSupportSection = () => `
   <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
     <h3 style="color: #111827; margin: 0 0 12px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">Need Help?</h3>
     <p style="color: #4b5563; font-size: 14px; line-height: 1.5; margin: 0;">
-      If you have any questions or need to make changes to your booking, please reply directly to this email or contact our support team at <a href="mailto:support@siriartsandcrafts.com" style="color: #4f46e5; text-decoration: none;">support@siriartsandcrafts.com</a>.
+      If you have any questions or need to make changes to your booking, please reply directly to this email or call us at <strong>9866006648</strong> / <strong>9324546303</strong>.
     </p>
   </div>
 `;
@@ -336,7 +391,6 @@ export const buildOrderConfirmationCustomerEmail = (order: any, user: any) => {
     
     ${invoiceLink}
     
-    ${button('Track Your Order', `${getFrontendUrl()}/dashboard/orders`)}
   `;
   return {
     subject: `Order Confirmation — #${orderId}`,
@@ -369,7 +423,6 @@ export const buildOrderConfirmationAdminEmail = (order: any) => {
     
     ${addressBlock('Shipping Address', order.shippingAddress)}
     
-    ${button('View Order in Admin', `${getFrontendUrl()}/admin/orders/${order._id}`)}
   `;
   const itemTitle =
     order.items && order.items.length > 0 ? order.items[0].title || order.items[0].name : 'Items';
@@ -418,7 +471,6 @@ export const buildOrderStatusChangeEmail = (order: any, oldStatus: string, newSt
     
     ${invoiceLink}
     
-    ${button('View Order Details', `${getFrontendUrl()}/dashboard/orders`)}
   `;
   return {
     subject: `Your Order #${orderId} is now ${newStatus}`,
@@ -447,7 +499,6 @@ export const buildPaymentFailedEmail = (order: any, reason: string) => {
     
     <p>Please try completing the payment again or contact support if the issue persists.</p>
     
-    ${button('Retry Payment', `${getFrontendUrl()}/checkout/payment-retry/${order._id}`)}
   `;
   return {
     subject: `Payment Failed - Order #${orderId}`,
@@ -476,7 +527,6 @@ export const buildCustomOrderCustomerEmail = (order: any) => {
       { label: 'Target Budget', value: formatCurrency(order.budget) },
     ])}
     
-    ${button('View Request Dashboard', `${getFrontendUrl()}/dashboard/custom-orders`)}
   `;
   return {
     subject: `Custom Design Request Received — #${orderId}`,
@@ -508,7 +558,6 @@ export const buildCustomOrderAdminEmail = (order: any) => {
       <p style="margin: 0; white-space: pre-wrap; font-style: italic;">"${escapeHtml(order.customRequirements || 'No special requirements provided.')}"</p>
     </div>
     
-    ${button('Manage Request', `${getFrontendUrl()}/admin/custom-orders/${order._id}`)}
   `;
   return {
     subject: `[CUSTOM ORDER] New Request #${orderId} from ${escapeHtml(order.customerName)}`,
@@ -534,7 +583,6 @@ export const buildCustomOrderStatusChangeEmail = (order: any, previousStatus: st
       { label: 'New Status', value: escapeHtml(order.status) },
     ])}
     
-    ${button('View Details', `${getFrontendUrl()}/dashboard/custom-orders`)}
   `;
   return {
     subject: `Custom Order #${orderId} is now ${escapeHtml(order.status)}`,
@@ -598,8 +646,9 @@ export const buildEventBookingInquiryEmail = (booking: any, user: any) => {
     
     ${buildBookingReferenceCard(bookingId, booking.status || 'inquiry')}
     ${buildEventDetailsCard(booking)}
+    ${buildEventPackageItemsTable(booking)}
+    ${buildBookingPaymentSummary(booking.pricing)}
     ${buildNextStepsSection(nextStepsHtml)}
-    ${button('View Dashboard', `${getFrontendUrl()}/dashboard/events`)}
     ${buildSupportSection()}
   `;
 
@@ -630,9 +679,9 @@ export const buildEventBookingConfirmedEmail = (booking: any, user: any) => {
     
     ${buildBookingReferenceCard(bookingId, booking.status || 'confirmed')}
     ${buildEventDetailsCard(booking)}
+    ${buildEventPackageItemsTable(booking)}
     ${buildBookingPaymentSummary(booking.pricing)}
     ${buildNextStepsSection(nextStepsHtml)}
-    ${button('Open Live Workspace', `${getFrontendUrl()}/dashboard/events`)}
     ${buildSupportSection()}
   `;
 
@@ -652,8 +701,9 @@ export const buildEventBookingAdminEmail = (booking: any, user: any) => {
     
     ${buildBookingReferenceCard(bookingId, booking.status || 'inquiry')}
     ${buildEventDetailsCard(booking)}
+    ${buildEventPackageItemsTable(booking)}
+    ${buildBookingPaymentSummary(booking.pricing)}
     
-    ${button('Manage Booking', `${getFrontendUrl()}/admin/bookings/${booking._id}`)}
   `;
 
   return {
@@ -720,7 +770,6 @@ export const buildReturnCreatedCustomerEmail = (returnRequest: any, order: any, 
         : ''
     }
 
-    ${button('Track Your Request', `${getFrontendUrl()}/dashboard/returns`)}
   `;
   return {
     subject: `${isExchange ? 'Exchange' : 'Return'} Request Received — #${escapeHtml(requestId)}`,
@@ -827,7 +876,6 @@ export const buildReturnStatusUpdateEmail = (
         : ''
     }
 
-    ${button('Track Your Request', `${getFrontendUrl()}/dashboard/returns`)}
   `;
   return {
     subject: `Your ${isExchange ? 'Exchange' : 'Return'} Request #${escapeHtml(requestId)} is now ${formatStatus(newStatus)}`,
@@ -928,7 +976,6 @@ export const buildEventBookingStatusUpdateEmail = (
     </div>
     
     ${buildNextStepsSection(nextStepsHtml)}
-    ${button('Open Live Workspace', `${getFrontendUrl()}/dashboard/events`)}
     ${buildSupportSection()}
   `;
 

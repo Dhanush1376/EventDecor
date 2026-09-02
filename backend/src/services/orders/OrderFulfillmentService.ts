@@ -28,10 +28,18 @@ export class OrderFulfillmentService {
 
     // Compatibility Mapping for lowercase status strings
     let finalStatus = status;
-    if (status === 'placed') finalStatus = 'Pending';
+    if (status === 'placed' || status === 'Payment Pending') finalStatus = 'Pending';
     else if (status === 'confirmed') finalStatus = 'Confirmed';
-    else if (status === 'processing') finalStatus = 'Packed';
-    else if (status === 'shipped') finalStatus = 'Shipped';
+    else if (
+      status === 'processing' ||
+      status === 'packed' ||
+      status === 'Packed' ||
+      status === 'Ready to Ship' ||
+      status === 'Shipped' ||
+      status === 'shipped' ||
+      status === 'Out for Delivery'
+    )
+      finalStatus = 'Processing';
     else if (status === 'delivered') finalStatus = 'Delivered';
     else if (status === 'cancelled') finalStatus = 'Cancelled';
     else if (status === 'settled') finalStatus = 'Settled';
@@ -48,7 +56,9 @@ export class OrderFulfillmentService {
         if (finalStatus === 'Confirmed' && oldStatus === 'Pending') {
           const { requiresApproval } = await RuleEngine.evaluate(order, 'Order', session);
           if (requiresApproval) {
-            finalStatus = 'On Hold';
+            finalStatus = 'Pending';
+            order.isOnHold = true;
+            order.holdReason = 'Order flagged by business rules pending admin approval.';
             note = 'Order flagged by business rules. Placed On Hold pending admin approval.';
           }
         }

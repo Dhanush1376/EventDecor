@@ -153,7 +153,7 @@ export function OrderDetail() {
     status?.toLowerCase() === 'settled';
   const isShipped =
     isDelivered ||
-    ['shipped', 'out for delivery'].includes(status?.toLowerCase()) ||
+    ['processing'].includes(status?.toLowerCase()) ||
     (order.trackingNumber ? true : false);
 
   const isNonRefundable =
@@ -180,32 +180,11 @@ export function OrderDetail() {
       color: 'sky',
     },
     {
-      key: 'packed',
-      title: 'Packed',
-      description: 'Items securely packed',
+      key: 'processing',
+      title: 'Processing',
+      description: 'Order is being processed',
       icon: 'inventory_2',
       color: 'fuchsia',
-    },
-    {
-      key: 'ready to ship',
-      title: 'Ready to Ship',
-      description: 'Awaiting courier pickup',
-      icon: 'schedule',
-      color: 'amber',
-    },
-    {
-      key: 'shipped',
-      title: 'Shipped',
-      description: 'In transit with logistics',
-      icon: 'local_shipping',
-      color: 'orange',
-    },
-    {
-      key: 'out for delivery',
-      title: 'Out for Delivery',
-      description: 'Arriving soon',
-      icon: 'directions_car',
-      color: 'teal',
     },
     {
       key: 'delivered',
@@ -244,7 +223,7 @@ export function OrderDetail() {
         icon: step.icon,
         color: step.color,
         meta:
-          step.key === 'shipped' && order.trackingNumber ? `AWB: ${order.trackingNumber}` : null,
+          step.key === 'processing' && order.trackingNumber ? `AWB: ${order.trackingNumber}` : null,
       });
     });
   } else if (isCancelled) {

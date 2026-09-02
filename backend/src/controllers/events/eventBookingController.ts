@@ -12,6 +12,71 @@ import { ADMIN_ROLES } from '../../config/adminConfig';
 import { EventBookingManagementService } from '../../services/eventBooking/EventBookingManagementService';
 import { EventJobCheckoutService } from '../../services/eventBooking/EventJobCheckoutService';
 
+const resolveMissingPackages = async (bookings: any[]) => {
+  const bookingsMissingPackage = bookings.filter((b: any) => !b.eventPackage && b.title);
+  if (bookingsMissingPackage.length > 0) {
+    const Product = require('../../models/Product').default;
+    const products = await Product.find({}).select('title imageSrc').lean();
+
+    const ShowcaseCollection =
+      mongoose.models.ShowcaseCollection || require('../../models/ShowcaseCollection').default;
+    const showcases = await ShowcaseCollection.find({}).select('title image').lean();
+
+    const Event = mongoose.models.Event || require('../../models/Event').default;
+    const events = await Event.find({}).select('title image').lean();
+
+    for (const booking of bookingsMissingPackage) {
+      const cleanTitle = booking.title
+        .replace(/^rent:\s*/i, '')
+        .replace(/\s*booking$/i, '')
+        .trim()
+        .toLowerCase();
+
+      let matchedItem = products.find((p: any) => p.title.toLowerCase().trim() === cleanTitle);
+      if (!matchedItem) {
+        matchedItem = products.find(
+          (p: any) =>
+            p.title.toLowerCase().includes(cleanTitle) ||
+            cleanTitle.includes(p.title.toLowerCase()),
+        );
+      }
+
+      if (!matchedItem) {
+        matchedItem = showcases.find((s: any) => s.title.toLowerCase().trim() === cleanTitle);
+        if (!matchedItem) {
+          matchedItem = showcases.find(
+            (s: any) =>
+              s.title.toLowerCase().includes(cleanTitle) ||
+              cleanTitle.includes(s.title.toLowerCase()),
+          );
+        }
+      }
+
+      if (!matchedItem) {
+        matchedItem = events.find((e: any) => e.title.toLowerCase().trim() === cleanTitle);
+        if (!matchedItem) {
+          matchedItem = events.find(
+            (e: any) =>
+              e.title.toLowerCase().includes(cleanTitle) ||
+              cleanTitle.includes(e.title.toLowerCase()),
+          );
+        }
+      }
+
+      if (matchedItem) {
+        const image = matchedItem.imageSrc || matchedItem.image;
+        if (image) {
+          booking.eventPackage = {
+            _id: matchedItem._id,
+            title: booking.title,
+            image: image,
+          };
+        }
+      }
+    }
+  }
+};
+
 // 1. Submit Event Booking Inquiry (Customer)
 export const submitEventJob = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
@@ -48,7 +113,7 @@ export const verifyBookingCheckout = asyncHandler(async (req: Request, res: Resp
     title: 'New Confirmed Event Booking (Paid)',
     message: `A customer paid the advance deposit for "${booking.title}" on ${eventDateStr}.`,
     type: 'payment',
-    actionLink: `/admin/bookings`,
+    actionLink: `/admin/events/${booking._id}`,
     metadata: { bookingId: booking._id.toString() },
   }).catch((err: any) => logger.error('Failed admin notification', err));
 
@@ -64,85 +129,7 @@ export const getMyEventJobs = asyncHandler(async (req: Request, res: Response) =
     .sort({ createdAt: -1 })
     .lean();
 
-  // If a booking is actually a rental for a product, eventPackage will be null (due to ref mismatch).
-  // Batch-load product images instead of querying in a loop (N+1 fix).
-  const Product = require('../../models/Product').default;
-  const bookingsMissingPackage = bookings.filter((b: any) => !b.eventPackage && b.title);
-  if (bookingsMissingPackage.length > 0) {
-    const products = await Product.find({}).select('title imageSrc').lean();
-
-    // Also include ShowcaseCollection and Event models for fallback
-    const ShowcaseCollection =
-      mongoose.models.ShowcaseCollection || require('../../models/ShowcaseCollection').default;
-    const showcases = await ShowcaseCollection.find({}).select('title image').lean();
-    const Event = mongoose.models.Event || require('../../models/Event').default;
-    const events = await Event.find({}).select('title image').lean();
-
-    logger.info(
-      `[DEBUG] Found products: ${products.length}, showcases: ${showcases.length}, events: ${events.length}. Missing package bookings: ${bookingsMissingPackage.length}`,
-    );
-
-    for (const booking of bookingsMissingPackage) {
-      const cleanTitle = (booking as any).title
-        .replace(/^rent:\s*/i, '')
-        .replace(/\s*booking$/i, '')
-        .trim()
-        .toLowerCase();
-
-      logger.info(
-        `[DEBUG] Trying to match cleanTitle: "${cleanTitle}" from original title: "${(booking as any).title}"`,
-      );
-
-      let matchedItem = products.find((p: any) => p.title.toLowerCase().trim() === cleanTitle);
-
-      if (!matchedItem) {
-        matchedItem = products.find(
-          (p: any) =>
-            p.title.toLowerCase().includes(cleanTitle) ||
-            cleanTitle.includes(p.title.toLowerCase()),
-        );
-      }
-
-      // If not in products, check showcases
-      if (!matchedItem) {
-        matchedItem = showcases.find((s: any) => s.title.toLowerCase().trim() === cleanTitle);
-        if (!matchedItem) {
-          matchedItem = showcases.find(
-            (s: any) =>
-              s.title.toLowerCase().includes(cleanTitle) ||
-              cleanTitle.includes(s.title.toLowerCase()),
-          );
-        }
-      }
-
-      // If not in showcases, check events
-      if (!matchedItem) {
-        matchedItem = events.find((e: any) => e.title.toLowerCase().trim() === cleanTitle);
-        if (!matchedItem) {
-          matchedItem = events.find(
-            (e: any) =>
-              e.title.toLowerCase().includes(cleanTitle) ||
-              cleanTitle.includes(e.title.toLowerCase()),
-          );
-        }
-      }
-
-      logger.info(
-        `[DEBUG] Matched item for "${cleanTitle}": ${matchedItem ? matchedItem.title : 'NONE'}`,
-      );
-
-      if (matchedItem) {
-        const image = matchedItem.imageSrc || matchedItem.image;
-        if (image) {
-          (booking as any).eventPackage = {
-            _id: matchedItem._id,
-            title: (booking as any).title,
-            image: image,
-          };
-        }
-      }
-    }
-  }
+  await resolveMissingPackages(bookings);
 
   res
     .status(200)
@@ -160,29 +147,8 @@ export const getSingleEventJob = asyncHandler(async (req: Request, res: Response
     throw new ApiError(404, 'Event details could not be found.');
   }
 
-  // Fallback for product rentals
-  if (!booking.eventPackage && booking.title) {
-    const Product = require('../../models/Product').default;
-    const cleanTitle = booking.title
-      .replace(/^rent:\s*/i, '')
-      .replace(/\s*booking$/i, '')
-      .trim();
-    const titleRegex = new RegExp(
-      `^${cleanTitle.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}$`,
-      'i',
-    );
-    const product = await Product.findOne({ title: titleRegex })
-      .select('imageSrc basePrice')
-      .lean();
-    if (product && product.imageSrc) {
-      booking.eventPackage = {
-        _id: product._id,
-        title: booking.title,
-        basePrice: product.price,
-        image: product.imageSrc,
-      } as any;
-    }
-  }
+  // Fallback for product rentals and showcases
+  await resolveMissingPackages([booking]);
 
   // Security bounds checks
   if (
@@ -327,6 +293,8 @@ export const adminGetAllBookings = asyncHandler(async (req: Request, res: Respon
       .lean(),
     EventJob.countDocuments(filterQuery),
   ]);
+
+  await resolveMissingPackages(bookings);
 
   res
     .status(200)

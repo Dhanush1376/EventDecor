@@ -3,14 +3,7 @@ import { orderService } from '../services/domainServices';
 import { playSuccessBeep, playErrorBeep } from '../utils/media/audioUtils';
 import toast from 'react-hot-toast';
 
-const trackingSteps = [
-  'Pending',
-  'Confirmed',
-  'Packed',
-  'Shipped',
-  'Out for Delivery',
-  'Delivered',
-];
+const trackingSteps = ['Pending', 'Confirmed', 'Processing', 'Delivered'];
 
 export function useOrderTracking({ orderId, trackingToken }) {
   const [order, setOrder] = useState(null);

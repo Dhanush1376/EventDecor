@@ -5,10 +5,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 const statusIcons = {
   Pending: 'schedule',
   Confirmed: 'thumb_up',
-  Packed: 'inventory_2',
-  'Ready to Ship': 'local_shipping',
-  Shipped: 'local_shipping',
-  'Out for Delivery': 'directions_run',
+  Processing: 'inventory_2',
   Delivered: 'check_circle',
   Cancelled: 'cancel',
   Returned: 'keyboard_return',
@@ -115,14 +112,7 @@ export function TrackingOperatorPanel({
                     TAP CORRESPONDING SCAN EVENT TO UPDATE
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {[
-                      'Packed',
-                      'Ready to Ship',
-                      'Shipped',
-                      'Out for Delivery',
-                      'Delivered',
-                      'Cancelled',
-                    ].map((s) => (
+                    {['Processing', 'Delivered', 'Cancelled'].map((s) => (
                       <button
                         key={s}
                         disabled={updatingStatus}

@@ -12,10 +12,7 @@ import { TrackingOperatorPanel } from '../components/tracking/TrackingOperatorPa
 const statusColors = {
   Pending: 'text-amber-600 bg-amber-50 border-amber-200',
   Confirmed: 'text-blue-600 bg-blue-50 border-blue-200',
-  Packed: 'text-purple-600 bg-purple-50 border-purple-200',
-  'Ready to Ship': 'text-indigo-600 bg-indigo-50 border-indigo-200',
-  Shipped: 'text-cyan-600 bg-cyan-50 border-cyan-200',
-  'Out for Delivery': 'text-teal-600 bg-teal-50 border-teal-200',
+  Processing: 'text-purple-600 bg-purple-50 border-purple-200',
   Delivered: 'text-emerald-700 bg-emerald-50 border-emerald-200',
   Cancelled: 'text-red-600 bg-red-50 border-red-200',
   Returned: 'text-orange-600 bg-orange-50 border-orange-200',

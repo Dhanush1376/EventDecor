@@ -39,7 +39,7 @@ describe('Event Booking Email Templates', () => {
       depositAmount: 28500,
       pendingBalance: 28500,
     },
-    guestCount: 500,
+
     venue: {
       name: 'Grand Palace',
       address: '123 Royal Ave',

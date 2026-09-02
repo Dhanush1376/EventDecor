@@ -290,7 +290,7 @@ export function useShowcasesData() {
         eventType: selectedShowcase.category || 'Showcase Rental',
         date: bookingDate,
         timing: { start: '09:00 AM', end: '09:00 PM' },
-        guestCount: 100,
+
         venue: {
           address: `Showcase Placement: ${placementPreference}. Notes: ${customNote}`,
           isOutdoor: false,

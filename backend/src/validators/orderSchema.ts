@@ -41,7 +41,7 @@ export const createOrderSchema = z.object({
         })
         .strict(),
       couponCode: z.string().trim().max(50).optional().or(z.literal('')),
-      notes: z.string().trim().max(3000).optional().or(z.literal('')),
+
       needByDate: z.string().trim().max(50).optional().or(z.literal('')),
       paymentMethod: z.enum(['razorpay', 'cod']).default('razorpay'),
       useWallet: z.boolean().optional(),
@@ -125,43 +125,19 @@ export const codOtpVerifySchema = z.object({
     .strict(),
 });
 
-export const orderNotesSchema = z.object({
-  body: z
-    .object({
-      notes: z
-        .string()
-        .trim()
-        .max(3000, 'Notes must be at most 3000 characters')
-        .optional()
-        .or(z.literal('')),
-    })
-    .strict(),
-});
-
 export const updateStatusSchema = z.object({
   body: z
     .object({
       status: z.enum(
         [
-          'Payment Pending',
           'Pending',
           'Confirmed',
-          'Packed',
-          'Ready to Ship',
-          'Shipped',
-          'Out for Delivery',
+          'Processing',
           'Delivered',
           'Cancelled',
           'Returned',
           'Refunded',
           'Settled',
-          'placed',
-          'confirmed',
-          'processing',
-          'shipped',
-          'delivered',
-          'cancelled',
-          'settled',
         ],
         {
           message: 'Invalid order status',

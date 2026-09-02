@@ -582,14 +582,14 @@ export function AdminProducts() {
                 className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-10 min-w-0"
               />
             </div>
-            <div className="flex items-stretch gap-2 min-w-0 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+            <div className="flex items-stretch gap-2 min-w-0 overflow-x-auto no-scrollbar pb-1 sm:pb-0 sm:flex-1">
               {activeTab === 'products' && (
                 <>
-                  <div className="relative flex items-stretch shrink-0">
+                  <div className="relative flex items-stretch shrink-0 flex-1 min-w-[110px]">
                     <select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none min-w-0 max-w-[130px] truncate"
+                      className="bg-[var(--admin-surface-muted)] w-full rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none truncate"
                     >
                       <option value="All">Category</option>
                       {productCategories.map((c) => (
@@ -605,11 +605,11 @@ export function AdminProducts() {
                       expand_more
                     </span>
                   </div>
-                  <div className="relative flex items-stretch shrink-0">
+                  <div className="relative flex items-stretch shrink-0 flex-1 min-w-[100px]">
                     <select
                       value={selectedStatus}
                       onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none min-w-0 max-w-[110px] truncate"
+                      className="bg-[var(--admin-surface-muted)] w-full rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none truncate"
                     >
                       <option value="All">Status</option>
                       <option value="active">Active</option>
@@ -623,11 +623,11 @@ export function AdminProducts() {
                       expand_more
                     </span>
                   </div>
-                  <div className="relative flex items-stretch shrink-0">
+                  <div className="relative flex items-stretch shrink-0 flex-1 min-w-[110px]">
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none min-w-0 max-w-[120px] truncate"
+                      className="bg-[var(--admin-surface-muted)] w-full rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none truncate"
                     >
                       <option value="newest">Newest</option>
                       <option value="price-asc">Price (Low-High)</option>

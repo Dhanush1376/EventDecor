@@ -31,7 +31,7 @@ export function useShowcaseForm({ id, isEditMode, navigate }) {
       rentalPrice: '',
       description: '',
       image: '',
-      galleryImages: ['', ''],
+      galleryImages: ['', '', ''],
       inclusionsText: '',
       inclusions: [],
       colorPalette: '',
@@ -72,8 +72,8 @@ export function useShowcaseForm({ id, isEditMode, navigate }) {
               image: sc.image || '',
               galleryImages:
                 sc.gallery && sc.gallery.length > 0
-                  ? [...sc.gallery, '', ''].slice(0, 2)
-                  : ['', ''],
+                  ? [...sc.gallery, '', '', ''].slice(0, 3)
+                  : ['', '', ''],
               inclusionsText: '',
               inclusions: sc.inclusions
                 ? sc.inclusions.map((i, idx) => ({ ...i, id: i._id || i.id || Date.now() + idx }))

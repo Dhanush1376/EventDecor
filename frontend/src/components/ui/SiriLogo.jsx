@@ -25,7 +25,9 @@ export function SiriLogo({
         style={{
           height: '100%',
           width: 'auto',
-          objectFit: 'contain',
+          aspectRatio: '1 / 1',
+          borderRadius: '50%',
+          objectFit: 'cover',
           filter: variant === 'white' ? 'brightness(0) invert(1)' : 'none',
           transition: 'filter 0.3s ease',
         }}

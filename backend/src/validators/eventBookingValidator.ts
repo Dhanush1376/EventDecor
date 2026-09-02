@@ -38,7 +38,7 @@ export const submitEventJobValidator = [
     .withMessage('Event date is required')
     .isISO8601()
     .withMessage('Event date must be a valid ISO 8601 date'),
-  body('guestCount').optional().isInt({ min: 1 }).withMessage('Guest count must be at least 1'),
+
   body('venue.address')
     .optional({ values: 'falsy' })
     .trim()

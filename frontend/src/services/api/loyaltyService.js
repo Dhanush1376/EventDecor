@@ -13,8 +13,12 @@ export const loyaltyService = {
     const response = await api.get('/loyalty/admin/reviews');
     return response.data;
   },
-  adminModerateReview: async (reviewId, action) => {
-    const response = await api.post('/loyalty/admin/moderate-review', { reviewId, action });
+  adminModerateReview: async (reviewId, action, customRewardAmount) => {
+    const response = await api.post('/loyalty/admin/moderate-review', {
+      reviewId,
+      action,
+      customRewardAmount,
+    });
     return response.data;
   },
 };

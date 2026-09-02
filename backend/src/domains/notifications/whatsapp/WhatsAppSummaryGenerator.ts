@@ -25,7 +25,7 @@ async function buildSummary(start: Date, end: Date, heading: string): Promise<st
     returnsRequested,
   ] = await Promise.all([
     Order.countDocuments({ createdAt: range }),
-    Order.countDocuments({ orderStatus: 'Shipped', updatedAt: range }),
+    Order.countDocuments({ orderStatus: 'Processing', updatedAt: range }),
     Order.countDocuments({ orderStatus: 'Delivered', updatedAt: range }),
     Order.aggregate([
       { $match: { createdAt: range, paymentStatus: { $in: PAID_STATUSES } } },

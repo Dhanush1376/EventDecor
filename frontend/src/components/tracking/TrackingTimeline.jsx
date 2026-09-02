@@ -4,24 +4,14 @@ import { m as motion } from 'framer-motion';
 const statusIcons = {
   Pending: 'schedule',
   Confirmed: 'thumb_up',
-  Packed: 'inventory_2',
-  'Ready to Ship': 'local_shipping',
-  Shipped: 'local_shipping',
-  'Out for Delivery': 'directions_run',
+  Processing: 'inventory_2',
   Delivered: 'check_circle',
   Cancelled: 'cancel',
   Returned: 'keyboard_return',
   Refunded: 'payments',
 };
 
-const trackingSteps = [
-  'Pending',
-  'Confirmed',
-  'Packed',
-  'Shipped',
-  'Out for Delivery',
-  'Delivered',
-];
+const trackingSteps = ['Pending', 'Confirmed', 'Processing', 'Delivered'];
 
 export function TrackingTimeline({ orderStatus }) {
   const activeIndex = trackingSteps.indexOf(orderStatus);

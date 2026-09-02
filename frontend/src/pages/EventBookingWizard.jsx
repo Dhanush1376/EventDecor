@@ -46,7 +46,7 @@ export function EventBookingWizard() {
     title: '',
     date: '',
     timing: { start: '08:00 AM', end: '10:00 PM' },
-    guestCount: 150,
+
     venue: { address: '', googleMapsLink: '', isOutdoor: false },
     customization: {
       themeColor: 'Gilded Gold & Crimson Red',
@@ -157,7 +157,7 @@ export function EventBookingWizard() {
     ).toUpperCase();
 
     // Deterministically generate result based on occasion type and guest count
-    const isLarge = formData.guestCount > 300;
+    const isLarge = false;
     const mood = occasionType.includes('WEDDING')
       ? 'Sacred South Indian Royal Temple Heritage'
       : 'Elegant Contemporary Celebration';

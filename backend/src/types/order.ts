@@ -63,10 +63,7 @@ export interface IOrder extends ISoftDeleted {
   orderStatus:
     | 'Pending'
     | 'Confirmed'
-    | 'Packed'
-    | 'Ready to Ship'
-    | 'Shipped'
-    | 'Out for Delivery'
+    | 'Processing'
     | 'Delivered'
     | 'Cancelled'
     | 'Returned'
@@ -98,6 +95,8 @@ export interface IOrder extends ISoftDeleted {
   barcodeData?: string;
   qrCodeData?: string;
   notes?: string;
+  isOnHold?: boolean;
+  holdReason?: string;
   needByDate?: string;
   idempotencyKey?: string;
   codCollected?: boolean;

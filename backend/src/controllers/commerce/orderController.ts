@@ -201,44 +201,6 @@ export const verifyCodOtp = asyncHandler(async (req: Request, res: Response) => 
   res.status(200).json(new ApiResponse(true, 'Email verified successfully'));
 });
 
-export const updateOrderNotes = asyncHandler(async (req: Request, res: Response) => {
-  const { notes } = req.body;
-
-  // Authorization: only the order owner or admin staff may update notes
-  const existingOrder = await Order.findById(req.params.id).lean();
-  if (!existingOrder) throw new ApiError(404, 'Order not found');
-  if (
-    existingOrder.user.toString() !== req.user!.id &&
-    !['admin', 'super_admin', 'main_admin', 'moderator', 'order_manager'].includes(req.user!.role)
-  ) {
-    throw new ApiError(403, 'You are not authorized to update notes for this order');
-  }
-
-  const order = await Order.findByIdAndUpdate(
-    req.params.id,
-    { $set: { notes: notes || '' } },
-    { returnDocument: 'after' },
-  );
-  if (!order) throw new ApiError(404, 'Order not found');
-
-  if (req.user!.role !== 'user') {
-    await AdminAuditService.logAction({
-      actorId: req.user!.id,
-      actorEmail: req.user!.email || 'unknown',
-      actorRole: req.user!.role,
-      method: req.method,
-      path: req.originalUrl,
-      entityType: 'Order',
-      entityId: order.id,
-      action: 'update_notes',
-      previousValue: { notes: existingOrder.notes },
-      newValue: { notes: order.notes },
-    });
-  }
-
-  res.status(200).json(new ApiResponse(true, 'Order notes updated', order));
-});
-
 export const getOrderTimeline = asyncHandler(async (req: Request, res: Response) => {
   const orderId = req.params.id as string;
   const timeline = await OrderTimelineService.getOrderTimeline(orderId);

@@ -41,7 +41,7 @@ export class EventBookingManagementService {
       eventType,
       date,
       timing,
-      guestCount,
+
       venue,
       customization,
       selectedAddons,
@@ -134,7 +134,7 @@ export class EventBookingManagementService {
             date: bookingDate,
             contactPhone: contactPhone || userRecord.phone || '',
             timing: timing || { start: '10:00 AM', end: '10:00 PM' },
-            guestCount: parseInt(guestCount) || 100,
+
             venue: venue || { address: 'TBD', isOutdoor: false },
             customization: customization || {},
             selectedAddons: selectedAddons || [],
