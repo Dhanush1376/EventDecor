@@ -20,6 +20,7 @@ export function GalleryDesktopLayout({
   handleShopLook,
   handleWishlistLook,
   navigate,
+  hideProducts,
 }) {
   const [activeTab, setActiveTab] = useState('details');
 
@@ -126,16 +127,18 @@ export function GalleryDesktopLayout({
               />
 
               {/* Divider */}
-              <div className="w-px h-5 bg-black/10" />
+              {!hideProducts && <div className="w-px h-5 bg-black/10" />}
 
               {/* Shop Look */}
-              <button
-                onClick={handleShopLook}
-                className="gallery-action-btn"
-                aria-label="Shop this look"
-              >
-                <ShoppingBag className="text-[20px]" strokeWidth={1.5} />
-              </button>
+              {!hideProducts && (
+                <button
+                  onClick={handleShopLook}
+                  className="gallery-action-btn"
+                  aria-label="Shop this look"
+                >
+                  <ShoppingBag className="text-[20px]" strokeWidth={1.5} />
+                </button>
+              )}
             </div>
           </motion.div>
         </motion.div>
@@ -183,30 +186,32 @@ export function GalleryDesktopLayout({
             { id: 'details', label: 'Details', icon: 'info' },
             { id: 'shop', label: 'Shop Look', icon: 'shopping_bag', count: linkedProducts?.length },
             { id: 'customize', label: 'Customize', icon: 'design_services' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 pb-3 px-4 font-label text-[10px] uppercase tracking-wider font-bold transition-all relative border-none bg-transparent cursor-pointer ${
-                activeTab === tab.id ? 'text-primary' : 'text-black/40 hover:text-black/70'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
-              <span>{tab.label}</span>
-              {tab.count !== undefined && tab.count > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-[8px] bg-primary/10 text-primary rounded-full">
-                  {tab.count}
-                </span>
-              )}
-              {activeTab === tab.id && (
-                <motion.div
-                  layoutId="activeTabUnderline"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                />
-              )}
-            </button>
-          ))}
+          ]
+            .filter((tab) => !hideProducts || tab.id !== 'shop')
+            .map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 pb-3 px-4 font-label text-[10px] uppercase tracking-wider font-bold transition-all relative border-none bg-transparent cursor-pointer ${
+                  activeTab === tab.id ? 'text-primary' : 'text-black/40 hover:text-black/70'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+                <span>{tab.label}</span>
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 text-[8px] bg-primary/10 text-primary rounded-full">
+                    {tab.count}
+                  </span>
+                )}
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="activeTabUnderline"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </button>
+            ))}
         </div>
 
         {/* Tab Contents */}

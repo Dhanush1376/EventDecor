@@ -90,7 +90,7 @@ export function MainLayout() {
 
       <GlobalAnnouncementBanner />
       <TopNavbar />
-      {isCartOpen && (
+      {isCartOpen && location.pathname !== '/cart' && (
         <Suspense fallback={null}>
           <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
         </Suspense>

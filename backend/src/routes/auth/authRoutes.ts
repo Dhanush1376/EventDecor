@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import {
-  sendOTP,
+  requestUnifiedOtp,
   verifyOTP,
   getProfile,
   refreshSession,
@@ -18,7 +18,7 @@ import {
 import { requireAuth } from '../../middleware/authMiddleware';
 import { validateRequest } from '../../middleware/zodValidationMiddleware';
 import {
-  sendOtpSchema,
+  requestOtpSchema,
   verifyOtpSchema,
   refreshSessionSchema,
   logoutSchema,
@@ -26,16 +26,19 @@ import {
 } from '../../validators/authSchema';
 import { googleAuthSchema } from '../../validators/googleAuthSchema';
 import { authLimiter, otpSendLimiter, otpVerifyLimiter } from '../../middleware/rateLimiter';
+import accountLinkingRoutes from './accountLinkingRoutes';
 
 const router = Router();
+
+router.use('/link', accountLinkingRoutes);
 
 // Removed deprecated register/login routes (A-01)
 
 /**
  * @swagger
- * /auth/send-otp:
+ * /auth/request-otp:
  *   post:
- *     summary: Send OTP to an email address
+ *     summary: Request OTP for email or phone
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -44,15 +47,15 @@ const router = Router();
  *           schema:
  *             type: object
  *             properties:
- *               email:
+ *               identifier:
  *                 type: string
  *     responses:
  *       200:
  *         description: OTP sent successfully
  *       400:
- *         description: Invalid email format
+ *         description: Invalid format
  */
-router.post('/send-otp', otpSendLimiter, validateRequest(sendOtpSchema), sendOTP);
+router.post('/request-otp', otpSendLimiter, validateRequest(requestOtpSchema), requestUnifiedOtp);
 
 /**
  * @swagger
@@ -67,9 +70,9 @@ router.post('/send-otp', otpSendLimiter, validateRequest(sendOtpSchema), sendOTP
  *           schema:
  *             type: object
  *             properties:
- *               email:
+ *               challengeId:
  *                 type: string
- *               code:
+ *               otp:
  *                 type: string
  *     responses:
  *       200:

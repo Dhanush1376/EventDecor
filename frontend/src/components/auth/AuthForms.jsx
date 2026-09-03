@@ -1,17 +1,15 @@
-import { Mail, Check } from 'lucide-react';
+import { Mail, Check, Smartphone, AlertCircle } from 'lucide-react';
 import React from 'react';
 import { m as motion } from 'framer-motion';
 import { GoogleSignInButton } from './GoogleSignInButton';
 import { useGoogleIdentity } from '../../hooks/useGoogleIdentity';
 import { LoadingButton } from '../ui/LoadingButton';
 
-export function EmailInputForm({
-  email,
-  setEmail,
-  sendOTP,
+export function UnifiedAuthForm({
+  identifier,
+  setIdentifier,
+  requestOTP,
   isLoading,
-  isFocused,
-  setIsFocused,
   googleLoading,
   handleGoogleSuccess,
   handleGoogleError,
@@ -22,49 +20,51 @@ export function EmailInputForm({
     renderGoogleButton,
   } = useGoogleIdentity(handleGoogleSuccess, handleGoogleError);
 
+  const isPhone = !identifier.includes('@') && /^\d/.test(identifier);
+
   return (
-    <motion.div
-      key="email-block"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className="space-y-5"
-    >
-      {/* OTP Login Section */}
-      <form onSubmit={sendOTP} className="space-y-5">
-        <div className="relative group">
-          <Mail
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/30 text-[16px] group-focus-within:text-primary transition-colors"
-            strokeWidth={1.5}
-          />
-
-          <label
-            htmlFor="auth-email-input"
-            className={`absolute transition-all duration-300 pointer-events-none font-bold ${
-              isFocused || email
-                ? 'text-[9px] -top-2 left-4 bg-[#faf9f6] px-1.5 text-primary tracking-[0.2em] uppercase z-10'
-                : 'text-[12px] top-1/2 -translate-y-1/2 left-12 text-on-surface-variant/40 tracking-[0.15em] uppercase'
-            }`}
-          >
-            Email Address
-          </label>
-
-          <input
-            id="auth-email-input"
-            type="email"
-            required
-            className="form-field !pl-12 !text-[12px]"
-            placeholder={isFocused ? 'e.g. creative@siriartsandcrafts.com' : ''}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-          />
+    <div className="space-y-5">
+      <form onSubmit={requestOTP} className="space-y-5">
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <label
+              htmlFor="auth-identifier-input"
+              className="flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant/70 tracking-[0.2em] uppercase mb-1.5"
+            >
+              {identifier.length === 0 ? (
+                <>
+                  <Mail className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Email or Phone
+                </>
+              ) : isPhone ? (
+                <>
+                  <Smartphone className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Phone Number
+                </>
+              ) : (
+                <>
+                  <Mail className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Email Address
+                </>
+              )}
+            </label>
+            <div className="relative group">
+              <input
+                id="auth-identifier-input"
+                type={isPhone ? 'tel' : 'text'}
+                required
+                className="form-field !text-[12px]"
+                placeholder="e.g. name@example.com or 98765 43210"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
         <LoadingButton
           type="submit"
           loading={isLoading}
-          disabled={!email}
+          disabled={!identifier}
           fullWidth
           icon="arrow_forward"
         >
@@ -88,17 +88,13 @@ export function EmailInputForm({
         disabled={!googleReady}
         renderGoogleButton={googleReady ? renderGoogleButton : null}
       />
-    </motion.div>
+    </div>
   );
 }
 
 export function TwoFactorForm({ totpCode, setTotpCode, verify2FA, isLoading, resetState }) {
   return (
-    <motion.form
-      key="2fa-block"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
+    <form
       onSubmit={(e) => {
         e.preventDefault();
         if (totpCode.length >= 6) verify2FA(totpCode);
@@ -132,7 +128,7 @@ export function TwoFactorForm({ totpCode, setTotpCode, verify2FA, isLoading, res
       >
         Start over
       </button>
-    </motion.form>
+    </form>
   );
 }
 
@@ -150,18 +146,9 @@ export function OtpVerificationForm({
   sendOTP,
 }) {
   return (
-    <motion.form
-      key="otp-block"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      onSubmit={handleVerifyOTP}
-      className="space-y-5"
-    >
-      <motion.div
-        animate={error ? { x: [-10, 10, -10, 10, 0] } : {}}
-        transition={{ duration: 0.4 }}
-        className="flex justify-between gap-1 xs:gap-1.5 sm:gap-2"
+    <form onSubmit={handleVerifyOTP} className="space-y-5">
+      <div
+        className={`flex justify-between gap-2 xs:gap-3 transition-transform duration-300 ${error ? 'translate-x-1' : ''}`}
         onPaste={handlePaste}
       >
         {otp.map((digit, idx) => (
@@ -178,16 +165,16 @@ export function OtpVerificationForm({
             onKeyDown={(e) => handleKeyDown(e, idx)}
             onPaste={handlePaste}
             aria-label={`Digit ${idx + 1} of verification code`}
-            className={`w-8 h-11 xs:w-9 xs:h-12 text-center font-mono text-[16px] xs:text-[18px] bg-transparent border-b-2 outline-none transition-all ${
+            className={`w-10 h-12 xs:w-12 xs:h-14 text-center font-mono text-[20px] xs:text-[22px] rounded-xl outline-none transition-all duration-300 shadow-sm focus:shadow-md ${
               error
-                ? 'border-error text-error'
+                ? 'border-2 border-error text-error bg-error/5'
                 : digit
-                  ? 'border-primary text-primary font-semibold'
-                  : 'border-outline-variant/30 text-on-surface-variant focus:border-primary'
+                  ? 'border-2 border-primary text-primary font-bold bg-primary/5 scale-105'
+                  : 'border border-outline-variant/40 text-on-surface-variant bg-surface focus:border-primary focus:ring-4 focus:ring-primary/10'
             }`}
           />
         ))}
-      </motion.div>
+      </div>
 
       {/* Aria-live inline error message */}
       <div aria-live="polite" className="h-4 text-center">
@@ -222,7 +209,7 @@ export function OtpVerificationForm({
           )}
         </div>
       </div>
-    </motion.form>
+    </form>
   );
 }
 
@@ -298,5 +285,38 @@ export function AuthSuccessScreen({ MandalaElement, isNewUser }) {
         />
       </motion.div>
     </motion.div>
+  );
+}
+
+export function LinkRequiredScreen({ setStep }) {
+  return (
+    <div className="space-y-6 text-center">
+      <div className="flex justify-center mb-2">
+        <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+          <AlertCircle className="text-orange-500" size={24} />
+        </div>
+      </div>
+
+      <h3 className="font-display text-[20px] text-on-surface">Sign-in Method Unavailable</h3>
+
+      <p className="text-[13px] text-on-surface-variant/70 leading-relaxed px-2">
+        This Google account can't be used to sign in directly.
+        <br />
+        <br />
+        If you have an existing account, sign in with your original method and connect Google from
+        Login & Security.
+      </p>
+
+      <div className="space-y-3 pt-4">
+        <button
+          onClick={() => {
+            setStep('identifier');
+          }}
+          className="w-full py-3 rounded-lg border border-outline-variant/30 font-bold text-[12px] text-on-surface hover:bg-surface-variant/30 transition-colors cursor-pointer"
+        >
+          Sign in with Email or Phone
+        </button>
+      </div>
+    </div>
   );
 }

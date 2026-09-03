@@ -188,7 +188,7 @@ export const setUserContext = (user) => {
 
   if (logRocketEnabled && logRocketClient) {
     logRocketClient.identify(identity.id, {
-      name: user.name || user.email.split('@')[0],
+      name: user.name || (user.email ? user.email.split('@')[0] : 'User'),
       email: identity.email,
       role: identity.role,
     });

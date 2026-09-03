@@ -4,14 +4,23 @@ import User from '../models/User';
 import OtpRequestLog from '../models/OtpRequestLog';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
+import {
+  sendDirectEmailProcessor,
+  sendDirectEmail,
+  createAdminNotification,
+} from './notificationService';
 import { canonicalizeEmail } from '../utils/email/emailHelper';
 import { setTwoFactorPending } from '../utils/security/twoFactorPending';
-import OtpVerification, { OTP_MAX_ATTEMPTS } from '../models/OtpVerification';
+import OtpChallenge from '../models/OtpChallenge';
+import AuthIdentity from '../models/AuthIdentity';
+import mongoose from 'mongoose';
 import FailedLoginAttempt from '../models/FailedLoginAttempt';
-import { cacheOtpSession, getCachedOtpSession } from '../utils/cache/otpVerifyCache';
+import { cacheOtpSession } from '../utils/cache/otpVerifyCache';
 import { recordOtpVerifyFailure } from '../utils/security/otpRateLimit';
 import SessionAuthService from './SessionAuthService';
 import { getFrontendUrl } from '../utils/getFrontendUrl';
+import { getOtpEmailTemplate } from '../utils/email/emailTemplates';
+import { SecurityAuditService } from './SecurityAuditService';
 
 class OtpAuthService {
   static normalizeOtpInput(otp: string): string {
@@ -43,9 +52,9 @@ class OtpAuthService {
       );
     }
 
-    const isDev = process.env.NODE_ENV === 'development';
+    const isTestRateLimit = process.env.TEST_RATE_LIMIT === 'true';
 
-    if (!isDev) {
+    if (!isTestRateLimit && process.env.NODE_ENV !== 'development') {
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
       const ipRequestCount = await OtpRequestLog.countDocuments({
         ip,
@@ -59,12 +68,10 @@ class OtpAuthService {
           'Too many OTP requests from this IP. Please try again after 15 minutes.',
         );
       }
-    }
 
-    if (!isDev) {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
       const emailRequestCount = await OtpRequestLog.countDocuments({
-        email: cleanEmail,
+        identifier: cleanEmail,
         action: 'request',
         createdAt: { $gte: oneHourAgo },
       });
@@ -79,13 +86,13 @@ class OtpAuthService {
 
     const twoSecondsAgo = new Date(Date.now() - 2000);
     const recentRequestCount = await OtpRequestLog.countDocuments({
-      email: cleanEmail,
+      identifier: cleanEmail,
       action: 'request',
       createdAt: { $gte: twoSecondsAgo },
     });
     if (recentRequestCount > 0) {
       logger.warn(
-        `[FRONTEND DUPLICATE REQUEST DETECTED] Multiple OTP requests received for ${cleanEmail} within 2 seconds. This indicates frontend race conditions or duplicate click triggers!`,
+        `[FRONTEND DUPLICATE REQUEST DETECTED] Multiple OTP requests received for ${SecurityAuditService.hashIdentifier(cleanEmail)} within 2 seconds. This indicates frontend race conditions or duplicate click triggers!`,
       );
     }
 
@@ -96,30 +103,35 @@ class OtpAuthService {
     const expiryMinutes = this.getOtpExpiryMinutes();
     const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
 
-    const otpRecord = await OtpVerification.create({
-      email: cleanEmail,
+    const challengeId = crypto.randomUUID();
+    const purpose = 'AUTHENTICATE_EMAIL';
+
+    await OtpChallenge.updateMany(
+      { identifier: cleanEmail, purpose, exhausted: false, consumedAt: null },
+      { $set: { exhausted: true } },
+    );
+
+    const otpRecord = await OtpChallenge.create({
+      challengeId,
+      purpose,
+      identifier: cleanEmail,
+      identifierType: 'email',
       otpHash,
-      attempts: 0,
-      maxAttempts: OTP_MAX_ATTEMPTS,
-      exhausted: false,
-      type: 'auth',
       expiresAt,
     });
 
     logger.info(
-      `[OTP CREATED] Active OTP record successfully stored for ${cleanEmail}. Timestamp: ${otpRecord.createdAt}. Expiration: ${expiresAt}.`,
+      `[OTP CREATED] Active OTP record successfully stored for ${SecurityAuditService.hashIdentifier(cleanEmail)}. Timestamp: ${otpRecord.createdAt}. Expiration: ${expiresAt}.`,
     );
 
     await OtpRequestLog.create({
       ip,
-      email: cleanEmail,
+      identifier: cleanEmail,
       action: 'request',
     });
 
-    const { sendDirectEmail } = require('./notificationService');
-    const { getOtpEmailTemplate } = require('../utils/email/emailTemplates');
     try {
-      sendDirectEmail({
+      await sendDirectEmailProcessor({
         email: cleanEmail,
         subject: `${otp} is your Siri Arts & Crafts verification code`,
         customHtml: getOtpEmailTemplate(otp, expiryMinutes),
@@ -128,44 +140,61 @@ class OtpAuthService {
       });
     } catch (err: any) {
       logger.error(
-        `[OTP EMAIL ERROR] Failed to initiate OTP email for ${cleanEmail}:`,
+        `[OTP EMAIL ERROR] Failed to deliver OTP email for ${SecurityAuditService.hashIdentifier(cleanEmail)}:`,
         err?.message || err,
+      );
+      // Mark challenge as exhausted so it can't be guessed/used
+      await OtpChallenge.updateOne({ _id: otpRecord._id }, { $set: { exhausted: true } });
+      throw new ApiError(500, 'Failed to send verification email. Please try again.');
+    }
+
+    SecurityAuditService.log({
+      eventType: 'OTP_REQUESTED',
+      success: true,
+      ip,
+      userAgent: 'unknown',
+      provider: 'email',
+      identifier: cleanEmail,
+      challengeId,
+    });
+
+    if (process.env.NODE_ENV === 'development') {
+      logger.info(
+        `Verification code successfully generated for ${SecurityAuditService.hashIdentifier(cleanEmail)}`,
       );
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      logger.info(`Verification code successfully generated for ${cleanEmail}`);
-    }
-
-    return otp;
+    return { challengeId };
   }
 
   static async verifyOTP(
-    email: string,
+    challengeId: string,
     otp: string,
     ip: string = '127.0.0.1',
     userAgent: string = '',
   ) {
-    if (!email || !otp) {
-      throw new ApiError(400, 'Email and OTP are required');
+    if (!challengeId || !otp) {
+      throw new ApiError(400, 'Challenge ID and OTP are required');
     }
 
-    const cleanEmail = canonicalizeEmail(email);
     const normalizedOtp = this.normalizeOtpInput(otp);
-
     if (normalizedOtp.length !== 6) {
       throw new ApiError(400, 'Verification code must be exactly 6 digits');
     }
 
-    const cachedSession = await getCachedOtpSession<any>(cleanEmail, normalizedOtp);
-    if (cachedSession) {
-      logger.info(`[OTP CACHE HIT] Returning cached session for duplicate verify: ${cleanEmail}`);
-      return cachedSession;
+    const challenge = await OtpChallenge.findOneAndUpdate(
+      { challengeId },
+      { $inc: { attempts: 1 } },
+      { new: true },
+    );
+    if (!challenge) {
+      throw new ApiError(400, 'Invalid or expired verification session');
     }
 
-    const isDev = process.env.NODE_ENV === 'development';
+    const cleanEmail = challenge.identifier;
 
-    if (!isDev) {
+    const isTestRateLimit = process.env.TEST_RATE_LIMIT === 'true';
+    if (!isTestRateLimit && process.env.NODE_ENV !== 'development') {
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
       const failedAttemptsCount = await OtpRequestLog.countDocuments({
         ip,
@@ -181,151 +210,163 @@ class OtpAuthService {
       }
     }
 
-    const otpClockSkewMs = 5 * 60 * 1000;
-    const now = new Date();
-    const expiryGraceCutoff = new Date(now.getTime() - otpClockSkewMs);
-
-    const otpRecords = await OtpVerification.find({
-      email: cleanEmail,
-      type: 'auth',
-      expiresAt: { $gt: expiryGraceCutoff },
-      exhausted: false,
-    }).sort({ createdAt: -1 });
-
-    if (otpRecords.length === 0) {
-      logger.warn(`[OTP VERIFY] No active OTP for ${cleanEmail}`);
-      throw new ApiError(400, 'Invalid or expired OTP. Please request a new code.');
+    // Fix #1: We shouldn't hardcode 'AUTHENTICATE_EMAIL' here if we have other auth purposes,
+    // but this function is specific to OtpAuthService (email). Actually wait, no!
+    // The controller calls OtpAuthService.verifyOTP for BOTH email and phone in the unified endpoint.
+    // The master plan says: "OtpAuthService.verifyOTP hardcodes `purpose === 'AUTHENTICATE_EMAIL'` — phone challenges routed here will fail".
+    // I should allow both or route appropriately.
+    if (
+      challenge.purpose !== 'AUTHENTICATE_EMAIL' &&
+      challenge.purpose !== 'AUTHENTICATE_PHONE' &&
+      challenge.purpose !== 'LINK_PHONE'
+    ) {
+      throw new ApiError(400, 'Invalid verification purpose');
     }
 
-    const activeRecord = otpRecords[0];
-    const maxAttempts = activeRecord.maxAttempts ?? OTP_MAX_ATTEMPTS;
-
-    if (activeRecord.attempts >= maxAttempts) {
-      await OtpVerification.updateOne({ _id: activeRecord._id }, { $set: { exhausted: true } });
+    if (new Date() > challenge.expiresAt) {
+      throw new ApiError(400, 'Verification code has expired');
+    }
+    if (challenge.exhausted) {
       throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
     }
-
-    const isBypassConfigured =
-      process.env.NODE_ENV === 'development' &&
-      process.env.BYPASS_OTP_CODE &&
-      normalizedOtp === String(process.env.BYPASS_OTP_CODE).replace(/\D/g, '').slice(0, 6);
-
-    if (isBypassConfigured) {
-      logger.warn(`[OTP BYPASS] Development bypass used for ${cleanEmail}`);
+    if (challenge.consumedAt) {
+      throw new ApiError(400, 'This verification code has already been used');
     }
 
-    let matchedRecord: (typeof otpRecords)[0] | null = null;
-    logger.info(
-      `[OTP VERIFY DEBUG] Found ${otpRecords.length} active OTP records for ${cleanEmail}. Testing normalized OTP: '${normalizedOtp}'`,
-    );
-    for (const record of otpRecords) {
-      const isMatch = isBypassConfigured || (await bcrypt.compare(normalizedOtp, record.otpHash));
-      logger.info(
-        `[OTP VERIFY DEBUG] Comparing against record ${record._id} (created at ${record.createdAt}). Match result: ${isMatch}`,
-      );
-      if (isMatch) {
-        matchedRecord = record;
-        break;
+    const isMatch = await bcrypt.compare(normalizedOtp, challenge.otpHash);
+
+    if (!isMatch) {
+      if (challenge.attempts >= challenge.maxAttempts && !challenge.exhausted) {
+        await OtpChallenge.updateOne({ _id: challenge._id }, { $set: { exhausted: true } });
+        challenge.exhausted = true;
       }
-    }
 
-    if (!matchedRecord) {
-      logger.error(
-        `[OTP VERIFY DEBUG] No matches found for ${cleanEmail}. The provided OTP did not match any stored hashes.`,
-      );
-      await OtpRequestLog.create({ ip, email: cleanEmail, action: 'verify_fail' });
+      await OtpRequestLog.create({ ip, identifier: cleanEmail, action: 'verify_fail' });
       await recordOtpVerifyFailure(ip);
 
-      const updatedRecords = await OtpVerification.find({
-        email: cleanEmail,
-        type: 'auth',
-        exhausted: false,
+      SecurityAuditService.log({
+        eventType: challenge.exhausted ? 'OTP_EXHAUSTED' : 'OTP_FAILED',
+        success: false,
+        ip,
+        userAgent,
+        provider: challenge.identifierType,
+        identifier: cleanEmail,
+        challengeId,
+        reason: 'invalid_otp',
       });
-      let attemptCount = 0;
 
-      if (updatedRecords.length > 0) {
-        await OtpVerification.updateMany(
-          { email: cleanEmail, type: 'auth', exhausted: false },
-          { $inc: { attempts: 1 } },
-        );
-        attemptCount = updatedRecords[0].attempts + 1;
-      }
-
-      logger.warn(
-        `[OTP VERIFY FAIL] Invalid code for ${cleanEmail}. Attempt ${attemptCount}/${maxAttempts}`,
-      );
-
-      if (attemptCount >= maxAttempts) {
+      if (challenge.exhausted) {
         logger.warn('[AUTH_FAILURE] Max OTP verification attempts exceeded', {
-          email: cleanEmail,
+          emailHash: SecurityAuditService.hashIdentifier(cleanEmail),
           ip,
         });
-        await OtpVerification.updateMany(
-          { email: cleanEmail, type: 'auth' },
-          { $set: { exhausted: true } },
-        );
         throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
       }
 
-      throw new ApiError(400, 'Invalid or expired OTP');
+      throw new ApiError(400, 'Invalid verification code');
     }
 
-    const consumed = await OtpVerification.findOneAndDelete({
-      _id: matchedRecord._id,
-      email: cleanEmail,
-      type: 'auth',
+    const updated = await OtpChallenge.findOneAndUpdate(
+      { _id: challenge._id, consumedAt: null },
+      { $set: { consumedAt: new Date() } },
+      { new: true },
+    );
+    if (!updated) {
+      throw new ApiError(400, 'This verification code has already been used');
+    }
+
+    await OtpChallenge.deleteMany({
+      identifier: cleanEmail,
+      purpose: challenge.purpose,
+      _id: { $ne: challenge._id },
     });
 
-    if (!consumed) {
-      const raced = await getCachedOtpSession<any>(cleanEmail, normalizedOtp);
-      if (raced) {
-        logger.info(`[OTP RACE] Concurrent verify resolved via cache for ${cleanEmail}`);
-        return raced;
-      }
-      logger.warn(`[OTP RACE] OTP already consumed for ${cleanEmail}`);
-      throw new ApiError(400, 'Invalid or expired OTP');
-    }
+    await OtpRequestLog.create({ ip, identifier: cleanEmail, action: 'verify' });
 
-    await OtpVerification.deleteMany(
-      { email: cleanEmail, type: 'auth' },
-      { bypassDestructionGuard: true },
-    );
-
-    logger.info(
-      `[OTP VERIFY OK] Code consumed for ${cleanEmail} (attempts: ${consumed.attempts + 1})`,
-    );
-
-    await OtpRequestLog.create({
+    SecurityAuditService.log({
+      eventType: 'OTP_VERIFIED',
+      success: true,
       ip,
-      email: cleanEmail,
-      action: 'verify',
+      userAgent,
+      provider: challenge.identifierType,
+      identifier: cleanEmail,
+      challengeId,
     });
 
-    let user = await User.findOne({ email: cleanEmail });
+    let user;
     let isNewUser = false;
 
-    if (!user) {
+    let identity = await AuthIdentity.findOne({
+      provider: challenge.identifierType,
+      providerSubjectId: cleanEmail,
+    });
+
+    if (!identity) {
+      const legacyUser = await User.findOne({ email: cleanEmail });
+      if (legacyUser) {
+        // Auto-migrate legacy user
+        identity = await AuthIdentity.create({
+          userId: legacyUser._id,
+          provider: 'email',
+          providerSubjectId: cleanEmail,
+          verifiedAt: new Date(),
+        });
+      }
+    }
+
+    if (identity) {
+      user = await User.findById(identity.userId);
+      if (!user) {
+        throw new ApiError(400, 'Account not found');
+      }
+      user.isVerified = true;
+      user.lastLogin = new Date();
+      await user.save();
+    } else {
       isNewUser = true;
       const namePart = cleanEmail.split('@')[0];
       const capitalizedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-
-      const role = 'customer';
-
       const hash = crypto.createHash('md5').update(cleanEmail).digest('hex');
       const avatar = `https://www.gravatar.com/avatar/${hash}?d=identicon&s=200`;
 
-      user = new User({
-        name: capitalizedName,
-        email: cleanEmail,
-        role: role,
-        isVerified: true,
-        avatar,
-        wishlist: [],
-        cart: [],
-        recentlyViewed: [],
-        notificationPreferences: { email: true, marketing: true },
-        accountPreferences: { theme: 'light', language: 'en' },
-      });
+      const dbSession = await mongoose.startSession();
+      dbSession.startTransaction();
+
+      try {
+        user = new User({
+          name: capitalizedName,
+          email: cleanEmail,
+          role: 'customer',
+          isVerified: true,
+          avatar,
+          wishlist: [],
+          cart: [],
+          recentlyViewed: [],
+          notificationPreferences: { email: true, marketing: true },
+          accountPreferences: { theme: 'light', language: 'en' },
+          lastLogin: new Date(),
+        });
+        await user.save({ session: dbSession });
+
+        await AuthIdentity.create(
+          [
+            {
+              userId: user._id,
+              provider: 'email',
+              providerSubjectId: cleanEmail,
+              verifiedAt: new Date(),
+            },
+          ],
+          { session: dbSession },
+        );
+
+        await dbSession.commitTransaction();
+      } catch (err) {
+        await dbSession.abortTransaction();
+        throw err;
+      } finally {
+        dbSession.endSession();
+      }
 
       (async () => {
         try {
@@ -356,21 +397,13 @@ class OtpAuthService {
                   avatar: gravatarAvatar,
                 },
               });
-              logger.info(
-                `[GRAVATAR BACKGROUND SUCCESS] Profile enriched for new user: ${cleanEmail}`,
-              );
             }
           }
         } catch (err) {
           logger.debug('Background Gravatar profile lookup skipped or failed', err);
         }
       })();
-    } else {
-      user.isVerified = true;
     }
-
-    user.lastLogin = new Date();
-    await user.save();
 
     if (isNewUser) {
       try {
@@ -381,56 +414,49 @@ class OtpAuthService {
       }
 
       try {
-        const { createAdminNotification } = require('./notificationService');
+        // Removed dynamic require
         createAdminNotification({
           title: 'New User Registration',
-          message: `${user.name || user.email} just registered on the platform.`,
+          message: `${user.name || user.phone || 'A new user'} just registered on the platform.`,
           type: 'user',
           actionLink: '/admin/users',
-        }).catch((err: any) => {
-          logger.error('Failed to create admin notification for user registration (async):', err);
-        });
+        }).catch((err: any) =>
+          logger.error('Failed to create admin notification for user registration (async):', err),
+        );
       } catch (notifErr) {
         logger.error('Failed to create admin notification for user registration:', notifErr);
       }
 
       try {
-        const { sendDirectEmail } = require('./notificationService');
+        // Removed dynamic require
         const frontendUrl = getFrontendUrl();
         sendDirectEmail({
           email: user.email,
           subject: `Welcome to Siri Arts & Crafts, ${user.name}`,
           templateName: 'Welcome Email',
-          templateData: {
-            name: user.name,
-            frontend_url: frontendUrl,
-          },
+          templateData: { name: user.name, frontend_url: frontendUrl },
           type: 'marketing',
           action: 'welcome_email',
           userId: user._id.toString(),
-        }).catch((err: any) => logger.error('Failed to send welcome email in background:', err));
+        });
       } catch (welcomeErr) {
         logger.error('Failed to initiate welcome email dispatch:', welcomeErr);
       }
-    }
-
-    try {
-      const { sendDirectEmail } = require('./notificationService');
-      sendDirectEmail({
-        email: user.email,
-        subject: 'Security Alert: New Login Detected',
-        templateName: 'Suspicious Login Alert',
-        templateData: {
-          name: user.name,
-          loginTime: new Date().toLocaleString(),
-          deviceInfo: ip,
-        },
-        type: 'security',
-        action: 'new_login_detected',
-        userId: user._id.toString(),
-      });
-    } catch (err) {
-      logger.error('Failed to trigger Suspicious Login email:', err);
+    } else if (user.email) {
+      try {
+        // Removed dynamic require
+        sendDirectEmail({
+          email: user.email,
+          subject: 'Security Alert: New Login Detected',
+          templateName: 'Suspicious Login Alert',
+          templateData: { name: user.name, loginTime: new Date().toLocaleString(), deviceInfo: ip },
+          type: 'security',
+          action: 'new_login_detected',
+          userId: user._id.toString(),
+        });
+      } catch (err) {
+        logger.error('Failed to trigger Suspicious Login email:', err);
+      }
     }
 
     const userWith2fa = await User.findById(user._id).select('+twoFactorEnabled');
@@ -442,12 +468,12 @@ class OtpAuthService {
         refreshToken: '',
         accessToken: '',
       };
-      await cacheOtpSession(cleanEmail, normalizedOtp, pendingResult);
+      await cacheOtpSession(challengeId, 'pending', pendingResult);
       return pendingResult;
     }
 
     const session = await SessionAuthService.createSession(user, userAgent);
-    await cacheOtpSession(cleanEmail, normalizedOtp, session);
+    await cacheOtpSession(challengeId, 'verified', session);
 
     return session;
   }
@@ -463,98 +489,101 @@ class OtpAuthService {
     const salt = await bcrypt.genSalt(12);
     const otpHash = await bcrypt.hash(otp, salt);
 
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    await OtpVerification.create({
-      email: cleanEmail,
+    const expiryMinutes = 5;
+    const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
+    const challengeId = crypto.randomUUID();
+    const purpose = 'COD_VERIFICATION';
+
+    await OtpChallenge.updateMany(
+      { identifier: cleanEmail, purpose, exhausted: false, consumedAt: null },
+      { $set: { exhausted: true } },
+    );
+
+    const otpRecord = await OtpChallenge.create({
+      challengeId,
+      purpose,
+      identifier: cleanEmail,
+      identifierType: 'email',
       otpHash,
-      attempts: 0,
-      type: 'cod',
       expiresAt,
     });
 
-    const { sendDirectEmail } = require('./notificationService');
+    // Removed dynamic require
     const { getCodOtpEmailTemplate } = require('../utils/email/emailTemplates');
     try {
-      sendDirectEmail({
+      await sendDirectEmailProcessor({
         email: cleanEmail,
         subject: `${otp} is your Siri Arts & Crafts COD verification code`,
-        customHtml: getCodOtpEmailTemplate(otp, 5),
+        customHtml: getCodOtpEmailTemplate(otp, expiryMinutes),
         type: 'security',
         action: 'cod_otp',
       });
     } catch (err: any) {
-      logger.error(`[COD OTP QUEUE ERROR] Failed to enqueue COD OTP email for ${cleanEmail}:`, err);
-      throw new ApiError(500, `COD verification email queueing failed. Please try again.`);
+      logger.error(
+        `[COD OTP ERROR] Failed to deliver COD OTP email for ${SecurityAuditService.hashIdentifier(cleanEmail)}:`,
+        err,
+      );
+      await OtpChallenge.updateOne({ _id: otpRecord._id }, { $set: { exhausted: true } });
+      throw new ApiError(500, `COD verification email delivery failed. Please try again.`);
     }
 
-    return otp;
+    return { challengeId }; // Stop returning raw OTP! Return challengeId instead.
   }
 
-  static async verifyCodOTP(email: string, otp: string) {
-    if (!email || !otp) {
-      throw new ApiError(400, 'Email and OTP are required');
+  static async verifyCodOTP(challengeId: string, otp: string) {
+    if (!challengeId || !otp) {
+      throw new ApiError(400, 'Challenge ID and OTP are required');
     }
 
-    const cleanEmail = canonicalizeEmail(email);
-    const otpClockSkewMs = 5 * 60 * 1000;
-    const expiryGraceCutoff = new Date(Date.now() - otpClockSkewMs);
+    const normalizedOtp = this.normalizeOtpInput(otp);
 
-    const otpRecords = await OtpVerification.find({
-      email: cleanEmail,
-      type: 'cod',
-      expiresAt: { $gt: expiryGraceCutoff },
-    }).sort({ createdAt: -1 });
-
-    if (otpRecords.length === 0) {
-      throw new ApiError(400, 'Invalid or expired OTP');
+    const challenge = await OtpChallenge.findOneAndUpdate(
+      { challengeId, purpose: 'COD_VERIFICATION' },
+      { $inc: { attempts: 1 } },
+      { new: true },
+    );
+    if (!challenge) {
+      throw new ApiError(400, 'Invalid or expired verification session');
     }
 
-    const isBypassConfigured =
-      process.env.NODE_ENV === 'development' &&
-      process.env.BYPASS_OTP_CODE &&
-      otp === process.env.BYPASS_OTP_CODE;
-
-    let isMatch = false;
-    let matchedRecord: (typeof otpRecords)[0] | null = null;
-    const latestRecord = otpRecords[0];
-    for (const record of otpRecords) {
-      if (new Date() > record.expiresAt) continue;
-      if (isBypassConfigured || (await bcrypt.compare(otp, record.otpHash))) {
-        isMatch = true;
-        matchedRecord = record;
-        break;
-      }
+    if (new Date() > challenge.expiresAt) {
+      throw new ApiError(400, 'Verification code has expired');
     }
+    if (challenge.exhausted) {
+      throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
+    }
+    if (challenge.consumedAt) {
+      throw new ApiError(400, 'This verification code has already been used');
+    }
+
+    const isMatch = await bcrypt.compare(normalizedOtp, challenge.otpHash);
 
     if (!isMatch) {
-      latestRecord.attempts += 1;
-      if (latestRecord.attempts >= 5) {
-        await OtpVerification.deleteMany(
-          { email: cleanEmail, type: 'cod' },
-          { bypassDestructionGuard: true },
-        );
-        throw new ApiError(429, 'Max verification attempts exceeded. Please request a new OTP.');
-      } else {
-        await latestRecord.save();
+      if (challenge.attempts >= challenge.maxAttempts && !challenge.exhausted) {
+        await OtpChallenge.updateOne({ _id: challenge._id }, { $set: { exhausted: true } });
+        challenge.exhausted = true;
       }
-      throw new ApiError(400, 'Invalid or expired OTP');
+      throw new ApiError(400, 'Invalid verification code');
     }
 
-    const consumed = await OtpVerification.findOneAndDelete({
-      _id: matchedRecord!._id,
-      email: cleanEmail,
-      type: 'cod',
-    });
-
-    if (!consumed) {
-      logger.warn(`[COD OTP RACE] OTP already consumed for ${cleanEmail}`);
+    const updated = await OtpChallenge.findOneAndUpdate(
+      { _id: challenge._id, consumedAt: null },
+      { $set: { consumedAt: new Date() } },
+      { new: true },
+    );
+    if (!updated) {
+      logger.warn(
+        `[COD OTP RACE] OTP already consumed for ${SecurityAuditService.hashIdentifier(challenge.identifier)}`,
+      );
       throw new ApiError(400, 'Verification code already used. Please request a new one.');
     }
 
-    await OtpVerification.deleteMany(
-      { email: cleanEmail, type: 'cod' },
-      { bypassDestructionGuard: true },
-    );
+    await OtpChallenge.deleteMany({
+      identifier: challenge.identifier,
+      purpose: 'COD_VERIFICATION',
+      _id: { $ne: challenge._id },
+    });
+
     return true;
   }
 }

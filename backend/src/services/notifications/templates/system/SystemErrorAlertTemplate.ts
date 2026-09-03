@@ -1,4 +1,4 @@
-import { MetadataGrid, CTAButton } from '../../components';
+import { MetadataGrid } from '../../components';
 
 export const SystemErrorAlertTemplate = (data: any) => {
   const { errorType, errorMessage, stackTrace, environment, requestContext, severity } = data;
@@ -32,8 +32,6 @@ export const SystemErrorAlertTemplate = (data: any) => {
     <pre style="background: #18181b; color: #f4f4f5; padding: 16px; border-radius: 6px; font-family: ui-monospace, monospace; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all;">${stackTrace || 'No stack trace available.'}</pre>
 
     <div style="margin-top: 32px; display: flex; gap: 12px;">
-      ${CTAButton('View Logs', `https://your-logging-provider.com/logs?query=${requestContext?.id}`, 'primary')}
-      ${CTAButton('Acknowledge in Sentry', `https://sentry.io`, 'secondary')}
     </div>
   `;
 

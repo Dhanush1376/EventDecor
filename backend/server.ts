@@ -214,12 +214,6 @@ const initializeNonCriticalServices = async (httpServer: Server) => {
 
 const startServer = async () => {
   try {
-    // Prevent BYPASS_OTP_CODE in production (Checked early)
-    if (process.env.NODE_ENV === 'production' && process.env.BYPASS_OTP_CODE) {
-      logger.error('CRITICAL: BYPASS_OTP_CODE must not be set in production');
-      process.exit(1);
-    }
-
     // 1. Connect to MongoDB FIRST — server must not accept traffic until DB is ready
     logger.info('[STARTUP] Connecting to MongoDB before accepting traffic...');
     await connectDB();

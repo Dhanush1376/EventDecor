@@ -6,7 +6,7 @@ export class UserAddressService {
     return Address.find({ user: userId }).lean();
   }
 
-  static async addAddress(userId: string, emailFallback: string, data: any) {
+  static async addAddress(userId: string, emailFallback: string | undefined, data: any) {
     const existingAddressesCount = await Address.countDocuments({ user: userId });
 
     const email = data.email || emailFallback;
@@ -23,7 +23,12 @@ export class UserAddressService {
     return Address.find({ user: userId });
   }
 
-  static async updateAddress(userId: string, addressId: string, emailFallback: string, data: any) {
+  static async updateAddress(
+    userId: string,
+    addressId: string,
+    emailFallback: string | undefined,
+    data: any,
+  ) {
     const updateData = { ...data };
     if (updateData.email === undefined && emailFallback) {
       updateData.email = emailFallback;

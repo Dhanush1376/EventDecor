@@ -15,6 +15,7 @@ export function GalleryMobileLayout({
   handleShopLook,
   handleWishlistLook,
   navigate,
+  hideProducts,
 }) {
   return (
     <>
@@ -119,14 +120,16 @@ export function GalleryMobileLayout({
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={handleShopLook}
-                className="bg-primary text-white h-11 px-5 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0"
-              >
-                <ShoppingBag className="text-[16px]" strokeWidth={1.5} />
-                <span className="hidden sm:inline">Shop look</span>
-                <span className="sm:hidden text-[9px]">Shop</span>
-              </button>
+              {!hideProducts && (
+                <button
+                  onClick={handleShopLook}
+                  className="bg-primary text-white h-11 px-5 rounded-full font-label text-[10px] uppercase tracking-[0.2em] font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0"
+                >
+                  <ShoppingBag className="text-[16px]" strokeWidth={1.5} />
+                  <span className="hidden sm:inline">Shop look</span>
+                  <span className="sm:hidden text-[9px]">Shop</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -225,14 +228,16 @@ export function GalleryMobileLayout({
                 </motion.span>
               </button>
 
-              <button
-                type="button"
-                onClick={handleShopLook}
-                className="bg-black text-white h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg active:scale-[0.96] transition-all flex items-center justify-center gap-1.5 border-none cursor-pointer"
-              >
-                <ShoppingBag className="text-[15px]" strokeWidth={1.5} />
-                <span>Shop Look</span>
-              </button>
+              {!hideProducts && (
+                <button
+                  type="button"
+                  onClick={handleShopLook}
+                  className="bg-black text-white h-10 px-5 rounded-full font-label text-[10px] uppercase tracking-widest font-bold shadow-lg active:scale-[0.96] transition-all flex items-center justify-center gap-1.5 border-none cursor-pointer"
+                >
+                  <ShoppingBag className="text-[15px]" strokeWidth={1.5} />
+                  <span>Shop Look</span>
+                </button>
+              )}
             </div>
           </motion.div>
         )}

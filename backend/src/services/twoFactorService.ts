@@ -23,7 +23,7 @@ export class TwoFactorService {
 
     return {
       secret,
-      otpauthUrl: buildOtpAuthUrl(user.email, secret),
+      otpauthUrl: buildOtpAuthUrl(user.email || user.phone || user._id.toString(), secret),
     };
   }
 

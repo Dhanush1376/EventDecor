@@ -2,11 +2,9 @@ import {
   getLuxuryEmailWrapper,
   formatCurrency,
   escapeHtml,
-  button,
   dataTable,
   getPrimaryEntityName,
 } from './emailTemplates';
-import { getFrontendUrl } from '../getFrontendUrl';
 
 const itemsTable = (items: any[]) => {
   const itemsHtml = items
@@ -69,7 +67,6 @@ export const buildReturnSubmittedCustomerEmail = (returnRequest: any, user: any)
       <li>If approved, we will share pickup and refund instructions.</li>
     </ol>
     
-    ${button('View Return Request', getFrontendUrl() + '/dashboard/returns/' + returnRequest._id)}
   `;
   return {
     subject: `Return Request Received - ${returnRequest.returnId}`,
@@ -128,7 +125,6 @@ export const buildReturnApprovedCustomerEmail = (returnRequest: any, user: any) 
       <li>Once the items are received and inspected, your refund will be processed.</li>
     </ol>
     
-    ${button('View Return Details', getFrontendUrl() + '/dashboard/returns/' + returnRequest._id)}
   `;
   return {
     subject: `Return Request Approved - ${returnRequest.returnId}`,
@@ -159,7 +155,6 @@ export const buildReturnRejectedCustomerEmail = (returnRequest: any, user: any) 
     
     <p style="font-size: 14px; color: #6b7280;">If you believe this is an error or would like to provide more information, you can reply to this email to contact our support team.</p>
     
-    ${button('View Request Details', getFrontendUrl() + '/dashboard/returns/' + returnRequest._id)}
   `;
   return {
     subject: `Update on Return Request - ${returnRequest.returnId}`,
@@ -192,7 +187,6 @@ export const buildRefundInitiatedCustomerEmail = (returnRequest: any, user: any)
     
     <p style="font-size: 14px; color: #6b7280;">Please note that it may take 3-5 business days for the amount to reflect in your account if processed to your original payment method. Wallet refunds are instant.</p>
     
-    ${button('View Return Details', getFrontendUrl() + '/dashboard/returns/' + returnRequest._id)}
   `;
   return {
     subject: `Refund Initiated - ${returnRequest.returnId}`,
@@ -222,7 +216,6 @@ export const buildRefundCompletedCustomerEmail = (returnRequest: any, user: any)
       { label: 'Status', value: 'Completed' },
     ])}
     
-    ${button('View Return Details', getFrontendUrl() + '/dashboard/returns/' + returnRequest._id)}
   `;
   return {
     subject: `Refund Completed - ${returnRequest.returnId}`,
@@ -306,7 +299,6 @@ export const buildExchangeSubmittedCustomerEmail = (
     <h3 style="color: #111827;">What Happens Next?</h3>
     ${nextStepsHtml}
     
-    ${button(diffAction === 'collect_payment' ? 'Complete Payment' : 'View Exchange Request', getFrontendUrl() + '/dashboard/returns/' + returnRequest._id)}
   `;
   return {
     subject:
@@ -348,7 +340,6 @@ export const buildExchangePaymentVerifiedEmail = (
       <li>We'll email you after a decision is made.</li>
     </ol>
     
-    ${button('View Exchange Request', getFrontendUrl() + '/dashboard/returns/' + returnRequest._id)}
   `;
   return {
     subject: `Payment Verified for Exchange Request - ${returnRequest.returnId}`,
@@ -405,7 +396,6 @@ export const buildExchangeApprovedCustomerEmail = (
       <li>Once the original item is received and inspected, your replacement will be dispatched.</li>
     </ol>
     
-    ${button('View Exchange Details', getFrontendUrl() + '/dashboard/returns/' + returnRequest._id)}
   `;
   return {
     subject: `Exchange Request Approved - ${returnRequest.returnId}`,
@@ -436,7 +426,6 @@ export const buildExchangeRejectedCustomerEmail = (returnRequest: any, user: any
     
     <p style="font-size: 14px; color: #6b7280;">If you paid any additional amount, it will be refunded. If you believe this is an error, you can reply to this email to contact our support team.</p>
     
-    ${button('View Request Details', getFrontendUrl() + '/dashboard/returns/' + returnRequest._id)}
   `;
   return {
     subject: `Update on Exchange Request - ${returnRequest.returnId}`,
@@ -463,7 +452,6 @@ export const buildReturnAdminEmail = (returnRequest: any, user: any) => {
     <h3 style="color: #111827;">Items to Return</h3>
     ${itemsTable(returnRequest.items)}
     
-    ${button('Review Return Request', getFrontendUrl() + '/admin/returns/' + returnRequest._id)}
   `;
   return {
     subject: `[NEW RETURN] ${returnRequest.returnId} - ${formatCurrency(returnRequest.refundBreakdown?.grandTotal || 0)}`,
@@ -499,7 +487,6 @@ export const buildExchangeAdminEmail = (returnRequest: any, exchangeDetails: any
     <h3 style="color: #111827;">Requested Replacement</h3>
     ${exchangeDetails?.replacementItem ? itemsTable([exchangeDetails.replacementItem]) : ''}
     
-    ${button('Review Exchange Request', getFrontendUrl() + '/admin/returns/' + returnRequest._id)}
   `;
   return {
     subject: `[NEW EXCHANGE] ${returnRequest.returnId} - ${paymentStatusText}`,

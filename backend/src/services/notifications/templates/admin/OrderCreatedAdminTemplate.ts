@@ -1,5 +1,4 @@
-import { MetadataGrid, InvoiceTable, CTAButton } from '../../components';
-import { getFrontendUrl } from '../../../../utils/getFrontendUrl';
+import { MetadataGrid, InvoiceTable } from '../../components';
 
 export const OrderCreatedAdminTemplate = (data: any) => {
   const {
@@ -52,8 +51,6 @@ export const OrderCreatedAdminTemplate = (data: any) => {
     ${InvoiceTable(productRows, orderDetails.subtotal, orderDetails.tax || 0, orderDetails.total)}
 
     <div style="margin-top: 32px; display: flex; gap: 12px;">
-      ${CTAButton('View Order', `${getFrontendUrl()}/admin/orders/${orderDetails.id}`, 'primary')}
-      ${CTAButton('View Customer', `${getFrontendUrl()}/admin/customers/${customerInfo.id}`, 'secondary')}
     </div>
   `;
 

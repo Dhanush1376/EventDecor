@@ -71,22 +71,16 @@
 
   /* ─── Unified Form System ─── */
   .form-field {
-    @apply w-full bg-black/[0.02] text-[13px] leading-tight text-on-surface;
+    @apply w-full bg-surface text-[13px] leading-tight text-on-surface rounded-xl border border-black/15 shadow-sm;
     @apply placeholder:text-[11px] placeholder:text-on-surface-variant/50;
-    border: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 4px 4px 0 0;
-    padding: 8px 12px;
+    padding: 12px 16px;
     font-family: var(--font-body);
     transition: all var(--duration-normal) var(--ease-smooth);
-    box-shadow: none; /* Remove heavy shadow to flatten it out */
   }
 
   .form-field:focus {
-    border-color: transparent;
-    border-bottom-color: var(--color-primary);
-    box-shadow: 0 1px 0 0 var(--color-primary);
-    outline: none;
+    @apply border-primary outline-none;
+    box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.1);
   }
 
   .form-field:-webkit-autofill,

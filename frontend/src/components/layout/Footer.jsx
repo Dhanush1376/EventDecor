@@ -40,7 +40,7 @@ export function Footer() {
   const businessName = settings?.general?.storeName || 'Siri Arts & Crafts';
 
   // Dynamic CMS Link Mappings
-  const exploreLinks =
+  let exploreLinks =
     footer?.exploreLinks?.length > 0
       ? footer.exploreLinks
       : [
@@ -48,6 +48,10 @@ export function Footer() {
           { label: 'Events', href: '/events' },
           { label: 'Gallery', href: '/gallery' },
         ];
+
+  if (settings?.storefront?.hideGallerySection) {
+    exploreLinks = exploreLinks.filter((link) => link.href !== '/gallery');
+  }
 
   const studioLinks =
     footer?.studioLinks?.length > 0

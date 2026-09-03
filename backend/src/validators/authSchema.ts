@@ -1,17 +1,12 @@
 import { z } from 'zod';
-import { canonicalizeEmail } from '../utils/email/emailHelper';
 
-const emailSchema = z
-  .string({ message: 'Email address is required' })
-  .trim()
-  .min(1, 'Email address is required')
-  .email('Please provide a valid email address')
-  .transform((val) => canonicalizeEmail(val));
-
-export const sendOtpSchema = z.object({
+export const requestOtpSchema = z.object({
   body: z
     .object({
-      email: emailSchema,
+      identifier: z
+        .string({ message: 'Email or phone number is required' })
+        .trim()
+        .min(1, 'Email or phone number is required'),
     })
     .strict(), // Reject any other payload properties
 });
@@ -19,7 +14,9 @@ export const sendOtpSchema = z.object({
 export const verifyOtpSchema = z.object({
   body: z
     .object({
-      email: emailSchema,
+      challengeId: z
+        .string({ message: 'Challenge ID is required' })
+        .min(1, 'Challenge ID is required'),
       otp: z
         .union([z.string(), z.number()])
         .transform((val) => String(val).replace(/\D/g, '').slice(0, 6))

@@ -1,6 +1,6 @@
 import { SlidersHorizontal } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, Navigate } from 'react-router-dom';
 import { GalleryCard } from '../components/gallery/GalleryCard';
 import { VirtualizedMasonry } from '../components/gallery/VirtualizedMasonry';
 import { SearchBar, CategoryTabs, CustomDropdown, EmptyState } from '../components/ui';
@@ -16,8 +16,12 @@ import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import toast from 'react-hot-toast';
 
+import { useConfig } from '../context/ConfigContext';
+
 export function GalleryInner() {
   const navigate = useNavigate();
+  const { storeSettings } = useConfig();
+
   const [searchParams, setSearchParams] = useSearchParams();
   const searchParam = searchParams.get('search') || '';
   const [activeCategory, setActiveCategory] = useState('All');
@@ -250,6 +254,10 @@ export function GalleryInner() {
     ),
     [navigate],
   );
+
+  if (storeSettings?.storefront?.hideGallerySection) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="bg-[#fcfbf9] min-h-screen selection:bg-primary/20 relative pt-20 lg:pt-28 pb-32 lg:pb-20 transition-all duration-300">

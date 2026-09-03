@@ -5,7 +5,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuthFlow } from '../../hooks/useAuthFlow';
 import toast from 'react-hot-toast';
-import { EmailInputForm, TwoFactorForm, OtpVerificationForm, AuthSuccessScreen } from './AuthForms';
+import {
+  UnifiedAuthForm,
+  TwoFactorForm,
+  OtpVerificationForm,
+  AuthSuccessScreen,
+  LinkRequiredScreen,
+} from './AuthForms';
 
 export function AuthModal() {
   const { isAuthModalOpen, closeAuthModal, loginSuccess } = useAuth();
@@ -13,8 +19,8 @@ export function AuthModal() {
   const {
     step,
     setStep,
-    email,
-    setEmail,
+    identifier,
+    setIdentifier,
     otp,
     totpCode,
     setTotpCode,
@@ -24,7 +30,7 @@ export function AuthModal() {
     setError,
     errorMsg,
     otpRefs,
-    sendOTP,
+    requestOTP,
     verifyOTP,
     verify2FA,
     handleOtpChange,
@@ -179,17 +185,19 @@ export function AuthModal() {
                               ? 'Verification Code'
                               : 'Login or Sign Up'}
                         </h2>
-                        {step !== 'otp' && (
+                        {step !== 'otp' && step !== 'account_exists' && (
                           <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
                             {step === '2fa'
                               ? 'Enter the 6-digit code from your authenticator app.'
-                              : 'Log in or register with your email'}
+                              : `Log in or register with your email or phone number`}
                           </p>
                         )}
                         {step === 'otp' && (
                           <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
                             Code sent to{' '}
-                            <span className="font-semibold text-on-surface-variant">{email}</span>
+                            <span className="font-semibold text-on-surface-variant">
+                              {identifier}
+                            </span>
                             <button
                               type="button"
                               onClick={() => setStep('identifier')}
@@ -205,39 +213,70 @@ export function AuthModal() {
                       <div className="w-full">
                         <AnimatePresence mode="wait">
                           {step === 'identifier' ? (
-                            <EmailInputForm
-                              email={email}
-                              setEmail={setEmail}
-                              sendOTP={sendOTP}
-                              isLoading={isLoading}
-                              isFocused={isFocused}
-                              setIsFocused={setIsFocused}
-                              googleLoading={googleLoading}
-                              handleGoogleSuccess={handleGoogleSuccess}
-                              handleGoogleError={handleGoogleError}
-                            />
+                            <motion.div
+                              key="identifier-step"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="space-y-6"
+                            >
+                              <UnifiedAuthForm
+                                identifier={identifier}
+                                setIdentifier={setIdentifier}
+                                requestOTP={requestOTP}
+                                isLoading={isLoading}
+                                isFocused={isFocused}
+                                setIsFocused={setIsFocused}
+                                googleLoading={googleLoading}
+                                handleGoogleSuccess={handleGoogleSuccess}
+                                handleGoogleError={handleGoogleError}
+                              />
+                            </motion.div>
+                          ) : step === 'account_exists' ? (
+                            <motion.div
+                              key="account-exists-step"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                            >
+                              <LinkRequiredScreen setStep={setStep} />
+                            </motion.div>
                           ) : step === '2fa' ? (
-                            <TwoFactorForm
-                              totpCode={totpCode}
-                              setTotpCode={setTotpCode}
-                              verify2FA={verify2FA}
-                              isLoading={isLoading}
-                              resetState={resetState}
-                            />
+                            <motion.div
+                              key="2fa-step"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                            >
+                              <TwoFactorForm
+                                totpCode={totpCode}
+                                setTotpCode={setTotpCode}
+                                verify2FA={verify2FA}
+                                isLoading={isLoading}
+                                resetState={resetState}
+                              />
+                            </motion.div>
                           ) : (
-                            <OtpVerificationForm
-                              otp={otp}
-                              handleVerifyOTP={handleVerifyOTP}
-                              handlePaste={handlePaste}
-                              handleOtpChange={handleOtpChange}
-                              handleKeyDown={handleKeyDown}
-                              otpRefs={otpRefs}
-                              error={error}
-                              errorMsg={errorMsg}
-                              isLoading={isLoading}
-                              timer={timer}
-                              sendOTP={sendOTP}
-                            />
+                            <motion.div
+                              key="otp-step"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                            >
+                              <OtpVerificationForm
+                                otp={otp}
+                                handleVerifyOTP={handleVerifyOTP}
+                                handlePaste={handlePaste}
+                                handleOtpChange={handleOtpChange}
+                                handleKeyDown={handleKeyDown}
+                                otpRefs={otpRefs}
+                                error={error}
+                                errorMsg={errorMsg}
+                                isLoading={isLoading}
+                                timer={timer}
+                                sendOTP={requestOTP}
+                              />
+                            </motion.div>
                           )}
                         </AnimatePresence>
                       </div>

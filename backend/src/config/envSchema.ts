@@ -69,7 +69,6 @@ const envSchema = z
 
     // Security / Dev Flags
     TEST_RATE_LIMIT: z.string().optional(),
-    BYPASS_OTP_CODE: z.string().optional(),
     SECRET_ROTATION_REMINDER: z.string().optional(),
 
     // Google OAuth
@@ -124,7 +123,6 @@ const envSchema = z
         if (data.REQUIRE_REDIS === 'true' && !data.REDIS_URL) return false;
 
         // Dev flags must be off
-        if (data.BYPASS_OTP_CODE) return false;
         if (data.SKIP_INDEX_BUILD === 'true') return false;
         if (data.TEST_RATE_LIMIT === 'true') return false;
 

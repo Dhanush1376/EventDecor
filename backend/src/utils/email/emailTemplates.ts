@@ -6,8 +6,6 @@
 
 // --- Shared Utility Components ---
 
-import { getFrontendUrl } from '../getFrontendUrl';
-
 export const formatCurrency = (amount: number) => `₹${Number(amount || 0).toLocaleString('en-IN')}`;
 
 export const escapeHtml = (unsafe: any) => {
@@ -66,12 +64,7 @@ export const getLuxuryEmailWrapper = (
   footerTextHtml: string = 'This is an automated transmission from Siri Arts & Crafts. If you did not request this, please safely disregard this email or contact support.',
   preheaderText?: string,
 ): string => {
-  const baseUrl = getFrontendUrl();
-  // Ensure logo is loaded even in local testing by using a public fallback if baseUrl is localhost,
-  // as email clients (like Gmail) proxy images and cannot access localhost.
-  const logoUrl = baseUrl.includes('localhost')
-    ? 'https://ui-avatars.com/api/?name=Siri+Arts&background=0D8ABC&color=fff&size=72'
-    : `${baseUrl}/MainLogo.png`;
+  // Logo removed in favor of text header
 
   const previewText = preheaderText || subtitle;
   return `<!DOCTYPE html>
@@ -152,7 +145,7 @@ export const getLuxuryEmailWrapper = (
             <td class="main-card">
               <div class="brand-header">
                 <a href="https://siriartsandcrafts.com" target="_blank" class="brand-link" style="display: block; text-align: center;">
-                  <img src="${logoUrl}" alt="Siri Arts & Crafts Logo" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb; background-color: white; margin: 0 auto; display: block;" />
+                  <h1 class="brand-name" style="color: #111827; margin: 0; font-size: 24px; text-decoration: none; font-weight: bold; text-align: center;">Siri Arts & Crafts</h1>
                 </a>
               </div>
               <div class="body-content">

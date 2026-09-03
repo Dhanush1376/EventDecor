@@ -8,11 +8,15 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useWebsiteContent } from '../../../hooks/useWebsiteContent';
 import { galleryService } from '../../../services/domainServices';
+import { useConfig } from '../../../context/ConfigContext';
 
 /**
  * Fashion Inspiration section using real gallery data and Admin-managed copy.
  */
 export function GalleryInspiration({ previewContent }) {
+  const { storeSettings } = useConfig();
+  const hideGallery = storeSettings?.storefront?.hideGallerySection;
+
   const cms = useWebsiteContent({ includeDefaults: false });
   const activeCms = previewContent || cms;
   const galleryPreview = useMemo(() => activeCms?.galleryInspiration || {}, [activeCms]);
@@ -51,6 +55,8 @@ export function GalleryInspiration({ previewContent }) {
 
   if (galleryPreview?.isVisible === false) return null;
   if (isError || (!galleryLoading && !cmsLoading && galleryItems.length === 0)) return null;
+  if (hideGallery) return null;
+
   if (cmsLoading || galleryLoading) {
     return (
       <section className="h1-section relative isolate" id="h1-inspiration">

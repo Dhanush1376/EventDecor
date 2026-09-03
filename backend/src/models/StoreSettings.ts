@@ -130,6 +130,8 @@ export interface IStoreSettings extends Document {
   storefront: {
     seoTitle: string;
     seoDescription: string;
+    hideGallerySection: boolean;
+    hideProductsFromGallery: boolean;
   };
   retentionPolicies?: {
     analyticsEventsDays: number;
@@ -284,6 +286,8 @@ const StoreSettingsSchema: Schema = new Schema(
     storefront: {
       seoTitle: { type: String, default: '' },
       seoDescription: { type: String, default: '' },
+      hideGallerySection: { type: Boolean, default: false },
+      hideProductsFromGallery: { type: Boolean, default: false },
     },
     retentionPolicies: {
       analyticsEventsDays: { type: Number, default: 30 },

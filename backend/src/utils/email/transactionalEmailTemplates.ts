@@ -2,11 +2,9 @@ import {
   getLuxuryEmailWrapper,
   formatCurrency,
   escapeHtml,
-  button,
   dataTable,
   getPrimaryEntityName,
 } from './emailTemplates';
-import { getFrontendUrl } from '../getFrontendUrl';
 import { getBackendUrl } from '../getBackendUrl';
 
 const textLink = (text: string, url: string) => `
@@ -455,19 +453,13 @@ export const buildOrderStatusChangeEmail = (order: any, oldStatus: string, newSt
     ${dataTable([
       { label: 'Previous Status', value: escapeHtml(oldStatus) },
       { label: 'New Status', value: escapeHtml(newStatus) },
-      ...(order.trackingNumber
-        ? [{ label: 'Tracking Number', value: escapeHtml(order.trackingNumber) }]
-        : []),
-      ...(order.courierPartner
-        ? [{ label: 'Courier', value: escapeHtml(order.courierPartner) }]
-        : []),
     ])}
     
     <h3 style="margin-top: 32px; color: #111827;">Order Summary</h3>
     ${itemsTable(order.items)}
     ${totalsSummary(order.subtotal, order.shippingFee || order.courierCharges || 0, order.tax?.totalTax || 0, order.total, order.discount || 0)}
     
-    ${order.trackingNumber ? button('Track Shipment', `${getFrontendUrl()}/tracking?order=${orderId}`) : ''}
+
     
     ${invoiceLink}
     

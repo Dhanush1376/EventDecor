@@ -1,4 +1,4 @@
-import { Header, Footer, OrderSummary, ProductCard, CTAButton, Timeline } from '../../components';
+import { Header, Footer, OrderSummary, ProductCard, Timeline } from '../../components';
 import { getFrontendUrl } from '../../../../utils/getFrontendUrl';
 
 export const OrderCreatedCustomerTemplate = (data: any) => {
@@ -18,7 +18,7 @@ export const OrderCreatedCustomerTemplate = (data: any) => {
     .join('');
 
   const content = `
-    ${Header('https://your-logo-url.com/MainLogo.png')}
+    ${Header(`${frontendUrl}/MainLogo_bg.png`)}
     
     <h2 style="color: #111827; margin-bottom: 16px;">Thank you for your order, ${customerInfo.name}!</h2>
     <p style="color: #4b5563; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">
@@ -45,7 +45,6 @@ export const OrderCreatedCustomerTemplate = (data: any) => {
       { title: 'Delivered', status: 'upcoming', time: `Est. ${deliveryInfo.expectedDelivery}` },
     ])}
 
-    ${CTAButton('Track Your Order', `${frontendUrl}/track/${orderDetails.id}`)}
 
     ${Footer('Siri Arts & Crafts', 'support@siriarts.com', '#28-1-92, South Street, ONGOLE-523001')}
   `;

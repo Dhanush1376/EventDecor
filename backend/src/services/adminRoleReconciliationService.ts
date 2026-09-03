@@ -24,6 +24,7 @@ export class AdminRoleReconciliationService {
 
     const staffUsers = await User.find({ role: { $in: [...ADMIN_ROLES] } }).select('email role');
     for (const user of staffUsers) {
+      if (!user.email) continue; // Phone-only users cannot be admin-by-email
       const stillAuthorized = configuredEmails.some((addr) => isSameEmail(user.email, addr));
       if (!stillAuthorized) {
         user.role = 'user';
@@ -35,7 +36,7 @@ export class AdminRoleReconciliationService {
 
     const allUsers = await User.find().select('email role');
     for (const configured of configuredEmails) {
-      const match = allUsers.find((u) => isSameEmail(u.email, configured));
+      const match = allUsers.find((u) => u.email && isSameEmail(u.email, configured));
       if (match && CUSTOMER_ROLES.includes(match.role)) {
         match.role = DEFAULT_STAFF_ROLE;
         await match.save();

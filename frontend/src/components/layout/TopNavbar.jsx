@@ -33,6 +33,7 @@ import { useVisualSearch } from '../../hooks/useVisualSearch';
 import { customOrderService } from '../../services/api/customOrderService';
 import { productService } from '../../services/api/productService';
 import { lazyWithRetry as lazy } from '../../utils/performance/lazyWithRetry';
+import { useConfig } from '../../context/ConfigContext';
 
 const IntelligentSearchOverlay = lazy(() =>
   import('../search/IntelligentSearchOverlay').then((m) => ({
@@ -46,6 +47,7 @@ const VisualSearchOverlay = lazy(() =>
 // Search caching is now handled by useSearchOverlay hook
 
 export function TopNavbar() {
+  const { storeSettings } = useConfig();
   const { navigation } = useWebsiteContent();
   const logoText = navigation?.logo?.text || 'SIRI ARTS & CRAFTS';
   const logoWords = logoText.split(' ');
@@ -292,7 +294,13 @@ export function TopNavbar() {
       .map((link) => ({
         label: link.label,
         href: link.href || link.link,
-      })) || [];
+      }))
+      .filter((link) => {
+        if (storeSettings?.storefront?.hideGallerySection && link.href === '/gallery') {
+          return false;
+        }
+        return true;
+      }) || [];
 
   const navLinks = [
     { label: 'Home', href: '/', mobileOnly: true },

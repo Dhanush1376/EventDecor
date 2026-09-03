@@ -46,12 +46,18 @@ export class PrivacyService {
   }
 
   /** GDPR Article 17 — right to erasure (anonymize PII; retain order records for legal/tax). */
-  static async eraseUserAccount(userId: string, confirmEmail: string) {
+  static async eraseUserAccount(userId: string, confirmIdentifier: string) {
     const user = await User.findById(userId);
     if (!user) throw new ApiError(404, 'User not found');
 
-    if (user.email.toLowerCase() !== confirmEmail.trim().toLowerCase()) {
-      throw new ApiError(400, 'Confirmation email does not match account email');
+    // Verify ownership: match against email or phone
+    const trimmedIdentifier = (confirmIdentifier || '').trim().toLowerCase();
+    const emailMatch = user.email && user.email.toLowerCase() === trimmedIdentifier;
+    const phoneMatch =
+      user.phone && user.phone.replace(/\D/g, '') === trimmedIdentifier.replace(/\D/g, '');
+
+    if (!emailMatch && !phoneMatch) {
+      throw new ApiError(400, 'Confirmation does not match account credentials');
     }
 
     const anonymizedEmail = `deleted+${userId}@anonymized.siriarts.local`;
@@ -87,7 +93,9 @@ export class PrivacyService {
     ]);
 
     user.name = 'Deleted User';
-    user.email = anonymizedEmail;
+    if (user.email) {
+      user.email = anonymizedEmail;
+    }
     user.phone = undefined;
     user.avatar = undefined;
     user.wishlist = [];

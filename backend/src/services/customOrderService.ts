@@ -81,10 +81,10 @@ export class CustomOrderService {
     let order: Record<string, unknown> | any;
 
     try {
-      if (payload.draftId && user?.email) {
+      if (payload.draftId && user?._id) {
         const draft = await CustomOrder.findOne({
           _id: payload.draftId,
-          customerEmail: user.email,
+          customer: user._id || user.id,
           isDraft: true,
         });
         if (draft) {
@@ -176,7 +176,7 @@ export class CustomOrderService {
 
     const orderData = {
       customer: user?._id || user?.id,
-      customerEmail: user.email,
+      customerEmail: user?.email || '',
       customerName: user.name,
       customerPhone: payload.customerPhone || user.phone,
       occasion: 'Product Customization',

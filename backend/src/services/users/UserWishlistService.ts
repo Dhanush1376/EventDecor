@@ -23,7 +23,7 @@ export class UserWishlistService {
     const [products, showcases] = await Promise.all([
       Product.find({ _id: { $in: wishlistArray } })
         .select(
-          'name title price rentalPrice imageSrc images primaryCategory isAvailable quantity availableQuantity slug',
+          'name title price oldPrice strikingPrice rentalPrice imageSrc images primaryCategory isAvailable quantity availableQuantity slug',
         )
         .populate('primaryCategory', 'name')
         .lean(),

@@ -2,6 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import SoftDeletePlugin, { ISoftDeleted, SoftDeleteModel } from '../utils/SoftDeletePlugin';
 import { indexProduct } from '../services/search/searchIndexer';
 import logger from '../config/logger';
+import './Category'; // Ensure Category model is registered since Product depends on it
 
 export interface IRentalPricing {
   daily: number;

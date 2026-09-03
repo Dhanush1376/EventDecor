@@ -12,11 +12,6 @@ const validateEnv = () => {
   }
 
   if (isProduction) {
-    if (process.env.BYPASS_OTP_CODE) {
-      logger.error('[CRITICAL STARTUP ERROR] BYPASS_OTP_CODE must not be set in production');
-      process.exit(1);
-    }
-
     if (!process.env.SENTRY_DSN) {
       logger.warn(
         '[ENV WARNING] SENTRY_DSN is not configured. Production error monitoring will be disabled.',

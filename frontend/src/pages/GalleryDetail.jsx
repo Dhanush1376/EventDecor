@@ -1,10 +1,11 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import { SEO } from '../components/seo/SEO';
 import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { GalleryDetailSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/FeedbackStates';
 import { useGalleryViewer } from '../hooks/gallery/useGalleryViewer';
+import { useConfig } from '../context/ConfigContext';
 
 import { GalleryMobileLayout } from './GalleryDetail/components/GalleryMobileLayout';
 import { GalleryDesktopLayout } from './GalleryDetail/components/GalleryDesktopLayout';
@@ -12,6 +13,7 @@ import { GalleryDiscoveryFeed } from './GalleryDetail/components/GalleryDiscover
 
 export function GalleryDetail() {
   const { id } = useParams();
+  const { storeSettings } = useConfig();
 
   const {
     item,
@@ -29,6 +31,13 @@ export function GalleryDetail() {
     formattedDate,
     navigate,
   } = useGalleryViewer(id);
+
+  const hideProducts = storeSettings?.storefront?.hideProductsFromGallery;
+  const finalLinkedProducts = hideProducts ? [] : linkedProducts;
+
+  if (storeSettings?.storefront?.hideGallerySection) {
+    return <Navigate to="/" replace />;
+  }
 
   if (loading) return <GalleryDetailSkeleton />;
 
@@ -69,12 +78,13 @@ export function GalleryDetail() {
           handleShopLook={handleShopLook}
           handleWishlistLook={handleWishlistLook}
           navigate={navigate}
+          hideProducts={hideProducts}
         />
 
         <GalleryDesktopLayout
           item={item}
           pageUrl={pageUrl}
-          linkedProducts={linkedProducts}
+          linkedProducts={finalLinkedProducts}
           isLiked={isLiked}
           formattedDate={formattedDate}
           imageHovered={imageHovered}
@@ -82,6 +92,7 @@ export function GalleryDetail() {
           handleShopLook={handleShopLook}
           handleWishlistLook={handleWishlistLook}
           navigate={navigate}
+          hideProducts={hideProducts}
         />
 
         <GalleryDiscoveryFeed moreLikeThis={moreLikeThis} />

@@ -115,7 +115,7 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
 
   const transporter = cachedTransporter;
 
-  const senderEmail = 'noreply@siriartsandcrafts.com';
+  const senderEmail = process.env.SMTP_USER || 'noreply@siriartsandcrafts.com';
   const senderName = 'Siri Arts & Crafts';
 
   const info = await transporter.sendMail({

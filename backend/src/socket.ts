@@ -23,14 +23,14 @@ import { checkSocketConnectionRateLimit } from './utils/socketConnectionRateLimi
  */
 let io: Server;
 
-type SocketUser = { _id: { toString(): string }; role: string; email: string };
+type SocketUser = { _id: { toString(): string }; role: string; email?: string };
 
 const socketLogContext = (socket: Socket, namespace: '/admin' | '/user', user: SocketUser) => ({
   correlationId: socket.id,
   socketId: socket.id,
   namespace,
   userId: user._id.toString(),
-  email: user.email,
+  ...(user.email && { email: user.email }),
 });
 
 const resolveMultiInstance = (): boolean => {

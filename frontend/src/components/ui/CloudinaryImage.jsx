@@ -24,6 +24,7 @@ function BaseOptimizedImage({
   skipObserver = false,
   priority,
   quality,
+  fallback,
   ...props
 }) {
   const [isLoaded, setIsLoaded] = useState(eager || loading === 'eager');
@@ -151,12 +152,13 @@ function BaseOptimizedImage({
       )}
 
       {/* Skeleton fallback if the image errored */}
-      {hasError && (
-        <div className="absolute inset-0 skeleton-box rounded-[inherit] flex flex-col items-center justify-center text-black/20 bg-black/5 z-0">
-          <ImageOff className="text-3xl mb-1" strokeWidth={1.5} />
-          <span className="text-[9px] uppercase tracking-widest font-bold">Unavailable</span>
-        </div>
-      )}
+      {hasError &&
+        (fallback || (
+          <div className="absolute inset-0 skeleton-box rounded-[inherit] flex flex-col items-center justify-center text-black/20 bg-black/5 z-0">
+            <ImageOff className="text-3xl mb-1" strokeWidth={1.5} />
+            <span className="text-[9px] uppercase tracking-widest font-bold">Unavailable</span>
+          </div>
+        ))}
 
       {/* Native img tag with srcset to prevent duplicate downloads */}
       {isInView && (

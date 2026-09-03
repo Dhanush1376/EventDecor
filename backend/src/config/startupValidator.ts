@@ -28,17 +28,6 @@ export const runStartupValidation = (): void => {
     detail: `NODE_ENV=${process.env.NODE_ENV || 'undefined'}`,
   });
 
-  // ── 2. Dev flags must be OFF in production ──
-  if (isProd && process.env.BYPASS_OTP_CODE) {
-    results.push({
-      name: 'BYPASS_OTP_CODE',
-      status: 'FAIL',
-      detail: 'BYPASS_OTP_CODE must not be set in production',
-    });
-  } else {
-    results.push({ name: 'BYPASS_OTP_CODE', status: 'PASS', detail: 'Not set' });
-  }
-
   if (isProd && process.env.TEST_RATE_LIMIT === 'true') {
     results.push({
       name: 'TEST_RATE_LIMIT',

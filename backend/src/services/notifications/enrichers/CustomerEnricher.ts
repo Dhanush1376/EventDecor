@@ -33,7 +33,7 @@ export class CustomerEnricher {
         customerInfo: {
           id: user._id.toString(),
           name: user.name,
-          email: user.email,
+          email: user.email || '',
           phone: user.phone || 'N/A',
           role: user.role,
           accountCreated: user.createdAt,

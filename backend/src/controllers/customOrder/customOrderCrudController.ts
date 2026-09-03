@@ -34,7 +34,7 @@ export const saveDraft = asyncHandler(async (req: Request, res: Response) => {
 
   const draftData: Record<string, unknown> = {
     customer: (req as any).user._id || (req as any).user.id,
-    customerEmail: (req as any).user.email,
+    customerEmail: (req as any).user.email || '',
     customerName: (req as any).user.name,
     customerPhone: (req as any).user.phone,
     occasion: 'Product Customization',
@@ -75,7 +75,7 @@ export const saveDraft = asyncHandler(async (req: Request, res: Response) => {
   if (draftId) {
     // Update existing draft
     draft = await CustomOrder.findOneAndUpdate(
-      { _id: draftId, customerEmail: (req as any).user.email, isDraft: true },
+      { _id: draftId, customer: (req as any).user._id || (req as any).user.id, isDraft: true },
       { $set: draftData },
       { returnDocument: 'after' },
     );
@@ -105,7 +105,7 @@ export const saveDraft = asyncHandler(async (req: Request, res: Response) => {
 // 4. Get My Drafts (Customer)
 export const getMyDrafts = asyncHandler(async (req: Request, res: Response) => {
   const drafts = await CustomOrder.find({
-    customerEmail: (req as any).user.email,
+    customer: (req as any).user._id || (req as any).user.id,
     isDraft: true,
   })
     .sort({ updatedAt: -1 })
@@ -118,7 +118,7 @@ export const getMyDrafts = asyncHandler(async (req: Request, res: Response) => {
 export const deleteDraft = asyncHandler(async (req: Request, res: Response) => {
   const draft = await CustomOrder.findOneAndDelete({
     _id: req.params.id,
-    customerEmail: (req as any).user.email,
+    customer: (req as any).user._id || (req as any).user.id,
     isDraft: true,
   });
 
@@ -132,8 +132,8 @@ export const deleteDraft = asyncHandler(async (req: Request, res: Response) => {
 
 // 6. Get My Custom Orders (Customer)
 export const getMyCustomOrders = asyncHandler(async (req: Request, res: Response) => {
-  const email = (req as any).user?.email;
-  const orders = await CustomOrder.find({ customerEmail: email, isDraft: { $ne: true } })
+  const userId = (req as any).user?._id || (req as any).user?.id;
+  const orders = await CustomOrder.find({ customer: userId, isDraft: { $ne: true } })
     .sort({ createdAt: -1 })
     .lean();
   res.status(200).json(new ApiResponse(true, 'My custom orders synced', orders));
@@ -151,7 +151,7 @@ export const getSingleCustomOrder = asyncHandler(async (req: Request, res: Respo
   // Ensure security boundaries
   if (
     !ADMIN_ROLES.includes((req as any).user.role as any) &&
-    order.customerEmail !== (req as any).user.email
+    order.customer?.toString() !== ((req as any).user._id?.toString() || (req as any).user.id)
   ) {
     res.status(403).json(new ApiResponse(false, 'Unauthorized view access restricted'));
     return;

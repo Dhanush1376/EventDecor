@@ -12,7 +12,6 @@ export function ProfileSection() {
     name: '',
     phone: '',
     gender: '',
-    dateOfBirth: '',
   });
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
@@ -22,7 +21,6 @@ export function ProfileSection() {
         name: user.name || '',
         phone: user.phone || '',
         gender: user.gender || '',
-        dateOfBirth: user.dateOfBirth || '',
       });
     }
   }, [user]);
@@ -127,20 +125,6 @@ export function ProfileSection() {
                 <option value="other">Other / Custom</option>
                 <option value="prefer_not_to_say">Prefer Not To Disclose</option>
               </select>
-            </div>
-
-            <div className="min-w-0">
-              <label htmlFor="dashboard-profile-dob" className="form-label mb-1.5">
-                Date Of Birth (DOB)
-              </label>
-              <input
-                id="dashboard-profile-dob"
-                type="date"
-                autoComplete="bday"
-                value={profileForm.dateOfBirth}
-                onChange={(e) => setProfileForm({ ...profileForm, dateOfBirth: e.target.value })}
-                className="form-field cursor-pointer"
-              />
             </div>
           </div>
 

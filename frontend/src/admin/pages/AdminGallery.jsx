@@ -2,6 +2,7 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { galleryService, productService } from '../../services/domainServices';
+import storeSettingsService from '../../services/api/storeSettingsService';
 import { handleImageError } from '../../utils/media/imageUtils';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
@@ -25,6 +26,11 @@ export function AdminGallery() {
   const [isLoading, setIsLoading] = useState(true);
   const confirm = useConfirm();
   const [_showUpload, setShowUpload] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [storefrontSettings, setStorefrontSettings] = useState({
+    hideGallerySection: false,
+    hideProductsFromGallery: false,
+  });
   const [newItem, setNewItem] = useState({
     title: '',
     teluguTitle: '',
@@ -57,10 +63,11 @@ export function AdminGallery() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [res, catRes, prodRes] = await Promise.all([
+      const [res, catRes, prodRes, settingsRes] = await Promise.all([
         galleryService.getAll({ limit: 1000 }),
         galleryService.getCategories(),
         productService.getAll({ limit: 150 }),
+        storeSettingsService.getSettings(),
       ]);
       if (res.success) setItems(res.data.data || res.data.items || res.data || []);
       if (catRes.success) {
@@ -71,6 +78,12 @@ export function AdminGallery() {
       }
       if (prodRes.success)
         setProducts(prodRes.data.data || prodRes.data.items || prodRes.data || []);
+      if (settingsRes && settingsRes.storefront) {
+        setStorefrontSettings({
+          hideGallerySection: !!settingsRes.storefront.hideGallerySection,
+          hideProductsFromGallery: !!settingsRes.storefront.hideProductsFromGallery,
+        });
+      }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to load gallery items'));
     } finally {
@@ -215,6 +228,19 @@ export function AdminGallery() {
     return matchesFilter && matchesType && matchesSearch;
   });
 
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    try {
+      await storeSettingsService.updateSettings('storefront', {
+        ...storefrontSettings,
+      });
+      toast.success('Gallery settings updated');
+      setShowSettingsModal(false);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update settings'));
+    }
+  };
+
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       {/* ─── Page Header ─── */}
@@ -222,13 +248,22 @@ export function AdminGallery() {
         title="Gallery Curation"
         subtitle={`${items.length} items cataloged · Manage design inspirations and real event showcases`}
       >
-        <button
-          onClick={() => navigate('/admin/gallery/add')}
-          className="admin-btn admin-btn-primary"
-        >
-          <span className="material-symbols-outlined text-[16px]">add_photo_alternate</span>
-          Add Item
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="admin-btn admin-btn-outline"
+          >
+            <span className="material-symbols-outlined text-[16px]">settings</span>
+            Settings <span className="text-[10px] ml-1">▾</span>
+          </button>
+          <button
+            onClick={() => navigate('/admin/gallery/add')}
+            className="admin-btn admin-btn-primary"
+          >
+            <span className="material-symbols-outlined text-[16px]">add_photo_alternate</span>
+            Add Item
+          </button>
+        </div>
       </PageHeader>
 
       {/* Upload/Edit Drawer Removed in favor of Router Navigation */}
@@ -544,6 +579,106 @@ export function AdminGallery() {
                   </div>
                 ))}
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Gallery Settings Modal ─── */}
+      <AnimatePresence>
+        {showSettingsModal && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSettingsModal(false)}
+              className="absolute inset-0 bg-[var(--admin-surface-overlay)] backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md admin-card shadow-[var(--admin-shadow-2xl)] p-6 z-10"
+            >
+              <div className="flex justify-between items-center border-b border-[var(--admin-border-subtle)] pb-4 mb-6">
+                <div>
+                  <h3 className="text-[16px] font-bold text-[var(--admin-text-primary)] tracking-tight">
+                    Gallery Settings
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowSettingsModal(false)}
+                  className="admin-btn admin-btn-icon w-8 h-8"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveSettings} className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border-subtle)]">
+                  <div className="pr-4">
+                    <p className="text-[13px] font-bold text-[var(--admin-text-primary)]">
+                      Show Gallery on Storefront
+                    </p>
+                    <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-1">
+                      Allow customers to browse your Gallery and inspiration.
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={!storefrontSettings.hideGallerySection}
+                      onChange={(e) =>
+                        setStorefrontSettings({
+                          ...storefrontSettings,
+                          hideGallerySection: !e.target.checked,
+                        })
+                      }
+                    />
+                    <div className="w-11 h-6 bg-[var(--admin-border-strong)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--admin-accent)]"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-[var(--admin-surface-muted)] rounded-xl border border-[var(--admin-border-subtle)]">
+                  <div className="pr-4">
+                    <p className="text-[13px] font-bold text-[var(--admin-text-primary)]">
+                      Show Products in Gallery
+                    </p>
+                    <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-1">
+                      Display linked products in Gallery items.
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={!storefrontSettings.hideProductsFromGallery}
+                      onChange={(e) =>
+                        setStorefrontSettings({
+                          ...storefrontSettings,
+                          hideProductsFromGallery: !e.target.checked,
+                        })
+                      }
+                    />
+                    <div className="w-11 h-6 bg-[var(--admin-border-strong)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--admin-accent)]"></div>
+                  </label>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-[var(--admin-border-subtle)]">
+                  <button
+                    type="button"
+                    onClick={() => setShowSettingsModal(false)}
+                    className="admin-btn admin-btn-ghost"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="admin-btn admin-btn-primary">
+                    Save Changes
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

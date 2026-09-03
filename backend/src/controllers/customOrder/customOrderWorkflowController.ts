@@ -31,7 +31,7 @@ export const customerRespondQuotation = asyncHandler(async (req: Request, res: R
     return;
   }
 
-  if (order.customerEmail !== (req as any).user.email) {
+  if (order.customer?.toString() !== ((req as any).user._id?.toString() || (req as any).user.id)) {
     res.status(403).json(new ApiResponse(false, 'Access restricted to order owner'));
     return;
   }
@@ -42,12 +42,12 @@ export const customerRespondQuotation = asyncHandler(async (req: Request, res: R
   if (status === 'approved') {
     order.status = 'Checkout Ready';
     order.quotation.approvedAt = new Date();
-    order.quotation.approvedBy = (req as any).user.email;
+    order.quotation.approvedBy = (req as any).user._id?.toString() || (req as any).user.id;
     order.statusHistory.push(
       createStatusHistoryEntry(
         prevStatus,
         'Checkout Ready',
-        (req as any).user.email,
+        (req as any).user._id?.toString() || (req as any).user.id,
         'Customer approved quotation',
       ) as any,
     );
@@ -94,7 +94,7 @@ export const customerRespondQuotation = asyncHandler(async (req: Request, res: R
       createStatusHistoryEntry(
         prevStatus,
         'Reviewing',
-        (req as any).user.email,
+        (req as any).user._id?.toString() || (req as any).user.id,
         'Customer requested changes to quotation',
       ) as any,
     );
@@ -140,7 +140,10 @@ export const postMessage = asyncHandler(async (req: Request, res: Response) => {
     }
   }
 
-  if (!isSenderAdmin && order.customerEmail !== (req as any).user.email) {
+  if (
+    !isSenderAdmin &&
+    order.customer?.toString() !== ((req as any).user._id?.toString() || (req as any).user.id)
+  ) {
     res.status(403).json(new ApiResponse(false, 'Unauthorized message dispatch restricted'));
     return;
   }
@@ -187,7 +190,7 @@ export const postMessage = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { emitUserEvent, emitAdminNotification } = require('../../socket');
     if (isSenderAdmin) {
-      const customer = await User.findOne({ email: order.customerEmail }).select('_id');
+      const customer = order.customer ? await User.findById(order.customer).select('_id') : null;
       if (customer) {
         emitUserEvent(customer._id.toString(), 'customOrder:newMessage', {
           orderId: order.orderId,
@@ -219,7 +222,10 @@ export const getOrderHistory = asyncHandler(async (req: Request, res: Response) 
 
   // BUG-02: Auth check
   const isSenderAdmin = ADMIN_ROLES.includes((req as any).user.role as any);
-  if (!isSenderAdmin && order.customerEmail !== (req as any).user.email) {
+  if (
+    !isSenderAdmin &&
+    order.customer?.toString() !== ((req as any).user._id?.toString() || (req as any).user.id)
+  ) {
     res.status(403).json(new ApiResponse(false, 'Access restricted to order owner'));
     return;
   }

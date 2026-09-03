@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import Gallery from '../../models/Gallery';
+import Category from '../../models/Category';
+
 import asyncHandler from '../../utils/asyncHandler';
 import ApiResponse from '../../utils/ApiResponse';
 import ApiError from '../../utils/ApiError';
@@ -316,8 +318,6 @@ export const likeGalleryItem = asyncHandler(async (req: any, res: Response) => {
 
   res.status(200).json(new ApiResponse(true, 'Gallery item liked', item));
 });
-
-import Category from '../../models/Category';
 
 export const getGalleryCategories = asyncHandler(async (req: Request, res: Response) => {
   const categories = await Category.find({ type: 'gallery', isActive: true }).select('name').lean();

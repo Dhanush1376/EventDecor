@@ -171,6 +171,29 @@ export const otpVerifyLimiter = createRateLimiter('otpVerifyLimiter', {
   message: 'Too many OTP verification attempts. Please try again after 15 minutes.',
 });
 
+// Phone OTP Send limiter: 3 requests per 15 minutes per phone number
+export const phoneOtpSendLimiter = createRateLimiter('phoneOtpSendLimiter', {
+  windowMs: 15 * 60 * 1000,
+  limit: 3,
+  message: 'Too many requests. Please try again later.',
+  keyGenerator: (req) => `phone:${req.body?.phone || 'unknown'}`,
+});
+
+// Phone OTP Verify limiter: 5 attempts per 15 minutes per IP
+export const phoneOtpVerifyLimiter = createRateLimiter('phoneOtpVerifyLimiter', {
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  message: 'Too many attempts. Please try again later.',
+});
+
+// Account Linking limiter: 5 requests per hour per user
+export const accountLinkingLimiter = createRateLimiter('accountLinkingLimiter', {
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  message: 'Too many account changes. Please try again later.',
+  keyGenerator: accountKeyGenerator,
+});
+
 // Contact/Inquiry limiter: 5 requests per 1 hour per IP
 export const contactLimiter = createRateLimiter('contactLimiter', {
   windowMs: 60 * 60 * 1000,

@@ -10,8 +10,11 @@ import { CloudinaryImage } from '../../components/ui/CloudinaryImage';
 import { MandalaElement } from '../../components/ui/MandalaElement';
 import { EASE, DURATION } from '../../constants/design-tokens';
 import { AboutSkeleton } from '../../components/ui/Skeleton';
+import { useConfig } from '../../context/ConfigContext';
 
 export function About() {
+  const { storeSettings } = useConfig();
+  const hideGallery = storeSettings?.storefront?.hideGallerySection;
   const { navigation, loading: webLoading } = useWebsiteContent();
   const logoText = navigation?.logo?.text || 'SIRI ARTS & CRAFTS';
 
@@ -481,7 +484,7 @@ export function About() {
       )}
 
       {/* 5. Heritage Gallery (Flowing Masonry) */}
-      {galleryPreview.length > 0 && (
+      {galleryPreview.length > 0 && !hideGallery && (
         <section className="py-32 bg-[#EAE5DB] relative z-10 border-t border-outline-variant/20 overflow-hidden">
           {/* Subtle Mandala Watermark */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">

@@ -14,6 +14,7 @@ import { ReturnRequestPage } from './returns/ReturnRequestPage';
 import { ExchangeRequestPage } from './returns/ExchangeRequestPage';
 import { MyCustomOrders } from './MyCustomOrders';
 import { NotificationsSection } from './Dashboard/NotificationsSection';
+import { SecuritySection } from './Dashboard/SecuritySection';
 
 function DashboardIndex() {
   const [searchParams] = useSearchParams();
@@ -61,6 +62,7 @@ export function Dashboard() {
           <Route path="returns/new" element={<ReturnRequestPage />} />
           <Route path="custom-orders" element={<MyCustomOrders />} />
           <Route path="notifications" element={<NotificationsSection />} />
+          <Route path="security" element={<SecuritySection />} />
 
           <Route path="returns/exchanges/new" element={<ExchangeRequestPage />} />
           <Route path="*" element={<Navigate to="profile" replace />} />

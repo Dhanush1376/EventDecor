@@ -5,7 +5,8 @@ import logger from '../utils/core/logger';
 
 export function useAuthFlow(loginSuccess, isAuthModalOpen) {
   const [step, setStep] = useState('identifier');
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
+  const [challengeId, setChallengeId] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [totpCode, setTotpCode] = useState('');
   const [pending2faUserId, setPending2faUserId] = useState(null);
@@ -21,7 +22,8 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
 
   const resetState = useCallback(() => {
     setStep('identifier');
-    setEmail('');
+    setIdentifier('');
+    setChallengeId('');
     setOtp(['', '', '', '', '', '']);
     setTimer(0);
     setError(false);
@@ -31,10 +33,10 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
     setIsNewUser(false);
   }, []);
 
-  const sendOTP = async (e) => {
+  const requestOTP = async (e) => {
     e?.preventDefault();
-    if (!email || !email.includes('@')) {
-      toast.error('Please enter a valid email address');
+    if (!identifier || identifier.length < 3) {
+      toast.error('Please enter a valid email or phone number');
       return;
     }
 
@@ -44,8 +46,9 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
     setIsLoading(true);
 
     try {
-      await authService.sendOTP(email);
-      toast.success('Verification code sent to your email!');
+      const response = await authService.requestOTP(identifier);
+      setChallengeId(response.data?.challengeId || '');
+      toast.success(response.message || 'Verification code sent!');
       setStep('otp');
       setTimer(60);
       setOtp(['', '', '', '', '', '']);
@@ -67,7 +70,7 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
       isSubmittingRef.current = true;
       setIsLoading(true);
       try {
-        const response = await authService.verifyOTP(email, otpString.replace(/\D/g, ''));
+        const response = await authService.verifyOTP(challengeId, otpString.replace(/\D/g, ''));
         if (response.success && response.data?.requires2FA) {
           setPending2faUserId(response.data.userId);
           setTotpCode('');
@@ -104,7 +107,7 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
         setIsLoading(false);
       }
     },
-    [isLoading, email, loginSuccess],
+    [isLoading, challengeId, loginSuccess],
   );
 
   const verify2FA = async (code) => {
@@ -160,8 +163,12 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
           }, 1800);
         }
       } catch (err) {
-        const msg = err.response?.data?.message || 'Google sign-in failed. Please try again.';
-        toast.error(msg);
+        if (err.response?.data?.action === 'LINK_REQUIRED') {
+          setStep('account_exists');
+        } else {
+          const msg = err.response?.data?.message || 'Google sign-in failed. Please try again.';
+          toast.error(msg);
+        }
       } finally {
         isSubmittingRef.current = false;
         setGoogleLoading(false);
@@ -283,8 +290,9 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
   return {
     step,
     setStep,
-    email,
-    setEmail,
+    identifier,
+    setIdentifier,
+    challengeId,
     otp,
     totpCode,
     setTotpCode,
@@ -294,7 +302,7 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
     setError,
     errorMsg,
     otpRefs,
-    sendOTP,
+    requestOTP,
     verifyOTP,
     verify2FA,
     handleOtpChange,

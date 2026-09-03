@@ -19,7 +19,7 @@ const CSRF_EXEMPT_PATHS = new Set(['/api/orders/webhook']);
  */
 const CSRF_EXEMPT_ROUTES = [
   '/auth/refresh',
-  '/auth/send-otp',
+  '/auth/request-otp',
   '/auth/verify-otp',
   '/auth/google',
   '/admin/auth/login',

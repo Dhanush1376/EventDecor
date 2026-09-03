@@ -1,11 +1,14 @@
 import { OAuth2Client } from 'google-auth-library';
+import mongoose from 'mongoose';
 import crypto from 'crypto';
 import User from '../models/User';
+import AuthIdentity from '../models/AuthIdentity';
 import ApiError from '../utils/ApiError';
 import logger from '../config/logger';
 import { canonicalizeEmail } from '../utils/email/emailHelper';
 import SessionAuthService from './SessionAuthService';
 import { getFrontendUrl } from '../utils/getFrontendUrl';
+import { SecurityAuditService } from './SecurityAuditService';
 
 const getGoogleClient = (() => {
   let client: OAuth2Client | null = null;
@@ -26,13 +29,10 @@ interface GoogleProfile {
   name: string;
   picture: string;
   googleId: string;
+  email_verified: boolean;
 }
 
 class GoogleAuthService {
-  /**
-   * Verify the Google ID token server-side against Google's public keys.
-   * Returns the verified user profile or throws on invalid/expired tokens.
-   */
   static async verifyIdToken(credential: string): Promise<GoogleProfile> {
     const client = getGoogleClient();
     const clientId = process.env.GOOGLE_CLIENT_ID!;
@@ -48,7 +48,6 @@ class GoogleAuthService {
         throw new ApiError(401, 'Invalid Google credential: empty payload');
       }
 
-      // SECURITY: Only accept verified email addresses
       if (!payload.email_verified) {
         logger.warn(`[GOOGLE AUTH] Rejected unverified email: ${payload.email}`);
         throw new ApiError(401, 'Google email is not verified. Please verify your Google account.');
@@ -63,6 +62,7 @@ class GoogleAuthService {
         name: payload.name || payload.email.split('@')[0],
         picture: payload.picture || '',
         googleId: payload.sub,
+        email_verified: payload.email_verified,
       };
     } catch (err: any) {
       if (err instanceof ApiError) throw err;
@@ -71,16 +71,6 @@ class GoogleAuthService {
     }
   }
 
-  /**
-   * Core authentication + account linking logic.
-   *
-   * CRITICAL DEDUPLICATION RULE:
-   * - Email is the single source of truth for identity.
-   * - If a user with that email exists (from OTP or any provider), we link the
-   *   Google provider to the SAME account. No new user is created.
-   * - If no user exists, we create a new one.
-   * - Uses atomic findOneAndUpdate to prevent race-condition duplicates.
-   */
   static async authenticateWithGoogle(
     credential: string,
     ip: string = '127.0.0.1',
@@ -89,176 +79,188 @@ class GoogleAuthService {
     const profile = await this.verifyIdToken(credential);
     const cleanEmail = canonicalizeEmail(profile.email);
 
-    logger.info(`[GOOGLE AUTH] Authentication requested for ${cleanEmail}`);
+    // 1. AUTHENTICATION RESOLUTION — AuthIdentity is the sole authority
+    const googleIdentity = await AuthIdentity.findOne({
+      provider: 'google',
+      providerSubjectId: profile.googleId,
+    });
 
-    // ── Step 1: Pre-flight Conflict Resolution ──
-    // If another account holds this googleId but has a different email, we detach it.
-    // Email is the ultimate source of truth. The new verified email takes ownership.
-    await User.updateOne(
-      { googleId: profile.googleId, email: { $ne: cleanEmail } },
-      { $unset: { googleId: 1 }, $pull: { providers: 'google' } },
-    );
+    // CASE A: Google identity already linked → login that user
+    if (googleIdentity) {
+      const user = await User.findById(googleIdentity.userId);
+      if (!user || !user.isVerified) {
+        throw new ApiError(401, 'Authentication failed. Please try again.');
+      }
 
-    // ── Step 2: Atomic Upsert ──
+      // 2FA check
+      const userWith2fa = await User.findById(user._id).select('+twoFactorEnabled');
+      if (userWith2fa?.twoFactorEnabled) {
+        const { setTwoFactorPending } = require('../utils/security/twoFactorPending');
+        await setTwoFactorPending(user._id.toString());
+        return {
+          requires2FA: true as const,
+          user: userWith2fa.toObject(),
+          refreshToken: '',
+          accessToken: '',
+        };
+      }
+
+      const session = await SessionAuthService.createSession(user, userAgent);
+
+      SecurityAuditService.log({
+        userId: user._id.toString(),
+        eventType: 'GOOGLE_AUTH_SUCCESS',
+        success: true,
+        ip,
+        userAgent,
+        provider: 'google',
+      });
+
+      return session;
+    }
+
+    // CASE B: Google identity NOT linked to any user
+    // Check if Google's email matches an existing user account
+    const existingUser = await User.findOne({ email: cleanEmail });
+
+    if (existingUser) {
+      // Auto-link the Google account since Google has verified the email
+      await AuthIdentity.create({
+        userId: existingUser._id,
+        provider: 'google',
+        providerSubjectId: profile.googleId,
+        verifiedAt: new Date(),
+        metadata: { displayName: profile.name, avatar: profile.picture, email: profile.email },
+      });
+
+      // 2FA check
+      const userWith2fa = await User.findById(existingUser._id).select('+twoFactorEnabled');
+      if (userWith2fa?.twoFactorEnabled) {
+        const { setTwoFactorPending } = require('../utils/security/twoFactorPending');
+        await setTwoFactorPending(existingUser._id.toString());
+        return {
+          requires2FA: true as const,
+          user: userWith2fa.toObject(),
+          refreshToken: '',
+          accessToken: '',
+        };
+      }
+
+      const session = await SessionAuthService.createSession(existingUser, userAgent);
+
+      SecurityAuditService.log({
+        userId: existingUser._id.toString(),
+        eventType: 'GOOGLE_AUTH_SUCCESS',
+        success: true,
+        ip,
+        userAgent,
+        provider: 'google',
+      });
+
+      return session;
+    }
+
+    // CASE C: Completely new identity → create new account
     const hash = crypto.createHash('md5').update(cleanEmail).digest('hex');
     const defaultAvatar =
       profile.picture || `https://www.gravatar.com/avatar/${hash}?d=identicon&s=200`;
 
-    let user = await User.findOneAndUpdate(
-      { email: cleanEmail },
-      {
-        $setOnInsert: {
-          name: profile.name || cleanEmail.split('@')[0],
-          role: 'customer',
-          avatar: defaultAvatar,
-          wishlist: [],
-          cart: [],
-          recentlyViewed: [],
-          notificationPreferences: { email: true, marketing: true },
-          accountPreferences: { theme: 'light', language: 'en' },
-        },
-        $set: {
-          googleId: profile.googleId,
-          lastLogin: new Date(),
-          isVerified: true,
-        },
-        $addToSet: { providers: 'google' },
-      },
-      {
-        upsert: true,
-        new: true,
-        runValidators: true,
-      },
-    );
+    let createdUser: any;
 
-    if (!user) {
-      throw new ApiError(500, 'Failed to authenticate and link Google account');
-    }
+    const session = await mongoose.connection.transaction(async (txSession) => {
+      const user = new User({
+        name: profile.name || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        role: 'customer',
+        isVerified: true,
+        avatar: defaultAvatar,
+        wishlist: [],
+        cart: [],
+        recentlyViewed: [],
+        notificationPreferences: { email: true, marketing: true },
+        accountPreferences: { theme: 'light', language: 'en' },
+      });
+      await user.save({ session: txSession });
+      createdUser = user;
 
-    // Determine if this was a brand new account (upserted) by comparing timestamps.
-    // Mongoose sets both exactly the same on an upsert.
-    const isNewUser =
-      user.createdAt && user.updatedAt && user.createdAt.getTime() === user.updatedAt.getTime();
-
-    if (isNewUser) {
-      logger.info(`[GOOGLE AUTH] No existing account for ${cleanEmail}. Created new user.`);
-    } else {
-      logger.info(
-        `[GOOGLE AUTH] Existing account found for ${cleanEmail} (id: ${user._id}). Updated Google provider.`,
+      await AuthIdentity.create(
+        [
+          {
+            userId: user._id,
+            provider: 'google',
+            providerSubjectId: profile.googleId,
+            verifiedAt: new Date(),
+            metadata: { displayName: profile.name, avatar: profile.picture, email: profile.email },
+          },
+        ],
+        { session: txSession },
       );
 
-      // Update name/avatar only if they are still auto-generated defaults
-      const updates: Record<string, any> = {};
-      const isDefaultName =
-        !user.name ||
-        user.name === 'Customer' ||
-        user.name === cleanEmail.split('@')[0] ||
-        user.name ===
-          cleanEmail.split('@')[0].charAt(0).toUpperCase() + cleanEmail.split('@')[0].slice(1);
-
-      if (isDefaultName && profile.name) {
-        updates.name = profile.name;
-      }
-
-      const isDefaultAvatar = !user.avatar || user.avatar.includes('gravatar.com/avatar');
-      if (isDefaultAvatar && profile.picture) {
-        updates.avatar = profile.picture;
-      }
-
-      if (Object.keys(updates).length > 0) {
-        const updatedUser = await User.findByIdAndUpdate(
-          user._id,
-          { $set: updates },
-          { new: true },
-        );
-        if (!updatedUser) {
-          throw new ApiError(500, 'Failed to update existing user profile');
-        }
-        user = updatedUser;
-      }
-    }
-
-    // ── Post-login: New user onboarding (same as OTP flow) ──
-    if (isNewUser) {
-      try {
-        const { RuleEngine } = require('./RuleEngine');
-        await RuleEngine.evaluateTrigger('on_signup', { user });
-      } catch (ruleErr) {
-        logger.error('Failed to evaluate signup rules:', ruleErr);
-      }
-
-      try {
-        const { createAdminNotification } = require('./notificationService');
-        createAdminNotification({
-          title: 'New User Registration (Google)',
-          message: `${user.name || user.email} registered via Google OAuth.`,
-          type: 'user',
-          actionLink: '/admin/users',
-        }).catch((err: any) => {
-          logger.error('Failed to create admin notification for Google registration:', err);
-        });
-      } catch (notifErr) {
-        logger.error('Failed to create admin notification for Google registration:', notifErr);
-      }
-
-      try {
-        const { sendDirectEmail } = require('./notificationService');
-        const frontendUrl = getFrontendUrl();
-        sendDirectEmail({
-          email: user.email,
-          subject: `Welcome to Siri Arts & Crafts, ${user.name}`,
-          templateName: 'Welcome Email',
-          templateData: {
-            name: user.name,
-            frontend_url: frontendUrl,
+      // Create email identity from Google's verified email
+      await AuthIdentity.create(
+        [
+          {
+            userId: user._id,
+            provider: 'email',
+            providerSubjectId: cleanEmail,
+            verifiedAt: new Date(),
           },
-          type: 'marketing',
-          action: 'welcome_email',
-          userId: user._id.toString(),
-        }).catch((err: any) => logger.error('Failed to send welcome email in background:', err));
-      } catch (welcomeErr) {
-        logger.error('Failed to initiate welcome email dispatch:', welcomeErr);
-      }
+        ],
+        { session: txSession },
+      );
+
+      return await SessionAuthService.createSession(user, userAgent);
+    });
+
+    SecurityAuditService.log({
+      userId: createdUser._id.toString(),
+      eventType: 'SIGNUP_SUCCESS',
+      success: true,
+      ip,
+      userAgent,
+      provider: 'google',
+    });
+
+    // Post-login triggers
+    try {
+      const { RuleEngine } = require('./RuleEngine');
+      await RuleEngine.evaluateTrigger('on_signup', { user: createdUser });
+    } catch (ruleErr) {
+      logger.error('Failed to evaluate signup rules:', ruleErr);
     }
 
-    // ── Security alert email ──
+    try {
+      const { createAdminNotification } = require('./notificationService');
+      createAdminNotification({
+        title: 'New User Registration (Google)',
+        message: `${createdUser.name || createdUser.email} registered via Google OAuth.`,
+        type: 'user',
+        actionLink: '/admin/users',
+      }).catch((err: any) => logger.error('Failed to create admin notification:', err));
+    } catch (notifErr) {
+      logger.error('Failed to create admin notification for Google registration:', notifErr);
+    }
+
     try {
       const { sendDirectEmail } = require('./notificationService');
+      const frontendUrl = getFrontendUrl();
       sendDirectEmail({
-        email: user.email,
-        subject: 'Security Alert: New Login Detected',
-        templateName: 'Suspicious Login Alert',
+        email: createdUser.email,
+        subject: `Welcome to Siri Arts & Crafts, ${createdUser.name}`,
+        templateName: 'Welcome Email',
         templateData: {
-          name: user.name,
-          loginTime: new Date().toLocaleString(),
-          deviceInfo: `Google OAuth from ${ip}`,
+          name: createdUser.name,
+          frontend_url: frontendUrl,
         },
-        type: 'security',
-        action: 'new_login_detected',
-        userId: user._id.toString(),
+        type: 'marketing',
+        action: 'welcome_email',
+        userId: createdUser._id.toString(),
       });
-    } catch (err) {
-      logger.error('Failed to trigger login alert email:', err);
+    } catch (welcomeErr) {
+      logger.error('Failed to initiate welcome email dispatch:', welcomeErr);
     }
 
-    // ── 2FA check (same as OTP flow) ──
-    const userWith2fa = await User.findById(user._id).select('+twoFactorEnabled');
-    if (userWith2fa?.twoFactorEnabled) {
-      const { setTwoFactorPending } = require('../utils/security/twoFactorPending');
-      await setTwoFactorPending(user._id.toString());
-      return {
-        requires2FA: true as const,
-        user: userWith2fa.toObject(),
-        refreshToken: '',
-        accessToken: '',
-      };
-    }
-
-    // ── Create session (JWT + refresh token) ──
-    const session = await SessionAuthService.createSession(user, userAgent);
-    logger.info(`[GOOGLE AUTH] Session created for user ${user._id} (${cleanEmail})`);
-
-    return session;
+    return Object.assign(session, { isNewUser: true });
   }
 }
 

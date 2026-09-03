@@ -28,7 +28,7 @@ async function run() {
     // Set a different port so we don't conflict with ts-node dev server
     const serverEnv = { ...process.env, NODE_ENV: 'production', PORT: '5015', ...test.env };
     // Remove dev-only variables to pass production validation checks
-    delete serverEnv.BYPASS_OTP_CODE;
+
     delete serverEnv.SKIP_INDEX_BUILD;
     delete serverEnv.TEST_RATE_LIMIT;
 

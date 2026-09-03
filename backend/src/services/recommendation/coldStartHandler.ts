@@ -1,4 +1,5 @@
 import Product from '../../models/Product';
+import '../../models/Category';
 import Event from '../../models/Event';
 import Gallery from '../../models/Gallery';
 import { getTrendingFeeds } from './trendingEngine';

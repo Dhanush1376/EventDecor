@@ -36,14 +36,16 @@ export class OrderNotificationService {
         invoiceNumber: order.invoiceNumber,
       };
 
-      // Dispatch to customer
-      await emailQueue.add('orderConfirmationEmail', {
-        to: user.email,
-        subject: `Order Confirmed: #${order._id}`,
-        template: 'order-confirmation',
-        context,
-        generatePdf: true,
-      });
+      // Dispatch to customer (only if they have an email)
+      if (user.email) {
+        await emailQueue.add('orderConfirmationEmail', {
+          to: user.email,
+          subject: `Order Confirmed: #${order._id}`,
+          template: 'order-confirmation',
+          context,
+          generatePdf: true,
+        });
+      }
 
       const itemTitle = order.items && order.items.length > 0 ? order.items[0].title : 'Items';
       const moreCount =
@@ -83,6 +85,10 @@ export class OrderNotificationService {
    */
   static async dispatchOrderFailure(order: any, user: any, reason: string) {
     try {
+      if (!user.email) {
+        logger.info(`[ORDER NOTIFICATION] Skipping failure email — user ${user._id} has no email`);
+        return;
+      }
       await emailQueue.add('orderFailureEmail', {
         to: user.email,
         subject: `Payment Failed for Order #${order._id}`,

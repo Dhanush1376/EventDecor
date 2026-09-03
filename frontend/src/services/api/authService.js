@@ -28,16 +28,37 @@ export const authService = {
     const response = await api.get('/auth/profile', options);
     return response.data;
   },
-  sendOTP: async (email) => {
-    const response = await api.post('/auth/send-otp', { email });
+  requestOTP: async (identifier) => {
+    const response = await api.post('/auth/request-otp', { identifier });
     return response.data;
   },
-  verifyOTP: async (email, otp) => {
-    const response = await api.post('/auth/verify-otp', { email, otp });
+  verifyOTP: async (challengeId, otp) => {
+    const response = await api.post('/auth/verify-otp', { challengeId, otp });
     return response.data;
   },
   googleAuth: async (credential) => {
     const response = await api.post('/auth/google', { credential });
+    return response.data;
+  },
+
+  getLinkedProviders: async () => {
+    const response = await api.get('/auth/link/providers');
+    return response.data;
+  },
+  linkGoogle: async (credential) => {
+    const response = await api.post('/auth/link/google', { credential });
+    return response.data;
+  },
+  linkPhoneRequest: async (phone) => {
+    const response = await api.post('/auth/link/phone/request', { phone });
+    return response.data;
+  },
+  linkPhoneVerify: async (challengeId, otp) => {
+    const response = await api.post('/auth/link/phone/verify', { challengeId, otp });
+    return response.data;
+  },
+  unlinkProvider: async (provider) => {
+    const response = await api.delete(`/auth/link/${provider}`);
     return response.data;
   },
   verify2FALogin: async (userId, token) => {
