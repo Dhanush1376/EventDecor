@@ -546,7 +546,9 @@ export function CartDrawer({ isOpen, onClose }) {
             {items.length > 0 && (
               <div
                 className="p-4 pt-3 border-t border-black/[0.04] space-y-2 bg-white/90 backdrop-blur-xl relative flex-shrink-0"
-                style={{ paddingBottom: `calc(12px + env(safe-area-inset-bottom, 0px))` }}
+                style={{
+                  paddingBottom: `calc(12px + var(--safe-area-bottom, env(safe-area-inset-bottom, 0px)))`,
+                }}
               >
                 {/* Promotions Panel */}
                 {drawerCoupons.length > 0 && !appliedCoupon && (

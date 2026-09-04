@@ -203,7 +203,7 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
             {/* Bottom Thumbnail Strip for Lightbox */}
             {allImages.length > 1 && (
               <div
-                className="w-full pb-[max(16px,env(safe-area-inset-bottom))] pt-3 px-4 flex gap-3 overflow-x-auto no-scrollbar justify-center items-center shrink-0 z-10"
+                className="w-full pb-[max(16px,var(--safe-area-bottom, env(safe-area-inset-bottom)))] pt-3 px-4 flex gap-3 overflow-x-auto no-scrollbar justify-center items-center shrink-0 z-10"
                 onClick={(e) => e.stopPropagation()}
               >
                 {allImages.map((img, idx) => (

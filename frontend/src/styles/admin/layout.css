@@ -284,9 +284,9 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Safe Area Inset Support (Notched Devices) ─────────────────────────── */
-@supports (padding: env(safe-area-inset-bottom)) {
+@supports (padding: var(--safe-area-bottom, env(safe-area-inset-bottom))) {
   .admin-section-root .admin-mobile-bottom-nav {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--safe-area-bottom, env(safe-area-inset-bottom));
   }
 }
 
@@ -458,10 +458,10 @@
 }
 
 /* ── Drawer / Panel safe-area padding ──────────────────────────────────── */
-@supports (padding: env(safe-area-inset-bottom)) {
+@supports (padding: var(--safe-area-bottom, env(safe-area-inset-bottom))) {
   @media (max-width: 640px) {
     .admin-section-root .admin-drawer-footer {
-      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      padding-bottom: calc(12px + var(--safe-area-bottom, env(safe-area-inset-bottom)));
     }
   }
 }

@@ -62,7 +62,7 @@ export function BottomNav() {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       className="bottom-nav lg:hidden fixed bottom-3 left-3 right-3 z-[var(--z-overlay)] bg-[#faf8f2]/95 backdrop-blur-2xl border border-[#b38235]/15 rounded-full h-[65px] px-2 flex items-center justify-evenly select-none shadow-[0_8px_32px_rgba(179,130,53,0.12)]"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      style={{ paddingBottom: 'var(--safe-area-bottom, env(safe-area-inset-bottom, 0px))' }}
     >
       {navItems.map((item) => {
         const active = item.isCart

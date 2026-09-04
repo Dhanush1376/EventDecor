@@ -152,7 +152,7 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[200] flex items-end lg:items-center justify-center p-3 sm:p-4 lg:p-8 pb-[max(16px,env(safe-area-inset-bottom))] lg:pb-8"
+          className="fixed inset-0 z-[200] flex items-end lg:items-center justify-center p-3 sm:p-4 lg:p-8 pb-[max(16px,var(--safe-area-bottom, env(safe-area-inset-bottom)))] lg:pb-8"
           role="dialog"
           aria-modal="true"
           aria-labelledby="quickview-title"
@@ -422,7 +422,7 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
                   )}
                 </div>
 
-                <div className="mt-auto hidden lg:block space-y-4 pb-[max(16px,env(safe-area-inset-bottom))] lg:pb-0">
+                <div className="mt-auto hidden lg:block space-y-4 pb-[max(16px,var(--safe-area-bottom, env(safe-area-inset-bottom)))] lg:pb-0">
                   <button
                     onClick={handleAddToCart}
                     className="w-full btn-primary !py-4 md:!py-5 flex items-center justify-center gap-3 font-bold cursor-pointer shadow-lg hover:scale-[1.02] transition-transform"

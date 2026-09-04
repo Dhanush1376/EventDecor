@@ -236,7 +236,7 @@
 }
 
 @utility pb-safe-area-inset-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--safe-area-bottom, env(safe-area-inset-bottom));
 }
 
 @utility pt-safe-area-inset-top {

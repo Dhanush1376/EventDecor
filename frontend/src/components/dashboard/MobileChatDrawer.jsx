@@ -115,7 +115,10 @@ export function MobileChatDrawer({
               <form
                 onSubmit={handleSendChat}
                 className="border-t border-black/5 px-4 py-3 shrink-0 flex items-center gap-2 bg-white"
-                style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
+                style={{
+                  paddingBottom:
+                    'calc(0.75rem + var(--safe-area-bottom, env(safe-area-inset-bottom, 0px)))',
+                }}
               >
                 <input
                   type="text"
