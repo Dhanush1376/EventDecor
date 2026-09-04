@@ -15,8 +15,9 @@ import { useDraft } from '../hooks/useDraft';
 
 // Settings Panels
 import { ProfilePanel } from '../components/settings/ProfilePanel';
-import { BrandingPanel } from '../components/settings/BrandingPanel';
+
 import { WhatsAppPanel } from '../components/settings/WhatsAppPanel';
+import AiSettingsPanel from '../components/settings/AiSettingsPanel';
 import { SecurityPanel } from '../components/settings/SecurityPanel';
 import { EmailSmtpPanel } from '../components/settings/EmailSmtpPanel';
 import {
@@ -33,6 +34,7 @@ import {
   NotificationSettingsPanel,
   StorefrontSettingsPanel,
 } from '../components/settings/StoreSettingsPanels';
+import { VisualSearchPanel } from '../components/settings/VisualSearchPanel';
 
 export function AdminSettings({ hideHeader }) {
   const { user: authUser, setUser: setAuthUser } = useAuth();
@@ -357,7 +359,7 @@ export function AdminSettings({ hideHeader }) {
   const sectionsList = [
     { id: 'profile', title: 'Profile & Account', icon: 'person' },
     { id: 'general', title: 'General Info', icon: 'store' },
-    { id: 'branding', title: 'Visual Branding', icon: 'palette' },
+
     { id: 'shipping', title: 'Shipping & Delivery', icon: 'local_shipping' },
     { id: 'payments', title: 'Payment Methods', icon: 'payments' },
     { id: 'returnsExchanges', title: 'Returns & Exchanges', icon: 'sync' },
@@ -372,6 +374,8 @@ export function AdminSettings({ hideHeader }) {
     { id: 'whatsapp', title: 'WhatsApp Automations', icon: 'chat' },
     { id: 'security', title: 'Security & Operations', icon: 'shield' },
     { id: 'email', title: 'Email Diagnostics', icon: 'mail' },
+    { id: 'visualSearch', title: 'AI Visual Search', icon: 'image_search' },
+    { id: 'aiPlatform', title: 'Global AI Platform', icon: 'memory' },
   ];
 
   return (
@@ -442,8 +446,7 @@ export function AdminSettings({ hideHeader }) {
                 <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium">
                   Update details for {sectionsList[activeSection].title} in database
                 </p>
-                {(sectionsList[activeSection].id === 'branding' ||
-                  sectionsList[activeSection].id === 'whatsapp') && (
+                {sectionsList[activeSection].id === 'whatsapp' && (
                   <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
                 )}
               </div>
@@ -474,16 +477,6 @@ export function AdminSettings({ hideHeader }) {
               formData={storeSettings.shipping || {}}
               handleChange={handleStoreSettingsChange('shipping')}
               handleSave={handleStoreSettingsSave('shipping')}
-              saving={saving}
-            />
-          )}
-
-          {sectionsList[activeSection].id === 'branding' && (
-            <BrandingPanel
-              settings={settings}
-              setSettings={setSettings}
-              handleGlobalSettingsSave={handleGlobalSettingsSave}
-              syncSettingsData={syncSettingsData}
               saving={saving}
             />
           )}
@@ -628,6 +621,10 @@ export function AdminSettings({ hideHeader }) {
               smtpTestResult={smtpTestResult}
             />
           )}
+
+          {sectionsList[activeSection].id === 'visualSearch' && <VisualSearchPanel />}
+
+          {sectionsList[activeSection].id === 'aiPlatform' && <AiSettingsPanel />}
         </motion.div>
       </div>
 

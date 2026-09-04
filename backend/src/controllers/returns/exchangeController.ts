@@ -147,9 +147,18 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
     throw new ApiError(400, 'Invalid payment signature');
   }
 
-  const exchangeRequest = await ExchangeRequest.findOne({ additionalPaymentId: razorpayOrderId });
+  const exchangeRequest = await ExchangeRequest.findOne({
+    additionalPaymentId: razorpayOrderId,
+  }).populate('returnRequestId');
+
   if (!exchangeRequest) {
     throw new ApiError(404, 'Exchange request not found for this payment');
+  }
+
+  // Authorization check
+  const returnReqDoc = exchangeRequest.returnRequestId as any;
+  if (!returnReqDoc || returnReqDoc.userId.toString() !== (req.user as any)?._id?.toString()) {
+    throw new ApiError(403, 'Not authorized to verify payment for this exchange');
   }
 
   if (exchangeRequest.paymentStatus === 'payment_paid') {

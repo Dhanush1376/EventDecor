@@ -628,7 +628,7 @@ export function AdminTeam({ hideHeader = false, setHeaderAction }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 50 }}
               transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-              className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] sm:rounded-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] sm:max-h-[85vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t sm:border border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+var(--safe-area-bottom, env(safe-area-inset-bottom)))] sm:pb-8"
+              className="relative w-full max-w-xl bg-[var(--admin-surface)] rounded-t-[24px] sm:rounded-[24px] shadow-[0_-8px_30px_rgb(0,0,0,0.18)] z-10 max-h-[92vh] sm:max-h-[85vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 lg:p-8 border-t sm:border border-[var(--admin-border-strong)] flex flex-col pb-[calc(24px+var(--safe-area-bottom,_env(safe-area-inset-bottom)))] sm:pb-8"
             >
               {/* Grab Handle (Mobile Only) */}
               <div className="w-12 h-1 bg-[var(--admin-border)] rounded-full mx-auto mb-4 shrink-0 sm:hidden" />

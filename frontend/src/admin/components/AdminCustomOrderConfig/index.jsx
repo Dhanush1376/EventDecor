@@ -33,13 +33,13 @@ export function AdminCustomOrderConfig() {
       setLoading(true);
       const res = await customOrderService.getAdminConfig(); // Fetches latest draft or published
       if (res.success && res.data?.types) {
-        setConfig(res.data);
-        if (res.data.types.length > 0) setActiveTypeTab(res.data.types[0].id);
+        const filteredTypes = res.data.types.filter((t) => t.id !== 'event');
+        setConfig({ ...res.data, types: filteredTypes });
+        if (filteredTypes.length > 0) setActiveTypeTab(filteredTypes[0].id);
       } else {
         // Fallback structure
         const defaultTypes = [
           { id: 'product', name: 'Product Customization', enabled: true, steps: [], workflows: [] },
-          { id: 'event', name: 'Event Display Setup', enabled: true, steps: [], workflows: [] },
           { id: 'general', name: 'General Custom Order', enabled: true, steps: [], workflows: [] },
         ];
         setConfig({ types: defaultTypes, status: 'draft' });

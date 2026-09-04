@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
+import { useConfig } from '../../context/ConfigContext';
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import {
   SITE_URL,
@@ -48,15 +49,19 @@ export function SEO({
 }) {
   const location = useLocation();
   const { footer, contact, seo } = useWebsiteContent();
+  const { storeSettings } = useConfig();
+
   const sameAs = buildSameAsLinks(footer?.socialLinks);
-  const siteName = SITE_NAME || 'Siri Arts & Crafts';
+  const siteName = storeSettings?.general?.storeName || SITE_NAME || 'Siri Arts & Crafts';
   const siteUrl = SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
-  const contactPhone = contact?.phone
-    ? `+91-${String(contact.phone).replace(/^\+91-?/, '')}`
+
+  const settingsPhone = storeSettings?.contact?.phone || contact?.phone;
+  const contactPhone = settingsPhone
+    ? `+91-${String(settingsPhone).replace(/^\+91-?/, '')}`
     : CONTACT_PHONE;
 
-  const globalSeoTitle = seo?.globalTitle;
-  const globalSeoDesc = seo?.globalDescription;
+  const globalSeoTitle = storeSettings?.storefront?.seoTitle || seo?.globalTitle;
+  const globalSeoDesc = storeSettings?.storefront?.seoDescription || seo?.globalDescription;
   const globalSeoKeywords = seo?.globalKeywords;
   const globalSeoOgImage = seo?.ogImage;
 

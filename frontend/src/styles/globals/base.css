@@ -1,10 +1,19 @@
 @layer base {
+  :root {
+    --visual-viewport-height: 100dvh;
+    --keyboard-offset: 0px;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
     text-size-adjust: 100%;
     overflow-x: clip;
     background: var(--color-surface);
+  }
+
+  html.keyboard-open {
+    /* Optional global overrides when keyboard is open */
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -131,6 +131,8 @@ export const updateOrderPublicStatus = asyncHandler(async (req: Request, res: Re
     req.params.id as string,
     status,
     note,
+    undefined,
+    isPrivileged,
   );
   res
     .status(200)

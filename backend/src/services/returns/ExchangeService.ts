@@ -83,9 +83,9 @@ export class ExchangeService {
               productId: originalProductId,
               returnQuantity: quantity,
               reason: reason || `Exchange for ${replacementProduct.title}`,
-              refundMethod: differenceAction === 'refund_difference' ? refundMethod : undefined,
             },
           ],
+          refundMethod: differenceAction === 'refund_difference' ? refundMethod : undefined,
           pickupAddress,
         },
         idempotencyKey ? `${idempotencyKey}_return` : undefined,
@@ -149,13 +149,17 @@ export class ExchangeService {
       await exchangeRequest.save({ session });
 
       // Reserve stock for replacement
-      await InventoryService.reserveInventory(
+      const reservation = await InventoryService.reserveInventory(
         replacementProduct._id.toString(),
         quantity,
         userId,
         60 * 24 * 7, // Reserve for 7 days
         session,
       );
+
+      // Persist reservation ID for lifecycle management (confirm on delivery, cancel on rejection)
+      exchangeRequest.replacementItem.reservationId = reservation._id;
+      await exchangeRequest.save({ session });
 
       let razorpayOrderId;
       let amountToPay = 0;

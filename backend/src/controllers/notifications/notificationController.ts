@@ -12,6 +12,7 @@ import ApiError from '../../utils/ApiError';
 import { runCampaignDispatch } from '../../services/notificationService';
 import logger from '../../config/logger';
 import { getFrontendUrl } from '../../utils/getFrontendUrl';
+import { EmailAdapter } from '../../services/notifications/adapters/EmailAdapter';
 
 // A transparent 1x1 pixel image GIF buffer for email open tracking
 const transparentGif = Buffer.from(
@@ -388,4 +389,65 @@ export const getNotificationAnalytics = asyncHandler(async (req: Request, res: R
       dailyTrends: dailyDispatches,
     }),
   );
+});
+
+export const testSmtpLive = asyncHandler(async (req: Request, res: Response) => {
+  const toEmail = req.query.to as string;
+  if (!toEmail) throw new ApiError(400, 'Recipient email is required for SMTP test');
+
+  try {
+    const adapter = new EmailAdapter();
+    const payload = {
+      subject: 'SMTP Diagnostic Test - Siri Arts & Crafts',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <h2 style="color: #0f172a; margin-top: 0;">System Diagnostic Alert</h2>
+          <p style="color: #334155; line-height: 1.6;">
+            This is an automated test message from the Siri Arts & Crafts administration panel.
+          </p>
+          <div style="background-color: #f1f5f9; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <p style="margin: 0; color: #475569; font-size: 14px;">
+              <strong>Status:</strong> Connection Successful<br>
+              <strong>Timestamp:</strong> ${new Date().toISOString()}<br>
+              <strong>Environment:</strong> ${process.env.NODE_ENV || 'development'}
+            </p>
+          </div>
+          <p style="color: #64748b; font-size: 12px; margin-bottom: 0;">
+            If you received this email, the SMTP configuration on the server is correct and operational.
+          </p>
+        </div>
+      `,
+      from: `"System Admin" <${process.env.SMTP_FROM || 'admin@siriartsandcrafts.com'}>`,
+    };
+
+    const result = await adapter.send({ email: toEmail }, payload, 'high');
+
+    if (result.success) {
+      res.status(200).json(
+        new ApiResponse(true, 'Test email dispatched successfully', {
+          messageId: result.messageId,
+          details: {
+            user: process.env.SMTP_USER || 'unknown',
+            host: process.env.SMTP_HOST || 'unknown',
+            port: process.env.SMTP_PORT || 'unknown',
+            recipient: toEmail,
+            provider: result.provider,
+          },
+        }),
+      );
+    } else {
+      res.status(400).json(
+        new ApiResponse(false, 'Failed to send test email via all providers.', {
+          errorMessage: result.reason || 'Unknown error',
+        }),
+      );
+    }
+  } catch (error: any) {
+    logger.error('SMTP test failed:', error);
+    res.status(500).json(
+      new ApiResponse(false, 'SMTP transport error', {
+        errorMessage: error.message || String(error),
+      }),
+    );
+  }
 });

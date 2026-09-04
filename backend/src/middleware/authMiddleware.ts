@@ -120,11 +120,10 @@ const checkSafetyLock = async (req: Request) => {
   req._safetyLockChecked = true;
 
   if (safetyLockDoc?.data?.safetyLock === true) {
-    // throw new ApiError(
-    //   403,
-    //   'Global safety write override lock is active on the backend. Write operations are blocked.',
-    // );
-    // Bypass for furious user
+    throw new ApiError(
+      403,
+      'Global safety write override lock is active on the backend. Write operations are blocked.',
+    );
   }
 };
 

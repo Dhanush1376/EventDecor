@@ -226,19 +226,53 @@ export class OrderCheckoutService {
       }
 
       const user = await User.findById(userId).session(session);
+
+      if (isCod) {
+        if (!settings.payments.enableCOD) {
+          throw new ApiError(400, 'Cash on Delivery is currently disabled.');
+        }
+        if (settings.payments.codMinOrder && subtotal < settings.payments.codMinOrder) {
+          throw new ApiError(
+            400,
+            `Minimum order amount for COD is ₹${settings.payments.codMinOrder}`,
+          );
+        }
+        if (settings.payments.codMaxOrder && subtotal > settings.payments.codMaxOrder) {
+          throw new ApiError(
+            400,
+            `Maximum order amount for COD is ₹${settings.payments.codMaxOrder}`,
+          );
+        }
+      } else if (paymentMethod === 'razorpay') {
+        if (!settings.payments.enableRazorpay) {
+          throw new ApiError(400, 'Online payments are currently disabled.');
+        }
+      }
+
       const totals = computeOrderTotals({
         subtotal,
         discount,
         depositTotal,
         isCod,
         codFee: settings.payments.codFee,
-        freeShippingThreshold: settings.shipping.freeShippingThreshold,
+        freeShippingThreshold: settings.shipping.enableFreeShipping
+          ? settings.shipping.freeShippingThreshold
+          : Infinity,
         deliveryCharge: settings.shipping.deliveryCharge,
-        useWallet: Boolean(useWallet && user),
+        useWallet: Boolean(useWallet && user && settings.loyalty.walletEnabled),
         walletBalance: user?.walletBalance || 0,
       });
 
       const { shippingFee, codFee, total } = totals;
+
+      const orderValueForLimits = total - depositTotal;
+      if (settings.orders.minOrderValue && orderValueForLimits < settings.orders.minOrderValue) {
+        throw new ApiError(400, `Minimum order value must be ₹${settings.orders.minOrderValue}`);
+      }
+      if (settings.orders.maxOrderValue && orderValueForLimits > settings.orders.maxOrderValue) {
+        throw new ApiError(400, `Maximum order value must be ₹${settings.orders.maxOrderValue}`);
+      }
+
       walletDeduction = totals.walletDeduction;
       if (walletDeduction > 0) walletDeducted = true;
 
@@ -246,6 +280,7 @@ export class OrderCheckoutService {
       const invoiceSnapshots = await InvoiceService.generateOrderSnapshots(
         { subtotal, discount, shippingFee, codFee, walletDeduction, total },
         {
+          gstEnabled: settings.taxes.gstEnabled,
           taxRate: settings.taxes.gstRate,
           cgstRate: settings.taxes.cgstRate,
           sgstRate: settings.taxes.sgstRate,

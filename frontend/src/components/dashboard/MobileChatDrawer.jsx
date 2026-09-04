@@ -32,10 +32,10 @@ export function MobileChatDrawer({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            className="relative z-10 w-full flex flex-col"
+            className="relative z-10 w-full flex flex-col keyboard-aware-drawer"
             style={{ height: '82vh' }}
           >
-            <div className="absolute top-[98%] left-0 right-0 h-[50vh] bg-white sm:hidden z-[-1]" />
+            <div className="absolute top-[98%] left-0 right-0 h-[100vh] bg-white sm:hidden z-[-1]" />
             <div className="w-full h-full bg-white rounded-t-[28px] flex flex-col relative overflow-hidden">
               {/* Drag handle pill */}
               <div className="flex justify-center pt-3 pb-1 shrink-0">

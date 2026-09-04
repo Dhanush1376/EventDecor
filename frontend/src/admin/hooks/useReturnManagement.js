@@ -147,6 +147,21 @@ export const useReturnManagement = () => {
     }
   };
 
+  const submitInspection = async (id, itemIndex, data) => {
+    setLoading(true);
+    try {
+      await returnService.submitInspection(id, itemIndex, data);
+      toast.success('Inspection submitted successfully');
+      if (currentReturn && currentReturn.request._id === id) {
+        await fetchReturnDetails(id);
+      } else {
+        setLoading(false);
+      }
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
   const triggerRefund = async (id, method) => {
     setLoading(true);
     try {
@@ -456,6 +471,7 @@ export const useReturnManagement = () => {
     schedulePickup,
     completeReturn,
     getOrderReturnSummary,
+    submitInspection,
   };
 };
 

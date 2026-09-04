@@ -28,8 +28,9 @@ export function PaymentModal({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="bg-surface-bright rounded-t-2xl sm:rounded-2xl border border-outline-variant/30 shadow-2xl p-6 lg:p-8 w-full sm:max-w-md relative z-10 space-y-6 max-h-[90vh] overflow-y-auto"
+            className="bg-surface-bright rounded-t-2xl sm:rounded-2xl border border-outline-variant/30 shadow-2xl p-6 lg:p-8 w-full sm:max-w-md relative z-10 space-y-6 max-h-[90vh] overflow-y-auto keyboard-aware-drawer"
           >
+            <div className="absolute top-[98%] left-0 right-0 h-[100vh] bg-surface-bright sm:hidden z-[-1]" />
             <div className="flex justify-between items-start border-b border-outline-variant/20 pb-3">
               <div className="space-y-0.5">
                 <span className="font-label text-[8px] uppercase tracking-widest text-primary font-bold">

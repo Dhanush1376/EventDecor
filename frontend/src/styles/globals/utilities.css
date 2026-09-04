@@ -628,3 +628,14 @@ body.filters-open img[src*='mandala'] {
 @utility bg-black {
   background-color: #2a2825 !important;
 }
+
+/* ─── Keyboard Aware Utilities ─── */
+/* These utilities ensure drawers and backdrops cover the gap when the mobile keyboard opens */
+html.keyboard-open .keyboard-aware-drawer {
+  max-height: calc(var(--visual-viewport-height) - 10px) !important;
+  height: calc(var(--visual-viewport-height) - 10px) !important;
+}
+
+html.keyboard-open .keyboard-aware-backdrop {
+  height: calc(var(--visual-viewport-height) + var(--keyboard-offset)) !important;
+}

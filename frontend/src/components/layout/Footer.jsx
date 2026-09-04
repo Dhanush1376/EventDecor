@@ -29,15 +29,24 @@ export function Footer() {
   const _restWords = logoWords.slice(1).join(' ') || 'ARTS & CRAFTS';
   const currentYear = new Date().getFullYear();
 
-  const phone = settings?.general?.supportPhone || contact?.phone || footer?.phone || '';
-  const email = settings?.general?.supportEmail || contact?.email || footer?.email || CONTACT_EMAIL;
+  const phone = settings?.contact?.phone || contact?.phone || footer?.phone || '';
+  const email =
+    settings?.contact?.email ||
+    settings?.general?.supportEmail ||
+    contact?.email ||
+    footer?.email ||
+    CONTACT_EMAIL;
 
   const instagramLink =
     settings?.social?.instagramUrl || footer?.socialLinks?.instagram || SOCIAL_INSTAGRAM;
   const pinterestLink =
     settings?.social?.pinterestUrl || footer?.socialLinks?.pinterest || SOCIAL_PINTEREST;
 
-  const businessName = settings?.general?.storeName || 'Siri Arts & Crafts';
+  const businessName =
+    settings?.legal?.legalCompanyName ||
+    settings?.legal?.companyName ||
+    settings?.general?.storeName ||
+    'Siri Arts & Crafts';
 
   // Dynamic CMS Link Mappings
   let exploreLinks =

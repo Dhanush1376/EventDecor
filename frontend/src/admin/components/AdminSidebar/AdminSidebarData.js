@@ -32,6 +32,13 @@ export const navSections = [
         keywords: 'photos, heritage, images',
         domain: 'settings',
       },
+      {
+        label: 'Payments',
+        icon: 'payments',
+        path: '/admin/payments',
+        keywords: 'payments, transactions',
+        domain: 'revenue',
+      },
     ],
   },
   {
@@ -241,20 +248,7 @@ export const navSections = [
         keywords: 'alerts, rules, emails',
         domain: 'settings',
       },
-      {
-        label: 'Global AI Platform',
-        icon: 'memory',
-        path: '/admin/ai-settings',
-        keywords: 'ai, machine learning, providers, models',
-        domain: 'settings',
-      },
 
-      {
-        label: 'WhatsApp Automations',
-        icon: 'chat',
-        path: '/admin/whatsapp-automations',
-        badge: 'NEW',
-      },
       {
         label: 'Settings',
         icon: 'settings',
@@ -272,10 +266,9 @@ export const navSections = [
       {
         label: 'Recycle Bin',
         icon: 'delete_sweep',
-        path: '/admin/recycle-bin',
-        keywords: 'trash, deleted, restore, recycle, bin',
-        domain: 'danger',
-        badge: 'NEW',
+        path: '/admin/system/trash',
+        keywords: 'trash, deleted, restore, purge',
+        domain: 'settings',
       },
     ],
   },

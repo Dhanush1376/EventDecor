@@ -39,6 +39,7 @@ const AdminReturnDetail = () => {
     rejectReturn,
     transitionStatus,
     triggerRefund,
+    submitInspection,
     addInternalNote,
     loading,
     error,
@@ -47,7 +48,37 @@ const AdminReturnDetail = () => {
   const [internalNote, setInternalNote] = useState('');
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [inspectionState, setInspectionState] = useState({});
   const confirm = useConfirm();
+
+  const handleInspectionChange = (itemIndex, field, value) => {
+    setInspectionState((prev) => ({
+      ...prev,
+      [itemIndex]: {
+        ...(prev[itemIndex] || {
+          originalProduct: true,
+          accessoriesPresent: true,
+          packagingIntact: true,
+          workingCondition: true,
+          inspectionScore: 100,
+          remarks: '',
+        }),
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleInspectionSubmit = async (itemIndex) => {
+    const data = inspectionState[itemIndex] || {
+      originalProduct: true,
+      accessoriesPresent: true,
+      packagingIntact: true,
+      workingCondition: true,
+      inspectionScore: 100,
+      remarks: '',
+    };
+    await submitInspection(id, itemIndex, data);
+  };
 
   useEffect(() => {
     fetchReturnDetails(id);
@@ -209,7 +240,7 @@ const AdminReturnDetail = () => {
       <PageHeader
         title={`Return Request ${request.returnId}`}
         subtitle={`Requested on ${request.createdAt ? format(new Date(request.createdAt), 'MMM dd, yyyy HH:mm') : 'Unknown Date'}`}
-        backButton={{ path: '/admin/returns/requests', label: 'Back to Requests' }}
+        backButton={{ path: '/admin/returns', label: 'Back to Returns' }}
         headerAction={
           <div className="flex gap-2">
             {request.status === 'submitted' && (
@@ -238,36 +269,44 @@ const AdminReturnDetail = () => {
                     {request.status === 'approved' && (
                       <button
                         className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
-                        onClick={() => handleTransition('pickup_assigned')}
+                        onClick={() => handleTransition('return_courier_assigned')}
                       >
-                        Assign Pickup
+                        Assign Courier
                       </button>
                     )}
-                    {request.status === 'pickup_assigned' && (
+                    {request.status === 'return_courier_assigned' && (
                       <button
                         className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
-                        onClick={() => handleTransition('pickup_accepted')}
-                      >
-                        Accept Pickup
-                      </button>
-                    )}
-                    {request.status === 'pickup_accepted' && (
-                      <button
-                        className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
-                        onClick={() => handleTransition('picked_up')}
+                        onClick={() => handleTransition('return_picked_up')}
                       >
                         Mark Picked Up
                       </button>
                     )}
-                    {request.status === 'picked_up' && (
+                    {request.status === 'return_picked_up' && (
+                      <>
+                        <button
+                          className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
+                          onClick={() => handleTransition('return_in_transit')}
+                        >
+                          Mark In Transit
+                        </button>
+                        <button
+                          className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
+                          onClick={() => handleTransition('return_received')}
+                        >
+                          Mark Received at Warehouse
+                        </button>
+                      </>
+                    )}
+                    {request.status === 'return_in_transit' && (
                       <button
                         className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
-                        onClick={() => handleTransition('reached_warehouse')}
+                        onClick={() => handleTransition('return_received')}
                       >
-                        Warehouse Reached
+                        Mark Received at Warehouse
                       </button>
                     )}
-                    {request.status === 'reached_warehouse' && (
+                    {request.status === 'return_received' && (
                       <button
                         className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
                         onClick={() => handleTransition('inspection_started')}
@@ -279,9 +318,9 @@ const AdminReturnDetail = () => {
                       <>
                         <button
                           className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm text-green-600"
-                          onClick={() => handleTransition('inspection_passed')}
+                          onClick={() => handleTransition('inspection_completed')}
                         >
-                          Pass Inspection
+                          Complete Inspection
                         </button>
                         <button
                           className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm text-red-600"
@@ -291,26 +330,8 @@ const AdminReturnDetail = () => {
                         </button>
                       </>
                     )}
-                    {request.status === 'inspection_passed' && (
-                      <button
-                        className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
-                        onClick={() => handleTransition('refund_triggered')}
-                      >
-                        Trigger Refund
-                      </button>
-                    )}
-                    {request.status === 'refund_triggered' && (
-                      <button
-                        className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm text-green-600"
-                        onClick={() => handleTransition('completed')}
-                      >
-                        Mark Completed
-                      </button>
-                    )}
 
-                    {['approved', 'pickup_assigned', 'pickup_accepted'].includes(
-                      request.status,
-                    ) && (
+                    {['approved', 'return_courier_assigned'].includes(request.status) && (
                       <button
                         className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm text-red-600 border-t border-admin-border"
                         onClick={() => setIsRejectOpen(true)}
@@ -596,12 +617,99 @@ const AdminReturnDetail = () => {
                         </div>
                       )}
                     </div>
+                  ) : ['return_received', 'inspection_started'].includes(request.status) ? (
+                    <div className="p-3 sm:p-4 bg-white rounded-lg border border-gray-200 m-3 shadow-sm">
+                      <h5 className="text-[10px] font-bold mb-3 uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[14px]">fact_check</span>
+                        Submit Inspection
+                      </h5>
+                      <div className="space-y-3">
+                        {[
+                          'originalProduct',
+                          'accessoriesPresent',
+                          'packagingIntact',
+                          'workingCondition',
+                        ].map((field) => (
+                          <div key={field} className="flex justify-between items-center text-xs">
+                            <span className="text-gray-700 font-medium capitalize">
+                              {field.replace(/([A-Z])/g, ' $1').trim()}
+                            </span>
+                            <div className="flex gap-2">
+                              <button
+                                className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
+                                  (inspectionState[index]?.[field] ?? true) === true
+                                    ? 'bg-green-50 text-green-700 border-green-200'
+                                    : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'
+                                }`}
+                                onClick={() => handleInspectionChange(index, field, true)}
+                              >
+                                Yes
+                              </button>
+                              <button
+                                className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
+                                  (inspectionState[index]?.[field] ?? true) === false
+                                    ? 'bg-red-50 text-red-700 border-red-200'
+                                    : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'
+                                }`}
+                                onClick={() => handleInspectionChange(index, field, false)}
+                              >
+                                No
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="pt-2 border-t border-gray-100">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">
+                            Score (0-100)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            className="w-full text-sm p-2 border border-gray-200 rounded-md focus:ring-1 focus:ring-admin-primary focus:border-admin-primary"
+                            value={inspectionState[index]?.inspectionScore ?? 100}
+                            onChange={(e) =>
+                              handleInspectionChange(
+                                index,
+                                'inspectionScore',
+                                parseInt(e.target.value) || 0,
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">
+                            Remarks
+                          </label>
+                          <textarea
+                            className="w-full text-xs p-2 border border-gray-200 rounded-md focus:ring-1 focus:ring-admin-primary focus:border-admin-primary"
+                            rows="2"
+                            placeholder="Add detailed inspection notes here..."
+                            value={inspectionState[index]?.remarks || ''}
+                            onChange={(e) =>
+                              handleInspectionChange(index, 'remarks', e.target.value)
+                            }
+                          />
+                        </div>
+                        <button
+                          className="w-full mt-2 py-2 bg-admin-primary text-white text-xs font-bold rounded-md hover:bg-admin-primary-dark transition-colors shadow-sm"
+                          onClick={() => handleInspectionSubmit(index)}
+                        >
+                          Submit Results
+                        </button>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="p-4 flex flex-col items-center justify-center text-gray-400">
-                      <span className="material-symbols-outlined text-2xl mb-2 opacity-40">
+                    <div className="p-4 flex flex-col items-center justify-center text-gray-400 h-full min-h-[200px]">
+                      <span className="material-symbols-outlined text-4xl mb-2 opacity-30">
                         pending_actions
                       </span>
-                      <p className="text-xs font-semibold">Pending Inspection</p>
+                      <p className="text-xs font-semibold">
+                        {request.status === 'inspection_started' ||
+                        request.status === 'return_received'
+                          ? 'Ready for Inspection'
+                          : 'Pending Arrival'}
+                      </p>
                     </div>
                   )}
                 </div>

@@ -45,6 +45,7 @@ const mapDbNotificationToFrontend = (n) => ({
     : 'Just now',
   timestamp: n.createdAt || n.timestamp || extractTimestamp(n._id || n.id),
   actionLink: n.actionLink,
+  image: n.metadata?.image || null,
   rawNotification: n,
 });
 

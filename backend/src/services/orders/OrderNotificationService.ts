@@ -74,6 +74,9 @@ export class OrderNotificationService {
         message: `${user.name || 'A customer'} placed a new order (₹${order.total}).`,
         type: 'order',
         actionLink: `/admin/orders/${order._id}`,
+        metadata: {
+          image: order.items && order.items.length > 0 ? order.items[0].imageSrc : null,
+        },
       });
     } catch (err) {
       logger.error('Failed to enqueue order confirmation notifications:', err);

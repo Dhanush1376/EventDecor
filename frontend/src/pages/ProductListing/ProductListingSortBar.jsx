@@ -18,6 +18,7 @@ export const ProductListingSortBar = ({
   setNavbarHeight,
   isStuck,
   setIsStuck,
+  visualSearchEnabled,
 }) => {
   const navRef = useRef(null);
 
@@ -77,11 +78,15 @@ export const ProductListingSortBar = ({
             <SearchBar
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              onCameraClick={() => {
-                window.dispatchEvent(
-                  new CustomEvent('open-global-search', { detail: { mode: 'visual' } }),
-                );
-              }}
+              onCameraClick={
+                visualSearchEnabled
+                  ? () => {
+                      window.dispatchEvent(
+                        new CustomEvent('open-global-search', { detail: { mode: 'visual' } }),
+                      );
+                    }
+                  : undefined
+              }
               placeholder="Search masterworks..."
               className="w-full h-[44px] lg:h-[44px] !rounded-full bg-surface-bright shadow-[0_2px_8px_rgba(115,92,0,0.08)] border border-outline-variant/15 !px-3 lg:!px-4 text-[13px] lg:text-[12px] flex items-center outline-none focus:outline-none"
             />

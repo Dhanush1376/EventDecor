@@ -67,7 +67,7 @@ export function AdminGallery() {
         galleryService.getAll({ limit: 1000 }),
         galleryService.getCategories(),
         productService.getAll({ limit: 150 }),
-        storeSettingsService.getSettings(),
+        storeSettingsService.getAdminSettings(),
       ]);
       if (res.success) setItems(res.data.data || res.data.items || res.data || []);
       if (catRes.success) {
@@ -231,7 +231,7 @@ export function AdminGallery() {
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     try {
-      await storeSettingsService.updateSettings('storefront', {
+      await storeSettingsService.updateSection('storefront', {
         ...storefrontSettings,
       });
       toast.success('Gallery settings updated');

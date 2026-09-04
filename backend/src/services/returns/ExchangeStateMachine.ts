@@ -66,17 +66,30 @@ export class ExchangeStateMachine {
       // or at least signal that the exchange portion is done.
       // In this architecture, ReturnRequest status 'completed' implies the whole return workflow is done.
       if (nextStatus === 'delivered') {
+        if (exchange.replacementItem.reservationId) {
+          const { InventoryService } = require('../InventoryService');
+          await InventoryService.confirmReservation(
+            exchange.replacementItem.reservationId.toString(),
+            session,
+          );
+        }
+
         const underlyingReturn = await mongoose
           .model('ReturnRequest')
           .findById(exchange.returnRequestId)
           .session(session);
         if (underlyingReturn && underlyingReturn.status !== 'completed') {
-          // This will trigger ReturnStateMachine side effects, notably setting Order.hasActiveExchange = false
-          await ReturnStateMachine.transition(
+          await ReturnStateMachine.autoCompleteExchange(
             underlyingReturn._id.toString(),
-            'completed',
             adminId || 'system',
-            undefined,
+            session,
+          );
+        }
+      } else if (nextStatus === 'cancelled') {
+        if (exchange.replacementItem.reservationId) {
+          const { InventoryService } = require('../InventoryService');
+          await InventoryService.cancelReservation(
+            exchange.replacementItem.reservationId.toString(),
             session,
           );
         }

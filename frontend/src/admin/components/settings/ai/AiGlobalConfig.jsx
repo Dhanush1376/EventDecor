@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { aiService } from '../../../services/api/aiService';
+import { aiService } from '../../../../services/api/aiService';
 
 const AiGlobalConfig = ({ settings, providers, onRefresh }) => {
   const [formData, setFormData] = useState({

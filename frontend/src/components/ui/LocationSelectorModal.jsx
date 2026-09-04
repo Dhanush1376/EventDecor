@@ -166,6 +166,7 @@ export function LocationSelectorModal({
       // Initialize map instance
       const map = L.map(container, {
         zoomControl: false,
+        tap: false, // Fixes mobile touch/click issues in modals
       }).setView([lat, lng], 13);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -413,7 +414,11 @@ export function LocationSelectorModal({
 
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            toast.error('GPS Access Denied! Please enable browser location permissions.');
+            toast.error(
+              window.isSecureContext
+                ? 'GPS Access Denied! Please enable browser location permissions.'
+                : 'Location requires a secure connection (HTTPS).',
+            );
             break;
           case error.POSITION_UNAVAILABLE:
             toast.error('Location details unavailable. Please drop a manual map pin.');
@@ -468,9 +473,10 @@ export function LocationSelectorModal({
             className={`relative bg-[#FCFAF6] border border-[#826237]/30 w-full font-body flex flex-col z-10 ${
               inline
                 ? 'rounded-2xl'
-                : 'max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden'
+                : 'max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden keyboard-aware-drawer'
             }`}
           >
+            <div className="absolute top-[98%] left-0 right-0 h-[100vh] bg-[#FCFAF6] sm:hidden z-[-1]" />
             {/* Elegant Header Banner */}
             {!inline && (
               <div className="bg-[#FAF6F0] px-6 py-5 border-b border-black/5 flex items-center justify-between relative">
@@ -560,10 +566,6 @@ export function LocationSelectorModal({
                         <button
                           key={idx}
                           type="button"
-                          onPointerDown={(e) => {
-                            e.preventDefault();
-                            handleSelectSuggestion(item);
-                          }}
                           onClick={() => handleSelectSuggestion(item)}
                           className="w-full text-left px-5 py-3 hover:bg-stone-50 text-xs text-stone-700 leading-relaxed font-medium transition-colors flex items-start gap-2.5"
                         >

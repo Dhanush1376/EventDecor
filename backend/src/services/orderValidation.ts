@@ -241,7 +241,9 @@ export class OrderValidationService {
 
     const { paymentMethod, useWallet } = data;
     const shippingFee =
-      subtotal > settings.shipping.freeShippingThreshold || subtotal === 0
+      (settings.shipping.enableFreeShipping &&
+        subtotal > settings.shipping.freeShippingThreshold) ||
+      subtotal === 0
         ? 0
         : settings.shipping.deliveryCharge;
     const platformFee = settings.orders.platformFee;
@@ -253,8 +255,15 @@ export class OrderValidationService {
 
     const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee - discount);
 
+    if (settings.orders.minOrderValue && preliminaryTotal < settings.orders.minOrderValue) {
+      throw new ApiError(400, `Minimum order value must be ₹${settings.orders.minOrderValue}`);
+    }
+    if (settings.orders.maxOrderValue && preliminaryTotal > settings.orders.maxOrderValue) {
+      throw new ApiError(400, `Maximum order value must be ₹${settings.orders.maxOrderValue}`);
+    }
+
     let walletDeduction = 0;
-    if (useWallet) {
+    if (useWallet && settings.loyalty.walletEnabled) {
       walletDeduction = Math.min(preliminaryTotal, availableWallet);
     }
 

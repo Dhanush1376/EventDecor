@@ -34,6 +34,7 @@ export class InvoiceService {
       total: number;
     },
     taxConfig?: {
+      gstEnabled: boolean;
       taxRate: number;
       cgstRate: number;
       sgstRate: number;
@@ -55,6 +56,7 @@ export class InvoiceService {
 
     // 3. Capture tax breakdown from the EXACT totals (no recalculation)
     const effectiveTaxConfig = taxConfig || {
+      gstEnabled: settings.taxes.gstEnabled,
       taxRate: settings.taxes.gstRate,
       cgstRate: settings.taxes.cgstRate,
       sgstRate: settings.taxes.sgstRate,
@@ -84,6 +86,8 @@ export class InvoiceService {
       legalCompanyName: settings.legal.legalCompanyName || settings.legal.companyName || '',
       logo: settings.general.logo || '',
       gstin: settings.taxes.gstNumber || '',
+      cin: settings.legal.cin || '',
+      registeredAddress: settings.legal.registeredAddress || '',
       addressLine1: settings.contact.addressLine1 || settings.contact.address || '',
       addressLine2: settings.contact.addressLine2 || '',
       city: settings.contact.city || '',
@@ -109,6 +113,7 @@ export class InvoiceService {
       total: number;
     },
     taxConfig: {
+      gstEnabled: boolean;
       taxRate: number;
       cgstRate: number;
       sgstRate: number;
@@ -116,12 +121,15 @@ export class InvoiceService {
     },
   ): IOrderTaxSnapshot {
     const { subtotal, discount, total } = totals;
-    const { taxRate, cgstRate, sgstRate, taxInclusive } = taxConfig;
+    const { gstEnabled, taxRate, cgstRate, sgstRate, taxInclusive } = taxConfig;
 
     let taxableAmount: number;
     let totalTax: number;
 
-    if (taxInclusive) {
+    if (!gstEnabled) {
+      taxableAmount = total;
+      totalTax = 0;
+    } else if (taxInclusive) {
       // Tax is already included in the total — extract it
       taxableAmount = parseFloat((total / (1 + taxRate)).toFixed(2));
       totalTax = parseFloat((total - taxableAmount).toFixed(2));

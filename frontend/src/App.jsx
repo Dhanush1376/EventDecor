@@ -17,9 +17,11 @@ hydrateQueryClientCache(queryClient);
 import { AuthModals } from './components/auth/AuthModals';
 
 import { GlobalNotificationToast } from './components/ui/GlobalNotificationToast';
+import { useKeyboardAwareViewport } from './hooks/useKeyboardAwareViewport';
 
 function App() {
   const [isMounted, setIsMounted] = useState(false);
+  useKeyboardAwareViewport();
 
   useEffect(() => {
     setIsMounted(true);

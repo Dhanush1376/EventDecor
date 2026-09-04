@@ -54,7 +54,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="dashboard-address-phone" className="form-label">
-                Contact Phone Number*
+                Phone Number*
               </label>
               <input
                 id="dashboard-address-phone"
@@ -73,7 +73,7 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
             </div>
             <div>
               <label htmlFor="dashboard-address-alt-phone" className="form-label">
-                Alternate Phone Number
+                Alternate Number
               </label>
               <input
                 id="dashboard-address-alt-phone"

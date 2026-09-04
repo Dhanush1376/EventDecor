@@ -33,9 +33,9 @@ export function CouponModal({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-[500px] flex flex-col z-[1001]"
+            className="relative w-full max-w-[500px] flex flex-col z-[1001] keyboard-aware-drawer"
           >
-            <div className="absolute top-[98%] left-0 right-0 h-[50vh] bg-surface-bright sm:hidden z-[-1]" />
+            <div className="absolute top-[98%] left-0 right-0 h-[100vh] bg-surface-bright sm:hidden z-[-1]" />
             <div className="w-full bg-surface-bright rounded-t-[24px] sm:rounded-[24px] p-6 sm:p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden max-h-[85vh] flex flex-col">
               <div className="w-12 h-1.5 bg-outline-variant/60 rounded-full mx-auto mb-6 sm:hidden" />
               <button

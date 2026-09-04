@@ -215,6 +215,7 @@ export function ProductListing() {
           setNavbarHeight={setNavbarHeight}
           isStuck={isStuck}
           setIsStuck={setIsStuck}
+          visualSearchEnabled={state.visualSearch?.isEnabled}
         />
 
         <CountdownPromo

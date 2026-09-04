@@ -30,6 +30,10 @@ export interface IOrderStoreSnapshot {
   logo?: string;
   /** GSTIN for tax compliance */
   gstin: string;
+  /** Corporate Identification Number */
+  cin?: string;
+  /** Registered Address (may differ from shipping/physical address) */
+  registeredAddress?: string;
   /** Structured address */
   addressLine1: string;
   addressLine2?: string;

@@ -127,6 +127,12 @@ export class CustomOrderService {
         message: `${order.customerName || 'A customer'} submitted a custom ${order.occasion || 'event'} order request.`,
         type: 'custom_request',
         actionLink: `/admin/custom-orders/${order._id}`,
+        metadata: {
+          image:
+            order.referenceImages && order.referenceImages.length > 0
+              ? order.referenceImages[0]
+              : null,
+        },
       });
     } catch (notifErr) {
       logger.error('Failed to create admin notification for custom order:', notifErr);

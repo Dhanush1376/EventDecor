@@ -47,13 +47,13 @@ router.patch(
 router.get(
   '/admin/dashboard',
   requireAuth,
-  authorize('super_admin', 'main_admin', 'admin', 'analyst'),
+  authorize('super_admin', 'main_admin', 'admin', 'analyst', 'support_admin', 'support'),
   returnAdminController.getDashboardStats,
 );
 router.get(
   '/admin/all',
   requireAuth,
-  authorize('super_admin', 'main_admin', 'admin', 'editor', 'analyst'),
+  authorize('super_admin', 'main_admin', 'admin', 'editor', 'analyst', 'support_admin', 'support'),
   returnAdminController.getAllReturns,
 );
 router.post(
@@ -66,13 +66,13 @@ router.post(
 router.get(
   '/admin/refunds/stats',
   requireAuth,
-  authorize('super_admin', 'main_admin', 'admin', 'analyst'),
+  authorize('super_admin', 'main_admin', 'admin', 'analyst', 'support_admin', 'support'),
   returnAdminController.getRefundStats,
 );
 router.get(
   '/admin/pickups',
   requireAuth,
-  authorize('super_admin', 'main_admin', 'admin', 'editor', 'analyst'),
+  authorize('super_admin', 'main_admin', 'admin', 'editor', 'analyst', 'support_admin', 'support'),
   returnAdminController.getPickupList,
 );
 router.get(
@@ -121,13 +121,13 @@ router.get(
 router.get(
   '/admin/exchange-stats',
   requireAuth,
-  authorize('super_admin', 'main_admin', 'admin', 'analyst'),
+  authorize('super_admin', 'main_admin', 'admin', 'analyst', 'support_admin', 'support'),
   returnAdminController.getExchangeStats,
 );
 router.get(
   '/admin/pickup-stats',
   requireAuth,
-  authorize('super_admin', 'main_admin', 'admin', 'analyst'),
+  authorize('super_admin', 'main_admin', 'admin', 'analyst', 'support_admin', 'support'),
   returnAdminController.getPickupStats,
 );
 
@@ -149,7 +149,7 @@ router.post(
 router.get(
   '/admin/:id',
   requireAuth,
-  authorize('super_admin', 'main_admin', 'admin', 'editor', 'analyst'),
+  authorize('super_admin', 'main_admin', 'admin', 'editor', 'analyst', 'support_admin', 'support'),
   returnAdminController.getReturnDetails,
 );
 router.patch(

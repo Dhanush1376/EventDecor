@@ -283,40 +283,66 @@ export async function processEvent(event: any): Promise<void> {
             message: `${customOrder.customerName || 'A customer'} submitted a custom order request.`,
             type: 'custom_request',
             actionLink: `/admin/orders/custom`,
-            metadata: { outboxEventId: event._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              image:
+                customOrder.referenceImages?.length > 0 ? customOrder.referenceImages[0] : null,
+            },
           });
         }
       } else if (eventName === 'EVENTJOB_BOOKINGINQUIRYSUBMITTED') {
-        const booking = await EventJob.findById(event.aggregateId).populate('user');
+        const booking = await EventJob.findById(event.aggregateId)
+          .populate('user')
+          .populate('eventPackage');
         if (booking) {
           await createAdminNotification({
             title: 'New Booking Request',
             message: `${(booking as any).user?.name || 'A customer'} submitted a booking for ${booking.title}.`,
             type: 'booking',
             actionLink: `/admin/events/${booking._id}`,
-            metadata: { outboxEventId: event._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              image:
+                (booking as any).eventPackage?.image ||
+                (booking.inspirationImages && booking.inspirationImages.length > 0
+                  ? booking.inspirationImages[0]
+                  : null),
+            },
           });
         }
       } else if (eventName === 'EVENTJOB_BOOKINGCONFIRMED') {
-        const booking = await EventJob.findById(event.aggregateId).populate('user');
+        const booking = await EventJob.findById(event.aggregateId)
+          .populate('user')
+          .populate('eventPackage');
         if (booking) {
           await createAdminNotification({
             title: 'Booking Confirmed',
             message: `Booking ${booking.bookingId || booking._id} for ${booking.title} has been confirmed.`,
             type: 'booking',
             actionLink: `/admin/events/${booking._id}`,
-            metadata: { outboxEventId: event._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              image:
+                (booking as any).eventPackage?.image ||
+                (booking.inspirationImages && booking.inspirationImages.length > 0
+                  ? booking.inspirationImages[0]
+                  : null),
+            },
           });
         }
       } else if (eventName === 'RETURNREQUEST_RETURNCREATED') {
-        const returnReq = await ReturnRequest.findById(event.aggregateId);
+        const returnReq = await ReturnRequest.findById(event.aggregateId).populate('orderId');
         if (returnReq) {
           await createAdminNotification({
             title: 'New Return/Exchange Request',
-            message: `Return request ${returnReq.returnId || returnReq._id} created for Order ${returnReq.orderId}`,
+            message: `Return request ${returnReq.returnId || returnReq._id} created for Order ${(returnReq as any).orderId?.orderId || returnReq.orderId}`,
             type: 'return',
             actionLink: `/admin/returns/requests/${returnReq._id}`,
-            metadata: { outboxEventId: event._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              image:
+                returnReq.items && returnReq.items.length > 0 ? returnReq.items[0].imageSrc : null,
+            },
           });
         }
       } else if (eventName === 'RETURNREQUEST_RETURNSTATUSUPDATED') {
@@ -327,7 +353,11 @@ export async function processEvent(event: any): Promise<void> {
             message: `Return request ${returnReq.returnId || returnReq._id} status changed to ${event.payload.status || event.payload.newStatus}`,
             type: 'return',
             actionLink: `/admin/returns/requests/${returnReq._id}`,
-            metadata: { outboxEventId: event._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              image:
+                returnReq.items && returnReq.items.length > 0 ? returnReq.items[0].imageSrc : null,
+            },
           });
         }
       } else if (eventName === 'ORDER_PAYMENTFAILED') {
@@ -338,7 +368,10 @@ export async function processEvent(event: any): Promise<void> {
             message: `Payment failed for Order #${order.orderUuid || order._id}`,
             type: 'payment',
             actionLink: `/admin/orders/${order._id}`,
-            metadata: { outboxEventId: event._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              image: order.items?.length > 0 ? order.items[0].imageSrc : null,
+            },
           });
         }
       } else if (eventName === 'ORDER_REFUNDREQUESTED') {
@@ -349,7 +382,10 @@ export async function processEvent(event: any): Promise<void> {
             message: `Refund requested for Order #${order.orderUuid || order._id}`,
             type: 'payment',
             actionLink: `/admin/orders/${order._id}`,
-            metadata: { outboxEventId: event._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              image: order.items?.length > 0 ? order.items[0].imageSrc : null,
+            },
           });
         }
       } else if (eventName === 'EVENTJOB_BOOKINGSTATUSUPDATED') {
@@ -357,10 +393,17 @@ export async function processEvent(event: any): Promise<void> {
         if (booking && event.payload) {
           await createAdminNotification({
             title: 'Booking Status Updated',
-            message: `Booking ${booking.bookingId || booking._id} status changed to ${event.payload.newStatus}`,
+            message: `Booking ${booking.bookingId || booking._id} for ${booking.title} is now ${event.payload.status || event.payload.newStatus}`,
             type: 'booking',
             actionLink: `/admin/events/${booking._id}`,
-            metadata: { outboxEventId: event._id.toString() },
+            metadata: {
+              outboxEventId: event._id.toString(),
+              image:
+                (booking as any).eventPackage?.image ||
+                (booking.inspirationImages && booking.inspirationImages.length > 0
+                  ? booking.inspirationImages[0]
+                  : null),
+            },
           });
         }
       } else if (eventName === 'ORDER_PAYMENTCAPTURED') {

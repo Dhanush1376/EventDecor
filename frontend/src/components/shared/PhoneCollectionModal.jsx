@@ -45,8 +45,9 @@ export function PhoneCollectionModal({ isOpen, onClose, onSuccess }) {
           initial="hidden"
           animate="show"
           exit="exit"
-          className="bg-[var(--surface)] w-full max-w-md rounded-2xl shadow-xl overflow-hidden"
+          className="bg-[var(--surface)] w-full max-w-md rounded-2xl shadow-xl overflow-hidden relative keyboard-aware-drawer"
         >
+          <div className="absolute top-[98%] left-0 right-0 h-[100vh] bg-[var(--surface)] sm:hidden z-[-1]" />
           <div className="p-6 border-b border-[var(--border-subtle)]">
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">
               Contact Details Required

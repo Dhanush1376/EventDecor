@@ -112,10 +112,12 @@ export default function CheckoutPaymentStep() {
     if (isTotalsLoading) return 'Calculating...';
     if (totalsError) return 'Pricing Load Error';
 
+    if (backendTotals?.total === 0) {
+      return 'Place Order (Fully Paid)';
+    }
+
     if (paymentOption === 'razorpay') {
-      return backendTotals.total === 0
-        ? 'Place Order (Fully Paid)'
-        : `Pay ₹${backendTotals.total.toLocaleString('en-IN')}`;
+      return `Pay ₹${backendTotals.total.toLocaleString('en-IN')}`;
     }
 
     // COD payment option selected
@@ -140,7 +142,7 @@ export default function CheckoutPaymentStep() {
       return;
     }
 
-    if (paymentOption === 'razorpay') {
+    if (backendTotals?.total === 0 || paymentOption === 'razorpay') {
       handleConfirmOrder();
     } else {
       if (!isCodEnabled) {
@@ -171,6 +173,8 @@ export default function CheckoutPaymentStep() {
     if (isProcessing) return true;
     if (isTotalsLoading) return true;
     if (totalsError) return true;
+    if (backendTotals?.total === 0) return false;
+
     if (
       paymentOption === 'cod' &&
       (!isCodEnabled || backendTotals.total < codMinOrder || backendTotals.total > codMaxOrder)
@@ -273,232 +277,255 @@ export default function CheckoutPaymentStep() {
         </div>
       )}
 
-      {/* Payment Header */}
-      <div className="py-4 sm:py-6 mb-2">
-        <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-primary">payments</span>
-          Payment Options
-        </h2>
-      </div>
-
-      <div className="flex flex-col gap-4 mb-4">
-        {/* Option: Razorpay (Secure Online Payment) */}
-        <div
-          onClick={() => setPaymentOption('razorpay')}
-          className={`relative p-5 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden ${
-            paymentOption === 'razorpay'
-              ? 'border-primary bg-primary/5 shadow-md'
-              : 'border-outline-variant/40 bg-surface-bright hover:border-primary/40 hover:shadow-sm'
-          }`}
+      {/* Payment Options Section */}
+      {backendTotals?.total === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="p-5 bg-green-50 text-green-900 border border-green-200/60 rounded-xl mb-6 shadow-sm mt-2"
         >
-          <div className="flex items-start gap-3.5 select-none">
-            {/* Custom Premium Radio Button */}
-            <div className="pt-1">
-              <div
-                className={`w-4.5 h-4.5 rounded-full border-[1.5px] flex items-center justify-center transition-all ${paymentOption === 'razorpay' ? 'border-primary bg-white' : 'border-outline-variant bg-transparent'}`}
-              >
-                {paymentOption === 'razorpay' && (
-                  <motion.div
-                    layoutId="payment-radio-dot"
-                    className="w-2.5 h-2.5 rounded-full bg-primary"
-                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  />
-                )}
-              </div>
-            </div>
-
-            <div className="flex-1">
-              <span className="text-[12px] font-semibold text-on-surface flex items-center gap-2">
-                {backendTotals.total === 0
-                  ? '100% Wallet Payment'
-                  : 'Secure Online Payment (Razorpay)'}
-                <span className="bg-primary/10 text-primary border border-primary/30 text-[8px] px-1.5 py-0.5 rounded-sm font-extrabold uppercase tracking-wider">
-                  Recommended
-                </span>
-              </span>
-              <p className="text-[10px] text-secondary mt-1 leading-relaxed">
-                {backendTotals.total === 0
-                  ? 'Your wallet balance covers the entire order amount.'
-                  : 'Pay securely using UPI, Credit/Debit Card, or Netbanking.'}
-              </p>
-            </div>
+          <div className="flex items-center gap-2.5 mb-2">
+            <span className="material-symbols-outlined text-green-600 text-[20px]">
+              check_circle
+            </span>
+            <h3 className="text-green-800 font-bold text-[13px] tracking-widest uppercase">
+              Payment Complete
+            </h3>
           </div>
-        </div>
+          <p className="text-green-700/80 text-[11px] font-medium leading-relaxed">
+            {backendTotals?.walletDeduction > 0
+              ? 'Used Siri Pay Wallet. Your wallet balance completely covers this order. No additional payment is required.'
+              : 'Your order total is fully covered. No additional payment is required.'}
+          </p>
+        </motion.div>
+      ) : (
+        <>
+          {/* Payment Header */}
+          <div className="py-4 sm:py-6 mb-2">
+            <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px] text-primary">payments</span>
+              Payment Options
+            </h2>
+          </div>
 
-        {/* Option: Cash on Delivery */}
-        <div
-          onClick={() => {
-            if (
-              isCodEnabled &&
-              backendTotals.total >= codMinOrder &&
-              backendTotals.total <= codMaxOrder
-            ) {
-              setPaymentOption('cod');
-            }
-          }}
-          className={`relative p-5 rounded-xl border transition-all duration-300 overflow-hidden ${
-            !isCodEnabled || backendTotals.total > codMaxOrder || backendTotals.total < codMinOrder
-              ? 'opacity-45 cursor-not-allowed border-outline-variant/20 bg-gray-50/50'
-              : 'cursor-pointer ' +
-                (paymentOption === 'cod'
+          <div className="flex flex-col gap-4 mb-4">
+            {/* Option: Razorpay (Secure Online Payment) */}
+            <div
+              onClick={() => setPaymentOption('razorpay')}
+              className={`relative p-5 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden ${
+                paymentOption === 'razorpay'
                   ? 'border-primary bg-primary/5 shadow-md'
-                  : 'border-outline-variant/40 bg-surface-bright hover:border-primary/40 hover:shadow-sm')
-          }`}
-        >
-          <div className="flex items-start gap-3.5 select-none">
-            {/* Custom Premium Radio Button */}
-            <div className="pt-1">
-              <div
-                className={`w-4.5 h-4.5 rounded-full border-[1.5px] flex items-center justify-center transition-all ${paymentOption === 'cod' ? 'border-primary bg-white' : 'border-outline-variant bg-transparent'}`}
-              >
-                {paymentOption === 'cod' && (
-                  <motion.div
-                    layoutId="payment-radio-dot"
-                    className="w-2.5 h-2.5 rounded-full bg-primary"
-                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  />
-                )}
+                  : 'border-outline-variant/40 bg-surface-bright hover:border-primary/40 hover:shadow-sm'
+              }`}
+            >
+              <div className="flex items-start gap-3.5 select-none">
+                {/* Custom Premium Radio Button */}
+                <div className="pt-1">
+                  <div
+                    className={`w-4.5 h-4.5 rounded-full border-[1.5px] flex items-center justify-center transition-all ${paymentOption === 'razorpay' ? 'border-primary bg-white' : 'border-outline-variant bg-transparent'}`}
+                  >
+                    {paymentOption === 'razorpay' && (
+                      <motion.div
+                        layoutId="payment-radio-dot"
+                        className="w-2.5 h-2.5 rounded-full bg-primary"
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex-1">
+                  <span className="text-[12px] font-semibold text-on-surface flex items-center gap-2">
+                    Secure Online Payment (Razorpay)
+                    <span className="bg-primary/10 text-primary border border-primary/30 text-[8px] px-1.5 py-0.5 rounded-sm font-extrabold uppercase tracking-wider">
+                      Recommended
+                    </span>
+                  </span>
+                  <p className="text-[10px] text-secondary mt-1 leading-relaxed">
+                    Pay securely using UPI, Credit/Debit Card, or Netbanking.
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="flex-1">
-              <span className="text-[12px] font-semibold text-on-surface">
-                Cash on Delivery (COD)
-              </span>
-              {!isCodEnabled ? (
-                <p className="text-[10px] text-red-600 font-bold mt-0.5 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[12px]">info</span>
-                  COD is currently disabled
-                </p>
-              ) : backendTotals.total > codMaxOrder ? (
-                <p className="text-[10px] text-red-600 font-bold mt-0.5 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[12px]">info</span>
-                  COD unavailable for orders above ₹{codMaxOrder.toLocaleString('en-IN')}
-                </p>
-              ) : backendTotals.total < codMinOrder ? (
-                <p className="text-[10px] text-red-600 font-bold mt-0.5 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[12px]">info</span>
-                  COD requires minimum order of ₹{codMinOrder.toLocaleString('en-IN')}
-                </p>
-              ) : (
-                <p className="text-[10px] text-secondary mt-1 leading-relaxed">
-                  Pay with cash or UPI when your item arrives at your doorstep.
-                </p>
-              )}
-            </div>
-          </div>
+            {/* Option: Cash on Delivery */}
+            <div
+              onClick={() => {
+                if (
+                  isCodEnabled &&
+                  backendTotals.total >= codMinOrder &&
+                  backendTotals.total <= codMaxOrder
+                ) {
+                  setPaymentOption('cod');
+                }
+              }}
+              className={`relative p-5 rounded-xl border transition-all duration-300 overflow-hidden ${
+                !isCodEnabled ||
+                backendTotals.total > codMaxOrder ||
+                backendTotals.total < codMinOrder
+                  ? 'opacity-45 cursor-not-allowed border-outline-variant/20 bg-gray-50/50'
+                  : 'cursor-pointer ' +
+                    (paymentOption === 'cod'
+                      ? 'border-primary bg-primary/5 shadow-md'
+                      : 'border-outline-variant/40 bg-surface-bright hover:border-primary/40 hover:shadow-sm')
+              }`}
+            >
+              <div className="flex items-start gap-3.5 select-none">
+                {/* Custom Premium Radio Button */}
+                <div className="pt-1">
+                  <div
+                    className={`w-4.5 h-4.5 rounded-full border-[1.5px] flex items-center justify-center transition-all ${paymentOption === 'cod' ? 'border-primary bg-white' : 'border-outline-variant bg-transparent'}`}
+                  >
+                    {paymentOption === 'cod' && (
+                      <motion.div
+                        layoutId="payment-radio-dot"
+                        className="w-2.5 h-2.5 rounded-full bg-primary"
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                      />
+                    )}
+                  </div>
+                </div>
 
-          <AnimatePresence>
-            {paymentOption === 'cod' &&
-              isCodEnabled &&
-              backendTotals.total <= codMaxOrder &&
-              backendTotals.total >= codMinOrder && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mt-4 pt-4 border-t border-primary/10 space-y-3 overflow-hidden text-xs"
-                >
-                  <>
-                    {/* Courier check */}
-                    <div className="flex items-center gap-2 text-[10px] font-semibold text-green-700 bg-green-50/50 border border-green-200/50 p-2.5 rounded-md mb-2">
-                      <span className="material-symbols-outlined text-[14px] text-green-700 font-extrabold">
-                        verified
-                      </span>
-                      <span>
-                        COD is serviceable at{' '}
-                        <span className="font-extrabold">
-                          {activeSelectedAddress?.pincode || 'your pincode'}
-                        </span>{' '}
-                        by Standard Courier
-                      </span>
-                    </div>
+                <div className="flex-1">
+                  <span className="text-[12px] font-semibold text-on-surface">
+                    Cash on Delivery (COD)
+                  </span>
+                  {!isCodEnabled ? (
+                    <p className="text-[10px] text-red-600 font-bold mt-0.5 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">info</span>
+                      COD is currently disabled
+                    </p>
+                  ) : backendTotals.total > codMaxOrder ? (
+                    <p className="text-[10px] text-red-600 font-bold mt-0.5 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">info</span>
+                      COD unavailable for orders above ₹{codMaxOrder.toLocaleString('en-IN')}
+                    </p>
+                  ) : backendTotals.total < codMinOrder ? (
+                    <p className="text-[10px] text-red-600 font-bold mt-0.5 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">info</span>
+                      COD requires minimum order of ₹{codMinOrder.toLocaleString('en-IN')}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-secondary mt-1 leading-relaxed">
+                      Pay with cash or UPI when your item arrives at your doorstep.
+                    </p>
+                  )}
+                </div>
+              </div>
 
-                    {/* Unified Verification Interface */}
-                    {!codVerified ? (
-                      <div className="space-y-3 pt-1">
-                        {!codOtpSent ? (
-                          <div className="flex items-start gap-2.5 bg-primary/5 border border-primary/15 p-3.5 rounded-md">
-                            <span className="material-symbols-outlined text-primary text-[16px] shrink-0 pt-0.5">
-                              verified_user
-                            </span>
-                            <div className="flex-1">
-                              <p className="text-[10px] text-secondary leading-relaxed font-light">
-                                To secure your order, we will send OTP to your email:
-                              </p>
-                              <strong className="text-on-surface font-semibold block mt-1 text-[10px] tracking-wide">
-                                {activeSelectedAddress?.email || user?.email}
-                              </strong>
-                              <button
-                                type="button"
-                                onClick={handleSendCodOtp}
-                                disabled={isSendingOtp || isProcessing}
-                                className="mt-3.5 px-5 py-2.5 bg-on-surface-variant text-surface rounded-md text-[11px] font-bold uppercase tracking-widest hover:bg-primary-container hover:text-on-primary-container transition-all shadow-sm w-full disabled:opacity-70 disabled:cursor-not-allowed"
-                              >
-                                {isSendingOtp ? 'SENDING...' : 'VERIFY OTP'}
-                              </button>
-                            </div>
+              <AnimatePresence>
+                {paymentOption === 'cod' &&
+                  isCodEnabled &&
+                  backendTotals.total <= codMaxOrder &&
+                  backendTotals.total >= codMinOrder && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-4 pt-4 border-t border-primary/10 space-y-3 overflow-hidden text-xs"
+                    >
+                      <>
+                        {/* Courier check */}
+                        <div className="flex items-center gap-2 text-[10px] font-semibold text-green-700 bg-green-50/50 border border-green-200/50 p-2.5 rounded-md mb-2">
+                          <span className="material-symbols-outlined text-[14px] text-green-700 font-extrabold">
+                            verified
+                          </span>
+                          <span>
+                            COD is serviceable at{' '}
+                            <span className="font-extrabold">
+                              {activeSelectedAddress?.pincode || 'your pincode'}
+                            </span>{' '}
+                            by Standard Courier
+                          </span>
+                        </div>
+
+                        {/* Unified Verification Interface */}
+                        {!codVerified ? (
+                          <div className="space-y-3 pt-1">
+                            {!codOtpSent ? (
+                              <div className="flex items-start gap-2.5 bg-primary/5 border border-primary/15 p-3.5 rounded-md">
+                                <span className="material-symbols-outlined text-primary text-[16px] shrink-0 pt-0.5">
+                                  verified_user
+                                </span>
+                                <div className="flex-1">
+                                  <p className="text-[10px] text-secondary leading-relaxed font-light">
+                                    To secure your order, we will send OTP to your email:
+                                  </p>
+                                  <strong className="text-on-surface font-semibold block mt-1 text-[10px] tracking-wide">
+                                    {activeSelectedAddress?.email || user?.email}
+                                  </strong>
+                                  <button
+                                    type="button"
+                                    onClick={handleSendCodOtp}
+                                    disabled={isSendingOtp || isProcessing}
+                                    className="mt-3.5 px-5 py-2.5 bg-on-surface-variant text-surface rounded-md text-[11px] font-bold uppercase tracking-widest hover:bg-primary-container hover:text-on-primary-container transition-all shadow-sm w-full disabled:opacity-70 disabled:cursor-not-allowed"
+                                  >
+                                    {isSendingOtp ? 'SENDING...' : 'VERIFY OTP'}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-2.5 bg-primary/5 border border-primary/15 p-4 rounded-md">
+                                <p className="text-[10px] text-secondary leading-normal">
+                                  We sent a 6-digit code to{' '}
+                                  <strong className="text-on-surface font-semibold">
+                                    {activeSelectedAddress?.email || user?.email}
+                                  </strong>
+                                  . Please check your inbox or spam folder:
+                                </p>
+
+                                {/* Gorgeous 6-digit input grid */}
+                                <div className="flex justify-center gap-3 py-2">
+                                  {otpDigits.map((digit, idx) => (
+                                    <input
+                                      key={idx}
+                                      ref={otpRefs[idx]}
+                                      type="tel"
+                                      pattern="[0-9]*"
+                                      inputMode="numeric"
+                                      maxLength={1}
+                                      value={digit}
+                                      disabled={isProcessing}
+                                      onChange={(e) => handleDigitChange(idx, e.target.value)}
+                                      onKeyDown={(e) => handleDigitKeyDown(idx, e)}
+                                      className="w-10 h-10 bg-white border border-outline-variant/30 focus:border-primary rounded-md text-center font-bold text-base text-on-surface shadow-xs outline-none transition-all disabled:opacity-50"
+                                    />
+                                  ))}
+                                </div>
+
+                                {/* Resend option */}
+                                <div className="flex justify-center pt-3 border-t border-primary/10 mt-2">
+                                  <button
+                                    type="button"
+                                    onClick={handleSendCodOtp}
+                                    disabled={isSendingOtp || isProcessing}
+                                    className="text-[11px] text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                  >
+                                    <span className="material-symbols-outlined text-xs">sync</span>
+                                    Resend verification code
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ) : (
-                          <div className="space-y-2.5 bg-primary/5 border border-primary/15 p-4 rounded-md">
-                            <p className="text-[10px] text-secondary leading-normal">
-                              We sent a 6-digit code to{' '}
-                              <strong className="text-on-surface font-semibold">
-                                {activeSelectedAddress?.email || user?.email}
-                              </strong>
-                              . Please check your inbox or spam folder:
-                            </p>
-
-                            {/* Gorgeous 6-digit input grid */}
-                            <div className="flex justify-center gap-3 py-2">
-                              {otpDigits.map((digit, idx) => (
-                                <input
-                                  key={idx}
-                                  ref={otpRefs[idx]}
-                                  type="tel"
-                                  pattern="[0-9]*"
-                                  inputMode="numeric"
-                                  maxLength={1}
-                                  value={digit}
-                                  disabled={isProcessing}
-                                  onChange={(e) => handleDigitChange(idx, e.target.value)}
-                                  onKeyDown={(e) => handleDigitKeyDown(idx, e)}
-                                  className="w-10 h-10 bg-white border border-outline-variant/30 focus:border-primary rounded-md text-center font-bold text-base text-on-surface shadow-xs outline-none transition-all disabled:opacity-50"
-                                />
-                              ))}
-                            </div>
-
-                            {/* Resend option */}
-                            <div className="flex justify-center pt-3 border-t border-primary/10 mt-2">
-                              <button
-                                type="button"
-                                onClick={handleSendCodOtp}
-                                disabled={isSendingOtp || isProcessing}
-                                className="text-[11px] text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                              >
-                                <span className="material-symbols-outlined text-xs">sync</span>
-                                Resend verification code
-                              </button>
-                            </div>
+                          <div className="flex items-center gap-2.5 text-[12px] text-green-700 bg-green-50/50 p-4 rounded-lg border border-green-200/50 mt-2 font-semibold">
+                            <span className="material-symbols-outlined text-[18px] text-green-700 font-bold">
+                              verified
+                            </span>
+                            <span>
+                              Verification completed! Ready to place your Cash on Delivery order.
+                            </span>
                           </div>
                         )}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2.5 text-[12px] text-green-700 bg-green-50/50 p-4 rounded-lg border border-green-200/50 mt-2 font-semibold">
-                        <span className="material-symbols-outlined text-[18px] text-green-700 font-bold">
-                          verified
-                        </span>
-                        <span>
-                          Verification completed! Ready to place your Cash on Delivery order.
-                        </span>
-                      </div>
-                    )}
-                  </>
-                </motion.div>
-              )}
-          </AnimatePresence>
-        </div>
-      </div>
+                      </>
+                    </motion.div>
+                  )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Sticky Action Footer */}
       <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-3 shadow-lg z-40 flex flex-col items-center">

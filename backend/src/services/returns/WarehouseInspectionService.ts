@@ -100,6 +100,33 @@ export class WarehouseInspectionService {
     });
 
     await request.save();
-    return request;
+
+    let updatedRequest = request;
+
+    if (updatedRequest.status === 'return_received') {
+      updatedRequest = (await ReturnStateMachine.transition(
+        returnId,
+        'inspection_started',
+        adminId,
+        { reason: 'Inspection started — first item inspected' },
+      )) as any;
+    }
+
+    const allInspected = updatedRequest.items.every((i) =>
+      ['quality_passed', 'rejected', 'repair_required', 'damaged_inventory', 'restocked'].includes(
+        i.warehouseStatus,
+      ),
+    );
+
+    if (allInspected && updatedRequest.status === 'inspection_started') {
+      updatedRequest = (await ReturnStateMachine.transition(
+        returnId,
+        'inspection_completed',
+        adminId,
+        { reason: 'All items inspected' },
+      )) as any;
+    }
+
+    return updatedRequest;
   }
 }

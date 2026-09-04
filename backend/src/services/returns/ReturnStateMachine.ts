@@ -18,7 +18,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   return_in_transit: ['return_received'],
   return_received: ['inspection_started'],
   inspection_started: ['inspection_completed', 'rejected'],
-  inspection_completed: ['refund_initiated'],
+  inspection_completed: ['refund_initiated', 'completed'], // completed only for zero-refund exchanges
   refund_initiated: ['refund_completed', 'refund_failed'],
   refund_failed: ['refund_initiated'],
   refund_completed: ['completed'],
@@ -70,6 +70,22 @@ export class ReturnStateMachine {
 
     if (!this.validateTransition(currentStatus, nextStatus)) {
       throw new ApiError(400, `Invalid transition from ${currentStatus} to ${nextStatus}`);
+    }
+
+    // Guard: inspection_completed -> completed is ONLY allowed for exchanges with no refund
+    if (currentStatus === 'inspection_completed' && nextStatus === 'completed') {
+      if (request.returnType !== 'exchange') {
+        throw new ApiError(
+          400,
+          'Direct completion from inspection_completed is only allowed for exchanges with no refund.',
+        );
+      }
+      const exchange = await ExchangeRequest.findOne({ returnRequestId: request._id }).session(
+        session || null,
+      );
+      if (!exchange || exchange.differenceAction === 'refund_difference') {
+        throw new ApiError(400, 'This exchange requires a refund. Use the refund flow instead.');
+      }
     }
 
     // FINANCIAL INVARIANT: Block logistics transitions for exchanges with unsettled payments
@@ -144,6 +160,87 @@ export class ReturnStateMachine {
     return request;
   }
 
+  /**
+   * Fast-paths an exchange's return leg to completion when the replacement is delivered.
+   * Walks through required intermediate logistics states if they haven't been completed yet.
+   */
+  static async autoCompleteExchange(
+    returnId: string,
+    performedBy: string,
+    session?: mongoose.ClientSession,
+  ): Promise<IReturnRequest> {
+    const request = await ReturnRequest.findById(returnId).session(session || null);
+    if (!request) throw new ApiError(404, 'Return request not found');
+
+    if (request.status === 'completed') return request;
+
+    const exchange = await ExchangeRequest.findOne({ returnRequestId: request._id }).session(
+      session || null,
+    );
+    if (!exchange) throw new ApiError(400, 'Not an exchange request');
+
+    const requireRefund = exchange.differenceAction === 'refund_difference';
+
+    let currentReq = request;
+    let current = currentReq.status;
+
+    while (current !== 'completed') {
+      let nextStatus;
+
+      switch (current) {
+        case 'submitted':
+          nextStatus = 'approved';
+          break;
+        case 'approved':
+          nextStatus = 'return_courier_assigned';
+          break;
+        case 'return_courier_assigned':
+          nextStatus = 'return_picked_up';
+          break;
+        case 'return_picked_up':
+        case 'return_in_transit':
+          nextStatus = 'return_received';
+          break;
+        case 'return_received':
+          nextStatus = 'inspection_started';
+          break;
+        case 'inspection_started':
+          nextStatus = 'inspection_completed';
+          break;
+        case 'inspection_completed':
+          if (requireRefund) {
+            nextStatus = 'refund_initiated';
+          } else {
+            nextStatus = 'completed';
+          }
+          break;
+        case 'refund_initiated':
+          nextStatus = 'refund_completed';
+          break;
+        case 'refund_completed':
+          nextStatus = 'completed';
+          break;
+        case 'rejected':
+        case 'cancelled':
+        case 'refund_failed':
+          throw new ApiError(400, `Cannot auto-complete exchange from ${current} status`);
+        default:
+          throw new ApiError(500, `Unknown status in auto-complete: ${current}`);
+      }
+
+      currentReq = (await this.transition(
+        currentReq._id.toString(),
+        nextStatus,
+        performedBy,
+        { reason: 'Auto-completing exchange workflow due to replacement delivery' },
+        session,
+      )) as any;
+      current = currentReq.status;
+    }
+
+    return currentReq;
+  }
+
   static validateTransition(currentStatus: string, nextStatus: string): boolean {
     const allowedNext = VALID_TRANSITIONS[currentStatus];
     if (!allowedNext) return false;
@@ -190,6 +287,20 @@ export class ReturnStateMachine {
           order.hasActiveReturn = false;
         }
         await order.save({ session });
+      }
+
+      // If this is an exchange, we must release the reserved stock when the return leg is rejected/cancelled
+      if (request.returnType === 'exchange') {
+        const exchange = await ExchangeRequest.findOne({ returnRequestId: request._id }).session(
+          session || null,
+        );
+        if (exchange && exchange.replacementItem.reservationId) {
+          const { InventoryService } = require('../InventoryService');
+          await InventoryService.cancelReservation(
+            exchange.replacementItem.reservationId.toString(),
+            session,
+          );
+        }
       }
     }
 

@@ -44,6 +44,7 @@ export function AdminProducts() {
   const [activeTab, setActiveTab] = useState('products'); // 'products', 'categories', 'inventory'
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const [selectedType, setSelectedType] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [viewMode, setViewMode] = useState('table');
@@ -269,12 +270,19 @@ export function AdminProducts() {
     let result = products.filter((p) => {
       const matchCategory = selectedCategory === 'All' || p.category === selectedCategory;
       const matchStatus = selectedStatus === 'All' || p.status === selectedStatus;
+      const matchType = (() => {
+        if (selectedType === 'rental') return p.rawProduct?.rentalEnabled === true;
+        if (selectedType === 'non_rental') return !p.rawProduct?.rentalEnabled;
+        if (selectedType === 'returnable') return !p.rawProduct?.isNonRefundable;
+        if (selectedType === 'non_returnable') return p.rawProduct?.isNonRefundable === true;
+        return true;
+      })();
       const matchLowStock = showLowStockOnly ? p.stock <= 5 : true;
       const matchSearch =
         !searchQuery ||
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.id.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchCategory && matchStatus && matchLowStock && matchSearch;
+      return matchCategory && matchStatus && matchType && matchLowStock && matchSearch;
     });
 
     if (sortBy === 'price-asc') result.sort((a, b) => a.price - b.price);
@@ -283,7 +291,15 @@ export function AdminProducts() {
     else if (sortBy === 'stock-desc') result.sort((a, b) => b.stock - a.stock);
 
     return result;
-  }, [products, selectedCategory, selectedStatus, searchQuery, showLowStockOnly, sortBy]);
+  }, [
+    products,
+    selectedCategory,
+    selectedStatus,
+    selectedType,
+    searchQuery,
+    showLowStockOnly,
+    sortBy,
+  ]);
 
   const toggleSelect = (id) =>
     setSelectedProducts((prev) =>
@@ -615,6 +631,25 @@ export function AdminProducts() {
                       <option value="active">Active</option>
                       <option value="low_stock">Low Stock</option>
                       <option value="out_of_stock">Out of Stock</option>
+                    </select>
+                    <span
+                      className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"
+                      style={{ top: '50%', transform: 'translateY(-50%)' }}
+                    >
+                      expand_more
+                    </span>
+                  </div>
+                  <div className="relative flex items-stretch shrink-0 flex-1 min-w-[100px]">
+                    <select
+                      value={selectedType}
+                      onChange={(e) => setSelectedType(e.target.value)}
+                      className="bg-[var(--admin-surface-muted)] w-full rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none truncate"
+                    >
+                      <option value="All">Type</option>
+                      <option value="rental">Rental</option>
+                      <option value="non_rental">Non-Rental</option>
+                      <option value="returnable">Returnable</option>
+                      <option value="non_returnable">Non-Returnable</option>
                     </select>
                     <span
                       className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"

@@ -83,7 +83,7 @@ export function AddAddressModal({
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="form-label">Contact Phone Number*</label>
+                          <label className="form-label">Phone Number*</label>
                           <input
                             type="tel"
                             required
@@ -98,7 +98,7 @@ export function AddAddressModal({
                           />
                         </div>
                         <div>
-                          <label className="form-label">Alternate Phone Number</label>
+                          <label className="form-label">Alternate Number</label>
                           <input
                             type="tel"
                             pattern="[0-9]{10}"
@@ -148,7 +148,9 @@ export function AddAddressModal({
                                   } else {
                                     let errorMsg = 'Could not access GPS';
                                     if (err.code === err.PERMISSION_DENIED) {
-                                      errorMsg = 'Location permission denied. Please allow access.';
+                                      errorMsg = window.isSecureContext
+                                        ? 'Location permission denied. Please allow access.'
+                                        : 'Location requires a secure connection (HTTPS).';
                                     } else if (err.code === err.TIMEOUT) {
                                       errorMsg = 'Location request timed out.';
                                     }

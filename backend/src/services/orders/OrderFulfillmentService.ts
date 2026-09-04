@@ -18,6 +18,7 @@ export class OrderFulfillmentService {
     status: string,
     note?: string,
     courierCharges?: number,
+    isPrivileged: boolean = true,
   ) {
     const session = await mongoose.startSession();
     let finalOrder: any;
@@ -83,6 +84,60 @@ export class OrderFulfillmentService {
               400,
               'This order consists entirely of non-refundable items and cannot be returned or refunded.',
             );
+          }
+        }
+
+        // Evaluate user-initiated cancellations/returns against store policies
+        if (!isPrivileged) {
+          if (finalStatus === 'Cancelled') {
+            // Check StoreSettings property mappings (allowCancellation or allowCustomerCancellation)
+            const isCancelAllowed =
+              settings.cancellation.allowCancellation ||
+              (settings.cancellation as any).allowCustomerCancellation;
+            if (!isCancelAllowed) {
+              throw new ApiError(400, 'Customer cancellations are disabled by the store.');
+            }
+
+            const orderDate =
+              order.createdAt ||
+              (order.statusHistory && order.statusHistory[0]?.timestamp) ||
+              new Date();
+            const hoursSinceOrder = (Date.now() - orderDate.getTime()) / (1000 * 60 * 60);
+
+            if (
+              settings.cancellation.cancellationWindowHours &&
+              hoursSinceOrder > settings.cancellation.cancellationWindowHours
+            ) {
+              throw new ApiError(
+                400,
+                `Cancellations are only allowed within ${settings.cancellation.cancellationWindowHours} hours of placing the order.`,
+              );
+            }
+          } else if (finalStatus === 'Returned') {
+            if (!settings.returnsExchanges.enableReturns) {
+              throw new ApiError(400, 'Returns are currently disabled by the store.');
+            }
+            if (oldStatus !== 'Delivered') {
+              throw new ApiError(400, 'Only delivered orders can be returned.');
+            }
+
+            const deliveredHistory = order.statusHistory?.find(
+              (h: any) => h.status === 'Delivered',
+            );
+            if (
+              deliveredHistory &&
+              deliveredHistory.timestamp &&
+              settings.returnsExchanges.returnWindowDays
+            ) {
+              const daysSinceDelivery =
+                (Date.now() - deliveredHistory.timestamp.getTime()) / (1000 * 60 * 60 * 24);
+              if (daysSinceDelivery > settings.returnsExchanges.returnWindowDays) {
+                throw new ApiError(
+                  400,
+                  `Returns are only allowed within ${settings.returnsExchanges.returnWindowDays} days of delivery.`,
+                );
+              }
+            }
           }
         }
 

@@ -321,12 +321,17 @@ export function AdminNotifications({ hideHeader }) {
 
                   <div className="flex items-start gap-4 flex-1 min-w-0">
                     {/* Circle Icon Indicator */}
+                    {/* Circle Icon Indicator or Image */}
                     <div
-                      className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border border-transparent transition-transform hover:scale-105 duration-300 ${typeStyle.iconBg}`}
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border border-transparent transition-transform hover:scale-105 duration-300 overflow-hidden ${!n.image ? typeStyle.iconBg : 'bg-gray-100'}`}
                     >
-                      <span className="material-symbols-outlined text-[20px]">
-                        {typeStyle.icon}
-                      </span>
+                      {n.image ? (
+                        <img src={n.image} alt={n.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="material-symbols-outlined text-[20px]">
+                          {typeStyle.icon}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0 pt-0.5">

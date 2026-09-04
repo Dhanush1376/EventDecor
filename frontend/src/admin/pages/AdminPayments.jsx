@@ -155,12 +155,24 @@ export function AdminPayments() {
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader title="Payments" subtitle="Track payments and sales revenue" mobileRow={true}>
-        <button className="admin-btn admin-btn-ghost" title="Export Report">
-          <span className="material-symbols-outlined text-[20px]">download</span>
-        </button>
+        <div className="hidden md:flex items-center">
+          <PeriodSelector
+            value={dateFilter}
+            onChange={setDateFilter}
+            periods={['All Time', 'Today', 'Last 7 Days', 'This Month', 'This Year']}
+          />
+        </div>
+        <div className="flex items-center bg-[var(--admin-surface-muted)] rounded-md p-0.5 border border-[var(--admin-border-subtle)] shrink-0">
+          <button
+            className="px-2 py-1.5 rounded-sm text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)]/50 transition-all cursor-pointer flex items-center justify-center"
+            title="Export Report"
+          >
+            <span className="material-symbols-outlined text-[20px]">download</span>
+          </button>
+        </div>
       </PageHeader>
 
-      <div className="flex w-full mt-[-8px]">
+      <div className="flex w-full mt-[-8px] md:hidden">
         <PeriodSelector
           value={dateFilter}
           onChange={setDateFilter}

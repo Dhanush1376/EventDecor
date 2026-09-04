@@ -198,8 +198,16 @@ export function useAddressManagement({
         fetchAddressFromCoords(latitude, longitude);
         toast.success('Location found!', { id: 'gps' });
       },
-      (_err) => {
-        toast.error('Could not access GPS', { id: 'gps' });
+      (error) => {
+        let errorMsg = 'Could not access GPS';
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMsg = window.isSecureContext
+            ? 'Location permission denied. Please allow access.'
+            : 'Location requires a secure connection (HTTPS).';
+        } else if (error.code === error.TIMEOUT) {
+          errorMsg = 'Location request timed out.';
+        }
+        toast.error(errorMsg, { id: 'gps' });
         setIsDetectingLocation(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },

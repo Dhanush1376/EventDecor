@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { aiService } from '../../../services/api/aiService';
-import AiProviderList from './AiProviderList';
-import AiGlobalConfig from './AiGlobalConfig';
-import AiProviderForm from './AiProviderForm';
+import AiProviderList from './ai/AiProviderList';
+import AiGlobalConfig from './ai/AiGlobalConfig';
+import AiProviderForm from './ai/AiProviderForm';
 import { FilterBar } from '../../components/AdminUIKit';
 
-const AdminAiSettings = () => {
+const AiSettingsPanel = () => {
   const [tab, setTab] = useState('Providers');
   const [providers, setProviders] = useState([]);
   const [settings, setSettings] = useState(null);
@@ -59,12 +59,7 @@ const AdminAiSettings = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[20px] sm:text-[24px] font-bold text-[var(--admin-text-primary)]">
-            Global AI Platform
-          </h1>
-        </div>
+      <div className="flex justify-end mb-4">
         <button
           onClick={openAddForm}
           className="flex justify-center items-center gap-2 bg-[var(--admin-accent)] text-white px-4 py-2 rounded-md text-[13px] font-bold hover:brightness-110 transition-all active:scale-95 shadow-sm w-full sm:w-auto"
@@ -134,4 +129,4 @@ const AdminAiSettings = () => {
   );
 };
 
-export default AdminAiSettings;
+export default AiSettingsPanel;

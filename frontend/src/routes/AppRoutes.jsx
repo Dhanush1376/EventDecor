@@ -167,11 +167,6 @@ const AdminProductionHub = lazy(() => import('../admin/pages/AdminProductionHub'
 const AdminBusinessRules = lazy(() => import('../admin/pages/AdminBusinessRules'));
 const AdminCatalogRegistry = lazy(() => import('../admin/pages/AdminCatalogRegistry'));
 
-const AdminWhatsAppAutomations = lazy(() =>
-  import('../admin/pages/AdminWhatsAppAutomations').then((m) => ({
-    default: m.AdminWhatsAppAutomations,
-  })),
-);
 const AdminApprovalsQueue = lazy(() => import('../admin/pages/AdminApprovalsQueue'));
 
 const AdminExecutiveDashboard = lazy(() => import('../admin/pages/ExecutiveDashboard'));
@@ -252,10 +247,7 @@ const AdminTemplateCreate = lazy(() =>
 const AdminReviews = lazy(() =>
   import('../admin/pages/AdminReviews').then((m) => ({ default: m.AdminReviews })),
 );
-const AdminVisualSearch = lazy(() =>
-  import('../admin/pages/AdminVisualSearch').then((m) => ({ default: m.AdminVisualSearch })),
-);
-const AdminAiSettings = lazy(() => import('../admin/pages/AdminAiSettings'));
+
 const AdminServiceAreas = lazy(() => import('../admin/pages/AdminServiceAreas'));
 const AdminServiceability = lazy(() => import('../admin/pages/AdminServiceability'));
 
@@ -425,13 +417,13 @@ export function AppRoutes() {
               <Route path="search" element={<AdminEnterpriseSearch />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="analytics/operations" element={<AdminRecommendationAnalytics />} />
-              <Route path="ai-settings" element={<AdminAiSettings />} />
+
               <Route
                 path="maintenance"
                 element={<Navigate to="/admin/maintenance-console" replace />}
               />
               <Route path="backup" element={<Navigate to="/admin/backup-center" replace />} />
-              <Route path="whatsapp-automations" element={<AdminWhatsAppAutomations />} />
+
               <Route path="coupons" element={<AdminCoupons />} />
               <Route path="coupons/create" element={<AdminCreateCoupon />} />
               <Route path="coupons/edit/:id" element={<AdminCreateCoupon />} />
@@ -448,7 +440,6 @@ export function AppRoutes() {
               <Route path="team" element={<AdminTeam />} />
 
               <Route path="reviews" element={<AdminReviews />} />
-              <Route path="visual-search" element={<AdminVisualSearch />} />
 
               {/* Warehouse Routes */}
               <Route path="warehouse" element={<AdminWarehouseHub />} />

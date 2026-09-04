@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { aiService } from '../../../services/api/aiService';
+import { aiService } from '../../../../services/api/aiService';
 import toast from 'react-hot-toast';
 
 const AiProviderList = ({ providers, onEdit, onRefresh }) => {

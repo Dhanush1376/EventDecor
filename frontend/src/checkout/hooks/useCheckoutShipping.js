@@ -242,8 +242,9 @@ export function useCheckoutShipping({ isAuthenticated, user, setActiveStep, setI
             setIsDetectingLocation(false);
             let errorMsg = 'Failed to access your location. Please fill details manually.';
             if (error.code === error.PERMISSION_DENIED) {
-              errorMsg =
-                'Location permission denied. Please allow browser location access and try again.';
+              errorMsg = window.isSecureContext
+                ? 'Location permission denied. Please allow browser location access and try again.'
+                : 'Location requires a secure connection (HTTPS).';
             } else if (error.code === error.POSITION_UNAVAILABLE) {
               errorMsg = 'Location unavailable. Please check GPS/network and try again.';
             } else if (error.code === error.TIMEOUT) {

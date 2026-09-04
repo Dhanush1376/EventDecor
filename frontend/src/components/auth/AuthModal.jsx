@@ -130,9 +130,9 @@ export function AuthModal() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full sm:max-w-[390px] relative flex flex-col justify-end"
+            className="w-full sm:max-w-[390px] relative flex flex-col justify-end keyboard-aware-drawer"
           >
-            <div className="absolute top-[98%] left-0 right-0 h-[50vh] bg-[#faf9f6] sm:hidden z-[-1]" />
+            <div className="absolute top-[98%] left-0 right-0 h-[100vh] bg-[#faf9f6] sm:hidden z-[-1]" />
             <div className="relative bg-[#faf9f6] w-full rounded-t-[28px] sm:rounded-[28px] p-6 xs:p-7 sm:p-8 border-t sm:border border-outline-variant/30 shadow-[0_-10px_40px_rgba(115,92,0,0.04)] sm:shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-y-auto max-h-[95vh] no-scrollbar">
               {/* Grab handle for mobile bottom sheet */}
               <div className="sm:hidden w-12 h-1 bg-outline-variant/40 rounded-full mx-auto mb-4 shrink-0" />

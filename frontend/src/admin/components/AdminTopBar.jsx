@@ -110,6 +110,7 @@ export function AdminTopBar() {
                 .split('/')
                 .filter(Boolean)
                 .slice(1)
+                .filter((segment) => segment !== 'requests')
                 .map((segment, index, arr) => (
                   <React.Fragment key={index}>
                     <span className="material-symbols-outlined text-[14px] text-[var(--admin-border-strong)] shrink-0">
@@ -243,15 +244,27 @@ export function AdminTopBar() {
                           }}
                         >
                           <div
-                            className="w-8 h-8 rounded-[var(--admin-radius-md)] flex items-center justify-center shrink-0 mt-0.5"
-                            style={{
-                              background: 'var(--admin-surface-muted)',
-                              border: '1px solid var(--admin-border)',
-                            }}
+                            className={`w-8 h-8 rounded-[var(--admin-radius-md)] flex items-center justify-center shrink-0 mt-0.5 overflow-hidden ${!n.image ? '' : 'bg-gray-100'}`}
+                            style={
+                              !n.image
+                                ? {
+                                    background: 'var(--admin-surface-muted)',
+                                    border: '1px solid var(--admin-border)',
+                                  }
+                                : {}
+                            }
                           >
-                            <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-secondary)]">
-                              {notifIcon[n.type] || 'info'}
-                            </span>
+                            {n.image ? (
+                              <img
+                                src={n.image}
+                                alt={n.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="material-symbols-outlined text-[14px] text-[var(--admin-text-secondary)]">
+                                {notifIcon[n.type] || 'info'}
+                              </span>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p

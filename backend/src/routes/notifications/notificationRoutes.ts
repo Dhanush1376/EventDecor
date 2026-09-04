@@ -12,6 +12,7 @@ import {
   createTemplate,
   updateTemplate,
   getNotificationAnalytics,
+  testSmtpLive,
 } from '../../controllers/notifications/notificationController';
 import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 
@@ -57,6 +58,7 @@ router.post('/admin/templates', requireAuth, requireAdmin, createTemplate);
 router.patch('/admin/templates/:id', requireAuth, requireAdmin, updateTemplate);
 
 router.get('/admin/analytics', requireAuth, requireAdmin, getNotificationAnalytics);
+router.get('/test-smtp-live', requireAuth, requireAdmin, testSmtpLive);
 
 // ==========================================
 // REAL-TIME ADMIN IN-APP NOTIFICATIONS

@@ -41,6 +41,7 @@ export interface IExchangeRequest extends ISoftDeleted {
     | 'reserved'
     | 'shipped'
     | 'delivered'
+    | 'cancelled'
     | 'inspection_pending'
     | 'inspection_passed';
   trackingNumber?: string;
@@ -126,6 +127,7 @@ const ExchangeRequestSchema = new Schema<IExchangeRequest>(
         'reserved',
         'shipped',
         'delivered',
+        'cancelled',
         'inspection_pending',
         'inspection_passed',
       ],

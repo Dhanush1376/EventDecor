@@ -43,7 +43,7 @@ export function ProfilePanel({
           />
         </div>
         <div className="space-y-2">
-          <label className="admin-label">Contact Phone Number</label>
+          <label className="admin-label">Phone Number</label>
           <input
             type="tel"
             value={profileForm.phone}

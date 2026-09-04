@@ -407,7 +407,7 @@ class OtpAuthService {
 
     if (isNewUser) {
       try {
-        const { RuleEngine } = require('./RuleEngine');
+        const { RuleEngine } = await import('./RuleEngine.js');
         await RuleEngine.evaluateTrigger('on_signup', { user });
       } catch (ruleErr) {
         logger.error('Failed to evaluate signup rules:', ruleErr);

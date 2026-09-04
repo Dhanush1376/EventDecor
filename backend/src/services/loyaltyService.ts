@@ -440,6 +440,12 @@ export class LoyaltyService {
 
       const settings = await storeSettingsService.getSettings();
 
+      if (!settings.loyalty.reviewRewardsEnabled) {
+        await session.abortTransaction();
+        session.endSession();
+        return { alreadyRewarded: false, rewardIssued: false };
+      }
+
       // Determine review credits reward
       let rewardAmount = settings.loyalty.reviewRewardText;
       let description = 'Text Review Credit';

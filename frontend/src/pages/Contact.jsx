@@ -84,32 +84,44 @@ export function Contact() {
   const contactMethods = [
     {
       title: 'Studio Address',
-      value: contact?.address || '#28-1-92, South Street, ONGOLE-523001',
+      value:
+        settings?.contact?.address || contact?.address || '#28-1-92, South Street, ONGOLE-523001',
       icon: 'location_on',
       link:
+        settings?.contact?.googleMapsUrl ||
         contact?.mapEmbed ||
         'https://www.google.com/maps/place/Siri+Arts+%26+Crafts/@15.5024512,80.0450481,17z/data=!3m1!4b1!4m6!3m5!1s0x3a4b01495510d675:0xe98014cae349dbea!8m2!3d15.502446!4d80.047623!16s%2Fg%2F11scb6jg5_',
       target: '_blank',
     },
     {
       title: 'WhatsApp Us',
-      value: contact?.phone || '+91 98660 06648',
+      value:
+        settings?.contact?.whatsappNumber ||
+        settings?.contact?.phone ||
+        contact?.phone ||
+        '+91 98660 06648',
       icon: 'forum',
-      link: contact?.whatsapp || 'https://wa.me/919866006648',
+      link: settings?.contact?.whatsappNumber
+        ? `https://wa.me/${String(settings.contact.whatsappNumber).replace(/\D/g, '')}`
+        : contact?.whatsapp || 'https://wa.me/919866006648',
       target: '_blank',
     },
     {
       title: 'Email Us',
-      value: contact?.email || 'Sirisha.atmakuri@gmail.com',
+      value:
+        settings?.contact?.email ||
+        settings?.general?.supportEmail ||
+        contact?.email ||
+        'Sirisha.atmakuri@gmail.com',
       icon: 'mail',
-      link: `mailto:${contact?.email || 'Sirisha.atmakuri@gmail.com'}`,
+      link: `mailto:${settings?.contact?.email || settings?.general?.supportEmail || contact?.email || 'Sirisha.atmakuri@gmail.com'}`,
       target: '_self',
     },
     {
       title: 'Call Us',
-      value: contact?.phone || '+91 98660 06648',
+      value: settings?.contact?.phone || contact?.phone || '+91 98660 06648',
       icon: 'phone',
-      link: `tel:${contact?.phone || '+91 98660 06648'}`,
+      link: `tel:${settings?.contact?.phone || contact?.phone || '+91 98660 06648'}`,
       target: '_self',
     },
     {

@@ -394,7 +394,7 @@ export function FilterPanel({
                   }}
                   className="relative w-full flex flex-col"
                 >
-                  <div className="absolute top-[98%] left-0 right-0 h-[50vh] bg-surface sm:hidden z-[-1]" />
+                  <div className="absolute top-[98%] left-0 right-0 h-[100vh] bg-surface sm:hidden z-[-1]" />
                   <div className="relative w-full bg-surface rounded-t-[32px] p-5 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10">
                     {/* Handlebar for bottom sheet feel */}
                     <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-4 shrink-0" />

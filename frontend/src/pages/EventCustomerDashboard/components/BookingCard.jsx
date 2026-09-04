@@ -91,8 +91,11 @@ export function BookingCard({ booking, idx, onClick }) {
           </span>
           <span className="text-[9px] text-secondary font-light">on {eventDate}</span>
         </div>
-        <StatusPill color="accent" className="capitalize">
-          {booking.eventType}
+        <StatusPill
+          color="accent"
+          className="capitalize max-w-[110px] sm:max-w-[140px] truncate inline-block"
+        >
+          {booking.eventType?.replace(/-/g, ' ')}
         </StatusPill>
       </div>
 
