@@ -475,7 +475,7 @@ export function LocationSelectorModal({
             className={`relative bg-[#FCFAF6] border border-[#826237]/30 w-full font-body flex flex-col z-10 ${
               inline
                 ? 'rounded-2xl'
-                : 'max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden'
+                : 'max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl max-h-[95dvh] sm:max-h-[90dvh] overflow-hidden'
             }`}
           >
             {/* Elegant Header Banner */}

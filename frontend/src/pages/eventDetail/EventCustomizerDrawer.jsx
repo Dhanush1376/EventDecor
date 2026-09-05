@@ -29,7 +29,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-          className="fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:left-0 lg:right-0 lg:mx-auto lg:w-[600px] lg:rounded-[2.5rem] lg:overflow-hidden z-[1000] bg-[#FCFAF6] border-t border-black/10 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col max-h-[85vh] lg:max-h-[90vh]"
+          className="fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:left-0 lg:right-0 lg:mx-auto lg:w-[600px] lg:rounded-[2.5rem] lg:overflow-hidden z-[1000] bg-[#FCFAF6] border-t border-black/10 rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col max-h-[85dvh] lg:max-h-[90dvh]"
         >
           <div className="bg-[#FAF6F0] px-6 py-4 border-b border-black/5 flex items-center justify-between shrink-0 relative rounded-t-[2.5rem] lg:rounded-t-none">
             <div className="flex items-center gap-2">

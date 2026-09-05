@@ -135,7 +135,7 @@ export function AuthModal() {
             exit="exit"
             className="w-full sm:max-w-[390px] relative flex flex-col justify-end"
           >
-            <div className="relative bg-[#faf9f6] w-full rounded-t-[28px] sm:rounded-[28px] p-6 xs:p-7 sm:p-8 border-t sm:border border-outline-variant/30 shadow-[0_-10px_40px_rgba(115,92,0,0.04)] sm:shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-y-auto max-h-[95vh] no-scrollbar">
+            <div className="relative bg-[#faf9f6] w-full rounded-t-[28px] sm:rounded-[28px] p-6 xs:p-7 sm:p-8 border-t sm:border border-outline-variant/30 shadow-[0_-10px_40px_rgba(115,92,0,0.04)] sm:shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-y-auto max-h-[95dvh] no-scrollbar">
               {/* Grab handle for mobile bottom sheet */}
               <div className="sm:hidden w-12 h-1 bg-outline-variant/40 rounded-full mx-auto mb-4 shrink-0" />
               {/* Concentric rotating gold mandalas for luxury styling */}
