@@ -452,7 +452,7 @@ export function LocationSelectorModal({
           className={
             inline
               ? 'relative w-full flex-1 flex flex-col'
-              : 'fixed inset-0 z-[999] flex items-end sm:items-center justify-center p-0 sm:p-4 keyboard-aware-bottom'
+              : 'fixed inset-0 z-[999] flex items-center justify-center p-4'
           }
         >
           {/* Blur Overlay */}

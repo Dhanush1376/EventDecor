@@ -384,7 +384,7 @@ export function ProductInfo({
       )}
 
       {/* Mobile Coupons */}
-      <div className="block lg:hidden">
+      <div className="block lg:hidden py-4 border-b border-outline-variant/10">
         <ProductCoupons
           product={product}
           localAppliedCoupon={localAppliedCoupon}

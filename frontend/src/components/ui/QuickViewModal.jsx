@@ -153,7 +153,7 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[200] flex items-end lg:items-center justify-center p-3 sm:p-4 lg:p-8 pb-[max(16px,var(--safe-area-bottom,_env(safe-area-inset-bottom)))] lg:pb-8 keyboard-aware-bottom"
+          className="fixed inset-0 z-[200] flex items-end lg:items-center justify-center p-3 sm:p-4 lg:p-8 pb-[max(16px,var(--safe-area-bottom,_env(safe-area-inset-bottom)))] lg:pb-8"
           role="dialog"
           aria-modal="true"
           aria-labelledby="quickview-title"

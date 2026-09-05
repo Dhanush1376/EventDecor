@@ -17,16 +17,6 @@
     --safe-area-bottom: 0px;
   }
 
-  /* 
-   * Global utility for mobile bottom sheets/drawers. 
-   * By removing interactive-widget=resizes-content, we bypass the Safari scroll offset bug.
-   * Instead, we manually translate fixed containers up by the exact keyboard offset.
-   */
-  .keyboard-aware-bottom {
-    transform: translateY(calc(-1 * var(--keyboard-offset, 0px)));
-    transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.1);
-  }
-
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
