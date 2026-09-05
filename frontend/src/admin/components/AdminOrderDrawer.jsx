@@ -113,7 +113,7 @@ export function AdminOrderDrawer({
         exit="exit"
         variants={slideDrawer}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed sm:right-0 sm:top-0 bottom-0 inset-x-0 sm:inset-x-auto h-[90dvh] sm:h-screen w-full sm:w-[500px] z-[1000] shadow-[var(--admin-shadow-2xl)] flex flex-col overflow-hidden border-t sm:border-t-0 sm:border-l border-[var(--admin-border)] rounded-t-2xl sm:rounded-none"
+        className="fixed sm:right-0 sm:top-0 bottom-0 inset-x-0 sm:inset-x-auto h-[90dvh] sm:h-screen w-full sm:w-[500px] z-[1000] shadow-[var(--admin-shadow-2xl)] flex flex-col overflow-hidden border-t sm:border-t-0 sm:border-l border-[var(--admin-border)] rounded-t-2xl sm:rounded-none keyboard-aware-bottom"
         style={{ background: 'var(--admin-surface)' }}
       >
         {/* Drawer Header */}

@@ -3,10 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, interactive-widget=resizes-content" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
     
-    <!-- Anti-Stale Service Worker Cleanup Script -->
-
     <!-- Anti-Stale Service Worker Cleanup Script -->
     <script defer src="/sw-cleanup.js"></script>
 
@@ -28,42 +26,6 @@
       } else {
         document.documentElement.classList.add('fonts-loaded');
       }
-    </script>
-
-    <!-- Keyboard Safe Area Fix -->
-    <script>
-      (function() {
-        const root = document.documentElement;
-        let isInputFocused = false;
-        
-        function handleKeyboard() {
-          if (isInputFocused || (window.visualViewport && window.visualViewport.height < window.screen.height * 0.75)) {
-            root.style.setProperty('--safe-area-bottom', '0px');
-          } else {
-            root.style.removeProperty('--safe-area-bottom');
-          }
-        }
-
-        document.addEventListener('focusin', (e) => {
-          if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
-            isInputFocused = true;
-            handleKeyboard();
-          }
-        });
-        
-        document.addEventListener('focusout', () => {
-          isInputFocused = false;
-          setTimeout(() => {
-            if (!document.activeElement || !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
-              handleKeyboard();
-            }
-          }, 100);
-        });
-
-        if (window.visualViewport) {
-          window.visualViewport.addEventListener('resize', handleKeyboard);
-        }
-      })();
     </script>
 
     <!-- Favicon -->

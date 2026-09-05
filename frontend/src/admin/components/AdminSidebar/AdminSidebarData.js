@@ -145,20 +145,6 @@ export const navSections = [
         keywords: 'rentals, leases, returns',
         domain: 'orders',
       },
-      {
-        label: 'Rental Calendar',
-        icon: 'calendar_month',
-        path: '/admin/rentals/calendar',
-        keywords: 'schedule, availability, tracking',
-        domain: 'orders',
-      },
-      {
-        label: 'Due Returns',
-        icon: 'assignment_return',
-        path: '/admin/rentals/due',
-        keywords: 'due, overdue, inspect',
-        domain: 'orders',
-      },
     ],
   },
 

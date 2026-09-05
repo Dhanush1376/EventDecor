@@ -854,7 +854,7 @@ export function AdminProducts() {
                         {activeTab === 'inventory' && <th className="text-center">Sold</th>}
                         {activeTab === 'products' && <th>Price</th>}
                         <th>Category</th>
-                        <th className="hidden lg:table-cell">Status</th>
+                        <th>Status</th>
                         {activeTab === 'products' && <th className="text-center">Stock Level</th>}
                         {activeTab === 'inventory' && (
                           <th className="text-right pr-6">Fast Action</th>
@@ -945,7 +945,7 @@ export function AdminProducts() {
                           <td className="text-[var(--admin-text-secondary)] font-medium text-[12px]">
                             {p.category}
                           </td>
-                          <td className="hidden lg:table-cell">
+                          <td>
                             <div className="flex items-center gap-3">
                               <StatusBadge status={statusLabels[p.status] || p.status} />
                               <div onClick={(e) => e.stopPropagation()}>
@@ -1086,11 +1086,23 @@ export function AdminProducts() {
                           Hero Carousel
                         </div>
                       )}
-                      <div className="absolute top-3 right-3">
+                      <div className="absolute top-3 right-3 flex items-center gap-2">
                         <StatusBadge
                           status={statusLabels[p.status] || p.status}
                           className="shadow-[var(--admin-shadow-sm)] border-none"
                         />
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <AdminToggle
+                            checked={p.status !== 'inactive' && p.status !== 'draft'}
+                            onChange={() => {
+                              const newStatus =
+                                p.status === 'inactive' || p.status === 'draft'
+                                  ? 'active'
+                                  : 'inactive';
+                              if (updateProductStatus) updateProductStatus(p.id, newStatus);
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                     <div className="p-4 flex-1 flex flex-col justify-between border-t border-[var(--admin-border-subtle)]">
