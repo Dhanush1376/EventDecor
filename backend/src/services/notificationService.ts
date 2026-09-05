@@ -384,7 +384,7 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
 
     // 5. Send via smart email provider (Brevo HTTP API → SMTP fallback → Ethereal dev)
     let info: any;
-    const maxRetries = 3;
+    const maxRetries = actionVal === 'cod_otp' || actionVal === 'otp_auth' ? 1 : 3;
 
     const headers: Record<string, string> = {};
     if (typeVal === 'marketing') {

@@ -74,7 +74,8 @@ export const addToCartSchema = z.object({
         endDate: z.string(),
         duration: z.number(),
       })
-      .optional(),
+      .optional()
+      .nullable(),
     deposit: z.number().nonnegative().optional(),
     customizationNote: z.string().max(2000).optional(),
   }),
@@ -93,7 +94,8 @@ export const syncCartSchema = z.object({
             endDate: z.string(),
             duration: z.number(),
           })
-          .optional(),
+          .optional()
+          .nullable(),
         deposit: z.number().nonnegative().optional(),
         customizationNote: z.string().max(2000).optional(),
       }),

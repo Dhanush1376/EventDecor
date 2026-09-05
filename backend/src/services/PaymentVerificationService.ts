@@ -155,7 +155,7 @@ export class PaymentVerificationService {
 
       const expectedAmount = Math.round(
         attempt.type === 'purchase' || attempt.type === 'rental'
-          ? attempt.orderData.total * 100
+          ? (attempt.orderData.total ?? attempt.orderData.totalAmount) * 100
           : attempt.orderData.depositAmount * 100,
       );
 
@@ -486,12 +486,33 @@ export class PaymentVerificationService {
           initialNote = 'Rental flagged by business rules. Pending admin approval.';
         }
 
+        if (orderData.walletDeduction && orderData.walletDeduction > 0) {
+          const user = await User.findById(userId).session(session);
+          if (user && user.walletBalance >= orderData.walletDeduction) {
+            await debitWalletBalance(userId, orderData.walletDeduction, session);
+            await WalletTransaction.create(
+              [
+                {
+                  userId,
+                  type: 'debit',
+                  amount: orderData.walletDeduction,
+                  source: 'checkout_redeem',
+                  description: 'Redeemed Siri Cash at rental checkout',
+                  status: 'active',
+                },
+              ],
+              { session },
+            );
+          }
+        }
+
         finalOrder = await RentalOrder.create(
           [
             {
               _id: orderData.pendingOrderId,
               user: userId,
               product: orderData.product,
+              quantity: orderData.quantity || 1,
               productTitle: orderData.productTitle,
               productImage: orderData.productImage,
               rentalStartDate: orderData.rentalStartDate,
@@ -502,6 +523,7 @@ export class PaymentVerificationService {
               securityDeposit: orderData.securityDeposit,
               deliveryCharge: orderData.deliveryCharge,
               tax: orderData.tax,
+              walletDeduction: orderData.walletDeduction || 0,
               totalAmount: orderData.totalAmount,
               paymentMethod: 'razorpay',
               paymentStatus: 'paid',

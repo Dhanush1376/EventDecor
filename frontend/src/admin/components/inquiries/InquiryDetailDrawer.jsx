@@ -10,8 +10,10 @@ import { DraftRestoreModal } from '../DraftRestoreModal';
 import { UnsavedChangesGuard } from '../UnsavedChangesGuard';
 import { EXTERNAL_URLS } from '../../../config/constants';
 import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
+import { useScrollLock } from '../../../hooks/useScrollLock';
 
 export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOrders, isMobile }) {
+  useScrollLock(!!selectedOrder);
   const chatEndRef = useRef(null);
   const [adminMessageText, setAdminMessageText] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);

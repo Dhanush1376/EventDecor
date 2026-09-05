@@ -10,29 +10,15 @@ import { NormalizationEngine } from './NormalizationEngine';
 // Pure input-shaping used by ProductService create/update — no query/cache concerns.
 
 export function enforceSmartPricing(data: Partial<IProduct>, existingProduct?: IProduct) {
-  const isManual =
-    data.isManualRentalPricing !== undefined
-      ? data.isManualRentalPricing
-      : existingProduct?.isManualRentalPricing;
-
-  // If manual pricing is explicitly disabled, we overwrite. If explicitly enabled, we return.
-  if (data.isManualRentalPricing === false) {
-    // proceed with smart pricing overwrite
-  } else if (isManual === true) {
+  // If securityDeposit is already provided explicitly, preserve it
+  if (data.securityDeposit !== undefined && Number(data.securityDeposit) > 0) {
     return;
-  } else {
-    // Auto-detect if explicit non-zero values were sent in case the flag was dropped
-    const hasManualRental =
-      data.rentalPricing &&
-      (Number(data.rentalPricing.daily) > 0 ||
-        Number(data.rentalPricing.weekly) > 0 ||
-        Number(data.rentalPricing.monthly) > 0);
-    const hasManualDeposit = data.securityDeposit !== undefined && Number(data.securityDeposit) > 0;
-
-    if (hasManualRental || hasManualDeposit) {
-      data.isManualRentalPricing = true;
-      return;
-    }
+  }
+  if (
+    existingProduct?.securityDeposit !== undefined &&
+    Number(existingProduct.securityDeposit) > 0
+  ) {
+    return;
   }
 
   const price = data.price !== undefined ? Number(data.price) : Number(existingProduct?.price || 0);
@@ -54,41 +40,27 @@ export function enforceSmartPricing(data: Partial<IProduct>, existingProduct?: I
   const category = categoryName.toLowerCase();
 
   if (price > 0 && category) {
-    let dailyRate: number;
     let depositRate: number;
 
     if (category.includes('furniture')) {
-      dailyRate = 0.04;
       depositRate = 0.3;
     } else if (category.includes('electronic')) {
-      dailyRate = 0.06;
       depositRate = 0.5;
     } else if (category.includes('wedding decoration') || category.includes('wedding')) {
-      dailyRate = 0.08;
       depositRate = 0.4;
     } else if (category.includes('camera')) {
-      dailyRate = 0.1;
       depositRate = 0.6;
     } else {
-      dailyRate = 0.05;
       if (price <= 5000) depositRate = 0.3;
       else if (price <= 25000) depositRate = 0.4;
       else if (price <= 100000) depositRate = 0.5;
       else depositRate = 0.6;
     }
 
-    const daily = Math.round(price * dailyRate);
-    const weekly = daily * 6;
-    const monthly = daily * 16;
     const deposit = Math.round(price * depositRate);
-
-    data.rentalPricing = {
-      ...(data.rentalPricing || existingProduct?.rentalPricing || ({} as any)),
-      daily,
-      weekly,
-      monthly,
-    };
-    data.securityDeposit = deposit;
+    if (data.securityDeposit === undefined) {
+      data.securityDeposit = deposit;
+    }
   }
 }
 

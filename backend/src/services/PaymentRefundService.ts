@@ -159,6 +159,36 @@ export class PaymentRefundService {
         await Order.findByIdAndUpdate(refundRecord.entityId, { paymentStatus: newStatus });
       }
 
+      // Update Rental deposit status if applicable
+      if (refundRecord.entityType === 'Rental') {
+        const RentalOrder = require('../models/RentalOrder').default;
+        const rental = await RentalOrder.findById(refundRecord.entityId);
+        if (rental && rental.depositStatus === 'processing') {
+          rental.depositRefund = rental.depositRefund || {};
+          rental.depositRefund.status = 'completed';
+          rental.depositRefund.refundId = rzpRefund.id;
+          rental.depositStatus = 'refunded';
+
+          const { RentalStateMachine } = require('./rentals/RentalStateMachine');
+          RentalStateMachine.transition(
+            rental,
+            'completed',
+            `Deposit refund completed via Razorpay. Refund ID: ${rzpRefund.id}`,
+            'system',
+          );
+
+          await rental.save();
+
+          const OutboxEvent = require('../models/OutboxEvent').default;
+          await OutboxEvent.create({
+            aggregateId: rental._id.toString(),
+            aggregateType: 'RentalOrder',
+            eventType: 'RentalDepositRefunded',
+            payload: { orderId: rental._id.toString() },
+          });
+        }
+      }
+
       // Emit refund socket event
       const { emitAdminNotification, emitUserEvent } = require('../socket');
       const payload = {

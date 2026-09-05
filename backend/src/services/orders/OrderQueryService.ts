@@ -101,6 +101,11 @@ export class OrderQueryService {
     const [orders, total] = await Promise.all([
       Order.find(filter)
         .populate('customOrderId', 'productSnapshot inspirationImages referenceImages files')
+        .populate({
+          path: 'items.productId',
+          select: 'primaryCategory',
+          populate: { path: 'primaryCategory', select: 'name' },
+        })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

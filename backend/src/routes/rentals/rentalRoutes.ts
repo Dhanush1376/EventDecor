@@ -17,6 +17,8 @@ import {
   getProductCalendar,
   getRentalAnalytics,
   adminCancelRental,
+  getDueReturns,
+  recordCodPayment,
 } from '../../controllers/rentals/rentalController';
 import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import { validate } from '../../middleware/validateMiddleware';
@@ -77,5 +79,7 @@ router.get('/admin/calendar', requireAuth, requireAdmin, getProductCalendar);
 router.get('/admin/calendar/:productId', requireAuth, requireAdmin, getProductCalendar);
 router.get('/admin/analytics', requireAuth, requireAdmin, getRentalAnalytics);
 router.post('/admin/:id/cancel', requireAuth, requireAdmin, adminCancelRental);
+router.get('/admin/due-returns', requireAuth, requireAdmin, getDueReturns);
+router.post('/admin/:id/record-payment', requireAuth, requireAdmin, recordCodPayment);
 
 export default router;

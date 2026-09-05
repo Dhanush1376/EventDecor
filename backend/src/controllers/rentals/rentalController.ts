@@ -7,8 +7,8 @@ import ApiError from '../../utils/ApiError';
 // ─── Customer Endpoints ───
 
 export const calculateRentalCost = asyncHandler(async (req: Request, res: Response) => {
-  const { productId, startDate, endDate } = req.body;
-  const result = await RentalService.calculateRentalCost(productId, startDate, endDate);
+  const { productId, startDate, endDate, quantity } = req.body;
+  const result = await RentalService.calculateRentalCost(productId, startDate, endDate, quantity);
   res.status(200).json(new ApiResponse(true, 'Rental cost calculated', result));
 });
 
@@ -92,14 +92,17 @@ export const processInspection = asyncHandler(async (req: Request, res: Response
 
 export const releaseDeposit = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user?.id) throw new ApiError(401, 'Authentication required');
-  const { amount, reason } = req.body;
+  const { deductionAmount, deductionReason, method } = req.body;
   const result = await RentalService.releaseDeposit(
     req.params.id as string,
-    amount,
-    reason,
+    {
+      deductionAmount: Number(deductionAmount) || 0,
+      deductionReason,
+      method: method || 'razorpay',
+    },
     req.user.id,
   );
-  res.status(200).json(new ApiResponse(true, 'Deposit released', result));
+  res.status(200).json(new ApiResponse(true, 'Deposit resolution processed', result));
 });
 
 export const getProductCalendar = asyncHandler(async (req: Request, res: Response) => {
@@ -114,7 +117,25 @@ export const getProductCalendar = asyncHandler(async (req: Request, res: Respons
 
 export const getRentalAnalytics = asyncHandler(async (req: Request, res: Response) => {
   const result = await RentalService.getRentalAnalytics();
-  res.status(200).json(new ApiResponse(true, 'Rental analytics fetched', result));
+  res.status(200).json(new ApiResponse(true, 'Analytics fetched', result));
+});
+
+export const getDueReturns = asyncHandler(async (req: Request, res: Response) => {
+  const result = await RentalService.getDueReturns();
+  res.status(200).json(new ApiResponse(true, 'Due returns fetched', result));
+});
+
+export const recordCodPayment = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user?.id) throw new ApiError(401, 'Authentication required');
+  const { amount, note, paymentMethod } = req.body;
+  const result = await RentalService.recordCodPayment(
+    req.params.id as string,
+    Number(amount),
+    note,
+    req.user.id,
+    paymentMethod || 'cash',
+  );
+  res.status(200).json(new ApiResponse(true, 'Payment recorded', result));
 });
 
 export const adminCancelRental = asyncHandler(async (req: Request, res: Response) => {

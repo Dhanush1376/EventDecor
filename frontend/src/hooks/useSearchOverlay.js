@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAutocomplete, useTrendingSearches, useDiscoveryData } from './useSearchQueries';
 import { useSearchAnalytics } from './useSearchAnalytics';
+import { useScrollLock } from './useScrollLock';
 
 const RECENT_SEARCHES_KEY = 'siri_recent_searches';
 const MAX_RECENT = 12;
@@ -138,16 +139,7 @@ export function useSearchOverlay() {
   }, [handleClose, isOpen]);
 
   // Prevent body scroll when overlay is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+  useScrollLock(isOpen);
 
   // Save a search to recent history
   const saveRecentSearch = useCallback((searchQuery) => {

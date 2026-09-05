@@ -55,7 +55,7 @@ export const orderService = {
     return response.data;
   },
   sendCodOtp: async (email) => {
-    const response = await api.post('/orders/send-cod-otp', { email });
+    const response = await api.post('/orders/send-cod-otp', { email }, { timeout: 30000 });
     return response.data;
   },
   verifyCodOtp: async (email, otp) => {

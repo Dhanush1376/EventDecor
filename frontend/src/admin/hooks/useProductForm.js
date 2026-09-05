@@ -4,42 +4,6 @@ import { useDraft } from './useDraft';
 import { productService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
 
-const calculateRentalPricing = (price, category) => {
-  const numPrice = Number(price);
-  if (numPrice <= 0) return null;
-  const cat = String(category || '').toLowerCase();
-
-  let dailyRate;
-  let depositRate;
-
-  if (cat.includes('furniture')) {
-    dailyRate = 0.04;
-    depositRate = 0.3;
-  } else if (cat.includes('electronic')) {
-    dailyRate = 0.06;
-    depositRate = 0.5;
-  } else if (cat.includes('wedding decoration') || cat.includes('wedding')) {
-    dailyRate = 0.08;
-    depositRate = 0.4;
-  } else if (cat.includes('camera')) {
-    dailyRate = 0.1;
-    depositRate = 0.6;
-  } else {
-    dailyRate = 0.05;
-    if (numPrice <= 5000) depositRate = 0.3;
-    else if (numPrice <= 25000) depositRate = 0.4;
-    else if (numPrice <= 100000) depositRate = 0.5;
-    else depositRate = 0.6;
-  }
-
-  return {
-    daily: Math.round(numPrice * dailyRate),
-    weekly: Math.round(numPrice * dailyRate * 6),
-    monthly: Math.round(numPrice * dailyRate * 16),
-    securityDeposit: Math.round(numPrice * depositRate),
-  };
-};
-
 const EMPTY_ARRAY = [];
 
 export function useProductForm({ id, isEditMode }) {
@@ -85,18 +49,14 @@ export function useProductForm({ id, isEditMode }) {
       rentalEnabled: false,
       availabilityMode: 'purchase_only',
       rentalPricing: {
-        daily: '',
-        weekly: '',
-        monthly: '',
-        customDurationEnabled: false,
-        customPricePerDay: '',
+        rentalPrice: '',
+        rentalDurationDays: '',
       },
       securityDeposit: '',
       isDepositRefundable: true,
       rentalStock: '',
       rentalMinDays: '1',
       rentalMaxDays: '365',
-      isManualRentalPricing: false,
       customizationConfig: {
         enabled: false,
         required: false,
@@ -196,12 +156,9 @@ export function useProductForm({ id, isEditMode }) {
               variants: Array.isArray(p.variants) ? p.variants : [],
               rentalEnabled: p.rentalEnabled || false,
               availabilityMode: p.availabilityMode || 'purchase_only',
-              rentalPricing: p.rentalPricing || {
-                daily: '',
-                weekly: '',
-                monthly: '',
-                customDurationEnabled: false,
-                customPricePerDay: '',
+              rentalPricing: {
+                rentalPrice: p.rentalPricing?.rentalPrice ?? '',
+                rentalDurationDays: p.rentalPricing?.rentalDurationDays ?? '',
               },
               securityDeposit: p.securityDeposit || '',
               isDepositRefundable:
@@ -209,7 +166,6 @@ export function useProductForm({ id, isEditMode }) {
               rentalStock: p.rentalStock !== undefined ? p.rentalStock : '',
               rentalMinDays: p.rentalMinDays || '1',
               rentalMaxDays: p.rentalMaxDays || '365',
-              isManualRentalPricing: p.isManualRentalPricing || false,
               customizationConfig: p.customizationConfig || {
                 enabled: false,
                 required: false,
@@ -245,41 +201,6 @@ export function useProductForm({ id, isEditMode }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isEditMode, dbCategories]);
-
-  // Smart Rental Pricing Auto-calculation
-  useEffect(() => {
-    if (!formData.isManualRentalPricing && formData.rentalEnabled && formData.price) {
-      const calculated = calculateRentalPricing(formData.price, formData.primaryCategory);
-      if (calculated) {
-        setFormData((prev) => {
-          if (
-            Number(prev.rentalPricing?.daily) === calculated.daily &&
-            Number(prev.rentalPricing?.weekly) === calculated.weekly &&
-            Number(prev.rentalPricing?.monthly) === calculated.monthly &&
-            Number(prev.securityDeposit) === calculated.securityDeposit
-          ) {
-            return prev;
-          }
-          return {
-            ...prev,
-            rentalPricing: {
-              ...(prev.rentalPricing || {}),
-              daily: calculated.daily,
-              weekly: calculated.weekly,
-              monthly: calculated.monthly,
-            },
-            securityDeposit: calculated.securityDeposit,
-          };
-        });
-      }
-    }
-  }, [
-    formData.price,
-    formData.primaryCategory,
-    formData.isManualRentalPricing,
-    formData.rentalEnabled,
-    setFormData,
-  ]);
 
   return {
     isLoading,

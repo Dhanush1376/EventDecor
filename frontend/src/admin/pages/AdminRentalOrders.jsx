@@ -13,6 +13,9 @@ import {
   StatCard,
 } from '../components/AdminUIKit';
 import { isWithinPeriod } from '../utils/dateFilters';
+import { EXTERNAL_URLS } from '../../config/constants';
+import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
+import { RentalPaymentModal } from './AdminRentalDetail/RentalPaymentModal';
 
 const slideDrawer = {
   hidden: { x: '100%', opacity: 0 },
@@ -36,9 +39,7 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState(initialFilter);
   const [dateFilter, setDateFilter] = useState('All Time');
-
-  const [selectedRental, setSelectedRental] = useState(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [paymentModalRental, setPaymentModalRental] = useState(null);
 
   useEffect(() => {
     fetchRentals();
@@ -73,6 +74,26 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
     }
   };
 
+  const getCardColorClass = (status) => {
+    const s = (status || '').toLowerCase();
+    switch (s) {
+      case 'completed':
+      case 'returned':
+        return 'bg-green-50 border-green-200';
+      case 'active_rental':
+        return 'bg-blue-50 border-blue-200';
+      case 'pending':
+      case 'confirmed':
+      case 'return_requested':
+        return 'bg-yellow-50 border-yellow-200';
+      case 'late_return':
+      case 'cancelled':
+        return 'bg-red-50 border-red-200';
+      default:
+        return 'bg-gray-50 border-gray-200';
+    }
+  };
+
   const filteredRentals = useMemo(() => {
     return rentals.filter((r) => {
       const matchStatus = filterStatus === 'All' || r.status === filterStatus;
@@ -101,7 +122,7 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
     rentals.forEach((r) => {
       if (!isWithinPeriod(r.createdAt || r.rentalStartDate, dateFilter)) return;
 
-      totalVolume += r.totalAmount || 0;
+      totalVolume += r.rentalCharge || 0;
       if (r.depositStatus === 'refunded') {
         depositsRefunded += r.securityDeposit || 0;
       } else if (r.status !== 'cancelled') {
@@ -115,9 +136,8 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
     return { totalVolume, depositsHeld, depositsRefunded, activeRentals };
   }, [rentals, dateFilter]);
 
-  const openRentalDrawer = (rental) => {
-    setSelectedRental(rental);
-    setIsDrawerOpen(true);
+  const goToDetail = (rentalId) => {
+    _navigate(`/admin/rentals/detail/${rentalId}`);
   };
 
   const downloadExcel = () => {
@@ -298,18 +318,19 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
             animate="show"
             exit="hidden"
             variants={fadeUp}
-            className="admin-card p-0"
+            className="admin-card p-0 bg-transparent sm:bg-white sm:shadow-sm sm:border sm:border-[var(--admin-border-subtle)]"
           >
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="admin-table w-full min-w-[900px]">
                 <thead>
                   <tr>
                     <th>Rental ID</th>
                     <th>Customer</th>
-                    <th>Product</th>
-                    <th>Rental Period</th>
-                    <th>Deposit</th>
+                    <th className="hidden md:table-cell">Product</th>
+                    <th className="hidden lg:table-cell">Period</th>
+                    <th className="hidden sm:table-cell">Deposit</th>
                     <th>Total</th>
+                    <th className="hidden sm:table-cell">Payment</th>
                     <th>Status</th>
                     <th className="text-right">Actions</th>
                   </tr>
@@ -327,64 +348,203 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                     </tr>
                   ) : (
                     filteredRentals.map((r) => {
+                      const paymentMethod = r.paymentMethod?.replace(/_/g, ' ') || 'Razorpay';
+                      const paymentStatus = (r.paymentStatus || 'paid')
+                        .replace(/_/g, ' ')
+                        .toUpperCase();
+                      const isPaid =
+                        r.paymentStatus === 'paid' || r.paymentStatus === 'COD Collected';
+                      const isPendingCod =
+                        r.paymentStatus === 'Pending COD' ||
+                        (r.paymentMethod === 'Cash_on_Delivery' && !isPaid);
+                      const isPartiallyPaid = r.paymentStatus === 'partially_paid';
+                      const isNew =
+                        new Date().getTime() - new Date(r.createdAt).getTime() <
+                        24 * 60 * 60 * 1000;
+
+                      const imgSrc =
+                        r.productImage ||
+                        r.productImages?.[0] ||
+                        r.productThumbnail ||
+                        'https://placehold.co/100x100/f3f4f6/a1a1aa?text=Image';
+
                       return (
                         <tr
                           key={r._id}
-                          className="admin-table-row-clickable group"
-                          onClick={() => openRentalDrawer(r)}
+                          className="admin-table-row-clickable group bg-[var(--admin-surface)] hover:bg-[var(--admin-bg-subtle)] transition-colors border-b border-[var(--admin-border-subtle)]"
+                          onClick={() => goToDetail(r._id)}
                         >
                           <td className="font-semibold text-[var(--admin-text-primary)]">
-                            #{r._id.substring(r._id.length - 8).toUpperCase()}
-                          </td>
-                          <td>
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-[var(--admin-text-primary)]">
-                                {r.userId?.name || r.user?.name || 'Guest'}
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                #{r._id.substring(r._id.length - 8).toUpperCase()}
+                                {isNew && (
+                                  <span
+                                    className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping"
+                                    title="Recent rental"
+                                  />
+                                )}
+                              </div>
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded w-max bg-indigo-100 text-indigo-700">
+                                RENTAL
                               </span>
                             </div>
                           </td>
-                          <td className="max-w-[200px] truncate text-[var(--admin-text-secondary)] font-medium">
-                            {r.productTitle}
+                          <td>
+                            <div className="flex flex-col">
+                              <span
+                                className="font-semibold text-[var(--admin-text-primary)] truncate max-w-[150px]"
+                                title={
+                                  r.userId?.name ||
+                                  r.user?.name ||
+                                  r.shippingAddress?.name ||
+                                  'Guest'
+                                }
+                              >
+                                {r.userId?.name ||
+                                  r.user?.name ||
+                                  r.shippingAddress?.name ||
+                                  'Guest'}
+                              </span>
+                              <span className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px]">call</span>
+                                {r.userId?.phone ||
+                                  r.user?.phone ||
+                                  r.shippingAddress?.phone ||
+                                  'N/A'}
+                              </span>
+                              {r.shippingAddress?.address && (
+                                <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1.5 flex items-start gap-1 leading-tight max-w-[150px]">
+                                  <span className="material-symbols-outlined text-[11px] mt-0.5 shrink-0">
+                                    location_on
+                                  </span>
+                                  <span className="truncate whitespace-normal line-clamp-2">
+                                    {r.shippingAddress.address}
+                                    {r.shippingAddress.city ? `, ${r.shippingAddress.city}` : ''}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
                           </td>
-                          <td className="text-[11px] text-[var(--admin-text-secondary)]">
-                            {new Date(r.rentalStartDate).toLocaleDateString()} -{' '}
-                            {new Date(r.rentalEndDate).toLocaleDateString()}
+                          <td className="hidden md:table-cell max-w-[250px] py-3 pr-4">
+                            <div className="flex items-center gap-3 w-full">
+                              <img
+                                src={imgSrc}
+                                alt={r.productTitle}
+                                className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm bg-gray-100 shrink-0"
+                              />
+                              <span
+                                className="text-[12.5px] font-medium text-[var(--admin-text-secondary)] leading-snug line-clamp-2"
+                                title={r.productTitle}
+                              >
+                                {r.productTitle}
+                              </span>
+                            </div>
                           </td>
-                          <td className="font-bold text-[var(--admin-success)]">
-                            {formatCurrency(r.securityDeposit)}
-                            <span
-                              className={`block text-[9px] uppercase mt-0.5 ${r.depositStatus === 'refunded' ? 'text-green-600' : 'text-amber-600'}`}
-                            >
-                              {r.depositStatus || 'held'}
-                            </span>
+                          <td className="hidden lg:table-cell text-[var(--admin-text-secondary)] text-[12px]">
+                            {new Date(r.rentalStartDate).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}{' '}
+                            -{' '}
+                            {new Date(r.rentalEndDate).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
+                          </td>
+                          <td className="font-bold text-[var(--admin-success)] hidden sm:table-cell">
+                            <div className="flex flex-col items-start">
+                              <span>{formatCurrency(r.securityDeposit)}</span>
+                              <span
+                                className={`block text-[9px] uppercase mt-1 p-0.5 px-1 font-extrabold rounded ${r.depositStatus === 'refunded' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
+                              >
+                                {r.depositStatus || 'held'}
+                              </span>
+                            </div>
                           </td>
                           <td className="font-bold text-[var(--admin-text-primary)]">
                             {formatCurrency(r.totalAmount)}
                           </td>
-                          <td>
-                            <span
-                              className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
-                                r.status === 'active_rental'
-                                  ? 'bg-indigo-100 text-indigo-700'
-                                  : r.status === 'late_return'
-                                    ? 'bg-red-100 text-red-700'
-                                    : r.status === 'returned' || r.status === 'completed'
-                                      ? 'bg-green-100 text-green-700'
-                                      : 'bg-amber-100 text-amber-700'
-                              }`}
+                          <td className="hidden sm:table-cell" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex flex-col items-start gap-1">
+                              <span className="text-[9.5px] uppercase font-bold text-[var(--admin-text-tertiary)]">
+                                {paymentMethod}
+                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span
+                                  className={`admin-badge uppercase text-[9px] tracking-wider font-bold ${
+                                    isPaid
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : isPartiallyPaid || isPendingCod
+                                        ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                        : 'bg-red-50 text-red-700 border-red-200'
+                                  }`}
+                                >
+                                  {paymentStatus}
+                                </span>
+                                {!isPaid && (
+                                  <button
+                                    onClick={() => setPaymentModalRental(r)}
+                                    className="h-5 px-1.5 rounded bg-[#b8a48f]/15 hover:bg-[#b8a48f] text-[#8c745d] hover:text-white text-[9px] font-bold border border-[#b8a48f]/40 flex items-center gap-0.5 transition-all cursor-pointer shadow-2xs active:scale-95"
+                                    title="Record payment for this rental"
+                                  >
+                                    <span className="material-symbols-outlined text-[11px]">
+                                      payments
+                                    </span>
+                                    <span>Pay</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td onClick={(e) => e.stopPropagation()}>
+                            <select
+                              value={r.status}
+                              onChange={(e) => updateRentalStatus(r._id, e.target.value)}
+                              className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-1 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border-strong)] bg-white/80 backdrop-blur-sm text-[var(--admin-text-primary)] cursor-pointer outline-none shadow-sm"
                             >
-                              {r.status?.replace('_', ' ') || 'unknown'}
-                            </span>
+                              {allStatuses.map((s) => (
+                                <option key={s} value={s}>
+                                  {s.replace('_', ' ')}
+                                </option>
+                              ))}
+                            </select>
                           </td>
                           <td className="text-right" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={() => openRentalDrawer(r)}
-                              className="admin-btn-icon text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">
-                                visibility
-                              </span>
-                            </button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              {!isPaid && (
+                                <button
+                                  onClick={() => setPaymentModalRental(r)}
+                                  className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[#8c745d] hover:text-white hover:bg-[#b8a48f] transition-colors"
+                                  title="Record Manual Payment"
+                                >
+                                  <span className="material-symbols-outlined text-[17px]">
+                                    payments
+                                  </span>
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => goToDetail(r._id)}
+                                className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                                title="View Details"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">
+                                  visibility
+                                </span>
+                              </button>
+
+                              {/* WhatsApp Contact */}
+                              <a
+                                href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${(r.userId?.phone || r.user?.phone || r.shippingAddress?.phone || '').replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[#25D366] transition-colors"
+                                title="Contact via WhatsApp"
+                              >
+                                <WhatsAppIcon className="w-4 h-4" />
+                              </a>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -393,114 +553,186 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                 </tbody>
               </table>
             </div>
+
+            <div className="flex md:hidden flex-col gap-3 px-1 py-3">
+              {filteredRentals.length === 0 ? (
+                <div className="py-10 text-center flex flex-col items-center justify-center bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)]">
+                  <EmptyState
+                    icon="inventory_2"
+                    title="No Rentals Found"
+                    description="No rentals match the criteria."
+                  />
+                </div>
+              ) : (
+                filteredRentals.map((r) => {
+                  const paymentStatus = (r.paymentStatus || 'paid')
+                    .replace(/_/g, ' ')
+                    .toUpperCase();
+                  const isPaid = r.paymentStatus === 'paid' || r.paymentStatus === 'COD Collected';
+                  const imgSrc =
+                    r.productImage ||
+                    r.productImages?.[0] ||
+                    r.productThumbnail ||
+                    'https://placehold.co/100x100/f3f4f6/a1a1aa?text=Image';
+
+                  return (
+                    <div
+                      key={r._id}
+                      onClick={() => goToDetail(r._id)}
+                      className="bg-[var(--admin-surface)] rounded-xl p-4 border border-[var(--admin-border-subtle)] shadow-xs hover:border-[var(--admin-border)] hover:shadow-sm transition-all duration-200 cursor-pointer group text-left flex flex-col relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 left-0 w-12 h-12 pointer-events-none z-10 overflow-hidden rounded-tl-[12px]">
+                        <div className="absolute top-2 -left-7 w-24 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wider bg-indigo-500">
+                          RENTAL
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[15px] font-bold text-gray-900 ml-6">
+                          #{r._id.substring(r._id.length - 8).toUpperCase()}
+                        </span>
+                        <div className="relative inline-block">
+                          <select
+                            value={r.status}
+                            onChange={(e) => updateRentalStatus(r._id, e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="appearance-none bg-white border border-[#E0E2D9] text-gray-900 text-[10px] font-bold uppercase tracking-wider rounded-[6px] py-1.5 pl-3 pr-8 cursor-pointer shadow-sm outline-none"
+                          >
+                            {allStatuses.map((s) => (
+                              <option key={s} value={s}>
+                                {s.replace('_', ' ')}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-900">
+                            <span className="material-symbols-outlined text-[16px]">
+                              expand_more
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 mb-2 text-gray-800">
+                        <span className="text-[12px] font-medium uppercase tracking-wide truncate max-w-[140px]">
+                          {r.userId?.name || r.user?.name || r.shippingAddress?.name || 'Guest'}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-[12px] font-medium">
+                          <span className="material-symbols-outlined text-[15px]">call</span>
+                          {(r.userId?.phone || r.user?.phone || r.shippingAddress?.phone || 'N/A')
+                            .replace('+91', '')
+                            .trim()}
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-1.5 mb-4 text-gray-800">
+                        <span className="material-symbols-outlined text-[15px] mt-0.5 shrink-0">
+                          location_on
+                        </span>
+                        <span className="text-[11px] leading-snug line-clamp-2">
+                          {r.shippingAddress?.address || 'Address not provided'}
+                          {r.shippingAddress?.city ? `, ${r.shippingAddress.city}` : ''}
+                        </span>
+                      </div>
+
+                      <div className="border-y border-black/5 py-3 mb-4">
+                        <div className="flex items-start gap-3">
+                          <img
+                            src={imgSrc}
+                            alt=""
+                            className="w-[34px] h-[34px] rounded-md object-cover border border-white shadow-sm bg-gray-100 shrink-0"
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-[11px] text-gray-800 leading-snug line-clamp-2 mt-0.5 font-bold">
+                              {r.productTitle}
+                            </span>
+                            <span className="text-[10px] text-gray-500 mt-0.5">
+                              {new Date(r.rentalStartDate).toLocaleDateString()} -{' '}
+                              {new Date(r.rentalEndDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-auto pt-1">
+                        <div className="flex flex-col">
+                          <span className="text-[15px] font-bold text-gray-900">
+                            {formatCurrency(r.totalAmount)}
+                          </span>
+                          <span className="text-[9px] font-bold text-green-700 uppercase">
+                            Deposit: {formatCurrency(r.securityDeposit)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-[4px] border shadow-sm ${
+                              paymentStatus === 'PAID'
+                                ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                                : paymentStatus === 'PARTIALLY PAID'
+                                  ? 'bg-amber-100 text-amber-700 border-amber-200'
+                                  : 'bg-red-100 text-red-700 border-red-200'
+                            }`}
+                          >
+                            {paymentStatus}
+                          </span>
+
+                          {!isPaid && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPaymentModalRental(r);
+                              }}
+                              className="h-6 px-2 rounded bg-[#b8a48f] hover:bg-[#a5917c] text-white text-[10px] font-bold shadow-xs flex items-center gap-1 cursor-pointer active:scale-95"
+                              title="Record Manual Payment"
+                            >
+                              <span className="material-symbols-outlined text-[12px]">
+                                payments
+                              </span>
+                              <span>Pay</span>
+                            </button>
+                          )}
+
+                          <button
+                            className="text-gray-700 hover:text-[var(--admin-primary)] transition-colors ml-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              goToDetail(r._id);
+                            }}
+                            title="View Detail"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">
+                              visibility
+                            </span>
+                          </button>
+
+                          <a
+                            href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${(r.userId?.phone || r.user?.phone || r.shippingAddress?.phone || '').replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-gray-700 hover:text-[#25D366] transition-colors"
+                            title="WhatsApp"
+                          >
+                            <WhatsAppIcon className="w-[18px] h-[18px]" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {isDrawerOpen && selectedRental && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsDrawerOpen(false)}
-              className="fixed inset-0 z-[999] cursor-pointer"
-              style={{ background: 'var(--admin-surface-overlay)', backdropFilter: 'blur(4px)' }}
-            />
-
-            <motion.aside
-              initial="hidden"
-              animate="show"
-              exit="exit"
-              variants={slideDrawer}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed right-0 top-0 h-screen w-full sm:w-[450px] z-[1000] shadow-[var(--admin-shadow-2xl)] flex flex-col bg-[var(--admin-surface)] border-l border-[var(--admin-border)]"
-            >
-              <div className="px-6 py-5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0 text-left bg-[var(--admin-bg-subtle)]">
-                <div>
-                  <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                    Rental Details
-                  </h3>
-                  <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-1">
-                    #{selectedRental._id.toUpperCase()}
-                  </p>
-                </div>
-                <button onClick={() => setIsDrawerOpen(false)} className="admin-btn-icon">
-                  <span className="material-symbols-outlined text-[20px]">close</span>
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 text-left custom-scrollbar">
-                <div className="admin-card p-5 space-y-4">
-                  <div>
-                    <p className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
-                      Product
-                    </p>
-                    <h4 className="text-[14px] font-bold text-[var(--admin-text-primary)] mt-1">
-                      {selectedRental.productTitle}
-                    </h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-[12px] pt-4 border-t border-[var(--admin-border-subtle)]">
-                    <div>
-                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
-                        Start Date
-                      </p>
-                      <p className="font-semibold text-[var(--admin-text-primary)]">
-                        {new Date(selectedRental.rentalStartDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
-                        End Date
-                      </p>
-                      <p className="font-semibold text-[var(--admin-text-primary)]">
-                        {new Date(selectedRental.rentalEndDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
-                        Total Cost
-                      </p>
-                      <p className="font-semibold text-[var(--admin-text-primary)]">
-                        {formatCurrency(selectedRental.totalAmount)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[var(--admin-text-tertiary)] font-medium mb-0.5 text-[10px] uppercase">
-                        Deposit Held
-                      </p>
-                      <p className="font-semibold text-[var(--admin-success)]">
-                        {formatCurrency(selectedRental.securityDeposit)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-[11px] font-bold uppercase text-[var(--admin-text-secondary)]">
-                    Update Status
-                  </p>
-                  <select
-                    value={selectedRental.status}
-                    onChange={(e) => {
-                      updateRentalStatus(selectedRental._id, e.target.value);
-                      setSelectedRental({ ...selectedRental, status: e.target.value });
-                    }}
-                    className="admin-input w-full uppercase text-[11px] font-bold"
-                  >
-                    {allStatuses.map((s) => (
-                      <option key={s} value={s}>
-                        {s.replace('_', ' ')}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Manual Payment Recording Modal directly from table */}
+      {paymentModalRental && (
+        <RentalPaymentModal
+          rental={paymentModalRental}
+          onClose={() => setPaymentModalRental(null)}
+          onSuccess={fetchRentals}
+        />
+      )}
     </motion.div>
   );
 }

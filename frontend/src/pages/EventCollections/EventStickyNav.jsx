@@ -23,6 +23,7 @@ export const EventStickyNav = React.forwardRef(
     return (
       <nav
         ref={ref}
+        id="event-sticky-nav"
         className={`sticky z-[49] -mt-6 lg:-mt-8 mb-8 lg:mb-12 transition-all duration-300 ease-out ${
           isSticky ? 'px-0' : 'px-3 lg:px-margin-desktop max-w-max-width mx-auto'
         }`}

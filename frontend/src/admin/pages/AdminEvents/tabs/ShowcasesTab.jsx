@@ -61,7 +61,7 @@ export function ShowcasesTab({
                     {sc.title}
                   </h4>
                   <span className="text-[12px] font-bold text-[var(--admin-accent)] block">
-                    {formatCurrency(sc.rentalPrice)} / day
+                    {formatCurrency(sc.rentalPrice)}
                   </span>
                   <p className="text-[11px] text-[var(--admin-text-secondary)] line-clamp-2">
                     {sc.description}

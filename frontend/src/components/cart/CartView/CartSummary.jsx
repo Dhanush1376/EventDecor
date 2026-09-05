@@ -48,9 +48,7 @@ export const CartSummary = ({
             <>
               <div className="flex justify-between">
                 <span className="text-secondary">Rental Charges</span>
-                <span className="font-medium">
-                  ₹{(totalMRP || actualSubtotal).toLocaleString()}
-                </span>
+                <span className="font-medium">₹{actualSubtotal.toLocaleString()}</span>
               </div>
               {depositTotal > 0 && (
                 <div className="flex justify-between">

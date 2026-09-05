@@ -3,10 +3,7 @@ import { z } from 'zod';
 export const requestOtpSchema = z.object({
   body: z
     .object({
-      identifier: z
-        .string({ message: 'Email or phone number is required' })
-        .trim()
-        .min(1, 'Email or phone number is required'),
+      identifier: z.string({ message: 'Email is required' }).trim().min(1, 'Email is required'),
     })
     .strict(), // Reject any other payload properties
 });

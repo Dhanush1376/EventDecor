@@ -247,7 +247,16 @@ export function CartProvider({ children }) {
   const subtotal = summary?.subtotal || 0;
 
   const totalMRP = useMemo(
-    () => items.reduce((acc, item) => acc + (item.oldPrice || item.price) * item.quantity, 0),
+    () =>
+      items.reduce(
+        (acc, item) =>
+          acc +
+          (item.type === 'rental'
+            ? Number(item.price) || 0
+            : Number(item.oldPrice || item.price) || 0) *
+            item.quantity,
+        0,
+      ),
     [items],
   );
 

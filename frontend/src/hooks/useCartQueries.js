@@ -161,6 +161,9 @@ export function useCartMutations() {
         cartData: data,
         source: 'addToCartMutation.onSuccess',
       });
+      if (data && (data.purchaseCart || data.rentalCart)) {
+        queryClient.setQueryData(['cart', cartKey], data);
+      }
     },
     onError: (err, variables, context) => {
       logCartTrace('ON_ERROR', {

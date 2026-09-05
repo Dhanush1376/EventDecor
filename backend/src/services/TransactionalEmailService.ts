@@ -5,6 +5,8 @@ import { generateInvoicePDF } from '../utils/pdfGenerator';
 import {
   buildOrderConfirmationCustomerEmail,
   buildOrderConfirmationAdminEmail,
+  buildRentalOrderCustomerEmail,
+  buildRentalOrderAdminEmail,
   buildOrderStatusChangeEmail,
   buildPaymentFailedEmail,
   buildCustomOrderCustomerEmail,
@@ -18,6 +20,9 @@ import {
   buildEventBookingStatusUpdateEmail,
   buildReturnCreatedCustomerEmail,
   buildReturnStatusUpdateEmail,
+  buildRentalStatusChangeEmail,
+  buildRentalDepositRefundedEmail,
+  buildRentalPaymentReceivedEmail,
 } from '../utils/email/transactionalEmailTemplates';
 
 import { sendDirectEmailProcessor } from './notificationService';
@@ -170,6 +175,39 @@ export class TransactionalEmailService {
       'order_confirmation_admin',
       eventId,
       'ORDER_CREATED',
+    );
+  }
+
+  public static async sendRentalOrderPlacedEmails(rentalOrder: any, user: any, eventId: string) {
+    logger.info(
+      `[TransactionalEmailService] Dispatching rental order placed emails for ${rentalOrder._id}`,
+    );
+
+    // 1. Notify Customer
+    const customerEmail = user?.email || rentalOrder.shippingAddress?.email;
+    if (customerEmail) {
+      const { subject, html } = buildRentalOrderCustomerEmail(rentalOrder, user);
+      const customerHash = this.hashEmail(customerEmail);
+      const notificationKey = `RENTAL_ORDER_CREATED:${eventId}:CUSTOMER:${customerHash}`;
+
+      await this.enqueueEmail(
+        customerEmail,
+        subject,
+        html,
+        'order',
+        'rental_order_confirmation_customer',
+        notificationKey,
+      );
+    }
+
+    // 2. Notify Admins
+    const adminTemplate = buildRentalOrderAdminEmail(rentalOrder);
+    await this.notifyAllAdmins(
+      adminTemplate.subject,
+      adminTemplate.html,
+      'rental_order_confirmation_admin',
+      eventId,
+      'RENTAL_ORDER_CREATED',
     );
   }
 
@@ -499,6 +537,78 @@ export class TransactionalEmailService {
         'event_booking_status_updated',
         notificationKey,
       );
+    }
+  }
+  public static async sendRentalStatusUpdate(
+    rentalOrder: any,
+    oldStatus: string,
+    newStatus: string,
+  ) {
+    try {
+      const email = rentalOrder.user?.email || rentalOrder.shippingAddress?.email;
+      if (!email) return;
+
+      const { subject, html } = buildRentalStatusChangeEmail(rentalOrder, oldStatus, newStatus);
+      const notificationKey = `rental_status_${rentalOrder._id}_${newStatus}`;
+
+      await this.enqueueEmail(
+        email,
+        subject,
+        html,
+        'order',
+        'rental_status_update',
+        notificationKey,
+      );
+    } catch (error) {
+      logger.error(
+        `[EMAIL] Failed to send rental status update email for ${rentalOrder._id}`,
+        error,
+      );
+    }
+  }
+
+  public static async sendRentalDepositRefunded(rentalOrder: any, refundData: any) {
+    try {
+      const email = rentalOrder.user?.email || rentalOrder.shippingAddress?.email;
+      if (!email) return;
+
+      const { subject, html } = buildRentalDepositRefundedEmail(rentalOrder, refundData);
+      const notificationKey = `rental_deposit_refund_${rentalOrder._id}_${Date.now()}`;
+
+      await this.enqueueEmail(
+        email,
+        subject,
+        html,
+        'order',
+        'rental_deposit_refunded',
+        notificationKey,
+      );
+    } catch (error) {
+      logger.error(
+        `[EMAIL] Failed to send rental deposit refund email for ${rentalOrder._id}`,
+        error,
+      );
+    }
+  }
+
+  public static async sendRentalPaymentReceived(rentalOrder: any, paymentData: any) {
+    try {
+      const email = rentalOrder.user?.email || rentalOrder.shippingAddress?.email;
+      if (!email) return;
+
+      const { subject, html } = buildRentalPaymentReceivedEmail(rentalOrder, paymentData);
+      const notificationKey = `rental_payment_${rentalOrder._id}_${Date.now()}`;
+
+      await this.enqueueEmail(
+        email,
+        subject,
+        html,
+        'order',
+        'rental_payment_received',
+        notificationKey,
+      );
+    } catch (error) {
+      logger.error(`[EMAIL] Failed to send rental payment email for ${rentalOrder._id}`, error);
     }
   }
 }

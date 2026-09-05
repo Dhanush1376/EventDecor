@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import storeSettingsService from '../../services/api/storeSettingsService';
 import { loyaltyService } from '../../services/domainServices';
 import toast from 'react-hot-toast';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 import logger from '../../utils/core/logger';
 export function LoyaltyPanel() {
@@ -43,16 +44,7 @@ export function LoyaltyPanel() {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (isCouponModalOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isCouponModalOpen]);
+  useScrollLock(isCouponModalOpen);
 
   const copyToClipboard = (text, message = 'Copied to clipboard!') => {
     navigator.clipboard.writeText(text);

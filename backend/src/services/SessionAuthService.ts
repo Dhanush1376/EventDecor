@@ -63,12 +63,14 @@ class SessionAuthService {
     // 1. Detect if this token was already used (Replay attack detection)
     const isUsed = await UsedRefreshToken.findOne({ tokenHash });
     if (isUsed) {
-      const timeSinceUsedMs = Date.now() - (isUsed as any).createdAt.getTime();
-      const GRACE_PERIOD_MS = 15000;
+      const usedDate = (isUsed as any).createdAt ? new Date((isUsed as any).createdAt) : null;
+      const timeSinceUsedMs =
+        usedDate && !isNaN(usedDate.getTime()) ? Date.now() - usedDate.getTime() : 0;
+      const GRACE_PERIOD_MS = 60000;
 
       if (timeSinceUsedMs < GRACE_PERIOD_MS) {
         logger.warn(
-          `[AUTH] Grace period overlap detected for userId: ${isUsed.userId}. Returning 409 Conflict without revoking sessions.`,
+          `[AUTH] Grace period overlap (${Math.round(timeSinceUsedMs / 1000)}s) detected for userId: ${isUsed.userId}. Returning 409 Conflict without revoking sessions.`,
         );
         throw new ApiError(409, 'Session refreshed concurrently in another tab.');
       }

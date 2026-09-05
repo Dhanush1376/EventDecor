@@ -156,6 +156,32 @@ export function EventShowcases() {
               handleCategorySelect={(cat) => {
                 setActiveCategory(cat);
                 setCurrentPage(1);
+                setTimeout(() => {
+                  const isMobileView = window.innerWidth < 1024;
+                  if (isMobileView) {
+                    const mobileCategoriesEl = document.getElementById(
+                      'showcase-mobile-sticky-categories',
+                    );
+                    const sortBar = document.getElementById('showcase-sticky-nav');
+                    if (mobileCategoriesEl) {
+                      const sortBarHeight = sortBar ? sortBar.getBoundingClientRect().height : 68;
+                      const currentAbsoluteTop =
+                        mobileCategoriesEl.getBoundingClientRect().top + window.scrollY;
+                      const targetY = currentAbsoluteTop - sortBarHeight;
+                      window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+                      return;
+                    }
+                  }
+
+                  const sortBar = document.getElementById('showcase-sticky-nav');
+                  if (sortBar) {
+                    const topNav = document.querySelector('.top-navbar');
+                    const navHeight = topNav ? topNav.getBoundingClientRect().height : 0;
+                    const currentAbsoluteTop = sortBar.getBoundingClientRect().top + window.scrollY;
+                    const targetY = currentAbsoluteTop - navHeight;
+                    window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+                  }
+                }, 50);
               }}
               isNavbarHidden={isNavbarHidden}
               navbarHeight={navbarHeight}
@@ -296,6 +322,7 @@ const MobileStickyCategories = ({
   return (
     <div
       ref={ref}
+      id="showcase-mobile-sticky-categories"
       className={`mb-8 overflow-x-auto no-scrollbar lg:hidden sticky z-[48] py-2 -mx-[var(--spacing-margin-mobile)] px-[var(--spacing-margin-mobile)] transition-all duration-300 ease-out ${
         isStuck
           ? 'bg-surface/95 backdrop-blur-xl shadow-sm border-b border-black/5'

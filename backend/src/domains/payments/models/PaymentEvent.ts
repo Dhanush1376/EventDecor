@@ -48,7 +48,6 @@ const PaymentEventSchema = new Schema<IPaymentEvent>(
   { timestamps: true },
 );
 
-PaymentEventSchema.index({ eventId: 1 }, { unique: true });
 PaymentEventSchema.index({ orderId: 1, timestamp: 1 });
 PaymentEventSchema.index({ razorpayOrderId: 1 });
 PaymentEventSchema.index({ razorpayPaymentId: 1 });

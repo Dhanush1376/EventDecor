@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
@@ -19,7 +21,7 @@ import { cacheOtpSession } from '../utils/cache/otpVerifyCache';
 import { recordOtpVerifyFailure } from '../utils/security/otpRateLimit';
 import SessionAuthService from './SessionAuthService';
 import { getFrontendUrl } from '../utils/getFrontendUrl';
-import { getOtpEmailTemplate } from '../utils/email/emailTemplates';
+import { getOtpEmailTemplate, getCodOtpEmailTemplate } from '../utils/email/emailTemplates';
 import { SecurityAuditService } from './SecurityAuditService';
 
 class OtpAuthService {
@@ -508,8 +510,18 @@ class OtpAuthService {
       expiresAt,
     });
 
-    // Removed dynamic require
-    const { getCodOtpEmailTemplate } = require('../utils/email/emailTemplates');
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        const logPath = path.resolve(process.cwd(), '.dev-otp-log');
+        const timestamp = new Date().toISOString();
+        const logEntry = `[${timestamp}] To: ${cleanEmail} | COD OTP: ${otp}\n`;
+        fs.appendFileSync(logPath, logEntry, 'utf8');
+        logger.info(`[DEV COD OTP] Verification code for ${cleanEmail}: ${otp}`);
+      } catch (err: any) {
+        logger.warn(`Failed to write to .dev-otp-log: ${err.message}`);
+      }
+    }
+
     try {
       await sendDirectEmailProcessor({
         email: cleanEmail,
@@ -519,6 +531,12 @@ class OtpAuthService {
         action: 'cod_otp',
       });
     } catch (err: any) {
+      if (process.env.NODE_ENV !== 'production') {
+        logger.warn(
+          `[DEV COD OTP] Email delivery failed in development (${err.message}), but OTP was saved and logged to .dev-otp-log: ${otp}`,
+        );
+        return { challengeId };
+      }
       logger.error(
         `[COD OTP ERROR] Failed to deliver COD OTP email for ${SecurityAuditService.hashIdentifier(cleanEmail)}:`,
         err,
@@ -530,17 +548,24 @@ class OtpAuthService {
     return { challengeId }; // Stop returning raw OTP! Return challengeId instead.
   }
 
-  static async verifyCodOTP(challengeId: string, otp: string) {
-    if (!challengeId || !otp) {
-      throw new ApiError(400, 'Challenge ID and OTP are required');
+  static async verifyCodOTP(identifierOrChallengeId: string, otp: string) {
+    if (!identifierOrChallengeId || !otp) {
+      throw new ApiError(400, 'Email or challenge ID and OTP are required');
     }
+
+    const cleanIdentifier = identifierOrChallengeId.includes('@')
+      ? canonicalizeEmail(identifierOrChallengeId)
+      : identifierOrChallengeId;
 
     const normalizedOtp = this.normalizeOtpInput(otp);
 
     const challenge = await OtpChallenge.findOneAndUpdate(
-      { challengeId, purpose: 'COD_VERIFICATION' },
+      {
+        $or: [{ challengeId: identifierOrChallengeId }, { identifier: cleanIdentifier }],
+        purpose: 'COD_VERIFICATION',
+      },
       { $inc: { attempts: 1 } },
-      { new: true },
+      { sort: { createdAt: -1 }, new: true },
     );
     if (!challenge) {
       throw new ApiError(400, 'Invalid or expired verification session');

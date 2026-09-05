@@ -87,4 +87,30 @@ export class RentalStateMachine {
     const allowedNextStates = this.validTransitions[currentState] || [];
     return allowedNextStates.includes(nextState);
   }
+
+  /**
+   * Gets the next contextual valid action for the UI.
+   */
+  static getNextValidAction(
+    currentStatus: RentalState,
+    depositStatus?: string,
+  ): { label: string; action: string } | null {
+    switch (currentStatus) {
+      case 'pending':
+        return { label: 'Confirm Rental', action: 'confirm' };
+      case 'confirmed':
+        return { label: 'Mark as Active', action: 'activate' };
+      case 'active_rental':
+      case 'late_return':
+      case 'return_requested':
+        return { label: 'Mark as Returned', action: 'return' };
+      case 'returned':
+        if (depositStatus === 'held')
+          return { label: 'Refund Security Deposit', action: 'refund_deposit' };
+        if (depositStatus === 'processing') return null;
+        return { label: 'Complete Rental', action: 'complete' };
+      default:
+        return null;
+    }
+  }
 }

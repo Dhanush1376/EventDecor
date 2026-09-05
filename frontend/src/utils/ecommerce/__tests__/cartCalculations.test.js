@@ -49,41 +49,45 @@ describe('calculateCartSummary', () => {
     expect(summary.total).toBe(149);
   });
 
-  it('prices rentals per day using daily pricing', () => {
+  it('prices rentals using total package price (not multiplied by days)', () => {
     const items = [
       {
-        product: { price: 999, rentalPricing: { daily: 200 } },
+        product: { price: 999, rentalPricing: { rentalPrice: 699, rentalDurationDays: 5 } },
         quantity: 1,
+        rentalInfo: { startDate: '2026-07-01', endDate: '2026-07-06' },
+      },
+    ];
+    // Complete package price is 699 (NOT 699 * 5)
+    expect(calculateCartSummary(items, 'rental').subtotal).toBe(699);
+  });
+
+  it('multiplies package rental price by quantity', () => {
+    const items = [
+      {
+        product: { price: 999, rentalPricing: { rentalPrice: 500, rentalDurationDays: 3 } },
+        quantity: 2,
         rentalInfo: { startDate: '2026-07-01', endDate: '2026-07-04' },
       },
     ];
-    // 3 days * 200/day
-    expect(calculateCartSummary(items, 'rental').subtotal).toBe(600);
-  });
-
-  it('uses weekly pricing for 7+ day rentals', () => {
-    const items = [
-      {
-        product: { price: 999, rentalPricing: { daily: 200, weekly: 700 } },
-        quantity: 1,
-        rentalInfo: { startDate: '2026-07-01', endDate: '2026-07-08' },
-      },
-    ];
-    // 7 days at weekly rate: (700/7) * 7
-    expect(calculateCartSummary(items, 'rental').subtotal).toBe(700);
+    expect(calculateCartSummary(items, 'rental').subtotal).toBe(1000);
   });
 
   it('includes security deposits for rentals', () => {
     const items = [
       {
-        product: { price: 100, deposit: 500, rentalPricing: { daily: 100 } },
+        product: {
+          price: 100,
+          deposit: 500,
+          rentalPricing: { rentalPrice: 300, rentalDurationDays: 2 },
+        },
         quantity: 2,
-        rentalInfo: { startDate: '2026-07-01', endDate: '2026-07-02' },
+        rentalInfo: { startDate: '2026-07-01', endDate: '2026-07-03' },
       },
     ];
     const summary = calculateCartSummary(items, 'rental');
+    expect(summary.subtotal).toBe(600);
     expect(summary.depositTotal).toBe(1000);
-    expect(summary.total).toBe(summary.subtotal + 1000);
+    expect(summary.total).toBe(1600);
   });
 });
 
@@ -123,5 +127,26 @@ describe('transformDbCart', () => {
       },
     ]);
     expect(item.rentalInfo).toBeUndefined();
+  });
+
+  it('maps rental product with package rentalPrice', () => {
+    const [item] = transformDbCart([
+      {
+        product: {
+          _id: 'p1',
+          title: 'Wedding Arch',
+          price: 1500,
+          rentalPricing: { rentalPrice: 699, rentalDurationDays: 5 },
+          securityDeposit: 300,
+        },
+        quantity: 1,
+        type: 'rental',
+        rentalInfo: { startDate: '2026-07-01', endDate: '2026-07-06' },
+      },
+    ]);
+    expect(item.type).toBe('rental');
+    expect(item.price).toBe(699);
+    expect(item.oldPrice).toBe(699);
+    expect(item.deposit).toBe(300);
   });
 });

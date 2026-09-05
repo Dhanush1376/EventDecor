@@ -196,7 +196,13 @@ export class UserService {
         cartChanged = true;
       }
       const availableStock =
-        item.type === 'rental' ? (item.product.rentalStock ?? 10) : (item.product.stock ?? 10);
+        item.type === 'rental'
+          ? Number(item.product.rentalStock) > 0
+            ? Number(item.product.rentalStock)
+            : Number(item.product.stock) > 0
+              ? Number(item.product.stock)
+              : 10
+          : (item.product.stock ?? 10);
       if (item.quantity > availableStock) {
         item.quantity = availableStock;
         cartChanged = true;
@@ -232,20 +238,12 @@ export class UserService {
       items.forEach((item) => {
         let itemPrice = item.product.price;
 
-        if (isRental && item.rentalInfo?.startDate && item.rentalInfo?.endDate) {
-          const start = new Date(item.rentalInfo.startDate);
-          const end = new Date(item.rentalInfo.endDate);
-          const diffDays =
-            Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) || 1;
-
-          if (item.product.rentalPricing) {
-            if (diffDays >= 30 && item.product.rentalPricing.monthly > 0) {
-              itemPrice = (item.product.rentalPricing.monthly / 30) * diffDays;
-            } else if (diffDays >= 7 && item.product.rentalPricing.weekly > 0) {
-              itemPrice = (item.product.rentalPricing.weekly / 7) * diffDays;
-            } else if (item.product.rentalPricing.daily > 0) {
-              itemPrice = item.product.rentalPricing.daily * diffDays;
-            }
+        if (isRental) {
+          if (
+            item.product.rentalPricing?.rentalPrice !== undefined &&
+            item.product.rentalPricing?.rentalPrice !== null
+          ) {
+            itemPrice = item.product.rentalPricing.rentalPrice;
           }
           depositTotal += (item.product.securityDeposit || 0) * item.quantity;
         }

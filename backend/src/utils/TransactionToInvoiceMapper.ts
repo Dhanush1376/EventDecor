@@ -44,7 +44,7 @@ export class TransactionToInvoiceMapper {
           if (rental) {
             lineItems = [
               {
-                description: `Rental: ${rental.product} (${rental.durationDays} days)`,
+                description: `Rental: ${rental.productTitle || rental.product} (${rental.durationDays} days)`,
                 quantity: 1,
                 unitPrice: rental.rentalCharge,
                 total: rental.rentalCharge,

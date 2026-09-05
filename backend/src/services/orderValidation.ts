@@ -108,19 +108,11 @@ export class OrderValidationService {
         if (!product.rentalEnabled)
           throw new ApiError(400, `Product is not available for rent: ${product.title}`);
 
-        // Calculate rental price based on days
-        if (item.rentalInfo?.startDate && item.rentalInfo?.endDate) {
-          const days =
-            Math.ceil(
-              (new Date(item.rentalInfo.endDate).getTime() -
-                new Date(item.rentalInfo.startDate).getTime()) /
-                (1000 * 3600 * 24),
-            ) + 1;
-
-          if (days <= 1 && product.rentalPricing?.daily) itemPrice = product.rentalPricing.daily;
-          else if (days <= 7 && product.rentalPricing?.weekly)
-            itemPrice = product.rentalPricing.weekly;
-          else if (product.rentalPricing?.monthly) itemPrice = product.rentalPricing.monthly;
+        if (
+          product.rentalPricing?.rentalPrice !== undefined &&
+          product.rentalPricing?.rentalPrice !== null
+        ) {
+          itemPrice = product.rentalPricing.rentalPrice;
         }
 
         // Add security deposit
@@ -253,12 +245,13 @@ export class OrderValidationService {
       codFee = settings.payments.codFee;
     }
 
-    const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee - discount);
+    const preliminaryTotal = Math.max(0, subtotal + shippingFee + codFee + depositTotal - discount);
 
-    if (settings.orders.minOrderValue && preliminaryTotal < settings.orders.minOrderValue) {
+    const orderValueForLimits = preliminaryTotal - depositTotal;
+    if (settings.orders.minOrderValue && orderValueForLimits < settings.orders.minOrderValue) {
       throw new ApiError(400, `Minimum order value must be ₹${settings.orders.minOrderValue}`);
     }
-    if (settings.orders.maxOrderValue && preliminaryTotal > settings.orders.maxOrderValue) {
+    if (settings.orders.maxOrderValue && orderValueForLimits > settings.orders.maxOrderValue) {
       throw new ApiError(400, `Maximum order value must be ₹${settings.orders.maxOrderValue}`);
     }
 
@@ -267,7 +260,7 @@ export class OrderValidationService {
       walletDeduction = Math.min(preliminaryTotal, availableWallet);
     }
 
-    const total = preliminaryTotal - walletDeduction + depositTotal;
+    const total = preliminaryTotal - walletDeduction;
 
     // Estimate Siri Coins
     const coinsToEarn = Math.round(subtotal * settings.loyalty.coinsPerRupee);

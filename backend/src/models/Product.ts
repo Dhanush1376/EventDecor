@@ -5,11 +5,8 @@ import logger from '../config/logger';
 import './Category'; // Ensure Category model is registered since Product depends on it
 
 export interface IRentalPricing {
-  daily: number;
-  weekly: number;
-  monthly: number;
-  customDurationEnabled: boolean;
-  customPricePerDay: number;
+  rentalPrice: number;
+  rentalDurationDays: number;
 }
 
 export interface IProduct extends ISoftDeleted {
@@ -101,7 +98,6 @@ export interface IProduct extends ISoftDeleted {
   rentalStock: number;
   rentalMinDays: number;
   rentalMaxDays: number;
-  isManualRentalPricing: boolean;
   customizationConfig?: {
     enabled: boolean;
     required: boolean;
@@ -228,6 +224,9 @@ const ProductSchema: Schema = new Schema(
       default: 'purchase_only',
     },
     rentalPricing: {
+      rentalPrice: { type: Number, default: 0, min: 0 },
+      rentalDurationDays: { type: Number, default: 1, min: 1 },
+      // Preserved for rollback safety
       daily: { type: Number, default: 0, min: 0 },
       weekly: { type: Number, default: 0, min: 0 },
       monthly: { type: Number, default: 0, min: 0 },

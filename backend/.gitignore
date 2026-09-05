@@ -10,3 +10,4 @@ isolate-*.log
 .eslintcache
 stats.html
 coverage/
+.dev-otp-log

@@ -5,19 +5,23 @@ export interface IRentalOrder extends Document {
   rentalOrderId: string;
   user: mongoose.Types.ObjectId;
   product: mongoose.Types.ObjectId;
+  quantity?: number;
   productTitle: string;
   productImage: string;
   rentalStartDate: Date;
   rentalEndDate: Date;
   durationDays: number;
   rentalRate: {
-    type: string;
-    rate: number;
+    rentalPrice: number;
+    rentalDurationDays: number;
+    type?: string;
+    rate?: number;
   };
   rentalCharge: number;
   securityDeposit: number;
   deliveryCharge: number;
   tax: number;
+  walletDeduction?: number;
   totalAmount: number;
   status:
     | 'pending'
@@ -33,6 +37,8 @@ export interface IRentalOrder extends Document {
     | 'pending'
     | 'processing'
     | 'paid'
+    | 'partially_paid'
+    | 'unpaid'
     | 'failed'
     | 'refunded'
     | 'Pending COD'
@@ -77,13 +83,24 @@ export interface IRentalOrder extends Document {
     images?: string[];
     inspectedAt: Date;
   };
+  amountPaid: number;
+  paymentHistory: {
+    amount: number;
+    method: string;
+    note?: string;
+    recordedBy: string;
+    date: Date;
+  }[];
   depositRefund?: {
     amount: number;
     date: Date;
     reason: string;
     processedBy: string;
+    method: string;
+    refundId?: string;
+    status?: string;
   };
-  depositStatus: 'held' | 'refunded' | 'forfeited';
+  depositStatus: 'held' | 'refunded' | 'forfeited' | 'processing' | 'not_applicable';
   lateFee: number;
   lateFeeAppliedDays: number;
   idempotencyKey?: string;
@@ -96,12 +113,15 @@ const RentalOrderSchema: Schema = new Schema(
     rentalOrderId: { type: String, unique: true },
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     product: { type: Schema.Types.ObjectId, ref: 'Product', required: true, index: true },
+    quantity: { type: Number, default: 1, min: 1 },
     productTitle: { type: String, required: true },
     productImage: { type: String, required: true },
     rentalStartDate: { type: Date, required: true },
     rentalEndDate: { type: Date, required: true },
     durationDays: { type: Number, required: true },
     rentalRate: {
+      rentalPrice: { type: Number },
+      rentalDurationDays: { type: Number },
       type: { type: String },
       rate: { type: Number },
     },
@@ -109,6 +129,7 @@ const RentalOrderSchema: Schema = new Schema(
     securityDeposit: { type: Number, required: true },
     deliveryCharge: { type: Number, default: 0 },
     tax: { type: Number, required: true },
+    walletDeduction: { type: Number, default: 0, min: 0 },
     totalAmount: { type: Number, required: true },
     status: {
       type: String,
@@ -132,7 +153,17 @@ const RentalOrderSchema: Schema = new Schema(
     paymentMethod: { type: String, default: 'Razorpay' },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'processing', 'paid', 'failed', 'refunded', 'Pending COD', 'COD Collected'],
+      enum: [
+        'pending',
+        'processing',
+        'paid',
+        'partially_paid',
+        'unpaid',
+        'failed',
+        'refunded',
+        'Pending COD',
+        'COD Collected',
+      ],
       default: 'pending',
       index: true,
     },
@@ -180,15 +211,28 @@ const RentalOrderSchema: Schema = new Schema(
       images: [{ type: String }],
       inspectedAt: { type: Date },
     },
+    amountPaid: { type: Number, default: 0 },
+    paymentHistory: [
+      {
+        amount: { type: Number, required: true },
+        method: { type: String, required: true },
+        note: { type: String },
+        recordedBy: { type: String },
+        date: { type: Date, default: Date.now },
+      },
+    ],
     depositRefund: {
       amount: { type: Number },
       date: { type: Date },
       reason: { type: String },
       processedBy: { type: String },
+      method: { type: String },
+      refundId: { type: String },
+      status: { type: String, enum: ['processing', 'completed', 'failed'] },
     },
     depositStatus: {
       type: String,
-      enum: ['held', 'refunded', 'forfeited'],
+      enum: ['held', 'refunded', 'forfeited', 'processing', 'not_applicable'],
       default: 'held',
     },
     lateFee: { type: Number, default: 0 },

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 const ConfirmContext = createContext(null);
 
@@ -125,6 +126,8 @@ const ConfirmModal = ({
 
   const styles = getTypeStyles();
 
+  useScrollLock(isOpen);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -145,13 +148,12 @@ const ConfirmModal = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className={`relative w-full max-w-md overflow-hidden keyboard-aware-drawer ${
+            className={`relative w-full max-w-md overflow-hidden ${
               isAdmin
                 ? 'bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] rounded-xl shadow-[var(--admin-shadow-lg)]'
                 : 'bg-surface border border-outline-variant/30 rounded-3xl shadow-2xl'
             }`}
           >
-            <div className="absolute top-[98%] left-0 right-0 h-[100vh] bg-inherit sm:hidden z-[-1]" />
             {/* Header */}
             <div
               className={`flex items-center justify-between ${isAdmin ? 'p-5 border-b border-[var(--admin-border-subtle)]' : 'p-6 pb-4 border-b border-outline-variant/20'}`}

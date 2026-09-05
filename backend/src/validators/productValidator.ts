@@ -39,11 +39,8 @@ export const createProductSchema = z.object({
   availabilityMode: z.enum(['purchase_only', 'rent_only', 'both']).optional(),
   rentalPricing: z
     .object({
-      daily: z.number().min(0).optional(),
-      weekly: z.number().min(0).optional(),
-      monthly: z.number().min(0).optional(),
-      customDurationEnabled: z.boolean().optional(),
-      customPricePerDay: z.number().min(0).optional(),
+      rentalPrice: z.number().min(0).optional(),
+      rentalDurationDays: z.number().min(1).optional(),
     })
     .optional(),
   securityDeposit: z.number().min(0).optional(),
@@ -51,7 +48,6 @@ export const createProductSchema = z.object({
   rentalStock: z.number().min(0).optional(),
   rentalMinDays: z.number().min(1).optional(),
   rentalMaxDays: z.number().min(1).optional(),
-  isManualRentalPricing: z.boolean().optional(),
   customizationConfig: z
     .object({
       enabled: z.boolean().optional(),

@@ -21,6 +21,7 @@ import { Link } from 'react-router-dom';
 import { reviewService } from '../../services/domainServices';
 import { uploadService } from '../../services/api/uploadService';
 import { useAuth } from '../../context/AuthContext';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import toast from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
 
@@ -177,12 +178,7 @@ export function WriteReviewModal({ showcaseId, showcaseTitle, onClose, onSuccess
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+  useScrollLock(true);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

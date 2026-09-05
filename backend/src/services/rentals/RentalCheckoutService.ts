@@ -11,9 +11,18 @@ import { RentalAvailabilityService } from './RentalAvailabilityService';
 import OutboxEvent from '../../models/OutboxEvent';
 import storeSettingsService from '../StoreSettingsService';
 import PaymentAttempt from '../../models/PaymentAttempt';
+import User from '../../models/User';
+import WalletTransaction from '../../models/WalletTransaction';
+import { debitWalletBalance } from '../../utils/payment/walletMutations';
 
 export class RentalCheckoutService {
-  static async calculateRentalCost(productId: string, startDate: Date, endDate: Date) {
+  static async calculateRentalCost(
+    productId: string,
+    startDate: Date,
+    endDate: Date,
+    quantity: number = 1,
+  ) {
+    const qty = Math.max(1, Number(quantity) || 1);
     const product = await Product.findById(productId).lean();
     if (!product) throw new ApiError(404, 'Product not found');
     if (!product.rentalEnabled) throw new ApiError(400, 'This product is not available for rent');
@@ -37,55 +46,67 @@ export class RentalCheckoutService {
     }
 
     const pricing = product.rentalPricing;
-    let rentalCharge: number;
-    let rateType: 'daily' | 'weekly' | 'monthly' | 'custom';
-    let rateUsed: number;
-
-    if (durationDays >= 30 && pricing.monthly > 0) {
-      const months = Math.floor(durationDays / 30);
-      const remainingDays = durationDays % 30;
-      rentalCharge =
-        months * pricing.monthly + remainingDays * (pricing.daily || pricing.monthly / 30);
-      rateType = 'monthly';
-      rateUsed = pricing.monthly;
-    } else if (durationDays >= 7 && pricing.weekly > 0) {
-      const weeks = Math.floor(durationDays / 7);
-      const remainingDays = durationDays % 7;
-      rentalCharge = weeks * pricing.weekly + remainingDays * (pricing.daily || pricing.weekly / 7);
-      rateType = 'weekly';
-      rateUsed = pricing.weekly;
-    } else if (pricing.daily > 0) {
-      rentalCharge = durationDays * pricing.daily;
-      rateType = 'daily';
-      rateUsed = pricing.daily;
-    } else if (pricing.customDurationEnabled && pricing.customPricePerDay > 0) {
-      rentalCharge = durationDays * pricing.customPricePerDay;
-      rateType = 'custom';
-      rateUsed = pricing.customPricePerDay;
-    } else {
+    if (!pricing || !pricing.rentalPrice || pricing.rentalPrice <= 0) {
       throw new ApiError(400, 'No rental pricing configured for this product');
     }
 
-    rentalCharge = Math.round(rentalCharge * 100) / 100;
+    const packageDurationDays = pricing.rentalDurationDays || 1;
+    const minDays = Math.max(1, product.rentalMinDays || 1);
+    if (durationDays < minDays) {
+      throw new ApiError(400, `Minimum rental duration is ${minDays} day(s)`);
+    }
+    if (durationDays > packageDurationDays) {
+      throw new ApiError(
+        400,
+        `Rental duration cannot exceed ${packageDurationDays} day(s) for this package (up to ${packageDurationDays} days)`,
+      );
+    }
+
+    const baseRentalCharge = Math.round(pricing.rentalPrice * 100) / 100;
+    const rentalCharge = Math.round(baseRentalCharge * qty * 100) / 100;
 
     const settings = await storeSettingsService.getSettings();
-    const securityDeposit = product.securityDeposit || 0;
-    const deliveryCharge = settings.shipping.deliveryCharge;
-    const taxRate = settings.taxes.gstRate;
-    const tax = Math.round(rentalCharge * taxRate * 100) / 100;
-    const totalAmount =
-      Math.round((rentalCharge + securityDeposit + deliveryCharge + tax) * 100) / 100;
+    const securityDeposit = Math.round((product.securityDeposit || 0) * qty * 100) / 100;
+    const isFreeShipping =
+      (settings.shipping.enableFreeShipping &&
+        rentalCharge > settings.shipping.freeShippingThreshold) ||
+      rentalCharge === 0;
+    const deliveryCharge = isFreeShipping ? 0 : settings.shipping.deliveryCharge;
+
+    const gstEnabled = settings.taxes.gstEnabled;
+    const taxInclusive = settings.taxes.taxInclusive !== false;
+    const taxRate = settings.taxes.gstRate || 0.18;
+    let tax: number;
+    let totalAmount: number;
+
+    if (!gstEnabled) {
+      tax = 0;
+      totalAmount = Math.round((rentalCharge + securityDeposit + deliveryCharge) * 100) / 100;
+    } else if (taxInclusive) {
+      const taxableAmount = Math.round((rentalCharge / (1 + taxRate)) * 100) / 100;
+      tax = Math.round((rentalCharge - taxableAmount) * 100) / 100;
+      totalAmount = Math.round((rentalCharge + securityDeposit + deliveryCharge) * 100) / 100;
+    } else {
+      tax = Math.round(rentalCharge * taxRate * 100) / 100;
+      totalAmount = Math.round((rentalCharge + securityDeposit + deliveryCharge + tax) * 100) / 100;
+    }
 
     return {
       productId: product._id,
       productTitle: product.title,
+      quantity: qty,
       durationDays,
-      rentalRate: { type: rateType, rate: rateUsed },
+      packageDurationDays,
+      rentalRate: {
+        rentalPrice: pricing.rentalPrice,
+        rentalDurationDays: packageDurationDays,
+      },
       rentalCharge,
       securityDeposit,
       isDepositRefundable: product.isDepositRefundable,
       deliveryCharge,
       tax,
+      taxInclusive,
       totalAmount,
       startDate: start,
       endDate: end,
@@ -127,15 +148,24 @@ export class RentalCheckoutService {
   static async createRentalOrder(data: any, userId: string) {
     const {
       productId,
+      quantity = 1,
       rentalStartDate,
       rentalEndDate,
       shippingAddress,
       identityDocuments,
+      aadhaarNumber,
       agreementAccepted,
       paymentMethod,
+      useWallet,
     } = data;
 
-    const costBreakdown = await this.calculateRentalCost(productId, rentalStartDate, rentalEndDate);
+    const qty = Math.max(1, Number(quantity) || 1);
+    const costBreakdown = await this.calculateRentalCost(
+      productId,
+      rentalStartDate,
+      rentalEndDate,
+      qty,
+    );
     const availability = await RentalAvailabilityService.checkAvailability(
       productId,
       rentalStartDate,
@@ -178,6 +208,19 @@ export class RentalCheckoutService {
         let rentalOrder;
         const pendingOrderId = new mongoose.Types.ObjectId();
 
+        const userDoc = await User.findById(userId).session(session);
+        const availableWallet = userDoc?.walletBalance || 0;
+        const settings = await storeSettingsService.getSettings();
+
+        const grossAmount = costBreakdown.totalAmount;
+        let walletDeduction = 0;
+        if (useWallet && settings.loyalty?.walletEnabled) {
+          walletDeduction = Math.min(grossAmount, availableWallet);
+        }
+        const finalAmount = Math.round((grossAmount - walletDeduction) * 100) / 100;
+        const isInstantWallet = !isCod && finalAmount === 0 && walletDeduction > 0;
+        const isDirectOrder = isCod || isInstantWallet;
+
         try {
           const availabilityCheck = await RentalAvailabilityService.checkAvailability(
             productId,
@@ -188,13 +231,31 @@ export class RentalCheckoutService {
           if (!availabilityCheck.available)
             throw new ApiError(400, availabilityCheck.reason || 'Product fully booked');
 
-          if (isCod) {
+          if (isDirectOrder) {
+            if (walletDeduction > 0) {
+              const updatedUser = await debitWalletBalance(userId, walletDeduction, session);
+              if (!updatedUser) throw new ApiError(400, 'Insufficient wallet balance.');
+              await WalletTransaction.create(
+                [
+                  {
+                    userId,
+                    type: 'debit',
+                    amount: walletDeduction,
+                    source: 'checkout_redeem',
+                    description: 'Redeemed Siri Cash at rental checkout',
+                  },
+                ],
+                { session },
+              );
+            }
+
             const rentalOrders = await RentalOrder.create(
               [
                 {
                   _id: pendingOrderId,
                   user: userId,
                   product: productId,
+                  quantity: qty,
                   productTitle: product.title,
                   productImage: product.imageSrc,
                   rentalStartDate: costBreakdown.startDate,
@@ -205,17 +266,21 @@ export class RentalCheckoutService {
                   securityDeposit: costBreakdown.securityDeposit,
                   deliveryCharge: costBreakdown.deliveryCharge,
                   tax: costBreakdown.tax,
-                  totalAmount: costBreakdown.totalAmount,
+                  walletDeduction,
+                  totalAmount: finalAmount,
                   status: 'confirmed',
-                  paymentMethod: 'cod',
-                  paymentStatus: 'Pending COD',
+                  paymentMethod: isInstantWallet ? 'wallet' : 'cod',
+                  paymentStatus: isInstantWallet ? 'paid' : 'Pending COD',
                   shippingAddress,
                   identityDocuments: identityDocuments || [],
+                  aadhaarNumber: aadhaarNumber || '',
                   agreementAcceptedAt: new Date(),
                   statusHistory: [
                     {
                       status: 'confirmed',
-                      note: 'Rental COD order placed',
+                      note: isInstantWallet
+                        ? 'Rental order fully paid with Siri Pay wallet'
+                        : 'Rental COD order placed',
                     },
                   ],
                 },
@@ -284,7 +349,7 @@ export class RentalCheckoutService {
           const { razorpayCircuitBreaker } = require('../../utils/CircuitBreaker');
           razorpayOrder = await razorpayCircuitBreaker.execute(() =>
             RazorpayGateway.createOrder({
-              amount: Math.round(costBreakdown.totalAmount * 100),
+              amount: Math.round(finalAmount * 100),
               currency: 'INR',
               receipt: `rental_${pendingOrderId}`,
               notes: { type: 'rental', productId, userId },
@@ -301,6 +366,7 @@ export class RentalCheckoutService {
           pendingOrderId,
           userId,
           product: productId,
+          quantity: qty,
           productTitle: product.title,
           productImage: product.imageSrc,
           rentalStartDate: costBreakdown.startDate,
@@ -311,10 +377,13 @@ export class RentalCheckoutService {
           securityDeposit: costBreakdown.securityDeposit,
           deliveryCharge: costBreakdown.deliveryCharge,
           tax: costBreakdown.tax,
-          totalAmount: costBreakdown.totalAmount,
+          walletDeduction,
+          total: finalAmount,
+          totalAmount: finalAmount,
           paymentMethod: 'razorpay',
           shippingAddress,
           identityDocuments: identityDocuments || [],
+          aadhaarNumber: aadhaarNumber || '',
           agreementAcceptedAt: new Date(),
         };
 
@@ -327,10 +396,10 @@ export class RentalCheckoutService {
         });
 
         return {
-          rentalOrder: { _id: pendingOrderId, total: costBreakdown.totalAmount },
+          rentalOrder: { _id: pendingOrderId, total: finalAmount, totalAmount: finalAmount },
           razorpayOrderId: razorpayOrder.id,
           razorpayKeyId: process.env.RAZORPAY_KEY_ID,
-          amount: Math.round(costBreakdown.totalAmount * 100),
+          amount: Math.round(finalAmount * 100),
         };
       },
       45,

@@ -55,7 +55,7 @@ export class AccountLinkingService {
         provider: 'google',
         providerSubjectId: profile.googleId,
         verifiedAt: new Date(),
-        metadata: { displayName: profile.name, avatar: profile.picture },
+        metadata: { displayName: profile.name, avatar: profile.picture, email: profile.email },
       });
     } catch (err: any) {
       if (err.name === 'MongoServerError' && err.code === 11000) {
@@ -264,14 +264,25 @@ export class AccountLinkingService {
 
   static async getLinkedProviders(userId: string) {
     const identities = await AuthIdentity.find({ userId })
-      .select('provider providerSubjectId verifiedAt metadata.displayName')
+      .select('provider providerSubjectId verifiedAt metadata')
       .lean();
 
-    return identities.map((id) => ({
-      provider: id.provider,
-      identifier: this.maskIdentifier(id.provider, id.providerSubjectId),
-      displayName: id.metadata?.displayName,
-      verifiedAt: id.verifiedAt,
-    }));
+    return identities.map((id) => {
+      let displayIdentifier = this.maskIdentifier(id.provider, id.providerSubjectId);
+      if (id.provider === 'google') {
+        if (id.metadata?.email) {
+          displayIdentifier = id.metadata.email;
+        } else if (id.metadata?.displayName) {
+          displayIdentifier = id.metadata.displayName;
+        }
+      }
+
+      return {
+        provider: id.provider,
+        identifier: displayIdentifier,
+        displayName: id.metadata?.displayName,
+        verifiedAt: id.verifiedAt,
+      };
+    });
   }
 }

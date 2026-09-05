@@ -63,6 +63,7 @@ export const ProductListingSortBar = ({
   return (
     <nav
       ref={navRef}
+      id="product-listing-sort-bar"
       className={`sticky -mt-12 lg:-mt-16 mb-4 lg:mb-6 transition-all duration-300 ease-out ${isStuck ? 'px-0' : 'px-3 lg:px-margin-desktop'}`}
       style={{ top: isNavbarHidden ? '0px' : `${navbarHeight}px`, zIndex: 49 }}
     >

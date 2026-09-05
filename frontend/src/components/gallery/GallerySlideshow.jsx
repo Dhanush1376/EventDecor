@@ -6,6 +6,7 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 const slideVariants = {
   enter: (direction) => ({
@@ -70,13 +71,13 @@ export function GallerySlideshow({
     [handlePrev, handleNext, onClose],
   );
 
+  useScrollLock(true);
+
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
     document.body.classList.add('slideshow-active');
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'auto';
       document.body.classList.remove('slideshow-active');
     };
   }, [handleKeyDown]);

@@ -10,7 +10,7 @@
     "build:all": "cd frontend && npm run build && cd ../backend && npm run build",
     "lint:all": "cd frontend && npm run lint && cd ../backend && npm run lint",
     "test:all": "cd frontend && npm test && cd ../backend && npm test",
-    "build": "node build-vercel.js",
+    "build": "npm run build:all",
     "prepare": "husky"
   },
   "devDependencies": {

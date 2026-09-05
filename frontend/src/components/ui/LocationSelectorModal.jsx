@@ -2,6 +2,7 @@ import { Map, X, Search, MapPin, Store, Navigation } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 import logger from '../../utils/core/logger';
 import 'leaflet/dist/leaflet.css';
@@ -18,6 +19,7 @@ export function LocationSelectorModal({
   initialLocation,
   inline = false,
 }) {
+  useScrollLock(isOpen && !inline);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -473,10 +475,9 @@ export function LocationSelectorModal({
             className={`relative bg-[#FCFAF6] border border-[#826237]/30 w-full font-body flex flex-col z-10 ${
               inline
                 ? 'rounded-2xl'
-                : 'max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden keyboard-aware-drawer'
+                : 'max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden'
             }`}
           >
-            <div className="absolute top-[98%] left-0 right-0 h-[100vh] bg-[#FCFAF6] sm:hidden z-[-1]" />
             {/* Elegant Header Banner */}
             {!inline && (
               <div className="bg-[#FAF6F0] px-6 py-5 border-b border-black/5 flex items-center justify-between relative">

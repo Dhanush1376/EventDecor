@@ -70,6 +70,7 @@ export const calculateRentalCostValidator = [
     .withMessage('End date is required')
     .isISO8601()
     .withMessage('Invalid end date'),
+  body('quantity').optional().isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
 ];
 
 export const checkAvailabilityValidator = [
@@ -106,8 +107,9 @@ export const inspectionValidator = [
 ];
 
 export const releaseDepositValidator = [
-  body('amount').isFloat({ min: 0 }).withMessage('Amount must be 0 or greater'),
-  body('reason').notEmpty().withMessage('Reason is required').trim(),
+  body('deductionAmount').isFloat({ min: 0 }).withMessage('Deduction amount must be 0 or greater'),
+  body('deductionReason').optional().trim(),
+  body('method').isIn(['razorpay', 'cash']).withMessage('Method must be razorpay or cash'),
 ];
 
 export const updateRentalStatusValidator = [

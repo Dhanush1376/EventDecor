@@ -5,6 +5,7 @@ import { MandalaArtDecor } from '../ui/MandalaArtDecor';
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { useDragControls, useScroll, useTransform, AnimatePresence, motion } from 'framer-motion';
 import '../../styles/visual-search.css';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import logger from '../../utils/core/logger';
 
 /**
@@ -87,20 +88,7 @@ export function VisualSearchOverlay({
   }, [isOpen, cameraStream]);
 
   // Prevent background scrolling when overlay is open
-  useEffect(() => {
-    if (isOpen) {
-      const originalBodyOverflow = document.body.style.overflow;
-      const originalHtmlOverflow = document.documentElement.style.overflow;
-
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-
-      return () => {
-        document.body.style.overflow = originalBodyOverflow;
-        document.documentElement.style.overflow = originalHtmlOverflow;
-      };
-    }
-  }, [isOpen]);
+  useScrollLock(isOpen);
 
   // Handle file input
   const handleFileSelect = useCallback(

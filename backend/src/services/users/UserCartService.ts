@@ -30,12 +30,15 @@ export class UserCartService {
     let updatedUser;
     if (userHasItem) {
       if (itemType === 'rental') {
+        const updateOps: any = {
+          $inc: { 'cart.$.quantity': qty },
+        };
+        if (rentalInfo) {
+          updateOps.$set = { 'cart.$.rentalInfo': rentalInfo };
+        }
         updatedUser = await User.findOneAndUpdate(
           { _id: userId, 'cart.product': objectId, 'cart.type': itemType } as any,
-          {
-            $inc: { 'cart.$.quantity': qty },
-            $set: { 'cart.$.rentalInfo': rentalInfo },
-          },
+          updateOps,
           { new: true },
         );
       } else {
@@ -50,17 +53,20 @@ export class UserCartService {
       if (currentUser && currentUser.cart.length >= 50) {
         throw new ApiError(400, 'Cart capacity reached. Maximum 50 items allowed.');
       }
+      const cartItem: any = {
+        product: objectId,
+        quantity: qty,
+        variant: 'Default',
+        type: itemType,
+      };
+      if (rentalInfo) {
+        cartItem.rentalInfo = rentalInfo;
+      }
       updatedUser = await User.findOneAndUpdate(
         { _id: userId },
         {
           $push: {
-            cart: {
-              product: objectId,
-              quantity: qty,
-              variant: 'Default',
-              type: itemType,
-              rentalInfo,
-            },
+            cart: cartItem,
           },
         },
         { new: true },
@@ -123,13 +129,17 @@ export class UserCartService {
       const productId = item.product || item._id || item.id;
       if (!productId) continue;
 
-      const product = await Product.findById(productId).select('isActive stock title');
-      if (!product || !product.isActive || product.stock <= 0) {
+      const product = await Product.findById(productId).select('isActive stock rentalStock title');
+      const itemType = item.type || 'purchase';
+      const isOutOfStock =
+        itemType === 'rental'
+          ? (Number(product?.rentalStock) || 0) <= 0 && (Number(product?.stock) || 0) <= 0
+          : (Number(product?.stock) || 0) <= 0;
+
+      if (!product || !product.isActive || isOutOfStock) {
         droppedItems.push({ productId, reason: 'Unavailable or Out of Stock' });
         continue;
       }
-
-      const itemType = item.type || 'purchase';
       const variant = item.variant || 'Default';
       const rentalInfoKey =
         itemType === 'rental' && item.rentalInfo

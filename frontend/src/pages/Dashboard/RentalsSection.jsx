@@ -8,13 +8,25 @@ import { OrderDetail } from '../../components/dashboard/OrderDetail';
 import { OrdersListSkeleton } from '../../components/ui';
 
 export function RentalsSection() {
-  const { selectedOrderId, isOrdersLoading, orderItems, orderFilter, setOrderFilter } =
-    useDashboard();
+  const {
+    selectedOrderId,
+    isRentalsLoading,
+    isOrdersLoading,
+    rentalOrderItems,
+    orderItems,
+    setOrderFilter,
+  } = useDashboard();
 
   useEffect(() => {
     // Default to Rental orders when accessing the rentals route
     setOrderFilter('RENTAL');
   }, [setOrderFilter]);
+
+  // Use rentalOrderItems as the authoritative source for rental display.
+  // Fall back to orderItems only if rentalOrderItems is somehow empty but
+  // the filter-based pipeline has rental items (defensive).
+  const itemsToDisplay = rentalOrderItems?.length > 0 ? rentalOrderItems : orderItems;
+  const isLoading = isRentalsLoading || (isOrdersLoading && itemsToDisplay.length === 0);
 
   return (
     <motion.div
@@ -38,12 +50,12 @@ export function RentalsSection() {
           </div>
 
           {/* Order Cards */}
-          {isOrdersLoading ? (
+          {isLoading ? (
             <OrdersListSkeleton rows={2} />
           ) : (
             <motion.div layout className="space-y-4">
               <AnimatePresence>
-                {orderItems.map(({ order, item, itemIdx }, idx) => (
+                {itemsToDisplay.map(({ order, item, itemIdx }, idx) => (
                   <OrderCard
                     key={`${order._id || idx}-${itemIdx}`}
                     order={order}
@@ -56,7 +68,7 @@ export function RentalsSection() {
             </motion.div>
           )}
 
-          {orderItems.length === 0 && !isOrdersLoading && (
+          {itemsToDisplay.length === 0 && !isLoading && (
             <div className="bg-surface-bright rounded-lg p-8 text-center shadow-sm flex flex-col items-center justify-center min-h-[35vh] relative overflow-hidden border border-black/5">
               {/* Decorative background blur */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#8c7335]/5 rounded-full blur-3xl pointer-events-none" />

@@ -38,6 +38,9 @@ export default function CheckoutPaymentStep() {
     rentalEndDate,
     needByDate,
     setNeedByDate,
+    orderType,
+    rentalCostBreakdown,
+    useWallet,
   } = useCheckout();
 
   const codMinOrder = settings?.payments?.codMinOrder ?? 500;
@@ -107,24 +110,35 @@ export default function CheckoutPaymentStep() {
     }
   };
 
+  const grossRentalAmount = rentalCostBreakdown?.totalAmount || 0;
+  const availableWalletBalance = (backendTotals?.walletBalance ?? user?.walletBalance) || 0;
+  const rentalWalletDeduction =
+    useWallet && availableWalletBalance > 0
+      ? Math.min(grossRentalAmount, availableWalletBalance)
+      : 0;
+  const netRentalPayable = Math.max(0, grossRentalAmount - rentalWalletDeduction);
+
+  const currentPayableTotal =
+    orderType === 'rental' ? netRentalPayable : (backendTotals?.total ?? 0);
+
   const getSubmitButtonLabel = () => {
     if (isProcessing) return 'Processing...';
     if (isTotalsLoading) return 'Calculating...';
     if (totalsError) return 'Pricing Load Error';
 
-    if (backendTotals?.total === 0) {
+    if (currentPayableTotal === 0) {
       return 'Place Order (Fully Paid)';
     }
 
     if (paymentOption === 'razorpay') {
-      return `Pay ₹${backendTotals.total.toLocaleString('en-IN')}`;
+      return `Pay ₹${currentPayableTotal.toLocaleString('en-IN')}`;
     }
 
     // COD payment option selected
     if (!isCodEnabled) {
       return 'COD Unavailable';
     }
-    if (backendTotals.total < codMinOrder) {
+    if (currentPayableTotal < codMinOrder) {
       return `COD Unavailable (< ₹${codMinOrder})`;
     }
     if (!codVerified) {

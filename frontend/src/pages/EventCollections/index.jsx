@@ -374,24 +374,51 @@ export function EventCollections() {
   }, []);
 
   const handleCategorySelect = (cat) => {
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-      if (cat === 'All Occasions') {
-        params.delete('category');
-      } else {
-        params.set('category', cat);
-      }
-      params.delete('page');
-      return params;
-    });
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (cat === 'All Occasions') {
+          params.delete('category');
+        } else {
+          params.set('category', cat);
+        }
+        params.delete('page');
+        return params;
+      },
+      { replace: true },
+    );
     setActiveCategory(cat);
     setCurrentPage(1);
     setTimeout(() => {
+      const isMobileView = window.innerWidth < 1024;
+      if (isMobileView) {
+        const mobileCategoriesEl = document.getElementById('event-mobile-sticky-categories');
+        const sortBar = document.getElementById('event-sticky-nav');
+        if (mobileCategoriesEl) {
+          const sortBarHeight = sortBar ? sortBar.getBoundingClientRect().height : 68;
+          const currentAbsoluteTop =
+            mobileCategoriesEl.getBoundingClientRect().top + window.scrollY;
+          const targetY = currentAbsoluteTop - sortBarHeight;
+          window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+          return;
+        }
+      }
+
+      const sortBar = document.getElementById('event-sticky-nav');
+      if (sortBar) {
+        const topNav = document.querySelector('.top-navbar');
+        const navHeight = topNav ? topNav.getBoundingClientRect().height : 0;
+        const currentAbsoluteTop = sortBar.getBoundingClientRect().top + window.scrollY;
+        const targetY = currentAbsoluteTop - navHeight;
+        window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+        return;
+      }
+
       const element = document.getElementById('event-collection');
       if (element) {
         const yOffset = -80;
         const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }
     }, 50);
   };
@@ -597,6 +624,7 @@ const MobileStickyCategories = ({
   return (
     <div
       ref={ref}
+      id="event-mobile-sticky-categories"
       className={`mb-8 overflow-x-auto no-scrollbar lg:hidden sticky z-[48] py-2 -mx-[var(--spacing-margin-mobile)] px-[var(--spacing-margin-mobile)] transition-all duration-300 ease-out ${
         isStuck
           ? 'bg-surface/95 backdrop-blur-xl shadow-sm border-b border-black/5'

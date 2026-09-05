@@ -11,14 +11,20 @@ import { RentalAvailabilityService } from './rentals/RentalAvailabilityService';
 import { RentalStateMachine } from './rentals/RentalStateMachine';
 import { PaymentRefundService } from './PaymentRefundService';
 import { RentalCheckoutService } from './rentals/RentalCheckoutService';
+import AuthIdentity from '../models/AuthIdentity';
 
 class RentalService {
   static async checkAvailability(productId: string, startDate: Date, endDate: Date) {
     return await RentalAvailabilityService.checkAvailability(productId, startDate, endDate);
   }
 
-  static async calculateRentalCost(productId: string, startDate: Date, endDate: Date) {
-    return await RentalCheckoutService.calculateRentalCost(productId, startDate, endDate);
+  static async calculateRentalCost(
+    productId: string,
+    startDate: Date,
+    endDate: Date,
+    quantity: number = 1,
+  ) {
+    return await RentalCheckoutService.calculateRentalCost(productId, startDate, endDate, quantity);
   }
 
   static async checkServiceArea(lat: number, lng: number) {
@@ -49,7 +55,16 @@ class RentalService {
 
     const skip = (Number(page) - 1) * Number(limit);
     const [rentals, total] = await Promise.all([
-      RentalOrder.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
+      RentalOrder.find(filter)
+        .populate({
+          path: 'product',
+          select: 'primaryCategory',
+          populate: { path: 'primaryCategory', select: 'name' },
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(),
       RentalOrder.countDocuments(filter),
     ]);
 
@@ -60,14 +75,34 @@ class RentalService {
    * Get single rental order detail.
    */
   static async getRentalDetail(rentalId: string, userId?: string) {
-    const filter: any = { _id: rentalId };
+    const isObjectId = mongoose.isValidObjectId(rentalId);
+    const filter: any = isObjectId
+      ? { $or: [{ _id: rentalId }, { rentalOrderId: rentalId }] }
+      : { rentalOrderId: rentalId };
     if (userId) filter.user = userId; // Non-admin users can only see their own
 
     const rental = await RentalOrder.findOne(filter)
       .populate('product', 'title imageSrc images price rentalPricing rentalEnabled')
+      .populate('user', 'name email phone avatar role isVerified googleId createdAt')
       .lean();
 
     if (!rental) throw new ApiError(404, 'Rental order not found');
+
+    if (rental.user && (rental.user as any)._id) {
+      const identities = await AuthIdentity.find({ userId: (rental.user as any)._id }).lean();
+      const hasEmailAuth = identities.some(
+        (i) => i.provider === 'email' || i.provider === 'google',
+      );
+      const hasPhoneAuth = identities.some((i) => i.provider === 'phone');
+
+      (rental.user as any).isEmailVerified = Boolean(
+        hasEmailAuth ||
+        ((rental.user as any).isVerified &&
+          Boolean((rental.user as any).email || (rental.user as any).googleId)),
+      );
+      (rental.user as any).isPhoneVerified = Boolean(hasPhoneAuth);
+    }
+
     return rental;
   }
 
@@ -79,10 +114,15 @@ class RentalService {
     const filter: any = {};
 
     if (status) filter.status = status;
+    if (queryParams.paymentStatus) filter.paymentStatus = queryParams.paymentStatus;
+
     if (search) {
       filter.$or = [
         { rentalOrderId: new RegExp(search, 'i') },
         { productTitle: new RegExp(search, 'i') },
+        { 'shippingAddress.name': new RegExp(search, 'i') },
+        { 'shippingAddress.email': new RegExp(search, 'i') },
+        { 'shippingAddress.phone': new RegExp(search, 'i') },
       ];
     }
 
@@ -112,8 +152,18 @@ class RentalService {
       note = note || 'Rental period started (marked as delivered)';
     }
 
+    const oldStatus = rental.status;
     RentalStateMachine.transition(rental, status as any, note, adminId);
     await rental.save();
+
+    const OutboxEvent = require('../models/OutboxEvent').default;
+    await OutboxEvent.create({
+      aggregateId: rental._id.toString(),
+      aggregateType: 'RentalOrder',
+      eventType: 'RentalStatusUpdated',
+      payload: { oldStatus, newStatus: status, orderId: rental._id.toString() },
+    });
+
     logger.info(`[RENTAL] Status updated to ${status} for ${rental.rentalOrderId} by ${adminId}`);
     return rental;
   }
@@ -257,7 +307,12 @@ class RentalService {
   /**
    * Release security deposit (admin).
    */
-  static async releaseDeposit(rentalId: string, amount: number, reason: string, adminId: string) {
+  static async releaseDeposit(
+    rentalId: string,
+    data: { deductionAmount: number; deductionReason?: string; method: string },
+    adminId: string,
+  ) {
+    const { deductionAmount, deductionReason, method } = data;
     const rental = await RentalOrder.findById(rentalId);
     if (!rental) throw new ApiError(404, 'Rental order not found');
 
@@ -265,49 +320,158 @@ class RentalService {
       throw new ApiError(400, 'Deposit has already been refunded for this order');
     }
 
-    if (amount > rental.securityDeposit) {
-      throw new ApiError(400, 'Refund amount cannot exceed the security deposit');
+    if (rental.status !== 'returned') {
+      throw new ApiError(400, 'Deposit can only be released after the product is returned');
     }
 
-    rental.depositRefund = {
-      amount,
-      date: new Date(),
-      reason,
-      processedBy: adminId,
-    };
+    if (rental.depositStatus !== 'held') {
+      throw new ApiError(400, 'Deposit is not currently held');
+    }
 
-    RentalStateMachine.transition(
-      rental,
-      'completed',
-      `Deposit of ₹${amount} released. Reason: ${reason}`,
-      adminId,
-    );
+    if (deductionAmount < 0 || deductionAmount > rental.securityDeposit) {
+      throw new ApiError(400, 'Invalid deduction amount');
+    }
 
-    await rental.save();
+    const refundAmount = rental.securityDeposit - deductionAmount;
 
-    // Initiate actual Razorpay refund for the deposit amount
-    if (amount > 0 && rental.razorpayPaymentId) {
-      try {
-        await PaymentRefundService.initiateAsyncRefund({
-          amount,
-          currency: 'INR',
-          originalTransactionId: rental.razorpayPaymentId,
-          entityType: 'Rental',
-          entityId: rental._id,
-        });
-        logger.info(
-          `[RENTAL] Razorpay deposit refund of ₹${amount} initiated for ${rental.rentalOrderId}`,
-        );
-      } catch (refundErr: any) {
-        logger.error(
-          `[CRITICAL] Failed to enqueue Razorpay deposit refund for rental ${rental._id}:`,
-          refundErr,
-        );
+    if (method === 'razorpay') {
+      if (!rental.razorpayPaymentId) {
+        throw new ApiError(400, 'Cannot refund via Razorpay: no original Razorpay payment found');
       }
+      // Note: We don't fetch original payment amount here, we trust the checkout flow
+      // which puts the whole totalAmount into the Razorpay order.
     }
 
-    logger.info(`[RENTAL] Deposit ₹${amount} released for ${rental.rentalOrderId} by ${adminId}`);
-    return rental;
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      if (refundAmount === 0) {
+        // Full forfeiture
+        rental.depositRefund = {
+          amount: 0,
+          date: new Date(),
+          reason: deductionReason || 'Full deposit forfeited',
+          processedBy: adminId,
+          method: 'none',
+          status: 'completed',
+        };
+        rental.depositStatus = 'forfeited';
+
+        RentalStateMachine.transition(
+          rental,
+          'completed',
+          `Deposit fully forfeited. Reason: ${deductionReason}`,
+          adminId,
+        );
+
+        await rental.save({ session });
+
+        const OutboxEvent = require('../models/OutboxEvent').default;
+        await OutboxEvent.create(
+          [
+            {
+              aggregateId: rental._id.toString(),
+              aggregateType: 'RentalOrder',
+              eventType: 'RentalDepositForfeited',
+              payload: { orderId: rental._id.toString() },
+            },
+          ],
+          { session },
+        );
+      } else if (method === 'cash') {
+        rental.depositRefund = {
+          amount: refundAmount,
+          date: new Date(),
+          reason: deductionReason ? `Deduction: ${deductionReason}` : 'Full refund',
+          processedBy: adminId,
+          method: 'cash',
+          status: 'completed',
+        };
+        rental.depositStatus = 'refunded';
+
+        RentalStateMachine.transition(
+          rental,
+          'completed',
+          `Deposit of ₹${refundAmount} released via Cash. ${deductionReason ? 'Deduction: ' + deductionReason : ''}`,
+          adminId,
+        );
+
+        await rental.save({ session });
+
+        const OutboxEvent = require('../models/OutboxEvent').default;
+        await OutboxEvent.create(
+          [
+            {
+              aggregateId: rental._id.toString(),
+              aggregateType: 'RentalOrder',
+              eventType: 'RentalDepositRefunded',
+              payload: { orderId: rental._id.toString() },
+            },
+          ],
+          { session },
+        );
+      } else if (method === 'razorpay') {
+        rental.depositRefund = {
+          amount: refundAmount,
+          date: new Date(),
+          reason: deductionReason ? `Deduction: ${deductionReason}` : 'Full refund',
+          processedBy: adminId,
+          method: 'razorpay',
+          status: 'processing',
+        };
+        rental.depositStatus = 'processing';
+
+        await rental.save({ session });
+
+        // Note: we do NOT transition to completed yet.
+
+        const OutboxEvent = require('../models/OutboxEvent').default;
+        await OutboxEvent.create(
+          [
+            {
+              aggregateId: rental._id.toString(),
+              aggregateType: 'RentalOrder',
+              eventType: 'RentalDepositRefundInitiated',
+              payload: { orderId: rental._id.toString() },
+            },
+          ],
+          { session },
+        );
+
+        // Initiate actual Razorpay refund for the deposit amount (async)
+        try {
+          await PaymentRefundService.initiateAsyncRefund({
+            amount: refundAmount,
+            currency: 'INR',
+            originalTransactionId: rental.razorpayPaymentId as string,
+            entityType: 'Rental',
+            entityId: rental._id,
+          });
+          logger.info(
+            `[RENTAL] Razorpay deposit refund of ₹${refundAmount} initiated for ${rental.rentalOrderId}`,
+          );
+        } catch (refundErr: any) {
+          logger.error(
+            `[CRITICAL] Failed to enqueue Razorpay deposit refund for rental ${rental._id}:`,
+            refundErr,
+          );
+          throw new ApiError(500, 'Failed to initiate refund process');
+        }
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+
+      logger.info(
+        `[RENTAL] Deposit ₹${refundAmount} released/processed for ${rental.rentalOrderId} by ${adminId}`,
+      );
+      return rental;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
   }
 
   /**
@@ -511,6 +675,127 @@ class RentalService {
       totalRevenue: totalRevenue[0]?.total || 0,
       totalDepositsHeld: totalDepositsHeld[0]?.total || 0,
     };
+  }
+
+  /**
+   * Get due returns (admin).
+   */
+  static async getDueReturns() {
+    const now = new Date();
+    const todayStart = new Date(now.setHours(0, 0, 0, 0));
+    const todayEnd = new Date(now.setHours(23, 59, 59, 999));
+
+    const threeDaysFromNow = new Date(now);
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+
+    const [dueToday, overdue, upcoming] = await Promise.all([
+      RentalOrder.find({
+        status: { $in: ['active_rental'] },
+        rentalEndDate: { $gte: todayStart, $lte: todayEnd },
+      })
+        .populate('user', 'name email phone')
+        .select('rentalOrderId productTitle rentalEndDate status paymentStatus user quantity')
+        .lean(),
+      RentalOrder.find({
+        status: { $in: ['active_rental', 'late_return'] },
+        rentalEndDate: { $lt: todayStart },
+      })
+        .populate('user', 'name email phone')
+        .select('rentalOrderId productTitle rentalEndDate status paymentStatus user quantity')
+        .lean(),
+      RentalOrder.find({
+        status: { $in: ['active_rental'] },
+        rentalEndDate: { $gt: todayEnd, $lte: threeDaysFromNow },
+      })
+        .populate('user', 'name email phone')
+        .select('rentalOrderId productTitle rentalEndDate status paymentStatus user quantity')
+        .lean(),
+    ]);
+
+    return { dueToday, overdue, upcoming };
+  }
+
+  /**
+   * Record a manual payment (admin).
+   */
+  static async recordCodPayment(
+    rentalId: string,
+    amount: number,
+    note: string,
+    adminId: string,
+    paymentMethod: string = 'cash',
+  ) {
+    const rental = await RentalOrder.findById(rentalId);
+    if (!rental) throw new ApiError(404, 'Rental order not found');
+
+    if (amount <= 0) {
+      throw new ApiError(400, 'Payment amount must be greater than 0');
+    }
+
+    const effectiveAmountPaid = (rental.paymentHistory || []).reduce((sum, p) => sum + p.amount, 0);
+
+    const currentPaid = rental.amountPaid ?? effectiveAmountPaid;
+    const balanceDue = Math.max(0, rental.totalAmount - currentPaid);
+
+    if (amount > balanceDue) {
+      throw new ApiError(
+        400,
+        `Payment amount exceeds balance due of ₹${balanceDue.toLocaleString('en-IN')}`,
+      );
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      if (!rental.paymentHistory) {
+        rental.paymentHistory = [];
+      }
+
+      rental.paymentHistory.push({
+        amount,
+        method: paymentMethod || 'cash',
+        note,
+        recordedBy: adminId,
+        date: new Date(),
+      });
+
+      rental.amountPaid = currentPaid + amount;
+
+      if (rental.amountPaid >= rental.totalAmount) {
+        rental.paymentStatus =
+          rental.paymentMethod === 'Cash_on_Delivery' ? 'COD Collected' : 'paid';
+      } else {
+        rental.paymentStatus = 'partially_paid';
+      }
+
+      await rental.save({ session });
+
+      const OutboxEvent = require('../models/OutboxEvent').default;
+      await OutboxEvent.create(
+        [
+          {
+            aggregateId: rental._id.toString(),
+            aggregateType: 'RentalOrder',
+            eventType: 'RentalPaymentReceived',
+            payload: { orderId: rental._id.toString() },
+          },
+        ],
+        { session },
+      );
+
+      await session.commitTransaction();
+      session.endSession();
+
+      logger.info(
+        `[RENTAL] Recorded COD payment of ₹${amount} for ${rental.rentalOrderId} by ${adminId}`,
+      );
+      return rental;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
   }
 }
 

@@ -241,8 +241,8 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
 
       {/* 2. REFINED INFO SECTION */}
       <div className="p-3 sm:p-4 lg:p-4 flex flex-col flex-1">
-        <div className="flex items-center justify-between gap-2 mb-1.5 sm:mb-2">
-          <span className="text-primary font-label-sm text-[8px] lg:text-[10px] uppercase tracking-widest font-bold truncate">
+        <div className="flex items-center justify-between gap-2 h-4 lg:h-5 mb-1.5 sm:mb-2">
+          <span className="text-primary font-label-sm text-[8px] lg:text-[10px] uppercase tracking-widest font-bold truncate leading-none">
             {formattedCat} • {setupTimeHours}H SETUP
           </span>
           <div className="flex items-center gap-0.5 shrink-0">
@@ -272,7 +272,6 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
               <span className="font-display text-[15px] sm:text-[18px] lg:text-[22px] text-black font-medium leading-none">
                 ₹{formatPrice(rentalPrice)}
               </span>
-              <span className="font-label text-[9px] lg:text-[10px] text-black/40">/ day</span>
             </div>
           </div>
 

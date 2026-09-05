@@ -6,8 +6,13 @@ const SERVICE_AREA_BASE = '/service-areas';
 
 const rentalService = {
   // ─── Customer Endpoints ───
-  calculateCost: async (productId, startDate, endDate) => {
-    const res = await api.post(`${RENTAL_BASE}/calculate`, { productId, startDate, endDate });
+  calculateCost: async (productId, startDate, endDate, quantity = 1) => {
+    const res = await api.post(`${RENTAL_BASE}/calculate`, {
+      productId,
+      startDate,
+      endDate,
+      quantity,
+    });
     return res.data;
   },
 
@@ -45,6 +50,11 @@ const rentalService = {
     return res.data;
   },
 
+  getRentalById: async (id) => {
+    const res = await api.get(`${RENTAL_BASE}/detail/${id}`);
+    return res.data;
+  },
+
   requestReturn: async (id) => {
     const res = await api.post(`${RENTAL_BASE}/${id}/request-return`);
     return res.data;
@@ -76,8 +86,8 @@ const rentalService = {
     return res.data;
   },
 
-  adminReleaseDeposit: async (id, amount, reason) => {
-    const res = await api.post(`${RENTAL_BASE}/admin/${id}/release-deposit`, { amount, reason });
+  adminReleaseDeposit: async (id, data) => {
+    const res = await api.post(`${RENTAL_BASE}/admin/${id}/release-deposit`, data);
     return res.data;
   },
 
@@ -98,6 +108,16 @@ const rentalService = {
 
   adminCancelRental: async (id) => {
     const res = await api.post(`${RENTAL_BASE}/admin/${id}/cancel`);
+    return res.data;
+  },
+
+  adminGetDueReturns: async () => {
+    const res = await api.get(`${RENTAL_BASE}/admin/due-returns`);
+    return res.data;
+  },
+
+  adminRecordPayment: async (id, data) => {
+    const res = await api.post(`${RENTAL_BASE}/admin/${id}/record-payment`, data);
     return res.data;
   },
 

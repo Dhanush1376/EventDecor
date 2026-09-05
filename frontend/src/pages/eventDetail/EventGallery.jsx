@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { m as motion } from 'framer-motion';
 import { OptimizedImage } from '../../components/ui/OptimizedImage';
 import { ShareButton } from '../../components/ui/ShareButton';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 export function EventGallery({ event, toggleItem, isWishlisted }) {
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
@@ -13,16 +14,15 @@ export function EventGallery({ event, toggleItem, isWishlisted }) {
     return Array.from(new Set([event.image, ...(event.gallery || [])].filter(Boolean)));
   }, [event.image, event.gallery]);
 
+  useScrollLock(isLightboxOpen);
+
   useEffect(() => {
     if (isLightboxOpen) {
-      document.body.style.overflow = 'hidden';
       document.body.classList.add('slideshow-active');
     } else {
-      document.body.style.overflow = '';
       document.body.classList.remove('slideshow-active');
     }
     return () => {
-      document.body.style.overflow = '';
       document.body.classList.remove('slideshow-active');
     };
   }, [isLightboxOpen]);

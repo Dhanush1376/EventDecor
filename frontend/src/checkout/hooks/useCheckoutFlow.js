@@ -257,6 +257,7 @@ export function useCheckoutFlow({
     try {
       const rentalPayload = {
         productId: rentalItem.id || rentalItem._id,
+        quantity: rentalItem.quantity || 1,
         rentalStartDate: rentals.rentalStartDate,
         rentalEndDate: rentals.rentalEndDate,
         shippingAddress: buildShippingAddress(),
@@ -264,6 +265,7 @@ export function useCheckoutFlow({
         aadhaarNumber: rentals.aadhaarNumber,
         agreementAccepted: true,
         paymentMethod: paymentOption === 'razorpay' ? 'razorpay' : 'cod',
+        useWallet: Boolean(totals.useWallet),
         customizationNote:
           customizationNotes[
             `${rentalItem.id || rentalItem._id}-${rentalItem.variant || 'default'}`
@@ -280,8 +282,12 @@ export function useCheckoutFlow({
 
       const { rentalOrder, razorpayOrderId, razorpayKeyId, amount } = createRes.data;
 
-      if (paymentOption === 'cod') {
-        toast.success('Rental Cash on Delivery order placed successfully!');
+      if (paymentOption === 'cod' || !razorpayOrderId) {
+        toast.success(
+          paymentOption === 'cod'
+            ? 'Rental Cash on Delivery order placed successfully!'
+            : 'Rental order placed successfully with wallet payment!',
+        );
         orderCompleteRef.current = true;
         activeItems
           .filter((i) => i.type === 'rental')

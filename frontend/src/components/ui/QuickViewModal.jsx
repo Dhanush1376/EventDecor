@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import toast from 'react-hot-toast';
 
 export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNext, hasPrev }) => {
@@ -84,10 +85,11 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
     }
   };
 
+  useScrollLock(isOpen);
+
   React.useEffect(() => {
     if (isOpen) {
       triggerElementRef.current = document.activeElement;
-      document.body.style.overflow = 'hidden';
       document.body.classList.add('quickview-active');
 
       const focusableElements = modalRef.current?.querySelectorAll(
@@ -128,7 +130,6 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
       window.addEventListener('keydown', handleKeyDown);
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
-        document.body.style.overflow = '';
         document.body.classList.remove('quickview-active');
         if (triggerElementRef.current) {
           triggerElementRef.current.focus();
@@ -407,13 +408,17 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
                     ₹
                     {(product.itemType === 'event'
                       ? product.rentalPrice || product.price
-                      : product.price
+                      : product.availabilityMode === 'rent_only' &&
+                          product.rentalPricing?.rentalPrice
+                        ? product.rentalPricing.rentalPrice
+                        : product.price
                     )?.toLocaleString('en-IN') || '0'}
-                    {product.itemType === 'event' && (
-                      <span className="font-label text-[10px] sm:text-[11px] text-on-surface-variant/60 ml-1">
-                        / day
-                      </span>
-                    )}
+                    {product.availabilityMode === 'rent_only' &&
+                      product.rentalPricing?.rentalPrice > 0 && (
+                        <span className="font-label text-[11px] sm:text-[12px] text-on-surface-variant/60 ml-1.5 font-bold">
+                          {`for up to ${product.rentalPricing.rentalDurationDays || 1} ${(product.rentalPricing.rentalDurationDays || 1) === 1 ? 'day' : 'days'}`}
+                        </span>
+                      )}
                   </span>
                   {product.itemType !== 'event' && product.oldPrice && (
                     <span className="font-display lining-nums text-on-surface-variant/40 line-through text-[15px] lg:text-[18px]">

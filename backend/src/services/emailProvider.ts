@@ -110,6 +110,9 @@ export const sendViaSMTP = async (payload: EmailPayload): Promise<{ messageId: s
       tls: { rejectUnauthorized: false }, // Helps with some local firewall setups
       // Force IPv4 to prevent ENETUNREACH issues when IPv6 is broken locally
       family: 4,
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 8000,
     });
   }
 

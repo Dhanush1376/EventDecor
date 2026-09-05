@@ -206,7 +206,11 @@ export const MyReturns = () => {
 
                         <div className="flex-1 min-w-0 space-y-1">
                           <span className="text-[9px] uppercase font-bold text-primary tracking-widest block font-label">
-                            Siri Atelier Collection
+                            {item.category ||
+                              (typeof item.productId === 'object'
+                                ? item.productId?.primaryCategory?.name
+                                : null) ||
+                              'Siri Atelier Collection'}
                           </span>
                           <h4 className="font-display font-medium text-on-surface text-[12px] truncate">
                             {prodTitle}

@@ -30,25 +30,28 @@ export function useCheckoutRentals() {
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
 
-  const handleRentalCostCalculation = useCallback(async (productId, startDate, endDate) => {
-    if (!productId || !startDate || !endDate) return null;
-    try {
-      setIsCheckingAvailability(true);
-      const [costRes, availRes] = await Promise.all([
-        rentalService.calculateCost(productId, startDate, endDate),
-        rentalService.checkAvailability(productId, startDate, endDate),
-      ]);
-      if (costRes.success) setRentalCostBreakdown(costRes.data);
-      if (availRes.success) setRentalAvailability(availRes.data);
-      return { cost: costRes.data, availability: availRes.data };
-    } catch (err) {
-      logger.error('Rental cost/availability check failed:', err);
-      toast.error(err.response?.data?.message || 'Failed to check rental availability');
-      return null;
-    } finally {
-      setIsCheckingAvailability(false);
-    }
-  }, []);
+  const handleRentalCostCalculation = useCallback(
+    async (productId, startDate, endDate, quantity = 1) => {
+      if (!productId || !startDate || !endDate) return null;
+      try {
+        setIsCheckingAvailability(true);
+        const [costRes, availRes] = await Promise.all([
+          rentalService.calculateCost(productId, startDate, endDate, quantity),
+          rentalService.checkAvailability(productId, startDate, endDate),
+        ]);
+        if (costRes.success) setRentalCostBreakdown(costRes.data);
+        if (availRes.success) setRentalAvailability(availRes.data);
+        return { cost: costRes.data, availability: availRes.data };
+      } catch (err) {
+        logger.error('Rental cost/availability check failed:', err);
+        toast.error(err.response?.data?.message || 'Failed to check rental availability');
+        return null;
+      } finally {
+        setIsCheckingAvailability(false);
+      }
+    },
+    [],
+  );
 
   return {
     rentalStartDate,

@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader, stagger } from '../components/AdminUIKit';
 import { AdminRentalOrders } from './AdminRentalOrders';
 import { AdminRentalCalendar } from './AdminRentalCalendar';
+import { AdminDueReturns } from './AdminDueReturns';
 
 export default function AdminRentalsHub() {
   const location = useLocation();
@@ -92,9 +93,7 @@ export default function AdminRentalsHub() {
           >
             {activeTab === 'active' && <AdminRentalOrders hideHeader={true} />}
             {activeTab === 'calendar' && <AdminRentalCalendar hideHeader={true} />}
-            {activeTab === 'due' && (
-              <AdminRentalOrders hideHeader={true} initialFilter="late_return" />
-            )}
+            {activeTab === 'due' && <AdminDueReturns />}
           </motion.div>
         </AnimatePresence>
       </div>

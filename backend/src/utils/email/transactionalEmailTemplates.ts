@@ -3,9 +3,11 @@ import {
   formatCurrency,
   escapeHtml,
   dataTable,
+  button,
   getPrimaryEntityName,
 } from './emailTemplates';
 import { getBackendUrl } from '../getBackendUrl';
+import { getFrontendUrl } from '../getFrontendUrl';
 
 const textLink = (text: string, url: string) => `
   <a href="${url}" style="color: #4f46e5; text-decoration: underline; font-size: 14px; font-weight: 500;">
@@ -974,5 +976,376 @@ export const buildEventBookingStatusUpdateEmail = (
   return {
     subject,
     html: getLuxuryEmailWrapper(title, body, undefined, preheader),
+  };
+};
+
+// --- Rental Order Templates ---
+
+const rentalItemCard = (rentalOrder: any) => {
+  const itemImage = rentalOrder.productImage
+    ? `<img src="${escapeHtml(resolveImageUrl(rentalOrder.productImage))}" alt="${escapeHtml(rentalOrder.productTitle)}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;" />`
+    : `<div style="width: 48px; height: 48px; background-color: #f3f4f6; border-radius: 4px; border: 1px solid #e5e7eb;"></div>`;
+
+  const qty = rentalOrder.quantity || 1;
+  const rentalPrice = rentalOrder.rentalRate?.rentalPrice || rentalOrder.rentalCharge || 0;
+  const rentalDurationDays =
+    rentalOrder.rentalRate?.rentalDurationDays || rentalOrder.durationDays || 0;
+
+  return `
+    <div style="margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="border-bottom: 2px solid #e5e7eb; text-align: left;">
+            <th colspan="2" style="padding-bottom: 8px; font-size: 12px; color: #6b7280; text-transform: uppercase;">Rental Item</th>
+            <th style="padding-bottom: 8px; font-size: 12px; color: #6b7280; text-transform: uppercase; text-align: right;">Rental Charge</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; width: 60px;">
+              ${itemImage}
+            </td>
+            <td style="padding: 12px 0; font-size: 14px; color: #374151;">
+              <strong style="color: #111827;">${escapeHtml(rentalOrder.productTitle || 'Rental Item')}</strong><br/>
+              <span style="color: #6b7280; font-size: 12px;">Qty: ${qty}</span><br/>
+              <span style="color: #6b7280; font-size: 12px;">${formatCurrency(rentalPrice)} for ${rentalDurationDays} day${rentalDurationDays !== 1 ? 's' : ''}</span>
+            </td>
+            <td style="padding: 12px 0; font-size: 14px; text-align: right; color: #111827; font-family: monospace; font-weight: 500;">
+              ${formatCurrency(rentalOrder.rentalCharge)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+};
+
+const rentalPeriodSection = (rentalOrder: any) => {
+  const startDate = rentalOrder.rentalStartDate
+    ? new Date(rentalOrder.rentalStartDate).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : 'Not Set';
+  const endDate = rentalOrder.rentalEndDate
+    ? new Date(rentalOrder.rentalEndDate).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : 'Not Set';
+  const duration = rentalOrder.durationDays || 0;
+
+  return `
+    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <h3 style="color: #111827; font-size: 14px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.05em;">Rental Period</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 6px 0; color: #6b7280; font-size: 14px; width: 40%;">Rental Start</td>
+          <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 500;">${escapeHtml(startDate)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Rental End</td>
+          <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 500;">${escapeHtml(endDate)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Duration</td>
+          <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 500;">${duration} Day${duration !== 1 ? 's' : ''}</td>
+        </tr>
+      </table>
+    </div>
+  `;
+};
+
+const rentalTotalsSummary = (rentalOrder: any) => {
+  const rentalCharge = rentalOrder.rentalCharge || 0;
+  const securityDeposit = rentalOrder.securityDeposit || 0;
+  const deliveryCharge = rentalOrder.deliveryCharge || 0;
+  const tax = rentalOrder.tax || 0;
+  const walletDeduction = rentalOrder.walletDeduction || 0;
+  const totalAmount = rentalOrder.totalAmount || 0;
+
+  return `
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
+      <tr>
+        <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: right; width: 70%;">Rental Charge:</td>
+        <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(rentalCharge)}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: right;">Security Deposit <span style="font-size: 11px; color: #059669;">(Refundable)</span>:</td>
+        <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(securityDeposit)}</td>
+      </tr>
+      ${
+        deliveryCharge > 0
+          ? `
+      <tr>
+        <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: right;">Delivery Charge:</td>
+        <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(deliveryCharge)}</td>
+      </tr>
+      `
+          : ''
+      }
+      ${
+        tax > 0
+          ? `
+      <tr>
+        <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: right;">Tax:</td>
+        <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(tax)}</td>
+      </tr>
+      `
+          : ''
+      }
+      ${
+        walletDeduction > 0
+          ? `
+      <tr>
+        <td style="padding: 6px 0; font-size: 14px; color: #059669; text-align: right;">Wallet Deduction:</td>
+        <td style="padding: 6px 0; font-size: 14px; color: #059669; text-align: right; font-family: monospace;">-${formatCurrency(walletDeduction)}</td>
+      </tr>
+      `
+          : ''
+      }
+      <tr style="border-top: 2px solid #e5e7eb;">
+        <td style="padding: 12px 0 0 0; font-size: 16px; font-weight: 700; color: #111827; text-align: right;">Grand Total:</td>
+        <td style="padding: 12px 0 0 0; font-size: 18px; font-weight: 700; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(totalAmount)}</td>
+      </tr>
+    </table>
+  `;
+};
+
+export const buildRentalOrderCustomerEmail = (rentalOrder: any, user: any) => {
+  const orderId = rentalOrder.rentalOrderId || rentalOrder._id;
+  const preheader = `Your rental order #${orderId} is confirmed`;
+
+  const headingText = rentalOrder.productTitle
+    ? `Your ${escapeHtml(rentalOrder.productTitle)} Rental Is Confirmed`
+    : 'Your Rental Order Is Confirmed';
+
+  const customerName = escapeHtml(user?.name || rentalOrder.shippingAddress?.name || 'Customer');
+  const frontendUrl = getFrontendUrl();
+
+  const body = `
+    <h2>${headingText}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Rental #${escapeHtml(orderId)}</p>
+    <p>Dear ${customerName},</p>
+    <p>Your rental order has been confirmed. Here are the details of your rental.</p>
+
+    <h3 style="margin-top: 32px; color: #111827;">Rental Summary</h3>
+    ${rentalItemCard(rentalOrder)}
+    ${rentalPeriodSection(rentalOrder)}
+    ${rentalTotalsSummary(rentalOrder)}
+
+    <div style="display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 32px;">
+      <div style="flex: 1; min-width: 250px;">
+        ${addressBlock('Delivery Address', rentalOrder.shippingAddress)}
+      </div>
+      <div style="flex: 1; min-width: 250px;">
+        <h3 style="color: #111827; font-size: 16px; margin-bottom: 12px;">Payment Details</h3>
+        <p style="color: #374151; font-size: 14px; line-height: 1.5; margin: 0;">
+          Method: ${escapeHtml(rentalOrder.paymentMethod || 'Razorpay')}<br/>
+          Status: <strong>${escapeHtml(rentalOrder.paymentStatus || 'Pending')}</strong>
+        </p>
+      </div>
+    </div>
+
+    ${buildNextStepsSection(`
+      <ol style="margin: 0; padding-left: 20px;">
+        <li style="margin-bottom: 6px;">Your rental order has been confirmed and is being prepared.</li>
+        <li style="margin-bottom: 6px;">The product will be delivered to your address before the rental start date.</li>
+        <li style="margin-bottom: 6px;">Please keep the product in good condition during the rental period.</li>
+        <li style="margin-bottom: 6px;">Return the product by the rental end date.</li>
+        <li style="margin-bottom: 6px;">Your security deposit will be processed after inspection upon return.</li>
+      </ol>
+    `)}
+
+    ${button('View My Rental Order', `${frontendUrl}/dashboard/rentals`)}
+
+    ${buildSupportSection()}
+  `;
+
+  return {
+    subject: `Rental Order Confirmed — #${orderId}`,
+    html: getLuxuryEmailWrapper('Rental Confirmed', body, undefined, preheader),
+  };
+};
+
+export const buildRentalOrderAdminEmail = (rentalOrder: any) => {
+  const orderId = rentalOrder.rentalOrderId || rentalOrder._id;
+  const customerName =
+    rentalOrder.shippingAddress?.name || (rentalOrder.user as any)?.name || 'A customer';
+
+  const startDate = rentalOrder.rentalStartDate
+    ? new Date(rentalOrder.rentalStartDate).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : 'Not Set';
+  const endDate = rentalOrder.rentalEndDate
+    ? new Date(rentalOrder.rentalEndDate).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : 'Not Set';
+  const frontendUrl = getFrontendUrl();
+
+  const body = `
+    <h2>New Rental Order: #${escapeHtml(orderId)}</h2>
+    <p>A new rental order has been placed on the store.</p>
+
+    ${dataTable([
+      { label: 'Customer', value: escapeHtml(rentalOrder.shippingAddress?.name || 'Unknown') },
+      { label: 'Email', value: escapeHtml(rentalOrder.shippingAddress?.email || 'Unknown') },
+      { label: 'Phone', value: escapeHtml(rentalOrder.shippingAddress?.phone || 'Unknown') },
+      { label: 'Total Value', value: formatCurrency(rentalOrder.totalAmount) },
+      {
+        label: 'Payment',
+        value: `${escapeHtml(rentalOrder.paymentMethod || 'N/A')} (${escapeHtml(rentalOrder.paymentStatus || 'N/A')})`,
+      },
+      { label: 'Rental Order ID', value: escapeHtml(orderId) },
+      { label: 'Database ID', value: escapeHtml(rentalOrder._id) },
+    ])}
+
+    <h3 style="color: #111827;">Rented Product</h3>
+    ${rentalItemCard(rentalOrder)}
+
+    <h3 style="color: #111827;">Rental Details</h3>
+    ${dataTable([
+      { label: 'Rental Start', value: escapeHtml(startDate) },
+      { label: 'Rental End', value: escapeHtml(endDate) },
+      {
+        label: 'Duration',
+        value: `${rentalOrder.durationDays || 0} Day${(rentalOrder.durationDays || 0) !== 1 ? 's' : ''}`,
+      },
+      { label: 'Rental Charge', value: formatCurrency(rentalOrder.rentalCharge) },
+      { label: 'Security Deposit', value: formatCurrency(rentalOrder.securityDeposit) },
+      { label: 'Deposit Status', value: escapeHtml(rentalOrder.depositStatus || 'held') },
+      { label: 'Delivery Charge', value: formatCurrency(rentalOrder.deliveryCharge || 0) },
+      { label: 'Tax', value: formatCurrency(rentalOrder.tax || 0) },
+      {
+        label: 'Wallet Deduction',
+        value: rentalOrder.walletDeduction
+          ? `-${formatCurrency(rentalOrder.walletDeduction)}`
+          : formatCurrency(0),
+      },
+      {
+        label: 'Grand Total',
+        value: `<strong>${formatCurrency(rentalOrder.totalAmount)}</strong>`,
+      },
+    ])}
+
+    ${addressBlock('Delivery Address', rentalOrder.shippingAddress)}
+    ${button('View Rental Order', `${frontendUrl}/admin/rentals/detail/${rentalOrder._id}`)}
+  `;
+
+  return {
+    subject: `[New Rental] ${escapeHtml(rentalOrder.productTitle || 'Rental Item')} rented by ${escapeHtml(customerName)}`,
+    html: getLuxuryEmailWrapper('Admin Alert', body),
+  };
+};
+
+export const buildRentalStatusChangeEmail = (
+  rentalOrder: any,
+  oldStatus: string,
+  newStatus: string,
+) => {
+  const orderId = rentalOrder.rentalOrderId || rentalOrder._id;
+  const customerName = escapeHtml(rentalOrder.shippingAddress?.name || 'Customer');
+  const frontendUrl = getFrontendUrl();
+  const title = escapeHtml(rentalOrder.productTitle || 'Rental Item');
+
+  const formattedStatus = newStatus.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+
+  const body = `
+    <h2>Your Rental Status Update</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Rental #${escapeHtml(orderId)}</p>
+    <p>Dear ${customerName},</p>
+    <p>The status of your rental for <strong>${title}</strong> has been updated to <strong>${formattedStatus}</strong>.</p>
+    
+    ${rentalPeriodSection(rentalOrder)}
+
+    ${button('View My Rental', `${frontendUrl}/dashboard/rentals`)}
+    ${buildSupportSection()}
+  `;
+
+  return {
+    subject: `Your Rental Status Update — #${orderId}`,
+    html: getLuxuryEmailWrapper('Rental Update', body),
+  };
+};
+
+export const buildRentalDepositRefundedEmail = (rentalOrder: any, refundData: any) => {
+  const orderId = rentalOrder.rentalOrderId || rentalOrder._id;
+  const customerName = escapeHtml(rentalOrder.shippingAddress?.name || 'Customer');
+  const title = escapeHtml(rentalOrder.productTitle || 'Rental Item');
+
+  const refundAmount = refundData.refundAmount || 0;
+  const isForfeited = refundAmount === 0;
+
+  const methodText =
+    refundData.method === 'cash' ? 'Cash' : 'Razorpay — refunded to your original payment method';
+
+  const body = `
+    <h2>${isForfeited ? 'Security Deposit Update' : 'Security Deposit Refunded'}</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Rental #${escapeHtml(orderId)}</p>
+    <p>Dear ${customerName},</p>
+    <p>Your security deposit for <strong>${title}</strong> has been processed after inspection.</p>
+    
+    <h3 style="color: #111827; margin-top: 24px;">Refund Details</h3>
+    ${dataTable([
+      { label: 'Deposit Held', value: formatCurrency(rentalOrder.securityDeposit) },
+      { label: 'Deductions', value: formatCurrency(rentalOrder.securityDeposit - refundAmount) },
+      { label: 'Refund Amount', value: `<strong>${formatCurrency(refundAmount)}</strong>` },
+      ...(refundAmount > 0 ? [{ label: 'Refund Method', value: methodText }] : []),
+    ])}
+    
+    ${buildSupportSection()}
+  `;
+
+  return {
+    subject: `Security Deposit ${isForfeited ? 'Update' : 'Refunded'} — #${orderId}`,
+    html: getLuxuryEmailWrapper('Deposit Processed', body),
+  };
+};
+
+export const buildRentalPaymentReceivedEmail = (rentalOrder: any, paymentData: any) => {
+  const orderId = rentalOrder.rentalOrderId || rentalOrder._id;
+  const customerName = escapeHtml(rentalOrder.shippingAddress?.name || 'Customer');
+  const frontendUrl = getFrontendUrl();
+  const title = escapeHtml(rentalOrder.productTitle || 'Rental Item');
+
+  const amountReceived = paymentData.amount || 0;
+  const isPaid = rentalOrder.paymentStatus === 'paid';
+
+  const body = `
+    <h2>Payment Received</h2>
+    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Rental #${escapeHtml(orderId)}</p>
+    <p>Dear ${customerName},</p>
+    <p>We have successfully received a payment of <strong>${formatCurrency(amountReceived)}</strong> toward your rental for ${title}.</p>
+    
+    ${isPaid ? `<p><strong>Your rental payment is now complete.</strong></p>` : ''}
+    
+    <h3 style="color: #111827; margin-top: 24px;">Payment Summary</h3>
+    ${dataTable([
+      { label: 'Total Amount', value: formatCurrency(rentalOrder.totalAmount) },
+      {
+        label: 'Total Paid',
+        value: formatCurrency(rentalOrder.amountPaid || rentalOrder.totalAmount),
+      },
+      {
+        label: 'Remaining Due',
+        value: `<strong>${formatCurrency(Math.max(0, rentalOrder.totalAmount - (rentalOrder.amountPaid || rentalOrder.totalAmount)))}</strong>`,
+      },
+    ])}
+
+    ${button('View My Rental', `${frontendUrl}/dashboard/rentals`)}
+    ${buildSupportSection()}
+  `;
+
+  return {
+    subject: `${isPaid ? 'Rental Payment Complete' : 'Payment Received'} — #${orderId}`,
+    html: getLuxuryEmailWrapper('Payment Confirmation', body),
   };
 };

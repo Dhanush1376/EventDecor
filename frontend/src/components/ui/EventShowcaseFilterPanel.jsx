@@ -1,6 +1,7 @@
 import { Check, CheckCircle2, X } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import { createPortal } from 'react-dom';
 
 const FilterSection = ({ title, id, children, activeSections, onToggle }) => (
@@ -89,16 +90,7 @@ export function EventShowcaseFilterPanel({
     return () => setMounted(false);
   }, []);
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+  useScrollLock(isOpen);
 
   const toggleSection = (section) => {
     setActiveSections((prev) => ({ ...prev, [section]: !prev[section] }));

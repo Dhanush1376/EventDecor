@@ -7,6 +7,7 @@ import Order from '../models/Order';
 import CustomOrder from '../models/CustomOrder';
 import EventJob from '../domains/event_operations/models/EventJob';
 import ReturnRequest from '../models/ReturnRequest';
+import RentalOrder from '../models/RentalOrder';
 
 /**
  * OutboxProcessor — Processes ALL outbox event types.
@@ -232,6 +233,34 @@ export async function processEvent(event: any): Promise<void> {
           event._id.toString(),
         );
       }
+    } else if (eventName === 'RENTALORDER_RENTALCREATED') {
+      const rentalOrder = await RentalOrder.findById(event.aggregateId).populate('user');
+      if (rentalOrder) {
+        await TransactionalEmailService.sendRentalOrderPlacedEmails(
+          rentalOrder,
+          (rentalOrder as any).user,
+          event._id.toString(),
+        );
+      }
+    } else if (eventName === 'RENTALORDER_RENTALSTATUSUPDATED') {
+      const rentalOrder = await RentalOrder.findById(event.aggregateId);
+      if (rentalOrder && event.payload) {
+        await TransactionalEmailService.sendRentalStatusUpdate(
+          rentalOrder,
+          event.payload.oldStatus,
+          event.payload.newStatus,
+        );
+      }
+    } else if (eventName === 'RENTALORDER_RENTALDEPOSITREFUNDED') {
+      const rentalOrder = await RentalOrder.findById(event.aggregateId);
+      if (rentalOrder && event.payload) {
+        await TransactionalEmailService.sendRentalDepositRefunded(rentalOrder, event.payload);
+      }
+    } else if (eventName === 'RENTALORDER_RENTALPAYMENTRECEIVED') {
+      const rentalOrder = await RentalOrder.findById(event.aggregateId);
+      if (rentalOrder && event.payload) {
+        await TransactionalEmailService.sendRentalPaymentReceived(rentalOrder, event.payload);
+      }
     }
   } catch (emailErr) {
     logger.error(`[OUTBOX] Failed to send transactional email for ${eventName}:`, emailErr);
@@ -415,6 +444,20 @@ export async function processEvent(event: any): Promise<void> {
             type: 'payment',
             actionLink: `/admin/orders/${order._id}`,
             metadata: { outboxEventId: event._id.toString() },
+          });
+        }
+      } else if (eventName === 'RENTALORDER_RENTALCREATED') {
+        const rentalOrder = await RentalOrder.findById(event.aggregateId);
+        if (rentalOrder) {
+          await createAdminNotification({
+            title: 'New Rental Order',
+            message: `Rental #${rentalOrder.rentalOrderId || rentalOrder._id} — ${rentalOrder.productTitle} (₹${rentalOrder.totalAmount})`,
+            type: 'order',
+            actionLink: '/admin/rentals',
+            metadata: {
+              outboxEventId: event._id.toString(),
+              image: rentalOrder.productImage,
+            },
           });
         }
       }
@@ -673,6 +716,25 @@ export async function processEvent(event: any): Promise<void> {
               orderId: order._id.toString(),
               entityId: order.orderUuid || order._id.toString(),
               imageSrc: order.items?.[0]?.imageSrc,
+            },
+          };
+        }
+      } else if (eventName === 'RENTALORDER_RENTALCREATED') {
+        const rentalOrder = await RentalOrder.findById(event.aggregateId);
+        if (rentalOrder) {
+          targetUserId = rentalOrder.user.toString();
+          customerNotificationPayload = {
+            user: targetUserId,
+            event: 'RENTAL_CONFIRMED',
+            title: 'Rental Order Confirmed',
+            message: `Your rental order #${rentalOrder.rentalOrderId || rentalOrder._id} has been confirmed.`,
+            type: 'order',
+            actionUrl: '/dashboard/rentals',
+            metadata: {
+              outboxEventId: event._id.toString(),
+              rentalOrderId: rentalOrder._id.toString(),
+              entityId: rentalOrder.rentalOrderId || rentalOrder._id.toString(),
+              imageSrc: rentalOrder.productImage,
             },
           };
         }

@@ -1,7 +1,6 @@
 import {
   Lock,
   CheckCircle2,
-  Info,
   BadgeCheck,
   Truck,
   MapPin,
@@ -11,6 +10,9 @@ import {
   ShoppingBag,
   ShieldCheck,
   History,
+  Check,
+  Clock,
+  Package,
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +23,6 @@ import { useState, useEffect } from 'react';
 import { handleImageError } from '../utils/media/imageUtils';
 import { orderService, rentalService } from '../services/domainServices';
 import logger from '../utils/core/logger';
-import Check from 'lucide-react/dist/esm/icons/check';
 
 const _BarcodeSVG = ({ _val }) => (
   <svg viewBox="0 0 200 40" className="w-full h-9" xmlns="http://www.w3.org/2000/svg">
@@ -56,60 +57,172 @@ const safeFormatDate = (val, options) => {
 
 const mapOrderData = (rawOrder) => {
   if (!rawOrder) return null;
-  const orderRef = rawOrder._id || rawOrder.id;
+
+  const isRental = Boolean(
+    rawOrder.rentalOrderId ||
+    rawOrder.rentalStartDate ||
+    rawOrder.rentalCharge !== undefined ||
+    rawOrder.securityDeposit !== undefined ||
+    rawOrder.isRental ||
+    rawOrder.orderType === 'rental' ||
+    (Array.isArray(rawOrder.items) &&
+      rawOrder.items.some((i) => i.type === 'rental' || i.isRental)),
+  );
+
+  const orderRef = rawOrder.rentalOrderId || rawOrder._id || rawOrder.id;
   const trackingToken = rawOrder.publicTrackingToken;
-  const trackingPath = trackingToken
-    ? `/track/${orderRef}?token=${encodeURIComponent(trackingToken)}`
-    : `/track/${orderRef}`;
+  const trackingPath = isRental
+    ? '/dashboard/rentals'
+    : trackingToken
+      ? `/track/${orderRef}?token=${encodeURIComponent(trackingToken)}`
+      : `/track/${orderRef}`;
 
   const est = rawOrder.createdAt ? new Date(rawOrder.createdAt) : new Date();
   if (!isNaN(est.getTime())) {
     est.setDate(est.getDate() + 7);
   }
-  const deliveryEstimate = !isNaN(est.getTime())
+  const defaultDeliveryEstimate = !isNaN(est.getTime())
     ? est.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
     : '';
 
+  const rentalDeliveryEstimate = rawOrder.rentalStartDate
+    ? `Delivery by ${new Date(rawOrder.rentalStartDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
+    : defaultDeliveryEstimate;
+
+  const rawPaymentMethod = (rawOrder.paymentMethod || '').toLowerCase();
+  const paymentMode =
+    rawPaymentMethod === 'cod'
+      ? 'Cash on Delivery (COD)'
+      : rawPaymentMethod.includes('wallet')
+        ? 'Wallet Payment'
+        : 'Razorpay Secure Online';
+
+  const addr = rawOrder.shippingAddress || rawOrder.deliveryAddress || {};
+  const deliveryAddress = {
+    name: addr.name || rawOrder.customer || 'Customer',
+    phone: addr.phone || rawOrder.phone || '',
+    addressString: addr.address || addr.addressString || '',
+    locality: addr.locality || '',
+    city: addr.city || '',
+    state: addr.state || '',
+    pincode: addr.pincode || '',
+    email: addr.email || rawOrder.email || '',
+  };
+
+  let items = [];
+  if (Array.isArray(rawOrder.items) && rawOrder.items.length > 0) {
+    items = rawOrder.items.map((item) => ({
+      ...item,
+      id: item.productId || item.id || item._id,
+      deliveryEstimate:
+        item.deliveryEstimate || (isRental ? rentalDeliveryEstimate : defaultDeliveryEstimate),
+      price: item.rentalPrice ?? item.price ?? 0,
+      quantity: item.quantity ?? item.qty ?? 1,
+      title: item.title || item.name || '',
+      variant:
+        item.variant ||
+        (item.durationDays ? `${item.durationDays} Day Rental` : isRental ? 'Rental' : 'Default'),
+      imageSrc: item.imageSrc || item.image || '',
+      type: item.type || (isRental ? 'rental' : 'purchase'),
+      rentalInfo:
+        item.rentalInfo ||
+        (isRental
+          ? {
+              startDate: rawOrder.rentalStartDate,
+              endDate: rawOrder.rentalEndDate,
+              durationDays: rawOrder.durationDays || item.rentalDurationDays || 1,
+            }
+          : null),
+      deposit: item.deposit || (isRental ? rawOrder.securityDeposit : 0),
+    }));
+  } else if (isRental) {
+    items = [
+      {
+        id: rawOrder.product?._id || rawOrder.product || rawOrder._id || 'rental-item',
+        deliveryEstimate: rentalDeliveryEstimate,
+        price: rawOrder.rentalCharge || rawOrder.rentalRate?.rentalPrice || 0,
+        rentalRate:
+          rawOrder.rentalRate?.rentalPrice ||
+          (rawOrder.rentalCharge !== undefined
+            ? rawOrder.rentalCharge / (rawOrder.quantity || 1)
+            : 0),
+        quantity: rawOrder.quantity || 1,
+        title:
+          rawOrder.productTitle ||
+          rawOrder.product?.title ||
+          rawOrder.product?.name ||
+          'Artisanal Rental Decor Item',
+        variant:
+          rawOrder.variant ||
+          (rawOrder.durationDays
+            ? `${rawOrder.durationDays} Day${rawOrder.durationDays > 1 ? 's' : ''} Rental`
+            : 'Rental'),
+        imageSrc:
+          rawOrder.productImage ||
+          rawOrder.product?.imageSrc ||
+          rawOrder.product?.images?.[0]?.url ||
+          'https://res.cloudinary.com/drxgnnzeb/image/upload/v1785779448/siri-arts-crafts/zqqwwbsrjpb7bqcrl24l.png',
+        type: 'rental',
+        isRental: true,
+        rentalInfo: {
+          startDate: rawOrder.rentalStartDate,
+          endDate: rawOrder.rentalEndDate,
+          durationDays: rawOrder.durationDays || rawOrder.rentalRate?.rentalDurationDays || 1,
+        },
+        deposit: rawOrder.securityDeposit || 0,
+      },
+    ];
+  }
+
+  const subtotal = isRental
+    ? (rawOrder.rentalCharge ?? rawOrder.subtotal ?? 0)
+    : (rawOrder.subtotal ?? 0);
+  const shippingFee = isRental
+    ? (rawOrder.deliveryCharge ?? rawOrder.shippingFee ?? 0)
+    : (rawOrder.shippingFee ?? 0);
+  const tax = isRental
+    ? typeof rawOrder.tax === 'number'
+      ? rawOrder.tax
+      : (rawOrder.tax?.totalTax ?? 0)
+    : (rawOrder.tax?.totalTax ?? 0);
+  const depositTotal = isRental
+    ? (rawOrder.securityDeposit ?? rawOrder.depositTotal ?? 0)
+    : (rawOrder.depositTotal ?? 0);
+  const discount = rawOrder.discount ?? 0;
+  const codFee = rawOrder.codFee ?? 0;
+  const walletDeduction = rawOrder.walletDeduction ?? 0;
+  const totalAmount = rawOrder.totalAmount ?? rawOrder.total ?? 0;
+
   return {
+    ...rawOrder,
     _id: orderRef,
-    orderId: orderRef,
+    orderId: rawOrder.rentalOrderId || orderRef,
+    rentalOrderId: rawOrder.rentalOrderId,
     trackingPath,
     trackingToken,
-    date: safeFormatDate(rawOrder.createdAt),
-    totalAmount: rawOrder.total ?? rawOrder.totalAmount ?? 0,
-    subtotal: rawOrder.subtotal ?? 0,
-    shippingFee: rawOrder.shippingFee ?? 0,
-    discount: rawOrder.discount ?? 0,
-    codFee: rawOrder.codFee ?? 0,
-    tax: rawOrder.tax?.totalTax ?? 0,
-    paymentMode: rawOrder.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Razorpay Secure',
+    date: safeFormatDate(rawOrder.createdAt || rawOrder.rentalStartDate),
+    totalAmount,
+    subtotal,
+    shippingFee,
+    deliveryCharge: shippingFee,
+    discount,
+    codFee,
+    tax,
+    walletDeduction,
+    paymentMode,
+    paymentStatus: rawOrder.paymentStatus || 'paid',
     needByDate: rawOrder.needByDate ? safeFormatDate(rawOrder.needByDate) : undefined,
-    deliveryAddress: {
-      name: rawOrder.shippingAddress?.name || 'Customer',
-      phone: rawOrder.shippingAddress?.phone || '',
-      addressString: rawOrder.shippingAddress?.address || '',
-      locality: rawOrder.shippingAddress?.locality || '',
-      city: rawOrder.shippingAddress?.city || '',
-      state: rawOrder.shippingAddress?.state || '',
-      pincode: rawOrder.shippingAddress?.pincode || '',
-    },
-    items: Array.isArray(rawOrder.items)
-      ? rawOrder.items.map((item) => ({
-          ...item,
-          id: item.productId || item.id,
-          deliveryEstimate,
-          price: item.price ?? 0,
-          quantity: item.quantity ?? 0,
-          title: item.title || '',
-          variant: item.variant || 'Default',
-          imageSrc: item.imageSrc || '',
-          type: item.type || 'purchase',
-          rentalInfo: item.rentalInfo,
-          deposit: item.deposit || 0,
-        }))
-      : [],
-    depositTotal: rawOrder.depositTotal || 0,
-    orderType: rawOrder.orderType || 'purchase',
+    deliveryAddress,
+    shippingAddress: deliveryAddress,
+    items,
+    depositTotal,
+    securityDeposit: depositTotal,
+    depositStatus: rawOrder.depositStatus || 'held',
+    rentalStartDate: rawOrder.rentalStartDate,
+    rentalEndDate: rawOrder.rentalEndDate,
+    durationDays: rawOrder.durationDays || rawOrder.rentalRate?.rentalDurationDays || 1,
+    orderType: isRental ? 'rental' : rawOrder.orderType || 'purchase',
+    isRental,
   };
 };
 
@@ -181,27 +294,48 @@ export function OrderSuccess() {
 
         let foundData = null;
 
-        try {
-          const res = await orderService.getById(orderId);
-          if (res.success && res.data) {
-            foundData = res.data;
-          }
-        } catch (err) {
-          // It might be a rental order instead of a purchase order
-          if (
-            err.response?.status === 404 ||
-            err.response?.data?.message?.toLowerCase().includes('not found')
-          ) {
-            try {
-              const rentalRes = await rentalService.getRentalById(orderId);
-              if (rentalRes.success && rentalRes.data) {
-                foundData = rentalRes.data;
-              }
-            } catch (rentalErr) {
-              logger.error('Error fetching rental order details:', rentalErr);
+        // If orderId starts with 'RNT-' or 'rnt-', query rentalService first
+        if (
+          typeof orderId === 'string' &&
+          (orderId.startsWith('RNT-') || orderId.startsWith('rnt-'))
+        ) {
+          try {
+            const rentalRes = await rentalService.getDetail(orderId);
+            if (rentalRes.success && rentalRes.data) {
+              foundData = rentalRes.data;
             }
-          } else {
-            throw err;
+          } catch (rErr) {
+            logger.warn(
+              'Direct rental fetch by rentalOrderId failed, falling back to orderService:',
+              rErr,
+            );
+          }
+        }
+
+        if (!foundData) {
+          try {
+            const res = await orderService.getById(orderId);
+            if (res.success && res.data) {
+              foundData = res.data;
+            }
+          } catch (err) {
+            // It might be a rental order instead of a purchase order
+            if (
+              err.response?.status === 404 ||
+              err.response?.status === 400 ||
+              err.response?.data?.message?.toLowerCase().includes('not found')
+            ) {
+              try {
+                const rentalRes = await rentalService.getDetail(orderId);
+                if (rentalRes.success && rentalRes.data) {
+                  foundData = rentalRes.data;
+                }
+              } catch (rentalErr) {
+                logger.error('Error fetching rental order details:', rentalErr);
+              }
+            } else {
+              throw err;
+            }
           }
         }
 
@@ -337,87 +471,197 @@ export function OrderSuccess() {
               </div>
 
               <h2 className="font-display text-2xl lg:text-3xl text-on-surface font-bold mb-3">
-                {order.orderType === 'rental' || order.items.some((i) => i.type === 'rental')
+                {order.isRental ||
+                order.orderType === 'rental' ||
+                order.items.some((i) => i.type === 'rental')
                   ? 'Rental Booking Confirmed!'
                   : 'Order Confirmed!'}
               </h2>
               <p className="text-xs text-secondary max-w-md mx-auto leading-relaxed mb-8">
-                Your artisanal journey has begun. We've sent the order details to your registered
-                number and email address.
+                {order.isRental || order.orderType === 'rental'
+                  ? "Your artisanal decor rental has been successfully reserved. We've dispatched your booking confirmation and rental policy to your mobile contact and email address."
+                  : "Your artisanal journey has begun. We've sent the order details to your registered number and email address."}
               </p>
 
-              <div className="bg-surface-container-low/50 rounded-lg p-4 inline-flex items-center gap-6 text-left border border-outline-variant/20">
-                <div className="space-y-0.5">
-                  <span className="text-[10px] uppercase font-bold text-secondary tracking-widest block">
-                    Order ID
+              <div className="w-full max-w-lg mx-auto bg-surface-container-low/40 rounded-xl p-3 sm:p-4 flex items-center justify-between gap-4 text-left border border-outline-variant/20">
+                <div className="space-y-0.5 min-w-0">
+                  <span
+                    className="text-[10px] uppercase font-bold text-secondary tracking-wider block"
+                    style={{ fontFamily: 'var(--font-label)' }}
+                  >
+                    {order.isRental ? 'Rental Booking ID' : 'Order ID'}
                   </span>
-                  <strong className="text-sm text-on-surface font-mono">{order.orderId}</strong>
+                  <strong className="text-xs sm:text-sm text-on-surface font-mono font-semibold tracking-wide block truncate">
+                    {order.orderId}
+                  </strong>
                 </div>
-                <div className="w-px h-8 bg-outline-variant/30" />
-                <div className="space-y-0.5">
-                  <span className="text-[10px] uppercase font-bold text-secondary tracking-widest block">
-                    Date
+                <div className="w-px h-8 bg-outline-variant/30 shrink-0" />
+                <div className="space-y-0.5 text-right shrink-0">
+                  <span
+                    className="text-[10px] uppercase font-bold text-secondary tracking-wider block"
+                    style={{ fontFamily: 'var(--font-label)' }}
+                  >
+                    {order.isRental ? 'Booking Date' : 'Order Date'}
                   </span>
-                  <strong className="text-sm text-on-surface font-medium">{order.date}</strong>
+                  <strong className="text-xs sm:text-sm text-on-surface font-medium block whitespace-nowrap">
+                    {order.date}
+                  </strong>
                 </div>
               </div>
 
-              {(order.orderType === 'rental' || order.items.some((i) => i.type === 'rental')) && (
-                <div className="mt-6 bg-[#8c7335]/5 border border-[#8c7335]/20 rounded-lg p-5 text-left text-[#5a481f] shadow-inner text-sm">
-                  <h4 className="font-bold text-[#8c7335] uppercase tracking-widest text-[11px] mb-4 flex items-center gap-1.5">
-                    <Info className="text-[16px]" strokeWidth={1.5} /> Rental Details
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="block text-[10px] uppercase tracking-wider text-[#8c7335]/80 font-bold mb-1">
-                        Rental Period
-                      </span>
-                      <strong className="font-medium text-sm">
-                        {order.items.find((i) => i.rentalInfo)?.rentalInfo
-                          ? `${new Date(order.items.find((i) => i.rentalInfo).rentalInfo.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - ${new Date(order.items.find((i) => i.rentalInfo).rentalInfo.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
-                          : 'N/A'}
-                      </strong>
+              {(order.isRental ||
+                order.orderType === 'rental' ||
+                order.items.some((i) => i.type === 'rental')) &&
+                (() => {
+                  const startDateStr =
+                    safeFormatDate(order.rentalStartDate, {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    }) ||
+                    (order.items.find((i) => i.rentalInfo)?.rentalInfo?.startDate
+                      ? safeFormatDate(order.items.find((i) => i.rentalInfo).rentalInfo.startDate, {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                      : 'Scheduled');
+
+                  const endDateStr =
+                    safeFormatDate(order.rentalEndDate, {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    }) ||
+                    (order.items.find((i) => i.rentalInfo)?.rentalInfo?.endDate
+                      ? safeFormatDate(order.items.find((i) => i.rentalInfo).rentalInfo.endDate, {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                      : 'Scheduled');
+
+                  return (
+                    <div className="mt-5 w-full max-w-lg mx-auto text-left rounded-xl border border-outline-variant/30 bg-surface-container-lowest/80 p-4 sm:p-5 space-y-3.5 shadow-xs relative z-10">
+                      {/* Header & Duration */}
+                      <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <Calendar className="w-3.5 h-3.5" strokeWidth={2} />
+                          </span>
+                          <span
+                            className="text-xs font-bold uppercase tracking-wider text-on-surface font-sans"
+                            style={{ fontFamily: 'var(--font-label)' }}
+                          >
+                            Rental Period
+                          </span>
+                        </div>
+                        <span
+                          className="bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-primary/20"
+                          style={{ fontFamily: 'var(--font-label)' }}
+                        >
+                          {order.durationDays || 1} Days Duration
+                        </span>
+                      </div>
+
+                      {/* Timeline Strip (Start -> Return) */}
+                      <div className="flex items-center justify-between gap-2 p-3 rounded-lg bg-surface-bright border border-outline-variant/20">
+                        <div className="min-w-0">
+                          <span
+                            className="text-[9.5px] uppercase font-bold tracking-wider text-secondary block"
+                            style={{ fontFamily: 'var(--font-label)' }}
+                          >
+                            Start Date
+                          </span>
+                          <strong className="text-xs sm:text-sm font-semibold text-on-surface block whitespace-nowrap">
+                            {startDateStr}
+                          </strong>
+                          <span className="text-[10px] text-secondary/70 block whitespace-nowrap">
+                            Delivery by start
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col items-center px-1 shrink-0 text-primary">
+                          <span className="text-[10px] font-bold text-secondary/70">
+                            {order.durationDays || 1}d
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <div className="w-5 sm:w-10 h-px bg-outline-variant/60" />
+                            <span className="text-xs font-bold">→</span>
+                          </div>
+                        </div>
+
+                        <div className="text-right min-w-0">
+                          <span
+                            className="text-[9.5px] uppercase font-bold tracking-wider text-secondary block"
+                            style={{ fontFamily: 'var(--font-label)' }}
+                          >
+                            Return Pickup
+                          </span>
+                          <strong className="text-xs sm:text-sm font-semibold text-on-surface block whitespace-nowrap">
+                            {endDateStr}
+                          </strong>
+                          <span className="text-[10px] text-secondary/70 block whitespace-nowrap">
+                            Automatic pickup
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Security Deposit Row */}
+                      {(order.securityDeposit > 0 || order.depositTotal > 0) && (
+                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200/50 text-[11px]">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <ShieldCheck
+                              className="w-4 h-4 text-emerald-600 shrink-0"
+                              strokeWidth={2}
+                            />
+                            <span className="font-semibold text-emerald-950 truncate">
+                              Refundable Security Deposit
+                            </span>
+                          </div>
+                          <strong className="font-bold text-emerald-800 text-xs sm:text-sm shrink-0 ml-2">
+                            ₹{safeFormatNumber(order.depositTotal || order.securityDeposit)}
+                          </strong>
+                        </div>
+                      )}
+
+                      {/* Guidelines bullet footer */}
+                      <div className="pt-2 border-t border-outline-variant/15 flex flex-col sm:flex-row gap-2 text-[10.5px] text-secondary">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Package
+                            className="w-3.5 h-3.5 text-secondary/60 shrink-0"
+                            strokeWidth={1.8}
+                          />
+                          <span className="truncate">
+                            Keep original packaging for safe return transit
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 min-w-0 sm:ml-auto">
+                          <Clock
+                            className="w-3.5 h-3.5 text-secondary/60 shrink-0"
+                            strokeWidth={1.8}
+                          />
+                          <span className="truncate">Deposit refunded 24–48h post inspection</span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <span className="block text-[10px] uppercase tracking-wider text-[#8c7335]/80 font-bold mb-1">
-                        Return Date
-                      </span>
-                      <strong className="font-medium text-sm">
-                        {order.items.find((i) => i.rentalInfo)?.rentalInfo
-                          ? new Date(
-                              order.items.find((i) => i.rentalInfo).rentalInfo.endDate,
-                            ).toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })
-                          : 'N/A'}
-                      </strong>
-                    </div>
-                    <div>
-                      <span className="block text-[10px] uppercase tracking-wider text-[#8c7335]/80 font-bold mb-1">
-                        Deposit Paid
-                      </span>
-                      <strong className="font-medium text-sm text-green-700">
-                        ₹{safeFormatNumber(order.depositTotal)}
-                      </strong>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-[#8c7335]/10 text-[11px] leading-relaxed">
-                    <strong>Return Instructions:</strong> Keep the original packaging. A return
-                    pickup will be scheduled automatically on the return date. The deposit is
-                    refunded upon successful inspection.
-                  </div>
-                </div>
-              )}
+                  );
+                })()}
             </motion.div>
 
             {/* Shipment Items Card */}
             <div className="bg-surface-bright border border-outline-variant/40 rounded-lg shadow-xs overflow-hidden">
               <div className="p-4 border-b border-surface-container flex items-center justify-between bg-surface-container-low/30">
-                <span className="text-xs font-bold text-secondary uppercase tracking-wider">
-                  Items in this shipment ({order.items.length})
-                </span>
+                <div
+                  role="heading"
+                  aria-level={3}
+                  className="text-xs font-bold text-secondary uppercase tracking-wider font-sans"
+                  style={{ fontFamily: 'var(--font-label)' }}
+                >
+                  {order.isRental
+                    ? 'Rented Item Details'
+                    : `Items in this shipment (${order.items.length})`}
+                </div>
                 <span className="text-[11px] text-green-700 font-bold flex items-center gap-1">
                   <BadgeCheck className="text-sm" strokeWidth={1.5} />
                   Confirmed
@@ -425,46 +669,126 @@ export function OrderSuccess() {
               </div>
 
               <div className="divide-y divide-surface-container">
-                {order.items.map((item) => (
-                  <div key={item.id} className="p-4 sm:p-6 flex gap-4 sm:gap-6">
-                    <div className="w-20 h-24 sm:w-24 sm:h-32 rounded-lg overflow-hidden shrink-0 border border-outline-variant/20">
+                {order.items.map((item, idx) => (
+                  <div key={item.id || idx} className="p-4 sm:p-6 flex gap-4 sm:gap-6">
+                    <div className="w-20 h-24 sm:w-24 sm:h-32 rounded-lg overflow-hidden shrink-0 border border-outline-variant/20 bg-surface-container-lowest">
                       <OptimizedImage
                         onError={handleImageError}
                         src={item.imageSrc}
-                        alt="Traditional wedding event decoration"
+                        alt={item.title || 'Artisanal event decor item'}
                         className="w-full h-full object-cover"
                         sizes="(max-width: 640px) 96px, 128px"
                       />
                     </div>
                     <div className="flex-1 min-w-0 py-1">
                       <div className="flex justify-between items-start gap-4">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-xs sm:text-sm text-on-surface line-clamp-1">
-                              {item.title}
-                            </h4>
-                            {item.type === 'rental' && (
-                              <span className="bg-[#8c7335]/10 text-[#8c7335] text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded flex items-center gap-1 border border-[#8c7335]/20">
-                                <span className="text-[10px] uppercase font-bold tracking-widest text-accent flex items-center gap-1">
-                                  <Check className="w-3 h-3" aria-hidden="true" /> RENTAL
-                                </span>
+                        <div className="min-w-0">
+                          <div
+                            role="heading"
+                            aria-level={4}
+                            className="font-bold text-sm sm:text-base text-on-surface line-clamp-1 font-sans"
+                            style={{ fontFamily: 'var(--font-body)' }}
+                          >
+                            {item.title}
+                          </div>
+                          {!(item.type === 'rental' || item.isRental || order.isRental) &&
+                            item.variant &&
+                            item.variant !== 'Default' && (
+                              <span className="text-[11px] text-secondary block mt-1 font-medium italic">
+                                Style: {item.variant}
                               </span>
                             )}
-                          </div>
-                          <span className="text-[11px] text-secondary block mt-1 font-medium italic">
-                            Style: {item.variant}
-                          </span>
-                          {item.type === 'rental' && item.rentalInfo && (
-                            <span className="text-[11px] text-[#8c7335] block mt-1 font-medium bg-[#8c7335]/10 border border-[#8c7335]/20 px-1.5 py-0.5 rounded inline-block">
-                              Period: {new Date(item.rentalInfo.startDate).toLocaleDateString()} to{' '}
-                              {new Date(item.rentalInfo.endDate).toLocaleDateString()}
-                            </span>
-                          )}
                         </div>
-                        <span className="text-sm font-bold text-on-surface">
+                        <span className="text-sm sm:text-base font-bold text-on-surface shrink-0">
                           ₹{safeFormatNumber(item.price)}
                         </span>
                       </div>
+
+                      {(item.type === 'rental' || item.isRental || order.isRental) &&
+                        (() => {
+                          let durationLabel = item.variant;
+                          if (!durationLabel || durationLabel === 'Default') {
+                            durationLabel = order.durationDays
+                              ? `${order.durationDays} Days Rental`
+                              : 'Rental Booking';
+                          } else if (/^\d+$/.test(String(durationLabel).trim())) {
+                            durationLabel = `${durationLabel} Days Rental`;
+                          }
+
+                          const startStr = safeFormatDate(
+                            item.rentalInfo?.startDate || order.rentalStartDate,
+                            { day: 'numeric', month: 'short', year: 'numeric' },
+                          );
+                          const endStr = safeFormatDate(
+                            item.rentalInfo?.endDate || order.rentalEndDate,
+                            { day: 'numeric', month: 'short', year: 'numeric' },
+                          );
+
+                          return (
+                            <div className="mt-2.5 p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-[#faf8f4] via-[#fdfcf9] to-[#f7f4ec] border border-[#d4af37]/35 shadow-[0_2px_8px_rgba(180,140,60,0.06)] space-y-2">
+                              {/* Badges row */}
+                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                <span
+                                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#8c7335]/15 text-[#705b22] text-[9.5px] uppercase font-bold tracking-wider border border-[#8c7335]/25"
+                                  style={{ fontFamily: 'var(--font-label)' }}
+                                >
+                                  <Check className="w-3 h-3 text-[#8c7335]" strokeWidth={2.5} />
+                                  Rental
+                                </span>
+
+                                <span
+                                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/90 text-secondary text-[10.5px] font-semibold border border-outline-variant/30 shadow-2xs"
+                                  style={{ fontFamily: 'var(--font-label)' }}
+                                >
+                                  <Clock
+                                    className="w-3 h-3 text-[#8c7335] shrink-0"
+                                    strokeWidth={1.8}
+                                  />
+                                  {durationLabel}
+                                </span>
+
+                                {(order.securityDeposit > 0 || order.depositTotal > 0) && (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50/90 text-emerald-800 text-[10px] font-semibold border border-emerald-200/70"
+                                    style={{ fontFamily: 'var(--font-label)' }}
+                                  >
+                                    <ShieldCheck
+                                      className="w-3 h-3 text-emerald-600 shrink-0"
+                                      strokeWidth={2}
+                                    />
+                                    ₹{safeFormatNumber(order.securityDeposit || order.depositTotal)}{' '}
+                                    Refundable Deposit
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Rental Period Timeline */}
+                              {(startStr || endStr) && (
+                                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[11px] pt-2 border-t border-[#8c7335]/15">
+                                  <div
+                                    className="flex items-center gap-1 text-[#705b22] font-bold text-[10px] uppercase tracking-wider shrink-0"
+                                    style={{ fontFamily: 'var(--font-label)' }}
+                                  >
+                                    <Calendar
+                                      className="w-3.5 h-3.5 text-[#8c7335]"
+                                      strokeWidth={1.8}
+                                    />
+                                    <span>Period:</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-on-surface font-medium flex-wrap">
+                                    <span className="font-semibold text-on-surface bg-white px-2.5 py-0.5 rounded border border-outline-variant/30 text-[11px] shadow-2xs whitespace-nowrap">
+                                      {startStr}
+                                    </span>
+                                    <span className="text-secondary/50 font-bold text-xs">to</span>
+                                    <span className="font-semibold text-on-surface bg-white px-2.5 py-0.5 rounded border border-outline-variant/30 text-[11px] shadow-2xs whitespace-nowrap">
+                                      {endStr}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
 
                       <div className="mt-4 flex items-center gap-4 text-[11px] text-secondary">
                         <span className="flex items-center gap-1">
@@ -473,7 +797,7 @@ export function OrderSuccess() {
                         <span className="text-outline-variant">|</span>
                         <span className="text-green-700 font-bold flex items-center gap-1">
                           <Truck className="text-xs" strokeWidth={1.5} />
-                          Est. Delivery: {item.deliveryEstimate}
+                          {item.deliveryEstimate || 'Delivery on or before start date'}
                         </span>
                       </div>
                     </div>
@@ -487,14 +811,19 @@ export function OrderSuccess() {
           <div className="lg:col-span-5 xl:col-span-4 space-y-4">
             {/* Price Summary Card */}
             <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs">
-              <h3 className="text-xs font-bold text-secondary uppercase tracking-wider pb-3 border-b border-outline-variant/40 mb-4">
-                {order.orderType === 'rental' || order.items.some((i) => i.type === 'rental')
+              <div
+                role="heading"
+                aria-level={3}
+                className="text-xs font-bold text-secondary uppercase tracking-wider pb-3 border-b border-outline-variant/40 mb-4 font-sans"
+                style={{ fontFamily: 'var(--font-label)' }}
+              >
+                {order.isRental || order.orderType === 'rental'
                   ? 'Rental Summary'
                   : 'Price Details'}
-              </h3>
+              </div>
               <div className="space-y-3 text-xs text-on-surface">
                 <div className="flex justify-between">
-                  <span>Subtotal</span>
+                  <span>{order.isRental ? 'Rental Base Charge' : 'Subtotal'}</span>
                   <span>₹{safeFormatNumber(order.subtotal)}</span>
                 </div>
                 {order.discount > 0 && (
@@ -506,30 +835,40 @@ export function OrderSuccess() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Shipping Fee</span>
+                  <span>{order.isRental ? 'Delivery & Setup Fee' : 'Shipping Fee'}</span>
                   <span className="text-green-700 font-bold">
                     {order.shippingFee === 0 ? 'FREE' : `₹${safeFormatNumber(order.shippingFee)}`}
                   </span>
                 </div>
-                {order.codFee > 0 && (
-                  <div className="flex justify-between">
-                    <span>COD Fee</span>
-                    <span className="font-medium">₹{safeFormatNumber(order.codFee)}</span>
-                  </div>
-                )}
                 {order.tax > 0 && (
                   <div className="flex justify-between">
-                    <span>Estimated Tax (GST)</span>
+                    <span>Taxes & GST</span>
                     <span className="font-medium">₹{safeFormatNumber(order.tax)}</span>
                   </div>
                 )}
-                {order.depositTotal > 0 && (
+                {(order.depositTotal > 0 || order.securityDeposit > 0) && (
                   <div className="flex justify-between">
                     <span className="flex items-center gap-1">
                       Security Deposit{' '}
                       <span className="text-[9px] text-green-600 font-bold">(Refundable)</span>
                     </span>
-                    <span className="font-medium">₹{safeFormatNumber(order.depositTotal)}</span>
+                    <span className="font-medium text-green-700">
+                      ₹{safeFormatNumber(order.depositTotal || order.securityDeposit)}
+                    </span>
+                  </div>
+                )}
+                {order.walletDeduction > 0 && (
+                  <div className="flex justify-between">
+                    <span>Wallet Deduction</span>
+                    <span className="text-green-700 font-medium">
+                      - ₹{safeFormatNumber(order.walletDeduction)}
+                    </span>
+                  </div>
+                )}
+                {order.codFee > 0 && (
+                  <div className="flex justify-between">
+                    <span>COD Collection Fee</span>
+                    <span className="font-medium">₹{safeFormatNumber(order.codFee)}</span>
                   </div>
                 )}
                 <div className="h-[1px] bg-outline-variant/40 my-3" />
@@ -545,33 +884,49 @@ export function OrderSuccess() {
             {/* Delivery Address Card */}
             <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs">
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-outline-variant/40">
-                <h3 className="text-xs font-bold text-secondary uppercase tracking-wider">
+                <div
+                  role="heading"
+                  aria-level={3}
+                  className="text-xs font-bold text-secondary uppercase tracking-wider font-sans"
+                  style={{ fontFamily: 'var(--font-label)' }}
+                >
                   Delivery Address
-                </h3>
+                </div>
                 <MapPin className="text-sm text-secondary" strokeWidth={1.5} />
               </div>
               <div className="text-[12px] space-y-1.5 text-on-surface">
                 <p className="font-bold text-sm">{order.deliveryAddress.name}</p>
                 <p className="text-secondary leading-relaxed">
-                  {order.deliveryAddress.addressString}, {order.deliveryAddress.locality}
+                  {order.deliveryAddress.addressString}
+                  {order.deliveryAddress.locality ? `, ${order.deliveryAddress.locality}` : ''}
                   <br />
                   {order.deliveryAddress.city}, {order.deliveryAddress.state} —{' '}
                   <strong>{order.deliveryAddress.pincode}</strong>
                 </p>
-                <p className="pt-2 font-bold text-on-surface">
-                  Mobile: {order.deliveryAddress.phone}
-                </p>
+                {order.deliveryAddress.phone && (
+                  <p className="pt-2 font-bold text-on-surface">
+                    Mobile: {order.deliveryAddress.phone}
+                  </p>
+                )}
+                {order.deliveryAddress.email && (
+                  <p className="text-[11px] text-secondary">Email: {order.deliveryAddress.email}</p>
+                )}
               </div>
             </div>
 
             {/* Payment Status Card */}
             <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-secondary uppercase tracking-wider">
+                <div
+                  role="heading"
+                  aria-level={3}
+                  className="font-bold text-secondary uppercase tracking-wider font-sans"
+                  style={{ fontFamily: 'var(--font-label)' }}
+                >
                   Payment Status
-                </span>
+                </div>
                 <span className="bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-bold border border-green-200 uppercase text-[10px]">
-                  Confirmed
+                  {order.paymentStatus === 'Pending COD' ? 'Pending COD' : 'Confirmed'}
                 </span>
               </div>
               <p className="text-[11px] text-secondary mt-3">
@@ -583,9 +938,14 @@ export function OrderSuccess() {
             {order.needByDate && (
               <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-secondary uppercase tracking-wider">
+                  <div
+                    role="heading"
+                    aria-level={3}
+                    className="font-bold text-secondary uppercase tracking-wider font-sans"
+                    style={{ fontFamily: 'var(--font-label)' }}
+                  >
                     Timeline Requested
-                  </span>
+                  </div>
                   <span className="bg-[var(--color-gold-dark)]/5 text-[var(--color-gold-dark)] px-2.5 py-1 rounded-full font-bold border border-[var(--color-gold-dark)]/25 uppercase text-[10px] flex items-center gap-1">
                     <Calendar className="text-[12px]" strokeWidth={1.5} />
                     Customer Request
@@ -601,25 +961,27 @@ export function OrderSuccess() {
             {/* Primary Actions */}
             <div className="space-y-3 pt-2">
               <button
-                onClick={() => navigate('/dashboard?tab=orders')}
+                onClick={() =>
+                  navigate(order.isRental ? '/dashboard/rentals' : '/dashboard?tab=orders')
+                }
                 className="w-full bg-primary hover:bg-primary-dark text-white py-3.5 rounded text-[11px] font-bold uppercase tracking-widest transition-all shadow-md block text-center cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <GitCommit className="text-[15px]" strokeWidth={1.5} />
-                Track Your Order
+                {order.isRental ? 'View My Rentals' : 'Track Your Order'}
               </button>
               <button
                 onClick={() => setShowStickerModal(true)}
                 className="w-full bg-white border border-primary text-primary py-3.5 rounded text-[11px] font-bold uppercase tracking-widest hover:bg-primary/5 transition-all block text-center cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Receipt className="text-[15px]" strokeWidth={1.5} />
-                View Digital Tax Invoice
+                {order.isRental ? 'View Rental Tax Invoice' : 'View Digital Tax Invoice'}
               </button>
               <Link
                 to="/collections"
                 className="w-full bg-surface-bright border border-outline-variant text-secondary py-3.5 rounded text-[11px] font-bold uppercase tracking-widest hover:bg-surface-container-low transition-all block text-center flex items-center justify-center gap-1.5"
               >
                 <ShoppingBag className="text-[15px]" strokeWidth={1.5} />
-                Continue Shopping
+                {order.isRental ? 'Explore More Rentals' : 'Continue Shopping'}
               </Link>
             </div>
 

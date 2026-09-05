@@ -303,6 +303,7 @@ const MobileStickyCategories = ({
   return (
     <div
       ref={ref}
+      id="mobile-sticky-categories"
       className={`mb-8 overflow-x-auto no-scrollbar lg:hidden sticky z-[48] py-2 -mx-[var(--spacing-margin-mobile)] px-[var(--spacing-margin-mobile)] transition-all duration-300 ease-out ${
         isStuck
           ? 'bg-surface/95 backdrop-blur-xl shadow-sm border-b border-black/5'

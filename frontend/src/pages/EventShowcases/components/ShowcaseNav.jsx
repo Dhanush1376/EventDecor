@@ -27,6 +27,7 @@ export function ShowcaseNav({
   return (
     <nav
       ref={navRef}
+      id="showcase-sticky-nav"
       className={`sticky z-[49] -mt-12 lg:-mt-16 mb-4 lg:mb-6 transition-all duration-300 ease-out ${
         isSticky ? 'px-0' : 'px-3 lg:px-margin-desktop max-w-max-width mx-auto'
       }`}

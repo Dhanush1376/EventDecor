@@ -8,6 +8,9 @@ import storeSettingsService from '../../services/api/storeSettingsService';
 export function OrderCard({ order, item, itemIdx, idx }) {
   const { setSelectedOrderId, setSelectedOrderItemIndex, setReviewingProduct } = useDashboard();
 
+  const isRental =
+    order.isRental === true || order.orderType === 'rental' || item.type === 'rental';
+
   const prodTitle =
     item.title ||
     (typeof item.productId === 'object' ? item.productId?.title : null) ||
@@ -157,9 +160,7 @@ export function OrderCard({ order, item, itemIdx, idx }) {
                 return formatStatus(matchingReturn.status);
               }
 
-              return order.orderStatus?.toLowerCase() === 'delivered'
-                ? 'Delivered'
-                : order.orderStatus || 'Confirmed';
+              return formatStatus(order.orderStatus || order.status || 'Confirmed');
             })()}
           </span>
           <span className="text-[9px] text-secondary font-light">
@@ -194,7 +195,9 @@ export function OrderCard({ order, item, itemIdx, idx }) {
 
         <div className="flex-1 min-w-0 space-y-1">
           <span className="text-[9px] uppercase font-bold text-primary tracking-widest block font-label">
-            Siri Atelier Collection
+            {item.category ||
+              (typeof item.productId === 'object' ? item.productId?.primaryCategory?.name : null) ||
+              'Siri Atelier Collection'}
           </span>
           <h4 className="font-display font-medium text-on-surface text-[12px] truncate">
             {prodTitle}
@@ -205,12 +208,38 @@ export function OrderCard({ order, item, itemIdx, idx }) {
           </p>
           <div className="flex items-center gap-1.5 pt-0.5 font-body">
             <span className="text-xs font-bold text-primary">₹{prodPrice.toLocaleString()}</span>
-            {item.originalPrice && (
+            {isRental && item.durationDays && (
+              <span className="text-[9px] text-secondary font-medium">
+                for {item.durationDays} days
+              </span>
+            )}
+            {!isRental && item.originalPrice && (
               <span className="text-[10px] text-secondary line-through font-light">
                 ₹{item.originalPrice.toLocaleString()}
               </span>
             )}
           </div>
+          {/* Rental period dates */}
+          {isRental && item.rentalStartDate && item.rentalEndDate && (
+            <p className="text-[9px] text-secondary font-light font-body mt-0.5">
+              {new Date(item.rentalStartDate).toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+              })}
+              {' – '}
+              {new Date(item.rentalEndDate).toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
+            </p>
+          )}
+          {/* Security deposit note */}
+          {isRental && item.securityDeposit > 0 && (
+            <p className="text-[9px] text-[#8c7335] font-medium font-body mt-0.5">
+              + ₹{item.securityDeposit.toLocaleString()} refundable deposit
+            </p>
+          )}
         </div>
 
         <svg
@@ -224,8 +253,8 @@ export function OrderCard({ order, item, itemIdx, idx }) {
         </svg>
       </div>
 
-      {/* Return/Exchange Window Status Block */}
-      {order.orderStatus?.toLowerCase() === 'delivered' && (
+      {/* Return/Exchange Window Status Block — purchase only */}
+      {!isRental && order.orderStatus?.toLowerCase() === 'delivered' && (
         <div className="px-4 py-2 bg-surface-container-low/40 border-t border-outline-variant/15 flex items-center justify-between text-[10px] text-secondary font-body">
           <div className="flex items-center gap-1.5">
             {isNonRefundable ? (
@@ -285,8 +314,8 @@ export function OrderCard({ order, item, itemIdx, idx }) {
         </div>
       )}
 
-      {/* Quick Review Prompt */}
-      {order.orderStatus?.toLowerCase() === 'delivered' && (
+      {/* Quick Review Prompt — purchase only */}
+      {!isRental && order.orderStatus?.toLowerCase() === 'delivered' && (
         <div
           onClick={(e) => {
             e.stopPropagation();

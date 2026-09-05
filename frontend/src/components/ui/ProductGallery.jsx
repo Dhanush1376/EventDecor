@@ -6,6 +6,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import { MandalaElement } from './MandalaElement';
 
 const RecommendationSystem = React.lazy(() =>
@@ -21,16 +22,15 @@ export function ProductGallery({ images = [], product }) {
   const lightboxScrollRef = useRef(null);
   const navigate = useNavigate();
 
+  useScrollLock(isLightboxOpen || isSimilarOpen);
+
   useEffect(() => {
     if (isLightboxOpen) {
-      document.body.style.overflow = 'hidden';
       document.body.classList.add('slideshow-active');
     } else {
-      document.body.style.overflow = '';
       document.body.classList.remove('slideshow-active');
     }
     return () => {
-      document.body.style.overflow = '';
       document.body.classList.remove('slideshow-active');
     };
   }, [isLightboxOpen]);

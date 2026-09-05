@@ -25,23 +25,12 @@ export function cleanRentalInfo(rentalInfo) {
 
 export function calculateCartSummary(items, cartType, shippingFee = 0) {
   const subtotal = items.reduce((sum, item) => {
-    let itemPrice = item.product?.price || item.price || 0;
+    let itemPrice = item.price || item.product?.price || 0;
 
-    if (cartType === 'rental' && item.rentalInfo?.startDate && item.rentalInfo?.endDate) {
-      const start = new Date(item.rentalInfo.startDate);
-      const end = new Date(item.rentalInfo.endDate);
-      const diffDays =
-        Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) || 1;
-
+    if (cartType === 'rental') {
       const rentalPricing = item.product?.rentalPricing || item.rentalPricing;
-      if (rentalPricing) {
-        if (diffDays >= 30 && rentalPricing.monthly > 0) {
-          itemPrice = (rentalPricing.monthly / 30) * diffDays;
-        } else if (diffDays >= 7 && rentalPricing.weekly > 0) {
-          itemPrice = (rentalPricing.weekly / 7) * diffDays;
-        } else if (rentalPricing.daily > 0) {
-          itemPrice = rentalPricing.daily * diffDays;
-        }
+      if (rentalPricing?.rentalPrice !== undefined && rentalPricing?.rentalPrice !== null) {
+        itemPrice = Number(rentalPricing.rentalPrice) || 0;
       }
     }
 
@@ -53,7 +42,11 @@ export function calculateCartSummary(items, cartType, shippingFee = 0) {
     depositTotal = items.reduce(
       (sum, item) =>
         sum +
-        (item.product?.deposit || item.deposit || item.product?.securityDeposit || 0) *
+        (item.deposit ||
+          item.product?.deposit ||
+          item.product?.securityDeposit ||
+          item.securityDeposit ||
+          0) *
           item.quantity,
       0,
     );
@@ -80,25 +73,51 @@ export function transformDbCart(dbCartItems) {
       }
       return isValid;
     })
-    .map((item) => ({
-      id: item.product._id || item.product.id,
-      _id: item.product._id || item.product.id,
-      title: item.product.title,
-      price: item.product.price,
-      oldPrice: item.product.oldPrice || item.product.price,
-      stock: item.product.stock ?? 10,
-      seller: item.product.seller || 'Siri Arts & Crafts Artisans',
-      rating: item.product.rating || 0,
-      imageSrc:
-        item.product.imageSrc || (item.product.images?.length > 0 ? item.product.images[0] : null),
-      category: item.product.category,
-      quantity: item.quantity,
-      variant: item.variant || 'Default',
-      type: item.type || 'purchase',
-      rentalInfo: cleanRentalInfo(item.rentalInfo),
-      deposit: item.deposit || 0,
-      isNonRefundable: item.product.isNonRefundable,
-      customizationConfig: item.product.customizationConfig,
-      product: item.product,
-    }));
+    .map((item) => {
+      const isRental = item.type === 'rental';
+      let itemPrice = item.price ?? item.product?.price ?? 0;
+      if (isRental) {
+        const rentalPricing = item.product?.rentalPricing || item.rentalPricing;
+        if (rentalPricing?.rentalPrice !== undefined && rentalPricing?.rentalPrice !== null) {
+          itemPrice = Number(rentalPricing.rentalPrice) || 0;
+        }
+      }
+
+      const itemId = item.product._id || item.product.id || item._id || item.id;
+
+      return {
+        id: itemId,
+        _id: itemId,
+        title: item.product.title || item.title,
+        price: itemPrice,
+        oldPrice: isRental ? itemPrice : item.product.oldPrice || item.product.price || item.price,
+        stock: isRental
+          ? Number(item.product.rentalStock) > 0
+            ? Number(item.product.rentalStock)
+            : Number(item.product.stock) > 0
+              ? Number(item.product.stock)
+              : 10
+          : (item.product.stock ?? 10),
+        seller: item.product.seller || 'Siri Arts & Crafts Artisans',
+        rating: item.product.rating || 0,
+        imageSrc:
+          item.product.imageSrc ||
+          (item.product.images?.length > 0 ? item.product.images[0] : null) ||
+          item.imageSrc,
+        category: item.product.category || item.category,
+        quantity: item.quantity,
+        variant: item.variant || 'Default',
+        type: item.type || 'purchase',
+        rentalInfo: cleanRentalInfo(item.rentalInfo),
+        deposit:
+          item.deposit ||
+          item.product?.deposit ||
+          item.product?.securityDeposit ||
+          item.securityDeposit ||
+          0,
+        isNonRefundable: item.product.isNonRefundable ?? item.isNonRefundable,
+        customizationConfig: item.product.customizationConfig,
+        product: item.product,
+      };
+    });
 }

@@ -28,6 +28,7 @@ import { adminInviteService, eventService } from '../../services/domainServices'
 import { useWebsiteContent } from '../../hooks/useWebsiteContent';
 import { useSearchOverlay } from '../../hooks/useSearchOverlay';
 import { prefetchManager } from '../../utils/performance/prefetchManager';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useVisualSearch } from '../../hooks/useVisualSearch';
 import { customOrderService } from '../../services/api/customOrderService';
@@ -236,6 +237,8 @@ export function TopNavbar() {
     setIsOpen(false);
   }, [location.pathname]);
 
+  useScrollLock(isOpen && isMobile);
+
   // Handle mobile menu focus trap and escape key
   useEffect(() => {
     const handleGlobalEscape = (e) => {
@@ -248,7 +251,6 @@ export function TopNavbar() {
 
     if (isOpen && isMobile) {
       mobileTriggerRef.current = document.activeElement;
-      document.body.style.overflow = 'hidden';
 
       const focusableElements = mobileMenuRef.current?.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
@@ -275,7 +277,6 @@ export function TopNavbar() {
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
         window.removeEventListener('keydown', handleGlobalEscape);
-        document.body.style.overflow = '';
         if (mobileTriggerRef.current) {
           mobileTriggerRef.current.focus();
         }

@@ -5,6 +5,7 @@ import { useDashboard } from '../../context/DashboardContext';
 import { userService } from '../../services/domainServices';
 import { MandalaElement } from '../ui/MandalaElement';
 import { useAddressManagement } from '../../hooks/useAddressManagement';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import { MapLocationPicker } from './MapLocationPicker';
 import { AddressFormFields } from './AddressFormFields';
 
@@ -37,6 +38,8 @@ export function AddressModal() {
     setIsAddressModalOpen,
   });
 
+  useScrollLock(isAddressModalOpen && !!addressFormData);
+
   if (!isAddressModalOpen || !addressFormData) return null;
 
   return (
@@ -57,9 +60,8 @@ export function AddressModal() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed bottom-0 left-0 right-0 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:bottom-auto lg:max-w-2xl w-full flex flex-col z-[101] keyboard-aware-drawer"
+          className="fixed bottom-0 left-0 right-0 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:bottom-auto lg:max-w-2xl w-full flex flex-col z-[101]"
         >
-          <div className="absolute top-[98%] left-0 right-0 h-[100vh] bg-white lg:hidden z-[-1]" />
           <div className="w-full bg-white rounded-t-lg lg:rounded-lg shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden max-h-[90vh] flex flex-col">
             {/* Rotating Gold Mandala Overlay */}
             <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-[0.04] z-0">

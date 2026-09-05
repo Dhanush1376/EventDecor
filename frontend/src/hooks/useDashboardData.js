@@ -29,8 +29,11 @@ export function useDashboardData(userId) {
     queryKey: ['dashboard', 'rentals', userId],
     queryFn: async () => {
       const res = await rentalService.getMyRentals();
-      const payload = res.data ?? res ?? [];
-      return Array.isArray(payload) ? payload : payload.data || [];
+      const payload = res?.data?.data ?? res?.data ?? res ?? [];
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray(payload?.data)) return payload.data;
+      if (Array.isArray(res?.data)) return res.data;
+      return [];
     },
     enabled: Boolean(userId),
     staleTime: 5 * 60 * 1000,

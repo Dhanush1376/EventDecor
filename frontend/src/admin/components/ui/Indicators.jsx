@@ -26,6 +26,7 @@ export function StatusBadge({ status, className = '' }) {
   const cfg = {
     published: 'admin-badge-success',
     active: 'admin-badge-success',
+    active_rental: 'admin-badge-success',
     confirmed: 'admin-badge-success',
     delivered: 'admin-badge-success',
     setup_in_progress: 'admin-badge-info',
@@ -52,7 +53,7 @@ export function StatusBadge({ status, className = '' }) {
     <span
       className={`admin-badge ${cfg[status?.toLowerCase()] || 'admin-badge-neutral'} ${className}`}
     >
-      {status}
+      {status ? status.toString().replace(/_/g, ' ') : ''}
     </span>
   );
 }

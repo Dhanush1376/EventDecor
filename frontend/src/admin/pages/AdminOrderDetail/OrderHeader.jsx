@@ -8,7 +8,7 @@ export function OrderHeader({ order, navigate, onPrintInvoice, onViewInvoice }) 
   return (
     <motion.div
       variants={fadeUp}
-      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6 bg-white/50 backdrop-blur-sm p-3 sm:p-4 rounded-xl border border-[var(--admin-border-subtle)] shadow-sm mb-4 sm:mb-6"
+      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6 bg-white/50 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-[var(--admin-border-subtle)] shadow-sm mb-4 sm:mb-6"
     >
       <div className="flex items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto overflow-hidden">
         <button

@@ -2,6 +2,7 @@ import { AlertCircle } from 'lucide-react';
 import React, { useState } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useCustomerContact } from '../../hooks/useCustomerContact';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import { fadeUp } from '../../animations/variants';
 
 const overlayVariants = {
@@ -13,6 +14,8 @@ export function PhoneCollectionModal({ isOpen, onClose, onSuccess }) {
   const [phone, setPhone] = useState('');
   const { updatePhone, isLoading } = useCustomerContact();
   const [error, setError] = useState('');
+
+  useScrollLock(isOpen);
 
   if (!isOpen) return null;
 
@@ -45,9 +48,8 @@ export function PhoneCollectionModal({ isOpen, onClose, onSuccess }) {
           initial="hidden"
           animate="show"
           exit="exit"
-          className="bg-[var(--surface)] w-full max-w-md rounded-2xl shadow-xl overflow-hidden relative keyboard-aware-drawer"
+          className="bg-[var(--surface)] w-full max-w-md rounded-2xl shadow-xl overflow-hidden relative"
         >
-          <div className="absolute top-[98%] left-0 right-0 h-[100vh] bg-[var(--surface)] sm:hidden z-[-1]" />
           <div className="p-6 border-b border-[var(--border-subtle)]">
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">
               Contact Details Required

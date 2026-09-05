@@ -206,6 +206,9 @@ const AdminCoupons = lazy(() =>
 const AdminRentalsHub = lazy(() =>
   import('../admin/pages/AdminRentalsHub').then((m) => ({ default: m.default })),
 );
+const AdminRentalDetail = lazy(() =>
+  import('../admin/pages/AdminRentalDetail').then((m) => ({ default: m.AdminRentalDetail })),
+);
 const AdminRentalPolicies = lazy(() => import('../admin/pages/AdminRentalPolicies'));
 const AdminCreateCoupon = lazy(() =>
   import('../admin/pages/AdminCreateCoupon').then((m) => ({ default: m.AdminCreateCoupon })),
@@ -394,6 +397,7 @@ export function AppRoutes() {
               <Route path="orders/*" element={<AdminOrdersHub />} />
               <Route path="orders/:orderId" element={<AdminOrderDetail />} />
               <Route path="rentals/*" element={<AdminRentalsHub />} />
+              <Route path="rentals/detail/:rentalId" element={<AdminRentalDetail />} />
               <Route path="rental-policies" element={<AdminRentalPolicies />} />
               <Route path="service-areas" element={<AdminServiceAreas />} />
               <Route path="serviceability" element={<AdminServiceability />} />

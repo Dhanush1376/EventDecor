@@ -4,6 +4,7 @@ import { OptimizedImage } from '../../../components/ui/OptimizedImage';
 import toast from 'react-hot-toast';
 import { uploadService } from '../../../services/domainServices';
 import { compressImage } from '../../../utils/media/imageCompressor';
+import { useScrollLock } from '../../../hooks/useScrollLock';
 import Check from 'lucide-react/dist/esm/icons/check';
 
 export function CustomizerDrawer({
@@ -27,6 +28,8 @@ export function CustomizerDrawer({
   handleBookRental,
   handleOpenShowcase,
 }) {
+  useScrollLock(!!selectedShowcase);
+
   if (!selectedShowcase) return null;
 
   const toggleInclusion = (name) => {
@@ -48,7 +51,7 @@ export function CustomizerDrawer({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={() => setSelectedShowcase(null)}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm keyboard-aware-backdrop"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
       <motion.div
         initial={{ x: '100%' }}

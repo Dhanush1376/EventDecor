@@ -104,20 +104,21 @@ export function ProductInfo({
   };
 
   const handleRentNow = () => {
+    const rentPrice = product.rentalPricing?.rentalPrice || product.price;
+
     attemptAddToCart({
+      ...product,
       id: product._id || product.id,
+      _id: product._id || product.id,
       title: product.title,
-      price:
-        product.rentalPricing?.daily ||
-        product.rentalPricing?.weekly ||
-        product.rentalPricing?.monthly ||
-        product.price,
+      price: rentPrice,
       imageSrc: product.imageSrc || product.image,
-      formattedPrice: `Rs. ${product.price?.toLocaleString()}`,
+      formattedPrice: `Rs. ${rentPrice?.toLocaleString()}`,
       quantity: quantity,
       type: 'rental',
       deposit: product.securityDeposit || 0,
       isNonRefundable: product.isNonRefundable,
+      product: product,
     });
     navigate('/cart');
   };
@@ -323,38 +324,27 @@ export function ProductInfo({
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                {product.rentalPricing.daily > 0 && (
-                  <div className="px-3 py-3 bg-white rounded-xl border border-[#e0d6b8]/50 text-center shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-                    <span className="block text-[15px] sm:text-[17px] font-display font-bold text-[#2a2c2a]">
-                      ₹{product.rentalPricing.daily.toLocaleString()}
+              {product.rentalPricing?.rentalPrice > 0 && (
+                <div className="p-4 bg-white rounded-xl border border-[#e0d6b8]/50 flex items-center justify-between shadow-sm mb-4">
+                  <div>
+                    <span className="text-[11px] sm:text-[12px] text-[#8c7335] uppercase tracking-wider font-bold block mb-0.5">
+                      Rental Package Price
                     </span>
-                    <span className="text-[9px] sm:text-[10px] text-[#5a5c5a] uppercase tracking-widest font-bold mt-0.5 block">
-                      per day
-                    </span>
-                  </div>
-                )}
-                {product.rentalPricing.weekly > 0 && (
-                  <div className="px-3 py-3 bg-white rounded-xl border border-[#e0d6b8]/50 text-center shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-                    <span className="block text-[15px] sm:text-[17px] font-display font-bold text-[#2a2c2a]">
-                      ₹{product.rentalPricing.weekly.toLocaleString()}
-                    </span>
-                    <span className="text-[9px] sm:text-[10px] text-[#5a5c5a] uppercase tracking-widest font-bold mt-0.5 block">
-                      per week
+                    <span className="text-[20px] sm:text-[24px] font-display font-black text-[#2a2c2a]">
+                      ₹{product.rentalPricing.rentalPrice.toLocaleString()}
                     </span>
                   </div>
-                )}
-                {product.rentalPricing.monthly > 0 && (
-                  <div className="px-3 py-3 bg-white rounded-xl border border-[#e0d6b8]/50 text-center shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-                    <span className="block text-[15px] sm:text-[17px] font-display font-bold text-[#2a2c2a]">
-                      ₹{product.rentalPricing.monthly.toLocaleString()}
+                  <div className="text-right bg-[#fdfbf7] px-3.5 py-2 rounded-xl border border-[#e0d6b8]/60">
+                    <span className="text-[13px] sm:text-[14px] font-bold text-[#8c7335] block">
+                      Up to {product.rentalPricing.rentalDurationDays || 1}{' '}
+                      {(product.rentalPricing.rentalDurationDays || 1) === 1 ? 'day' : 'days'}
                     </span>
-                    <span className="text-[9px] sm:text-[10px] text-[#5a5c5a] uppercase tracking-widest font-bold mt-0.5 block">
-                      per month
+                    <span className="text-[9px] text-[#5a5c5a] uppercase tracking-widest font-semibold block">
+                      Duration Covered
                     </span>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {product.securityDeposit > 0 && (
                 <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-[#e0d6b8]/50 shadow-sm mt-2 mb-3">

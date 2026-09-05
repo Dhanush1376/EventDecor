@@ -140,10 +140,18 @@ export function OrderDetail() {
   const discount =
     order.discount ||
     (item.originalPrice ? Math.max(0, (item.originalPrice - item.price) * item.quantity) : 0);
-  const status = order.orderStatus || 'Confirmed';
-  const isDelivered = ['delivered', 'returned', 'refunded', 'settled'].includes(
-    status?.toLowerCase(),
-  );
+  const status = order.orderStatus || order.status || 'Confirmed';
+  const isRental =
+    order.isRental === true || order.orderType === 'rental' || item.type === 'rental';
+
+  const isDelivered = [
+    'delivered',
+    'returned',
+    'refunded',
+    'settled',
+    'active_rental',
+    'active rental',
+  ].includes(status?.toLowerCase());
   const isCancelled = status?.toLowerCase() === 'cancelled';
   const isReturned = ['returned', 'refunded', 'settled'].includes(status?.toLowerCase());
   const isRefunded =
@@ -195,25 +203,68 @@ export function OrderDetail() {
     },
   ];
 
-  const currentStatusLower = status?.toLowerCase() || 'pending';
+  const rentalTimeline = [
+    {
+      key: 'confirmed',
+      title: 'Confirmed',
+      description: 'Rental verified and confirmed',
+      icon: 'check_circle',
+      color: 'sky',
+    },
+    {
+      key: 'active_rental',
+      title: 'Active Rental',
+      description: 'You currently have this item',
+      icon: 'timer',
+      color: 'emerald',
+    },
+    {
+      key: 'return_requested',
+      title: 'Return Requested',
+      description: 'Return process initiated',
+      icon: 'sync_alt',
+      color: 'amber',
+    },
+    {
+      key: 'returned',
+      title: 'Returned',
+      description: 'Item safely returned to facility',
+      icon: 'inventory_2',
+      color: 'blue',
+    },
+    {
+      key: 'completed',
+      title: 'Completed',
+      description: 'Rental cycle finished, deposit settled',
+      icon: 'done_all',
+      color: 'emerald',
+    },
+  ];
+
+  const currentStatusLower = status?.toLowerCase()?.replace(' ', '_') || 'pending';
 
   if (!isCancelled && !returnRequest && !isReturned) {
-    const currentStatusIndex = standardTimeline.findIndex((s) => s.key === currentStatusLower);
+    const timeline = isRental ? rentalTimeline : standardTimeline;
+    const currentStatusIndex = timeline.findIndex((s) => s.key === currentStatusLower);
 
-    standardTimeline.forEach((step, index) => {
+    timeline.forEach((step, index) => {
       // Find timestamp from history if available
       const historyEntry = order.statusHistory
         ?.slice()
         .reverse()
-        .find((h) => h.status?.toLowerCase() === step.key);
+        .find((h) => h.status?.toLowerCase()?.replace(' ', '_') === step.key);
       const timestamp = historyEntry
         ? new Date(historyEntry.timestamp)
         : index === 0
-          ? new Date(order.createdAt)
+          ? new Date(order.createdAt || order.orderDate)
           : null;
 
       let stepStatus = 'pending';
-      if (index <= currentStatusIndex || isDelivered) stepStatus = 'completed';
+      if (
+        index <= currentStatusIndex ||
+        (!isRental && isDelivered && index < standardTimeline.length)
+      )
+        stepStatus = 'completed';
 
       journeySteps.push({
         title: step.title,
@@ -527,17 +578,43 @@ export function OrderDetail() {
               <span className="text-[12px] font-bold text-primary font-body">
                 ₹{(prodPrice * (item.quantity || 1)).toLocaleString()}
               </span>
-              {item.originalPrice && item.originalPrice > prodPrice && (
+              {isRental && item.durationDays && (
+                <span className="text-[10px] text-secondary font-medium font-body">
+                  for {item.durationDays} days
+                </span>
+              )}
+              {!isRental && item.originalPrice && item.originalPrice > prodPrice && (
                 <span className="text-[10px] text-secondary line-through font-light font-body">
                   ₹{(item.originalPrice * (item.quantity || 1)).toLocaleString()}
                 </span>
               )}
             </div>
+            {/* Rental specific dates and deposit */}
+            {isRental && item.rentalStartDate && item.rentalEndDate && (
+              <p className="text-[10px] text-secondary font-light mt-1.5 font-body">
+                Period:{' '}
+                {new Date(item.rentalStartDate).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                })}
+                {' – '}
+                {new Date(item.rentalEndDate).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </p>
+            )}
+            {isRental && item.securityDeposit > 0 && (
+              <p className="text-[10px] text-[#8c7335] font-medium mt-0.5 font-body">
+                Includes ₹{item.securityDeposit.toLocaleString()} refundable deposit
+              </p>
+            )}
           </div>
         </div>
       </div>
 
-      <ReturnExchangeSection orderId={order._id} />
+      {!isRental && <ReturnExchangeSection orderId={order._id || order.id} />}
 
       {/* Dynamic Timeline Tracker */}
       <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs relative overflow-hidden">
@@ -719,40 +796,42 @@ export function OrderDetail() {
         </div>
       </div>
 
-      {/* Loyalty Review Callout */}
-      <div
-        className={`bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs transition-all flex items-center justify-between gap-4 ${!isDelivered ? 'opacity-75 grayscale-[50%]' : ''}`}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded bg-primary/5 text-primary flex items-center justify-center border border-primary/20 shrink-0">
-            <span className="material-symbols-outlined text-[16px]">stars</span>
-          </div>
-          <div>
-            <h4 className="font-bold text-[9px] uppercase tracking-widest text-on-surface">
-              Rate this Artisan Masterpiece
-            </h4>
-            <p className="text-[9px] text-secondary tracking-wider mt-0.5">
-              {isDelivered
-                ? 'Share your review to win Loyalty Coins!'
-                : 'Unlocks once item is successfully delivered.'}
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={() =>
-            isDelivered &&
-            setReviewingProduct({
-              productId: item.productId?._id || item.productId,
-              productTitle: prodTitle,
-            })
-          }
-          disabled={!isDelivered}
-          className="px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50"
+      {/* Loyalty Review Callout — Purchase only */}
+      {!isRental && (
+        <div
+          className={`bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs transition-all flex items-center justify-between gap-4 ${!isDelivered ? 'opacity-75 grayscale-[50%]' : ''}`}
         >
-          <FileEdit className="text-[14px]" strokeWidth={1.5} /> Write Review
-        </button>
-      </div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded bg-primary/5 text-primary flex items-center justify-center border border-primary/20 shrink-0">
+              <span className="material-symbols-outlined text-[16px]">stars</span>
+            </div>
+            <div>
+              <h4 className="font-bold text-[9px] uppercase tracking-widest text-on-surface">
+                Rate this Artisan Masterpiece
+              </h4>
+              <p className="text-[9px] text-secondary tracking-wider mt-0.5">
+                {isDelivered
+                  ? 'Share your review to win Loyalty Coins!'
+                  : 'Unlocks once item is successfully delivered.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() =>
+              isDelivered &&
+              setReviewingProduct({
+                productId: item.productId?._id || item.productId,
+                productTitle: prodTitle,
+              })
+            }
+            disabled={!isDelivered}
+            className="px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50"
+          >
+            <FileEdit className="text-[14px]" strokeWidth={1.5} /> Write Review
+          </button>
+        </div>
+      )}
 
       {/* Split Panels: Delivery Address & Map Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -849,17 +928,42 @@ export function OrderDetail() {
               className="overflow-hidden bg-surface-container-lowest"
             >
               <div className="p-5 space-y-3 border-b border-outline-variant/20 text-[11px] text-on-surface">
-                <div className="flex justify-between">
-                  <span className="text-secondary">Items Subtotal</span>
-                  <span className="font-semibold">
-                    ₹
-                    {(
-                      order.total -
-                      (order.shippingFee || 0) +
-                      (order.discount || 0)
-                    ).toLocaleString()}
-                  </span>
-                </div>
+                {!isRental ? (
+                  <div className="flex justify-between">
+                    <span className="text-secondary">Items Subtotal</span>
+                    <span className="font-semibold">
+                      ₹
+                      {(
+                        order.total -
+                        (order.shippingFee || 0) +
+                        (order.discount || 0)
+                      ).toLocaleString()}
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-secondary">Rental Charge</span>
+                      <span className="font-semibold">
+                        ₹
+                        {(
+                          order.total -
+                          (order.shippingFee || 0) +
+                          (order.discount || 0) -
+                          (item.securityDeposit || 0)
+                        ).toLocaleString()}
+                      </span>
+                    </div>
+                    {item.securityDeposit > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-secondary">Refundable Security Deposit</span>
+                        <span className="font-semibold">
+                          ₹{item.securityDeposit.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
                 <div className="flex justify-between">
                   <span className="text-secondary">Delivery & Shipping Fee</span>
                   <span>{order.shippingFee ? `₹${order.shippingFee}` : 'FREE'}</span>
@@ -929,39 +1033,43 @@ export function OrderDetail() {
             Need official copies or assistance?
           </span>
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-            {isReturnExchangeBlocked ? (
-              <button
-                disabled
-                className="w-full sm:w-auto px-6 py-2.5 bg-surface text-secondary font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed"
-              >
-                <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
-                Return Items
-              </button>
-            ) : (
-              <Link
-                to={`/dashboard/returns/new?orderId=${order._id}`}
-                className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
-              >
-                <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
-                Return Items
-              </Link>
-            )}
-            {isReturnExchangeBlocked ? (
-              <button
-                disabled
-                className="w-full sm:w-auto px-6 py-2.5 bg-surface text-secondary font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed"
-              >
-                <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
-                Exchange Items
-              </button>
-            ) : (
-              <Link
-                to={`/dashboard/returns/exchanges/new?orderId=${order._id}`}
-                className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
-              >
-                <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
-                Exchange Items
-              </Link>
+            {!isRental && (
+              <>
+                {isReturnExchangeBlocked ? (
+                  <button
+                    disabled
+                    className="w-full sm:w-auto px-6 py-2.5 bg-surface text-secondary font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed"
+                  >
+                    <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
+                    Return Items
+                  </button>
+                ) : (
+                  <Link
+                    to={`/dashboard/returns/new?orderId=${order._id || order.id}`}
+                    className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
+                    Return Items
+                  </Link>
+                )}
+                {isReturnExchangeBlocked ? (
+                  <button
+                    disabled
+                    className="w-full sm:w-auto px-6 py-2.5 bg-surface text-secondary font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed"
+                  >
+                    <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
+                    Exchange Items
+                  </button>
+                ) : (
+                  <Link
+                    to={`/dashboard/returns/exchanges/new?orderId=${order._id || order.id}`}
+                    className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
+                    Exchange Items
+                  </Link>
+                )}
+              </>
             )}
             <button
               onClick={() => downloadInvoice(order._id)}

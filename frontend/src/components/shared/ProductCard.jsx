@@ -176,11 +176,13 @@ export const ProductCard = React.memo(function ProductCard({
 
   const isRental = cartType === 'rental' || (!canPurchase && canRent);
   const resolvedCartType = isRental ? 'rental' : 'purchase';
-  const resolvedPrice = isRental
-    ? rentalPricing?.daily || rentalPricing?.weekly || rentalPricing?.monthly || price
-    : price;
+  const resolvedPrice = isRental ? rentalPricing?.rentalPrice || price : price;
   const resolvedDeposit = isRental ? securityDeposit || deposit || 0 : 0;
-  const isOutOfStock = isRental ? rentalStock <= 0 : stock <= 0;
+  const isOutOfStock = isRental
+    ? Number(rentalStock) > 0
+      ? rentalStock <= 0
+      : stock <= 0
+    : stock <= 0;
 
   const handleCardClick = (e) => {
     if (longPressTriggered) return;
@@ -689,10 +691,10 @@ export const ProductCard = React.memo(function ProductCard({
         className={`${compact ? 'pt-1.5 pb-1 px-1.5' : 'pt-2.5 pb-2 px-3.5 lg:px-4'} flex flex-col flex-1 transition-opacity duration-500 ${hideDetails ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
         <div
-          className={`flex items-center justify-between gap-2 ${compact ? 'mb-1.5' : 'mb-2.5 lg:mb-3'}`}
+          className={`flex items-center justify-between gap-2 h-4 lg:h-5 ${compact ? 'mb-1.5' : 'mb-2.5 lg:mb-3'}`}
         >
           <span
-            className={`text-black/50 font-label uppercase ${compact ? 'text-[8px] tracking-[0.1em]' : 'text-[9px] lg:text-[10px] tracking-[0.2em]'} font-bold truncate min-w-0 transition-colors group-hover:text-black/80`}
+            className={`text-black/50 font-label uppercase ${compact ? 'text-[8px] tracking-[0.1em]' : 'text-[9px] lg:text-[10px] tracking-[0.2em]'} font-bold truncate min-w-0 transition-colors group-hover:text-black/80 leading-none`}
           >
             {(() => {
               const displayCategory = primaryCategory?.name || category;
@@ -748,22 +750,16 @@ export const ProductCard = React.memo(function ProductCard({
                 itemType === 'event'
                   ? rentalPrice || price
                   : isRental
-                    ? rentalPricing?.daily ||
-                      rentalPricing?.weekly ||
-                      rentalPricing?.monthly ||
-                      price
+                    ? rentalPricing?.rentalPrice || price
                     : canPurchase
                       ? price
-                      : rentalPricing?.daily ||
-                        rentalPricing?.weekly ||
-                        rentalPricing?.monthly ||
-                        price,
+                      : rentalPricing?.rentalPrice || price,
               )}
-              {(isRental || itemType === 'event') && (
+              {isRental && rentalPricing?.rentalPrice > 0 && (
                 <span
-                  className={`font-label text-black/40 ml-0.5 normal-case font-bold ${compact ? 'text-[8px] lg:text-[9px]' : 'text-[9px] lg:text-[10px]'}`}
+                  className={`font-label text-black/40 ml-1 normal-case font-bold ${compact ? 'text-[8px] lg:text-[9px]' : 'text-[9px] lg:text-[10px]'}`}
                 >
-                  / day
+                  {`for up to ${rentalPricing.rentalDurationDays || 1} ${(rentalPricing.rentalDurationDays || 1) === 1 ? 'day' : 'days'}`}
                 </span>
               )}
             </span>

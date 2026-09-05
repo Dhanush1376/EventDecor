@@ -46,8 +46,20 @@ export default function CheckoutSidebar() {
     settings?.loyalty?.tiers?.find((t) => t.name === userTier) || settings?.loyalty?.tiers?.[0];
   const cashbackRate = currentTier?.cashbackRate ? currentTier.cashbackRate * 100 : 0;
 
-  const activeTotal =
-    orderType === 'rental' ? rentalCostBreakdown?.totalAmount || 0 : backendTotals?.total || 0;
+  const grossRentalAmount = rentalCostBreakdown?.totalAmount || 0;
+  const availableWalletBalance = (backendTotals?.walletBalance ?? user?.walletBalance) || 0;
+  const rentalWalletDeduction =
+    useWallet && availableWalletBalance > 0
+      ? Math.min(grossRentalAmount, availableWalletBalance)
+      : 0;
+  const netRentalPayable = Math.max(0, grossRentalAmount - rentalWalletDeduction);
+
+  const activeTotal = orderType === 'rental' ? netRentalPayable : backendTotals?.total || 0;
+
+  const currentWalletDeduction =
+    orderType === 'rental' ? rentalWalletDeduction : backendTotals?.walletDeduction || 0;
+
+  const totalItemUnits = activeItems.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
 
   const estimatedCoins = Math.round(activeTotal * (siriCoinEarnRate / 100));
   const estimatedCashback = Math.round(activeTotal * (cashbackRate / 100));
@@ -93,14 +105,14 @@ export default function CheckoutSidebar() {
               <span className="material-symbols-outlined text-primary text-sm">stars</span>
             </div>
 
-            {useWallet && backendTotals && backendTotals.walletDeduction > 0 && (
+            {useWallet && currentWalletDeduction > 0 && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 className="mt-3 pt-3 border-t border-outline-variant/30 text-[11px] text-primary font-bold flex justify-between"
               >
                 <span>Wallet Deducted:</span>
-                <span>− ₹{backendTotals?.walletDeduction?.toLocaleString('en-IN') || 0}</span>
+                <span>− ₹{currentWalletDeduction.toLocaleString('en-IN')}</span>
               </motion.div>
             )}
           </div>
@@ -268,8 +280,8 @@ export default function CheckoutSidebar() {
         <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs sticky top-28 relative overflow-hidden">
           <div className="pb-3 border-b border-outline-variant/40 mb-4 relative z-10 flex items-center justify-between">
             <h3 className="text-[10px] font-label font-bold text-on-surface uppercase tracking-widest">
-              {orderType === 'rental' ? 'Rental Order' : 'Purchase Summary'} ({activeItems.length}{' '}
-              Items)
+              {orderType === 'rental' ? 'Rental Order' : 'Purchase Summary'} ({totalItemUnits}{' '}
+              {totalItemUnits === 1 ? 'Item' : 'Items'})
             </h3>
             {orderType === 'rental' && (
               <span className="bg-primary/10 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider flex items-center gap-1">
@@ -283,7 +295,9 @@ export default function CheckoutSidebar() {
             {orderType === 'rental' && rentalCostBreakdown ? (
               <>
                 <div className="flex justify-between">
-                  <span>Rental Fee ({activeItems.length} items)</span>
+                  <span>
+                    Rental Fee ({totalItemUnits} {totalItemUnits === 1 ? 'item' : 'items'})
+                  </span>
                   <span>₹{rentalCostBreakdown?.rentalCharge?.toLocaleString() || 0}</span>
                 </div>
 
@@ -312,7 +326,17 @@ export default function CheckoutSidebar() {
                   </span>
                 </div>
 
-                {rentalCostBreakdown?.tax > 0 ? (
+                {rentalCostBreakdown?.taxInclusive ? (
+                  <div className="flex justify-between">
+                    <span>Tax (GST)</span>
+                    <span className="text-secondary font-medium">
+                      Included{' '}
+                      {rentalCostBreakdown?.tax > 0
+                        ? `(₹${rentalCostBreakdown?.tax?.toLocaleString()})`
+                        : ''}
+                    </span>
+                  </div>
+                ) : rentalCostBreakdown?.tax > 0 ? (
                   <div className="flex justify-between">
                     <span>Tax (GST)</span>
                     <span className="font-medium">
@@ -338,12 +362,24 @@ export default function CheckoutSidebar() {
                   </div>
                 )}
 
+                {useWallet && rentalWalletDeduction > 0 && (
+                  <div className="flex justify-between items-center bg-primary/10 text-primary rounded-lg px-3 py-2 border border-primary/20 font-semibold">
+                    <span className="flex items-center gap-1 font-medium text-[11px]">
+                      <span className="material-symbols-outlined text-[14px] text-primary">
+                        stars
+                      </span>
+                      Siri Pay Wallet applied
+                    </span>
+                    <span>− ₹{rentalWalletDeduction.toLocaleString()}</span>
+                  </div>
+                )}
+
                 <div className="h-[1px] bg-outline-variant/40 my-3" />
 
                 <div className="flex justify-between items-baseline font-bold text-sm">
                   <span>Total to Pay Now</span>
                   <span className="text-base text-on-surface font-extrabold">
-                    ₹{rentalCostBreakdown?.totalAmount?.toLocaleString() || 0}
+                    ₹{netRentalPayable.toLocaleString()}
                   </span>
                 </div>
               </>

@@ -9,6 +9,8 @@ import { canonicalizeEmail } from '../utils/email/emailHelper';
 import SessionAuthService from './SessionAuthService';
 import { getFrontendUrl } from '../utils/getFrontendUrl';
 import { SecurityAuditService } from './SecurityAuditService';
+import { RuleEngine } from './RuleEngine';
+import { createAdminNotification, sendDirectEmail } from './notificationService';
 
 const getGoogleClient = (() => {
   let client: OAuth2Client | null = null;
@@ -223,14 +225,12 @@ class GoogleAuthService {
 
     // Post-login triggers
     try {
-      const { RuleEngine } = require('./RuleEngine');
       await RuleEngine.evaluateTrigger('on_signup', { user: createdUser });
     } catch (ruleErr) {
       logger.error('Failed to evaluate signup rules:', ruleErr);
     }
 
     try {
-      const { createAdminNotification } = require('./notificationService');
       createAdminNotification({
         title: 'New User Registration (Google)',
         message: `${createdUser.name || createdUser.email} registered via Google OAuth.`,
@@ -242,7 +242,6 @@ class GoogleAuthService {
     }
 
     try {
-      const { sendDirectEmail } = require('./notificationService');
       const frontendUrl = getFrontendUrl();
       sendDirectEmail({
         email: createdUser.email,

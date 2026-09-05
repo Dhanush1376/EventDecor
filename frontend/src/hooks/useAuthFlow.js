@@ -36,7 +36,7 @@ export function useAuthFlow(loginSuccess, isAuthModalOpen) {
   const requestOTP = async (e) => {
     e?.preventDefault();
     if (!identifier || identifier.length < 3) {
-      toast.error('Please enter a valid email or phone number');
+      toast.error('Please enter a valid email');
       return;
     }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Profiler } from 'react';
+import React, { useState, useEffect, useRef, Profiler } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -33,14 +33,18 @@ export function ProductListing() {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
   const state = useProductListingState();
+  const prevSearchRef = useRef(searchParams.get('search'));
 
-  // Auto-scroll on mobile/tablet to the top of the page when search query changes
+  // Auto-scroll on mobile/tablet to the top of the page ONLY when search query itself changes
   useEffect(() => {
-    const hasSearch = searchParams.get('search');
+    const search = searchParams.get('search');
+    const isSearchChange = prevSearchRef.current !== search;
+    prevSearchRef.current = search;
+
     const isTypingInPageSearch =
       document.activeElement?.getAttribute('placeholder') === 'Search masterworks...';
 
-    if (isMobile && hasSearch && !isTypingInPageSearch) {
+    if (isMobile && isSearchChange && search && !isTypingInPageSearch) {
       const timer = setTimeout(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 100);

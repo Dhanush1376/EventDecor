@@ -29,6 +29,7 @@ export default function CheckoutRentalDurationStep() {
           rentalItem.id || rentalItem._id,
           rentalStartDate,
           rentalEndDate,
+          rentalItem.quantity || 1,
         );
       }
     }
@@ -61,6 +62,22 @@ export default function CheckoutRentalDurationStep() {
       return;
     }
 
+    const packageDurationDays =
+      rentalItem?.rentalPricing?.rentalDurationDays ||
+      rentalItem?.product?.rentalPricing?.rentalDurationDays ||
+      7;
+    const minRentalDays = rentalItem?.rentalMinDays || rentalItem?.product?.rentalMinDays || 1;
+
+    if (durationDays > packageDurationDays) {
+      toast.error(`Rental duration cannot exceed ${packageDurationDays} day(s) for this package.`);
+      return;
+    }
+
+    if (durationDays < minRentalDays) {
+      toast.error(`Minimum rental duration is ${minRentalDays} day(s).`);
+      return;
+    }
+
     const nextIndex = checkoutSteps.indexOf('DURATION') + 1;
     setActiveStep(nextIndex); // Proceed to next step
   };
@@ -69,6 +86,26 @@ export default function CheckoutRentalDurationStep() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split('T')[0];
+  };
+
+  const packageDurationDays =
+    rentalItem?.rentalPricing?.rentalDurationDays ||
+    rentalItem?.product?.rentalPricing?.rentalDurationDays ||
+    7;
+  const minRentalDays = rentalItem?.rentalMinDays || rentalItem?.product?.rentalMinDays || 1;
+
+  const getMaxEndDate = () => {
+    if (!rentalStartDate) return undefined;
+    const start = new Date(rentalStartDate);
+    start.setDate(start.getDate() + packageDurationDays);
+    return start.toISOString().split('T')[0];
+  };
+
+  const getMinEndDate = () => {
+    if (!rentalStartDate) return getMinDate();
+    const start = new Date(rentalStartDate);
+    start.setDate(start.getDate() + minRentalDays);
+    return start.toISOString().split('T')[0];
   };
 
   // Calculate duration locally for immediate UX feedback
@@ -83,12 +120,18 @@ export default function CheckoutRentalDurationStep() {
   return (
     <div className="bg-surface-container-low -mt-2">
       <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs">
-        <h2 className="font-sans text-base font-bold text-on-surface uppercase tracking-wider mb-5">
-          Rental Duration
-        </h2>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h2 className="font-sans text-xs sm:text-sm font-bold text-on-surface uppercase tracking-wide whitespace-nowrap">
+            Rental Duration
+          </h2>
+          <span className="text-[10px] sm:text-[11px] font-semibold bg-primary/10 text-primary px-2.5 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">
+            Up to {packageDurationDays} Days
+          </span>
+        </div>
 
-        <p className="text-[13px] text-secondary mb-6 leading-relaxed">
-          Please select the duration for which you need the rental items.
+        <p className="text-[12px] sm:text-[13px] text-secondary mb-5 leading-relaxed">
+          Please select your rental dates. This package covers any duration up to{' '}
+          <strong>{packageDurationDays} days</strong>.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
@@ -110,7 +153,8 @@ export default function CheckoutRentalDurationStep() {
             </label>
             <input
               type="date"
-              min={rentalStartDate || getMinDate()}
+              min={getMinEndDate()}
+              max={getMaxEndDate()}
               value={rentalEndDate || ''}
               onChange={(e) => setRentalEndDate(e.target.value)}
               className="w-full min-w-0 overflow-hidden bg-white border border-outline-variant/30 rounded-lg px-4 py-3 text-xs outline-none focus:border-primary transition-all font-semibold cursor-pointer"
@@ -122,9 +166,14 @@ export default function CheckoutRentalDurationStep() {
           <div
             className={`p-4 rounded border space-y-2 mb-4 transition-colors ${rentalAvailability?.available === false ? 'bg-red-50 border-red-200' : 'bg-surface-container-low border-outline-variant/30'}`}
           >
-            <div className="flex justify-between text-[13px]">
+            <div className="flex justify-between items-center text-[13px]">
               <span className="text-secondary font-bold">Rental Duration</span>
-              <span className="text-on-surface font-extrabold">{durationDays} Days</span>
+              <div className="text-right">
+                <span className="text-on-surface font-extrabold">{durationDays} Days</span>
+                <span className="text-[11px] text-primary/80 block font-medium">
+                  (Package covers up to {packageDurationDays} Days)
+                </span>
+              </div>
             </div>
 
             {isCheckingAvailability ? (
