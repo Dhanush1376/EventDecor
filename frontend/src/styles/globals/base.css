@@ -17,6 +17,17 @@
     --safe-area-bottom: 0px;
   }
 
+  /* 
+   * Counteracts the Safari visualViewport scroll bug.
+   * When interactive-widget=resizes-content shrinks the layout viewport,
+   * Safari erroneously scrolls the visual viewport to keep inputs visible,
+   * dragging fixed elements UP and creating a massive gap below them.
+   * This class pushes the fixed element DOWN by exactly the scroll amount.
+   */
+  .keyboard-safari-fix {
+    bottom: calc(-1 * var(--safari-keyboard-gap, 0px)) !important;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;

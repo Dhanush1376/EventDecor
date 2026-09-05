@@ -31,11 +31,17 @@ export function useKeyboardAwareViewport() {
       const keyboardOffset = Math.max(0, maxHeights.current[orientation] - visibleHeight);
       const isKeyboardOpen = keyboardOffset > 150; // Typical mobile keyboard is > 200px
 
+      // Safari 'resizes-content' bug workaround: Safari scrolls the visual viewport
+      // to keep focused inputs visible, pushing fixed elements up and creating a gap.
+      // vv.pageTop captures exactly how much Safari pushed the page up.
+      const offsetTop = vv.pageTop || vv.offsetTop || 0;
+
       const doc = document.documentElement;
 
       // Set CSS variables for global consumption (kept for backwards compatibility/reference)
       doc.style.setProperty('--visual-viewport-height', `${visibleHeight}px`);
       doc.style.setProperty('--keyboard-offset', `${keyboardOffset}px`);
+      doc.style.setProperty('--safari-keyboard-gap', `${offsetTop}px`);
 
       // Set safe-area override directly to prevent gap between drawer and keyboard
       if (isKeyboardOpen) {
