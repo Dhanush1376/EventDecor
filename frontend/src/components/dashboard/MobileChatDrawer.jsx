@@ -17,7 +17,7 @@ export function MobileChatDrawer({
   return (
     <AnimatePresence>
       {isMobileChatOpen && selectedBooking && (
-        <div className="fixed inset-0 z-[100] flex flex-col justify-end lg:hidden keyboard-safari-fix">
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end lg:hidden">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
