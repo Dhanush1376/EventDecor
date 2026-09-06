@@ -115,7 +115,7 @@ export function AuthModal() {
   return (
     <AnimatePresence>
       {isAuthModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div className="fixed top-0 left-0 w-full h-[100dvh] z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
           {/* Dark blurred background overlay */}
           <motion.div
             key="auth-backdrop"
