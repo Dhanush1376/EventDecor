@@ -452,7 +452,7 @@ export function LocationSelectorModal({
           className={
             inline
               ? 'relative w-full flex-1 flex flex-col'
-              : 'fixed top-0 left-0 w-full h-[100dvh] z-[999] flex items-center justify-center p-4'
+              : 'fixed inset-0 z-[999] flex items-center justify-center p-4'
           }
         >
           {/* Blur Overlay */}
@@ -475,7 +475,7 @@ export function LocationSelectorModal({
             className={`relative bg-[#FCFAF6] border border-[#826237]/30 w-full font-body flex flex-col z-10 ${
               inline
                 ? 'rounded-2xl'
-                : 'max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl max-h-[95dvh] sm:max-h-[90dvh] overflow-hidden'
+                : 'max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden'
             }`}
           >
             {/* Elegant Header Banner */}

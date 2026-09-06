@@ -2,7 +2,6 @@
   :root {
     --visual-viewport-height: 100dvh;
     --keyboard-offset: 0px;
-    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   html {
@@ -14,7 +13,7 @@
   }
 
   html.keyboard-open {
-    --safe-area-bottom: 0px;
+    /* Optional global overrides when keyboard is open */
   }
 
   @media (prefers-reduced-motion: reduce) {

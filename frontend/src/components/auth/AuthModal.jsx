@@ -115,185 +115,180 @@ export function AuthModal() {
   return (
     <AnimatePresence>
       {isAuthModalOpen && (
-        <>
-          {/* Dark blurred background overlay (always full screen) */}
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          {/* Dark blurred background overlay */}
           <motion.div
             key="auth-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeAuthModal}
-            className="fixed inset-0 bg-black/40 backdrop-blur-md z-[9998]"
+            className="absolute inset-0 bg-black/40 backdrop-blur-md"
           />
 
-          {/* Floating Auth Card Modal Container (anchored to visual viewport) */}
-          <div
-            className="fixed top-0 left-0 w-full z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none"
-            style={{ height: 'var(--visual-viewport-height, 100dvh)' }}
+          {/* Floating Auth Card Modal Container */}
+          <motion.div
+            key="auth-modal"
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="w-full sm:max-w-[390px] relative flex flex-col justify-end"
           >
-            <motion.div
-              key="auth-modal"
-              variants={modalVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="w-full sm:max-w-[390px] relative flex flex-col justify-end pointer-events-auto"
-            >
-              <div className="relative bg-[#faf9f6] w-full rounded-t-[28px] sm:rounded-[28px] p-6 xs:p-7 sm:p-8 border-t sm:border border-outline-variant/30 shadow-[0_-10px_40px_rgba(115,92,0,0.04)] sm:shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-y-auto max-h-[95dvh] no-scrollbar">
-                {/* Grab handle for mobile bottom sheet */}
-                <div className="sm:hidden w-12 h-1 bg-outline-variant/40 rounded-full mx-auto mb-4 shrink-0" />
-                {/* Concentric rotating gold mandalas for luxury styling */}
-                <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-[0.06] z-0">
-                  <MandalaElement
-                    size={300}
-                    duration={70}
-                    variant={1}
-                    opacity={1}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary"
-                  />
-                  <MandalaElement
-                    size={180}
-                    duration={40}
-                    variant={2}
-                    opacity={0.8}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary"
-                  />
-                </div>
-
-                {/* Close button */}
-                <button
-                  onClick={closeAuthModal}
-                  className="absolute top-6 right-6 w-11 h-11 rounded-full bg-white/50 backdrop-blur-md border border-outline-variant/20 flex items-center justify-center hover:bg-primary/10 text-on-surface-variant/40 hover:text-primary transition-all duration-300 z-50 cursor-pointer shadow-2xs"
-                  aria-label="Close authentication modal"
-                >
-                  <X className="text-[18px]" strokeWidth={1.5} />
-                </button>
-
-                {/* Core Content Layout */}
-                <div className="relative z-10">
-                  <AnimatePresence mode="wait">
-                    {step === 'success' ? (
-                      <AuthSuccessScreen MandalaElement={MandalaElement} isNewUser={isNewUser} />
-                    ) : (
-                      <motion.div
-                        key="form-container"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="space-y-8"
-                      >
-                        {/* Headings */}
-                        <div className="text-left mb-8 sm:mb-10 space-y-1.5 sm:space-y-2">
-                          <h2 className="font-display text-[24px] sm:text-[28px] leading-tight text-on-surface-variant font-light">
-                            {step === '2fa'
-                              ? 'Enter Authenticator Code'
-                              : step === 'otp'
-                                ? 'Verification Code'
-                                : 'Login or Sign Up'}
-                          </h2>
-                          {step !== 'otp' && step !== 'account_exists' && (
-                            <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
-                              {step === '2fa'
-                                ? 'Enter the 6-digit code from your authenticator app.'
-                                : `Log in or register with your email`}
-                            </p>
-                          )}
-                          {step === 'otp' && (
-                            <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
-                              Code sent to{' '}
-                              <span className="font-semibold text-on-surface-variant">
-                                {identifier}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => setStep('identifier')}
-                                className="text-primary font-bold hover:underline cursor-pointer ml-1.5 uppercase text-[10px] tracking-wider"
-                              >
-                                Change
-                              </button>
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Form fields */}
-                        <div className="w-full">
-                          <AnimatePresence mode="wait">
-                            {step === 'identifier' ? (
-                              <motion.div
-                                key="identifier-step"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="space-y-6"
-                              >
-                                <UnifiedAuthForm
-                                  identifier={identifier}
-                                  setIdentifier={setIdentifier}
-                                  requestOTP={requestOTP}
-                                  isLoading={isLoading}
-                                  isFocused={isFocused}
-                                  setIsFocused={setIsFocused}
-                                  googleLoading={googleLoading}
-                                  handleGoogleSuccess={handleGoogleSuccess}
-                                  handleGoogleError={handleGoogleError}
-                                />
-                              </motion.div>
-                            ) : step === 'account_exists' ? (
-                              <motion.div
-                                key="account-exists-step"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                              >
-                                <LinkRequiredScreen setStep={setStep} />
-                              </motion.div>
-                            ) : step === '2fa' ? (
-                              <motion.div
-                                key="2fa-step"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                              >
-                                <TwoFactorForm
-                                  totpCode={totpCode}
-                                  setTotpCode={setTotpCode}
-                                  verify2FA={verify2FA}
-                                  isLoading={isLoading}
-                                  resetState={resetState}
-                                />
-                              </motion.div>
-                            ) : (
-                              <motion.div
-                                key="otp-step"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                              >
-                                <OtpVerificationForm
-                                  otp={otp}
-                                  handleVerifyOTP={handleVerifyOTP}
-                                  handlePaste={handlePaste}
-                                  handleOtpChange={handleOtpChange}
-                                  handleKeyDown={handleKeyDown}
-                                  otpRefs={otpRefs}
-                                  error={error}
-                                  errorMsg={errorMsg}
-                                  isLoading={isLoading}
-                                  timer={timer}
-                                  sendOTP={requestOTP}
-                                />
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+            <div className="relative bg-[#faf9f6] w-full rounded-t-[28px] sm:rounded-[28px] p-6 xs:p-7 sm:p-8 border-t sm:border border-outline-variant/30 shadow-[0_-10px_40px_rgba(115,92,0,0.04)] sm:shadow-[0_30px_70px_rgba(115,92,0,0.06)] overflow-y-auto max-h-[95vh] no-scrollbar">
+              {/* Grab handle for mobile bottom sheet */}
+              <div className="sm:hidden w-12 h-1 bg-outline-variant/40 rounded-full mx-auto mb-4 shrink-0" />
+              {/* Concentric rotating gold mandalas for luxury styling */}
+              <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-[0.06] z-0">
+                <MandalaElement
+                  size={300}
+                  duration={70}
+                  variant={1}
+                  opacity={1}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary"
+                />
+                <MandalaElement
+                  size={180}
+                  duration={40}
+                  variant={2}
+                  opacity={0.8}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary"
+                />
               </div>
-            </motion.div>
-          </div>
-        </>
+
+              {/* Close button */}
+              <button
+                onClick={closeAuthModal}
+                className="absolute top-6 right-6 w-11 h-11 rounded-full bg-white/50 backdrop-blur-md border border-outline-variant/20 flex items-center justify-center hover:bg-primary/10 text-on-surface-variant/40 hover:text-primary transition-all duration-300 z-50 cursor-pointer shadow-2xs"
+                aria-label="Close authentication modal"
+              >
+                <X className="text-[18px]" strokeWidth={1.5} />
+              </button>
+
+              {/* Core Content Layout */}
+              <div className="relative z-10">
+                <AnimatePresence mode="wait">
+                  {step === 'success' ? (
+                    <AuthSuccessScreen MandalaElement={MandalaElement} isNewUser={isNewUser} />
+                  ) : (
+                    <motion.div
+                      key="form-container"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="space-y-8"
+                    >
+                      {/* Headings */}
+                      <div className="text-left mb-8 sm:mb-10 space-y-1.5 sm:space-y-2">
+                        <h2 className="font-display text-[24px] sm:text-[28px] leading-tight text-on-surface-variant font-light">
+                          {step === '2fa'
+                            ? 'Enter Authenticator Code'
+                            : step === 'otp'
+                              ? 'Verification Code'
+                              : 'Login or Sign Up'}
+                        </h2>
+                        {step !== 'otp' && step !== 'account_exists' && (
+                          <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
+                            {step === '2fa'
+                              ? 'Enter the 6-digit code from your authenticator app.'
+                              : `Log in or register with your email`}
+                          </p>
+                        )}
+                        {step === 'otp' && (
+                          <p className="text-on-surface-variant/60 text-[13px] font-light leading-relaxed">
+                            Code sent to{' '}
+                            <span className="font-semibold text-on-surface-variant">
+                              {identifier}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setStep('identifier')}
+                              className="text-primary font-bold hover:underline cursor-pointer ml-1.5 uppercase text-[10px] tracking-wider"
+                            >
+                              Change
+                            </button>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Form fields */}
+                      <div className="w-full">
+                        <AnimatePresence mode="wait">
+                          {step === 'identifier' ? (
+                            <motion.div
+                              key="identifier-step"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="space-y-6"
+                            >
+                              <UnifiedAuthForm
+                                identifier={identifier}
+                                setIdentifier={setIdentifier}
+                                requestOTP={requestOTP}
+                                isLoading={isLoading}
+                                isFocused={isFocused}
+                                setIsFocused={setIsFocused}
+                                googleLoading={googleLoading}
+                                handleGoogleSuccess={handleGoogleSuccess}
+                                handleGoogleError={handleGoogleError}
+                              />
+                            </motion.div>
+                          ) : step === 'account_exists' ? (
+                            <motion.div
+                              key="account-exists-step"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                            >
+                              <LinkRequiredScreen setStep={setStep} />
+                            </motion.div>
+                          ) : step === '2fa' ? (
+                            <motion.div
+                              key="2fa-step"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                            >
+                              <TwoFactorForm
+                                totpCode={totpCode}
+                                setTotpCode={setTotpCode}
+                                verify2FA={verify2FA}
+                                isLoading={isLoading}
+                                resetState={resetState}
+                              />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="otp-step"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                            >
+                              <OtpVerificationForm
+                                otp={otp}
+                                handleVerifyOTP={handleVerifyOTP}
+                                handlePaste={handlePaste}
+                                handleOtpChange={handleOtpChange}
+                                handleKeyDown={handleKeyDown}
+                                otpRefs={otpRefs}
+                                error={error}
+                                errorMsg={errorMsg}
+                                isLoading={isLoading}
+                                timer={timer}
+                                sendOTP={requestOTP}
+                              />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );

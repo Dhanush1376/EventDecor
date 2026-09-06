@@ -204,7 +204,7 @@ export function InquiryDetailDrawer({ selectedOrder, setSelectedOrder, refetchOr
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={
               isMobile
-                ? 'fixed top-[8dvh] left-0 right-0 h-[92dvh] w-full bg-[var(--admin-surface)] z-50 shadow-2xl flex flex-col rounded-t-[var(--admin-radius-2xl)] border-t border-[var(--admin-border)]'
+                ? 'fixed bottom-0 left-0 right-0 h-[92vh] w-full bg-[var(--admin-surface)] z-50 shadow-2xl flex flex-col rounded-t-[var(--admin-radius-2xl)] border-t border-[var(--admin-border)]'
                 : 'fixed top-0 right-0 h-full w-full max-w-[540px] bg-[var(--admin-surface)] z-50 shadow-2xl flex flex-col border-l border-[var(--admin-border)]'
             }
           >
