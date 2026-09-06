@@ -7,11 +7,10 @@ const Barcode = lazy(() => import('react-barcode'));
 /**
  * InvoiceTemplate — Pure Presentation Component
  *
- * Renders authoritative tax invoice data for both standard purchase orders
- * and rental orders. For purchase orders, it uses immutable snapshots
- * (order.invoice, order.store, order.tax). For rental orders, it incorporates
- * rental-specific metadata (rental period, duration, refundable security deposit,
- * rental charge, delivery fees).
+ * Renders authoritative tax invoice data for:
+ * 1. Standard purchase orders (immutable snapshots, GST assessment, shipping).
+ * 2. Rental orders (rental agreement, duration, start/end dates, security deposit).
+ * 3. Mixed orders (cleanly segregates purchased merchandise from rented decor items).
  */
 export function InvoiceTemplate({ order, user = {}, onClose }) {
   const [isDownloading, setIsDownloading] = useState(false);
@@ -19,16 +18,37 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
 
   if (!order) return null;
 
-  // ─── Detect Rental Order ──────────────────────────────────────────
-  const isRental = Boolean(
-    order.rentalOrderId ||
-    order.rentalStartDate ||
-    order.rentalCharge !== undefined ||
-    order.securityDeposit !== undefined ||
-    order.isRental ||
-    order.orderType === 'rental' ||
-    (Array.isArray(order.items) && order.items.some((i) => i.type === 'rental' || i.isRental)),
-  );
+  // ─── Order Items & Category Segregation ───────────────────────────
+  const rawItems = Array.isArray(order.items) && order.items.length > 0 ? order.items : [];
+
+  const checkItemRental = (item) => {
+    if (!item) return false;
+    if (item.type === 'rental' || item.isRental === true) return true;
+    if (item.rentalInfo && (item.rentalInfo.startDate || item.rentalInfo.durationDays)) return true;
+    if (item.rentalStartDate || item.rentalEndDate) return true;
+    if (item.rentalDurationDays) return true;
+    if (order.orderType === 'rental' && item.type !== 'purchase') return true;
+    return false;
+  };
+
+  const rentalItemsRaw = rawItems.filter(checkItemRental);
+  const purchaseItemsRaw = rawItems.filter((i) => !checkItemRental(i));
+
+  const isMixed =
+    (rentalItemsRaw.length > 0 && purchaseItemsRaw.length > 0) ||
+    order.orderKind === 'mixed' ||
+    order.isMixed === true;
+
+  const isPureRental =
+    !isMixed &&
+    ((rentalItemsRaw.length > 0 && purchaseItemsRaw.length === 0) ||
+      Boolean(order.rentalOrderId) ||
+      (order.orderType === 'rental' && purchaseItemsRaw.length === 0) ||
+      order.isPureRental === true ||
+      (order.isRental === true && purchaseItemsRaw.length === 0));
+
+  const isPurePurchase = !isMixed && !isPureRental;
+  const isRental = isPureRental; // legacy alias for pure rental
 
   // ─── Read from immutable snapshots ─────────────────────────────────
   const invoiceSnap = order.invoice || {};
@@ -36,15 +56,29 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
   const taxSnap = typeof order.tax === 'object' && order.tax !== null ? order.tax : {};
 
   // ─── Invoice metadata ─────────────────────────────────────────────
-  const orderId = order.rentalOrderId || order._id || order.id || 'N/A';
-  const displayInvoiceNumber = isRental
+  const orderId = isPureRental
+    ? order.rentalOrderId || order.orderId || order._id || order.id || 'N/A'
+    : order.orderId || order._id || order.id || 'N/A';
+
+  const displayInvoiceNumber = isPureRental
     ? order.rentalOrderId ||
       (order._id ? `RNT-${order._id.slice(-8).toUpperCase()}` : 'Not Generated')
-    : invoiceSnap.number || order.invoiceNumber || 'Not Generated';
-  const invoiceNumber = displayInvoiceNumber;
-  const invoiceHeading = isRental ? 'TAX INVOICE — RENTAL' : 'TAX INVOICE';
+    : invoiceSnap.number ||
+      order.invoiceNumber ||
+      (order._id ? `INV-${order._id.slice(-8).toUpperCase()}` : 'Not Generated');
 
-  const rawDate = invoiceSnap.issuedAt || order.createdAt || order.rentalStartDate || order.date;
+  const invoiceNumber = displayInvoiceNumber;
+  const invoiceHeading = isMixed
+    ? 'TAX INVOICE — COMBINED'
+    : isPureRental
+      ? 'TAX INVOICE — RENTAL'
+      : 'TAX INVOICE';
+
+  const rawDate =
+    invoiceSnap.issuedAt ||
+    order.createdAt ||
+    (isPureRental ? order.rentalStartDate : null) ||
+    order.date;
   const invoiceDate = rawDate
     ? new Date(rawDate).toLocaleDateString('en-IN', {
         day: 'numeric',
@@ -59,7 +93,6 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
   const gstin = storeSnap.gstin || '29AAAES9284D1ZX';
   const storeEmail = storeSnap.email || 'support@siriartsandcrafts.com';
 
-  // Build store address from structured fields or use fallback
   const storeAddressLines = storeSnap.addressLine1
     ? [
         storeSnap.addressLine1,
@@ -71,7 +104,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
     : ['#28-1-92, South Street', 'ONGOLE-523001, Prakasam District', 'Andhra Pradesh'];
 
   // ─── Payment (from live order fields) ──────────────────────────────
-  const paymentMode = order.paymentMethod || 'N/A';
+  const paymentMode = order.paymentMethod || order.paymentMode || 'N/A';
 
   // ─── Customer (from live order fields) ─────────────────────────────
   const customerName =
@@ -102,11 +135,36 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
     pin = addrObj.pincode || '';
   }
 
-  // ─── Items (normalized for both purchase and rental orders) ────────
+  // ─── Items (normalized for purchase, rental, or mixed orders) ──────
   const items =
-    Array.isArray(order.items) && order.items.length > 0
-      ? order.items
-      : isRental
+    rawItems.length > 0
+      ? rawItems.map((item) => {
+          const itemIsRental = checkItemRental(item);
+          return {
+            ...item,
+            title: item.title || item.name || (itemIsRental ? 'Event Rental Item' : 'Product'),
+            quantity: item.quantity || item.qty || 1,
+            price: Number(item.price) || Number(item.rentalPrice) || 0,
+            isRental: itemIsRental,
+            type: itemIsRental ? 'rental' : 'purchase',
+            rentalDurationDays:
+              item.rentalDurationDays ||
+              item.rentalInfo?.durationDays ||
+              (itemIsRental ? order.durationDays : undefined),
+            rentalStartDate:
+              item.rentalStartDate ||
+              item.rentalInfo?.startDate ||
+              (itemIsRental ? order.rentalStartDate : undefined),
+            rentalEndDate:
+              item.rentalEndDate ||
+              item.rentalInfo?.endDate ||
+              (itemIsRental ? order.rentalEndDate : undefined),
+            deposit: itemIsRental
+              ? item.deposit || item.securityDeposit || (order.securityDeposit ?? 0)
+              : 0,
+          };
+        })
+      : isPureRental
         ? [
             {
               title:
@@ -118,7 +176,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
               quantity: order.quantity || 1,
               price:
                 order.rentalRate?.rentalPrice ||
-                (order.rentalCharge !== undefined
+                (typeof order.rentalCharge === 'number'
                   ? Math.round((order.rentalCharge / (order.quantity || 1)) * 100) / 100
                   : 0),
               rentalCharge: order.rentalCharge || order.rentalRate?.rentalPrice || 0,
@@ -128,57 +186,98 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   ? `${order.durationDays} Day${order.durationDays > 1 ? 's' : ''} Rental`
                   : 'Rental'),
               isRental: true,
-              rentalDurationDays: order.durationDays || order.rentalRate?.rentalDurationDays,
+              type: 'rental',
+              rentalDurationDays: order.durationDays || order.rentalRate?.rentalDurationDays || 1,
               rentalStartDate: order.rentalStartDate,
               rentalEndDate: order.rentalEndDate,
-              securityDeposit: order.securityDeposit,
+              deposit: order.securityDeposit || 0,
             },
           ]
         : [];
 
-  // ─── Financial data ───────────────────────────────────────────────
-  const subtotal = isRental
-    ? (order.rentalCharge ?? taxSnap.subtotal ?? order.subtotal ?? 0)
-    : (taxSnap.subtotal ?? order.subtotal ?? 0);
+  // ─── Financial calculations ───────────────────────────────────────
+  const purchaseSubtotal = items
+    .filter((i) => !i.isRental)
+    .reduce((acc, i) => acc + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0);
+
+  const rentalCharge =
+    items
+      .filter((i) => i.isRental)
+      .reduce((acc, i) => acc + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0) ||
+    (isPureRental ? Number(order.rentalCharge) || 0 : 0);
+
+  const subtotal = isPurePurchase
+    ? (taxSnap.subtotal ?? order.subtotal ?? purchaseSubtotal)
+    : isPureRental
+      ? (order.rentalCharge ?? taxSnap.subtotal ?? order.subtotal ?? rentalCharge)
+      : purchaseSubtotal + rentalCharge;
+
   const discount = taxSnap.discount ?? order.discount ?? 0;
-  const securityDeposit = isRental ? (order.securityDeposit ?? 0) : 0;
-  const deliveryCharge = isRental
+  const securityDeposit = isPurePurchase
+    ? 0
+    : (order.securityDeposit ??
+      order.depositTotal ??
+      items.filter((i) => i.isRental).reduce((acc, i) => acc + (Number(i.deposit) || 0), 0));
+
+  const deliveryCharge = isPureRental
     ? (order.deliveryCharge ?? order.shippingFee ?? 0)
-    : (order.shippingFee ?? 0);
+    : (order.shippingFee ?? order.deliveryCharge ?? 0);
   const shippingFee = deliveryCharge;
-  const taxAmount = isRental
+
+  const taxAmount = isPureRental
     ? typeof order.tax === 'number'
       ? order.tax
       : (taxSnap.totalTax ?? 0)
-    : (taxSnap.totalTax ?? 0);
+    : (taxSnap.totalTax ??
+      (typeof order.tax === 'number' ? order.tax : (order.tax?.totalTax ?? 0)));
+
   const walletDeduction = order.walletDeduction ?? 0;
   const grandTotal =
     taxSnap.grandTotal ??
     order.totalAmount ??
     order.total ??
     subtotal + securityDeposit + deliveryCharge + taxAmount - discount - walletDeduction;
-  const taxableAmount =
-    Number(taxSnap.taxableAmount ?? (isRental ? (order.rentalCharge ?? 0) : 0)) || 0;
+
+  const taxableAmount = isPurePurchase
+    ? Number(taxSnap.taxableAmount ?? subtotal) || 0
+    : isPureRental
+      ? Number(taxSnap.taxableAmount ?? rentalCharge) || 0
+      : Number(taxSnap.taxableAmount ?? subtotal) || 0;
+
   const totalTax = Number(taxSnap.totalTax ?? taxAmount) || 0;
   const cgst = Number(taxSnap.cgst ?? (totalTax > 0 ? totalTax / 2 : 0)) || 0;
   const sgst = Number(taxSnap.sgst ?? (totalTax > 0 ? totalTax / 2 : 0)) || 0;
   const currency = taxSnap.currencySymbol || '₹';
 
-  // Derive CGST/SGST percentage from amounts (for display only)
   const cgstPercent = taxableAmount > 0 ? ((cgst / taxableAmount) * 100).toFixed(0) : '0';
   const sgstPercent = taxableAmount > 0 ? ((sgst / taxableAmount) * 100).toFixed(0) : '0';
 
   // ─── Shipping & Tracking ──────────────────────────────────────────
-  const courierPartner = order.courierPartner || 'Not Yet Dispatched';
-  const trackingNumber = order.trackingNumber || (isRental ? order.rentalOrderId : 'Pending');
-  const trackingQR = isRental
+  const courierPartner =
+    order.courierPartner || (isPureRental ? 'Siri Logistics' : 'Not Yet Dispatched');
+  const trackingNumber =
+    order.trackingNumber || (isPureRental ? order.rentalOrderId || orderId : 'Pending');
+  const trackingQR = isPureRental
     ? `${window.location.origin}/dashboard/rentals`
-    : `${window.location.origin}/track/${orderId}`;
+    : isMixed
+      ? `${window.location.origin}/dashboard`
+      : `${window.location.origin}/track/${orderId}`;
 
   // ─── Assessment / Tax box display logic ───────────────────────────
   const hasTaxSnapshot = Boolean(
-    taxSnap.grandTotal || (isRental && (taxAmount > 0 || securityDeposit > 0 || taxableAmount > 0)),
+    taxSnap.grandTotal ||
+    taxAmount > 0 ||
+    taxableAmount > 0 ||
+    (securityDeposit > 0 && !isPurePurchase),
   );
+
+  const rentalStartDate = order.rentalStartDate || items.find((i) => i.isRental)?.rentalStartDate;
+  const rentalEndDate = order.rentalEndDate || items.find((i) => i.isRental)?.rentalEndDate;
+  const rentalDurationDays =
+    order.durationDays ||
+    items.find((i) => i.isRental)?.rentalDurationDays ||
+    order.rentalRate?.rentalDurationDays ||
+    1;
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -186,7 +285,6 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
       const element = printRef.current;
       if (!element) throw new Error('Invoice element not found');
 
-      // Temporarily remove overflow restrictions from parent modal to prevent html2canvas cropping
       const parentModal = element.closest('.invoice-modal-container');
       const originalMaxHeight = parentModal ? parentModal.style.maxHeight : '';
       const originalOverflow = parentModal ? parentModal.style.overflow : '';
@@ -196,7 +294,6 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
         parentModal.style.overflow = 'visible';
       }
 
-      // Dynamically load heavy libraries only when downloading!
       const html2canvasModule = await import('html2canvas');
       const html2canvas = html2canvasModule.default || html2canvasModule;
       const { jsPDF } = await import('jspdf');
@@ -217,14 +314,17 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
       const imgData = canvas.toDataURL('image/jpeg', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
 
-      // Add a 10mm margin around the invoice box on the A4 page
       const margin = 10;
       const pdfWidth = pdf.internal.pageSize.getWidth() - margin * 2;
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
       pdf.addImage(imgData, 'JPEG', margin, margin, pdfWidth, pdfHeight);
       pdf.save(
-        isRental ? `Rental_Invoice_${displayInvoiceNumber}.pdf` : `Invoice_${invoiceNumber}.pdf`,
+        isPureRental
+          ? `Rental_Invoice_${displayInvoiceNumber}.pdf`
+          : isMixed
+            ? `Combined_Invoice_${displayInvoiceNumber}.pdf`
+            : `Invoice_${invoiceNumber}.pdf`,
       );
     } catch (err) {
       console.error('Invoice download failed', err);
@@ -293,12 +393,12 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
             <div className="text-[7px] sm:text-[9px] lg:text-[11px] text-[#4b5563] mt-1.5 lg:mt-3 space-y-0.5 lg:space-y-1">
               {displayInvoiceNumber !== 'Not Generated' && (
                 <p>
-                  {isRental ? 'Rental ID: ' : 'Invoice No: '}
+                  {isPureRental ? 'Rental ID: ' : 'Invoice No: '}
                   <strong className="text-black font-mono">{displayInvoiceNumber}</strong>
                 </p>
               )}
               <p className="hidden sm:block">
-                {isRental ? 'Reference: ' : 'Order Ref: '}
+                {isPureRental ? 'Reference: ' : 'Order Ref: '}
                 <span className="font-mono">{displayInvoiceNumber.substring(0, 16)}</span>
               </p>
               {invoiceDate !== 'N/A' && <p>Invoice Date: {invoiceDate}</p>}
@@ -346,11 +446,11 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
           </div>
         </div>
 
-        {/* Rental Terms & Period Banner */}
-        {isRental && (
+        {/* Rental Terms & Period Banner (Only shown if pure rental or mixed with rental items) */}
+        {(isPureRental || (isMixed && rentalItemsRaw.length > 0)) && (
           <div className="bg-[#f9fafb] p-3 lg:p-4 rounded-xl border border-[#e5e7eb] mb-4 lg:mb-6 print:bg-white print:border print:p-2">
             <h3 className="font-black text-[#374151] uppercase tracking-widest border-b border-[#e5e7eb] pb-1 mb-2 text-[7px] lg:text-[10px]">
-              Rental Period & Terms
+              {isMixed ? 'Rental Items Schedule & Terms' : 'Rental Period & Terms'}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[8px] sm:text-[9px] lg:text-[11px]">
               <div>
@@ -358,8 +458,8 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   Rental Start:
                 </span>
                 <strong className="text-[#111827]">
-                  {order.rentalStartDate
-                    ? new Date(order.rentalStartDate).toLocaleDateString('en-IN', {
+                  {rentalStartDate
+                    ? new Date(rentalStartDate).toLocaleDateString('en-IN', {
                         day: 'numeric',
                         month: 'short',
                         year: 'numeric',
@@ -372,8 +472,8 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   Rental End:
                 </span>
                 <strong className="text-[#111827]">
-                  {order.rentalEndDate
-                    ? new Date(order.rentalEndDate).toLocaleDateString('en-IN', {
+                  {rentalEndDate
+                    ? new Date(rentalEndDate).toLocaleDateString('en-IN', {
                         day: 'numeric',
                         month: 'short',
                         year: 'numeric',
@@ -386,10 +486,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   Duration:
                 </span>
                 <strong className="text-[#111827]">
-                  {order.durationDays || order.rentalRate?.rentalDurationDays || 1} Day
-                  {(order.durationDays || order.rentalRate?.rentalDurationDays || 1) !== 1
-                    ? 's'
-                    : ''}
+                  {rentalDurationDays} Day{rentalDurationDays !== 1 ? 's' : ''}
                 </strong>
               </div>
               <div>
@@ -420,7 +517,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   Qty
                 </th>
                 <th className="text-right p-1.5 lg:p-3 uppercase tracking-wider text-[#374151] hidden sm:table-cell">
-                  {isRental ? 'Rental Rate' : 'Price'}
+                  {isMixed ? 'Price / Rate' : isPureRental ? 'Rental Rate' : 'Price'}
                 </th>
                 <th className="text-right p-1.5 lg:p-3 uppercase tracking-wider text-[#374151] hidden lg:table-cell">
                   CGST
@@ -443,26 +540,51 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                 return (
                   <tr key={idx} className="hover:bg-[#f9fafb]">
                     <td className="p-1.5 lg:p-3 font-semibold text-[#111827]">
-                      {title}
-                      {item.variant && item.variant !== 'Default' && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span>{title}</span>
+                        {isMixed && (
+                          <span
+                            className={`text-[6px] lg:text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                              item.isRental
+                                ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                : 'bg-slate-100 text-slate-700 border border-slate-200'
+                            }`}
+                          >
+                            {item.isRental ? 'Rental' : 'Purchase'}
+                          </span>
+                        )}
+                      </div>
+                      {!item.isRental && item.variant && item.variant !== 'Default' && (
                         <span className="block text-[6px] lg:text-[9px] text-[#6b7280] font-light mt-0.5">
-                          {item.isRental ? 'Duration: ' : 'Style: '}
-                          {item.variant}
+                          Style: {item.variant}
                         </span>
                       )}
-                      {item.isRental && item.rentalStartDate && (
+                      {item.isRental && (
+                        <span className="block text-[6px] lg:text-[9px] text-[#8c7335] font-medium mt-0.5">
+                          Duration:{' '}
+                          {item.variant ||
+                            `${item.rentalDurationDays || rentalDurationDays || 1} Day Rental`}
+                        </span>
+                      )}
+                      {item.isRental && (item.rentalStartDate || rentalStartDate) && (
                         <span className="block text-[6px] lg:text-[9px] text-[#6b7280] font-light mt-0.5">
                           Period:{' '}
-                          {new Date(item.rentalStartDate).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                          })}{' '}
+                          {new Date(item.rentalStartDate || rentalStartDate).toLocaleDateString(
+                            'en-IN',
+                            {
+                              day: 'numeric',
+                              month: 'short',
+                            },
+                          )}{' '}
                           –{' '}
-                          {new Date(item.rentalEndDate).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
+                          {new Date(item.rentalEndDate || rentalEndDate).toLocaleDateString(
+                            'en-IN',
+                            {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            },
+                          )}
                         </span>
                       )}
                     </td>
@@ -486,31 +608,85 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
               })}
             </tbody>
             <tfoot className="border-t border-[#d1d5db] text-[8px] lg:text-[11px]">
-              <tr>
-                <td
-                  className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] sm:hidden"
-                  colSpan="2"
-                >
-                  {isRental ? 'Rental Charge:' : 'Gross Subtotal:'}
-                </td>
-                <td
-                  className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] hidden sm:table-cell lg:hidden"
-                  colSpan="3"
-                >
-                  {isRental ? 'Rental Charge:' : 'Gross Subtotal:'}
-                </td>
-                <td
-                  className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] hidden lg:table-cell"
-                  colSpan="5"
-                >
-                  {isRental ? 'Rental Charge:' : 'Gross Subtotal:'}
-                </td>
-                <td className="text-right p-1.5 lg:p-2 font-bold font-mono text-[#111827]">
-                  {currency}
-                  {subtotal.toLocaleString()}
-                </td>
-              </tr>
-              {isRental && securityDeposit > 0 && (
+              {isMixed ? (
+                <>
+                  <tr>
+                    <td
+                      className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] sm:hidden"
+                      colSpan="2"
+                    >
+                      Purchased Items Subtotal:
+                    </td>
+                    <td
+                      className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] hidden sm:table-cell lg:hidden"
+                      colSpan="3"
+                    >
+                      Purchased Items Subtotal:
+                    </td>
+                    <td
+                      className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] hidden lg:table-cell"
+                      colSpan="5"
+                    >
+                      Purchased Items Subtotal:
+                    </td>
+                    <td className="text-right p-1.5 lg:p-2 font-bold font-mono text-[#111827]">
+                      {currency}
+                      {purchaseSubtotal.toLocaleString()}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td
+                      className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] sm:hidden"
+                      colSpan="2"
+                    >
+                      Rental Decor Charges:
+                    </td>
+                    <td
+                      className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] hidden sm:table-cell lg:hidden"
+                      colSpan="3"
+                    >
+                      Rental Decor Charges:
+                    </td>
+                    <td
+                      className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] hidden lg:table-cell"
+                      colSpan="5"
+                    >
+                      Rental Decor Charges:
+                    </td>
+                    <td className="text-right p-1.5 lg:p-2 font-bold font-mono text-[#111827]">
+                      {currency}
+                      {rentalCharge.toLocaleString()}
+                    </td>
+                  </tr>
+                </>
+              ) : (
+                <tr>
+                  <td
+                    className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] sm:hidden"
+                    colSpan="2"
+                  >
+                    {isPureRental ? 'Rental Charge:' : 'Gross Subtotal:'}
+                  </td>
+                  <td
+                    className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] hidden sm:table-cell lg:hidden"
+                    colSpan="3"
+                  >
+                    {isPureRental ? 'Rental Charge:' : 'Gross Subtotal:'}
+                  </td>
+                  <td
+                    className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] hidden lg:table-cell"
+                    colSpan="5"
+                  >
+                    {isPureRental ? 'Rental Charge:' : 'Gross Subtotal:'}
+                  </td>
+                  <td className="text-right p-1.5 lg:p-2 font-bold font-mono text-[#111827]">
+                    {currency}
+                    {subtotal.toLocaleString()}
+                  </td>
+                </tr>
+              )}
+
+              {!isPurePurchase && securityDeposit > 0 && (
                 <tr>
                   <td
                     className="text-right p-1.5 lg:p-2 font-bold text-[#059669] sm:hidden"
@@ -539,6 +715,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   </td>
                 </tr>
               )}
+
               {discount > 0 && (
                 <tr>
                   <td
@@ -565,25 +742,38 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   </td>
                 </tr>
               )}
+
               {shippingFee > 0 && (
                 <tr>
                   <td
                     className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] sm:hidden"
                     colSpan="2"
                   >
-                    {isRental ? 'Delivery Charge:' : 'Shipping:'}
+                    {isPureRental
+                      ? 'Delivery Charge:'
+                      : isMixed
+                        ? 'Shipping & Delivery:'
+                        : 'Shipping:'}
                   </td>
                   <td
                     className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] hidden sm:table-cell lg:hidden"
                     colSpan="3"
                   >
-                    {isRental ? 'Delivery Charge:' : 'Shipping:'}
+                    {isPureRental
+                      ? 'Delivery Charge:'
+                      : isMixed
+                        ? 'Shipping & Delivery:'
+                        : 'Shipping:'}
                   </td>
                   <td
                     className="text-right p-1.5 lg:p-2 font-bold text-[#4b5563] hidden lg:table-cell"
                     colSpan="5"
                   >
-                    {isRental ? 'Delivery Charge:' : 'Shipping:'}
+                    {isPureRental
+                      ? 'Delivery Charge:'
+                      : isMixed
+                        ? 'Shipping & Delivery:'
+                        : 'Shipping:'}
                   </td>
                   <td className="text-right p-1.5 lg:p-2 font-bold font-mono text-[#111827]">
                     {currency}
@@ -591,6 +781,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   </td>
                 </tr>
               )}
+
               {taxAmount > 0 && (
                 <tr>
                   <td
@@ -617,6 +808,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   </td>
                 </tr>
               )}
+
               {walletDeduction > 0 && (
                 <tr>
                   <td
@@ -643,6 +835,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   </td>
                 </tr>
               )}
+
               <tr className="bg-[#f9fafb] print:bg-white border-t border-double border-[#111827]">
                 <td
                   className="text-right p-2 lg:p-3 font-black text-[#1f2937] text-[8px] lg:text-xs uppercase tracking-wider sm:hidden"
@@ -676,20 +869,44 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
           {hasTaxSnapshot ? (
             <div className="p-2 lg:p-4 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl w-full sm:max-w-[50%] print:bg-white print:border-none print:p-0">
               <h4 className="font-black text-[7px] lg:text-[9px] uppercase tracking-widest text-[#374151] border-b border-[#e5e7eb] pb-1 mb-1.5 lg:mb-2">
-                {isRental ? 'Rental Fee & Tax Assessment' : 'GST Tax Assessment'}
+                {isMixed
+                  ? 'Order & Rental Tax Assessment'
+                  : isPureRental
+                    ? 'Rental Fee & Tax Assessment'
+                    : 'GST Tax Assessment'}
               </h4>
               <table className="w-full text-[7px] lg:text-[10px]">
                 <tbody>
-                  <tr>
-                    <td className="py-0.5 lg:py-1 text-[#4b5563]">
-                      {isRental ? 'Rental Charge (Base):' : 'Taxable Basic Value:'}
-                    </td>
-                    <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
-                      {currency}
-                      {taxableAmount.toFixed(2)}
-                    </td>
-                  </tr>
-                  {isRental && securityDeposit > 0 && (
+                  {isMixed ? (
+                    <>
+                      <tr>
+                        <td className="py-0.5 lg:py-1 text-[#4b5563]">Purchased Taxable Value:</td>
+                        <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
+                          {currency}
+                          {purchaseSubtotal.toFixed(2)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-0.5 lg:py-1 text-[#4b5563]">Rental Charge (Base):</td>
+                        <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
+                          {currency}
+                          {rentalCharge.toFixed(2)}
+                        </td>
+                      </tr>
+                    </>
+                  ) : (
+                    <tr>
+                      <td className="py-0.5 lg:py-1 text-[#4b5563]">
+                        {isPureRental ? 'Rental Charge (Base):' : 'Taxable Basic Value:'}
+                      </td>
+                      <td className="text-right py-0.5 lg:py-1 font-mono text-[#111827] font-semibold">
+                        {currency}
+                        {taxableAmount.toFixed(2)}
+                      </td>
+                    </tr>
+                  )}
+
+                  {!isPurePurchase && securityDeposit > 0 && (
                     <tr>
                       <td className="py-0.5 lg:py-1 text-[#059669]">
                         Refundable Security Deposit:
@@ -700,6 +917,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                       </td>
                     </tr>
                   )}
+
                   {sgst > 0 && (
                     <tr>
                       <td className="py-0.5 lg:py-1 text-[#4b5563]">
@@ -725,7 +943,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   {totalTax > 0 && (
                     <tr className="border-t border-dashed border-[#d1d5db] font-bold font-mono">
                       <td className="pt-1 lg:pt-2 text-[#1f2937]">
-                        {isRental ? 'Total Taxes:' : 'Total Taxes (Inclusive):'}
+                        {isPureRental ? 'Total Taxes:' : 'Total Taxes (Inclusive):'}
                       </td>
                       <td className="text-right pt-1 lg:pt-2 text-black font-black">
                         {currency}
@@ -735,7 +953,7 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
                   )}
                 </tbody>
               </table>
-              {isRental && (
+              {!isPurePurchase && securityDeposit > 0 && (
                 <p className="text-[6px] lg:text-[8px] text-[#6b7280] mt-2 italic leading-tight">
                   * Security deposit of {currency}
                   {securityDeposit.toLocaleString()} is held until return inspection.
@@ -750,7 +968,11 @@ export function InvoiceTemplate({ order, user = {}, onClose }) {
           <div className="flex justify-between items-center w-full sm:w-[45%]">
             <div className="space-y-0.5 lg:space-y-1">
               <h3 className="font-black text-[#1f2937] text-[7px] lg:text-[10px] uppercase tracking-wider mb-1 lg:mb-2">
-                {isRental ? 'Rental Tracking' : 'Order Tracking'}
+                {isPureRental
+                  ? 'Rental Tracking'
+                  : isMixed
+                    ? 'Order & Rental Tracking'
+                    : 'Order Tracking'}
               </h3>
               {courierPartner !== 'Not Yet Dispatched' && (
                 <p className="text-[7px] lg:text-[11px] text-[#4b5563]">

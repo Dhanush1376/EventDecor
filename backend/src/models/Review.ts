@@ -10,6 +10,7 @@ export interface IReview extends ISoftDeleted {
   rating: number;
   comment: string;
   images: string[];
+  originalImages?: string[];
   reviewImages?: {
     secureUrl: string;
     publicId: string;
@@ -31,6 +32,7 @@ export interface IReview extends ISoftDeleted {
   helpfulBy?: mongoose.Types.ObjectId[];
   category: 'showcase' | 'event' | 'product';
   verified: boolean;
+  rewardPaid?: number;
   createdAt: Date;
   isMock?: boolean;
 }
@@ -44,6 +46,7 @@ const ReviewSchema: Schema = new Schema(
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true },
     images: [{ type: String }],
+    originalImages: [{ type: String }],
     reviewImages: [
       {
         secureUrl: { type: String, required: true },
@@ -75,6 +78,7 @@ const ReviewSchema: Schema = new Schema(
       default: 'product',
     },
     verified: { type: Boolean, default: false },
+    rewardPaid: { type: Number, default: 0 },
     isMock: { type: Boolean, default: false },
   },
   { timestamps: true },

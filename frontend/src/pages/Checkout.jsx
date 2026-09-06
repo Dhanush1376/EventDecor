@@ -65,7 +65,9 @@ function CheckoutContent() {
             setActiveStep(stepIndex);
           } else {
             // Cannot jump forward without passing validations, rely on continue buttons
-            toast('Complete the current step to continue', { icon: '📍' });
+            toast('Complete the current step to continue', {
+              icon: <MapPin className="w-4 h-4 text-brand-primary" />,
+            });
           }
         }}
       />

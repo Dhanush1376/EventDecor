@@ -147,7 +147,9 @@ const AdminReturnDetail = lazy(() =>
   })),
 );
 const AdminExchangeHub = lazy(() =>
-  import('../admin/pages/returns/AdminExchangeHub').then((m) => ({ default: m.AdminExchangeHub })),
+  import('../admin/pages/returns/AdminExchangeHub').then((m) => ({
+    default: m.default || m.AdminExchangeHub,
+  })),
 );
 const AdminAddEvent = lazy(() =>
   import('../admin/pages/AdminAddEvent').then((m) => ({ default: m.AdminAddEvent })),
@@ -191,7 +193,7 @@ const AdminPolicyEditor = lazy(() =>
 );
 const AdminRecommendationAnalytics = lazy(() =>
   import('../admin/pages/AdminRecommendationAnalytics').then((m) => ({
-    default: m.AdminRecommendationAnalytics,
+    default: m.default || m.AdminRecommendationAnalytics,
   })),
 );
 const AdminAnalytics = lazy(() =>
@@ -471,10 +473,18 @@ export function AppRoutes() {
               <Route path="system/audit" element={<AdminSystemHub />} />
 
               <Route path="recycle-bin" element={<AdminRecycleBin />} />
+              <Route path="trash" element={<Navigate to="/admin/recycle-bin" replace />} />
+              <Route path="system/trash" element={<Navigate to="/admin/recycle-bin" replace />} />
+              <Route
+                path="system/recycle-bin"
+                element={<Navigate to="/admin/recycle-bin" replace />}
+              />
 
               <Route path="returns" element={<AdminReturnsHub />} />
               <Route path="returns/requests/:id" element={<AdminReturnDetail />} />
               <Route path="exchanges" element={<AdminExchangeHub />} />
+              <Route path="exchanges/requests/:id" element={<AdminReturnDetail />} />
+              <Route path="exchanges/:id" element={<AdminReturnDetail />} />
 
               <Route path="enterprise-search" element={<AdminEnterpriseSearch />} />
 

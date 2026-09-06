@@ -179,6 +179,12 @@ router.post(
   returnAdminController.triggerRefund,
 );
 router.post(
+  '/admin/:id/settle-refund',
+  requireAuth,
+  authorize('super_admin', 'main_admin', 'admin'),
+  returnAdminController.recordRefundSettlement,
+);
+router.post(
   '/admin/:id/notes',
   requireAuth,
   authorize('super_admin', 'main_admin', 'admin', 'editor'),

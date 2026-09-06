@@ -184,11 +184,11 @@ export function useCreateCoupon() {
 
       if (res.success) {
         await deleteDraft();
-        toast.success(isEdit ? 'Coupon updated' : 'Campaign published');
+        toast.success(isEdit ? 'Coupon updated' : 'Coupon published');
         navigate('/admin/coupons');
       }
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to save coupon campaign'));
+      toast.error(getErrorMessage(err, 'Failed to save coupon'));
     } finally {
       setSaving(false);
     }

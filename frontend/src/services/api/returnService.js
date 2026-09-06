@@ -19,6 +19,8 @@ export const returnService = {
 
   triggerRefund: (id, method) => api.post(`/returns/admin/${id}/refund`, { method }),
 
+  settleRefund: (id, data) => api.post(`/returns/admin/${id}/settle-refund`, data),
+
   addInternalNote: (id, data) => api.post(`/returns/admin/${id}/notes`, data),
 
   bulkAction: (data) => api.post('/returns/admin/bulk', data),

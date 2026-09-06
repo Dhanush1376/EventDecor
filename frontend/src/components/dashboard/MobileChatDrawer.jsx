@@ -35,7 +35,7 @@ export function MobileChatDrawer({
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
             className="relative z-10 w-full flex flex-col"
-            style={{ height: '82vh' }}
+            style={{ height: '85%' }}
           >
             <div className="w-full h-full bg-white rounded-t-[28px] flex flex-col relative overflow-hidden">
               {/* Drag handle pill */}

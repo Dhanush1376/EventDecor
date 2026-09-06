@@ -182,7 +182,8 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
                 onClose();
               }
             }}
-            className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-5xl bg-surface rounded-[24px] lg:rounded-[32px] overflow-hidden shadow-2xl flex flex-col lg:flex-row h-auto max-h-[85vh] border border-outline-variant/10 touch-pan-x"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-5xl bg-surface rounded-[24px] lg:rounded-[32px] overflow-hidden shadow-2xl flex flex-col lg:flex-row h-auto max-h-[85%] border border-outline-variant/10 touch-pan-x"
           >
             {/* Close Button - Fixed in Modal Container */}
             <button
@@ -197,11 +198,12 @@ export const QuickViewModal = ({ isOpen, onClose, product, onNext, onPrev, hasNe
             {(product.reviews > 0 || product.rating > 0) && (
               <div className="absolute top-4 left-4 lg:top-8 lg:left-8 h-9 lg:h-12 min-h-0 z-[60] flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-3 lg:px-4 rounded-full shadow-sm border border-black/5 pointer-events-auto">
                 <Star className="text-[12px] lg:text-[14px] text-primary" strokeWidth={1.5} />
-                <span className="font-label text-[10px] lg:text-[11px] text-black/60 font-bold uppercase tracking-wider flex items-center">
-                  <span className="text-black font-bold mr-1">
+                <span className="font-label text-[10px] lg:text-[11px] text-black/60 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <span className="text-black font-bold">
                     {Number(product.rating || 0).toFixed(1)}
                   </span>
-                  ({product.reviews || 0} Reviews)
+                  <span className="text-black/30 font-normal">·</span>
+                  <span>{product.reviews || 0} Reviews</span>
                 </span>
               </div>
             )}

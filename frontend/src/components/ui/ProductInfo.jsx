@@ -1,6 +1,5 @@
 import {
   Award,
-  PenLine,
   CornerDownLeft,
   ArrowLeftRight,
   Heart,
@@ -147,7 +146,7 @@ export function ProductInfo({
             </>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           {(product.isBestseller || product.isFeatured) && (
             <div className="relative group/badge">
               <div className="w-9 h-9 rounded-full bg-primary-container/10 border border-primary-container/20 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
@@ -158,14 +157,27 @@ export function ProductInfo({
               </span>
             </div>
           )}
-          <div className="relative group/badge">
-            <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
-              <PenLine className="text-[16px] text-on-surface" strokeWidth={1.5} />
-            </div>
-            <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-on-surface text-surface text-[12px] uppercase tracking-widest rounded-md opacity-0 group-hover/badge:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-xl z-10">
-              Handmade
-            </span>
-          </div>
+          {(product.reviewCount || product.reviews || 0) > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('reviews-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 hover:border-primary/40 hover:bg-surface-container active:scale-95 transition-all cursor-pointer group shadow-sm"
+              title={`${product.reviewCount || product.reviews} Verified Review${(product.reviewCount || product.reviews) > 1 ? 's' : ''}`}
+            >
+              <Star className="text-[13px] fill-[#D4A853] text-[#D4A853] group-hover:scale-110 transition-transform shrink-0" />
+              <span className="font-label text-[11px] font-bold text-on-surface leading-none">
+                {Number(product.rating || 5.0).toFixed(1)}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-on-surface/30 shrink-0" />
+              <span className="font-label text-[10px] text-on-surface/70 font-medium leading-none">
+                {product.reviewCount || product.reviews}{' '}
+                {Number(product.reviewCount || product.reviews) === 1 ? 'review' : 'reviews'}
+              </span>
+            </button>
+          )}
           {product.returnSettings?.isReturnable && (
             <div className="relative group/badge">
               <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center shadow-sm cursor-default hover:scale-110 transition-transform">
@@ -207,37 +219,14 @@ export function ProductInfo({
               </div>
             )}
           </h2>
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            {(product.reviewCount || product.reviews || 0) > 0 && (
-              <button
-                onClick={() => {
-                  const el = document.getElementById('reviews-section');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="flex items-center gap-2.5 hover:opacity-80 active:scale-98 transition-all cursor-pointer text-left outline-none"
-              >
-                <div className="flex items-center gap-0.5 text-primary-container">
-                  {[...Array(5)].map((_, i) => (
-                    <Star className="text-[13px] sm:text-[14px]" strokeWidth={1.5} />
-                  ))}
-                </div>
-                <span className="font-body-sm text-on-surface/60 font-semibold text-[12px] sm:text-[13px] underline decoration-dotted decoration-primary/45 hover:text-primary transition-colors">
-                  {product.reviewCount || product.reviews} Verified Reviews
-                </span>
-              </button>
-            )}
-
-            {(product.reviewCount || product.reviews || 0) > 0 && product.isFeatured && (
-              <span className="w-1 h-1 rounded-full bg-on-surface/20"></span>
-            )}
-
-            {product.isFeatured && (
+          {product.isFeatured && (
+            <div className="flex items-center gap-2 pt-0.5">
               <span className="font-label-sm text-[11px] sm:text-[12px] text-green-700 font-bold flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
                 Trending this week
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

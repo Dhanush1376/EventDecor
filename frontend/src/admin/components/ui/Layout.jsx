@@ -96,7 +96,7 @@ export function PageHeader({
         </div>
         {headerAction && (
           <div
-            className={`${actionRowMobile ? 'w-auto mt-0' : 'w-full sm:w-auto mt-3 sm:mt-0'} shrink-0 flex items-center justify-start sm:justify-center`}
+            className={`${actionRowMobile ? 'w-auto mt-0' : 'w-full sm:w-auto mt-3 sm:mt-0'} shrink-0 flex items-center justify-end sm:justify-end`}
           >
             {headerAction}
           </div>

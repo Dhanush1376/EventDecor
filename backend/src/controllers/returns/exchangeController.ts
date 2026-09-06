@@ -22,6 +22,7 @@ export const createExchange = asyncHandler(async (req: Request, res: Response) =
     pickupAddress,
     idempotencyKey,
     refundMethod,
+    upiId,
   } = req.body;
 
   if (!userId) throw new ApiError(401, 'Unauthorized');
@@ -38,6 +39,7 @@ export const createExchange = asyncHandler(async (req: Request, res: Response) =
       pickupAddress,
       idempotencyKey,
       refundMethod,
+      upiId,
     );
 
   if (amountToPay === 0) {
@@ -103,7 +105,7 @@ export const getAllExchanges = asyncHandler(async (req: Request, res: Response) 
   const exchanges = await ExchangeRequest.find()
     .populate({
       path: 'returnRequestId',
-      select: 'status returnId orderId userId items',
+      select: 'status returnId orderId userId items upiId refundMethod',
       populate: { path: 'userId', select: 'name email phone' },
     })
     .sort({ createdAt: -1, _id: -1 })

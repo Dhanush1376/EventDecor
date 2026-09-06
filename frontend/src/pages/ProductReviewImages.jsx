@@ -147,36 +147,38 @@ export function ProductReviewImages() {
   }
 
   return (
-    <div className="bg-surface min-h-screen pt-28 pb-16">
+    <div className="bg-surface min-h-screen pt-16 sm:pt-20 pb-12">
       <SEO
         title={`Customer Gallery - ${product?.title || 'Artisanal Masterpiece'}`}
         description={`Browse customer submitted gallery images for ${product?.title}`}
       />
 
-      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop space-y-8">
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop space-y-4 sm:space-y-5">
         {/* Header & Back Button */}
-        <div className="flex flex-col border-b border-neutral-200/60 pb-6">
-          <div className="border-b border-black/5 pb-1 mb-1.5">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-neutral-200/60 pb-3 sm:pb-4">
+          <div>
             <Link
               to={`/product/${id}`}
-              className="inline-flex items-center gap-1.5 font-label text-[10px] uppercase tracking-widest text-neutral-400 hover:text-primary transition-colors font-bold w-fit"
+              className="inline-flex items-center gap-1.5 font-label text-[9px] uppercase tracking-widest text-neutral-400 hover:text-primary transition-colors font-bold mb-1"
             >
-              <ArrowLeft className="text-[14px]" strokeWidth={1.5} />
+              <ArrowLeft className="text-[13px]" strokeWidth={1.5} />
               Back to Product
             </Link>
-          </div>
-
-          <div>
-            <h2 className="font-display text-[26px] lg:text-[32px] text-neutral-900 font-semibold tracking-tight">
+            <h1 className="font-display text-xl sm:text-2xl text-neutral-900 font-semibold tracking-tight">
               Customer Gallery
-            </h2>
+            </h1>
             {product && (
-              <p className="font-body text-[14px] text-neutral-500 mt-1.5">
+              <p className="font-body text-xs sm:text-sm text-neutral-500 mt-0.5">
                 Real setup photos of{' '}
                 <span className="font-medium text-neutral-800">{product.title}</span>
               </p>
             )}
           </div>
+          {photos.length > 0 && (
+            <span className="font-label text-[10px] uppercase tracking-wider text-neutral-400 font-bold self-start sm:self-end">
+              {photos.length} photo{photos.length !== 1 ? 's' : ''}
+            </span>
+          )}
         </div>
 
         {/* Gallery Grid */}

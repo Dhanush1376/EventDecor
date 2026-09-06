@@ -13,6 +13,12 @@ import {
   ArrowLeftRight,
   Download,
   BellRing,
+  Lock,
+  ShieldCheck,
+  CheckCircle2,
+  ArrowRight,
+  Loader2,
+  Wallet,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import React, { useEffect } from 'react';
@@ -306,11 +312,13 @@ export function OrderDetail() {
     // Step 1: Submitted
     journeySteps.push({
       title: isExchange ? 'Exchange Submitted' : 'Return Request Submitted',
-      description: 'Request is under review by our team',
+      description: isExchange
+        ? 'Customer request under review'
+        : 'Request is under review by our team',
       timestamp: new Date(returnRequest.createdAt),
       status: 'completed',
-      icon: isExchange ? 'change_circle' : 'assignment_return',
-      color: isExchange ? 'indigo' : 'blue',
+      icon: isExchange ? 'assignment' : 'assignment_return',
+      color: 'blue',
     });
 
     if (isRequestRejected) {
@@ -329,7 +337,211 @@ export function OrderDetail() {
         icon: 'cancel',
         color: 'red',
       });
+    } else if (isExchange) {
+      // ─── EXCHANGE 6-STAGE LIFECYCLE (Mirrors Admin Portal) ───
+      const repStatus = exchangeDetails?.replacementStatus || 'pending_stock';
+
+      // Stage 2: Exchange Approved
+      const isApproved =
+        [
+          'approved',
+          'return_courier_assigned',
+          'return_picked_up',
+          'return_in_transit',
+          'return_received',
+          'inspection_started',
+          'inspection_completed',
+          'refund_initiated',
+          'refund_completed',
+          'completed',
+        ].includes(returnRequest.status) || ['shipped', 'delivered'].includes(repStatus);
+
+      journeySteps.push({
+        title: 'Exchange Approved',
+        description: isApproved ? 'Approved by store team' : 'Pending review and approval',
+        status: isApproved ? 'completed' : 'pending',
+        icon: 'check_circle',
+        color: 'amber',
+        timestamp:
+          isApproved && returnRequest.approvedAt ? new Date(returnRequest.approvedAt) : null,
+        isExchangeApprovalStep: exchangeDetails?.differenceAction === 'collect_payment',
+      });
+
+      // Stage 3: Item Picked Up
+      const isPickedUp =
+        [
+          'return_picked_up',
+          'return_in_transit',
+          'return_received',
+          'inspection_started',
+          'inspection_completed',
+          'refund_initiated',
+          'refund_completed',
+          'completed',
+        ].includes(returnRequest.status) || ['shipped', 'delivered'].includes(repStatus);
+
+      const isPaymentRequired = exchangeDetails?.paymentStatus === 'payment_required';
+      const isLocked = isPaymentRequired && !isPickedUp;
+
+      let pickupTitle = 'Item Picked Up';
+      let pickupDesc = 'Returning item collected by courier';
+      if (!isPickedUp) {
+        if (returnRequest.status === 'return_courier_assigned') {
+          pickupDesc = 'Courier assigned for reverse pickup';
+        } else if (isLocked) {
+          pickupDesc = 'Waiting for difference payment completion';
+        } else {
+          pickupDesc = 'Awaiting reverse courier pickup';
+        }
+      } else {
+        if (returnRequest.status === 'return_in_transit') {
+          pickupDesc = 'Your returned item is on its way to warehouse';
+        } else if (
+          [
+            'return_received',
+            'inspection_started',
+            'inspection_completed',
+            'refund_initiated',
+            'refund_completed',
+            'completed',
+          ].includes(returnRequest.status) ||
+          ['shipped', 'delivered'].includes(repStatus)
+        ) {
+          pickupDesc = 'Item collected and received at warehouse';
+        }
+      }
+
+      journeySteps.push({
+        title: pickupTitle,
+        description: pickupDesc,
+        status: isPickedUp ? 'completed' : 'pending',
+        icon: 'local_shipping',
+        color: 'indigo',
+        locked: isLocked,
+        timestamp:
+          isPickedUp && returnRequest.pickup?.actualPickupTime
+            ? new Date(returnRequest.pickup.actualPickupTime)
+            : null,
+      });
+
+      // Stage 4: Quality Check
+      const isQCCompleted =
+        ['inspection_completed', 'refund_initiated', 'refund_completed', 'completed'].includes(
+          returnRequest.status,
+        ) || ['shipped', 'delivered'].includes(repStatus);
+
+      const isQCInProgress = ['return_received', 'inspection_started'].includes(
+        returnRequest.status,
+      );
+
+      journeySteps.push({
+        title: isQCCompleted ? 'Quality Check Passed' : 'Quality Check',
+        description: isQCCompleted
+          ? 'Item received & verified at warehouse'
+          : isQCInProgress
+            ? 'Item arrived at warehouse, inspection in progress'
+            : 'Awaiting warehouse inspection after pickup',
+        status: isQCCompleted ? 'completed' : 'pending',
+        icon: 'fact_check',
+        color: 'purple',
+        timestamp:
+          isQCCompleted && returnRequest.inspectedAt ? new Date(returnRequest.inspectedAt) : null,
+      });
+
+      // Stage 5: Replacement Dispatched (Only completed once shipped/delivered, NOT when just reserved)
+      const isDispatched =
+        ['shipped', 'delivered'].includes(repStatus) || returnRequest.status === 'completed';
+
+      let repDesc = 'New replacement package on the way';
+      let trackingMeta = null;
+
+      if (isDispatched) {
+        if (repStatus === 'delivered' || returnRequest.status === 'completed') {
+          repDesc = 'Replacement item has been delivered';
+        } else if (exchangeDetails?.trackingNumber) {
+          repDesc = `Dispatched via ${exchangeDetails.courierPartner || 'courier'} (AWB: ${exchangeDetails.trackingNumber})`;
+          trackingMeta = {
+            awb: exchangeDetails.trackingNumber,
+            courier: exchangeDetails.courierPartner,
+          };
+        } else {
+          repDesc = 'New replacement package on the way';
+        }
+      } else {
+        if (repStatus === 'reserved') {
+          repDesc = 'Replacement item reserved in stock; dispatching after quality check';
+        } else {
+          repDesc = 'Replacement package being prepared';
+        }
+      }
+
+      journeySteps.push({
+        title: 'Replacement Dispatched',
+        description: repDesc,
+        timestamp:
+          isDispatched && exchangeDetails?.dispatchedAt
+            ? new Date(exchangeDetails.dispatchedAt)
+            : null,
+        status: isDispatched ? 'completed' : 'pending',
+        icon: 'inventory_2',
+        color: 'blue',
+        tracking: trackingMeta,
+      });
+
+      // Stage 6: Exchange Completed
+      const isExchangeFinished = returnRequest.status === 'completed' || repStatus === 'delivered';
+
+      journeySteps.push({
+        title: 'Exchange Completed',
+        description: isExchangeFinished
+          ? 'Delivered & exchange finalized'
+          : 'Exchange finalized upon replacement delivery',
+        timestamp:
+          isExchangeFinished && returnRequest.completedAt
+            ? new Date(returnRequest.completedAt)
+            : null,
+        status: isExchangeFinished ? 'completed' : 'pending',
+        icon: 'verified',
+        color: 'emerald',
+      });
+
+      // Optional Balance Refund Settlement Card Step (when store owes difference to customer)
+      if (
+        exchangeDetails &&
+        exchangeDetails.differenceAction === 'refund_difference' &&
+        ((exchangeDetails.priceDifference && exchangeDetails.priceDifference > 0) ||
+          (returnRequest.refundBreakdown?.grandTotal &&
+            returnRequest.refundBreakdown.grandTotal > 0))
+      ) {
+        const isRefundDone = ['refund_completed', 'completed'].includes(returnRequest.status);
+        const refundAmt =
+          exchangeDetails.priceDifference || returnRequest.refundBreakdown?.grandTotal || 0;
+        const isWallet = returnRequest.refundMethod === 'wallet';
+        const upi = returnRequest.upiId || exchangeDetails.upiId;
+
+        let refundDesc = '';
+        if (isRefundDone) {
+          refundDesc = isWallet
+            ? `₹${refundAmt} credited to your store wallet`
+            : `₹${refundAmt} refunded to your account ${upi ? `(${upi})` : ''}`;
+        } else {
+          refundDesc = isWallet
+            ? `₹${refundAmt} will be credited to your store wallet upon exchange completion`
+            : `₹${refundAmt} will be transferred to your account ${upi ? `(${upi})` : ''} upon exchange completion`;
+        }
+
+        journeySteps.push({
+          title: isRefundDone ? 'Balance Refund Settled' : 'Balance Refund',
+          description: refundDesc,
+          timestamp: isRefundDone ? new Date(returnRequest.updatedAt) : null,
+          status: isRefundDone ? 'completed' : 'pending',
+          icon: 'account_balance_wallet',
+          color: isRefundDone ? 'emerald' : 'amber',
+          isExchangeRefundStep: true,
+        });
+      }
     } else {
+      // ─── STANDARD RETURN LIFECYCLE ───
       // Step 2: Approved
       const isApproved = [
         'approved',
@@ -345,12 +557,11 @@ export function OrderDetail() {
       ].includes(returnRequest.status);
 
       journeySteps.push({
-        title: isExchange ? 'Exchange Approved' : 'Return Approved',
+        title: 'Return Approved',
         description: isApproved ? 'Approved by our team' : 'Pending approval',
         status: isApproved ? 'completed' : 'pending',
         icon: 'thumb_up',
         color: 'amber',
-        isExchangeApprovalStep: isExchange,
       });
 
       // Step 3: Pickup
@@ -366,15 +577,10 @@ export function OrderDetail() {
         'completed',
       ].includes(returnRequest.status);
 
-      const isPaymentRequired = isExchange && exchangeDetails?.paymentStatus === 'payment_required';
-      const isLocked = isPaymentRequired && !isPickupScheduled;
-
       let pickupTitle = 'Pickup Scheduled';
       let pickupDesc = isPickupScheduled
         ? 'A courier has been assigned to collect your item'
-        : isLocked
-          ? 'Waiting for payment completion'
-          : 'Awaiting courier assignment';
+        : 'Awaiting courier assignment';
 
       if (['return_picked_up'].includes(returnRequest.status)) {
         pickupTitle = 'Item Picked Up';
@@ -402,7 +608,6 @@ export function OrderDetail() {
         status: isPickupScheduled ? 'completed' : 'pending',
         icon: 'local_shipping',
         color: 'blue',
-        locked: isLocked,
       });
 
       // Step 4: Quality Check
@@ -424,69 +629,20 @@ export function OrderDetail() {
         color: 'emerald',
       });
 
-      // Step 5: Resolution
-      if (isExchange) {
-        const repStatus = exchangeDetails?.replacementStatus || 'pending_stock';
-        const isCompleted = returnRequest.status === 'completed';
-        const isDispatched = ['shipped', 'delivered'].includes(repStatus) || isCompleted;
-        const isStarted = ['reserved', 'shipped', 'delivered'].includes(repStatus) || isCompleted;
-
-        let repTitle = 'Replacement Preparing';
-        let repDesc = 'Your replacement item is being prepared';
-        let repIcon = 'inventory_2';
-        let repColor = 'blue';
-        let trackingMeta = null;
-
-        if (repStatus === 'reserved') {
-          repTitle = 'Replacement Reserved';
-          repDesc = 'Your replacement item has been reserved';
-        } else if (repStatus === 'shipped') {
-          repTitle = 'Replacement Dispatched';
-          repDesc = 'Your replacement item has been shipped';
-          repIcon = 'local_shipping';
-          if (exchangeDetails?.trackingNumber) {
-            trackingMeta = {
-              awb: exchangeDetails.trackingNumber,
-              courier: exchangeDetails.courierPartner,
-            };
-          }
-        } else if (repStatus === 'delivered') {
-          repTitle = 'Replacement Delivered';
-          repDesc = 'Your replacement item has been delivered';
-          repIcon = 'done_all';
-        } else if (isCompleted) {
-          repTitle = 'Exchange Completed';
-          repDesc = 'Your exchange has been successfully completed';
-          repIcon = 'check_circle';
-          repColor = 'emerald';
-        }
-
-        journeySteps.push({
-          title: repTitle,
-          description: repDesc,
-          timestamp: isStarted
-            ? new Date(exchangeDetails?.updatedAt || returnRequest.updatedAt)
-            : null,
-          status: isStarted ? 'completed' : 'pending',
-          icon: repIcon,
-          color: repColor,
-          tracking: trackingMeta,
-        });
-      } else {
-        const isRefundedStatus = ['refund_initiated', 'refund_completed', 'completed'].includes(
-          returnRequest.status,
-        );
-        journeySteps.push({
-          title: 'Refund Processed',
-          description: isRefundedStatus
-            ? `Amount credited via ${returnRequest.refundMethod || 'Original Method'}`
-            : 'Awaiting refund processing',
-          timestamp: isRefundedStatus ? new Date(returnRequest.updatedAt) : null,
-          status: isRefundedStatus ? 'completed' : 'pending',
-          icon: 'account_balance_wallet',
-          color: 'emerald',
-        });
-      }
+      // Step 5: Refund Processed
+      const isRefundedStatus = ['refund_initiated', 'refund_completed', 'completed'].includes(
+        returnRequest.status,
+      );
+      journeySteps.push({
+        title: 'Refund Processed',
+        description: isRefundedStatus
+          ? `Amount credited via ${returnRequest.refundMethod || 'Original Method'}`
+          : 'Awaiting refund processing',
+        timestamp: isRefundedStatus ? new Date(returnRequest.updatedAt) : null,
+        status: isRefundedStatus ? 'completed' : 'pending',
+        icon: 'account_balance_wallet',
+        color: 'emerald',
+      });
     }
   } else {
     if (isReturned) {
@@ -530,6 +686,7 @@ export function OrderDetail() {
       sky: 'bg-sky-500 border-sky-500 text-white',
       blue: 'bg-blue-500 border-blue-500 text-white',
       indigo: 'bg-indigo-500 border-indigo-500 text-white',
+      purple: 'bg-purple-500 border-purple-500 text-white',
       violet: 'bg-violet-500 border-violet-500 text-white',
       fuchsia: 'bg-fuchsia-500 border-fuchsia-500 text-white',
       amber: 'bg-amber-500 border-amber-500 text-white',
@@ -699,93 +856,155 @@ export function OrderDetail() {
                       </span>
                     )}
 
-                    {/* Exchange Payment Sub-Card */}
+                    {/* 1. Exchange Customer Payment Card (Shown at Approval step when customer owes difference) */}
                     {step.isExchangeApprovalStep &&
                       exchangeDetails &&
-                      exchangeDetails.differenceAction &&
-                      exchangeDetails.differenceAction !== 'direct_exchange' && (
-                        <div className="mt-3 p-3 rounded bg-surface border border-outline-variant/30 shadow-sm">
-                          {exchangeDetails.differenceAction === 'collect_payment' && (
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[10px] text-secondary uppercase tracking-widest font-semibold">
-                                  {exchangeDetails.paymentStatus === 'payment_paid'
-                                    ? '✓ Additional payment received'
-                                    : 'Additional payment required'}
+                      exchangeDetails.differenceAction === 'collect_payment' && (
+                        <div className="mt-3.5 p-4 rounded-xl bg-linear-to-br from-[#FDFBF7] to-[#F7F4EC] border border-[#D4AF37]/40 shadow-xs">
+                          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-outline-variant/20">
+                            <div className="flex items-center gap-1.5 text-secondary text-[9px] uppercase tracking-widest font-bold">
+                              <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
+                              <span>Exchange Price Difference</span>
+                            </div>
+                            <span className="text-[12px] font-bold text-[#2A2927]">
+                              ₹{exchangeDetails.priceDifference}
+                            </span>
+                          </div>
+
+                          {exchangeDetails.paymentStatus === 'payment_paid' ? (
+                            <div className="mt-2.5 flex items-center gap-2 text-emerald-700 bg-emerald-50/80 border border-emerald-200/70 p-2.5 rounded-lg">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <div className="text-[10px] leading-tight">
+                                <span className="font-bold uppercase tracking-wider block">
+                                  Payment Verified
                                 </span>
-                                <span className="text-[11px] font-bold text-on-surface">
-                                  ₹{exchangeDetails.priceDifference}
+                                <span className="text-secondary text-[9px]">
+                                  Your replacement order is unlocked and being processed.
                                 </span>
                               </div>
-
-                              {exchangeDetails.paymentStatus === 'payment_required' && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsResuming(true);
-                                    resumePayment(
-                                      exchangeDetails.additionalPaymentId,
-                                      exchangeDetails.priceDifference,
-                                    ).finally(() => setIsResuming(false));
-                                  }}
-                                  disabled={isResuming}
-                                  className="w-full mt-1 py-1.5 bg-primary text-on-primary rounded text-[9px] font-bold uppercase tracking-widest hover:bg-primary/90 transition-colors flex items-center justify-center gap-1"
-                                >
-                                  {isResuming
-                                    ? 'Processing...'
-                                    : `Pay ₹${exchangeDetails.priceDifference}`}
-                                </button>
-                              )}
-
-                              {exchangeDetails.paymentStatus === 'payment_paid' && (
-                                <div className="text-[9px] text-emerald-600 font-bold uppercase tracking-widest mt-1">
-                                  Payment Paid
-                                </div>
-                              )}
-
-                              {exchangeDetails.paymentStatus === 'failed' && (
-                                <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-outline-variant/20">
-                                  <div className="text-[9px] text-red-600 font-bold uppercase tracking-widest">
-                                    Payment Failed
-                                  </div>
-                                  <p className="text-[9px] text-secondary">
-                                    We couldn't confirm your payment.
-                                  </p>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setIsResuming(true);
-                                      resumePayment(
-                                        exchangeDetails.additionalPaymentId,
-                                        exchangeDetails.priceDifference,
-                                      ).finally(() => setIsResuming(false));
-                                    }}
-                                    disabled={isResuming}
-                                    className="w-full py-1.5 bg-surface-container-low hover:bg-surface-variant text-on-surface rounded text-[9px] font-bold uppercase tracking-widest border border-outline-variant/50 transition-colors"
-                                  >
-                                    {isResuming ? 'Processing...' : 'Retry Payment'}
-                                  </button>
-                                </div>
-                              )}
                             </div>
-                          )}
-
-                          {exchangeDetails.differenceAction === 'refund_difference' && (
-                            <div className="flex flex-col gap-1">
-                              <span className="text-[10px] text-secondary uppercase tracking-widest font-semibold">
-                                {['completed', 'refund_completed'].includes(returnRequest.status)
-                                  ? `✓ ₹${exchangeDetails.priceDifference} credited to your wallet`
-                                  : `₹${exchangeDetails.priceDifference} refund to wallet`}
-                              </span>
-                              <span
-                                className={`text-[9px] font-bold uppercase tracking-widest ${['completed', 'refund_completed'].includes(returnRequest.status) ? 'text-emerald-600' : 'text-blue-600'}`}
+                          ) : exchangeDetails.paymentStatus === 'failed' ? (
+                            <div className="mt-2.5 space-y-2">
+                              <div className="flex items-center gap-2 text-red-700 bg-red-50 border border-red-200 p-2.5 rounded-lg text-[9px]">
+                                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                                <span>
+                                  Previous payment attempt failed. Please retry to proceed.
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsResuming(true);
+                                  resumePayment(
+                                    exchangeDetails.additionalPaymentId,
+                                    exchangeDetails.priceDifference,
+                                  ).finally(() => setIsResuming(false));
+                                }}
+                                disabled={isResuming}
+                                className="w-full py-2.5 px-4 bg-[#2A2927] hover:bg-black text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer border-0 disabled:opacity-50"
                               >
-                                {['completed', 'refund_completed'].includes(returnRequest.status)
-                                  ? 'Refund Complete'
-                                  : 'Pending'}
-                              </span>
+                                {isResuming ? (
+                                  <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Retrying...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Lock className="w-3.5 h-3.5 text-[#D4AF37]" /> Retry Payment (₹
+                                    {exchangeDetails.priceDifference})
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="mt-3 space-y-2.5">
+                              <p className="text-[9.5px] text-secondary leading-relaxed">
+                                Please complete the price difference payment to confirm your
+                                replacement item dispatch.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsResuming(true);
+                                  resumePayment(
+                                    exchangeDetails.additionalPaymentId,
+                                    exchangeDetails.priceDifference,
+                                  ).finally(() => setIsResuming(false));
+                                }}
+                                disabled={isResuming}
+                                className="w-full py-3 px-4 bg-[#2A2927] hover:bg-black text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer border-0 disabled:opacity-50"
+                              >
+                                {isResuming ? (
+                                  <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Connecting to
+                                    Secure Gateway...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Lock className="w-3.5 h-3.5 text-[#D4AF37]" />
+                                    <span>Pay ₹{exchangeDetails.priceDifference} Securely Now</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                  </>
+                                )}
+                              </button>
+                              <div className="flex items-center justify-center gap-2 text-[8px] uppercase tracking-widest text-secondary/70">
+                                <span>UPI</span> • <span>Cards</span> • <span>NetBanking</span> •{' '}
+                                <span>100% Encrypted</span>
+                              </div>
                             </div>
                           )}
+                        </div>
+                      )}
+
+                    {/* 2. Exchange Admin Refund Card (Positioned strictly at the final step) */}
+                    {step.isExchangeRefundStep &&
+                      exchangeDetails &&
+                      exchangeDetails.differenceAction === 'refund_difference' && (
+                        <div className="mt-3.5 p-4 rounded-xl bg-surface-container-low/60 border border-outline-variant/30 shadow-xs">
+                          <div className="flex items-center justify-between pb-2.5 border-b border-outline-variant/20">
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-secondary flex items-center gap-1.5">
+                              <Wallet className="w-3.5 h-3.5 text-[#D4AF37]" />
+                              Balance Refund Amount
+                            </span>
+                            <span className="text-[12px] font-bold text-[#2A2927]">
+                              ₹{exchangeDetails.priceDifference}
+                            </span>
+                          </div>
+
+                          <div className="mt-2.5 text-[9.5px] space-y-1.5">
+                            <div className="flex justify-between text-secondary">
+                              <span>Refund Destination:</span>
+                              <span className="font-bold text-[#2A2927]">
+                                {returnRequest.refundMethod === 'wallet'
+                                  ? 'Store Wallet'
+                                  : 'Direct Bank / UPI Transfer'}
+                              </span>
+                            </div>
+                            {(returnRequest.upiId || exchangeDetails.upiId) && (
+                              <div className="flex justify-between text-secondary">
+                                <span>Recipient UPI ID:</span>
+                                <span className="font-mono font-bold text-emerald-700">
+                                  {returnRequest.upiId || exchangeDetails.upiId}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="mt-3 pt-2.5 border-t border-outline-variant/20 flex items-center justify-between">
+                            <span className="text-[9px] uppercase tracking-wider text-secondary">
+                              Settlement Status
+                            </span>
+                            {['completed', 'refund_completed'].includes(returnRequest.status) ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[8.5px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Refund Settled
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[8.5px] font-bold uppercase tracking-widest bg-amber-50 text-amber-800 border border-amber-200">
+                                Pending Settlement
+                              </span>
+                            )}
+                          </div>
                         </div>
                       )}
                   </div>

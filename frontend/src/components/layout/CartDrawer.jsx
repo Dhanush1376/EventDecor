@@ -126,7 +126,7 @@ export function CartDrawer({ isOpen, onClose }) {
                 onClose();
               }
             }}
-            className="fixed right-0 top-0 w-full max-w-[calc(100vw-32px)] sm:max-w-[440px] h-[100dvh] bg-white/95 backdrop-blur-2xl z-[210] flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.08)] touch-pan-y border-l border-white/60 modern-sans-headings font-body"
+            className="fixed right-0 top-0 w-full max-w-[calc(100vw-32px)] sm:max-w-[440px] h-full bg-white/95 backdrop-blur-2xl z-[210] flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.08)] touch-pan-y border-l border-white/60 modern-sans-headings font-body"
           >
             {/* Header */}
             <div className="flex justify-between items-center px-5 py-3.5 border-b border-black/[0.06] bg-white/70 sticky top-0 z-10 backdrop-blur-md">

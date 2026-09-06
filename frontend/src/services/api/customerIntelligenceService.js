@@ -65,4 +65,11 @@ export const customerIntelligenceService = {
     );
     return response.data;
   },
+
+  deleteCustomer: async (customerId, reason) => {
+    const response = await api.delete(`/customer-intelligence/customers/${customerId}`, {
+      data: { reason },
+    });
+    return response.data;
+  },
 };

@@ -508,6 +508,7 @@ const AdminRecycleBin = () => {
               <option value="Product">Products</option>
               <option value="Category">Categories</option>
               <option value="Order">Orders</option>
+              <option value="User">Customers</option>
               <option value="Review">Reviews</option>
               <option value="Gallery">Gallery</option>
             </select>

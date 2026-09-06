@@ -776,6 +776,162 @@ export const buildReturnCreatedCustomerEmail = (returnRequest: any, order: any, 
   };
 };
 
+export const buildReturnCreatedAdminEmail = (
+  returnRequest: any,
+  order: any,
+  user: any,
+  exchange?: any,
+) => {
+  const isExchange = returnRequest.returnType === 'exchange';
+  const requestId = returnRequest.returnId || returnRequest._id;
+  const orderRef = order?.orderUuid || order?.orderNumber || returnRequest.orderId;
+  const customerName = user?.name || order?.shippingAddress?.name || 'A customer';
+  const customerEmail = user?.email || order?.shippingAddress?.email || 'N/A';
+  const customerPhone = user?.phone || order?.shippingAddress?.phone || 'N/A';
+  const frontendUrl = getFrontendUrl();
+  const adminUrl = `${frontendUrl}/admin/returns/${isExchange ? 'exchanges' : 'requests'}/${returnRequest._id}`;
+
+  const rows: { label: string; value: string }[] = [
+    {
+      label: 'Request ID',
+      value: `<strong style="font-family: monospace; color: #111827;">${escapeHtml(requestId)}</strong>`,
+    },
+    {
+      label: 'Type',
+      value: `<span style="font-weight: 700; color: ${isExchange ? '#b45309' : '#4338ca'}; text-transform: uppercase;">${isExchange ? 'Exchange Request' : 'Return Request'}</span>`,
+    },
+    {
+      label: 'Order Reference',
+      value: `<span style="font-family: monospace; font-weight: 600;">#${escapeHtml(orderRef)}</span>`,
+    },
+    {
+      label: 'Customer',
+      value: `${escapeHtml(customerName)} (${escapeHtml(customerEmail)}${customerPhone !== 'N/A' ? ` • ${escapeHtml(customerPhone)}` : ''})`,
+    },
+    {
+      label: 'Current Status',
+      value: `<span style="display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background-color: #fef3c7; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(returnRequest.status || 'Submitted')}</span>`,
+    },
+  ];
+
+  if (returnRequest.refundMethod) {
+    rows.push({
+      label: 'Refund Mode',
+      value: escapeHtml(
+        returnRequest.refundMethod === 'wallet'
+          ? 'Store Wallet'
+          : returnRequest.refundMethod.toUpperCase(),
+      ),
+    });
+  }
+
+  const effectiveUpiId = returnRequest.upiId || exchange?.upiId;
+  if (effectiveUpiId) {
+    rows.push({
+      label: 'Refund UPI ID',
+      value: `<strong style="font-family: monospace; color: #047857; font-size: 14px;">${escapeHtml(effectiveUpiId)}</strong>`,
+    });
+  }
+
+  if (isExchange && exchange) {
+    rows.push({
+      label: 'Exchange Type',
+      value:
+        exchange.exchangeType === 'different_product' ? 'Different Product' : 'Same Item / Variant',
+    });
+    if (exchange.priceDifference !== undefined && exchange.priceDifference !== 0) {
+      const diffFormatted =
+        exchange.priceDifference > 0
+          ? `+${formatCurrency(exchange.priceDifference)} (Customer to Pay)`
+          : `-${formatCurrency(Math.abs(exchange.priceDifference))} (Refund Due)`;
+      rows.push({
+        label: 'Price Difference',
+        value: `<strong style="color: #111827;">${diffFormatted}</strong>`,
+      });
+    }
+  }
+
+  const preheader = `[Admin] New ${isExchange ? 'exchange' : 'return'} request #${requestId} submitted by ${customerName}.`;
+
+  const body = `
+    <div style="border-left: 4px solid #D4AF37; padding-left: 16px; margin-bottom: 24px;">
+      <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #b45309; display: block;">Administrative Dispatch</span>
+      <h2 style="margin: 4px 0 0 0; font-size: 20px; color: #111827; font-weight: 700;">
+        New ${isExchange ? 'Exchange' : 'Return'} Request Lodged
+      </h2>
+    </div>
+
+    <p style="color: #4b5563; font-size: 14px; margin-bottom: 24px; line-height: 1.6;">
+      A customer has submitted a new ${isExchange ? 'exchange' : 'return'} request that requires administrative review and processing.
+    </p>
+
+    ${dataTable(rows)}
+
+    ${
+      returnRequest.items && returnRequest.items.length > 0
+        ? `
+      <h3 style="margin-top: 32px; color: #111827; font-size: 15px; font-weight: 700;">Item(s) to ${isExchange ? 'Exchange' : 'Return'}</h3>
+      ${itemsTable(
+        returnRequest.items.map((item: any) => ({
+          imageSrc: item.imageSrc || item.productId?.imageSrc,
+          title: item.title || item.productId?.title,
+          quantity: item.returnQuantity,
+          price: item.unitPrice,
+          variant: item.variant,
+        })),
+      )}
+      `
+        : ''
+    }
+
+    ${
+      isExchange && exchange?.replacementItem
+        ? `
+      <h3 style="margin-top: 24px; color: #111827; font-size: 15px; font-weight: 700;">Replacement Item Requested</h3>
+      ${itemsTable([
+        {
+          imageSrc: exchange.replacementItem.imageSrc,
+          title: exchange.replacementItem.title,
+          quantity: exchange.replacementItem.quantity || 1,
+          price: exchange.replacementItem.unitPrice || 0,
+          variant: exchange.replacementItem.variant,
+        },
+      ])}
+      `
+        : ''
+    }
+
+    ${
+      !isExchange &&
+      (returnRequest.refundBreakdown?.grandTotal !== undefined ||
+        returnRequest.refundAmount !== undefined)
+        ? `
+      <div style="text-align: right; padding-top: 14px; font-size: 15px; border-top: 2px solid #e5e7eb; margin-top: 16px;">
+        <strong style="color: #111827;">Total Refund Due: </strong><span style="font-family: monospace; color: #047857; font-weight: 700; font-size: 16px;">${formatCurrency(returnRequest.refundBreakdown?.grandTotal ?? returnRequest.refundAmount ?? 0)}</span>
+      </div>
+      `
+        : ''
+    }
+
+    ${
+      returnRequest.pickupAddress
+        ? addressBlock('Pickup Address', returnRequest.pickupAddress)
+        : order?.shippingAddress
+          ? addressBlock('Original Shipping Address', order.shippingAddress)
+          : ''
+    }
+
+    <div style="margin-top: 32px; text-align: center;">
+      ${button(`Open in Admin Portal`, adminUrl)}
+    </div>
+  `;
+
+  return {
+    subject: `[${isExchange ? 'Exchange' : 'Return'} Request] #${escapeHtml(requestId)} from ${escapeHtml(customerName)}`,
+    html: getLuxuryEmailWrapper('Admin Alert', body, undefined, preheader),
+  };
+};
+
 export const buildReturnStatusUpdateEmail = (
   returnRequest: any,
   order: any,

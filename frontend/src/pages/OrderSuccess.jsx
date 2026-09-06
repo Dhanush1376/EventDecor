@@ -58,25 +58,8 @@ const safeFormatDate = (val, options) => {
 const mapOrderData = (rawOrder) => {
   if (!rawOrder) return null;
 
-  const isRental = Boolean(
-    rawOrder.rentalOrderId ||
-    rawOrder.rentalStartDate ||
-    rawOrder.rentalCharge !== undefined ||
-    rawOrder.securityDeposit !== undefined ||
-    rawOrder.isRental ||
-    rawOrder.orderType === 'rental' ||
-    (Array.isArray(rawOrder.items) &&
-      rawOrder.items.some((i) => i.type === 'rental' || i.isRental)),
-  );
-
-  const orderRef = rawOrder.rentalOrderId || rawOrder._id || rawOrder.id;
-  const trackingToken = rawOrder.publicTrackingToken;
-  const trackingPath = isRental
-    ? '/dashboard/rentals'
-    : trackingToken
-      ? `/track/${orderRef}?token=${encodeURIComponent(trackingToken)}`
-      : `/track/${orderRef}`;
-
+  // 1. First extract and normalize items without mutating or contaminating their types
+  let items = [];
   const est = rawOrder.createdAt ? new Date(rawOrder.createdAt) : new Date();
   if (!isNaN(est.getTime())) {
     est.setDate(est.getDate() + 7);
@@ -88,6 +71,131 @@ const mapOrderData = (rawOrder) => {
   const rentalDeliveryEstimate = rawOrder.rentalStartDate
     ? `Delivery by ${new Date(rawOrder.rentalStartDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
     : defaultDeliveryEstimate;
+
+  const checkItemRental = (item) => {
+    if (!item) return false;
+    if (item.type === 'rental' || item.isRental === true) return true;
+    if (item.rentalInfo && (item.rentalInfo.startDate || item.rentalInfo.durationDays)) return true;
+    if (item.rentalStartDate || item.rentalEndDate) return true;
+    if (item.rentalDurationDays) return true;
+    if (rawOrder.orderType === 'rental' && item.type !== 'purchase') return true;
+    return false;
+  };
+
+  if (Array.isArray(rawOrder.items) && rawOrder.items.length > 0) {
+    items = rawOrder.items.map((item) => {
+      const itemIsRental = checkItemRental(item);
+      const itemDeliveryEst =
+        item.deliveryEstimate ||
+        (itemIsRental && (item.rentalStartDate || rawOrder.rentalStartDate)
+          ? `Delivery by ${new Date(item.rentalStartDate || rawOrder.rentalStartDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
+          : defaultDeliveryEstimate);
+
+      return {
+        ...item,
+        id: item.productId || item.id || item._id,
+        deliveryEstimate: itemDeliveryEst,
+        price: itemIsRental ? (item.rentalPrice ?? item.price ?? 0) : (item.price ?? 0),
+        quantity: item.quantity ?? item.qty ?? 1,
+        title: item.title || item.name || '',
+        variant:
+          item.variant ||
+          (itemIsRental
+            ? item.durationDays
+              ? `${item.durationDays} Day Rental`
+              : 'Rental'
+            : 'Default'),
+        imageSrc: item.imageSrc || item.image || '',
+        type: itemIsRental ? 'rental' : 'purchase',
+        isRental: itemIsRental,
+        rentalInfo: itemIsRental
+          ? item.rentalInfo || {
+              startDate: item.rentalStartDate || rawOrder.rentalStartDate,
+              endDate: item.rentalEndDate || rawOrder.rentalEndDate,
+              durationDays:
+                item.durationDays ||
+                item.rentalDurationDays ||
+                rawOrder.durationDays ||
+                rawOrder.rentalRate?.rentalDurationDays ||
+                1,
+            }
+          : null,
+        deposit: itemIsRental
+          ? item.deposit || item.securityDeposit || (rawOrder.securityDeposit ?? 0)
+          : 0,
+      };
+    });
+  } else {
+    // Check if rawOrder is a single rental record (from RentalOrder schema without items array)
+    const isSingleRentalRecord = Boolean(
+      rawOrder.rentalOrderId ||
+      rawOrder.orderType === 'rental' ||
+      rawOrder.isRental === true ||
+      (rawOrder.rentalStartDate && rawOrder.rentalEndDate) ||
+      (typeof rawOrder.rentalCharge === 'number' && rawOrder.rentalCharge > 0),
+    );
+
+    if (isSingleRentalRecord) {
+      items = [
+        {
+          id: rawOrder.product?._id || rawOrder.product || rawOrder._id || 'rental-item',
+          deliveryEstimate: rentalDeliveryEstimate,
+          price: rawOrder.rentalCharge || rawOrder.rentalRate?.rentalPrice || 0,
+          rentalRate:
+            rawOrder.rentalRate?.rentalPrice ||
+            (typeof rawOrder.rentalCharge === 'number'
+              ? Math.round((rawOrder.rentalCharge / (rawOrder.quantity || 1)) * 100) / 100
+              : 0),
+          quantity: rawOrder.quantity || 1,
+          title:
+            rawOrder.productTitle ||
+            rawOrder.product?.title ||
+            rawOrder.product?.name ||
+            'Artisanal Rental Decor Item',
+          variant:
+            rawOrder.variant ||
+            (rawOrder.durationDays
+              ? `${rawOrder.durationDays} Day${rawOrder.durationDays > 1 ? 's' : ''} Rental`
+              : 'Rental'),
+          imageSrc:
+            rawOrder.productImage ||
+            rawOrder.product?.imageSrc ||
+            rawOrder.product?.images?.[0]?.url ||
+            'https://res.cloudinary.com/drxgnnzeb/image/upload/v1785779448/siri-arts-crafts/zqqwwbsrjpb7bqcrl24l.png',
+          type: 'rental',
+          isRental: true,
+          rentalInfo: {
+            startDate: rawOrder.rentalStartDate,
+            endDate: rawOrder.rentalEndDate,
+            durationDays: rawOrder.durationDays || rawOrder.rentalRate?.rentalDurationDays || 1,
+          },
+          deposit: rawOrder.securityDeposit || 0,
+        },
+      ];
+    }
+  }
+
+  // 2. Accurately segregate rental and purchase items
+  const rentalItems = items.filter((i) => i.isRental || i.type === 'rental');
+  const purchaseItems = items.filter((i) => !i.isRental && i.type !== 'rental');
+
+  const isMixed = rentalItems.length > 0 && purchaseItems.length > 0;
+  const isPureRental =
+    !isMixed &&
+    ((rentalItems.length > 0 && purchaseItems.length === 0) ||
+      Boolean(rawOrder.rentalOrderId) ||
+      (rawOrder.orderType === 'rental' && purchaseItems.length === 0) ||
+      rawOrder.isRental === true);
+  const isPurePurchase = !isMixed && !isPureRental;
+  const orderKind = isMixed ? 'mixed' : isPureRental ? 'rental' : 'purchase';
+
+  const orderRef = rawOrder.rentalOrderId || rawOrder.orderId || rawOrder._id || rawOrder.id;
+  const trackingToken = rawOrder.publicTrackingToken;
+  const trackingPath = isPureRental
+    ? '/dashboard/rentals'
+    : trackingToken
+      ? `/track/${orderRef}?token=${encodeURIComponent(trackingToken)}`
+      : `/track/${orderRef}`;
 
   const rawPaymentMethod = (rawOrder.paymentMethod || '').toLowerCase();
   const paymentMode =
@@ -109,100 +217,56 @@ const mapOrderData = (rawOrder) => {
     email: addr.email || rawOrder.email || '',
   };
 
-  let items = [];
-  if (Array.isArray(rawOrder.items) && rawOrder.items.length > 0) {
-    items = rawOrder.items.map((item) => ({
-      ...item,
-      id: item.productId || item.id || item._id,
-      deliveryEstimate:
-        item.deliveryEstimate || (isRental ? rentalDeliveryEstimate : defaultDeliveryEstimate),
-      price: item.rentalPrice ?? item.price ?? 0,
-      quantity: item.quantity ?? item.qty ?? 1,
-      title: item.title || item.name || '',
-      variant:
-        item.variant ||
-        (item.durationDays ? `${item.durationDays} Day Rental` : isRental ? 'Rental' : 'Default'),
-      imageSrc: item.imageSrc || item.image || '',
-      type: item.type || (isRental ? 'rental' : 'purchase'),
-      rentalInfo:
-        item.rentalInfo ||
-        (isRental
-          ? {
-              startDate: rawOrder.rentalStartDate,
-              endDate: rawOrder.rentalEndDate,
-              durationDays: rawOrder.durationDays || item.rentalDurationDays || 1,
-            }
-          : null),
-      deposit: item.deposit || (isRental ? rawOrder.securityDeposit : 0),
-    }));
-  } else if (isRental) {
-    items = [
-      {
-        id: rawOrder.product?._id || rawOrder.product || rawOrder._id || 'rental-item',
-        deliveryEstimate: rentalDeliveryEstimate,
-        price: rawOrder.rentalCharge || rawOrder.rentalRate?.rentalPrice || 0,
-        rentalRate:
-          rawOrder.rentalRate?.rentalPrice ||
-          (rawOrder.rentalCharge !== undefined
-            ? rawOrder.rentalCharge / (rawOrder.quantity || 1)
-            : 0),
-        quantity: rawOrder.quantity || 1,
-        title:
-          rawOrder.productTitle ||
-          rawOrder.product?.title ||
-          rawOrder.product?.name ||
-          'Artisanal Rental Decor Item',
-        variant:
-          rawOrder.variant ||
-          (rawOrder.durationDays
-            ? `${rawOrder.durationDays} Day${rawOrder.durationDays > 1 ? 's' : ''} Rental`
-            : 'Rental'),
-        imageSrc:
-          rawOrder.productImage ||
-          rawOrder.product?.imageSrc ||
-          rawOrder.product?.images?.[0]?.url ||
-          'https://res.cloudinary.com/drxgnnzeb/image/upload/v1785779448/siri-arts-crafts/zqqwwbsrjpb7bqcrl24l.png',
-        type: 'rental',
-        isRental: true,
-        rentalInfo: {
-          startDate: rawOrder.rentalStartDate,
-          endDate: rawOrder.rentalEndDate,
-          durationDays: rawOrder.durationDays || rawOrder.rentalRate?.rentalDurationDays || 1,
-        },
-        deposit: rawOrder.securityDeposit || 0,
-      },
-    ];
-  }
+  // 3. Compute distinct purchase and rental financial sums
+  const purchaseSubtotal = purchaseItems.reduce(
+    (acc, i) => acc + (Number(i.price) || 0) * (Number(i.quantity) || 1),
+    0,
+  );
+  const rentalCharge =
+    rentalItems.reduce((acc, i) => acc + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0) ||
+    (isPureRental ? Number(rawOrder.rentalCharge) || 0 : 0);
+  const depositTotal = isPurePurchase
+    ? 0
+    : rentalItems.reduce((acc, i) => acc + (Number(i.deposit) || 0), 0) ||
+      (isPureRental ? Number(rawOrder.securityDeposit) || 0 : 0);
 
-  const subtotal = isRental
-    ? (rawOrder.rentalCharge ?? rawOrder.subtotal ?? 0)
-    : (rawOrder.subtotal ?? 0);
-  const shippingFee = isRental
-    ? (rawOrder.deliveryCharge ?? rawOrder.shippingFee ?? 0)
-    : (rawOrder.shippingFee ?? 0);
-  const tax = isRental
-    ? typeof rawOrder.tax === 'number'
-      ? rawOrder.tax
-      : (rawOrder.tax?.totalTax ?? 0)
-    : (rawOrder.tax?.totalTax ?? 0);
-  const depositTotal = isRental
-    ? (rawOrder.securityDeposit ?? rawOrder.depositTotal ?? 0)
-    : (rawOrder.depositTotal ?? 0);
+  const subtotal =
+    orderKind === 'purchase'
+      ? (rawOrder.subtotal ?? purchaseSubtotal)
+      : orderKind === 'rental'
+        ? (rawOrder.rentalCharge ?? rentalCharge)
+        : purchaseSubtotal + rentalCharge;
+
+  const shippingFee = rawOrder.shippingFee ?? rawOrder.deliveryCharge ?? 0;
+  const tax = typeof rawOrder.tax === 'number' ? rawOrder.tax : (rawOrder.tax?.totalTax ?? 0);
   const discount = rawOrder.discount ?? 0;
   const codFee = rawOrder.codFee ?? 0;
   const walletDeduction = rawOrder.walletDeduction ?? 0;
-  const totalAmount = rawOrder.totalAmount ?? rawOrder.total ?? 0;
+  const totalAmount =
+    rawOrder.totalAmount ??
+    rawOrder.total ??
+    subtotal + depositTotal + shippingFee + tax + codFee - discount - walletDeduction;
+
+  const rentalStartDate = rentalItems[0]?.rentalInfo?.startDate || rawOrder.rentalStartDate;
+  const rentalEndDate = rentalItems[0]?.rentalInfo?.endDate || rawOrder.rentalEndDate;
+  const durationDays =
+    rentalItems[0]?.rentalInfo?.durationDays ||
+    rawOrder.durationDays ||
+    rawOrder.rentalRate?.rentalDurationDays ||
+    1;
 
   return {
     ...rawOrder,
     _id: orderRef,
-    orderId: rawOrder.rentalOrderId || orderRef,
+    orderId: rawOrder.rentalOrderId || rawOrder.orderId || orderRef,
     rentalOrderId: rawOrder.rentalOrderId,
     trackingPath,
     trackingToken,
-    date: safeFormatDate(rawOrder.createdAt || rawOrder.rentalStartDate),
+    date: safeFormatDate(rawOrder.createdAt || rawOrder.rentalStartDate || rawOrder.date),
     totalAmount,
     subtotal,
+    purchaseSubtotal,
+    rentalCharge,
     shippingFee,
     deliveryCharge: shippingFee,
     discount,
@@ -215,14 +279,20 @@ const mapOrderData = (rawOrder) => {
     deliveryAddress,
     shippingAddress: deliveryAddress,
     items,
+    purchaseItems,
+    rentalItems,
     depositTotal,
     securityDeposit: depositTotal,
-    depositStatus: rawOrder.depositStatus || 'held',
-    rentalStartDate: rawOrder.rentalStartDate,
-    rentalEndDate: rawOrder.rentalEndDate,
-    durationDays: rawOrder.durationDays || rawOrder.rentalRate?.rentalDurationDays || 1,
-    orderType: isRental ? 'rental' : rawOrder.orderType || 'purchase',
-    isRental,
+    depositStatus: rawOrder.depositStatus || (depositTotal > 0 ? 'held' : 'none'),
+    rentalStartDate,
+    rentalEndDate,
+    durationDays,
+    orderType: orderKind,
+    orderKind,
+    isRental: isPureRental,
+    isPureRental,
+    isPurePurchase,
+    isMixed,
   };
 };
 
@@ -471,16 +541,18 @@ export function OrderSuccess() {
               </div>
 
               <h2 className="font-display text-2xl lg:text-3xl text-on-surface font-bold mb-3">
-                {order.isRental ||
-                order.orderType === 'rental' ||
-                order.items.some((i) => i.type === 'rental')
-                  ? 'Rental Booking Confirmed!'
-                  : 'Order Confirmed!'}
+                {order.isMixed
+                  ? 'Order & Rental Confirmed!'
+                  : order.isPureRental
+                    ? 'Rental Booking Confirmed!'
+                    : 'Order Confirmed!'}
               </h2>
               <p className="text-xs text-secondary max-w-md mx-auto leading-relaxed mb-8">
-                {order.isRental || order.orderType === 'rental'
-                  ? "Your artisanal decor rental has been successfully reserved. We've dispatched your booking confirmation and rental policy to your mobile contact and email address."
-                  : "Your artisanal journey has begun. We've sent the order details to your registered number and email address."}
+                {order.isMixed
+                  ? 'Thank you for shopping & renting with Siri Arts & Crafts. Your purchased items and rental bookings have both been confirmed.'
+                  : order.isPureRental
+                    ? "Your artisanal decor rental has been successfully reserved. We've dispatched your booking confirmation and rental policy to your mobile contact and email address."
+                    : "Your artisanal journey has begun. We've sent the order details to your registered number and email address."}
               </p>
 
               <div className="w-full max-w-lg mx-auto bg-surface-container-low/40 rounded-xl p-3 sm:p-4 flex items-center justify-between gap-4 text-left border border-outline-variant/20">
@@ -489,7 +561,11 @@ export function OrderSuccess() {
                     className="text-[10px] uppercase font-bold text-secondary tracking-wider block"
                     style={{ fontFamily: 'var(--font-label)' }}
                   >
-                    {order.isRental ? 'Rental Booking ID' : 'Order ID'}
+                    {order.isPureRental
+                      ? 'Rental Booking ID'
+                      : order.isMixed
+                        ? 'Order & Booking ID'
+                        : 'Order ID'}
                   </span>
                   <strong className="text-xs sm:text-sm text-on-surface font-mono font-semibold tracking-wide block truncate">
                     {order.orderId}
@@ -501,7 +577,7 @@ export function OrderSuccess() {
                     className="text-[10px] uppercase font-bold text-secondary tracking-wider block"
                     style={{ fontFamily: 'var(--font-label)' }}
                   >
-                    {order.isRental ? 'Booking Date' : 'Order Date'}
+                    {order.isPureRental ? 'Booking Date' : 'Order Date'}
                   </span>
                   <strong className="text-xs sm:text-sm text-on-surface font-medium block whitespace-nowrap">
                     {order.date}
@@ -509,9 +585,7 @@ export function OrderSuccess() {
                 </div>
               </div>
 
-              {(order.isRental ||
-                order.orderType === 'rental' ||
-                order.items.some((i) => i.type === 'rental')) &&
+              {(order.isPureRental || (order.isMixed && order.rentalItems?.length > 0)) &&
                 (() => {
                   const startDateStr =
                     safeFormatDate(order.rentalStartDate, {
@@ -553,7 +627,7 @@ export function OrderSuccess() {
                             className="text-xs font-bold uppercase tracking-wider text-on-surface font-sans"
                             style={{ fontFamily: 'var(--font-label)' }}
                           >
-                            Rental Period
+                            {order.isMixed ? 'Rental Items Schedule & Terms' : 'Rental Period'}
                           </span>
                         </div>
                         <span
@@ -658,9 +732,11 @@ export function OrderSuccess() {
                   className="text-xs font-bold text-secondary uppercase tracking-wider font-sans"
                   style={{ fontFamily: 'var(--font-label)' }}
                 >
-                  {order.isRental
-                    ? 'Rented Item Details'
-                    : `Items in this shipment (${order.items.length})`}
+                  {order.isPureRental
+                    ? `Rented Items (${order.items.length})`
+                    : order.isMixed
+                      ? `Items in this order (${order.items.length})`
+                      : `Items in this shipment (${order.items.length})`}
                 </div>
                 <span className="text-[11px] text-green-700 font-bold flex items-center gap-1">
                   <BadgeCheck className="text-sm" strokeWidth={1.5} />
@@ -691,26 +767,30 @@ export function OrderSuccess() {
                           >
                             {item.title}
                           </div>
-                          {!(item.type === 'rental' || item.isRental || order.isRental) &&
-                            item.variant &&
-                            item.variant !== 'Default' && (
-                              <span className="text-[11px] text-secondary block mt-1 font-medium italic">
-                                Style: {item.variant}
-                              </span>
-                            )}
+                          {!item.isRental && item.variant && item.variant !== 'Default' && (
+                            <span className="text-[11px] text-secondary block mt-1 font-medium italic">
+                              Style: {item.variant}
+                            </span>
+                          )}
+                          {order.isMixed && !item.isRental && (
+                            <span className="inline-block bg-surface-container-low text-secondary text-[9px] font-bold px-2 py-0.5 rounded border border-outline-variant/30 mt-1 uppercase">
+                              Purchased Product
+                            </span>
+                          )}
                         </div>
                         <span className="text-sm sm:text-base font-bold text-on-surface shrink-0">
                           ₹{safeFormatNumber(item.price)}
                         </span>
                       </div>
 
-                      {(item.type === 'rental' || item.isRental || order.isRental) &&
+                      {item.isRental &&
                         (() => {
                           let durationLabel = item.variant;
                           if (!durationLabel || durationLabel === 'Default') {
-                            durationLabel = order.durationDays
-                              ? `${order.durationDays} Days Rental`
-                              : 'Rental Booking';
+                            durationLabel =
+                              item.rentalInfo?.durationDays || order.durationDays
+                                ? `${item.rentalInfo?.durationDays || order.durationDays} Days Rental`
+                                : 'Rental Booking';
                           } else if (/^\d+$/.test(String(durationLabel).trim())) {
                             durationLabel = `${durationLabel} Days Rental`;
                           }
@@ -747,7 +827,7 @@ export function OrderSuccess() {
                                   {durationLabel}
                                 </span>
 
-                                {(order.securityDeposit > 0 || order.depositTotal > 0) && (
+                                {item.deposit > 0 && (
                                   <span
                                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50/90 text-emerald-800 text-[10px] font-semibold border border-emerald-200/70"
                                     style={{ fontFamily: 'var(--font-label)' }}
@@ -756,8 +836,7 @@ export function OrderSuccess() {
                                       className="w-3 h-3 text-emerald-600 shrink-0"
                                       strokeWidth={2}
                                     />
-                                    ₹{safeFormatNumber(order.securityDeposit || order.depositTotal)}{' '}
-                                    Refundable Deposit
+                                    ₹{safeFormatNumber(item.deposit)} Refundable Deposit
                                   </span>
                                 )}
                               </div>
@@ -817,15 +896,30 @@ export function OrderSuccess() {
                 className="text-xs font-bold text-secondary uppercase tracking-wider pb-3 border-b border-outline-variant/40 mb-4 font-sans"
                 style={{ fontFamily: 'var(--font-label)' }}
               >
-                {order.isRental || order.orderType === 'rental'
-                  ? 'Rental Summary'
-                  : 'Price Details'}
+                {order.isMixed
+                  ? 'Order & Rental Summary'
+                  : order.isPureRental
+                    ? 'Rental Summary'
+                    : 'Price Details'}
               </div>
               <div className="space-y-3 text-xs text-on-surface">
-                <div className="flex justify-between">
-                  <span>{order.isRental ? 'Rental Base Charge' : 'Subtotal'}</span>
-                  <span>₹{safeFormatNumber(order.subtotal)}</span>
-                </div>
+                {order.isMixed ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span>Purchased Items Subtotal</span>
+                      <span>₹{safeFormatNumber(order.purchaseSubtotal || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Rental Decor Charges</span>
+                      <span>₹{safeFormatNumber(order.rentalCharge || 0)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between">
+                    <span>{order.isPureRental ? 'Rental Base Charge' : 'Subtotal'}</span>
+                    <span>₹{safeFormatNumber(order.subtotal)}</span>
+                  </div>
+                )}
                 {order.discount > 0 && (
                   <div className="flex justify-between">
                     <span>Promo Discount</span>
@@ -835,7 +929,13 @@ export function OrderSuccess() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>{order.isRental ? 'Delivery & Setup Fee' : 'Shipping Fee'}</span>
+                  <span>
+                    {order.isPureRental
+                      ? 'Delivery & Setup Fee'
+                      : order.isMixed
+                        ? 'Shipping & Delivery Fee'
+                        : 'Shipping Fee'}
+                  </span>
                   <span className="text-green-700 font-bold">
                     {order.shippingFee === 0 ? 'FREE' : `₹${safeFormatNumber(order.shippingFee)}`}
                   </span>
@@ -846,7 +946,7 @@ export function OrderSuccess() {
                     <span className="font-medium">₹{safeFormatNumber(order.tax)}</span>
                   </div>
                 )}
-                {(order.depositTotal > 0 || order.securityDeposit > 0) && (
+                {!order.isPurePurchase && (order.depositTotal > 0 || order.securityDeposit > 0) && (
                   <div className="flex justify-between">
                     <span className="flex items-center gap-1">
                       Security Deposit{' '}
@@ -962,19 +1062,33 @@ export function OrderSuccess() {
             <div className="space-y-3 pt-2">
               <button
                 onClick={() =>
-                  navigate(order.isRental ? '/dashboard/rentals' : '/dashboard?tab=orders')
+                  navigate(
+                    order.isPureRental
+                      ? '/dashboard/rentals'
+                      : order.isMixed
+                        ? '/dashboard'
+                        : '/dashboard?tab=orders',
+                  )
                 }
                 className="w-full bg-primary hover:bg-primary-dark text-white py-3.5 rounded text-[11px] font-bold uppercase tracking-widest transition-all shadow-md block text-center cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <GitCommit className="text-[15px]" strokeWidth={1.5} />
-                {order.isRental ? 'View My Rentals' : 'Track Your Order'}
+                {order.isPureRental
+                  ? 'View My Rentals'
+                  : order.isMixed
+                    ? 'View Orders & Rentals'
+                    : 'Track Your Order'}
               </button>
               <button
                 onClick={() => setShowStickerModal(true)}
                 className="w-full bg-white border border-primary text-primary py-3.5 rounded text-[11px] font-bold uppercase tracking-widest hover:bg-primary/5 transition-all block text-center cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Receipt className="text-[15px]" strokeWidth={1.5} />
-                {order.isRental ? 'View Rental Tax Invoice' : 'View Digital Tax Invoice'}
+                {order.isPureRental
+                  ? 'View Rental Tax Invoice'
+                  : order.isMixed
+                    ? 'View Tax Invoice'
+                    : 'View Digital Tax Invoice'}
               </button>
               <Link
                 to="/collections"

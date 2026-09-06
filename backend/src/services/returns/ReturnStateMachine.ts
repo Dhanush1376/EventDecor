@@ -12,14 +12,14 @@ import logger from '../../config/logger';
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   submitted: ['approved', 'rejected', 'cancelled'],
-  approved: ['return_courier_assigned', 'cancelled'],
-  return_courier_assigned: ['return_picked_up', 'cancelled'],
-  return_picked_up: ['return_in_transit', 'return_received'],
-  return_in_transit: ['return_received'],
-  return_received: ['inspection_started'],
+  approved: ['return_courier_assigned', 'return_picked_up', 'rejected', 'cancelled'],
+  return_courier_assigned: ['return_picked_up', 'rejected', 'cancelled'],
+  return_picked_up: ['return_in_transit', 'return_received', 'inspection_completed'],
+  return_in_transit: ['return_received', 'inspection_completed'],
+  return_received: ['inspection_started', 'inspection_completed'],
   inspection_started: ['inspection_completed', 'rejected'],
-  inspection_completed: ['refund_initiated', 'completed'], // completed only for zero-refund exchanges
-  refund_initiated: ['refund_completed', 'refund_failed'],
+  inspection_completed: ['refund_initiated', 'refund_completed', 'completed'],
+  refund_initiated: ['refund_completed', 'refund_failed', 'completed'],
   refund_failed: ['refund_initiated'],
   refund_completed: ['completed'],
 };
@@ -72,7 +72,7 @@ export class ReturnStateMachine {
       throw new ApiError(400, `Invalid transition from ${currentStatus} to ${nextStatus}`);
     }
 
-    // Guard: inspection_completed -> completed is ONLY allowed for exchanges with no refund
+    // Guard: inspection_completed -> completed is allowed for exchanges (when refund is not required or already settled)
     if (currentStatus === 'inspection_completed' && nextStatus === 'completed') {
       if (request.returnType !== 'exchange') {
         throw new ApiError(
@@ -83,8 +83,17 @@ export class ReturnStateMachine {
       const exchange = await ExchangeRequest.findOne({ returnRequestId: request._id }).session(
         session || null,
       );
-      if (!exchange || exchange.differenceAction === 'refund_difference') {
-        throw new ApiError(400, 'This exchange requires a refund. Use the refund flow instead.');
+      if (
+        !exchange ||
+        (exchange.differenceAction === 'refund_difference' &&
+          !exchange.additionalRefundId &&
+          !request.refundRecordId &&
+          exchange.paymentStatus !== 'payment_paid')
+      ) {
+        throw new ApiError(
+          400,
+          'This exchange requires a refund. Please record the refund payout first.',
+        );
       }
     }
 

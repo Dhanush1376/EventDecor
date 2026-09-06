@@ -20,6 +20,7 @@ router.get('/executive-summary', heavyQuery, ciController.getExecutiveSummary);
 router.get('/customers', heavyQuery, ciController.getCustomerList);
 router.get('/customers/export', heavyQuery, ciController.exportCustomers);
 router.get('/customers/:id', ciController.getCustomer360);
+router.delete('/customers/:id', ciController.deleteCustomer);
 router.get('/customers/:id/journey', ciController.getCustomerJourney);
 router.get('/customers/:id/journey/:sessionId', ciController.getCustomerJourney);
 router.get('/customers/:id/timeline', ciController.getCustomerTimeline);

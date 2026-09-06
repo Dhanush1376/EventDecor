@@ -5,7 +5,7 @@ export function MetadataStep({ formData, setFormData, isEdit }) {
         <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-secondary)]">
           sell
         </span>
-        1. Campaign Metadata
+        1. Coupon Metadata
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5">

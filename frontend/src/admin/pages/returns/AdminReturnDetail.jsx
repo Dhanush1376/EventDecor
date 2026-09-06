@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useConfirm } from '../../../context/ConfirmProvider';
 import { format } from 'date-fns';
@@ -15,30 +15,163 @@ import {
   SkeletonDashboard,
   stagger,
 } from '../../components/AdminUIKit';
+import AdminExchangeDetailView from './AdminExchangeDetailView';
 
-const TIMELINE_STAGES = [
-  { id: 'submitted', label: 'Submitted' },
-  { id: 'approved', label: 'Approved' },
-  { id: 'return_courier_assigned', label: 'Courier Assigned' },
-  { id: 'return_picked_up', label: 'Picked Up' },
-  { id: 'return_in_transit', label: 'In Transit' },
-  { id: 'return_received', label: 'Warehouse Received' },
-  { id: 'inspection_started', label: 'Inspection Started' },
-  { id: 'inspection_completed', label: 'Inspection Completed' },
-  { id: 'refund_initiated', label: 'Refund Initiated' },
-  { id: 'refund_completed', label: 'Refund Completed' },
-  { id: 'completed', label: 'Completed' },
+const formatINR = (val) => {
+  if (val === null || val === undefined || isNaN(val)) return '0';
+  return Number(val).toLocaleString('en-IN');
+};
+
+const RETURN_STAGES = [
+  {
+    key: 'submitted',
+    number: 1,
+    title: 'Request Submitted',
+    desc: 'Customer submitted return request awaiting admin review',
+    icon: 'inbox',
+    color: 'text-[var(--admin-accent)]',
+    bg: 'bg-[var(--admin-accent-light)]',
+    border: 'border-[var(--admin-border-strong)]',
+  },
+  {
+    key: 'approved',
+    number: 2,
+    title: 'Return Approved',
+    desc: 'Return request approved; reverse pickup ready to schedule',
+    icon: 'verified',
+    color: 'text-emerald-700',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-200',
+  },
+  {
+    key: 'return_courier_assigned',
+    number: 3,
+    title: 'Courier Assigned',
+    desc: 'Reverse pickup courier partner assigned to fetch item',
+    icon: 'local_shipping',
+    color: 'text-blue-700',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+  },
+  {
+    key: 'return_picked_up',
+    number: 3,
+    title: 'Item Picked Up',
+    desc: 'Courier successfully picked up the returned item from customer',
+    icon: 'inventory',
+    color: 'text-blue-700',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+  },
+  {
+    key: 'return_in_transit',
+    number: 3,
+    title: 'In Transit',
+    desc: 'Item in transit to warehouse for inspection',
+    icon: 'commute',
+    color: 'text-indigo-700',
+    bg: 'bg-indigo-50',
+    border: 'border-indigo-200',
+  },
+  {
+    key: 'return_received',
+    number: 4,
+    title: 'Warehouse Received',
+    desc: 'Item received at warehouse; ready for quality inspection',
+    icon: 'warehouse',
+    color: 'text-amber-700',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+  },
+  {
+    key: 'inspection_started',
+    number: 4,
+    title: 'Inspection in Progress',
+    desc: 'Quality check and condition inspection actively being conducted',
+    icon: 'fact_check',
+    color: 'text-amber-700',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+  },
+  {
+    key: 'inspection_completed',
+    number: 4,
+    title: 'Quality Check Passed',
+    desc: 'Inspection completed and verified at warehouse',
+    icon: 'task_alt',
+    color: 'text-emerald-700',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-200',
+  },
+  {
+    key: 'refund_initiated',
+    number: 5,
+    title: 'Refund Initiated',
+    desc: 'Refund payment initiated or queued for settlement',
+    icon: 'payments',
+    color: 'text-purple-700',
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
+  },
+  {
+    key: 'refund_completed',
+    number: 5,
+    title: 'Refund Settled',
+    desc: 'Refund successfully settled and credited to customer',
+    icon: 'savings',
+    color: 'text-emerald-700',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-200',
+  },
+  {
+    key: 'completed',
+    number: 6,
+    title: 'Return Completed',
+    desc: 'All return logistics and financial refunds successfully completed',
+    icon: 'check_circle',
+    color: 'text-emerald-800',
+    bg: 'bg-emerald-100',
+    border: 'border-emerald-300',
+  },
+  {
+    key: 'rejected',
+    number: 0,
+    title: 'Return Rejected',
+    desc: 'This return request has been rejected',
+    icon: 'cancel',
+    color: 'text-red-700',
+    bg: 'bg-red-50',
+    border: 'border-red-200',
+  },
+];
+
+const STAGE_DROPDOWN_OPTIONS = [
+  { key: 'submitted', label: 'Step 1: Request Submitted' },
+  { key: 'approved', label: 'Step 2: Return Approved' },
+  { key: 'return_courier_assigned', label: 'Step 3: Assign Courier' },
+  { key: 'return_picked_up', label: 'Step 3: Item Picked Up' },
+  { key: 'return_in_transit', label: 'Step 3: In Transit' },
+  { key: 'return_received', label: 'Step 4: Warehouse Received' },
+  { key: 'inspection_started', label: 'Step 4: Inspection Started' },
+  { key: 'inspection_completed', label: 'Step 4: Inspection Completed' },
+  { key: 'refund_initiated', label: 'Step 5: Refund Initiated' },
+  { key: 'refund_completed', label: 'Step 5: Refund Settled' },
+  { key: 'completed', label: 'Step 6: Return Completed' },
 ];
 
 const AdminReturnDetail = () => {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const {
     currentReturn,
     fetchReturnDetails,
     approveReturn,
     rejectReturn,
     transitionStatus,
+    transitionExchangeReplacement,
     triggerRefund,
+    settleRefund,
     submitInspection,
     addInternalNote,
     loading,
@@ -49,6 +182,16 @@ const AdminReturnDetail = () => {
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [inspectionState, setInspectionState] = useState({});
+  const [previewImage, setPreviewImage] = useState(null);
+  const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
+  const [settleData, setSettleData] = useState({
+    amount: 0,
+    paymentMethod: 'upi',
+    upiId: '',
+    transactionId: '',
+    notes: '',
+  });
+  const [isSubmittingSettle, setIsSubmittingSettle] = useState(false);
   const confirm = useConfirm();
 
   const handleInspectionChange = (itemIndex, field, value) => {
@@ -83,6 +226,18 @@ const AdminReturnDetail = () => {
   useEffect(() => {
     fetchReturnDetails(id);
   }, [id, fetchReturnDetails]);
+
+  // Synchronize route with request type (exchange vs return) so sidebar & topbar routes remain accurate
+  useEffect(() => {
+    if (!loading && currentReturn?.request) {
+      const isExchange = currentReturn.request.returnType === 'exchange';
+      if (isExchange && location.pathname.startsWith('/admin/returns')) {
+        navigate(`/admin/exchanges/requests/${id}`, { replace: true });
+      } else if (!isExchange && location.pathname.startsWith('/admin/exchanges')) {
+        navigate(`/admin/returns/requests/${id}`, { replace: true });
+      }
+    }
+  }, [loading, currentReturn, location.pathname, id, navigate]);
 
   const handleApprove = async () => {
     if (
@@ -125,110 +280,180 @@ const AdminReturnDetail = () => {
     setInternalNote('');
   };
 
-  if (loading && !currentReturn) {
+  if (!currentReturn) {
+    if (error) {
+      return (
+        <EmptyState
+          icon="error_outline"
+          title="Failed to load return details"
+          description={error || 'Return request not found'}
+        />
+      );
+    }
     return <SkeletonDashboard />;
   }
 
-  if (error || !currentReturn) {
+  const { request = {}, userStats = {}, exchangeDetails = {} } = currentReturn;
+
+  if (!request || (!request._id && !request.returnId)) {
     return (
       <EmptyState
-        icon="error_outline"
-        title="Failed to load return details"
-        description={error || 'Return request not found'}
+        icon="search_off"
+        title="Return Request Not Found"
+        description="The requested return or exchange record could not be found."
       />
     );
   }
 
-  const { request, userStats, exchangeDetails } = currentReturn;
-
   const isExchange = request.returnType === 'exchange';
-  const isRequestRejected = request.status === 'rejected';
 
-  // 1. Submitted
-  const step1 = { label: 'Submitted', status: 'completed' };
-
-  // 2. Approved
-  const isApproved = [
-    'approved',
-    'return_courier_assigned',
-    'return_picked_up',
-    'return_in_transit',
-    'return_received',
-    'inspection_started',
-    'inspection_completed',
-    'refund_initiated',
-    'refund_completed',
-    'completed',
-  ].includes(request.status);
-  const step2 = {
-    label: 'Approved',
-    status: isRequestRejected ? 'rejected' : isApproved ? 'completed' : 'pending',
-    subtext:
-      isExchange && isApproved
-        ? exchangeDetails?.paymentStatus === 'payment_paid'
-          ? 'Payment Received ✓'
-          : exchangeDetails?.paymentStatus === 'payment_required'
-            ? `₹${exchangeDetails.priceDifference} Required`
-            : ''
-        : '',
-  };
-
-  // 3. Pickup Scheduled
-  const isPickupScheduled = [
-    'return_courier_assigned',
-    'return_picked_up',
-    'return_in_transit',
-    'return_received',
-    'inspection_started',
-    'inspection_completed',
-    'refund_initiated',
-    'refund_completed',
-    'completed',
-  ].includes(request.status);
-  const isPaymentRequired = isExchange && exchangeDetails?.paymentStatus === 'payment_required';
-  const step3 = {
-    label: 'Pickup',
-    status: isRequestRejected ? 'rejected' : isPickupScheduled ? 'completed' : 'pending',
-    subtext:
-      isPaymentRequired && !isPickupScheduled
-        ? 'Locked (Awaiting Payment)'
-        : isPickupScheduled
-          ? ''
-          : 'Awaiting Assignment',
-  };
-
-  // 4. Quality Check
-  const isQC = [
-    'inspection_started',
-    'inspection_completed',
-    'refund_initiated',
-    'refund_completed',
-    'completed',
-  ].includes(request.status);
-  const step4 = {
-    label: 'Quality Check',
-    status: isRequestRejected ? 'rejected' : isQC ? 'completed' : 'pending',
-  };
-
-  // 5. Resolution
-  let isResolved = false;
-  let resolutionSubtext = '';
   if (isExchange) {
-    isResolved =
-      ['reserved', 'shipped', 'delivered'].includes(exchangeDetails?.replacementStatus) ||
-      request.status === 'completed';
-    resolutionSubtext = exchangeDetails?.replacementStatus || 'pending_stock';
-  } else {
-    isResolved = ['refund_initiated', 'refund_completed', 'completed'].includes(request.status);
-    resolutionSubtext = isResolved ? request.status : '';
+    return (
+      <AdminExchangeDetailView
+        currentReturn={currentReturn}
+        onApprove={handleApprove}
+        onReject={(reason) => rejectReturn(id, { reason })}
+        onTransitionStatus={(nextStatus, reason, metadata) =>
+          transitionStatus(id, { nextStatus, status: nextStatus, reason, metadata })
+        }
+        onTransitionReplacement={(exchangeId, returnRequestId, nextStatus, metadata) =>
+          transitionExchangeReplacement(exchangeId, returnRequestId, nextStatus, metadata)
+        }
+        onTriggerRefund={(method) => triggerRefund(id, method)}
+        onSettleRefund={(settlementData) => settleRefund(id, settlementData)}
+        onAddNote={(note) => addInternalNote(id, { note })}
+        onSubmitInspection={(itemIndex) => handleInspectionSubmit(itemIndex)}
+        inspectionState={inspectionState}
+        onInspectionChange={handleInspectionChange}
+      />
+    );
   }
-  const step5 = {
-    label: isExchange ? 'Replacement' : 'Refund',
-    status: isRequestRejected ? 'rejected' : isResolved ? 'completed' : 'pending',
-    subtext: resolutionSubtext.replace(/_/g, ' '),
+
+  const currentStageObj = RETURN_STAGES.find((s) => s.key === request.status) || {
+    key: request.status || 'submitted',
+    number: 1,
+    title: (request.status || 'Submitted').replace(/_/g, ' '),
+    desc: 'Return request in progress',
+    icon: 'sync',
+    color: 'text-[var(--admin-accent)]',
+    bg: 'bg-[var(--admin-accent-light)]',
+    border: 'border-[var(--admin-border-strong)]',
   };
 
-  const adminTimeline = [step1, step2, step3, step4, step5];
+  const handleSelectReturnStage = async (newStage) => {
+    if (newStage === 'rejected') {
+      setIsRejectOpen(true);
+      return;
+    }
+    if (newStage === 'approved') {
+      await handleApprove();
+      return;
+    }
+    await handleTransition(newStage);
+  };
+
+  const handleTriggerRefundClick = async () => {
+    if (
+      await confirm({
+        title: 'Trigger Refund',
+        message: 'Are you sure you want to trigger the refund for this return request?',
+        type: 'warning',
+      })
+    ) {
+      triggerRefund(id, request.refundMethod || 'original');
+    }
+  };
+
+  const handleSettleSubmit = async (e) => {
+    e.preventDefault();
+    if (!settleData.amount || Number(settleData.amount) <= 0) {
+      toast.error('Please enter a valid refund amount');
+      return;
+    }
+    if (settleData.paymentMethod === 'upi' && !settleData.upiId?.trim()) {
+      toast.error('Customer UPI ID is required for UPI payout');
+      return;
+    }
+    try {
+      setIsSubmittingSettle(true);
+      await settleRefund(id, {
+        amount: Number(settleData.amount),
+        refundMethod: settleData.paymentMethod,
+        bankReference: settleData.transactionId?.trim() || undefined,
+        originalTransactionId: settleData.transactionId?.trim() || undefined,
+        notes: settleData.notes?.trim() || undefined,
+        status: 'completed',
+        reason: 'Return order refund payout',
+      });
+      toast.success('Refund payment record saved successfully');
+      setIsSettleModalOpen(false);
+    } catch (err) {
+      console.error('Failed to settle refund:', err);
+      toast.error(err.message || 'Failed to record refund settlement');
+    } finally {
+      setIsSubmittingSettle(false);
+    }
+  };
+
+  // Financial Math & Settlement
+  const refundBreakdown = request.refundBreakdown || {};
+  const productTotal = Number(
+    refundBreakdown.productTotal ??
+      request.items?.reduce(
+        (acc, curr) => acc + (curr.unitPrice || 0) * (curr.returnQuantity || 1),
+        0,
+      ) ??
+      0,
+  );
+  const taxRefund = Number(refundBreakdown.taxRefund ?? 0);
+  const shippingRefund = Number(refundBreakdown.shippingRefund ?? 0);
+  const restockingFee = Number(refundBreakdown.restockingFee ?? 0);
+  const discountDeduction = Number(refundBreakdown.discountDeduction ?? 0);
+  const walletUsedDeduction = Number(refundBreakdown.walletUsedDeduction ?? 0);
+  const grandTotal = Number(
+    refundBreakdown.grandTotal ??
+      Math.max(
+        0,
+        productTotal +
+          taxRefund +
+          shippingRefund -
+          restockingFee -
+          discountDeduction -
+          walletUsedDeduction,
+      ),
+  );
+
+  const refundTimelineEvent = request.timeline?.find(
+    (t) =>
+      t.status === 'refund_completed' ||
+      t.action === 'refund_completed' ||
+      t.status === 'refund_settled',
+  );
+  const refundRecord = request.refundRecordId || request.refundId;
+  const isRefundSettled =
+    Boolean(request.refundRecordId) ||
+    Boolean(refundTimelineEvent) ||
+    request.status === 'refund_completed' ||
+    request.status === 'completed';
+
+  const settledAmount = refundRecord?.amount || refundTimelineEvent?.metadata?.amount || grandTotal;
+
+  const settledUtr =
+    refundRecord?.bankReference ||
+    refundRecord?.originalTransactionId ||
+    refundTimelineEvent?.metadata?.transactionId ||
+    '';
+
+  const settledDate = refundRecord?.completedAt || refundTimelineEvent?.timestamp;
+
+  const refundMethod = request.refundMethod || 'original';
+  const upiId = request.upiId || '';
+  const isCOD = request.orderId?.paymentMethod === 'cod' || request.order?.paymentMethod === 'cod';
+
+  // Addresses & contacts
+  const pickupAddr = request.pickup?.address || request.orderId?.shippingAddress || {};
+  const rawPhone = String(request.userId?.phone || pickupAddr.phone || '').replace(/\D/g, '');
+  const waPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
 
   return (
     <motion.div
@@ -237,823 +462,834 @@ const AdminReturnDetail = () => {
       variants={stagger}
       className="flex flex-col space-y-6 pb-12"
     >
+      {/* ─── Top Header & Controls ─── */}
       <PageHeader
-        title={`Return Request ${request.returnId}`}
-        subtitle={`Requested on ${request.createdAt ? format(new Date(request.createdAt), 'MMM dd, yyyy HH:mm') : 'Unknown Date'}`}
-        backButton={{ path: '/admin/returns', label: 'Back to Returns' }}
-        headerAction={
-          <div className="flex gap-2">
-            {request.status === 'submitted' && (
-              <>
-                <button
-                  className="admin-btn admin-btn-outline !border-[var(--admin-error)] !text-[var(--admin-error)]"
-                  onClick={() => setIsRejectOpen(true)}
-                >
-                  Reject
-                </button>
-                <button className="admin-btn admin-btn-primary" onClick={handleApprove}>
-                  Approve Return
-                </button>
-              </>
-            )}
-            {request.status !== 'submitted' &&
-              request.status !== 'completed' &&
-              request.status !== 'rejected' &&
-              request.status !== 'cancelled' && (
-                <div className="relative group">
-                  <button className="admin-btn admin-btn-primary flex items-center gap-1">
-                    Change Status{' '}
-                    <span className="material-symbols-outlined text-[16px]">expand_more</span>
-                  </button>
-                  <div className="absolute right-0 mt-1 w-48 bg-white border border-admin-border rounded shadow-lg hidden group-hover:block z-50">
-                    {request.status === 'approved' && (
-                      <button
-                        className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
-                        onClick={() => handleTransition('return_courier_assigned')}
-                      >
-                        Assign Courier
-                      </button>
-                    )}
-                    {request.status === 'return_courier_assigned' && (
-                      <button
-                        className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
-                        onClick={() => handleTransition('return_picked_up')}
-                      >
-                        Mark Picked Up
-                      </button>
-                    )}
-                    {request.status === 'return_picked_up' && (
-                      <>
-                        <button
-                          className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
-                          onClick={() => handleTransition('return_in_transit')}
-                        >
-                          Mark In Transit
-                        </button>
-                        <button
-                          className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
-                          onClick={() => handleTransition('return_received')}
-                        >
-                          Mark Received at Warehouse
-                        </button>
-                      </>
-                    )}
-                    {request.status === 'return_in_transit' && (
-                      <button
-                        className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
-                        onClick={() => handleTransition('return_received')}
-                      >
-                        Mark Received at Warehouse
-                      </button>
-                    )}
-                    {request.status === 'return_received' && (
-                      <button
-                        className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm"
-                        onClick={() => handleTransition('inspection_started')}
-                      >
-                        Start Inspection
-                      </button>
-                    )}
-                    {request.status === 'inspection_started' && (
-                      <>
-                        <button
-                          className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm text-green-600"
-                          onClick={() => handleTransition('inspection_completed')}
-                        >
-                          Complete Inspection
-                        </button>
-                        <button
-                          className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm text-red-600"
-                          onClick={() => handleTransition('rejected')}
-                        >
-                          Fail Inspection (Reject)
-                        </button>
-                      </>
-                    )}
+        actionRowMobile={true}
+        title={
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="text-[var(--admin-text-primary)] font-bold text-lg sm:text-2xl">
+              Return Request
+            </span>
+            <span className="font-mono text-[var(--admin-accent)] bg-[var(--admin-accent-light)] border border-[var(--admin-border-strong)] px-2 py-0.5 rounded-lg text-xs sm:text-sm font-bold">
+              {request.returnId}
+            </span>
+          </div>
+        }
+        subtitle={
+          <div className="flex items-center gap-x-2.5 gap-y-1 text-xs text-[var(--admin-text-secondary)] mt-1 flex-wrap">
+            <span>
+              {request.createdAt
+                ? format(new Date(request.createdAt), 'MMM dd, yyyy • HH:mm')
+                : 'Recent'}
+            </span>
+            <span>•</span>
+            <span>
+              Order:{' '}
+              <a
+                href={`/admin/orders/${request.orderId?._id || request.orderId}`}
+                className="text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] font-bold hover:underline"
+              >
+                #
+                {request.orderId?.orderCode ||
+                  request.orderId?._id?.slice(-8) ||
+                  request.orderId ||
+                  'N/A'}
+              </a>
+            </span>
+          </div>
+        }
+        backButton={{ path: '/admin/returns', label: 'Back' }}
+        headerAction={<StatusBadge status={request.status} />}
+      />
 
-                    {['approved', 'return_courier_assigned'].includes(request.status) && (
-                      <button
-                        className="w-full text-left px-4 py-2 hover:bg-admin-surface-hover text-sm text-red-600 border-t border-admin-border"
-                        onClick={() => setIsRejectOpen(true)}
-                      >
-                        Reject
-                      </button>
-                    )}
+      {/* ─── Unified Return Lifecycle Stage Selector ─── */}
+      <div className="admin-card overflow-hidden border border-[var(--admin-border)] shadow-xs bg-white rounded-2xl p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Current Stage */}
+          <div className="flex items-center gap-3.5 min-w-0 flex-1">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${currentStageObj.bg} ${currentStageObj.color} shadow-xs border ${currentStageObj.border || 'border-current/20'}`}
+            >
+              <span className="material-symbols-outlined text-[22px]">{currentStageObj.icon}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-sm sm:text-base font-bold text-[var(--admin-text-primary)] block truncate">
+                {currentStageObj.number > 0 ? `Step ${currentStageObj.number} of 6: ` : ''}
+                {currentStageObj.title}
+              </span>
+              <p className="text-xs text-[var(--admin-text-secondary)] mt-0.5 truncate">
+                {currentStageObj.desc}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Stage Dropdown */}
+          <div className="relative shrink-0 w-full sm:w-auto min-w-0 sm:min-w-[240px]">
+            <select
+              id="return-status-dropdown"
+              value={request.status}
+              onChange={(e) => handleSelectReturnStage(e.target.value)}
+              className="w-full appearance-none bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] hover:border-[var(--admin-accent)] focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 rounded-xl px-3.5 py-2.5 pr-9 text-xs font-bold text-[var(--admin-text-primary)] shadow-2xs cursor-pointer transition-all outline-none"
+            >
+              {STAGE_DROPDOWN_OPTIONS.map((st) => (
+                <option key={st.key} value={st.key}>
+                  {st.label}
+                </option>
+              ))}
+              <option value="rejected">✕ Reject Return</option>
+            </select>
+            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--admin-text-tertiary)] text-[18px]">
+              unfold_more
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Main Two-Column Layout ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_400px] gap-6 items-start">
+        {/* Left Column: Return Details & Logistics */}
+        <div className="flex flex-col gap-6 min-w-0">
+          {/* 1. PICKUP LOGISTICS CARD */}
+          <div className="admin-card overflow-hidden border border-[var(--admin-border)] shadow-xs bg-white rounded-2xl flex flex-col justify-between">
+            <div>
+              <div className="p-4 sm:p-5 border-b border-[var(--admin-border)] flex items-center justify-between bg-[var(--admin-bg-subtle)]/40">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[var(--admin-accent)] text-[18px]">
+                    local_shipping
+                  </span>
+                  <h3 className="text-sm font-bold text-[var(--admin-text-primary)]">
+                    Pickup Logistics
+                  </h3>
+                </div>
+                <StatusBadge status={request.pickup?.status || 'pending'} />
+              </div>
+              <div className="p-4 sm:p-5 text-xs space-y-2">
+                <p className="text-sm font-bold text-[var(--admin-text-primary)]">
+                  {pickupAddr.name || request.userId?.name || 'Customer'}
+                </p>
+                <p className="text-[var(--admin-text-secondary)] leading-relaxed">
+                  {pickupAddr.address || pickupAddr.addressLine1 || 'Address details not provided'}
+                  {pickupAddr.locality && `, ${pickupAddr.locality}`}
+                  <br />
+                  {pickupAddr.city || 'City'}, {pickupAddr.state || 'State'} -{' '}
+                  <strong className="text-[var(--admin-text-primary)]">
+                    {pickupAddr.pincode || pickupAddr.pinCode || ''}
+                  </strong>
+                </p>
+              </div>
+
+              {/* Courier Partner Strip (if assigned) */}
+              {(request.pickup?.partner || request.pickup?.trackingId) && (
+                <div className="px-4 sm:px-5 pb-4 text-xs">
+                  <div className="p-3 rounded-xl bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase font-bold block">
+                        Courier Partner: {request.pickup.partner || 'Assigned'}
+                      </span>
+                      {request.pickup.trackingId && (
+                        <p className="font-mono font-bold text-[var(--admin-text-primary)] mt-0.5">
+                          Tracking: {request.pickup.trackingId}
+                        </p>
+                      )}
+                      {request.pickup.driverName && (
+                        <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
+                          Driver: {request.pickup.driverName}{' '}
+                          {request.pickup.driverPhone && `(${request.pickup.driverPhone})`}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-[var(--admin-accent)] font-bold text-[11px] flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg border border-[var(--admin-border)] shadow-2xs">
+                      <span className="material-symbols-outlined text-[14px]">local_shipping</span>
+                      {request.pickup.status?.replace(/_/g, ' ') || 'In Progress'}
+                    </span>
                   </div>
                 </div>
               )}
-          </div>
-        }
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px] gap-6 xl:gap-8 items-start mt-6">
-        {/* Main Content */}
-        <div className="flex flex-col gap-6 min-w-0">
-          {/* Status Alert Banner */}
-          {request.sla?.isOverdue && (
-            <div className="bg-[var(--admin-domain-danger-bg)] border border-[var(--admin-domain-danger)] rounded-xl p-4 flex items-start gap-3">
-              <span className="material-symbols-outlined text-[var(--admin-error)]">warning</span>
-              <div>
-                <h4 className="text-[var(--admin-error)] font-bold text-sm">SLA Overdue</h4>
-                <p className="text-sm text-red-800 mt-1">
-                  This request has exceeded the standard processing time for the{' '}
-                  <strong>{request.sla.currentStage}</strong> stage. Action required immediately.
-                </p>
-              </div>
             </div>
-          )}
 
-          {/* Logistics Timeline (Req #6) */}
-          <div className="admin-card overflow-hidden border-none ring-1 ring-black/5 shadow-sm bg-white rounded-xl">
-            <div className="admin-card-header p-4 sm:p-5 border-b border-admin-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h2 className="admin-card-title text-base font-bold text-gray-900">
-                Reverse Logistics Timeline
-              </h2>
-              <StatusBadge status={request.status} />
-            </div>
-            <div className="admin-card-body p-4 overflow-hidden">
-              <div className="relative pb-2 overflow-x-auto admin-scrollbar">
-                <div className="flex items-start min-w-max px-2 pt-2">
-                  {adminTimeline.map((stage, index) => {
-                    const isCompleted = stage.status === 'completed';
-                    const isPending = stage.status === 'pending';
-                    const isRejected = stage.status === 'rejected';
-
-                    return (
-                      <div
-                        key={index}
-                        className="relative flex flex-col items-center w-28 flex-shrink-0"
-                      >
-                        {/* Connecting Line */}
-                        {index < adminTimeline.length - 1 && (
-                          <div
-                            className={`absolute top-3 left-1/2 w-full h-[2px] ${isCompleted && adminTimeline[index + 1]?.status !== 'pending' && !isRejected ? 'bg-admin-success' : 'bg-admin-border'}`}
-                          ></div>
-                        )}
-
-                        {/* Circle */}
-                        <div
-                          className={`relative z-10 flex items-center justify-center w-6 h-6 rounded-full border 
-                          ${
-                            isCompleted
-                              ? 'bg-admin-success border-admin-success text-white'
-                              : isRejected
-                                ? 'bg-admin-error border-admin-error text-white'
-                                : 'bg-admin-surface border-admin-border text-admin-text-muted'
-                          }`}
-                        >
-                          {isCompleted ? (
-                            <span className="material-symbols-outlined text-[12px]">check</span>
-                          ) : isRejected ? (
-                            <span className="material-symbols-outlined text-[12px]">close</span>
-                          ) : (
-                            <span className="text-[10px] font-bold">{index + 1}</span>
-                          )}
-                        </div>
-
-                        {/* Label & Subtext */}
-                        <div className="mt-2 text-center flex flex-col items-center">
-                          <p
-                            className={`text-[11px] leading-tight max-w-[90px] mx-auto font-bold ${!isPending ? 'text-gray-900' : 'text-gray-500'}`}
-                          >
-                            {stage.label}
-                          </p>
-                          {stage.subtext && (
-                            <span
-                              className={`mt-1 text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded
-                              ${stage.subtext.includes('Required') || stage.subtext.includes('Locked') ? 'text-amber-700 bg-amber-50 border border-amber-200' : 'text-gray-500 bg-gray-100'}`}
-                            >
-                              {stage.subtext}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+            {/* Contact Actions */}
+            <div className="p-4 pt-0 flex gap-2">
+              {pickupAddr.phone && (
+                <a
+                  href={`tel:${pickupAddr.phone}`}
+                  className="flex-1 py-2 px-3 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] text-xs font-bold rounded-xl border border-[var(--admin-border)] text-center flex items-center justify-center gap-1 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[14px]">call</span>
+                  Call {pickupAddr.phone}
+                </a>
+              )}
+              {waPhone && (
+                <a
+                  href={`https://wa.me/${waPhone}?text=Hi%20${encodeURIComponent(pickupAddr.name || 'there')},%20regarding%20your%20Return%20Request%20#${encodeURIComponent(request.returnId)}:`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="py-2 px-3 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] text-xs font-bold rounded-xl border border-[#25D366]/30 text-center flex items-center justify-center gap-1 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[14px]">chat</span>
+                  WhatsApp
+                </a>
+              )}
             </div>
           </div>
 
-          {/* Items Section */}
+          {/* 2. RETURNING ITEMS & WAREHOUSE INSPECTION */}
           <div className="flex flex-col gap-5">
-            {request.items?.map((item, index) => (
-              <div
-                key={index}
-                className="admin-card overflow-hidden border-none shadow-sm ring-1 ring-black/5 bg-white rounded-xl"
-              >
-                <div className="p-3 sm:p-4 flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white">
-                  <img
-                    src={item.imageSrc || PLACEHOLDER_IMAGES.product}
-                    alt={item.title}
-                    onError={handleImageError}
-                    className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl shadow-sm flex-shrink-0 border border-gray-100"
-                  />
-                  <div className="flex-1 flex flex-col justify-between min-w-0">
-                    <div className="mb-2">
-                      <h4 className="font-bold text-gray-900 text-sm sm:text-base mb-1 truncate">
-                        {item.title}
-                      </h4>
-                      {item.variant && (
-                        <span className="inline-flex bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md text-[10px] font-semibold border border-gray-200">
-                          Variant: {item.variant}
-                        </span>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-4 sm:gap-6 lg:gap-8">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">
-                          Qty Returning
-                        </span>
-                        <span className="font-semibold text-gray-900 text-sm">
-                          {item.returnQuantity}{' '}
-                          <span className="text-gray-400 font-normal">
-                            / {item.orderedQuantity}
-                          </span>
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">
-                          Unit Price
-                        </span>
-                        <span className="font-semibold text-gray-900 text-sm">
-                          ₹{item.unitPrice}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-0.5 col-span-2 sm:col-span-1">
-                        <span className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">
-                          Status
-                        </span>
-                        <span className="capitalize font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md text-[10px] inline-flex w-fit border border-blue-100">
-                          {item.warehouseStatus.replace('_', ' ')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            {request.items?.map((item, index) => {
+              const itemUnit = Number(item.unitPrice || 0);
+              const itemQty = Number(item.returnQuantity || 1);
+              const itemTotal = itemUnit * itemQty;
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 bg-gray-50/50">
-                  <div className="p-3 sm:p-4">
-                    <h5 className="text-[10px] font-bold mb-2 uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[14px]">forum</span>
-                      Customer Reason
-                    </h5>
-                    <div>
-                      <p className="font-bold text-gray-900 text-sm leading-snug">{item.reason}</p>
-                      {item.description && (
-                        <p className="text-xs text-gray-600 mt-1.5 leading-snug">
-                          {item.description}
+              return (
+                <div
+                  key={index}
+                  className="admin-card overflow-hidden border border-[var(--admin-border)] shadow-xs bg-white rounded-2xl"
+                >
+                  {/* Item Header Strip */}
+                  <div className="p-4 sm:p-5 border-b border-[var(--admin-border)] flex flex-wrap items-center justify-between gap-3 bg-[var(--admin-bg-subtle)]/50">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[var(--admin-accent)] text-[20px]">
+                        outbox
+                      </span>
+                      <h3 className="text-base font-bold text-[var(--admin-text-primary)]">
+                        Returning Item {request.items.length > 1 ? `#${index + 1}` : ''}
+                      </h3>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-[var(--admin-accent)] bg-[var(--admin-accent-light)] border border-[var(--admin-border-strong)] uppercase tracking-wider">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)]" />
+                      Qty: {itemQty} of {item.orderedQuantity || itemQty}
+                    </span>
+                  </div>
+
+                  {/* Item Product Details */}
+                  <div className="p-4 sm:p-6 space-y-4">
+                    <div className="flex gap-4 items-start">
+                      <img
+                        src={item.imageSrc || PLACEHOLDER_IMAGES.product}
+                        alt={item.title || 'Product'}
+                        onError={handleImageError}
+                        onClick={() => item.imageSrc && setPreviewImage(item.imageSrc)}
+                        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl border border-[var(--admin-border)] shadow-xs flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm sm:text-base font-bold text-[var(--admin-text-primary)] leading-snug">
+                          {item.title || 'Product'}
+                        </h4>
+                        {item.variant && (
+                          <div className="mt-1">
+                            <span className="inline-block bg-[var(--admin-bg-subtle)] text-[var(--admin-text-secondary)] text-[10px] font-semibold px-2 py-0.5 rounded border border-[var(--admin-border)] shadow-2xs">
+                              Variant: {item.variant}
+                            </span>
+                          </div>
+                        )}
+                        <p className="mt-1.5 text-sm font-extrabold text-[var(--admin-text-primary)] font-mono">
+                          ₹{formatINR(itemUnit)}{' '}
+                          <span className="text-[11px] font-normal text-[var(--admin-text-tertiary)]">
+                            / unit
+                          </span>
+                          <span className="text-[var(--admin-text-tertiary)] font-normal mx-1.5">
+                            •
+                          </span>
+                          <span className="text-[var(--admin-accent)]">
+                            Total: ₹{formatINR(itemTotal)}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Customer Reason */}
+                    <div className="p-3.5 rounded-xl bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] text-xs">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)] block mb-1">
+                        Return Reason:
+                      </span>
+                      <p className="font-semibold text-[var(--admin-text-primary)]">
+                        {item.reason || 'Customer request'}
+                      </p>
+                      {item.description && item.description !== item.reason && (
+                        <p className="mt-1 text-[var(--admin-text-secondary)] text-[11px] italic leading-relaxed">
+                          "{item.description}"
                         </p>
                       )}
                     </div>
 
+                    {/* Evidence Photos */}
                     {item.evidenceImages?.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-200/60">
+                      <div className="pt-2">
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)] mb-2 block">
+                          Customer Photos ({item.evidenceImages.length})
+                        </span>
                         <div className="flex gap-2 overflow-x-auto admin-scrollbar pb-1">
                           {item.evidenceImages.map((img, i) => (
-                            <a
+                            <img
                               key={i}
-                              href={img}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="block flex-shrink-0"
-                            >
-                              <img
-                                src={img}
-                                alt="Evidence"
-                                className="w-12 h-12 object-cover rounded-md shadow-sm hover:opacity-80 transition-opacity border border-gray-200"
-                              />
-                            </a>
+                              src={img}
+                              alt="Evidence"
+                              onClick={() => setPreviewImage(img)}
+                              className="w-14 h-14 object-cover rounded-xl border border-[var(--admin-border)] shadow-2xs cursor-pointer hover:scale-105 transition-transform"
+                            />
                           ))}
                         </div>
                       </div>
                     )}
-                  </div>
 
-                  {/* Inspection Results if available */}
-                  {item.inspectionResult?.inspectedAt ? (
-                    <div className="p-3 sm:p-4">
-                      <h5 className="text-[10px] font-bold mb-2 uppercase tracking-wider text-gray-500 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[14px]">fact_check</span>
-                          Warehouse Inspection
+                    {/* ─── Warehouse Inspection Section ─── */}
+                    <div className="pt-3 border-t border-[var(--admin-border)]">
+                      {item.inspectionResult?.inspectedAt ? (
+                        <div className="p-4 rounded-xl bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] space-y-3 text-xs">
+                          <div className="flex items-center justify-between pb-2 border-b border-[var(--admin-border)]">
+                            <span className="font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-[16px] text-emerald-600">
+                                fact_check
+                              </span>
+                              Warehouse Inspection Result
+                            </span>
+                            <span
+                              className={`px-2.5 py-0.5 rounded-md text-xs font-bold border ${item.inspectionResult.inspectionScore >= 80 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}
+                            >
+                              Score: {item.inspectionResult.inspectionScore}/100
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div className="p-2 bg-white rounded-lg border border-[var(--admin-border)]">
+                              <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
+                                Original Product
+                              </span>
+                              <span
+                                className={`font-bold flex items-center gap-1 text-[11px] mt-0.5 ${item.inspectionResult.originalProduct ? 'text-emerald-700' : 'text-red-700'}`}
+                              >
+                                <span className="material-symbols-outlined text-[13px]">
+                                  {item.inspectionResult.originalProduct
+                                    ? 'check_circle'
+                                    : 'cancel'}
+                                </span>
+                                {item.inspectionResult.originalProduct ? 'Verified' : 'Missing'}
+                              </span>
+                            </div>
+                            <div className="p-2 bg-white rounded-lg border border-[var(--admin-border)]">
+                              <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
+                                Accessories
+                              </span>
+                              <span
+                                className={`font-bold flex items-center gap-1 text-[11px] mt-0.5 ${item.inspectionResult.accessoriesPresent ? 'text-emerald-700' : 'text-red-700'}`}
+                              >
+                                <span className="material-symbols-outlined text-[13px]">
+                                  {item.inspectionResult.accessoriesPresent
+                                    ? 'check_circle'
+                                    : 'cancel'}
+                                </span>
+                                {item.inspectionResult.accessoriesPresent ? 'Present' : 'Missing'}
+                              </span>
+                            </div>
+                            <div className="p-2 bg-white rounded-lg border border-[var(--admin-border)]">
+                              <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
+                                Packaging
+                              </span>
+                              <span
+                                className={`font-bold flex items-center gap-1 text-[11px] mt-0.5 ${item.inspectionResult.packagingIntact ? 'text-emerald-700' : 'text-red-700'}`}
+                              >
+                                <span className="material-symbols-outlined text-[13px]">
+                                  {item.inspectionResult.packagingIntact
+                                    ? 'check_circle'
+                                    : 'cancel'}
+                                </span>
+                                {item.inspectionResult.packagingIntact ? 'Intact' : 'Damaged'}
+                              </span>
+                            </div>
+                            <div className="p-2 bg-white rounded-lg border border-[var(--admin-border)]">
+                              <span className="text-[10px] text-[var(--admin-text-tertiary)] block font-medium">
+                                Condition
+                              </span>
+                              <span
+                                className={`font-bold flex items-center gap-1 text-[11px] mt-0.5 ${item.inspectionResult.workingCondition ? 'text-emerald-700' : 'text-red-700'}`}
+                              >
+                                <span className="material-symbols-outlined text-[13px]">
+                                  {item.inspectionResult.workingCondition
+                                    ? 'check_circle'
+                                    : 'cancel'}
+                                </span>
+                                {item.inspectionResult.workingCondition ? 'Good' : 'Damaged'}
+                              </span>
+                            </div>
+                          </div>
+                          {item.inspectionResult.remarks && (
+                            <div className="pt-2 border-t border-[var(--admin-border)] text-xs text-[var(--admin-text-secondary)]">
+                              <strong className="text-[var(--admin-text-primary)]">
+                                Remarks:{' '}
+                              </strong>
+                              {item.inspectionResult.remarks}
+                            </div>
+                          )}
                         </div>
-                        <span
-                          className={`px-2 py-0.5 rounded-md text-[9px] font-bold shadow-sm border ${item.inspectionResult.inspectionScore >= 80 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}
-                        >
-                          Score: {item.inspectionResult.inspectionScore}
-                        </span>
-                      </h5>
-                      <ul className="space-y-1.5 text-xs">
-                        <li className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Original Product</span>
-                          {item.inspectionResult.originalProduct ? (
-                            <span className="font-bold text-green-700 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">
-                                check_circle
-                              </span>{' '}
-                              Yes
+                      ) : ['return_received', 'inspection_started'].includes(request.status) ? (
+                        <div className="p-4 rounded-xl bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] space-y-3">
+                          <h5 className="text-xs font-bold text-[var(--admin-text-primary)] flex items-center gap-1.5 pb-2 border-b border-[var(--admin-border)]">
+                            <span className="material-symbols-outlined text-[16px] text-[var(--admin-accent)]">
+                              fact_check
                             </span>
-                          ) : (
-                            <span className="font-bold text-red-700 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">cancel</span>{' '}
-                              No
-                            </span>
-                          )}
-                        </li>
-                        <li className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Accessories</span>
-                          {item.inspectionResult.accessoriesPresent ? (
-                            <span className="font-bold text-green-700 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">
-                                check_circle
-                              </span>{' '}
-                              Yes
-                            </span>
-                          ) : (
-                            <span className="font-bold text-red-700 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">cancel</span>{' '}
-                              No
-                            </span>
-                          )}
-                        </li>
-                        <li className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Packaging</span>
-                          {item.inspectionResult.packagingIntact ? (
-                            <span className="font-bold text-green-700 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">
-                                check_circle
-                              </span>{' '}
-                              Intact
-                            </span>
-                          ) : (
-                            <span className="font-bold text-red-700 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">cancel</span>{' '}
-                              Damaged
-                            </span>
-                          )}
-                        </li>
-                        <li className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Working Condition</span>
-                          {item.inspectionResult.workingCondition ? (
-                            <span className="font-bold text-green-700 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">
-                                check_circle
-                              </span>{' '}
-                              Yes
-                            </span>
-                          ) : (
-                            <span className="font-bold text-red-700 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">cancel</span>{' '}
-                              No
-                            </span>
-                          )}
-                        </li>
-                      </ul>
-                      {item.inspectionResult.remarks && (
-                        <div className="mt-3 p-2 bg-white border border-gray-200 rounded-md text-[11px] text-gray-700 leading-snug shadow-sm">
-                          <span className="font-bold mr-1 text-gray-900">Remarks:</span>
-                          {item.inspectionResult.remarks}
+                            Conduct Warehouse Inspection
+                          </h5>
+                          <div className="space-y-2.5">
+                            {[
+                              'originalProduct',
+                              'accessoriesPresent',
+                              'packagingIntact',
+                              'workingCondition',
+                            ].map((field) => (
+                              <div
+                                key={field}
+                                className="flex justify-between items-center text-xs"
+                              >
+                                <span className="text-[var(--admin-text-primary)] font-medium capitalize">
+                                  {field.replace(/([A-Z])/g, ' $1').trim()}
+                                </span>
+                                <div className="flex gap-1.5">
+                                  <button
+                                    type="button"
+                                    className={`px-3 py-1 rounded-lg border text-xs font-bold transition-colors cursor-pointer ${
+                                      (inspectionState[index]?.[field] ?? true) === true
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                        : 'bg-white text-[var(--admin-text-tertiary)] border-[var(--admin-border)] hover:bg-[var(--admin-surface-hover)]'
+                                    }`}
+                                    onClick={() => handleInspectionChange(index, field, true)}
+                                  >
+                                    Yes
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`px-3 py-1 rounded-lg border text-xs font-bold transition-colors cursor-pointer ${
+                                      (inspectionState[index]?.[field] ?? true) === false
+                                        ? 'bg-red-50 text-red-700 border-red-300'
+                                        : 'bg-white text-[var(--admin-text-tertiary)] border-[var(--admin-border)] hover:bg-[var(--admin-surface-hover)]'
+                                    }`}
+                                    onClick={() => handleInspectionChange(index, field, false)}
+                                  >
+                                    No
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                            <div className="pt-2 border-t border-[var(--admin-border)]">
+                              <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1 block">
+                                Inspection Score (0-100)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                className="w-full text-xs p-2 bg-white border border-[var(--admin-border)] rounded-xl outline-none focus:border-[var(--admin-accent)]"
+                                value={inspectionState[index]?.inspectionScore ?? 100}
+                                onChange={(e) =>
+                                  handleInspectionChange(
+                                    index,
+                                    'inspectionScore',
+                                    parseInt(e.target.value) || 0,
+                                  )
+                                }
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-1 block">
+                                Inspection Remarks
+                              </label>
+                              <textarea
+                                className="w-full text-xs p-2 bg-white border border-[var(--admin-border)] rounded-xl outline-none focus:border-[var(--admin-accent)]"
+                                rows="2"
+                                placeholder="Add detailed inspection observations..."
+                                value={inspectionState[index]?.remarks || ''}
+                                onChange={(e) =>
+                                  handleInspectionChange(index, 'remarks', e.target.value)
+                                }
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-primary w-full text-xs font-bold mt-2"
+                              onClick={() => handleInspectionSubmit(index)}
+                            >
+                              Submit Inspection
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="py-2 text-xs text-[var(--admin-text-tertiary)] flex items-center gap-1.5 italic">
+                          <span className="material-symbols-outlined text-[16px]">
+                            pending_actions
+                          </span>
+                          Quality inspection will unlock once item is marked received at warehouse.
                         </div>
                       )}
                     </div>
-                  ) : ['return_received', 'inspection_started'].includes(request.status) ? (
-                    <div className="p-3 sm:p-4 bg-white rounded-lg border border-gray-200 m-3 shadow-sm">
-                      <h5 className="text-[10px] font-bold mb-3 uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[14px]">fact_check</span>
-                        Submit Inspection
-                      </h5>
-                      <div className="space-y-3">
-                        {[
-                          'originalProduct',
-                          'accessoriesPresent',
-                          'packagingIntact',
-                          'workingCondition',
-                        ].map((field) => (
-                          <div key={field} className="flex justify-between items-center text-xs">
-                            <span className="text-gray-700 font-medium capitalize">
-                              {field.replace(/([A-Z])/g, ' $1').trim()}
-                            </span>
-                            <div className="flex gap-2">
-                              <button
-                                className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
-                                  (inspectionState[index]?.[field] ?? true) === true
-                                    ? 'bg-green-50 text-green-700 border-green-200'
-                                    : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'
-                                }`}
-                                onClick={() => handleInspectionChange(index, field, true)}
-                              >
-                                Yes
-                              </button>
-                              <button
-                                className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
-                                  (inspectionState[index]?.[field] ?? true) === false
-                                    ? 'bg-red-50 text-red-700 border-red-200'
-                                    : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'
-                                }`}
-                                onClick={() => handleInspectionChange(index, field, false)}
-                              >
-                                No
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                        <div className="pt-2 border-t border-gray-100">
-                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">
-                            Score (0-100)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            className="w-full text-sm p-2 border border-gray-200 rounded-md focus:ring-1 focus:ring-admin-primary focus:border-admin-primary"
-                            value={inspectionState[index]?.inspectionScore ?? 100}
-                            onChange={(e) =>
-                              handleInspectionChange(
-                                index,
-                                'inspectionScore',
-                                parseInt(e.target.value) || 0,
-                              )
-                            }
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">
-                            Remarks
-                          </label>
-                          <textarea
-                            className="w-full text-xs p-2 border border-gray-200 rounded-md focus:ring-1 focus:ring-admin-primary focus:border-admin-primary"
-                            rows="2"
-                            placeholder="Add detailed inspection notes here..."
-                            value={inspectionState[index]?.remarks || ''}
-                            onChange={(e) =>
-                              handleInspectionChange(index, 'remarks', e.target.value)
-                            }
-                          />
-                        </div>
-                        <button
-                          className="w-full mt-2 py-2 bg-admin-primary text-white text-xs font-bold rounded-md hover:bg-admin-primary-dark transition-colors shadow-sm"
-                          onClick={() => handleInspectionSubmit(index)}
-                        >
-                          Submit Results
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-4 flex flex-col items-center justify-center text-gray-400 h-full min-h-[200px]">
-                      <span className="material-symbols-outlined text-4xl mb-2 opacity-30">
-                        pending_actions
-                      </span>
-                      <p className="text-xs font-semibold">
-                        {request.status === 'inspection_started' ||
-                        request.status === 'return_received'
-                          ? 'Ready for Inspection'
-                          : 'Pending Arrival'}
-                      </p>
-                    </div>
-                  )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Side-by-side bottom cards: Pickup & Audit */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Pickup Details (Req #22) */}
-            <div className="admin-card shadow-sm border-none ring-1 ring-black/5 bg-white rounded-xl flex flex-col">
-              <div className="admin-card-header flex justify-between items-center p-4 sm:p-5 border-b border-admin-border bg-white flex-shrink-0">
-                <h2 className="admin-card-title text-base font-bold text-gray-900">
-                  Pickup Logistics
-                </h2>
-                {request.pickup?.status && <StatusBadge status={request.pickup.status} />}
+          {/* 3. AUTHORITATIVE FINANCIAL REFUND SETTLEMENT CARD */}
+          <div className="admin-card overflow-hidden border border-[var(--admin-border)] shadow-xs bg-white rounded-2xl">
+            <div className="p-4 sm:p-5 border-b border-[var(--admin-border)] flex items-center justify-between bg-[var(--admin-bg-subtle)]/50">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--admin-accent)] text-[20px]">
+                  account_balance_wallet
+                </span>
+                <h3 className="text-base font-bold text-[var(--admin-text-primary)]">
+                  Refund Financial Settlement
+                </h3>
               </div>
-              <div className="admin-card-body p-4 sm:p-5 flex-1">
-                {request.pickup?.address ? (
-                  <div className="space-y-4">
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border border-[var(--admin-border)] font-mono uppercase">
+                Method: {refundMethod.replace(/_/g, ' ')}
+              </span>
+            </div>
+
+            <div className="p-4 sm:p-6 space-y-5">
+              {/* Financial Math Summary */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center p-3 rounded-xl bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)]">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+                    Product Total
+                  </span>
+                  <p className="text-sm sm:text-base font-bold text-[var(--admin-text-primary)] font-mono mt-0.5">
+                    ₹{formatINR(productTotal)}
+                  </p>
+                </div>
+                <div className="border-l border-[var(--admin-border)] pl-2">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+                    Additions
+                  </span>
+                  <p className="text-sm sm:text-base font-bold text-emerald-700 font-mono mt-0.5">
+                    +₹{formatINR(taxRefund + shippingRefund)}
+                  </p>
+                </div>
+                <div className="border-l border-[var(--admin-border)] pl-2">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+                    Deductions
+                  </span>
+                  <p className="text-sm sm:text-base font-bold text-red-600 font-mono mt-0.5">
+                    -₹{formatINR(restockingFee + discountDeduction + walletUsedDeduction)}
+                  </p>
+                </div>
+                <div className="border-l border-[var(--admin-border)] pl-2">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+                    Grand Total
+                  </span>
+                  <p className="text-sm sm:text-lg font-black text-emerald-700 font-mono mt-0.5">
+                    ₹{formatINR(grandTotal)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Settlement Strip */}
+              <div className="p-4 rounded-xl bg-[var(--admin-success-light)] border border-[var(--admin-success-border)] space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[var(--admin-success)] text-[22px]">
+                      savings
+                    </span>
                     <div>
-                      <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                        Pickup Address
-                      </h4>
-                      <p className="text-sm text-gray-800 break-words leading-relaxed font-medium bg-gray-50/80 p-3 rounded-lg border border-gray-100">
-                        {request.pickup.address.name ||
-                          `${request.pickup.address.firstName || ''} ${request.pickup.address.lastName || ''}`.trim() ||
-                          request.orderId?.shippingAddress?.name ||
-                          request.userId?.name ||
-                          'Customer Name Not Provided'}
-                        <br />
-                        {request.pickup.address.addressString ||
-                          request.pickup.address.addressLine1 ||
-                          request.orderId?.shippingAddress?.address ||
-                          'Address line not provided'}
-                        {(request.pickup.address.locality ||
-                          request.orderId?.shippingAddress?.locality) && (
-                          <>
-                            ,{' '}
-                            {request.pickup.address.locality ||
-                              request.orderId?.shippingAddress?.locality}
-                          </>
-                        )}
-                        <br />
-                        {request.pickup.address.city ||
-                          request.orderId?.shippingAddress?.city ||
-                          'City'}
-                        ,{' '}
-                        {request.pickup.address.state ||
-                          request.orderId?.shippingAddress?.state ||
-                          'State'}{' '}
-                        {request.pickup.address.pincode ||
-                          request.pickup.address.pinCode ||
-                          request.orderId?.shippingAddress?.pincode ||
-                          ''}
-                        {(request.pickup.address.phone ||
-                          request.orderId?.shippingAddress?.phone ||
-                          request.userId?.phone) && (
-                          <>
-                            <br />
-                            <span className="text-gray-500 text-xs mt-1 inline-block">
-                              <span className="font-bold">Phone:</span>{' '}
-                              {request.pickup.address.phone ||
-                                request.orderId?.shippingAddress?.phone ||
-                                request.userId?.phone}
-                            </span>
-                          </>
-                        )}
+                      <span className="font-bold text-sm text-[var(--admin-text-primary)]">
+                        Refund Due to Customer
+                      </span>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)]">
+                        Authoritative refund calculation ready for credit or payout.
                       </p>
                     </div>
+                  </div>
+                  <span className="text-base font-mono font-black text-[var(--admin-success)] bg-white px-3 py-1 rounded-xl border border-[var(--admin-success-border)] shadow-2xs">
+                    ₹{formatINR(grandTotal)} Refund
+                  </span>
+                </div>
 
-                    {request.pickup.partner && (
-                      <div className="pt-4 mt-4 border-t border-gray-200">
-                        <div className="flex justify-between text-xs mb-2.5">
-                          <span className="text-gray-500 font-bold uppercase tracking-wider">
-                            Partner:
-                          </span>
-                          <span className="font-bold text-gray-900">{request.pickup.partner}</span>
-                        </div>
-                        <div className="flex justify-between text-xs mb-2.5">
-                          <span className="text-gray-500 font-bold uppercase tracking-wider">
-                            Tracking:
-                          </span>
-                          <span className="font-bold text-admin-primary">
-                            {request.pickup.trackingId}
-                          </span>
-                        </div>
-                        {request.pickup.driverName && (
-                          <div className="flex justify-between text-xs">
-                            <span className="text-gray-500 font-bold uppercase tracking-wider">
-                              Driver:
-                            </span>
-                            <span className="font-bold text-gray-900">
-                              {request.pickup.driverName} ({request.pickup.driverPhone})
-                            </span>
-                          </div>
-                        )}
+                {/* Payment Destination Strip */}
+                <div className="p-3.5 bg-white rounded-xl border border-[var(--admin-success-border)] flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+                        Destination:
+                      </span>
+                      <span className="font-bold text-[var(--admin-text-primary)] uppercase">
+                        {refundMethod === 'wallet'
+                          ? 'Store Wallet'
+                          : isCOD
+                            ? 'UPI Refund (COD Order)'
+                            : 'Original Payment Method / Online'}
+                      </span>
+                      {isCOD && (
+                        <span className="px-2 py-0.5 bg-[var(--admin-warning-light)] text-[var(--admin-warning)] border border-[var(--admin-warning-border)] text-[10px] font-bold rounded">
+                          COD Order
+                        </span>
+                      )}
+                    </div>
+                    {upiId && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+                          Customer UPI ID:
+                        </span>
+                        <span className="font-mono font-black text-sm text-[var(--admin-text-primary)] select-all">
+                          {upiId}
+                        </span>
                       </div>
                     )}
+                  </div>
 
-                    {(request.status === 'approved' || request.status === 'pickup_assigned') && (
-                      <button className="admin-btn-secondary w-full justify-center mt-4 py-2.5 shadow-sm font-bold">
-                        Assign/Update Courier
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {upiId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(upiId);
+                          toast.success('UPI ID copied to clipboard!');
+                        }}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] text-xs font-bold rounded-lg border border-[var(--admin-border)] transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">content_copy</span>
+                        Copy UPI ID
+                      </button>
+                    )}
+
+                    {!isRefundSettled ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleTriggerRefundClick}
+                          className="admin-btn admin-btn-outline text-xs font-bold rounded-lg"
+                        >
+                          Trigger Refund
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSettleData({
+                              amount: grandTotal,
+                              paymentMethod: isCOD
+                                ? 'upi'
+                                : refundMethod === 'wallet'
+                                  ? 'wallet'
+                                  : 'upi',
+                              upiId: upiId || '',
+                              transactionId: '',
+                              notes: `Paid ₹${formatINR(grandTotal)} refund to customer`,
+                            });
+                            setIsSettleModalOpen(true);
+                          }}
+                          className="admin-btn admin-btn-primary flex items-center gap-1.5 text-xs font-bold rounded-lg shadow-xs transition-all cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">verified</span>
+                          Mark Payment Done
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSettleData({
+                            amount: settledAmount,
+                            paymentMethod: refundRecord?.refundMethod || 'upi',
+                            upiId: upiId || '',
+                            transactionId: settledUtr || '',
+                            notes: refundRecord?.reason || refundTimelineEvent?.description || '',
+                          });
+                          setIsSettleModalOpen(true);
+                        }}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] text-xs font-bold rounded-lg border border-[var(--admin-border)] transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">edit_note</span>
+                        Update Payout Record
                       </button>
                     )}
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full py-6 text-gray-400">
-                    <span className="material-symbols-outlined text-3xl mb-2 opacity-50">
-                      local_shipping
-                    </span>
-                    <p className="text-sm font-medium italic">No pickup scheduled.</p>
+                </div>
+
+                {/* Settled Details Summary Strip if already paid */}
+                {isRefundSettled && (
+                  <div className="p-3 bg-white rounded-xl border border-[var(--admin-success-border)] flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="material-symbols-outlined text-[var(--admin-success)] text-[18px]">
+                        check_circle
+                      </span>
+                      <span className="text-[var(--admin-text-primary)] font-bold">
+                        Payout Registered:{' '}
+                        <span className="font-mono font-black text-sm text-[var(--admin-success)]">
+                          ₹{formatINR(settledAmount)}
+                        </span>
+                      </span>
+                      {settledUtr && (
+                        <span className="font-mono text-[11px] bg-[var(--admin-bg-subtle)] px-2 py-0.5 rounded border border-[var(--admin-border)] text-[var(--admin-text-primary)] font-bold">
+                          UTR / Ref: {settledUtr}
+                        </span>
+                      )}
+                    </div>
+                    {settledDate && (
+                      <span className="text-[11px] text-[var(--admin-text-secondary)] font-medium">
+                        Recorded on {format(new Date(settledDate), 'dd MMM yyyy, hh:mm a')}
+                      </span>
+                    )}
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Audit Info */}
-            <div className="admin-card shadow-sm border-none ring-1 ring-black/5 bg-white rounded-xl flex flex-col">
-              <div className="admin-card-header p-4 sm:p-5 border-b border-admin-border bg-white flex-shrink-0">
-                <h2 className="admin-card-title text-base font-bold text-gray-900">Audit Info</h2>
-              </div>
-              <div className="admin-card-body p-4 sm:p-5 text-xs text-gray-500 space-y-4 font-medium flex-1">
-                <div className="flex justify-between items-center py-1">
-                  <span>Created:</span>
-                  <span className="text-gray-900 font-bold text-right">
-                    {request.createdAt ? format(new Date(request.createdAt), 'PP pp') : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span>Last Updated:</span>
-                  <span className="text-gray-900 font-bold text-right">
-                    {request.updatedAt ? format(new Date(request.updatedAt), 'PP pp') : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span>Priority:</span>
-                  <span
-                    className={`capitalize font-bold px-2 py-0.5 rounded text-[10px] ${request.priority === 'high' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-700'}`}
-                  >
-                    {request.priority}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span>Approval Level:</span>
-                  <span className="capitalize font-bold text-gray-900">
-                    {request.approvalLevel?.replace('_', ' ')}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Sidebar Column */}
+        {/* Right Sidebar: Customer Profile & Order Context */}
         <div className="flex flex-col gap-6 min-w-0">
-          {/* Refund Breakdown */}
-          <div className="admin-card overflow-hidden shadow-sm border-none ring-1 ring-black/5 bg-white rounded-xl">
-            <div className="admin-card-header bg-white border-b border-admin-border p-4 sm:p-5">
-              <h2 className="admin-card-title flex items-center gap-2 text-base font-bold text-gray-900">
-                <span className="material-symbols-outlined text-admin-primary">
-                  account_balance_wallet
+          {/* 1. CUSTOMER PROFILE CARD */}
+          <div className="admin-card overflow-hidden border border-[var(--admin-border)] shadow-xs bg-white rounded-2xl">
+            <div className="p-4 sm:p-5 border-b border-[var(--admin-border)] flex items-center justify-between bg-[var(--admin-bg-subtle)]/50">
+              <h3 className="text-sm font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--admin-accent)] text-[18px]">
+                  person
                 </span>
-                Refund Breakdown
-              </h2>
+                Customer Profile
+              </h3>
             </div>
-            <div className="admin-card-body p-4 sm:p-5">
-              <div className="space-y-3.5">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-500 font-medium">
-                    Product Total (
-                    {request.items.reduce((acc, curr) => acc + curr.returnQuantity, 0)} items)
-                  </span>
-                  <span className="font-bold text-gray-900 text-sm">
-                    ₹{request.refundBreakdown?.productTotal || 0}
-                  </span>
+            <div className="p-4 sm:p-5 space-y-3.5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--admin-accent)] text-white font-bold text-base flex items-center justify-center shadow-xs flex-shrink-0">
+                  {request.userId?.name?.charAt(0) || 'U'}
                 </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-500 font-medium">Tax Refund</span>
-                  <span className="font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
-                    + ₹{request.refundBreakdown?.taxRefund || 0}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-500 font-medium">Shipping Refund</span>
-                  <span className="font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-100">
-                    + ₹{request.refundBreakdown?.shippingRefund || 0}
-                  </span>
-                </div>
-
-                <div className="h-px bg-gray-200 w-full my-3"></div>
-
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[14px] text-red-500">
-                      remove
-                    </span>{' '}
-                    Restocking Fee
-                  </span>
-                  <span className="font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
-                    - ₹{request.refundBreakdown?.restockingFee || 0}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[14px] text-red-500">
-                      remove
-                    </span>{' '}
-                    Discount Deduction
-                  </span>
-                  <span className="font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
-                    - ₹{request.refundBreakdown?.discountDeduction || 0}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[14px] text-orange-500">
-                      account_balance_wallet
-                    </span>{' '}
-                    Wallet Deduction
-                  </span>
-                  <span className="font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100">
-                    - ₹{request.refundBreakdown?.walletUsedDeduction || 0}
-                  </span>
-                </div>
-
-                <div className="pt-4 mt-4 border-t-2 border-dashed border-gray-200 flex justify-between items-center font-bold">
-                  <span className="text-gray-900 text-sm">Grand Total</span>
-                  <span className="text-green-700 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 text-base shadow-sm">
-                    ₹{(request.refundBreakdown?.grandTotal || 0).toLocaleString()}
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm font-bold text-[var(--admin-text-primary)] truncate">
+                    {request.userId?.name || 'Customer Name'}
+                  </h4>
+                  <p className="text-xs text-[var(--admin-text-secondary)] truncate">
+                    {request.userId?.email || 'No email'}
+                  </p>
+                  <p className="text-xs text-[var(--admin-text-secondary)] font-mono mt-0.5">
+                    {request.userId?.phone || 'No phone'}
+                  </p>
                 </div>
               </div>
 
-              <div className="mt-6 p-4 sm:p-5 bg-blue-50/50 rounded-xl border border-blue-100 shadow-sm flex flex-col gap-5">
+              {/* Order & Return Stats */}
+              <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] text-center text-xs">
                 <div>
-                  <h4 className="font-bold text-gray-900 mb-2.5 flex items-center gap-2 text-sm">
-                    <span className="material-symbols-outlined text-admin-primary text-[20px]">
-                      credit_card
-                    </span>
-                    Refund Destination
-                  </h4>
-                  <div className="inline-flex">
-                    <span className="px-3 py-1.5 bg-white border border-blue-200 rounded-md text-xs font-bold uppercase tracking-wider text-blue-800 shadow-sm">
-                      {request.refundMethod?.replace('_', ' ')}
-                    </span>
-                  </div>
-                  {request.refundMethod === 'original' && request.upiId && (
-                    <div className="mt-4 bg-white p-3.5 rounded-lg border border-blue-100 shadow-sm flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-admin-primary text-[20px]">
-                          account_balance
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 truncate">
-                          Linked UPI ID
-                        </p>
-                        <p className="text-sm font-bold text-gray-900 truncate">{request.upiId}</p>
-                      </div>
-                    </div>
-                  )}
+                  <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase font-semibold">
+                    Orders
+                  </span>
+                  <p className="text-base font-black text-[var(--admin-text-primary)] mt-0.5">
+                    {userStats?.totalOrders || 1}
+                  </p>
                 </div>
-                {request.status === 'inspection_completed' && (
-                  <button
-                    className="w-full bg-admin-primary hover:bg-admin-primary-dark text-white rounded-lg flex items-center justify-center gap-2 px-5 py-3.5 text-sm font-bold shadow-md hover:shadow-lg transition-all"
-                    onClick={() => triggerRefund(id, request.refundMethod)}
-                  >
-                    <span className="material-symbols-outlined text-[20px]">payments</span>
-                    Process Refund
-                  </button>
-                )}
+                <div className="border-x border-[var(--admin-border)]">
+                  <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase font-semibold">
+                    Returns
+                  </span>
+                  <p className="text-base font-black text-[var(--admin-warning)] mt-0.5">
+                    {userStats?.totalReturns || 0}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[var(--admin-text-tertiary)] uppercase font-semibold">
+                    Rate
+                  </span>
+                  <p className="text-base font-black text-[var(--admin-text-primary)] mt-0.5">
+                    {userStats?.returnPercentage || 0}%
+                  </p>
+                </div>
+              </div>
+
+              {/* Fraud & Trust Score */}
+              <div className="flex items-center justify-between text-xs pt-1">
+                <span className="text-[var(--admin-text-secondary)] flex items-center gap-1.5 font-medium">
+                  <span className="material-symbols-outlined text-[16px] text-[var(--admin-accent)]">
+                    security
+                  </span>
+                  Risk Assessment:
+                </span>
+                <span
+                  className={`font-bold px-2 py-0.5 rounded text-[11px] ${
+                    (userStats?.fraudScore || 0) > 50
+                      ? 'bg-[var(--admin-error-light)] text-[var(--admin-error)] border border-[var(--admin-error-border)]'
+                      : 'bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)]'
+                  }`}
+                >
+                  Safe (Score {userStats?.fraudScore || 0}/100)
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Customer Profile (Req #23) */}
-          <div className="admin-card shadow-sm border-none ring-1 ring-black/5 bg-white rounded-xl">
-            <div className="admin-card-header p-4 sm:p-5 border-b border-admin-border bg-white">
-              <h2 className="admin-card-title text-base font-bold text-gray-900">
-                Customer Profile
-              </h2>
+          {/* 2. ORDER CONTEXT CARD */}
+          <div className="admin-card overflow-hidden border border-[var(--admin-border)] shadow-xs bg-white rounded-2xl">
+            <div className="p-4 sm:p-5 border-b border-[var(--admin-border)] flex items-center justify-between bg-[var(--admin-bg-subtle)]/50">
+              <h3 className="text-sm font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--admin-accent)] text-[18px]">
+                  receipt_long
+                </span>
+                Original Order Context
+              </h3>
             </div>
-            <div className="admin-card-body p-4 sm:p-5">
-              <div className="flex items-center gap-4 mb-6 min-w-0">
-                <div className="w-14 h-14 rounded-full bg-admin-primary/10 text-admin-primary flex items-center justify-center font-bold text-2xl flex-shrink-0">
-                  {request.userId?.name?.charAt(0) || 'U'}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-gray-900 truncate text-base mb-0.5">
-                    {request.userId?.name}
-                  </h3>
-                  <p className="text-xs font-medium text-gray-500 truncate mb-0.5">
-                    {request.userId?.email}
-                  </p>
-                  <p className="text-xs font-medium text-gray-500 truncate">
-                    {request.userId?.phone}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-center border-t border-b border-gray-200 py-5 mb-5 bg-gray-50/50 rounded-xl">
-                <div>
-                  <div className="text-2xl font-black text-gray-900">
-                    {userStats?.totalOrders || 0}
-                  </div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mt-1">
-                    Total Orders
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-amber-600">
-                    {userStats?.totalReturns || 0}
-                  </div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mt-1">
-                    Total Returns
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  Return Rate
-                </span>
-                <span className="text-sm font-black text-gray-900">
-                  {userStats?.returnPercentage || 0}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden mb-5 shadow-inner">
-                <div
-                  className={`h-full rounded-full ${userStats?.returnPercentage > 50 ? 'bg-red-500' : userStats?.returnPercentage > 20 ? 'bg-amber-500' : 'bg-green-500'}`}
-                  style={{ width: `${Math.min(100, userStats?.returnPercentage || 0)}%` }}
-                ></div>
-              </div>
-
-              <div className="flex justify-between items-center bg-red-50 p-3.5 rounded-xl border border-red-100 shadow-sm">
-                <span className="text-xs text-red-700 font-bold flex items-center gap-1.5 uppercase tracking-wider">
-                  <span className="material-symbols-outlined text-[16px]">security</span> Fraud
-                  Score
-                </span>
-                <span
-                  className={`text-sm font-black ${userStats?.fraudScore > 50 ? 'text-red-700' : 'text-gray-900'}`}
+            <div className="p-4 sm:p-5 text-xs space-y-3 font-medium">
+              <div className="flex justify-between items-center py-1 border-b border-[var(--admin-border-subtle)]">
+                <span className="text-[var(--admin-text-secondary)]">Order ID:</span>
+                <a
+                  href={`/admin/orders/${request.orderId?._id || request.orderId}`}
+                  className="font-mono font-bold text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:underline"
                 >
-                  {userStats?.fraudScore || 0}/100
+                  #{request.orderId?.orderCode || request.orderId?._id?.slice(-8) || 'Order'}
+                </a>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-[var(--admin-border-subtle)]">
+                <span className="text-[var(--admin-text-secondary)]">Payment Method:</span>
+                <span className="font-bold text-[var(--admin-text-primary)] uppercase">
+                  {request.orderId?.paymentMethod || request.order?.paymentMethod || 'Online'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-[var(--admin-border-subtle)]">
+                <span className="text-[var(--admin-text-secondary)]">Order Status:</span>
+                <span className="font-bold capitalize text-[var(--admin-text-primary)]">
+                  {request.orderId?.orderStatus || 'Delivered'}
+                </span>
+              </div>
+              {request.orderId?.total !== undefined && (
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-[var(--admin-text-secondary)]">Order Total:</span>
+                  <span className="font-bold text-[var(--admin-text-primary)] font-mono">
+                    ₹{formatINR(request.orderId.total)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 3. AUDIT INFO CARD */}
+          <div className="admin-card overflow-hidden border border-[var(--admin-border)] shadow-xs bg-white rounded-2xl">
+            <div className="p-4 sm:p-5 border-b border-[var(--admin-border)] flex items-center justify-between bg-[var(--admin-bg-subtle)]/50">
+              <h3 className="text-sm font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--admin-accent)] text-[18px]">
+                  history
+                </span>
+                Audit Details
+              </h3>
+            </div>
+            <div className="p-4 sm:p-5 text-xs space-y-3 font-medium">
+              <div className="flex justify-between items-center py-1 border-b border-[var(--admin-border-subtle)]">
+                <span className="text-[var(--admin-text-secondary)]">Created:</span>
+                <span className="font-bold text-[var(--admin-text-primary)]">
+                  {request.createdAt
+                    ? format(new Date(request.createdAt), 'MMM dd, yyyy • HH:mm')
+                    : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-[var(--admin-border-subtle)]">
+                <span className="text-[var(--admin-text-secondary)]">Last Updated:</span>
+                <span className="font-bold text-[var(--admin-text-primary)]">
+                  {request.updatedAt
+                    ? format(new Date(request.updatedAt), 'MMM dd, yyyy • HH:mm')
+                    : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-[var(--admin-border-subtle)]">
+                <span className="text-[var(--admin-text-secondary)]">Priority:</span>
+                <span
+                  className={`capitalize font-bold px-2 py-0.5 rounded text-[10px] ${request.priority === 'high' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-[var(--admin-bg-subtle)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]'}`}
+                >
+                  {request.priority || 'Normal'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-[var(--admin-text-secondary)]">Approval Level:</span>
+                <span className="font-bold text-[var(--admin-text-primary)] capitalize">
+                  {request.approvalLevel?.replace(/_/g, ' ') || 'Standard'}
                 </span>
               </div>
             </div>
@@ -1061,26 +1297,50 @@ const AdminReturnDetail = () => {
         </div>
       </div>
 
-      {/* Reject Dialog */}
+      {/* ─── Lightbox Image Preview Modal ─── */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4 cursor-pointer"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-3xl max-h-[90vh] p-2" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={previewImage}
+              alt="Preview"
+              className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/20"
+            />
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Reject Return Request Modal ─── */}
       {isRejectOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
-          <div className="bg-white rounded-lg w-full max-w-md p-6 shadow-xl">
-            <h3 className="text-lg font-bold mb-4 text-admin-error flex items-center gap-2">
-              <span className="material-symbols-outlined">warning</span> Reject Return Request
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-[var(--admin-border)]">
+            <h3 className="text-base font-bold text-[var(--admin-error)] flex items-center gap-2 mb-2">
+              <span className="material-symbols-outlined">warning</span>
+              Reject Return Request
             </h3>
-            <p className="text-sm text-admin-text-muted mb-4">
-              Please provide a reason for rejecting this return request. This will be sent to the
-              customer.
+            <p className="text-xs text-[var(--admin-text-secondary)] mb-4">
+              Please enter the reason for rejecting this return request. This message will be sent
+              to the customer.
             </p>
             <textarea
-              className="admin-input w-full min-h-[100px] mb-4"
+              className="admin-input w-full min-h-[100px] text-xs mb-4"
               placeholder="e.g., The item does not meet the return policy criteria..."
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-            ></textarea>
-            <div className="flex justify-end gap-2">
+            />
+            <div className="flex justify-end gap-2.5">
               <button
-                className="admin-btn admin-btn-secondary"
+                type="button"
+                className="admin-btn admin-btn-outline text-xs"
                 onClick={() => {
                   setIsRejectOpen(false);
                   setRejectReason('');
@@ -1089,12 +1349,135 @@ const AdminReturnDetail = () => {
                 Cancel
               </button>
               <button
-                className="admin-btn bg-admin-error text-white border-0 hover:bg-red-700"
+                type="button"
+                className="admin-btn admin-btn-primary !bg-[var(--admin-error)] hover:!bg-[var(--admin-error)]/90 text-xs"
                 onClick={handleReject}
               >
                 Confirm Rejection
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Record Refund Payment / Settlement Modal ─── */}
+      {isSettleModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-[var(--admin-border)]">
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--admin-border)]">
+              <h3 className="text-base font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--admin-accent)] text-[22px]">
+                  payments
+                </span>
+                Record Refund Payment
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsSettleModalOpen(false)}
+                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSettleSubmit} className="space-y-4">
+              <div>
+                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-1">
+                  Refund Amount (₹) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={settleData.amount}
+                  onChange={(e) => setSettleData({ ...settleData, amount: e.target.value })}
+                  className="admin-input w-full text-sm font-mono font-bold"
+                  placeholder="e.g. 500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-1">
+                  Payment Method
+                </label>
+                <select
+                  value={settleData.paymentMethod}
+                  onChange={(e) => setSettleData({ ...settleData, paymentMethod: e.target.value })}
+                  className="admin-input w-full text-xs font-semibold"
+                >
+                  <option value="upi">UPI Payout</option>
+                  <option value="wallet">Store Wallet Credit</option>
+                  <option value="bank_transfer">Bank Transfer (NEFT/IMPS)</option>
+                  <option value="original">Original Payment Gateway (Razorpay)</option>
+                </select>
+              </div>
+
+              {settleData.paymentMethod === 'upi' && (
+                <div>
+                  <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-1">
+                    Customer UPI ID *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={settleData.upiId}
+                    onChange={(e) => setSettleData({ ...settleData, upiId: e.target.value })}
+                    className="admin-input w-full text-xs font-mono"
+                    placeholder="e.g. customer@okhdfcbank"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-1">
+                  Bank Reference / UTR Number
+                </label>
+                <input
+                  type="text"
+                  value={settleData.transactionId}
+                  onChange={(e) => setSettleData({ ...settleData, transactionId: e.target.value })}
+                  className="admin-input w-full text-xs font-mono"
+                  placeholder="e.g. UPI/123456789012 or UTR..."
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider block mb-1">
+                  Notes
+                </label>
+                <textarea
+                  rows="2"
+                  value={settleData.notes}
+                  onChange={(e) => setSettleData({ ...settleData, notes: e.target.value })}
+                  className="admin-input w-full text-xs"
+                  placeholder="Optional notes or payout reference details..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-outline text-xs"
+                  onClick={() => setIsSettleModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingSettle}
+                  className="admin-btn admin-btn-primary text-xs flex items-center gap-1.5"
+                >
+                  {isSubmittingSettle ? (
+                    <span>Saving...</span>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">check</span>
+                      Confirm & Save Settlement
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

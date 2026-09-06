@@ -48,6 +48,16 @@ export function StatusBadge({ status, className = '' }) {
     refunded: 'admin-badge-neutral',
     'out of stock': 'admin-badge-error',
     'low stock': 'admin-badge-warning',
+    return_received: 'admin-badge-info',
+    return_requested: 'admin-badge-warning',
+    return_picked_up: 'admin-badge-info',
+    approved: 'admin-badge-success',
+    rejected: 'admin-badge-error',
+    inspection_pending: 'admin-badge-warning',
+    inspection_completed: 'admin-badge-info',
+    completed: 'admin-badge-success',
+    refund_initiated: 'admin-badge-warning',
+    refund_completed: 'admin-badge-success',
   };
   return (
     <span

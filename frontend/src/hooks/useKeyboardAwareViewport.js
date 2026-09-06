@@ -14,21 +14,25 @@ export function useKeyboardAwareViewport() {
 
     const updateViewport = () => {
       const vv = window.visualViewport;
-      const fullHeight = window.innerHeight;
-      const visibleHeight = vv.height;
+      // We rely on window.screen.height or a maximum observed height
+      // because in Safari 17.4+ with interactive-widget=resizes-content,
+      // window.innerHeight shrinks and equals vv.height when the keyboard is open.
 
-      // Calculate how much of the screen is covered by the keyboard (or browser chrome)
-      // We use a small threshold to ignore minor browser chrome changes
-      const keyboardOffset = Math.max(0, fullHeight - visibleHeight);
-      const isKeyboardOpen = keyboardOffset > 150; // Typical mobile keyboard is > 200px
+      // Calculate how much the visual viewport has shrunk relative to its normal size
+      // We use document.documentElement.clientHeight which represents the layout viewport.
+      // If layout viewport shrinks natively (modern Safari), keyboardOffset will be 0.
+      // If layout viewport stays full (older Safari), keyboardOffset will be the keyboard height.
+      const layoutHeight = document.documentElement.clientHeight;
+      const keyboardOffset = Math.max(0, layoutHeight - vv.height);
+      const isKeyboardOpen = window.screen.height - vv.height > 150;
 
       const doc = document.documentElement;
 
       // Set CSS variables for global consumption
-      doc.style.setProperty('--visual-viewport-height', `${visibleHeight}px`);
+      doc.style.setProperty('--visual-viewport-height', `${vv.height}px`);
       doc.style.setProperty('--keyboard-offset', `${keyboardOffset}px`);
 
-      // Add/remove global class for conditional styling
+      // Add/remove global class for conditional styling if any component still uses it
       if (isKeyboardOpen) {
         doc.classList.add('keyboard-open');
       } else {

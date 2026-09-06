@@ -7,7 +7,9 @@ import {
   Truck,
   Info,
   CheckCircle2,
-  Check,
+  Minus,
+  Plus,
+  Ban,
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -28,6 +30,7 @@ export const ExchangeRequestPage = () => {
   const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
+  const [returnState, setReturnState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -62,6 +65,7 @@ export const ExchangeRequestPage = () => {
   }, [exchangeType, replacementProduct, selectedItem, order]);
 
   const [refundMethod, setRefundMethod] = useState('original');
+  const [upiId, setUpiId] = useState('');
 
   const stepsList = ['SELECT ITEM', 'REASON', 'EXCHANGE PREFERENCES'];
   if (Math.abs(diff) > 0) stepsList.push('PRICE ADJUSTMENT');
@@ -86,6 +90,7 @@ export const ExchangeRequestPage = () => {
           // If stateRes exists, check if exchange is allowed globally
           if (stateRes && stateRes.data && stateRes.data.success) {
             const state = stateRes.data.data;
+            setReturnState(state);
             if (state.orderStatus !== 'Delivered') {
               toast.error('Returns/Exchanges are only available for delivered orders.');
               navigate('/dashboard/orders');
@@ -205,6 +210,18 @@ export const ExchangeRequestPage = () => {
       return;
     }
 
+    if (
+      diff < 0 &&
+      refundMethod === 'original' &&
+      order?.paymentMethod === 'cod' &&
+      !upiId.trim()
+    ) {
+      toast.error('Please enter your UPI ID for the refund transfer.');
+      setStep(4);
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const payload = {
         orderId,
@@ -218,7 +235,8 @@ export const ExchangeRequestPage = () => {
         quantity: quantity,
         reason: exchangeReason === 'Other' ? exchangeReasonOther : exchangeReason,
         idempotencyKey,
-        refundMethod: diff < 0 ? refundMethod : undefined,
+        refundMethod: refundMethod || undefined,
+        upiId: upiId?.trim() || undefined,
       };
 
       const res = await returnService.createExchange(payload);
@@ -290,74 +308,126 @@ export const ExchangeRequestPage = () => {
             </div>
 
             <div className="space-y-4">
-              {order?.items.map((item) => (
-                <label
-                  key={item._id}
-                  className={`flex items-start gap-4 p-4 border rounded-[16px] transition-all cursor-pointer ${selectedItem?._id === item._id ? 'bg-[#2A2927] border-[#2A2927] text-white shadow-sm' : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'}`}
-                >
-                  <input
-                    type="radio"
-                    name="exchangeItem"
-                    className="hidden"
-                    checked={selectedItem?._id === item._id}
-                    onChange={() => setSelectedItem(item)}
-                  />
-                  <div
-                    className={`w-16 h-16 rounded-[12px] overflow-hidden bg-surface-container shrink-0 border ${selectedItem?._id === item._id ? 'border-white/20' : 'border-outline-variant/20'}`}
+              {order?.items.map((item) => {
+                const productId = item.productId?._id || item.productId;
+                const isNonExchangeable =
+                  item.isNonExchangeable === true ||
+                  item.productId?.isNonExchangeable === true ||
+                  item.isNonRefundable === true ||
+                  item.productId?.isNonRefundable === true;
+
+                let eligibility = returnState?.items?.find((i) => i.productId === productId);
+                if (isNonExchangeable) {
+                  eligibility = { isEligibleForExchange: false, reason: 'Non-Exchangeable Item' };
+                }
+
+                const isEligible = eligibility?.isEligibleForExchange ?? !isNonExchangeable;
+                const isSelected = selectedItem?._id === item._id;
+
+                return (
+                  <label
+                    key={item._id}
+                    className={`flex flex-col p-4 border rounded-[16px] transition-all ${
+                      !isEligible
+                        ? 'opacity-60 bg-surface-container-lowest border-outline-variant/20 cursor-not-allowed'
+                        : isSelected
+                          ? 'border-[#D4AF37] bg-[#FDFBF7] cursor-pointer shadow-sm ring-1 ring-[#D4AF37]/50'
+                          : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37] cursor-pointer'
+                    }`}
                   >
-                    <OptimizedImage
-                      src={item.imageSrc || item.productId?.imageSrc}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0 pt-1">
-                    <h3
-                      className={`font-bold uppercase tracking-wider text-[10px] truncate ${selectedItem?._id === item._id ? 'text-white' : 'text-[#2A2927]'}`}
-                    >
-                      {item.title || item.productId?.title}
-                    </h3>
-                    <p
-                      className={`text-[9px] uppercase tracking-wider mt-1 ${selectedItem?._id === item._id ? 'text-white/80' : 'text-secondary'}`}
-                    >
-                      CURRENT VARIANT: {item.variant || 'DEFAULT'}
-                    </p>
-                    {selectedItem?._id === item._id && (
-                      <div className="mt-4 flex items-center gap-3 bg-black/20 p-2 rounded-xl inline-flex w-auto border border-white/10">
-                        <span className="text-[9px] font-bold text-white uppercase tracking-widest pl-2">
-                          QTY:
+                    <div className="flex items-start gap-4">
+                      <input
+                        type="radio"
+                        name="exchangeItem"
+                        className={`mt-1 w-4 h-4 accent-[#2A2927] cursor-pointer ${
+                          !isEligible && 'cursor-not-allowed'
+                        }`}
+                        checked={isSelected}
+                        disabled={!isEligible}
+                        onChange={() => {
+                          if (isEligible) {
+                            setSelectedItem(item);
+                            setQuantity(1);
+                          }
+                        }}
+                      />
+                      <div className="w-16 h-16 rounded-[12px] overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0">
+                        <OptimizedImage
+                          src={item.imageSrc || item.productId?.imageSrc}
+                          className={`w-full h-full object-cover ${!isEligible && 'grayscale'}`}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold uppercase tracking-wider text-[#2A2927] text-[10px] truncate">
+                          {item.title || item.productId?.title}
+                        </h3>
+                        <p className="text-[10px] text-secondary mt-1 tracking-wider uppercase font-medium">
+                          {item.price ? `₹${item.price.toLocaleString()} • ` : ''}QTY:{' '}
+                          {item.quantity}
+                          {item.variant ? ` • VARIANT: ${item.variant}` : ''}
+                        </p>
+
+                        {!isEligible && (
+                          <div className="inline-flex items-center gap-1.5 mt-2 text-error text-[9px] uppercase tracking-widest font-bold">
+                            <Ban className="text-[12px]" strokeWidth={1.5} />
+                            {eligibility?.reason ||
+                              eligibility?.exchangeBadge ||
+                              'Non-Exchangeable Item'}
+                          </div>
+                        )}
+
+                        {isEligible && (
+                          <div className="inline-flex items-center gap-1 mt-2 text-success text-[9px] uppercase tracking-widest font-bold">
+                            <CheckCircle2 className="text-[12px]" strokeWidth={1.5} />
+                            EXCHANGE WINDOW OPEN
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {isSelected && (
+                      <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between">
+                        <span className="text-[9px] uppercase tracking-widest font-bold text-secondary">
+                          EXCHANGE QTY
                         </span>
-                        <div className="flex items-center bg-white/10 rounded-full">
+                        <div className="inline-flex items-center bg-[#FDFBF7] border border-outline-variant/40 rounded-xl p-1 shadow-2xs">
                           <button
                             type="button"
+                            disabled={quantity <= 1}
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               setQuantity(Math.max(1, quantity - 1));
                             }}
-                            className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-full transition-colors cursor-pointer border-0"
+                            className="w-7 h-7 flex items-center justify-center text-[#2A2927] hover:bg-surface-container-high rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer border-0"
+                            title="Decrease quantity"
+                            aria-label="Decrease quantity"
                           >
-                            -
+                            <Minus className="w-3.5 h-3.5" strokeWidth={2} />
                           </button>
-                          <span className="text-[10px] font-bold text-white w-6 text-center leading-none">
+                          <span className="w-8 text-center text-xs font-bold text-[#2A2927] select-none">
                             {quantity}
                           </span>
                           <button
                             type="button"
+                            disabled={quantity >= (item.quantity || 1)}
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               setQuantity(Math.min(item.quantity || 1, quantity + 1));
                             }}
-                            className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-full transition-colors cursor-pointer border-0"
+                            className="w-7 h-7 flex items-center justify-center text-[#2A2927] hover:bg-surface-container-high rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer border-0"
+                            title="Increase quantity"
+                            aria-label="Increase quantity"
                           >
-                            +
+                            <Plus className="w-3.5 h-3.5" strokeWidth={2} />
                           </button>
                         </div>
                       </div>
                     )}
-                  </div>
-                </label>
-              ))}
+                  </label>
+                );
+              })}
             </div>
 
             <div className="pt-5 flex justify-end border-t border-outline-variant/20 mt-8">
@@ -396,27 +466,32 @@ export const ExchangeRequestPage = () => {
                 'Product not as described',
                 'Need a different variant',
                 'Other',
-              ].map((reason) => (
-                <label
-                  key={reason}
-                  className={`flex items-start p-4 border rounded-[16px] transition-all cursor-pointer ${exchangeReason === reason ? 'bg-[#2A2927] border-[#2A2927] text-white shadow-sm' : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'}`}
-                >
-                  <input
-                    type="radio"
-                    name="exchangeReason"
-                    className="hidden"
-                    checked={exchangeReason === reason}
-                    onChange={() => setExchangeReason(reason)}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3
-                      className={`font-bold uppercase tracking-widest text-[10px] ${exchangeReason === reason ? 'text-white' : 'text-[#2A2927]'}`}
-                    >
-                      {reason.toUpperCase()}
-                    </h3>
-                  </div>
-                </label>
-              ))}
+              ].map((reason) => {
+                const isSelected = exchangeReason === reason;
+                return (
+                  <label
+                    key={reason}
+                    className={`flex items-center gap-4 p-4 border rounded-[16px] transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-[#D4AF37] bg-[#FDFBF7] shadow-sm ring-1 ring-[#D4AF37]/50'
+                        : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="exchangeReason"
+                      className="w-4 h-4 accent-[#2A2927] cursor-pointer"
+                      checked={isSelected}
+                      onChange={() => setExchangeReason(reason)}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold uppercase tracking-widest text-[10px] text-[#2A2927]">
+                        {reason.toUpperCase()}
+                      </h3>
+                    </div>
+                  </label>
+                );
+              })}
 
               {exchangeReason === 'Other' && (
                 <div className="mt-4">
@@ -471,12 +546,16 @@ export const ExchangeRequestPage = () => {
             <div className="space-y-4">
               {/* Option 1 */}
               <label
-                className={`flex items-start p-4 border rounded-[16px] transition-all cursor-pointer ${exchangeType === 'same' ? 'bg-[#2A2927] border-[#2A2927] text-white shadow-sm' : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'}`}
+                className={`flex items-start gap-4 p-4 border rounded-[16px] transition-all cursor-pointer ${
+                  exchangeType === 'same'
+                    ? 'border-[#D4AF37] bg-[#FDFBF7] shadow-sm ring-1 ring-[#D4AF37]/50'
+                    : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'
+                }`}
               >
                 <input
                   type="radio"
                   name="exchangeType"
-                  className="hidden"
+                  className="mt-1 w-4 h-4 accent-[#2A2927] cursor-pointer"
                   checked={exchangeType === 'same'}
                   onChange={() => {
                     setExchangeType('same');
@@ -484,14 +563,10 @@ export const ExchangeRequestPage = () => {
                   }}
                 />
                 <div className="flex-1 min-w-0">
-                  <h3
-                    className={`font-bold uppercase tracking-widest text-[10px] ${exchangeType === 'same' ? 'text-white' : 'text-[#2A2927]'}`}
-                  >
+                  <h3 className="font-bold uppercase tracking-widest text-[10px] text-[#2A2927]">
                     REPLACE WITH SAME PRODUCT
                   </h3>
-                  <p
-                    className={`text-[9px] uppercase tracking-wider mt-1.5 leading-relaxed ${exchangeType === 'same' ? 'text-white/80' : 'text-secondary'}`}
-                  >
+                  <p className="text-[9px] uppercase tracking-wider mt-1.5 leading-relaxed text-secondary">
                     Exact same specifications. No price difference.
                   </p>
                 </div>
@@ -499,12 +574,16 @@ export const ExchangeRequestPage = () => {
 
               {/* Option 2 */}
               <label
-                className={`flex items-start p-4 border rounded-[16px] transition-all cursor-pointer ${exchangeType === 'different_product' ? 'bg-[#2A2927] border-[#2A2927] text-white shadow-sm' : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'}`}
+                className={`flex items-start gap-4 p-4 border rounded-[16px] transition-all cursor-pointer ${
+                  exchangeType === 'different_product'
+                    ? 'border-[#D4AF37] bg-[#FDFBF7] shadow-sm ring-1 ring-[#D4AF37]/50'
+                    : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'
+                }`}
               >
                 <input
                   type="radio"
                   name="exchangeType"
-                  className="hidden"
+                  className="mt-1 w-4 h-4 accent-[#2A2927] cursor-pointer"
                   checked={exchangeType === 'different_product'}
                   onChange={() => {
                     setExchangeType('different_product');
@@ -512,47 +591,48 @@ export const ExchangeRequestPage = () => {
                   }}
                 />
                 <div className="flex-1 min-w-0">
-                  <h3
-                    className={`font-bold uppercase tracking-widest text-[10px] ${exchangeType === 'different_product' ? 'text-white' : 'text-[#2A2927]'}`}
-                  >
+                  <h3 className="font-bold uppercase tracking-widest text-[10px] text-[#2A2927]">
                     CHOOSE ANOTHER PRODUCT
                   </h3>
-                  <p
-                    className={`text-[9px] uppercase tracking-wider mt-1.5 leading-relaxed ${exchangeType === 'different_product' ? 'text-white/80' : 'text-secondary'}`}
-                  >
+                  <p className="text-[9px] uppercase tracking-wider mt-1.5 leading-relaxed text-secondary">
                     Select a different item from the catalog.
                   </p>
 
                   {exchangeType === 'different_product' && (
                     <div className="mt-4">
                       {replacementProduct ? (
-                        <div className="flex items-center gap-4 p-3 border border-white/20 bg-white/5 rounded-[12px]">
-                          <div className="w-12 h-12 shrink-0 rounded-[8px] overflow-hidden bg-white/10 border border-white/20">
-                            <OptimizedImage
-                              src={replacementProduct.imageSrc}
-                              alt=""
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-white truncate">
+                        <div className="flex items-center justify-between gap-3 p-3.5 border border-outline-variant/30 bg-white/70 rounded-[14px] shadow-2xs">
+                          <div className="flex-1 min-w-0 pr-2">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#2A2927] truncate">
                               {replacementProduct.title}
                             </p>
-                            <p className="text-[9px] uppercase tracking-widest text-white/60 mt-0.5">
-                              SELECTED REPLACEMENT
+                            <p className="text-[9px] uppercase tracking-widest text-secondary mt-0.5 font-medium">
+                              SELECTED REPLACEMENT{' '}
+                              {replacementProduct.price
+                                ? `• ₹${replacementProduct.price.toLocaleString()}`
+                                : ''}
                             </p>
                           </div>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setIsBottomSheetOpen(true);
-                            }}
-                            className="shrink-0 px-4 py-2 bg-transparent border border-white/30 text-white text-[9px] font-bold uppercase tracking-widest rounded-[32px] transition-all hover:bg-white/10"
-                          >
-                            CHANGE
-                          </button>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setIsBottomSheetOpen(true);
+                              }}
+                              className="px-3.5 py-1.5 bg-transparent border border-outline-variant/40 hover:border-[#D4AF37] text-[#2A2927] text-[9px] font-bold uppercase tracking-widest rounded-[32px] transition-all hover:bg-[#FDFBF7] cursor-pointer"
+                            >
+                              CHANGE
+                            </button>
+                            <div className="w-14 h-14 rounded-[10px] overflow-hidden bg-surface-container border border-outline-variant/30 shadow-2xs">
+                              <OptimizedImage
+                                src={replacementProduct.imageSrc}
+                                alt={replacementProduct.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </div>
                         </div>
                       ) : (
                         <button
@@ -562,7 +642,7 @@ export const ExchangeRequestPage = () => {
                             e.stopPropagation();
                             setIsBottomSheetOpen(true);
                           }}
-                          className="px-5 py-2.5 bg-transparent border border-white/30 text-white text-[9px] font-bold uppercase tracking-widest rounded-[32px] flex items-center gap-1.5 transition-all hover:bg-white/10"
+                          className="px-5 py-2.5 bg-transparent border border-outline-variant/40 hover:border-[#D4AF37] text-[#2A2927] text-[9px] font-bold uppercase tracking-widest rounded-[32px] flex items-center gap-1.5 transition-all hover:bg-[#FDFBF7] cursor-pointer"
                         >
                           <Search className="text-[14px]" strokeWidth={1.5} />
                           BROWSE CATALOG
@@ -665,13 +745,18 @@ export const ExchangeRequestPage = () => {
                 <h3 className="font-bold uppercase tracking-widest text-[9px] text-[#2A2927] mb-3">
                   PAYMENT METHOD
                 </h3>
-                <label className="flex items-start p-4 border rounded-[16px] transition-all cursor-pointer bg-[#2A2927] border-[#2A2927] text-white shadow-sm">
-                  <input type="radio" className="hidden" checked readOnly />
+                <label className="flex items-start gap-4 p-4 border rounded-[16px] transition-all cursor-pointer border-[#D4AF37] bg-[#FDFBF7] shadow-sm ring-1 ring-[#D4AF37]/50">
+                  <input
+                    type="radio"
+                    className="mt-1 w-4 h-4 accent-[#2A2927] cursor-pointer"
+                    checked
+                    readOnly
+                  />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold uppercase tracking-widest text-[10px] text-white">
+                    <h3 className="font-bold uppercase tracking-widest text-[10px] text-[#2A2927]">
                       ONLINE PAYMENT (RAZORPAY)
                     </h3>
-                    <p className="text-[9px] uppercase tracking-wider mt-1.5 leading-relaxed text-white/80">
+                    <p className="text-[9px] uppercase tracking-wider mt-1.5 leading-relaxed text-secondary">
                       Pay securely via UPI, Credit/Debit Card, or Netbanking.
                     </p>
                   </div>
@@ -690,58 +775,90 @@ export const ExchangeRequestPage = () => {
                 </h3>
                 <div className="space-y-4">
                   <label
-                    className={`flex items-start p-4 border rounded-[16px] transition-all cursor-pointer ${refundMethod === 'wallet' ? 'bg-[#2A2927] border-[#2A2927] text-white shadow-sm' : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'}`}
+                    className={`flex items-start gap-4 p-4 border rounded-[16px] transition-all cursor-pointer ${
+                      refundMethod === 'wallet'
+                        ? 'border-[#D4AF37] bg-[#FDFBF7] shadow-sm ring-1 ring-[#D4AF37]/50'
+                        : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'
+                    }`}
                   >
                     <input
                       type="radio"
                       name="refundMethod"
-                      className="hidden"
+                      className="mt-1 w-4 h-4 accent-[#2A2927] cursor-pointer"
                       checked={refundMethod === 'wallet'}
                       onChange={() => setRefundMethod('wallet')}
                     />
                     <div className="flex-1 min-w-0">
-                      <h3
-                        className={`font-bold uppercase tracking-widest text-[10px] ${refundMethod === 'wallet' ? 'text-white' : 'text-[#2A2927]'}`}
-                      >
+                      <h3 className="font-bold uppercase tracking-widest text-[10px] text-[#2A2927]">
                         STORE WALLET (INSTANT)
                       </h3>
-                      <p
-                        className={`text-[9px] uppercase tracking-wider mt-1.5 leading-relaxed ${refundMethod === 'wallet' ? 'text-white/80' : 'text-secondary'}`}
-                      >
+                      <p className="text-[9px] uppercase tracking-wider mt-1.5 leading-relaxed text-secondary">
                         Fastest refund. Credits never expire and can be used for any future
                         purchase.
                       </p>
                     </div>
                   </label>
 
-                  <label
-                    className={`flex items-start p-4 border rounded-[16px] transition-all ${order?.paymentMethod === 'cod' ? 'opacity-50 cursor-not-allowed bg-surface-variant/20 border-outline-variant/20' : `cursor-pointer ${refundMethod === 'original' ? 'bg-[#2A2927] border-[#2A2927] text-white shadow-sm' : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'}`}`}
+                  <div
+                    className={`border transition-all overflow-hidden rounded-[16px] ${
+                      refundMethod === 'original'
+                        ? 'border-[#D4AF37] bg-[#FDFBF7] shadow-sm ring-1 ring-[#D4AF37]/50'
+                        : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'
+                    }`}
                   >
-                    <input
-                      type="radio"
-                      name="refundMethod"
-                      className="hidden"
-                      checked={refundMethod === 'original'}
-                      onChange={() => {
-                        if (order?.paymentMethod !== 'cod') setRefundMethod('original');
-                      }}
-                      disabled={order?.paymentMethod === 'cod'}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3
-                        className={`font-bold uppercase tracking-widest text-[10px] ${refundMethod === 'original' ? 'text-white' : 'text-[#2A2927]'}`}
-                      >
-                        ORIGINAL PAYMENT METHOD
-                      </h3>
-                      <p
-                        className={`text-[9px] uppercase tracking-wider mt-1.5 leading-relaxed ${refundMethod === 'original' ? 'text-white/80' : 'text-secondary'}`}
-                      >
-                        {order?.paymentMethod === 'cod'
-                          ? 'Not available for Cash on Delivery orders.'
-                          : 'Refund to source account (5-7 business days).'}
-                      </p>
-                    </div>
-                  </label>
+                    <label className="flex items-start gap-4 p-4 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="refundMethod"
+                        className="mt-1 w-4 h-4 accent-[#2A2927] cursor-pointer"
+                        checked={refundMethod === 'original'}
+                        onChange={() => setRefundMethod('original')}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold uppercase tracking-widest text-[10px] text-[#2A2927]">
+                          {order?.paymentMethod === 'cod'
+                            ? 'UPI / BANK REFUND (COD)'
+                            : 'ORIGINAL PAYMENT METHOD'}
+                        </h3>
+                        <p className="text-[9px] uppercase tracking-wider mt-1.5 leading-relaxed text-secondary">
+                          {order?.paymentMethod === 'cod'
+                            ? 'Direct refund transfer to your UPI ID for Cash on Delivery order.'
+                            : 'Refund to source account (5-7 business days).'}
+                        </p>
+                      </div>
+                    </label>
+
+                    <AnimatePresence>
+                      {refundMethod === 'original' && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="px-4 pb-4"
+                        >
+                          <div className="pt-3.5 border-t border-outline-variant/20">
+                            <label className="form-label mb-1.5 uppercase tracking-widest text-[9px] text-[#2A2927] block font-bold">
+                              {order?.paymentMethod === 'cod'
+                                ? 'YOUR UPI ID FOR REFUND *'
+                                : 'UPI ID FOR FAST TRANSFER (OPTIONAL)'}
+                            </label>
+                            <input
+                              type="text"
+                              value={upiId}
+                              onChange={(e) => setUpiId(e.target.value)}
+                              placeholder="username@bank or 9876543210@upi"
+                              className="w-full bg-white border border-[#E8E6E1] text-[#2A2927] placeholder-secondary/50 px-4 py-2.5 rounded-[32px] text-[11px] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]"
+                            />
+                            <p className="text-[9px] text-secondary mt-1.5">
+                              {order?.paymentMethod === 'cod'
+                                ? 'We will transfer the balance difference directly to this UPI ID.'
+                                : 'Provide your UPI ID to receive direct bank settlement.'}
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </div>
             )}
@@ -754,7 +871,17 @@ export const ExchangeRequestPage = () => {
                 BACK
               </button>
               <button
-                onClick={() => setStep(totalSteps)}
+                onClick={() => {
+                  if (
+                    refundMethod === 'original' &&
+                    order?.paymentMethod === 'cod' &&
+                    !upiId.trim()
+                  ) {
+                    toast.error('Please enter your UPI ID for the refund transfer.');
+                    return;
+                  }
+                  setStep(totalSteps);
+                }}
                 className="bg-[#2A2927] hover:bg-black text-white px-6 py-2.5 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-sm transition-all border-0 cursor-pointer"
               >
                 CONTINUE <ArrowRight className="text-[14px]" strokeWidth={1.5} />
@@ -809,6 +936,35 @@ export const ExchangeRequestPage = () => {
               </div>
             </div>
 
+            {diff < 0 && (
+              <div className="border rounded-[16px] border-outline-variant/30 p-5">
+                <h3 className="font-bold uppercase tracking-widest text-[9px] text-[#2A2927] mb-3">
+                  REFUND SUMMARY
+                </h3>
+                <div className="text-[10px] text-secondary uppercase tracking-wider space-y-1.5">
+                  <p>
+                    REFUND AMOUNT:{' '}
+                    <span className="font-bold text-[#2A2927]">₹{Math.abs(diff)}</span>
+                  </p>
+                  <p>
+                    DESTINATION:{' '}
+                    <span className="font-bold text-[#2A2927]">
+                      {refundMethod === 'wallet'
+                        ? 'STORE WALLET'
+                        : order?.paymentMethod === 'cod'
+                          ? 'DIRECT UPI TRANSFER (COD)'
+                          : 'ORIGINAL PAYMENT METHOD'}
+                    </span>
+                  </p>
+                  {upiId && (
+                    <p className="pt-1 text-[#2A2927] font-medium">
+                      RECIPIENT UPI ID: <span className="font-mono">{upiId}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="pt-5 flex justify-between items-center border-t border-outline-variant/20 mt-8">
               <button
                 onClick={() => setStep(totalSteps - 1)}
@@ -844,9 +1000,38 @@ export const ExchangeRequestPage = () => {
             animate="show"
             className="text-center py-10"
           >
-            <div className="w-16 h-16 bg-[#FDFBF7] text-[#2A2927] flex items-center justify-center mx-auto mb-6">
-              <Check className="text-[32px]" strokeWidth={1.5} />
-            </div>
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+              className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center"
+            >
+              {/* Soft ambient success glow */}
+              <div className="absolute inset-0 rounded-full bg-emerald-500/15 blur-lg" />
+
+              {/* Outer elegant ring */}
+              <div className="relative w-20 h-20 rounded-full bg-[#FDFBF7] border border-emerald-500/30 shadow-[0_8px_20px_-6px_rgba(16,185,129,0.2)] flex items-center justify-center ring-4 ring-emerald-500/10">
+                {/* Inner jewel circle */}
+                <div className="w-12 h-12 rounded-full bg-linear-to-tr from-emerald-600 via-emerald-500 to-emerald-400 text-white flex items-center justify-center shadow-md shadow-emerald-600/30">
+                  <motion.svg
+                    className="w-6 h-6 text-white"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <motion.path
+                      d="M20 6L9 17l-5-5"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ delay: 0.2, duration: 0.45, ease: 'easeOut' }}
+                    />
+                  </motion.svg>
+                </div>
+              </div>
+            </motion.div>
             <h2 className="text-[14px] font-bold uppercase tracking-widest text-[#2A2927] mb-3">
               EXCHANGE REQUESTED
             </h2>

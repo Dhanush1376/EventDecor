@@ -34,7 +34,7 @@ export function UnifiedAuthForm({
               {identifier.length === 0 ? (
                 <>
                   <Mail className="w-3.5 h-3.5" strokeWidth={1.5} />
-                  Email or Phone
+                  Email
                 </>
               ) : isPhone ? (
                 <>
@@ -54,7 +54,7 @@ export function UnifiedAuthForm({
                 type={isPhone ? 'tel' : 'text'}
                 required
                 className="form-field !text-[12px]"
-                placeholder="e.g. name@example.com or 98765 43210"
+                placeholder="e.g. name@example.com "
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
               />

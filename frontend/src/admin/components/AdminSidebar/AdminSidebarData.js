@@ -32,13 +32,6 @@ export const navSections = [
         keywords: 'photos, heritage, images',
         domain: 'settings',
       },
-      {
-        label: 'Payments',
-        icon: 'payments',
-        path: '/admin/payments',
-        keywords: 'payments, transactions',
-        domain: 'revenue',
-      },
     ],
   },
   {
@@ -53,7 +46,13 @@ export const navSections = [
         keywords: 'sales, checkout, delivery',
         domain: 'orders',
       },
-
+      {
+        label: 'Rentals',
+        icon: 'car_rental',
+        path: '/admin/rentals',
+        keywords: 'rentals, leases, active, orders',
+        domain: 'orders',
+      },
       {
         label: 'Custom Orders',
         icon: 'architecture',
@@ -73,6 +72,13 @@ export const navSections = [
         icon: 'swap_horiz',
         path: '/admin/exchanges',
         keywords: 'returns, exchanges, replacement',
+        domain: 'orders',
+      },
+      {
+        label: 'Payments',
+        icon: 'payments',
+        path: '/admin/payments',
+        keywords: 'payments, transactions, settlements, revenue',
         domain: 'orders',
       },
     ],
@@ -133,34 +139,6 @@ export const navSections = [
       },
     ],
   },
-  {
-    label: 'Rentals',
-    subtitle: 'Track rental inventory and returns',
-    roles: ['owner', 'manager', 'support'],
-    items: [
-      {
-        label: 'Active Rentals',
-        icon: 'car_rental',
-        path: '/admin/rentals',
-        keywords: 'rentals, leases, returns',
-        domain: 'orders',
-      },
-      {
-        label: 'Rental Calendar',
-        icon: 'calendar_month',
-        path: '/admin/rentals/calendar',
-        keywords: 'schedule, availability, tracking',
-        domain: 'orders',
-      },
-      {
-        label: 'Due Returns',
-        icon: 'assignment_return',
-        path: '/admin/rentals/due',
-        keywords: 'due, overdue, inspect',
-        domain: 'orders',
-      },
-    ],
-  },
 
   {
     label: 'Promotions',
@@ -200,22 +178,22 @@ export const navSections = [
   },
 
   {
-    label: 'Insights',
-    subtitle: 'Business analytics and reports',
+    label: 'Reports',
+    subtitle: 'Sales & customer activity',
     roles: ['owner', 'manager'],
     items: [
       {
-        label: 'Analytics',
-        icon: 'query_stats',
+        label: 'Sales & Revenue',
+        icon: 'trending_up',
         path: '/admin/analytics',
-        keywords: 'trends, metrics, profits',
+        keywords: 'sales, money, revenue, profit, earnings, orders',
         domain: 'revenue',
       },
       {
-        label: 'Operational Insights',
-        icon: 'insights',
+        label: 'Live Customer Activity',
+        icon: 'visibility',
         path: '/admin/analytics/operations',
-        keywords: 'operations, performance, delays',
+        keywords: 'customer actions, visitor activity, logs, clicks, searches',
         domain: 'revenue',
       },
     ],
@@ -266,8 +244,8 @@ export const navSections = [
       {
         label: 'Recycle Bin',
         icon: 'delete_sweep',
-        path: '/admin/system/trash',
-        keywords: 'trash, deleted, restore, purge',
+        path: '/admin/recycle-bin',
+        keywords: 'trash, deleted, restore, purge, recycle bin',
         domain: 'settings',
       },
     ],

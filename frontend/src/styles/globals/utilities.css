@@ -178,6 +178,14 @@
 }
 
 /* Typography Utilities */
+@utility font-display {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+}
+
+@utility font-serif {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+}
+
 @utility font-headline-xl {
   font-size: clamp(36px, 8vw, 75px);
   line-height: 1.1;

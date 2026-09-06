@@ -89,7 +89,7 @@ function ReviewCard({ review, showcaseId }) {
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[#FAFAF9] rounded-[24px] border border-black/5 p-5 shadow-sm hover:shadow-luxury hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full"
+      className="bg-white rounded-[24px] border border-black/5 p-5 shadow-sm hover:shadow-luxury hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full"
     >
       <div>
         <div className="flex items-start justify-between gap-2 mb-2">
@@ -104,8 +104,8 @@ function ReviewCard({ review, showcaseId }) {
               </p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 {review.verified && (
-                  <span className="inline-flex items-center gap-0.5 bg-green-50 text-green-700 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border border-green-100">
-                    <BadgeCheck className="text-[9px]" strokeWidth={1.5} />
+                  <span className="inline-flex items-center gap-1 text-[8px] font-semibold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200/50">
+                    <BadgeCheck className="w-2.5 h-2.5 text-emerald-600 shrink-0" strokeWidth={2} />
                     Verified Purchase
                   </span>
                 )}
@@ -130,7 +130,7 @@ function ReviewCard({ review, showcaseId }) {
             <Link
               key={idx}
               to={`/events/#reviews/images`}
-              className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs cursor-pointer relative group flex-shrink-0"
+              className="w-10 h-10 rounded-lg overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs cursor-pointer relative group flex-shrink-0"
             >
               <OptimizedImage
                 src={imgUrl}
@@ -144,7 +144,7 @@ function ReviewCard({ review, showcaseId }) {
           {review.images.length > 3 && (
             <Link
               to={`/events/#reviews/images`}
-              className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[9px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-lg overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[9px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
             >
               +{review.images.length - 3}
             </Link>

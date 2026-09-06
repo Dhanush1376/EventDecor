@@ -729,12 +729,10 @@ export const ProductCard = React.memo(function ProductCard({
           className={`group/link block ${compact ? 'mb-0.5' : 'mb-1 lg:mb-1.5'}`}
         >
           <h3
-            className={`text-black group-hover/link:text-primary transition-colors leading-tight font-medium line-clamp-1 ${
-              compact
-                ? 'font-body text-[12px] lg:text-[13px]'
-                : 'font-display text-[13px] lg:text-[15px]'
+            className={`text-black group-hover/link:text-primary transition-colors leading-tight font-medium line-clamp-1 font-serif-heading ${
+              compact ? 'text-[12px] lg:text-[13px]' : 'text-[13px] lg:text-[15px]'
             }`}
-            style={compact ? { fontFamily: 'var(--font-body)' } : undefined}
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
           >
             {title}
           </h3>
@@ -743,7 +741,8 @@ export const ProductCard = React.memo(function ProductCard({
         <div className="mt-auto flex flex-col justify-end">
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span
-              className={`font-display lining-nums font-bold text-black leading-none ${compact ? 'text-[13px] lg:text-[14px]' : 'text-[14px] lg:text-[17px]'}`}
+              className={`font-serif-heading lining-nums font-bold text-black leading-none ${compact ? 'text-[13px] lg:text-[14px]' : 'text-[14px] lg:text-[17px]'}`}
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
             >
               {'Rs. '}
               {formatPrice(
@@ -765,7 +764,8 @@ export const ProductCard = React.memo(function ProductCard({
             </span>
             {numericOldPrice > numericPrice && (
               <span
-                className={`font-display lining-nums text-black/40 line-through ${compact ? 'text-[9px] lg:text-[10px]' : 'text-[10px] lg:text-[11px]'}`}
+                className={`font-serif-heading lining-nums text-black/40 line-through ${compact ? 'text-[9px] lg:text-[10px]' : 'text-[10px] lg:text-[11px]'}`}
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
               >
                 Rs. {formatPrice(numericOldPrice)}
               </span>

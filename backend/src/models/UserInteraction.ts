@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import storeSettingsService from '../services/StoreSettingsService';
+import { DestructionGuard } from '../utils/DestructionGuard';
 export type InteractionEventType =
   | 'product_view'
   | 'product_click'
@@ -99,6 +99,9 @@ const UserInteractionSchema: Schema = new Schema(
   },
 );
 
+// Protect collection against accidental mass deletions
+DestructionGuard(UserInteractionSchema);
+
 // ── Performance Indexes ──
 UserInteractionSchema.index({ userId: 1, timestamp: -1 });
 UserInteractionSchema.index({ sessionId: 1, timestamp: -1 });
@@ -106,20 +109,7 @@ UserInteractionSchema.index({ targetId: 1, eventType: 1 });
 UserInteractionSchema.index({ eventType: 1, timestamp: -1 });
 UserInteractionSchema.index({ 'metadata.category': 1, eventType: 1, timestamp: -1 });
 
-// Dynamic TTL index (expiresAt calculated on save)
-UserInteractionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
-UserInteractionSchema.pre('save', async function () {
-  if (!this.expiresAt) {
-    try {
-      const settings = await storeSettingsService.getSettings();
-      const days = settings.retentionPolicies?.userInteractionsDays || 30;
-      this.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    } catch (_err) {
-      this.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days fallback
-    }
-  }
-});
+// Note: TTL index removed to permanently retain all customer interaction and visitor data.
 
 const UserInteraction = mongoose.model<IUserInteraction>('UserInteraction', UserInteractionSchema);
 export default UserInteraction;

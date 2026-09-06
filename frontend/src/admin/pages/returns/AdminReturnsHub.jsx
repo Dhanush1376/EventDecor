@@ -92,12 +92,17 @@ const getCardColorClass = (req) => {
     case 'rejected':
       return '!bg-[#bc6c5c]/10 border-[#bc6c5c]/30';
     default:
-      // Separate normal returns and exchanges by color
       if (req?.returnType === 'exchange') {
-        return '!bg-blue-500/10 border-blue-500/20';
+        return '!bg-[var(--admin-accent-light)] border-[var(--admin-border-strong)]';
       }
-      return '!bg-yellow-500/10 border-yellow-500/20';
+      return '!bg-[var(--admin-warning-light)] border-[var(--admin-warning-border)]';
   }
+};
+
+const getRequestDetailUrl = (req) => {
+  return req?.returnType === 'exchange'
+    ? `/admin/exchanges/requests/${req._id}`
+    : `/admin/returns/requests/${req._id}`;
 };
 
 export default function AdminReturnsHub({ hideHeader = false }) {
@@ -166,7 +171,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
     try {
       const isEarly = !['inspection_passed', 'inspection_completed'].includes(currentStatus);
       const earlyWarning = isEarly
-        ? `\n\n⚠️ WARNING: This return is currently in '${currentStatus}' state and has not completed inspection. Are you absolutely sure you want to bypass the process and issue a refund early?`
+        ? `\n\nWARNING: This return is currently in '${currentStatus}' state and has not completed inspection. Are you absolutely sure you want to bypass the process and issue a refund early?`
         : '';
 
       const confirmed = await confirm({
@@ -337,7 +342,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                         <tr
                           key={req._id}
                           className={`group ${getCardColorClass(req)} cursor-pointer`}
-                          onClick={() => navigate(`/admin/returns/requests/${req._id}`)}
+                          onClick={() => navigate(getRequestDetailUrl(req))}
                         >
                           <td className="pl-5 relative overflow-hidden font-semibold text-[var(--admin-text-primary)]">
                             {(req.sla?.isOverdue ||
@@ -476,10 +481,10 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                                   </div>
                                   <div className="flex items-center flex-wrap gap-1.5 mt-1">
                                     <span
-                                      className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded w-max ${
+                                      className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded w-max border ${
                                         req.returnType === 'exchange'
-                                          ? 'bg-purple-100 text-purple-700'
-                                          : 'bg-blue-100 text-blue-700'
+                                          ? 'bg-[var(--admin-accent-light)] text-[var(--admin-accent)] border-[var(--admin-border-strong)]'
+                                          : 'bg-[var(--admin-info-light)] text-[var(--admin-info)] border-[var(--admin-info-border)]'
                                       }`}
                                     >
                                       {req.returnType === 'exchange' ? 'Exchange' : 'Return'}
@@ -511,12 +516,31 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                             )}
                           </td>
                           <td className="font-bold text-[var(--admin-text-primary)]">
-                            ₹
-                            {(
-                              req.refundBreakdown?.grandTotal ||
-                              req.refundAmount ||
-                              0
-                            ).toLocaleString()}
+                            <div>
+                              ₹
+                              {(
+                                req.refundBreakdown?.grandTotal ||
+                                req.refundAmount ||
+                                0
+                              ).toLocaleString()}
+                            </div>
+                            {req.upiId && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigator.clipboard.writeText(req.upiId);
+                                  toast.success(`Copied UPI ID: ${req.upiId}`);
+                                }}
+                                className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold bg-amber-50 text-amber-900 border border-amber-200 rounded hover:bg-amber-100 transition-colors cursor-pointer"
+                                title="Click to copy UPI ID to issue payment"
+                              >
+                                <span className="material-symbols-outlined text-[11px]">
+                                  account_balance_wallet
+                                </span>
+                                Pay UPI: {req.upiId}
+                              </button>
+                            )}
                           </td>
                           <td>
                             <div className="flex flex-col items-start gap-1.5">
@@ -539,7 +563,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                                         }
                                       });
                                     }}
-                                    className="bg-blue-600 text-white font-bold px-2.5 py-1 text-[10px] uppercase tracking-wider rounded border border-blue-700 hover:bg-blue-700 transition-colors shadow-sm"
+                                    className="admin-btn admin-btn-primary !py-1 !px-2.5 text-[10px] uppercase tracking-wider font-bold shadow-2xs"
                                   >
                                     Approve
                                   </button>
@@ -708,7 +732,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                           <td className="text-right pr-5" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-1.5">
                               <button
-                                onClick={() => navigate(`/admin/returns/requests/${req._id}`)}
+                                onClick={() => navigate(getRequestDetailUrl(req))}
                                 className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
                                 title="Review Request"
                               >
@@ -755,7 +779,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                   returnsList.map((req) => (
                     <div
                       key={req._id}
-                      onClick={() => navigate(`/admin/returns/requests/${req._id}`)}
+                      onClick={() => navigate(getRequestDetailUrl(req))}
                       className={`${getCardColorClass(req)} relative overflow-hidden rounded-[var(--admin-radius-lg)] p-4 shadow-sm border flex flex-col gap-3 cursor-pointer hover:shadow-md transition-all`}
                     >
                       {(req.sla?.isOverdue ||
@@ -865,7 +889,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                                     }
                                   });
                                 }}
-                                className="bg-blue-600 text-white font-bold px-2.5 py-1 text-[10px] uppercase tracking-wider rounded border border-blue-700 hover:bg-blue-700 transition-colors shadow-sm"
+                                className="admin-btn admin-btn-primary !py-1 !px-2.5 text-[10px] uppercase tracking-wider font-bold shadow-2xs"
                               >
                                 Approve
                               </button>
@@ -929,7 +953,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/admin/returns/requests/${req._id}`);
+                              navigate(getRequestDetailUrl(req));
                             }}
                             className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
                           >

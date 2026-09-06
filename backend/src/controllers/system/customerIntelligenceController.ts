@@ -575,3 +575,41 @@ export const getCohorts = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
+export const deleteCustomer = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body || {};
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Customer not found' });
+    }
+
+    // Protect administrative accounts from deletion via customer page
+    if (!['user', 'customer'].includes(user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot delete staff or admin accounts through customer management.',
+      });
+    }
+
+    // Soft-delete the customer document, automatically moving them to RecycleBin
+    const actor = (req as any).user;
+    await (user as any).softDelete(
+      actor,
+      reason || `Customer soft-deleted by admin ${actor?.email || actor?.id || ''}`,
+    );
+
+    logger.info(`Customer ${user.name} (${user._id}) soft-deleted and moved to RecycleBin`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Customer moved to recycle bin successfully',
+      data: { customerId: id },
+    });
+  } catch (error: any) {
+    logger.error('Error soft-deleting customer', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to delete customer' });
+  }
+};

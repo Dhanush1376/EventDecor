@@ -1,5 +1,5 @@
-import { BadgeCheck, ArrowRight, X } from 'lucide-react';
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { BadgeCheck, ArrowRight, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -45,12 +45,14 @@ export function DynamicRatingBadge({
   const [isLoading, setIsLoading] = useState(false);
   const wrapperRef = useRef(null);
   const popoverRef = useRef(null);
+  const reviewsScrollRef = useRef(null);
+  const [activeReviewIdx, setActiveReviewIdx] = useState(0);
   const [placement, setPlacement] = useState('above');
   const [popoverStyle, setPopoverStyle] = useState({
     position: 'fixed',
     left: '16px',
     top: '16px',
-    width: '280px',
+    width: '295px',
     zIndex: 999999,
   });
   const [arrowStyle, setArrowStyle] = useState({ left: '50%', transform: 'translateX(-50%)' });
@@ -58,7 +60,7 @@ export function DynamicRatingBadge({
   const calculatePosition = useCallback(() => {
     if (!wrapperRef.current) return;
     const rect = wrapperRef.current.getBoundingClientRect();
-    const popoverWidth = window.innerWidth < 640 ? Math.min(window.innerWidth - 32, 280) : 280;
+    const popoverWidth = window.innerWidth < 640 ? Math.min(window.innerWidth - 32, 290) : 295;
     const padding = 16;
 
     // Ideal center position (relative to viewport)
@@ -141,9 +143,16 @@ export function DynamicRatingBadge({
     };
   }, [isOpen, calculatePosition]);
 
-  if (!initialReviews || initialReviews === 0) {
-    return null;
-  }
+  // Get reviews that have content (comment or photos)
+  const visibleReviews = useMemo(() => {
+    const list = reviewsData.filter(
+      (r) =>
+        (r.comment && r.comment.trim().length > 0) ||
+        (r.images && r.images.length > 0) ||
+        (r.reviewImages && r.reviewImages.length > 0),
+    );
+    return list.length > 0 ? list : reviewsData;
+  }, [reviewsData]);
 
   // Fetch reviews exactly like the PDP does
   const fetchReviews = async () => {
@@ -198,10 +207,30 @@ export function DynamicRatingBadge({
     count: reviewsData.filter((r) => Math.round(r.rating) === star).length,
   }));
 
-  // Find the most helpful or first comment
-  const topReview = [...reviewsData]
-    .sort((a, b) => (b.helpfulCount || 0) - (a.helpfulCount || 0))
-    .find((r) => r.comment && r.comment.length > 10);
+  const handleReviewsScroll = (direction) => {
+    if (reviewsScrollRef.current) {
+      const container = reviewsScrollRef.current;
+      const scrollAmount = container.clientWidth;
+      container.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  const onReviewsContainerScroll = () => {
+    if (reviewsScrollRef.current) {
+      const container = reviewsScrollRef.current;
+      if (container.clientWidth > 0) {
+        const idx = Math.round(container.scrollLeft / container.clientWidth);
+        setActiveReviewIdx(idx);
+      }
+    }
+  };
+
+  if (!initialReviews || initialReviews === 0) {
+    return null;
+  }
 
   return (
     <>
@@ -222,11 +251,17 @@ export function DynamicRatingBadge({
             star
           </span>
           <span
-            className={`font-label ${compact ? 'text-[9px]' : 'text-[10px] lg:text-[11px]'} text-black/60 font-bold group-hover:text-primary transition-colors`}
+            className={`font-label ${compact ? 'text-[9px]' : 'text-[10px] lg:text-[11px]'} text-black/60 font-bold group-hover:text-primary transition-colors inline-flex items-center gap-0.5`}
           >
-            {initialReviews === 0
-              ? 'New'
-              : `${Number(initialRating).toFixed(1)} (${initialReviews})`}
+            {initialReviews === 0 ? (
+              'New'
+            ) : (
+              <>
+                <span>{Number(initialRating).toFixed(1)}</span>
+                <span className="text-black/30 font-normal mx-0.5">·</span>
+                <span className="text-black/40 font-medium">{initialReviews}</span>
+              </>
+            )}
           </span>
         </button>
       </div>
@@ -338,23 +373,111 @@ export function DynamicRatingBadge({
                         })}
                       </div>
 
-                      {/* Top Review Snippet */}
-                      {topReview && (
-                        <div className="bg-neutral-50 rounded-lg p-2.5 border border-black/5">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className="font-body text-[10px] font-semibold text-black">
-                              {topReview.customer?.name || topReview.customerName || 'Customer'}
-                            </span>
-                            {topReview.verified && (
-                              <BadgeCheck
-                                className="text-[10px] text-green-600"
-                                strokeWidth={1.5}
-                              />
-                            )}
+                      {/* Scrollable Reviews Section */}
+                      {visibleReviews.length > 0 && (
+                        <div className="space-y-1.5">
+                          {visibleReviews.length > 1 && (
+                            <div className="flex items-center justify-between px-0.5 text-[9px] uppercase tracking-wider text-black/50 font-bold">
+                              <span>
+                                Reviews ({Math.min(activeReviewIdx + 1, visibleReviews.length)} of{' '}
+                                {visibleReviews.length})
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleReviewsScroll('left')}
+                                  disabled={activeReviewIdx === 0}
+                                  className="w-5 h-5 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 disabled:opacity-25 disabled:pointer-events-none transition-all cursor-pointer text-black/70"
+                                  aria-label="Previous review"
+                                >
+                                  <ChevronLeft size={11} strokeWidth={2} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleReviewsScroll('right')}
+                                  disabled={activeReviewIdx >= visibleReviews.length - 1}
+                                  className="w-5 h-5 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 disabled:opacity-25 disabled:pointer-events-none transition-all cursor-pointer text-black/70"
+                                  aria-label="Next review"
+                                >
+                                  <ChevronRight size={11} strokeWidth={2} />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          <div
+                            ref={reviewsScrollRef}
+                            onScroll={onReviewsContainerScroll}
+                            className="flex gap-2 overflow-x-auto snap-x snap-mandatory no-scrollbar w-full"
+                          >
+                            {visibleReviews.map((rev, idx) => {
+                              const rImages = rev.images || rev.reviewImages || [];
+                              const reviewerName =
+                                rev.customer?.name || rev.customerName || 'Customer';
+                              return (
+                                <div
+                                  key={rev._id || idx}
+                                  className="w-full shrink-0 snap-start bg-neutral-50 rounded-xl p-2.5 border border-black/5 flex flex-col justify-between"
+                                >
+                                  <div>
+                                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <span className="font-body text-[11px] font-semibold text-black truncate">
+                                          {reviewerName}
+                                        </span>
+                                        {rev.verified && (
+                                          <span className="inline-flex items-center gap-0.5 text-[7px] font-semibold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200/50 shrink-0">
+                                            <BadgeCheck
+                                              className="w-2.5 h-2.5 text-emerald-600"
+                                              strokeWidth={2}
+                                            />
+                                          </span>
+                                        )}
+                                      </div>
+                                      {rev.rating > 0 && <StarRating value={rev.rating} size={9} />}
+                                    </div>
+
+                                    {rev.comment && (
+                                      <p className="font-body text-[10px] text-black/75 leading-relaxed line-clamp-2 italic">
+                                        "{rev.comment}"
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  {/* Review Images */}
+                                  {rImages.length > 0 && (
+                                    <div className="flex items-center gap-1.5 mt-2 pt-1.5 border-t border-black/5">
+                                      {rImages.slice(0, 3).map((imgItem, imgIdx) => {
+                                        const url =
+                                          typeof imgItem === 'string'
+                                            ? imgItem
+                                            : imgItem.secureUrl || imgItem.url;
+                                        if (!url) return null;
+                                        return (
+                                          <div
+                                            key={imgIdx}
+                                            className="w-9 h-9 rounded-lg overflow-hidden border border-black/5 bg-white shadow-3xs shrink-0"
+                                          >
+                                            <img
+                                              src={url}
+                                              alt=""
+                                              className="w-full h-full object-cover"
+                                              loading="lazy"
+                                            />
+                                          </div>
+                                        );
+                                      })}
+                                      {rImages.length > 3 && (
+                                        <span className="text-[8px] font-bold text-black/50 bg-black/5 px-1.5 py-1 rounded-md">
+                                          +{rImages.length - 3}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
-                          <p className="font-body text-[10px] text-black/70 leading-relaxed line-clamp-2 italic">
-                            "{topReview.comment}"
-                          </p>
                         </div>
                       )}
 

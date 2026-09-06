@@ -226,6 +226,7 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
     rating,
     comment,
     images: images || (reviewImages ? reviewImages.map((img: any) => img.secureUrl) : []),
+    originalImages: images || (reviewImages ? reviewImages.map((img: any) => img.secureUrl) : []),
     reviewImages: reviewImages || undefined,
     location: location || undefined,
     eventType: eventType || undefined,
@@ -566,13 +567,11 @@ export const bulkUpdateReviewStatus = asyncHandler(async (req: Request, res: Res
     await updateShowcaseRating(showcaseId);
   }
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(true, `Successfully updated ${updatedReviews.length} reviews`, {
-        updatedReviews,
-      }),
-    );
+  res.status(200).json(
+    new ApiResponse(true, `Successfully updated ${updatedReviews.length} reviews`, {
+      updatedReviews,
+    }),
+  );
 });
 
 export const getPublicReviews = asyncHandler(async (req: Request, res: Response) => {

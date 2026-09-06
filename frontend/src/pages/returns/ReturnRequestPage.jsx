@@ -10,8 +10,16 @@ import {
   Landmark,
   Eye,
   Info,
-  Check,
   ArrowRight,
+  Minus,
+  Plus,
+  PackageX,
+  ArrowLeftRight,
+  Ruler,
+  FileQuestion,
+  RotateCcw,
+  MoreHorizontal,
+  Loader2,
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
@@ -27,12 +35,12 @@ import EvidenceUploader from './components/EvidenceUploader';
 const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
 
 const RETURN_REASONS = [
-  { value: 'Defective / Damaged', label: 'Damaged', icon: 'broken_image' },
-  { value: 'Wrong Item Sent', label: 'Wrong Item', icon: 'swap_horiz' },
-  { value: 'Size too small/large', label: 'Size Issue', icon: 'straighten' },
-  { value: "Product doesn't match description", label: 'Mismatch', icon: 'difference' },
-  { value: 'Changed my mind', label: 'Changed Mind', icon: 'undo' },
-  { value: 'Other', label: 'Other', icon: 'more_horiz' },
+  { value: 'Defective / Damaged', label: 'Damaged', icon: PackageX },
+  { value: 'Wrong Item Sent', label: 'Wrong Item', icon: ArrowLeftRight },
+  { value: 'Size too small/large', label: 'Size Issue', icon: Ruler },
+  { value: "Product doesn't match description", label: 'Mismatch', icon: FileQuestion },
+  { value: 'Changed my mind', label: 'Changed Mind', icon: RotateCcw },
+  { value: 'Other', label: 'Other', icon: MoreHorizontal },
 ];
 
 export const ReturnRequestPage = () => {
@@ -85,7 +93,7 @@ export const ReturnRequestPage = () => {
   useEffect(() => {
     if (!orderId) {
       toast.error('Order ID is missing');
-      navigate('dashboard/orders');
+      navigate('/dashboard/orders');
       return;
     }
 
@@ -336,17 +344,23 @@ export const ReturnRequestPage = () => {
             </div>
             {Object.entries(selectedItems).map(([itemId, data]) => (
               <div key={itemId} className="p-4 border rounded-[16px] border-outline-variant/30">
-                <div className="flex items-center gap-4 mb-4 pb-4 border-b border-outline-variant/20">
-                  <div className="w-12 h-12 rounded-[12px] overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0">
+                <div className="flex items-center gap-3.5 mb-4 pb-4 border-b border-outline-variant/20">
+                  <div className="w-14 h-14 rounded-2xl overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0 shadow-2xs">
                     <OptimizedImage
                       src={data.image}
                       alt={data.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <span className="font-bold uppercase tracking-wider text-[#2A2927] text-[10px] flex-1">
-                    {data.title}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold uppercase tracking-wider text-[#2A2927] text-xs leading-snug truncate">
+                      {data.title}
+                    </h3>
+                    <p className="text-[10px] text-secondary mt-1 tracking-wider uppercase font-medium">
+                      {data.price ? `₹${data.price.toLocaleString()} • ` : ''}Qty:{' '}
+                      {data.returnQuantity || 1}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -355,7 +369,11 @@ export const ReturnRequestPage = () => {
                       <div
                         key={cond}
                         onClick={() => updateItemDetails(itemId, 'condition', cond)}
-                        className={`p-3 border rounded-[12px] cursor-pointer transition-all text-center uppercase tracking-widest text-[9px] font-bold ${data.condition === cond ? 'bg-[#2A2927] border-[#2A2927] text-white' : 'bg-[#FDFBF7] border-[#E8E6E1]  hover:border-[#D4AF37] text-[#2A2927]'}`}
+                        className={`p-3 border rounded-[12px] cursor-pointer transition-all text-center uppercase tracking-widest text-[9px] font-bold ${
+                          data.condition === cond
+                            ? 'border-[#D4AF37] bg-[#FDFBF7] text-[#2A2927] shadow-sm ring-1 ring-[#D4AF37]/50'
+                            : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37] text-[#2A2927]'
+                        }`}
                       >
                         <span>{cond}</span>
                       </div>
@@ -388,36 +406,66 @@ export const ReturnRequestPage = () => {
                 key={itemId}
                 className="p-4 border rounded-[16px] border-outline-variant/30 space-y-5"
               >
-                <div className="flex items-center gap-4 border-b border-outline-variant/20 pb-4">
-                  <div className="w-12 h-12 rounded-[12px] overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0">
-                    <OptimizedImage
-                      src={data.image}
-                      alt={data.title}
-                      className="w-full h-full object-cover"
-                    />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline-variant/20 pb-4">
+                  <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0 shadow-2xs">
+                      <OptimizedImage
+                        src={data.image}
+                        alt={data.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold uppercase tracking-wider text-[#2A2927] text-xs leading-snug truncate">
+                        {data.title}
+                      </h3>
+                      <p className="text-[10px] text-secondary mt-1 tracking-wider uppercase font-medium">
+                        {data.price ? `₹${data.price.toLocaleString()} • ` : ''}Max Returnable:{' '}
+                        {data.maxQuantity}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <span className="font-bold uppercase tracking-wider text-[#2A2927] text-[10px] block">
-                      {data.title}
-                    </span>
 
-                    <div className="mt-2 flex items-center gap-3">
-                      <label className="text-[9px] uppercase tracking-widest font-bold text-secondary">
-                        RETURN QTY
-                      </label>
-                      <select
-                        className="form-field py-1 px-2 text-[10px]"
-                        value={data.returnQuantity}
-                        onChange={(e) =>
-                          updateItemDetails(itemId, 'returnQuantity', parseInt(e.target.value))
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-outline-variant/15">
+                    <span className="text-[9px] uppercase tracking-widest font-bold text-secondary shrink-0 whitespace-nowrap">
+                      RETURN QTY
+                    </span>
+                    <div className="inline-flex items-center bg-[#FDFBF7] border border-outline-variant/40 rounded-xl p-1 shadow-2xs">
+                      <button
+                        type="button"
+                        disabled={(data.returnQuantity || 1) <= 1}
+                        onClick={() =>
+                          updateItemDetails(
+                            itemId,
+                            'returnQuantity',
+                            Math.max(1, (data.returnQuantity || 1) - 1),
+                          )
                         }
+                        className="w-7 h-7 flex items-center justify-center text-[#2A2927] hover:bg-surface-container-high rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer border-0"
+                        title="Decrease quantity"
+                        aria-label="Decrease quantity"
                       >
-                        {[...Array(data.maxQuantity)].map((_, i) => (
-                          <option key={i + 1} value={i + 1}>
-                            {i + 1}
-                          </option>
-                        ))}
-                      </select>
+                        <Minus className="w-3.5 h-3.5" strokeWidth={2} />
+                      </button>
+                      <span className="w-8 text-center text-xs font-bold text-[#2A2927] select-none">
+                        {data.returnQuantity || 1}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={(data.returnQuantity || 1) >= data.maxQuantity}
+                        onClick={() =>
+                          updateItemDetails(
+                            itemId,
+                            'returnQuantity',
+                            Math.min(data.maxQuantity, (data.returnQuantity || 1) + 1),
+                          )
+                        }
+                        className="w-7 h-7 flex items-center justify-center text-[#2A2927] hover:bg-surface-container-high rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer border-0"
+                        title="Increase quantity"
+                        aria-label="Increase quantity"
+                      >
+                        <Plus className="w-3.5 h-3.5" strokeWidth={2} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -427,18 +475,30 @@ export const ReturnRequestPage = () => {
                     PRIMARY REASON
                   </label>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                    {RETURN_REASONS.map((r) => (
-                      <div
-                        key={r.value}
-                        onClick={() => updateItemDetails(itemId, 'reason', r.value)}
-                        className={`p-3 border rounded-[12px] cursor-pointer flex flex-col items-center gap-2 text-center transition-all ${data.reason === r.value ? 'bg-[#2A2927] border-[#2A2927] text-white' : 'bg-[#FDFBF7] border-[#E8E6E1] text-secondary  hover:border-[#D4AF37]'}`}
-                      >
-                        <span className="material-symbols-outlined text-[16px]">{r.icon}</span>
-                        <span className="text-[9px] font-bold uppercase tracking-widest">
-                          {r.label}
-                        </span>
-                      </div>
-                    ))}
+                    {RETURN_REASONS.map((r) => {
+                      const IconComponent = r.icon;
+                      const isSelected = data.reason === r.value;
+                      return (
+                        <button
+                          key={r.value}
+                          type="button"
+                          onClick={() => updateItemDetails(itemId, 'reason', r.value)}
+                          className={`p-3 border rounded-[12px] cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${
+                            isSelected
+                              ? 'border-[#D4AF37] bg-[#FDFBF7] text-[#2A2927] shadow-sm ring-1 ring-[#D4AF37]/50 font-extrabold'
+                              : 'bg-[#FDFBF7] border-[#E8E6E1] text-secondary hover:border-[#D4AF37] hover:text-[#2A2927]'
+                          }`}
+                        >
+                          <IconComponent
+                            className={`w-4 h-4 ${isSelected ? 'text-[#D4AF37]' : ''}`}
+                            strokeWidth={1.5}
+                          />
+                          <span className="text-[9px] font-bold uppercase tracking-widest">
+                            {r.label}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -537,54 +597,58 @@ export const ReturnRequestPage = () => {
 
             <div className="space-y-4">
               <label
-                className={`flex items-start p-4 border rounded-[16px] transition-all cursor-pointer ${refundMethod === 'wallet' ? 'bg-[#2A2927] border-[#2A2927] text-white' : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'}`}
+                className={`flex items-start gap-4 p-4 border rounded-[16px] transition-all cursor-pointer ${
+                  refundMethod === 'wallet'
+                    ? 'border-[#D4AF37] bg-[#FDFBF7] shadow-sm ring-1 ring-[#D4AF37]/50'
+                    : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'
+                }`}
               >
                 <input
                   type="radio"
                   name="refundMethod"
                   value="wallet"
-                  className="hidden"
+                  className="mt-1 w-4 h-4 accent-[#2A2927] cursor-pointer"
                   checked={refundMethod === 'wallet'}
                   onChange={(e) => setRefundMethod(e.target.value)}
                 />
                 <div className="flex-1">
-                  <div
-                    className={`font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 ${refundMethod === 'wallet' ? 'text-white' : 'text-[#2A2927]'}`}
-                  >
+                  <div className="font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 text-[#2A2927]">
                     <Wallet className="text-[14px]" strokeWidth={1.5} />
                     STORE WALLET (RECOMMENDED)
                   </div>
-                  <p
-                    className={`text-[9px] uppercase tracking-wider mt-1.5 ${refundMethod === 'wallet' ? 'text-white/80' : 'text-secondary'}`}
-                  >
+                  <p className="text-[9px] uppercase tracking-wider mt-1.5 text-secondary">
                     Instant refund to your wallet. Use it for your next purchase.
                   </p>
                 </div>
               </label>
 
               <div
-                className={`border transition-all overflow-hidden rounded-[16px] ${refundMethod === 'original' ? 'bg-[#2A2927] border-[#2A2927] text-white' : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'}`}
+                className={`border transition-all overflow-hidden rounded-[16px] ${
+                  refundMethod === 'original'
+                    ? 'border-[#D4AF37] bg-[#FDFBF7] shadow-sm ring-1 ring-[#D4AF37]/50'
+                    : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'
+                }`}
               >
-                <label className="flex items-start p-4 cursor-pointer">
+                <label className="flex items-start gap-4 p-4 cursor-pointer">
                   <input
                     type="radio"
                     name="refundMethod"
                     value="original"
-                    className="hidden"
+                    className="mt-1 w-4 h-4 accent-[#2A2927] cursor-pointer"
                     checked={refundMethod === 'original'}
                     onChange={(e) => setRefundMethod(e.target.value)}
                   />
                   <div className="flex-1">
-                    <div
-                      className={`font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 ${refundMethod === 'original' ? 'text-white' : 'text-[#2A2927]'}`}
-                    >
+                    <div className="font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 text-[#2A2927]">
                       <Landmark className="text-[14px]" strokeWidth={1.5} />
-                      ORIGINAL PAYMENT METHOD
+                      {order?.paymentMethod === 'cod'
+                        ? 'UPI / BANK TRANSFER (COD REFUND)'
+                        : 'ORIGINAL PAYMENT METHOD'}
                     </div>
-                    <p
-                      className={`text-[9px] uppercase tracking-wider mt-1.5 ${refundMethod === 'original' ? 'text-white/80' : 'text-secondary'}`}
-                    >
-                      Refund to your original bank account or card (takes 5-7 business days).
+                    <p className="text-[9px] uppercase tracking-wider mt-1.5 text-secondary">
+                      {order?.paymentMethod === 'cod'
+                        ? 'Direct refund transfer to your UPI ID for Cash on Delivery order.'
+                        : 'Refund to your original bank account or card (takes 5-7 business days).'}
                     </p>
                   </div>
                 </label>
@@ -597,17 +661,24 @@ export const ReturnRequestPage = () => {
                       exit={{ height: 0, opacity: 0 }}
                       className="px-4 pb-4"
                     >
-                      <div className="pt-4 border-t border-white/20">
-                        <label className="form-label mb-1.5 uppercase tracking-widest text-[9px] text-white/80">
-                          UPI ID FOR BANK TRANSFER *
+                      <div className="pt-3.5 border-t border-outline-variant/20">
+                        <label className="form-label mb-1.5 uppercase tracking-widest text-[9px] text-[#2A2927] block font-bold">
+                          {order?.paymentMethod === 'cod'
+                            ? 'YOUR UPI ID FOR COD REFUND *'
+                            : 'UPI ID FOR BANK TRANSFER *'}
                         </label>
                         <input
                           type="text"
                           value={upiId}
                           onChange={(e) => setUpiId(e.target.value)}
-                          placeholder="username@bank"
-                          className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 px-4 py-2.5 rounded-[32px] text-[11px] focus:outline-none focus:border-white focus:ring-1 focus:ring-white"
+                          placeholder="username@bank or 9876543210@upi"
+                          className="w-full bg-white border border-[#E8E6E1] text-[#2A2927] placeholder-secondary/50 px-4 py-2.5 rounded-[32px] text-[11px] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]"
                         />
+                        <p className="text-[9px] text-secondary mt-1.5">
+                          {order?.paymentMethod === 'cod'
+                            ? 'We will transfer the refund amount directly to this UPI ID once approved.'
+                            : 'Direct bank transfer to your UPI linked bank account.'}
+                        </p>
                       </div>
                     </motion.div>
                   )}
@@ -642,19 +713,19 @@ export const ReturnRequestPage = () => {
               </div>
               <div className="divide-y divide-outline-variant/20">
                 {Object.values(selectedItems).map((data, idx) => (
-                  <div key={idx} className="p-4 flex gap-4">
-                    <div className="w-12 h-12 rounded-[12px] overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0">
+                  <div key={idx} className="p-4 flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0 shadow-2xs">
                       <OptimizedImage
                         src={data.image}
                         alt={data.title}
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold uppercase tracking-wider text-[10px] text-[#2A2927]">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold uppercase tracking-wider text-xs text-[#2A2927] truncate">
                         {data.title}
                       </h4>
-                      <p className="text-[9px] uppercase tracking-wider text-secondary mt-1">
+                      <p className="text-[10px] uppercase tracking-wider text-secondary mt-1">
                         QTY: {data.returnQuantity} • REASON: {data.reason}
                       </p>
                       <span className="inline-block mt-2 text-[8px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[4px] bg-[#2A2927]/5 text-[#2A2927] border border-[#2A2927]/10">
@@ -709,13 +780,13 @@ export const ReturnRequestPage = () => {
               </div>
             </div>
 
-            <div className="bg-[#2A2927] rounded-[16px] p-4 flex items-start gap-3 shadow-sm">
-              <Info className="text-white mt-0.5 text-[14px]" strokeWidth={1.5} />
-              <p className="text-[9px] uppercase tracking-wider text-white font-medium leading-relaxed">
+            <div className="bg-[#FDFBF7] border border-outline-variant/30 rounded-[16px] p-4 flex items-start gap-3 shadow-2xs">
+              <Info className="text-secondary mt-0.5 text-[14px]" strokeWidth={1.5} />
+              <p className="text-[9px] uppercase tracking-wider text-secondary font-medium leading-relaxed">
                 By submitting this request, you agree to our{' '}
                 <Link
                   to="/policies/returns"
-                  className="underline hover:text-white/80 transition-colors font-bold cursor-pointer"
+                  className="underline text-[#2A2927] hover:text-[#D4AF37] transition-colors font-bold cursor-pointer"
                 >
                   return policy
                 </Link>
@@ -734,9 +805,38 @@ export const ReturnRequestPage = () => {
             animate="show"
             className="text-center py-10"
           >
-            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-green-200">
-              <Check className="text-[40px]" strokeWidth={2} />
-            </div>
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+              className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center"
+            >
+              {/* Soft ambient success glow */}
+              <div className="absolute inset-0 rounded-full bg-emerald-500/15 blur-lg" />
+
+              {/* Outer elegant ring */}
+              <div className="relative w-20 h-20 rounded-full bg-[#FDFBF7] border border-emerald-500/30 shadow-[0_8px_20px_-6px_rgba(16,185,129,0.2)] flex items-center justify-center ring-4 ring-emerald-500/10">
+                {/* Inner jewel circle */}
+                <div className="w-12 h-12 rounded-full bg-linear-to-tr from-emerald-600 via-emerald-500 to-emerald-400 text-white flex items-center justify-center shadow-md shadow-emerald-600/30">
+                  <motion.svg
+                    className="w-6 h-6 text-white"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <motion.path
+                      d="M20 6L9 17l-5-5"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ delay: 0.2, duration: 0.45, ease: 'easeOut' }}
+                    />
+                  </motion.svg>
+                </div>
+              </div>
+            </motion.div>
             <h2 className="text-[14px] font-bold uppercase tracking-widest text-[#2A2927] mb-3">
               REQUEST SUBMITTED SUCCESSFULLY
             </h2>
@@ -746,7 +846,7 @@ export const ReturnRequestPage = () => {
             </p>
             <button
               onClick={() => navigate('/dashboard/returns')}
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer"
+              className="bg-[#2A2927] hover:bg-black text-white px-8 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer"
             >
               TRACK RETURN STATUS <ArrowRight className="text-[14px]" strokeWidth={1.5} />
             </button>
@@ -776,10 +876,7 @@ export const ReturnRequestPage = () => {
           >
             {submitting ? (
               <>
-                <span className="material-symbols-outlined animate-spin text-[14px]">
-                  progress_activity
-                </span>{' '}
-                PROCESSING
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> PROCESSING
               </>
             ) : step === 6 ? (
               'SUBMIT REQUEST'

@@ -104,7 +104,7 @@ export function AdminCreateCoupon() {
                   ? 'Saving...'
                   : isEdit
                     ? 'Update Coupon'
-                    : 'Publish Campaign'
+                    : 'Publish Coupon'
                 : 'Next Step'}
             </button>
           </div>
@@ -135,7 +135,7 @@ export function AdminCreateCoupon() {
           </button>
           <div>
             <h2 className="text-[20px] font-bold text-[var(--admin-text-primary)] leading-none mb-1.5 flex items-center gap-2">
-              {isEdit ? 'Edit Campaign' : 'New Campaign'}
+              {isEdit ? 'Edit Coupon' : 'New Coupon'}
               <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
             </h2>
           </div>

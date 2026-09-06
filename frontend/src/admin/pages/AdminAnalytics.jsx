@@ -1,8 +1,14 @@
 import {
   ResponsiveContainer,
   ComposedChart,
+  AreaChart,
+  Area,
   BarChart,
   Bar,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   Tooltip,
@@ -22,6 +28,66 @@ import {
 } from '../components/AdminUIKit';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { FilterBar } from '../components/ui/Navigation';
+
+const formatMonthLabel = (monthStr) => {
+  if (!monthStr) return '';
+  const parts = String(monthStr).split('-');
+  if (parts.length === 2) {
+    const year = parts[0];
+    const monthIndex = parseInt(parts[1], 10) - 1;
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    if (monthIndex >= 0 && monthIndex < 12) {
+      return `${months[monthIndex]} '${year.slice(2)}`;
+    }
+  }
+  return monthStr;
+};
+
+const formatFullMonthLabel = (monthStr) => {
+  if (!monthStr) return '';
+  const parts = String(monthStr).split('-');
+  if (parts.length === 2) {
+    const year = parts[0];
+    const monthIndex = parseInt(parts[1], 10) - 1;
+    const fullMonths = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    if (monthIndex >= 0 && monthIndex < 12) {
+      return `${fullMonths[monthIndex]} ${year}`;
+    }
+  }
+  return monthStr;
+};
+
+const formatYAxisCurrency = (val) => {
+  if (val >= 100000) return `₹${(val / 100000).toFixed(1)}L`;
+  if (val >= 1000) return `₹${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}k`;
+  return `₹${val}`;
+};
 
 const Sparkline = ({ color, data }) => (
   <svg viewBox="0 0 100 30" className="w-16 h-8 ml-auto opacity-80" preserveAspectRatio="none">
@@ -121,32 +187,43 @@ const PremiumStatCard = ({ icon, label, value, change, changeType, color, sparkl
   );
 };
 
-const CustomDualTooltip = ({ active, payload, label }) => {
+const FriendlySalesTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
+    const fullMonth = formatFullMonthLabel(label);
+    const rev = payload.find((p) => p.dataKey === 'revenue')?.value;
+    const ord = payload.find((p) => p.dataKey === 'orders')?.value;
+
     return (
-      <div className="bg-[var(--admin-surface)]/90 backdrop-blur-md border border-[var(--admin-border-strong)] p-4 rounded-[var(--admin-radius-lg)] shadow-2xl">
-        <p className="text-[12px] font-bold text-[var(--admin-text-secondary)] mb-3 tracking-wide">
-          {label}
+      <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] p-3.5 rounded-[var(--admin-radius-lg)] shadow-2xl min-w-[190px] pointer-events-none">
+        <p className="text-[13px] font-bold text-[var(--admin-text-primary)] mb-2.5 pb-1.5 border-b border-[var(--admin-border-subtle)] flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-[15px] text-[var(--admin-text-tertiary)]">
+            calendar_today
+          </span>
+          {fullMonth || label}
         </p>
-        <div className="space-y-2.5">
-          {payload.map((entry, index) => (
-            <div key={index} className="flex items-center justify-between gap-8">
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-2.5 h-2.5 rounded-full shadow-sm"
-                  style={{ backgroundColor: entry.color }}
-                />
-                <span className="text-[13px] font-medium text-[var(--admin-text-tertiary)] capitalize">
-                  {entry.name}
-                </span>
-              </div>
-              <span className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                {entry.name === 'revenue'
-                  ? formatCurrency(entry.value)
-                  : entry.value.toLocaleString()}
+        <div className="space-y-2">
+          {rev !== undefined && (
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
+                Money Earned
+              </span>
+              <span className="text-[13px] font-bold text-[var(--admin-text-primary)] font-mono">
+                {formatCurrency(rev)}
               </span>
             </div>
-          ))}
+          )}
+          {ord !== undefined && (
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0" />
+                Orders
+              </span>
+              <span className="text-[13px] font-bold text-[var(--admin-text-primary)] font-mono">
+                {ord} {ord === 1 ? 'order' : 'orders'}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -154,19 +231,32 @@ const CustomDualTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const CustomBarTooltip = ({ active, payload, label }) => {
+const FriendlyCategoryTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
+    const data = payload[0].payload;
     return (
-      <div className="bg-[var(--admin-surface)]/90 backdrop-blur-md border border-[var(--admin-border-strong)] p-3 rounded-[var(--admin-radius-md)] shadow-xl">
-        <p className="text-[12px] font-bold text-[var(--admin-text-secondary)] mb-1.5 tracking-wide">
-          {label}
+      <div className="bg-[var(--admin-surface)] border border-[var(--admin-border-strong)] p-3 rounded-[var(--admin-radius-lg)] shadow-xl pointer-events-none min-w-[180px]">
+        <p className="text-[13px] font-bold text-[var(--admin-text-primary)] mb-1.5 flex items-center gap-1.5">
+          <span
+            className="w-2.5 h-2.5 rounded-full shrink-0"
+            style={{ backgroundColor: data.fill || data.color }}
+          />
+          {data.name}
         </p>
-        <div className="flex items-center gap-4">
-          <span className="text-[13px] font-medium text-[var(--admin-text-tertiary)]">Volume</span>
-          <span className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-            {payload[0].value.toLocaleString()} items
+        <div className="flex items-center justify-between text-[12px] text-[var(--admin-text-secondary)] pt-1.5 border-t border-[var(--admin-border-subtle)]">
+          <span>Items Sold:</span>
+          <span className="font-bold text-[var(--admin-text-primary)]">
+            {data.value} {data.value === 1 ? 'item' : 'items'}
           </span>
         </div>
+        {data.percentage !== undefined && (
+          <div className="flex items-center justify-between text-[12px] text-[var(--admin-text-secondary)] mt-1">
+            <span>Share of Sales:</span>
+            <span className="font-bold text-emerald-600 dark:text-emerald-400">
+              {data.percentage}%
+            </span>
+          </div>
+        )}
       </div>
     );
   }
@@ -212,11 +302,24 @@ const generateSparklinePath = (dataPoints) => {
   return path;
 };
 
+const CATEGORY_COLORS = [
+  '#3b82f6', // Royal Blue
+  '#10b981', // Emerald Green
+  '#f59e0b', // Warm Amber
+  '#8b5cf6', // Violet
+  '#ec4899', // Pink
+  '#06b6d4', // Teal Cyan
+  '#f97316', // Bright Orange
+  '#6366f1', // Indigo
+];
+
 export function AdminAnalytics() {
   const { dashboardStats, dataLoading, refreshDashboard, lastDataRefresh } = useAdmin();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [timeRange, setTimeRange] = useState('12M');
+  const [salesView, setSalesView] = useState('revenue'); // 'revenue' | 'orders' | 'both'
+  const [categoryView, setCategoryView] = useState('donut'); // 'donut' | 'bars'
 
   // Auto-refresh analytics data every 90 seconds
   useEffect(() => {
@@ -245,6 +348,79 @@ export function AdminAnalytics() {
       };
     return dashboardStats;
   }, [dashboardStats]);
+
+  // Format monthly data for easy human understanding
+  const formattedMonthlyData = useMemo(() => {
+    if (!stats.monthlyRevenue || stats.monthlyRevenue.length === 0) return [];
+    // Ascending order for display from left to right (oldest to newest)
+    const sorted = [...stats.monthlyRevenue].reverse();
+    return sorted.map((item) => ({
+      ...item,
+      displayMonth: formatMonthLabel(item.month),
+      fullMonth: formatFullMonthLabel(item.month),
+    }));
+  }, [stats.monthlyRevenue]);
+
+  // Aggregate monthly stats for summary cards
+  const { totalRevenueSum, totalOrdersSum, topMonthName, topMonthRevenue, topMonthText } =
+    useMemo(() => {
+      if (!formattedMonthlyData || formattedMonthlyData.length === 0) {
+        return {
+          totalRevenueSum: 0,
+          totalOrdersSum: 0,
+          topMonthName: 'None',
+          topMonthRevenue: '',
+          topMonthText: 'None',
+        };
+      }
+      let revSum = 0;
+      let ordSum = 0;
+      let highestRev = -1;
+      let highestMonthName = '';
+
+      formattedMonthlyData.forEach((m) => {
+        revSum += Number(m.revenue || 0);
+        ordSum += Number(m.orders || 0);
+        if (Number(m.revenue || 0) > highestRev) {
+          highestRev = Number(m.revenue || 0);
+          highestMonthName = m.displayMonth;
+        }
+      });
+
+      return {
+        totalRevenueSum: revSum,
+        totalOrdersSum: ordSum,
+        topMonthName: highestMonthName || 'None',
+        topMonthRevenue: highestRev > 0 ? formatCurrency(highestRev) : '',
+        topMonthText: highestMonthName
+          ? `${highestMonthName} (${formatCurrency(highestRev)})`
+          : 'None',
+      };
+    }, [formattedMonthlyData]);
+
+  // Categories processing with percentage share
+  const { totalCategoryItems, processedCategories } = useMemo(() => {
+    if (!stats.categoryPerformance || stats.categoryPerformance.length === 0) {
+      return { totalCategoryItems: 0, processedCategories: [] };
+    }
+    const total = stats.categoryPerformance.reduce((sum, item) => sum + Number(item.value || 0), 0);
+    const safeTotal = total > 0 ? total : 1;
+
+    const list = stats.categoryPerformance.map((item, idx) => {
+      const count = Number(item.value || 0);
+      const percentage = Math.round((count / safeTotal) * 100);
+      const color = CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+      return {
+        name: item.name || 'Uncategorized',
+        value: count,
+        percentage,
+        fill: color,
+        color,
+      };
+    });
+
+    return { totalCategoryItems: total, processedCategories: list };
+  }, [stats.categoryPerformance]);
 
   // Dynamically calculate trends and sparklines from actual monthly data
   const {
@@ -318,8 +494,8 @@ export function AdminAnalytics() {
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader
-        title="Business Analytics"
-        subtitle={`Real-time performance metrics and growth insights · Last synced ${lastDataRefresh ? lastDataRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`}
+        title="Sales & Revenue"
+        subtitle={`Clear store earnings & order performance · Last synced ${lastDataRefresh ? lastDataRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`}
         headerAction={
           <div className="flex items-stretch gap-2 w-full sm:w-auto">
             <FilterBar
@@ -344,13 +520,6 @@ export function AdminAnalytics() {
                 sync
               </span>
             </button>
-
-            <button
-              className="w-10 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-md flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0"
-              title="Export Data"
-            >
-              <span className="material-symbols-outlined text-[18px]">download</span>
-            </button>
           </div>
         }
       />
@@ -369,7 +538,7 @@ export function AdminAnalytics() {
         <PremiumStatCard
           icon="local_mall"
           label="Total Orders"
-          value={stats.stats?.totalOrders || stats.totalOrders || 0}
+          value={stats.stats?.totalOrders !== undefined ? stats.stats.totalOrders : totalOrdersSum}
           change={ordersChangeStr}
           changeType={ordersChangeType}
           color="#8b5cf6"
@@ -384,7 +553,6 @@ export function AdminAnalytics() {
           color="#10b981"
           sparklineData={sparklineCustomers}
         />
-        {/* Replaced Conversion (no tracking) with Pending Orders (actionable) */}
         <PremiumStatCard
           icon="schedule"
           label="Pending Orders"
@@ -398,37 +566,112 @@ export function AdminAnalytics() {
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Performance - Composed Chart */}
+        {/* Sales & Orders Trend */}
         <motion.div variants={fadeUp}>
           <ChartCard
-            title="Revenue & Orders Performance"
-            subtitle={`Correlating order volume with gross revenue across ${timeRange}`}
+            title="Sales & Orders Trend"
+            subtitle="How much money you made and orders placed each month"
+            legend={
+              <div className="w-full sm:w-auto grid grid-cols-3 sm:flex items-center gap-1 bg-[var(--admin-bg-subtle)] p-1 rounded-[var(--admin-radius-md)] border border-[var(--admin-border-subtle)]">
+                <button
+                  type="button"
+                  onClick={() => setSalesView('revenue')}
+                  className={`px-2 py-1.5 sm:px-2.5 sm:py-1 rounded-[var(--admin-radius-sm)] text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 min-w-0 ${
+                    salesView === 'revenue'
+                      ? 'bg-[var(--admin-surface)] text-blue-600 dark:text-blue-400 shadow-sm'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[15px] shrink-0">payments</span>
+                  <span className="truncate">Money (₹)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSalesView('orders')}
+                  className={`px-2 py-1.5 sm:px-2.5 sm:py-1 rounded-[var(--admin-radius-sm)] text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 min-w-0 ${
+                    salesView === 'orders'
+                      ? 'bg-[var(--admin-surface)] text-purple-600 dark:text-purple-400 shadow-sm'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[15px] shrink-0">package_2</span>
+                  <span className="truncate">Orders</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSalesView('both')}
+                  className={`px-2 py-1.5 sm:px-2.5 sm:py-1 rounded-[var(--admin-radius-sm)] text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 min-w-0 ${
+                    salesView === 'both'
+                      ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[15px] shrink-0">
+                    stacked_bar_chart
+                  </span>
+                  <span className="truncate">Both</span>
+                </button>
+              </div>
+            }
           >
-            <div className="h-[380px] w-full pt-4">
-              {!stats.monthlyRevenue || stats.monthlyRevenue.length === 0 ? (
+            {/* Quick Summary Strip */}
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-4 p-2.5 sm:p-3 bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
+              <div className="text-center sm:text-left sm:pl-2 min-w-0 flex flex-col justify-center">
+                <p className="text-[9.5px] sm:text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider truncate">
+                  Total Revenue
+                </p>
+                <p className="text-[13.5px] sm:text-[15px] font-extrabold text-blue-600 dark:text-blue-400 mt-0.5 truncate">
+                  {formatCurrency(totalRevenueSum)}
+                </p>
+              </div>
+              <div className="text-center border-x border-[var(--admin-border-subtle)] px-1 sm:px-2 min-w-0 flex flex-col justify-center">
+                <p className="text-[9.5px] sm:text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider truncate">
+                  Total Orders
+                </p>
+                <p className="text-[13.5px] sm:text-[15px] font-extrabold text-purple-600 dark:text-purple-400 mt-0.5 truncate">
+                  {totalOrdersSum} {totalOrdersSum === 1 ? 'order' : 'orders'}
+                </p>
+              </div>
+              <div className="text-center sm:text-right sm:pr-2 min-w-0 flex flex-col justify-center">
+                <p className="text-[9.5px] sm:text-[10px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider truncate">
+                  Best Month
+                </p>
+                <div className="mt-0.5 min-w-0">
+                  <p className="text-[12.5px] sm:text-[13px] font-bold text-[var(--admin-text-primary)] truncate leading-tight">
+                    {topMonthName}
+                  </p>
+                  {topMonthRevenue && (
+                    <p className="text-[10.5px] sm:text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 truncate leading-tight mt-0.5">
+                      {topMonthRevenue}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="h-[300px] w-full pt-2">
+              {formattedMonthlyData.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
                   <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
                     analytics
                   </span>
-                  <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">
-                    No Revenue Data
+                  <span className="text-[12px] font-semibold text-[var(--admin-text-secondary)]">
+                    No Revenue Data Yet
                   </span>
+                  <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5">
+                    Orders will appear here automatically
+                  </p>
                 </div>
-              ) : (
+              ) : salesView === 'revenue' ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart
-                    data={[...stats.monthlyRevenue].reverse()}
-                    margin={{ top: 10, right: 0, left: -20, bottom: 0 }}
-                    barGap={8}
+                  <AreaChart
+                    data={formattedMonthlyData}
+                    margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
                   >
                     <defs>
-                      <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.3} />
-                      </linearGradient>
-                      <linearGradient id="ordersGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                      <linearGradient id="revenueFriendlyGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.45} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -437,98 +680,321 @@ export function AdminAnalytics() {
                       stroke="var(--admin-border-subtle)"
                     />
                     <XAxis
-                      dataKey="month"
+                      dataKey="displayMonth"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 500 }}
-                      dy={10}
+                      tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 600 }}
+                      dy={8}
                     />
                     <YAxis
-                      yAxisId="left"
                       hide={isMobile}
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 500 }}
-                      tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
-                      dx={-10}
+                      tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 600 }}
+                      tickFormatter={formatYAxisCurrency}
+                      dx={-5}
                     />
-                    <YAxis yAxisId="right" orientation="right" hide={true} />
-                    <Tooltip
-                      content={<CustomDualTooltip />}
-                      cursor={{ fill: 'var(--admin-surface-muted)', opacity: 0.4 }}
-                    />
-                    <Bar
-                      yAxisId="left"
+                    <Tooltip content={<FriendlySalesTooltip />} />
+                    <Area
+                      type="monotone"
                       dataKey="revenue"
                       name="revenue"
-                      fill="url(#revenueGrad)"
-                      radius={[4, 4, 0, 0]}
-                      maxBarSize={40}
+                      stroke="#3b82f6"
+                      strokeWidth={3}
+                      fill="url(#revenueFriendlyGrad)"
+                      dot={{ fill: '#3b82f6', stroke: '#fff', strokeWidth: 2, r: 5 }}
+                      activeDot={{ r: 7, fill: '#2563eb', stroke: '#fff', strokeWidth: 2 }}
                     />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : salesView === 'orders' ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={formattedMonthlyData}
+                    margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="ordersFriendlyGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.4} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="var(--admin-border-subtle)"
+                    />
+                    <XAxis
+                      dataKey="displayMonth"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 600 }}
+                      dy={8}
+                    />
+                    <YAxis
+                      hide={isMobile}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 600 }}
+                      allowDecimals={false}
+                      dx={-5}
+                    />
+                    <Tooltip content={<FriendlySalesTooltip />} />
                     <Bar
-                      yAxisId="right"
                       dataKey="orders"
                       name="orders"
-                      fill="url(#ordersGrad)"
-                      radius={[4, 4, 0, 0]}
-                      maxBarSize={40}
+                      fill="url(#ordersFriendlyGrad)"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={48}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                    data={formattedMonthlyData}
+                    margin={{ top: 10, right: isMobile ? 0 : 20, left: -10, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="bothRevGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="var(--admin-border-subtle)"
+                    />
+                    <XAxis
+                      dataKey="displayMonth"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 600 }}
+                      dy={8}
+                    />
+                    <YAxis
+                      yAxisId="revAxis"
+                      hide={isMobile}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: 'var(--admin-text-tertiary)', fontWeight: 600 }}
+                      tickFormatter={formatYAxisCurrency}
+                      dx={-5}
+                    />
+                    <YAxis
+                      yAxisId="ordAxis"
+                      orientation="right"
+                      hide={isMobile}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: '#8b5cf6', fontWeight: 600 }}
+                      allowDecimals={false}
+                      dx={5}
+                    />
+                    <Tooltip content={<FriendlySalesTooltip />} />
+                    <Area
+                      yAxisId="revAxis"
+                      type="monotone"
+                      dataKey="revenue"
+                      name="revenue"
+                      stroke="#3b82f6"
+                      strokeWidth={2.5}
+                      fill="url(#bothRevGrad)"
+                      dot={{ fill: '#3b82f6', stroke: '#fff', strokeWidth: 2, r: 4 }}
+                    />
+                    <Line
+                      yAxisId="ordAxis"
+                      type="monotone"
+                      dataKey="orders"
+                      name="orders"
+                      stroke="#8b5cf6"
+                      strokeWidth={3}
+                      dot={{ fill: '#8b5cf6', stroke: '#fff', strokeWidth: 2, r: 5 }}
+                      activeDot={{ r: 7, fill: '#7c3aed', stroke: '#fff', strokeWidth: 2 }}
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
               )}
             </div>
+
+            {salesView === 'both' && (
+              <div className="flex items-center justify-center gap-6 mt-3 text-[11px] font-semibold text-[var(--admin-text-secondary)]">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                  Money Earned (₹)
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                  Orders Placed
+                </span>
+              </div>
+            )}
           </ChartCard>
         </motion.div>
 
-        {/* Category Sales */}
+        {/* Top Selling Categories */}
         <motion.div variants={fadeUp}>
-          <ChartCard title="Category Distribution" subtitle="Sales volume by category">
-            <div className="h-[380px] pt-4">
-              {!stats.categoryPerformance || stats.categoryPerformance.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
-                  <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
-                    bar_chart
-                  </span>
-                  <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">
-                    No Category Data
-                  </span>
+          <ChartCard
+            title="Popular Categories"
+            subtitle="Which items and themes are selling the most"
+            legend={
+              <div className="w-full sm:w-auto grid grid-cols-2 sm:flex items-center gap-1 bg-[var(--admin-bg-subtle)] p-1 rounded-[var(--admin-radius-md)] border border-[var(--admin-border-subtle)]">
+                <button
+                  type="button"
+                  onClick={() => setCategoryView('donut')}
+                  className={`px-2.5 py-1.5 sm:py-1 rounded-[var(--admin-radius-sm)] text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 min-w-0 ${
+                    categoryView === 'donut'
+                      ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[15px] shrink-0">pie_chart</span>
+                  <span className="truncate">Circle Chart</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCategoryView('bars')}
+                  className={`px-2.5 py-1.5 sm:py-1 rounded-[var(--admin-radius-sm)] text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 min-w-0 ${
+                    categoryView === 'bars'
+                      ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm'
+                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[15px] shrink-0">bar_chart</span>
+                  <span className="truncate">Ranked List</span>
+                </button>
+              </div>
+            }
+          >
+            {processedCategories.length === 0 ? (
+              <div className="h-[360px] flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)] p-6 text-center">
+                <span className="material-symbols-outlined text-[36px] text-[var(--admin-text-tertiary)] mb-2">
+                  category
+                </span>
+                <span className="text-[13px] font-bold text-[var(--admin-text-secondary)]">
+                  No Category Sales Yet
+                </span>
+                <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-1 max-w-xs">
+                  When customers purchase decor items, their categories will be ranked and displayed
+                  here automatically.
+                </p>
+              </div>
+            ) : categoryView === 'donut' ? (
+              <div className="flex flex-col sm:flex-row items-center gap-6 min-h-[360px] pt-1">
+                {/* Donut graphic */}
+                <div className="relative w-[190px] h-[190px] shrink-0 flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={processedCategories}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={85}
+                        dataKey="value"
+                        paddingAngle={3}
+                        strokeWidth={0}
+                      >
+                        {processedCategories.map((entry, idx) => (
+                          <Cell key={idx} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<FriendlyCategoryTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  {/* Center Stat Badge */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                    <span className="text-[24px] font-black text-[var(--admin-text-primary)] leading-tight font-mono">
+                      {totalCategoryItems}
+                    </span>
+                    <span className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
+                      Items Sold
+                    </span>
+                  </div>
                 </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={stats.categoryPerformance}
-                    layout="vertical"
-                    margin={{ left: -20, right: 20 }}
+
+                {/* Ranked Legend List */}
+                <div className="flex-1 w-full space-y-2.5 overflow-y-auto max-h-[320px] custom-scrollbar pr-1">
+                  {processedCategories.map((cat, idx) => (
+                    <div
+                      key={idx}
+                      className="p-2.5 rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)] transition-all"
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-5 h-5 rounded-full bg-[var(--admin-surface)] text-[10px] font-extrabold text-[var(--admin-text-secondary)] border border-[var(--admin-border)] flex items-center justify-center shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <span className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate">
+                            {cat.name}
+                          </span>
+                        </div>
+                        <span className="text-[12px] font-extrabold text-[var(--admin-text-primary)] shrink-0 font-mono">
+                          {cat.value} {cat.value === 1 ? 'item' : 'items'}
+                          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 ml-1.5">
+                            ({cat.percentage}%)
+                          </span>
+                        </span>
+                      </div>
+                      {/* Mini Progress meter */}
+                      <div className="w-full h-1.5 bg-[var(--admin-surface-muted)] rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.max(cat.percentage, 4)}%`,
+                            backgroundColor: cat.color,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              /* Full Ranked Bars View */
+              <div className="space-y-3 min-h-[360px] overflow-y-auto max-h-[360px] custom-scrollbar pr-1 pt-2">
+                {processedCategories.map((cat, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)]"
                   >
-                    <defs>
-                      <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.6} />
-                        <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.9} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      horizontal={false}
-                      stroke="var(--admin-border-subtle)"
-                    />
-                    <XAxis type="number" hide />
-                    <YAxis
-                      dataKey="name"
-                      type="category"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: 'var(--admin-text-secondary)', fontWeight: 500 }}
-                      width={110}
-                    />
-                    <Tooltip
-                      content={<CustomBarTooltip />}
-                      cursor={{ fill: 'var(--admin-surface-muted)', opacity: 0.4 }}
-                    />
-                    <Bar dataKey="value" fill="url(#barGrad)" radius={[0, 6, 6, 0]} barSize={20} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="w-6 h-6 rounded-md bg-[var(--admin-surface)] text-[11px] font-extrabold text-[var(--admin-text-secondary)] border border-[var(--admin-border)] flex items-center justify-center shrink-0 shadow-xs">
+                          #{idx + 1}
+                        </span>
+                        <span className="text-[13px] font-bold text-[var(--admin-text-primary)] truncate">
+                          {cat.name}
+                        </span>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-[13px] font-extrabold text-[var(--admin-text-primary)] font-mono">
+                          {cat.value} {cat.value === 1 ? 'item' : 'items'}
+                        </span>
+                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 ml-2">
+                          ({cat.percentage}%)
+                        </span>
+                      </div>
+                    </div>
+                    {/* Progress Bar with true proportion */}
+                    <div className="w-full h-2 bg-[var(--admin-surface-muted)] rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.max(cat.percentage, 5)}%`,
+                          backgroundColor: cat.color,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </ChartCard>
         </motion.div>
       </div>

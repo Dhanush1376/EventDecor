@@ -39,12 +39,13 @@ export const getAllReturns = asyncHandler(async (req: Request, res: Response) =>
       { returnId: { $regex: search, $options: 'i' } },
       { 'items.title': { $regex: search, $options: 'i' } },
       { 'pickup.trackingId': { $regex: search, $options: 'i' } },
+      { upiId: { $regex: search, $options: 'i' } },
     ];
   }
 
   const returns = await ReturnRequest.find(query)
     .populate('userId', 'name email phone')
-    .populate('orderId', 'orderStatus paymentStatus shippingAddress')
+    .populate('orderId', 'orderStatus paymentStatus shippingAddress paymentMethod')
     .populate('items.productId', 'title imageSrc')
     .sort({ createdAt: -1, _id: -1 })
     .skip(skip)
@@ -70,11 +71,30 @@ export const getAllReturns = asyncHandler(async (req: Request, res: Response) =>
  * @access  Admin
  */
 export const getReturnDetails = asyncHandler(async (req: Request, res: Response) => {
-  const returnRequest = await ReturnRequest.findById(req.params.id)
+  const paramId = req.params.id;
+  const isObjectId = mongoose.isValidObjectId(paramId);
+
+  let returnRequest = await ReturnRequest.findOne(
+    isObjectId ? { _id: paramId } : { returnId: paramId },
+  )
     .populate('userId', 'name email phone avatar')
-    .populate('orderId', 'paymentStatus orderStatus total items shippingAddress')
+    .populate('orderId', 'paymentStatus orderStatus total items shippingAddress paymentMethod')
     .populate('items.productId', 'title imageSrc')
-    .populate('assignedStaff', 'name email');
+    .populate('assignedStaff', 'name email')
+    .populate('refundRecordId');
+
+  if (!returnRequest && !isObjectId) {
+    const ExchangeRequest = require('../../models/ExchangeRequest').default;
+    const linkedExchange = await ExchangeRequest.findOne({ exchangeId: paramId });
+    if (linkedExchange) {
+      returnRequest = await ReturnRequest.findById(linkedExchange.returnRequestId)
+        .populate('userId', 'name email phone avatar')
+        .populate('orderId', 'paymentStatus orderStatus total items shippingAddress paymentMethod')
+        .populate('items.productId', 'title imageSrc')
+        .populate('assignedStaff', 'name email')
+        .populate('refundRecordId');
+    }
+  }
 
   if (!returnRequest) {
     throw new ApiError(404, 'Return request not found');
@@ -84,7 +104,9 @@ export const getReturnDetails = asyncHandler(async (req: Request, res: Response)
   let exchangeDetails = null;
   if (returnRequest.returnType === 'exchange') {
     const ExchangeRequest = require('../../models/ExchangeRequest').default;
-    exchangeDetails = await ExchangeRequest.findOne({ returnRequestId: returnRequest._id });
+    exchangeDetails = await ExchangeRequest.findOne({
+      returnRequestId: returnRequest._id,
+    }).populate('additionalRefundId');
   }
 
   // Add user profile stats (fraud score, total orders, etc)
@@ -318,14 +340,19 @@ export const rejectReturn = asyncHandler(async (req: Request, res: Response) => 
  */
 export const transitionStatus = asyncHandler(async (req: Request, res: Response) => {
   const adminId = req.user?.id;
-  const { nextStatus } = req.body;
+  const nextStatus = req.body.nextStatus || req.body.status;
   if (!adminId) throw new ApiError(401, 'Unauthorized');
   if (!nextStatus) throw new ApiError(400, 'Next status is required');
+
+  const metadata = req.body.reason
+    ? { reason: req.body.reason, ...req.body.metadata }
+    : req.body.metadata;
 
   const returnRequest = await ReturnStateMachine.transition(
     req.params.id as string,
     nextStatus,
     adminId,
+    metadata,
   );
 
   res.status(200).json({
@@ -431,6 +458,197 @@ export const triggerRefund = asyncHandler(async (req: Request, res: Response) =>
     res.status(200).json({
       success: true,
       data: returnRequest,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+});
+
+/**
+ * @desc    Record manual/direct refund settlement (e.g. UPI payout for exchange difference or COD return)
+ * @route   POST /api/v1/returns/admin/:id/settle-refund
+ * @access  Admin
+ */
+export const recordRefundSettlement = asyncHandler(async (req: Request, res: Response) => {
+  const adminId = req.user?.id;
+  if (!adminId) throw new ApiError(401, 'Unauthorized');
+
+  const { amount, transactionId, paymentMethod = 'upi', upiId, notes } = req.body;
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const paramId = req.params.id;
+    const isObjectId = mongoose.isValidObjectId(paramId);
+
+    let returnReq = await ReturnRequest.findOne(
+      isObjectId ? { _id: paramId } : { returnId: paramId },
+    ).session(session);
+
+    if (!returnReq && !isObjectId) {
+      const ExchangeRequest = require('../../models/ExchangeRequest').default;
+      const linkedExchange = await ExchangeRequest.findOne({ exchangeId: paramId }).session(
+        session,
+      );
+      if (linkedExchange) {
+        returnReq = await ReturnRequest.findById(linkedExchange.returnRequestId).session(session);
+      }
+    }
+
+    if (!returnReq) throw new ApiError(404, 'Return request not found');
+
+    const order = await Order.findById(returnReq.orderId).session(session);
+    if (!order) throw new ApiError(404, 'Order not found');
+
+    const ExchangeRequest = require('../../models/ExchangeRequest').default;
+    const exchange = await ExchangeRequest.findOne({ returnRequestId: returnReq._id }).session(
+      session,
+    );
+
+    const payoutAmount =
+      Number(amount) ||
+      (exchange?.priceDifference
+        ? exchange.priceDifference
+        : returnReq.refundBreakdown?.grandTotal || 0);
+
+    if (payoutAmount <= 0) {
+      throw new ApiError(400, 'Settlement amount must be greater than 0');
+    }
+
+    const effectiveUpi = upiId || exchange?.upiId || returnReq.upiId || 'N/A';
+    const effectiveTxId = transactionId?.trim() || `UPI-MANUAL-${Date.now()}`;
+
+    // 1. Create or update RefundRecord
+    let refundRecord = await RefundRecord.findOne({
+      returnRequestId: returnReq._id,
+      status: { $in: ['completed', 'processing', 'pending'] },
+    }).session(session);
+
+    if (!refundRecord) {
+      const created = await RefundRecord.create(
+        [
+          {
+            amount: payoutAmount,
+            currency: 'INR',
+            originalTransactionId: effectiveTxId,
+            entityType: 'Order',
+            entityId: order._id,
+            status: 'completed',
+            returnRequestId: returnReq._id,
+            refundMethod: paymentMethod === 'wallet' ? 'wallet' : 'gateway',
+            bankReference: effectiveTxId,
+            reason: notes || `Exchange refund difference paid to customer (${effectiveUpi})`,
+            completedAt: new Date(),
+            refundBreakdown: {
+              productTotal: payoutAmount,
+              taxRefund: 0,
+              shippingRefund: 0,
+              couponDeduction: 0,
+              walletDeduction: 0,
+            },
+          },
+        ],
+        { session },
+      );
+      refundRecord = created[0];
+    } else {
+      refundRecord.status = 'completed';
+      refundRecord.amount = payoutAmount;
+      refundRecord.bankReference = effectiveTxId;
+      refundRecord.completedAt = new Date();
+      if (notes) refundRecord.reason = notes;
+      await refundRecord.save({ session });
+    }
+
+    // 2. Update ExchangeRequest if linked
+    if (exchange) {
+      exchange.additionalRefundId = refundRecord._id;
+      if (exchange.differenceAction === 'refund_difference') {
+        exchange.paymentStatus = 'payment_paid';
+      }
+      if (effectiveUpi && !exchange.upiId) {
+        exchange.upiId = effectiveUpi;
+      }
+      exchange.timeline.push({
+        action: `Refund difference of ₹${payoutAmount} paid to customer (${effectiveUpi}). UTR/Ref: ${effectiveTxId}`,
+        timestamp: new Date(),
+        performedBy: new mongoose.Types.ObjectId(adminId),
+      });
+      await exchange.save({ session });
+    }
+
+    // 3. Update ReturnRequest
+    returnReq.refundRecordId = refundRecord._id;
+    returnReq.executedRefundMethod = paymentMethod === 'wallet' ? 'wallet' : 'original';
+    if (effectiveUpi && !returnReq.upiId) {
+      returnReq.upiId = effectiveUpi;
+    }
+
+    const eventDesc = `Refund payout of ₹${payoutAmount} marked as PAID to customer (${effectiveUpi}) via ${paymentMethod.toUpperCase()}. Reference / UTR: ${effectiveTxId}.${notes ? ` Note: ${notes}` : ''}`;
+
+    returnReq.timeline.push({
+      action: 'refund_settled',
+      description: eventDesc,
+      performedBy: new mongoose.Types.ObjectId(adminId),
+      performedByName: (req.user as any)?.name || 'Admin',
+      performedByRole: (req.user as any)?.role || 'admin',
+      metadata: {
+        amount: payoutAmount,
+        paymentMethod,
+        upiId: effectiveUpi,
+        transactionId: effectiveTxId,
+        notes,
+        refundRecordId: refundRecord._id,
+        settledAt: new Date(),
+      },
+      timestamp: new Date(),
+    });
+
+    returnReq.auditLog.push({
+      timestamp: new Date(),
+      user: new mongoose.Types.ObjectId(adminId),
+      userType: 'admin',
+      action: 'REFUND_SETTLED_MANUALLY',
+      reason: notes || `Admin confirmed payment of ₹${payoutAmount} to ${effectiveUpi}`,
+      oldValue: { refundStatus: 'pending' },
+      newValue: {
+        refundStatus: 'completed',
+        amount: payoutAmount,
+        transactionId: effectiveTxId,
+        upiId: effectiveUpi,
+      },
+    });
+
+    if (returnReq.status === 'inspection_completed') {
+      returnReq.status = 'refund_completed';
+    }
+
+    await returnReq.save({ session });
+    await session.commitTransaction();
+
+    const updatedReturn = await ReturnRequest.findById(returnReq._id)
+      .populate('userId', 'name email phone avatar')
+      .populate('orderId', 'paymentStatus orderStatus total items shippingAddress paymentMethod')
+      .populate('items.productId', 'title imageSrc')
+      .populate('assignedStaff', 'name email')
+      .populate('refundRecordId');
+
+    const updatedExchange = exchange
+      ? await ExchangeRequest.findById(exchange._id).populate('additionalRefundId')
+      : null;
+
+    res.status(200).json({
+      success: true,
+      message: `Refund of ₹${payoutAmount} registered as paid successfully.`,
+      data: {
+        request: updatedReturn,
+        exchangeDetails: updatedExchange,
+        refundRecord,
+      },
     });
   } catch (error) {
     await session.abortTransaction();

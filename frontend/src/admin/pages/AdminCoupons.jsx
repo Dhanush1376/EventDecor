@@ -7,7 +7,6 @@ import { useConfirm } from '../../context/ConfirmProvider';
 import toast from 'react-hot-toast';
 import {
   PageHeader,
-  StatusBadge,
   AdminToggle,
   EmptyState,
   fadeUp,
@@ -137,8 +136,8 @@ export function AdminCoupons() {
                   !c.isActive || isExpired ? 'opacity-60' : ''
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`w-11 h-11 rounded-[var(--admin-radius-lg)] flex items-center justify-center shrink-0 ${
                         c.isActive && !isExpired
@@ -148,13 +147,11 @@ export function AdminCoupons() {
                     >
                       <span className="material-symbols-outlined text-[22px]">sell</span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[16px] font-bold text-[var(--admin-text-primary)] font-mono tracking-wider">
-                          {c.code}
-                        </span>
-                      </div>
-                      <p className="text-[12px] text-[var(--admin-text-secondary)] mt-0.5">
+                    <div className="min-w-0">
+                      <span className="text-[16px] font-bold text-[var(--admin-text-primary)] font-mono tracking-wider block truncate">
+                        {c.code}
+                      </span>
+                      <p className="text-[12px] text-[var(--admin-text-secondary)] mt-0.5 truncate">
                         {c.discountType === 'percentage'
                           ? `${c.discountValue}% off`
                           : `₹${c.discountValue} off`}{' '}
@@ -162,14 +159,20 @@ export function AdminCoupons() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
+
+                  <div className="flex items-center gap-2.5 shrink-0">
                     <AdminToggle
                       checked={c.isActive && !isExpired}
                       onChange={() => handleToggleActive(c._id || c.id, c.isActive)}
                       disabled={isExpired}
                     />
-                    <StatusBadge
-                      status={isExpired ? 'Cancelled' : c.isActive ? 'Active' : 'Inactive'}
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full shrink-0 transition-colors ${
+                        c.isActive && !isExpired
+                          ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]'
+                          : 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.4)]'
+                      }`}
+                      title={isExpired ? 'Expired' : c.isActive ? 'Active' : 'Deactive'}
                     />
                   </div>
                 </div>

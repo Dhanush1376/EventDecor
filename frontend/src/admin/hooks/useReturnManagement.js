@@ -28,7 +28,9 @@ export const useReturnManagement = () => {
 
   const handleError = (err) => {
     const msg = err.response?.data?.message || err.message || 'An error occurred';
-    setError(msg);
+    if (!currentReturn) {
+      setError(msg);
+    }
     toast.error(msg);
     setLoading(false);
     throw err;
@@ -85,21 +87,19 @@ export const useReturnManagement = () => {
     [],
   );
 
-  const fetchReturnDetails = useCallback(
-    async (id) => {
-      setLoading(true);
-      try {
-        const response = await returnService.getReturnDetails(id);
-        setCurrentReturn(response.data.data);
-        setLoading(false);
-        return response.data.data;
-      } catch (err) {
-        handleError(err);
-      }
-    },
-
-    [],
-  );
+  const fetchReturnDetails = useCallback(async (id) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await returnService.getReturnDetails(id);
+      setCurrentReturn(response.data.data);
+      setError(null);
+      setLoading(false);
+      return response.data.data;
+    } catch (err) {
+      handleError(err);
+    }
+  }, []);
 
   const approveReturn = async (id) => {
     setLoading(true);
@@ -147,6 +147,29 @@ export const useReturnManagement = () => {
     }
   };
 
+  const transitionExchangeReplacement = async (
+    exchangeId,
+    returnRequestId,
+    nextStatus,
+    metadata = {},
+  ) => {
+    setLoading(true);
+    try {
+      await returnService.transitionExchangeReplacement(exchangeId, {
+        status: nextStatus,
+        metadata,
+      });
+      toast.success(`Replacement marked as ${nextStatus.replace(/_/g, ' ')}`);
+      if (returnRequestId) {
+        await fetchReturnDetails(returnRequestId);
+      } else {
+        setLoading(false);
+      }
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
   const submitInspection = async (id, itemIndex, data) => {
     setLoading(true);
     try {
@@ -174,6 +197,23 @@ export const useReturnManagement = () => {
       }
     } catch (err) {
       handleError(err);
+    }
+  };
+
+  const settleRefund = async (id, settlementData) => {
+    setLoading(true);
+    try {
+      const res = await returnService.settleRefund(id, settlementData);
+      toast.success(res.data?.message || 'Refund marked as settled successfully');
+      if (id) {
+        await fetchReturnDetails(id);
+      } else {
+        setLoading(false);
+      }
+      return res.data;
+    } catch (err) {
+      handleError(err);
+      throw err;
     }
   };
 
@@ -454,7 +494,9 @@ export const useReturnManagement = () => {
     approveReturn,
     rejectReturn,
     transitionStatus,
+    transitionExchangeReplacement,
     triggerRefund,
+    settleRefund,
     addInternalNote,
     performBulkAction,
     fetchRefundStats,

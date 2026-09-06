@@ -161,7 +161,7 @@ export function RentalTimeline({ rental, fetchRentalDetail, nextAction }) {
       const finEl = document.getElementById('rental-financials');
       if (finEl) finEl.scrollIntoView({ behavior: 'smooth' });
       toast('Please resolve the security deposit in the Financial Settlement section.', {
-        icon: 'ℹ️',
+        icon: <span className="material-symbols-outlined text-[18px] text-blue-500">info</span>,
       });
       return;
     }

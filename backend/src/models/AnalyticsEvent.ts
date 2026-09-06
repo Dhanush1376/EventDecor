@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import storeSettingsService from '../services/StoreSettingsService';
+import { DestructionGuard } from '../utils/DestructionGuard';
 
 export interface IAnalyticsEvent extends Document {
   userId?: mongoose.Types.ObjectId;
@@ -154,6 +154,9 @@ AnalyticsEventSchema.add({
   metadata: { type: Schema.Types.Mixed },
 });
 
+// Protect collection against accidental mass deletions
+DestructionGuard(AnalyticsEventSchema);
+
 // Indexes for fast querying and aggregation
 AnalyticsEventSchema.index({ userId: 1, timestamp: 1 });
 AnalyticsEventSchema.index({ sessionId: 1, timestamp: 1 });
@@ -162,20 +165,7 @@ AnalyticsEventSchema.index({ page: 1, timestamp: 1 });
 AnalyticsEventSchema.index({ 'metadata.referralChannel': 1, timestamp: 1 });
 AnalyticsEventSchema.index({ 'metadata.searchIntent': 1, timestamp: 1 });
 
-// Dynamic TTL index (expiresAt calculated on save)
-AnalyticsEventSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
-AnalyticsEventSchema.pre('save', async function () {
-  if (!this.expiresAt) {
-    try {
-      const settings = await storeSettingsService.getSettings();
-      const days = settings.retentionPolicies?.analyticsEventsDays || 30;
-      this.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    } catch (_err) {
-      this.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days fallback
-    }
-  }
-});
+// Note: TTL index removed to permanently retain all visitor, clickstream, and traffic analytics.
 
 const AnalyticsEvent = mongoose.model<IAnalyticsEvent>('AnalyticsEvent', AnalyticsEventSchema);
 export default AnalyticsEvent;

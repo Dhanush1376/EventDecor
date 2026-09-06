@@ -22,6 +22,7 @@ export class ExchangeService {
     pickupAddress?: any,
     idempotencyKey?: string,
     refundMethod?: 'original' | 'wallet' | 'store_credit',
+    upiId?: string,
   ) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -60,17 +61,20 @@ export class ExchangeService {
       if (replacementTotal > originalTotal) differenceAction = 'collect_payment';
       else if (replacementTotal < originalTotal) differenceAction = 'refund_difference';
 
-      // Ensure 'original' refund method isn't used if order was COD
+      // For COD orders, require UPI ID if refunding difference
       if (
         differenceAction === 'refund_difference' &&
         refundMethod === 'original' &&
-        order.paymentMethod === 'cod'
+        order.paymentMethod === 'cod' &&
+        !upiId?.trim()
       ) {
-        throw new ApiError(
-          400,
-          'Cannot refund to original payment method for COD orders. Please select wallet.',
-        );
+        throw new ApiError(400, 'UPI ID is required to process Cash on Delivery refund.');
       }
+
+      const effectiveUpiId =
+        differenceAction === 'refund_difference' && (refundMethod === 'original' || Boolean(upiId))
+          ? upiId?.trim()
+          : undefined;
 
       // 1. Create underlying ReturnRequest using State Machine
       const returnRequest = await ReturnStateMachine.createRequest(
@@ -87,6 +91,7 @@ export class ExchangeService {
           ],
           refundMethod: differenceAction === 'refund_difference' ? refundMethod : undefined,
           pickupAddress,
+          upiId: effectiveUpiId,
         },
         idempotencyKey ? `${idempotencyKey}_return` : undefined,
         session,
@@ -117,6 +122,7 @@ export class ExchangeService {
       const exchangeRequest = new ExchangeRequest({
         exchangeId,
         returnRequestId: returnRequest._id,
+        upiId: effectiveUpiId,
         originalItem: {
           productId: originalItem.productId,
           title: originalItem.title,

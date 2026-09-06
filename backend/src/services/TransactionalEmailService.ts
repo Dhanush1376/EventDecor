@@ -19,6 +19,7 @@ import {
   buildEventBookingAdminEmail,
   buildEventBookingStatusUpdateEmail,
   buildReturnCreatedCustomerEmail,
+  buildReturnCreatedAdminEmail,
   buildReturnStatusUpdateEmail,
   buildRentalStatusChangeEmail,
   buildRentalDepositRefundedEmail,
@@ -431,13 +432,19 @@ export class TransactionalEmailService {
       `[TransactionalEmailService] Dispatching return created emails for ${returnRequest._id}`,
     );
 
-    // Fetch the original order for the summary
+    // Fetch the original order and exchange record for the summary
     let order: any = null;
+    let exchange: any = null;
     try {
       const Order = require('../models/Order').default;
       order = await Order.findById(returnRequest.orderId).lean();
+
+      if (returnRequest.returnType === 'exchange') {
+        const ExchangeRequest = require('../models/ExchangeRequest').default;
+        exchange = await ExchangeRequest.findOne({ returnRequestId: returnRequest._id }).lean();
+      }
     } catch (err) {
-      logger.warn(`Could not fetch order for return emails: ${err}`);
+      logger.warn(`Could not fetch order/exchange for return emails: ${err}`);
     }
 
     // 1. Notify Customer
@@ -454,6 +461,21 @@ export class TransactionalEmailService {
         'return_created_customer',
         notificationKey,
       );
+    }
+
+    // 2. Notify Admins
+    try {
+      const isExchange = returnRequest.returnType === 'exchange';
+      const adminTemplate = buildReturnCreatedAdminEmail(returnRequest, order, user, exchange);
+      await this.notifyAllAdmins(
+        adminTemplate.subject,
+        adminTemplate.html,
+        isExchange ? 'exchange_created_admin' : 'return_created_admin',
+        eventId,
+        isExchange ? 'EXCHANGE_CREATED' : 'RETURN_CREATED',
+      );
+    } catch (adminErr) {
+      logger.error(`Failed to dispatch return/exchange admin notification email:`, adminErr);
     }
   }
 

@@ -85,7 +85,7 @@ function ReviewCard({ review, productId }) {
     : '';
 
   return (
-    <div className="bg-[#FAFAF9] rounded-[24px] p-5 flex flex-col justify-between h-full">
+    <div className="bg-white rounded-[24px] border border-black/5 shadow-sm p-5 flex flex-col justify-between h-full">
       <div>
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2.5">
@@ -99,8 +99,8 @@ function ReviewCard({ review, productId }) {
               </p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 {review.verified && (
-                  <span className="inline-flex items-center gap-0.5 bg-green-50 text-green-700 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border border-green-100">
-                    <BadgeCheck className="text-[9px]" strokeWidth={1.5} />
+                  <span className="inline-flex items-center gap-1 text-[8px] font-semibold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200/50">
+                    <BadgeCheck className="w-2.5 h-2.5 text-emerald-600 shrink-0" strokeWidth={2} />
                     Verified Purchase
                   </span>
                 )}
@@ -125,7 +125,7 @@ function ReviewCard({ review, productId }) {
             <Link
               key={idx}
               to={`/product/${productId}/reviews/images`}
-              className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs cursor-pointer relative group flex-shrink-0"
+              className="w-10 h-10 rounded-lg overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs cursor-pointer relative group flex-shrink-0"
             >
               <OptimizedImage
                 src={imgUrl}
@@ -138,7 +138,7 @@ function ReviewCard({ review, productId }) {
           {review.reviewImages && review.reviewImages.length > 3 ? (
             <Link
               to={`/product/${productId}/reviews/images`}
-              className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[9px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-lg overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[9px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
             >
               +{review.reviewImages.length - 3}
             </Link>
@@ -147,7 +147,7 @@ function ReviewCard({ review, productId }) {
             review.images.length > 3 && (
               <Link
                 to={`/product/${productId}/reviews/images`}
-                className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[9px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
+                className="w-10 h-10 rounded-lg overflow-hidden border border-black/5 bg-black/60 hover:bg-black/80 flex items-center justify-center text-white text-[9px] font-bold tracking-widest flex-shrink-0 transition-colors cursor-pointer"
               >
                 +{review.images.length - 3}
               </Link>
@@ -608,7 +608,7 @@ export function ProductReviews({ productId, productTitle }) {
   return (
     <section
       id="reviews-section"
-      className="relative z-10 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-8 lg:py-12 overflow-hidden"
+      className="relative z-10 max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop py-8 lg:py-12"
     >
       {/* Section Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4 lg:mb-6">
@@ -650,7 +650,7 @@ export function ProductReviews({ productId, productTitle }) {
 
       {/* Stats Row */}
       {reviews.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-10 mb-6 py-6 border-y border-black/5">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-10 mb-8 py-8 px-6 sm:px-10 bg-white rounded-[24px] border border-black/5 shadow-sm">
           {/* Big Average */}
           <div className="flex flex-col items-center justify-center sm:border-r border-black/5 sm:pr-10 w-[140px] shrink-0 gap-3">
             <div className="flex flex-col items-center gap-2">

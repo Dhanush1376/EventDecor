@@ -94,6 +94,38 @@ export const getAdminReviews = asyncHandler(async (req: Request, res: Response) 
     });
   }
 
+  // Ensure originalImages is populated on all reviews for admin inspection
+  reviews.forEach((r: any) => {
+    if (!r.originalImages || r.originalImages.length === 0) {
+      r.originalImages =
+        r.reviewImages && r.reviewImages.length > 0
+          ? r.reviewImages.map((img: any) => img.secureUrl)
+          : r.images || [];
+    }
+  });
+
+  // Calculate previously disbursed rewards for each review from WalletTransaction & review.rewardPaid
+  const reviewIds = reviews.map((r: any) => new mongoose.Types.ObjectId(r._id));
+  const rewardTransactions = await WalletTransaction.find({
+    reviewId: { $in: reviewIds },
+    source: 'review_reward',
+    status: 'active',
+  }).lean();
+
+  const rewardPaidMap = new Map<string, number>();
+  rewardTransactions.forEach((tx: any) => {
+    if (tx.reviewId) {
+      const key = tx.reviewId.toString();
+      rewardPaidMap.set(key, (rewardPaidMap.get(key) || 0) + (tx.amount || 0));
+    }
+  });
+
+  reviews.forEach((r: any) => {
+    const txTotal = rewardPaidMap.get(r._id.toString()) || 0;
+    const resolved = Math.max(r.rewardPaid || 0, txTotal);
+    r.rewardPaid = resolved > 0 ? resolved : r.status === 'approved' ? 20 : 0;
+  });
+
   res
     .status(200)
     .json(
@@ -105,10 +137,48 @@ export const getAdminReviews = asyncHandler(async (req: Request, res: Response) 
     );
 });
 
-export const moderateReview = asyncHandler(async (req: Request, res: Response) => {
-  const { reviewId, action, customRewardAmount } = req.body; // action: 'approve' | 'reject'
+export const updateReviewImages = asyncHandler(async (req: Request, res: Response) => {
+  const { reviewId, approvedImages } = req.body;
 
-  if (!reviewId || !['approve', 'reject'].includes(action)) {
+  if (!reviewId || !Array.isArray(approvedImages)) {
+    throw new ApiError(400, 'Review ID and approvedImages array are required');
+  }
+
+  const review = await Review.findById(reviewId);
+  if (!review) {
+    throw new ApiError(404, 'Review not found');
+  }
+
+  // Preserve original uploaded images before modifying approved images
+  if (!review.originalImages || review.originalImages.length === 0) {
+    review.originalImages =
+      review.reviewImages && review.reviewImages.length > 0
+        ? review.reviewImages.map((img: any) => img.secureUrl)
+        : review.images || [];
+  }
+
+  review.images = approvedImages;
+  if (review.reviewImages && review.reviewImages.length > 0) {
+    review.reviewImages = review.reviewImages.filter((img: any) =>
+      approvedImages.includes(img.secureUrl),
+    );
+  }
+
+  await review.save();
+
+  res.status(200).json(
+    new ApiResponse(true, 'Review images successfully updated!', {
+      reviewId: review._id,
+      images: review.images,
+      originalImages: review.originalImages,
+    }),
+  );
+});
+
+export const moderateReview = asyncHandler(async (req: Request, res: Response) => {
+  const { reviewId, action, customRewardAmount, approvedImages } = req.body; // action: 'approve' | 'reject' | 'undo'
+
+  if (!reviewId || !['approve', 'reject', 'undo'].includes(action)) {
     throw new ApiError(400, 'Review ID and valid action are required');
   }
 
@@ -117,12 +187,12 @@ export const moderateReview = asyncHandler(async (req: Request, res: Response) =
     throw new ApiError(404, 'Review not found');
   }
 
-  if (review.status !== 'pending') {
-    throw new ApiError(400, `Review has already been moderated with status: ${review.status}`);
-  }
+  if (action === 'undo') {
+    if (review.status === 'pending') {
+      throw new ApiError(400, 'Review is already in pending status');
+    }
 
-  if (action === 'approve') {
-    review.status = 'approved';
+    review.status = 'pending';
     await review.save();
 
     // Recalculate product rating atomically using MongoDB aggregation pipeline directly in database
@@ -130,7 +200,45 @@ export const moderateReview = asyncHandler(async (req: Request, res: Response) =
       await updateProductRating(review.product);
     }
 
-    let message = 'Review successfully approved! Dynamic rules evaluated.';
+    return res.status(200).json(
+      new ApiResponse(true, 'Review has been unpublished and reverted to pending moderation.', {
+        review,
+      }),
+    );
+  }
+
+  if (review.status !== 'pending') {
+    throw new ApiError(400, `Review has already been moderated with status: ${review.status}`);
+  }
+
+  if (action === 'approve') {
+    review.status = 'approved';
+
+    // Preserve original uploaded images before updating approved set
+    if (!review.originalImages || review.originalImages.length === 0) {
+      review.originalImages =
+        review.reviewImages && review.reviewImages.length > 0
+          ? review.reviewImages.map((img: any) => img.secureUrl)
+          : review.images || [];
+    }
+
+    if (Array.isArray(approvedImages)) {
+      review.images = approvedImages;
+      if (review.reviewImages && review.reviewImages.length > 0) {
+        review.reviewImages = review.reviewImages.filter((img: any) =>
+          approvedImages.includes(img.secureUrl),
+        );
+      }
+    }
+
+    await review.save();
+
+    // Recalculate product rating atomically using MongoDB aggregation pipeline directly in database
+    if (review.product) {
+      await updateProductRating(review.product);
+    }
+
+    let message = 'Review successfully approved!';
 
     if (customRewardAmount && typeof customRewardAmount === 'number' && customRewardAmount > 0) {
       const user = await User.findById(review.customer);
@@ -154,8 +262,12 @@ export const moderateReview = asyncHandler(async (req: Request, res: Response) =
             balanceAfter,
           },
         ]);
+        review.rewardPaid = (review.rewardPaid || 0) + customRewardAmount;
+        await review.save();
         message = `Review successfully approved! ₹${customRewardAmount} credited manually.`;
       }
+    } else if (customRewardAmount === 0 || (review.rewardPaid && review.rewardPaid > 0)) {
+      message = 'Review successfully approved without additional reward payout.';
     } else {
       const { RuleEngine } = require('../../services/RuleEngine');
       const userForRule = await User.findById(review.customer).lean();

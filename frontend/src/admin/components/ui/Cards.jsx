@@ -118,18 +118,20 @@ export function StatCard({
 
 export function ChartCard({ title, subtitle, legend, children, className = '' }) {
   return (
-    <motion.div variants={fadeUp} className={`admin-card p-5 sm:p-6 ${className}`}>
-      <div className="flex items-start sm:items-center justify-between mb-5 gap-3 flex-col sm:flex-row">
-        <div>
-          <h3 className="text-[14px] font-semibold text-[var(--admin-text-primary)] tracking-tight">
+    <motion.div variants={fadeUp} className={`admin-card p-4 sm:p-6 ${className}`}>
+      <div className="flex items-start sm:items-center justify-between mb-4 sm:mb-5 gap-3 flex-col sm:flex-row">
+        <div className="min-w-0 w-full sm:w-auto">
+          <h3 className="text-[14px] sm:text-[15px] font-semibold text-[var(--admin-text-primary)] tracking-tight">
             {title}
           </h3>
           {subtitle && (
-            <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-0.5">{subtitle}</p>
+            <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-0.5 leading-snug">
+              {subtitle}
+            </p>
           )}
         </div>
         {legend && (
-          <div className="flex items-center gap-4 text-[11px] font-medium text-[var(--admin-text-secondary)]">
+          <div className="w-full sm:w-auto flex items-center justify-start sm:justify-end text-[11px] font-medium text-[var(--admin-text-secondary)]">
             {legend}
           </div>
         )}

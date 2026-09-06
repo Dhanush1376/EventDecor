@@ -417,12 +417,14 @@ class OtpAuthService {
 
       try {
         // Removed dynamic require
-        createAdminNotification({
-          title: 'New User Registration',
-          message: `${user.name || user.phone || 'A new user'} just registered on the platform.`,
-          type: 'user',
-          actionLink: '/admin/users',
-        }).catch((err: any) =>
+        Promise.resolve(
+          createAdminNotification({
+            title: 'New User Registration',
+            message: `${user.name || user.phone || 'A new user'} just registered on the platform.`,
+            type: 'user',
+            actionLink: '/admin/users',
+          }),
+        ).catch((err: any) =>
           logger.error('Failed to create admin notification for user registration (async):', err),
         );
       } catch (notifErr) {

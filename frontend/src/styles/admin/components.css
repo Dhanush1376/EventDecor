@@ -594,3 +594,16 @@
 .admin-section-root .admin-animate-in {
   animation: admin-fade-in 0.3s var(--admin-ease-spring) forwards;
 }
+
+/* Activity Log Search Bar Responsive Sizing */
+.activity-search-box {
+  min-height: 56px !important;
+  height: 56px !important;
+}
+
+@media (min-width: 1024px) {
+  .activity-search-box {
+    min-height: 46px !important;
+    height: 46px !important;
+  }
+}

@@ -330,9 +330,9 @@
   }
 
   /* General interactive element baseline */
-  .admin-section-root button,
-  .admin-section-root a,
-  .admin-section-root [role='button'] {
+  .admin-section-root button:not(.min-h-0),
+  .admin-section-root a:not(.min-h-0),
+  .admin-section-root [role='button']:not(.min-h-0) {
     min-height: 36px;
   }
 

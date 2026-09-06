@@ -4,6 +4,7 @@ export const createReturnSchema = z.object({
   body: z.object({
     orderId: z.string().min(1, 'Order ID is required'),
     refundMethod: z.enum(['original', 'wallet', 'store_credit']).optional(),
+    upiId: z.string().optional(),
     pickupAddress: z.any().optional(),
     idempotencyKey: z.string().optional(),
     items: z
@@ -39,23 +40,32 @@ export const rejectReturnSchema = z.object({
   }),
 });
 
+const VALID_RETURN_STATUSES = [
+  'approved',
+  'return_courier_assigned',
+  'return_picked_up',
+  'return_in_transit',
+  'return_received',
+  'inspection_started',
+  'inspection_completed',
+  'refund_initiated',
+  'refund_completed',
+  'completed',
+  'rejected',
+  'cancelled',
+] as const;
+
 export const transitionStatusSchema = z.object({
-  body: z.object({
-    nextStatus: z.enum([
-      'approved',
-      'return_courier_assigned',
-      'return_picked_up',
-      'return_in_transit',
-      'return_received',
-      'inspection_started',
-      'inspection_completed',
-      'refund_initiated',
-      'refund_completed',
-      'completed',
-      'rejected',
-      'cancelled',
-    ]),
-  }),
+  body: z
+    .object({
+      nextStatus: z.enum(VALID_RETURN_STATUSES).optional(),
+      status: z.enum(VALID_RETURN_STATUSES).optional(),
+      reason: z.string().optional(),
+      metadata: z.any().optional(),
+    })
+    .refine((data) => data.nextStatus || data.status, {
+      message: 'Either nextStatus or status is required',
+    }),
 });
 
 export const createExchangeSchema = z.object({
@@ -69,5 +79,6 @@ export const createExchangeSchema = z.object({
     pickupAddress: z.any().optional(),
     idempotencyKey: z.string().optional(),
     refundMethod: z.enum(['original', 'wallet', 'store_credit']).optional(),
+    upiId: z.string().optional(),
   }),
 });

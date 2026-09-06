@@ -53,11 +53,8 @@ export function AdminSidebarContent({
                 exit={{ opacity: 0, x: -8, width: 0 }}
                 className="flex flex-col whitespace-nowrap overflow-hidden"
               >
-                <span
-                  className="font-semibold text-[13px] tracking-wide text-[var(--admin-text-primary)]"
-                  style={{ fontFamily: "'Playfair Display', 'Georgia', 'Times New Roman', serif" }}
-                >
-                  Siri arts & crafts
+                <span className="font-bold text-[13.5px] tracking-tight text-[var(--admin-text-primary)] font-sans">
+                  Siri Arts & Crafts
                 </span>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="text-[9px] tracking-wider uppercase text-[var(--admin-text-tertiary)] font-medium">

@@ -211,6 +211,30 @@ export async function processEvent(event: any): Promise<void> {
             action: 'exchange_payment_verified',
           });
         }
+
+        // Notify Admins that exchange payment was received
+        try {
+          const { getActiveAdminEmailsFromDB } = require('../config/adminConfig');
+          const adminEmails = await getActiveAdminEmailsFromDB();
+          const { sendDirectEmail } = require('../services/notificationService');
+          const { getFrontendUrl } = require('../utils/getFrontendUrl');
+          for (const email of adminEmails) {
+            await sendDirectEmail({
+              email,
+              subject: `[Exchange Paid] Payment Verified for #${returnReq.returnId}`,
+              customHtml: `
+                <h2>Exchange Payment Received</h2>
+                <p>The price difference payment for Exchange <strong>#${returnReq.returnId}</strong> has been successfully received.</p>
+                <p>You can now proceed to approve and dispatch the replacement item in the admin dashboard.</p>
+                <p><a href="${getFrontendUrl()}/admin/returns/exchanges/${returnReq._id}" style="display: inline-block; padding: 10px 20px; background-color: #2A2927; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 12px;">Open Exchange in Admin Portal</a></p>
+              `,
+              type: 'system',
+              action: 'exchange_payment_verified_admin',
+            });
+          }
+        } catch (adminPayErr) {
+          logger.error('Failed to notify admins of exchange payment verified:', adminPayErr);
+        }
       }
     } else if (eventName === 'ORDER_PAYMENTFAILED') {
       const order = await Order.findById(event.aggregateId).populate('user');
@@ -362,11 +386,12 @@ export async function processEvent(event: any): Promise<void> {
       } else if (eventName === 'RETURNREQUEST_RETURNCREATED') {
         const returnReq = await ReturnRequest.findById(event.aggregateId).populate('orderId');
         if (returnReq) {
+          const isEx = returnReq.returnType === 'exchange';
           await createAdminNotification({
-            title: 'New Return/Exchange Request',
-            message: `Return request ${returnReq.returnId || returnReq._id} created for Order ${(returnReq as any).orderId?.orderId || returnReq.orderId}`,
+            title: isEx ? 'New Exchange Request' : 'New Return Request',
+            message: `${isEx ? 'Exchange' : 'Return'} request ${returnReq.returnId || returnReq._id} created for Order ${(returnReq as any).orderId?.orderId || returnReq.orderId}`,
             type: 'return',
-            actionLink: `/admin/returns/requests/${returnReq._id}`,
+            actionLink: `/admin/returns/${isEx ? 'exchanges' : 'requests'}/${returnReq._id}`,
             metadata: {
               outboxEventId: event._id.toString(),
               image:

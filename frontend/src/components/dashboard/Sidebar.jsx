@@ -35,7 +35,6 @@ export function Sidebar() {
     hasRecentOrderUpdates,
     hasRecentRentalUpdates,
     hasRecentCustomUpdates,
-    hasRecentReturnUpdates,
   } = useDashboard();
 
   const path = location.pathname;

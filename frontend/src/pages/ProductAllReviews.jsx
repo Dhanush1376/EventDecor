@@ -1,4 +1,4 @@
-import { BadgeCheck, PenSquare, ArrowLeft, Search } from 'lucide-react';
+import { BadgeCheck, PenSquare, Search } from 'lucide-react';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { useParams, Link } from 'react-router-dom';
@@ -8,7 +8,6 @@ import { useAuth } from '../context/AuthContext';
 import { SEO } from '../components/seo/SEO';
 import { WriteReviewModal, getPremiumReviewerName } from '../components/sections/ProductReviews';
 import { OptimizedImage } from '../components/ui/OptimizedImage';
-import { MandalaArtDecor } from '../components/ui/MandalaArtDecor';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import Star from 'lucide-react/dist/esm/icons/star';
 
@@ -59,31 +58,31 @@ function FullPageReviewCard({ review, productId }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-[24px] border border-[#EBE6DD] p-5 shadow-sm hover:shadow-luxury hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+      className="bg-white rounded-[24px] border border-black/5 p-5 shadow-sm hover:shadow-luxury hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
     >
       <div>
         {/* Reviewer Info */}
-        <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex items-start justify-between gap-2 mb-2.5">
           <div className="flex items-center gap-2.5">
             {/* Initials Circle */}
-            <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#E2DACB] flex items-center justify-center shrink-0 shadow-2xs">
-              <span className="font-serif text-[#8C7000] text-xs font-bold">{initials}</span>
+            <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+              <span className="font-display text-primary text-xs font-bold">{initials}</span>
             </div>
             <div>
-              <p className="font-display font-semibold uppercase tracking-[0.1em] text-[#2d2b29] text-[10px] leading-tight">
+              <p className="font-body text-xs font-semibold text-black leading-tight">
                 {customerName}
               </p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 {review.verified && (
-                  <span className="inline-flex items-center gap-0.5 text-[7px] font-bold text-emerald-800 uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100/60">
-                    <BadgeCheck className="text-[9px] font-bold" strokeWidth={1.5} />
+                  <span className="inline-flex items-center gap-1 text-[8px] font-semibold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200/50">
+                    <BadgeCheck className="w-2.5 h-2.5 text-emerald-600 shrink-0" strokeWidth={2} />
                     Verified Purchase
                   </span>
                 )}
               </div>
             </div>
           </div>
-          <span className="font-label text-[8px] text-[#685c57]/50 font-bold uppercase tracking-wider shrink-0 mt-0.5">
+          <span className="font-label text-[9px] text-black/40 font-medium shrink-0 mt-0.5">
             {date}
           </span>
         </div>
@@ -103,12 +102,12 @@ function FullPageReviewCard({ review, productId }) {
 
       {/* Review Images */}
       {review.images && review.images.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-[#F3EFE7]">
+        <div className="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-black/5">
           {review.images.map((imgUrl, idx) => (
             <Link
               key={idx}
               to={`/product/${productId}/reviews/images`}
-              className="w-10 h-10 rounded-xl overflow-hidden border border-[#E2DACB] bg-[#FAF9F6] shadow-3xs cursor-pointer relative group flex-shrink-0"
+              className="w-10 h-10 rounded-lg overflow-hidden border border-black/5 bg-neutral-50 shadow-3xs cursor-pointer relative group flex-shrink-0"
             >
               <OptimizedImage
                 src={imgUrl}
@@ -234,47 +233,23 @@ export function ProductAllReviews() {
   }
 
   return (
-    <div className="bg-[#FAF9F6] min-h-screen pt-24 lg:pt-28 pb-20 relative overflow-hidden">
+    <div className="bg-[#FAF9F6] min-h-screen pt-16 sm:pt-20 lg:pt-22 pb-14 relative overflow-hidden">
       <SEO
         title={`Reviews - ${product?.title || 'Artisanal Masterpiece'}`}
         description={`Read verified customer feedback and ratings for ${product?.title}`}
       />
 
-      {/* Background aesthetics */}
-      <MandalaArtDecor
-        variant={1}
-        size={400}
-        opacity={0.03}
-        className="-top-32 -left-32 pointer-events-none"
-      />
-      <MandalaArtDecor
-        variant={2}
-        size={500}
-        opacity={0.03}
-        className="bottom-20 -right-20 pointer-events-none"
-      />
-
-      <div className="max-w-[1280px] mx-auto px-margin-mobile lg:px-margin-desktop space-y-6 relative z-10">
+      <div className="max-w-[1280px] mx-auto px-margin-mobile lg:px-margin-desktop space-y-4 sm:space-y-5 relative z-10">
         {/* Navigation Breadcrumb Header */}
-        <div className="flex flex-col gap-2">
-          <Link
-            to={`/product/${id}`}
-            className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.2em] font-bold text-[#685c57] hover:text-[#8C7000] transition-colors self-start group"
-          >
-            <ArrowLeft
-              className="text-[12px] group-hover:-translate-x-1 transition-transform"
-              strokeWidth={1.5}
-            />
-            Back to Masterpiece
-          </Link>
-          <h1 className="font-display text-2xl lg:text-3xl text-[#2D2B29] font-light tracking-tight mt-0.5">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="font-display text-xl sm:text-2xl lg:text-3xl text-[#2D2B29] font-light tracking-tight">
             Customer Testimonials
           </h1>
           <div className="w-10 h-[1px] bg-[#D4AF37]/40" />
         </div>
 
         {/* Unified Top Dashboard */}
-        <div className="bg-white rounded-[24px] border border-[#EBE6DD] p-5 lg:p-6 shadow-sm flex flex-col lg:flex-row gap-6 lg:gap-8 items-stretch">
+        <div className="bg-white rounded-[24px] border border-black/5 p-4 sm:p-5 lg:p-6 shadow-sm flex flex-col lg:flex-row gap-5 lg:gap-8 items-stretch">
           {/* Column 1: Masterpiece Reference */}
           {product && (
             <div className="flex-1 flex flex-row gap-4 items-center border-b lg:border-b-0 lg:border-r border-[#F3EFE7] pb-6 lg:pb-0 lg:pr-6 shrink-0 lg:max-w-[320px] w-full">
@@ -371,7 +346,7 @@ export function ProductAllReviews() {
             {/* Custom Search Box */}
             <div className="relative">
               <Search
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-[#685c57]/50 pointer-events-none"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[16px] text-black/40 pointer-events-none"
                 strokeWidth={1.5}
               />
               <input
@@ -379,7 +354,7 @@ export function ProductAllReviews() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search text in reviews..."
-                className="w-full lg:w-72 pl-10 pr-4 py-3 rounded-full border border-[#E2DACB] bg-white text-xs font-body text-black placeholder:text-[#685c57]/35 outline-none focus:border-[#8C7000] transition-all shadow-3xs"
+                className="w-full lg:w-72 pl-10 pr-4 py-2.5 rounded-full border border-black/10 bg-white text-xs font-body text-black placeholder:text-black/40 outline-none focus:border-black/30 transition-all shadow-xs"
               />
             </div>
           </div>

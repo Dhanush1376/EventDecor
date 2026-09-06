@@ -67,16 +67,16 @@ export function ProductSelectionBottomSheet({ isOpen, onClose, onSelect, selecte
 
             <div className="px-6 pb-4 border-b border-outline-variant/20 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-display font-medium text-on-surface">
+                <h2 className="text-[20px] sm:text-[22px] font-bold text-on-surface leading-tight mb-1 font-serif-heading">
                   Choose Replacement
                 </h2>
-                <p className="text-xs text-secondary mt-1">Select a product from our catalog</p>
+                <p className="text-secondary text-[12px]">Select a product from our catalog</p>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-secondary hover:text-on-surface transition-colors border-0"
+                className="w-8 h-8 rounded-full bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-secondary hover:text-on-surface transition-colors border-0 cursor-pointer"
               >
-                <X className="text-[18px]" strokeWidth={1.5} />
+                <X className="w-4 h-4" strokeWidth={1.5} />
               </button>
             </div>
 

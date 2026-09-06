@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { m as motion } from 'framer-motion';
 import { formatCurrency } from '../components/AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
@@ -41,7 +42,26 @@ export function AdminOrderDrawer({
     selectedOrderData?.rawOrder?.courierCharges || selectedOrder.courierCharges || 150,
   );
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const [isMobile, setIsMobile] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   const slideDrawer = {
     hidden: isMobile ? { y: '100%', opacity: 0 } : { x: '100%', opacity: 0 },
@@ -96,25 +116,38 @@ export function AdminOrderDrawer({
       setIsDrawerOpen(false);
     }
   };
-  return (
-    <>
+  if (typeof document === 'undefined') return null;
+
+  const isDark =
+    typeof document !== 'undefined' &&
+    (document.documentElement.classList.contains('dark') ||
+      document.body.classList.contains('dark'));
+
+  return createPortal(
+    <div className={`admin-section-root ${isDark ? 'dark' : ''}`}>
       <motion.div
+        key="admin-order-drawer-backdrop"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={() => setIsDrawerOpen(false)}
         className="fixed inset-0 z-[999] cursor-pointer"
-        style={{ background: 'var(--admin-surface-overlay)', backdropFilter: 'blur(4px)' }}
+        style={{
+          background: 'var(--admin-surface-overlay, rgba(60, 54, 42, 0.45))',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+        }}
       />
 
       <motion.aside
+        key="admin-order-drawer-aside"
         initial="hidden"
         animate="show"
         exit="exit"
         variants={slideDrawer}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed sm:right-0 sm:top-0 bottom-0 inset-x-0 sm:inset-x-auto h-[90vh] sm:h-screen w-full sm:w-[500px] z-[1000] shadow-[var(--admin-shadow-2xl)] flex flex-col overflow-hidden border-t sm:border-t-0 sm:border-l border-[var(--admin-border)] rounded-t-2xl sm:rounded-none"
-        style={{ background: 'var(--admin-surface)' }}
+        className="fixed z-[1000] flex flex-col overflow-hidden shadow-[var(--admin-shadow-2xl)] border-[var(--admin-border)] sm:inset-y-0 sm:top-0 sm:bottom-0 sm:right-0 sm:left-auto sm:w-[520px] sm:h-full sm:max-h-none sm:rounded-none sm:border-l sm:border-t-0 bottom-0 inset-x-0 max-h-[90vh] h-auto rounded-t-2xl border-t bg-[var(--admin-surface)] text-[var(--admin-text-primary)]"
+        style={{ background: 'var(--admin-surface, #ffffff)' }}
       >
         {/* Drawer Header */}
         <div className="px-6 py-5 border-b border-[var(--admin-border-subtle)] flex items-center justify-between shrink-0 text-left bg-[var(--admin-bg-subtle)]">
@@ -550,6 +583,7 @@ export function AdminOrderDrawer({
         confirmText="Move to Recycle Bin"
         isRecycleBinAction={true}
       />
-    </>
+    </div>,
+    document.body,
   );
 }

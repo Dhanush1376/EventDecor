@@ -50,19 +50,18 @@ const RETURN_STATUS_GROUPS = [
   },
 ];
 
-// Reusing same color styling logic as returns for consistency
 const getStatusBadge = (status) => {
   switch (status) {
     case 'pending_stock':
-      return 'bg-amber-100 text-amber-700 border-amber-200';
+      return 'bg-[var(--admin-warning-light)] text-[var(--admin-warning)] border-[var(--admin-warning-border)]';
     case 'reserved':
-      return 'bg-blue-100 text-blue-700 border-blue-200';
+      return 'bg-[var(--admin-accent-light)] text-[var(--admin-accent)] border-[var(--admin-border-strong)]';
     case 'shipped':
-      return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+      return 'bg-[var(--admin-info-light)] text-[var(--admin-info)] border-[var(--admin-info-border)]';
     case 'delivered':
-      return 'bg-green-100 text-green-700 border-green-200';
+      return 'bg-[var(--admin-success-light)] text-[var(--admin-success)] border-[var(--admin-success-border)]';
     default:
-      return 'bg-gray-100 text-gray-700 border-gray-200';
+      return 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border-[var(--admin-border)]';
   }
 };
 export default function AdminExchangeHub({ hideHeader = false }) {
@@ -268,7 +267,7 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                       onClick={() => {
                         const requestId = ex.returnRequestId?._id || ex.returnRequestId;
                         if (requestId) {
-                          navigate(`/admin/returns/requests/${requestId}`);
+                          navigate(`/admin/exchanges/requests/${requestId}`);
                         }
                       }}
                     >
@@ -276,7 +275,7 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                         <input type="checkbox" className="admin-checkbox" />
                       </td>
                       <td className="font-semibold text-[var(--admin-text-primary)]">
-                        <div className="flex items-center gap-2 text-blue-600">
+                        <div className="flex items-center gap-2 text-[var(--admin-accent)]">
                           <span className="material-symbols-outlined text-[14px]">swap_horiz</span>
                           {ex.exchangeId || ex._id.substring(0, 8)}
                         </div>
@@ -372,6 +371,24 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                           <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--admin-text-tertiary)] bg-[var(--admin-surface-muted)] px-1.5 py-0.5 rounded w-max">
                             {ex.paymentStatus?.replace(/_/g, ' ') || 'Pending'}
                           </span>
+                          {(ex.upiId || ex.returnRequestId?.upiId) && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const upi = ex.upiId || ex.returnRequestId?.upiId;
+                                navigator.clipboard.writeText(upi);
+                                toast.success(`Copied UPI ID: ${upi}`);
+                              }}
+                              className="mt-0.5 inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold bg-amber-50 text-amber-900 border border-amber-200 rounded hover:bg-amber-100 transition-colors cursor-pointer w-max"
+                              title="Click to copy UPI ID to issue refund"
+                            >
+                              <span className="material-symbols-outlined text-[10px]">
+                                account_balance_wallet
+                              </span>
+                              Pay UPI: {ex.upiId || ex.returnRequestId?.upiId}
+                            </button>
+                          )}
                         </div>
                       </td>
                       <td>
@@ -396,7 +413,7 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                                     }
                                   });
                                 }}
-                                className="bg-blue-600 text-white font-bold px-2.5 py-1 text-[10px] uppercase tracking-wider rounded border border-blue-700 hover:bg-blue-700 transition-colors shadow-sm"
+                                className="admin-btn admin-btn-primary !py-1 !px-2.5 text-[10px] uppercase tracking-wider font-bold shadow-2xs"
                               >
                                 Approve
                               </button>
@@ -476,7 +493,7 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                           <button
                             onClick={() => {
                               const requestId = ex.returnRequestId?._id || ex.returnRequestId;
-                              if (requestId) navigate(`/admin/returns/requests/${requestId}`);
+                              if (requestId) navigate(`/admin/exchanges/requests/${requestId}`);
                             }}
                             className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] tooltip-trigger"
                             title="View Request Details"
@@ -500,7 +517,7 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                           {ex.replacementStatus === 'reserved' && (
                             <button
                               onClick={() => handleTransition(ex._id, 'shipped')}
-                              className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 tooltip-trigger border border-blue-200"
+                              className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] hover:bg-[var(--admin-accent-light)] tooltip-trigger border border-[var(--admin-border-strong)]"
                               title="Mark as Shipped"
                             >
                               <span className="material-symbols-outlined text-[16px]">
@@ -540,3 +557,5 @@ export default function AdminExchangeHub({ hideHeader = false }) {
     </motion.div>
   );
 }
+
+export { AdminExchangeHub };

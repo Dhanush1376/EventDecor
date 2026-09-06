@@ -6,6 +6,7 @@ import {
   getUserInterests,
   getSeasonalDemand,
   getConversionImpact,
+  getLiveUserLogs,
 } from '../../controllers/discovery/recommendationAnalyticsController';
 import { requireAuth, requireAdmin } from '../../middleware/authMiddleware';
 import { requestTimeout } from '../../middleware/queryTimeout';
@@ -21,5 +22,6 @@ router.get('/trending-history', getTrendingHistory);
 router.get('/user-interests', getUserInterests);
 router.get('/seasonal-demand', getSeasonalDemand);
 router.get('/conversion-impact', getConversionImpact);
+router.get('/live-user-logs', getLiveUserLogs);
 
 export default router;

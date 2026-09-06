@@ -2,6 +2,7 @@
   :root {
     --visual-viewport-height: 100dvh;
     --keyboard-offset: 0px;
+    --safe-area-bottom: max(0px, env(safe-area-inset-bottom) - var(--keyboard-offset));
   }
 
   html {
@@ -72,14 +73,19 @@
     @apply font-medium;
   }
 
-  .modern-sans-headings h1,
-  .modern-sans-headings h2,
-  .modern-sans-headings h3,
-  .modern-sans-headings h4,
-  .modern-sans-headings h5,
-  .modern-sans-headings h6,
-  .modern-sans-headings [class*='font-display'] {
+  .modern-sans-headings h1:not(.font-serif-heading):not(.font-display-force),
+  .modern-sans-headings h2:not(.font-serif-heading):not(.font-display-force),
+  .modern-sans-headings h3:not(.font-serif-heading):not(.font-display-force),
+  .modern-sans-headings h4:not(.font-serif-heading):not(.font-display-force),
+  .modern-sans-headings h5:not(.font-serif-heading):not(.font-display-force),
+  .modern-sans-headings h6:not(.font-serif-heading):not(.font-display-force),
+  .modern-sans-headings [class*='font-display']:not(.font-serif-heading):not(.font-display-force) {
     font-family: var(--font-body) !important;
+  }
+
+  .font-serif-heading,
+  .font-display-force {
+    font-family: 'Playfair Display', Georgia, serif !important;
   }
 
   /* Global Minimal Micro-Interaction for all Buttons */

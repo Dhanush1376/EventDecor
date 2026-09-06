@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
+import { useConfirm } from '../../context/ConfirmProvider';
 import { customerIntelligenceService } from '../../services/domainServices';
 import {
   PageHeader,
@@ -43,9 +44,11 @@ const StatCard = ({ title, value, icon, color }) => (
 export function AdminCustomers() {
   const navigate = useNavigate();
   const { searchQuery, setSearchQuery } = useAdmin();
+  const confirm = useConfirm();
 
   const [tierFilter, setTierFilter] = useState('All');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
 
   const [customers, setCustomers] = useState([]);
@@ -61,7 +64,7 @@ export function AdminCustomers() {
     try {
       const res = await customerIntelligenceService.getCustomers({
         page,
-        limit: 12,
+        limit: pageSize,
         search: searchQuery,
         tier: tierFilter === 'All' ? undefined : tierFilter,
       });
@@ -72,7 +75,7 @@ export function AdminCustomers() {
     } finally {
       setDataLoading(false);
     }
-  }, [page, searchQuery, tierFilter]);
+  }, [page, pageSize, searchQuery, tierFilter]);
 
   const fetchKpis = useCallback(async () => {
     setKpiLoading(true);
@@ -156,6 +159,36 @@ export function AdminCustomers() {
       toast.error('Export failed');
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleDeleteCustomer = async (customerToDelete) => {
+    if (!customerToDelete?._id) return;
+
+    const confirmed = await confirm({
+      title: 'Move Customer to Recycle Bin?',
+      message: `Are you sure you want to move "${customerToDelete.name || 'this customer'}" to the recycle bin? Customer access will be revoked, and their record will be safely held in the Recycle Bin for 30 days where it can be restored or permanently removed.`,
+      confirmText: 'Move to Recycle Bin',
+      cancelText: 'Cancel',
+      type: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      await customerIntelligenceService.deleteCustomer(
+        customerToDelete._id,
+        'Moved to recycle bin from Customers dashboard',
+      );
+      toast.success(`"${customerToDelete.name || 'Customer'}" moved to Recycle Bin`);
+      if (selectedCustomerId === customerToDelete._id) {
+        setSelectedCustomerId(null);
+      }
+      fetchCustomers();
+      fetchKpis();
+    } catch (err) {
+      console.error('Failed to soft delete customer:', err);
+      toast.error(err?.response?.data?.message || 'Failed to move customer to recycle bin');
     }
   };
 
@@ -382,32 +415,46 @@ export function AdminCustomers() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-4 border-t border-[var(--admin-border-subtle)]">
-                  <a
-                    href={`mailto:${c.email}`}
-                    className="admin-btn admin-btn-outline min-h-[36px] h-8 text-[10px] px-2 hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] justify-center gap-1.5 w-full transition-all"
-                  >
-                    <span className="material-symbols-outlined text-[14px] shrink-0">mail</span>
-                    <span className="hidden sm:inline truncate">Email</span>
-                  </a>
-                  <a
-                    href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${c.phone?.replace(/[^0-9]/g, '') || ''}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="admin-btn admin-btn-outline min-h-[36px] h-8 text-[10px] px-2 border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)] justify-center gap-1.5 w-full transition-all"
-                  >
-                    <WhatsAppIcon className="w-[14px] h-[14px] shrink-0" />
-                    <span className="hidden sm:inline truncate">WhatsApp</span>
-                  </a>
+                <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-2">
                   <button
                     onClick={() => setSelectedCustomerId(c._id)}
-                    className="admin-btn min-h-[36px] h-8 text-[10px] px-2 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)] justify-center gap-1.5 w-full transition-all"
+                    className="admin-btn w-full min-h-[36px] h-9 text-[12px] font-semibold bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)] justify-center gap-2 transition-all cursor-pointer rounded-lg"
                   >
-                    <span className="material-symbols-outlined text-[14px] shrink-0">
+                    <span className="material-symbols-outlined text-[16px] shrink-0">
                       visibility
                     </span>
-                    <span className="hidden sm:inline truncate">Quick View</span>
+                    <span>Quick View</span>
                   </button>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <a
+                      href={`mailto:${c.email}`}
+                      style={{ paddingLeft: '6px', paddingRight: '6px' }}
+                      className="admin-btn admin-btn-outline min-h-[32px] h-8 text-[11px] font-medium hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] justify-center gap-1.5 w-full transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[14px] shrink-0">mail</span>
+                      <span className="truncate">Email</span>
+                    </a>
+                    <a
+                      href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${c.phone?.replace(/[^0-9]/g, '') || ''}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ paddingLeft: '6px', paddingRight: '6px' }}
+                      className="admin-btn admin-btn-outline min-h-[32px] h-8 text-[11px] font-medium border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)] justify-center gap-1.5 w-full transition-all cursor-pointer"
+                    >
+                      <WhatsAppIcon className="w-[13px] h-[13px] shrink-0" />
+                      <span className="truncate">WhatsApp</span>
+                    </a>
+                    <button
+                      onClick={() => handleDeleteCustomer(c)}
+                      style={{ paddingLeft: '6px', paddingRight: '6px' }}
+                      className="admin-btn admin-btn-outline min-h-[32px] h-8 text-[11px] font-medium border-red-200 dark:border-red-900/50 text-red-600 hover:text-white hover:bg-red-600 hover:border-red-600 justify-center gap-1.5 w-full transition-all cursor-pointer"
+                      title="Move Customer to Recycle Bin"
+                    >
+                      <span className="material-symbols-outlined text-[14px] shrink-0">delete</span>
+                      <span className="truncate">Delete</span>
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -416,25 +463,59 @@ export function AdminCustomers() {
       </AnimatePresence>
 
       {/* Pagination Controls */}
-      {!dataLoading && meta.pages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-8">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="admin-btn admin-btn-outline px-3"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-[var(--admin-text-secondary)]">
-            Page {page} of {meta.pages}
-          </span>
-          <button
-            onClick={() => setPage((p) => Math.min(meta.pages, p + 1))}
-            disabled={page === meta.pages}
-            className="admin-btn admin-btn-outline px-3"
-          >
-            Next
-          </button>
+      {!dataLoading && (meta.pages > 1 || customers.length > 0) && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-4 border-t border-[var(--admin-border-subtle)]">
+          <div className="text-xs text-[var(--admin-text-secondary)]">
+            Showing{' '}
+            <span className="font-semibold text-[var(--admin-text-primary)]">
+              {customers.length}
+            </span>{' '}
+            of{' '}
+            <span className="font-semibold text-[var(--admin-text-primary)]">
+              {meta.total || customers.length}
+            </span>{' '}
+            customers
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs text-[var(--admin-text-secondary)]">
+              <span>Per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] rounded px-2 py-1 text-xs font-semibold text-[var(--admin-text-primary)] outline-none cursor-pointer"
+              >
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            {meta.pages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="admin-btn admin-btn-outline px-3 h-8 text-xs disabled:opacity-50 cursor-pointer"
+                >
+                  Previous
+                </button>
+                <span className="text-xs font-medium text-[var(--admin-text-secondary)] px-1">
+                  Page {page} of {meta.pages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(meta.pages, p + 1))}
+                  disabled={page === meta.pages}
+                  className="admin-btn admin-btn-outline px-3 h-8 text-xs disabled:opacity-50 cursor-pointer"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
       {/* Slide-over Profile */}
@@ -443,6 +524,7 @@ export function AdminCustomers() {
           <AdminCustomerProfileModal
             customer={customers.find((c) => c._id === selectedCustomerId)}
             onClose={() => setSelectedCustomerId(null)}
+            onDelete={handleDeleteCustomer}
           />
         )}
       </AnimatePresence>

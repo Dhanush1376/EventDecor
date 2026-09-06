@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import logger from './logger';
 
 export const seedDefaultEmailTemplates = async (): Promise<void> => {
@@ -158,6 +159,39 @@ export const ensureIndexes = async (): Promise<void> => {
   }
 
   logger.info('[DATABASE] MongoDB compound indexes verified');
+
+  // ── DATA PRESERVATION: Permanently preserve UserInteraction and AnalyticsEvent data ──
+  const collectionsToPreserve = ['userinteractions', 'analyticsevents'];
+  for (const collName of collectionsToPreserve) {
+    try {
+      const coll = mongoose.connection.collection(collName);
+      const existingIndexes = await coll.listIndexes().toArray();
+      const ttlIndex = existingIndexes.find(
+        (idx) =>
+          idx.name === 'expiresAt_1' ||
+          (idx.expireAfterSeconds !== undefined && idx.key && (idx.key as any).expiresAt),
+      );
+      if (ttlIndex) {
+        logger.info(
+          `[DATABASE] [DATA PRESERVATION] Dropping TTL index "${ttlIndex.name}" on ${collName} to prevent data loss...`,
+        );
+        await coll.dropIndex(ttlIndex.name);
+      }
+      // Unset any expiresAt field on existing documents so they are permanently preserved
+      const unsetResult = await coll.updateMany(
+        { expiresAt: { $exists: true } },
+        { $unset: { expiresAt: 1 } },
+        { bypassDestructionGuard: true } as any,
+      );
+      if (unsetResult.modifiedCount > 0) {
+        logger.info(
+          `[DATABASE] [DATA PRESERVATION] Cleared expiresAt timestamp on ${unsetResult.modifiedCount} records in ${collName} for permanent retention.`,
+        );
+      }
+    } catch (err: any) {
+      logger.warn(`[DATABASE] [DATA PRESERVATION] Check on ${collName}: ${err.message}`);
+    }
+  }
 
   // Seed default email templates once the indexes are built
   await seedDefaultEmailTemplates();

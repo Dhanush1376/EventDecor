@@ -5,6 +5,41 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { useAuth } from '../../context/AuthContext';
 
+const ROUTE_LABELS = {
+  exchanges: 'Exchange Hub',
+  returns: 'Returns & Refunds',
+  orders: 'All Orders',
+  rentals: 'Rentals',
+  'custom-orders': 'Custom Orders',
+  homepage: 'Edit Website',
+  policies: 'Policies',
+  gallery: 'Photo Gallery',
+  payments: 'Payments',
+  products: 'Products',
+  categories: 'Categories',
+  inventory: 'Inventory',
+  customers: 'Customers',
+  analytics: 'Analytics',
+  system: 'System Settings',
+  'recycle-bin': 'Recycle Bin',
+};
+
+const getBreadcrumbLabel = (segment, index, arr) => {
+  if (ROUTE_LABELS[segment]) {
+    return ROUTE_LABELS[segment];
+  }
+  // MongoDB 24-character hexadecimal ObjectId
+  if (/^[0-9a-fA-F]{24}$/.test(segment)) {
+    const parent = arr[0];
+    if (parent === 'exchanges') return 'Exchange Details';
+    if (parent === 'returns') return 'Return Details';
+    if (parent === 'orders') return 'Order Details';
+    if (parent === 'rentals') return 'Rental Details';
+    return `#${segment.slice(-6)}`;
+  }
+  return segment.replace(/-/g, ' ');
+};
+
 export function AdminTopBar() {
   const {
     sidebarOpen,
@@ -111,24 +146,27 @@ export function AdminTopBar() {
                 .filter(Boolean)
                 .slice(1)
                 .filter((segment) => segment !== 'requests')
-                .map((segment, index, arr) => (
-                  <React.Fragment key={index}>
-                    <span className="material-symbols-outlined text-[14px] text-[var(--admin-border-strong)] shrink-0">
-                      chevron_right
-                    </span>
-                    <span
-                      className={`text-[12px] font-semibold capitalize truncate ${index === arr.length - 1 ? 'text-[var(--admin-text-primary)]' : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer transition-colors'}`}
-                      onClick={() => {
-                        if (index < arr.length - 1) {
-                          navigate('/admin/' + arr.slice(0, index + 1).join('/'));
-                        }
-                      }}
-                      title={segment.replace(/-/g, ' ')}
-                    >
-                      {segment.replace(/-/g, ' ')}
-                    </span>
-                  </React.Fragment>
-                ))}
+                .map((segment, index, arr) => {
+                  const label = getBreadcrumbLabel(segment, index, arr);
+                  return (
+                    <React.Fragment key={index}>
+                      <span className="material-symbols-outlined text-[14px] text-[var(--admin-border-strong)] shrink-0">
+                        chevron_right
+                      </span>
+                      <span
+                        className={`text-[12px] font-semibold truncate ${index === arr.length - 1 ? 'text-[var(--admin-text-primary)]' : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer transition-colors'}`}
+                        onClick={() => {
+                          if (index < arr.length - 1) {
+                            navigate('/admin/' + arr.slice(0, index + 1).join('/'));
+                          }
+                        }}
+                        title={label}
+                      >
+                        {label}
+                      </span>
+                    </React.Fragment>
+                  );
+                })}
           </div>
 
           {/* Search Trigger — Responsive */}
