@@ -33,6 +33,8 @@ export default function CheckoutAddressStep() {
     mapPosition,
     setMapPosition,
     fetchAddressFromCoords,
+    handleAutofillLocation,
+    isResolvingLocation,
     handleEdit,
     handleAddNew,
     deliveryEstimates,
@@ -61,6 +63,8 @@ export default function CheckoutAddressStep() {
           mapPosition={mapPosition}
           setMapPosition={setMapPosition}
           fetchAddressFromCoords={fetchAddressFromCoords}
+          handleAutofillLocation={handleAutofillLocation}
+          isResolvingLocation={isResolvingLocation}
         />
       </>
     );
@@ -91,6 +95,8 @@ export default function CheckoutAddressStep() {
         mapPosition={mapPosition}
         setMapPosition={setMapPosition}
         fetchAddressFromCoords={fetchAddressFromCoords}
+        handleAutofillLocation={handleAutofillLocation}
+        isResolvingLocation={isResolvingLocation}
       />
     </>
   );

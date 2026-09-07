@@ -27,7 +27,6 @@ export default function AdminExchangeDetailView({
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [previewImage, setPreviewImage] = useState(null);
-  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
 
   // Record Refund Settlement / Payout Modal state
   const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
@@ -131,10 +130,22 @@ export default function AdminExchangeDetailView({
           amount: Number(settleData.amount),
           paymentMethod: settleData.paymentMethod,
           upiId: settleData.upiId?.trim(),
-          transactionId: settleData.transactionId?.trim(),
+          transactionId: settleData.transactionId?.trim() || `UPI-MANUAL-${Date.now()}`,
           notes: settleData.notes?.trim(),
         });
       }
+
+      if (settleData.autoCompleteAfterSettle) {
+        if (exchangeDetails?._id) {
+          await onTransitionReplacement(exchangeDetails._id, request._id, 'delivered');
+        } else {
+          await onTransitionStatus('completed');
+        }
+        toast.success(
+          `Refund of ₹${settleData.amount} recorded and exchange completed successfully!`,
+        );
+      }
+
       setIsSettleModalOpen(false);
     } catch (err) {
       console.error(err);
@@ -143,7 +154,7 @@ export default function AdminExchangeDetailView({
     }
   };
 
-  // Clean matching stages for Exchange lifecycle (Aligned with Admin Portal Design Tokens)
+  // Clean matching stages for Exchange lifecycle (Aligned with Storefront Journey Tracker - 6 Steps)
   const EXCHANGE_STAGES = [
     {
       key: 'submitted',
@@ -168,26 +179,26 @@ export default function AdminExchangeDetailView({
       dot: 'bg-[var(--admin-warning)]',
     },
     {
-      key: 'return_picked_up',
+      key: 'item_picked_up',
       number: 3,
       title: 'Item Picked Up',
-      desc: 'Returning item collected by courier',
+      desc: 'Reverse pickup collected from customer',
       icon: 'local_shipping',
-      color: 'text-[var(--admin-accent)]',
-      bg: 'bg-[var(--admin-accent-light)]',
-      border: 'border-[var(--admin-border-strong)]',
-      dot: 'bg-[var(--admin-accent)]',
+      color: 'text-indigo-600',
+      bg: 'bg-indigo-50',
+      border: 'border-indigo-200',
+      dot: 'bg-indigo-600',
     },
     {
-      key: 'inspection_completed',
+      key: 'quality_check_passed',
       number: 4,
       title: 'Quality Check Passed',
-      desc: 'Item received & verified at warehouse',
+      desc: 'Returned item verified at warehouse',
       icon: 'fact_check',
-      color: 'text-[var(--admin-accent)]',
-      bg: 'bg-[var(--admin-accent-light)]',
-      border: 'border-[var(--admin-border-strong)]',
-      dot: 'bg-[var(--admin-accent)]',
+      color: 'text-purple-600',
+      bg: 'bg-purple-50',
+      border: 'border-purple-200',
+      dot: 'bg-purple-600',
     },
     {
       key: 'replacement_dispatched',
@@ -221,28 +232,72 @@ export default function AdminExchangeDetailView({
       return 'replacement_dispatched';
     }
     if (
-      [
-        'inspection_completed',
-        'inspection_started',
-        'return_received',
-        'refund_initiated',
-        'refund_completed',
-      ].includes(request.status)
+      ['inspection_completed', 'refund_initiated', 'refund_completed'].includes(request.status) ||
+      ['reserved'].includes(replacementStatus)
     ) {
-      return 'inspection_completed';
+      return 'quality_check_passed';
     }
-    if (
-      ['return_picked_up', 'return_in_transit', 'return_courier_assigned'].includes(request.status)
-    ) {
-      return 'return_picked_up';
+    if (['return_received', 'inspection_started'].includes(request.status)) {
+      return 'quality_check_passed';
     }
-    if (['approved'].includes(request.status)) {
+    if (['return_picked_up', 'return_in_transit'].includes(request.status)) {
+      return 'item_picked_up';
+    }
+    if (['approved', 'return_courier_assigned'].includes(request.status)) {
       return 'approved';
     }
     if (request.status === 'rejected') {
       return 'rejected';
     }
     return 'submitted';
+  };
+
+  const getReplacementStatusInfo = (repStatus, retStatus, hasReservation = false) => {
+    if (['completed', 'refund_completed'].includes(retStatus) || repStatus === 'delivered') {
+      return {
+        label: 'Delivered',
+        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        icon: 'verified',
+      };
+    }
+    if (repStatus === 'shipped') {
+      return {
+        label: 'Dispatched',
+        badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+        icon: 'local_shipping',
+      };
+    }
+    if (['rejected', 'cancelled'].includes(retStatus) || repStatus === 'cancelled') {
+      return {
+        label: 'Cancelled',
+        badgeClass: 'bg-red-50 text-red-700 border-red-200',
+        icon: 'cancel',
+      };
+    }
+    if (
+      repStatus === 'reserved' ||
+      hasReservation ||
+      [
+        'approved',
+        'return_courier_assigned',
+        'return_picked_up',
+        'return_in_transit',
+        'return_received',
+        'inspection_started',
+        'inspection_completed',
+      ].includes(retStatus)
+    ) {
+      return {
+        label: 'Stock Reserved',
+        badgeClass: 'bg-purple-50 text-purple-700 border-purple-200',
+        icon: 'inventory_2',
+      };
+    }
+    return {
+      label: 'Under Review',
+      badgeClass: 'bg-stone-50 text-stone-700 border-stone-200',
+      icon: 'hourglass_empty',
+    };
   };
 
   const activeStepKey = getActiveExchangeStep();
@@ -262,62 +317,6 @@ export default function AdminExchangeDetailView({
           dot: 'bg-[var(--admin-error)]',
         }
       : EXCHANGE_STAGES[0]);
-
-  const handleSelectExchangeStage = async (stageKey) => {
-    setIsStatusDropdownOpen(false);
-
-    if (stageKey === activeStepKey) return;
-
-    if (stageKey === 'rejected') {
-      setIsRejectOpen(true);
-      return;
-    }
-
-    if (stageKey === 'approved') {
-      if (
-        await confirm({
-          title: 'Approve Exchange Request',
-          message: `Are you sure you want to approve Exchange #${exchangeDetails?.exchangeId || request.returnId}?`,
-          type: 'warning',
-        })
-      ) {
-        onApprove();
-      }
-      return;
-    }
-
-    if (stageKey === 'return_picked_up') {
-      onTransitionStatus('return_picked_up');
-      return;
-    }
-
-    if (stageKey === 'inspection_completed') {
-      onTransitionStatus('inspection_completed');
-      return;
-    }
-
-    if (stageKey === 'replacement_dispatched') {
-      if (exchangeDetails?._id) {
-        onTransitionReplacement(exchangeDetails._id, request._id, 'shipped');
-      } else {
-        toast.success('Replacement item marked as dispatched.');
-      }
-      return;
-    }
-
-    if (stageKey === 'completed') {
-      if (
-        await confirm({
-          title: 'Complete Exchange',
-          message: 'Are you sure you want to mark this exchange as completed?',
-          type: 'info',
-        })
-      ) {
-        onTransitionStatus('completed');
-      }
-      return;
-    }
-  };
 
   return (
     <motion.div
@@ -378,7 +377,7 @@ export default function AdminExchangeDetailView({
             </div>
             <div className="min-w-0 flex-1">
               <span className="text-sm sm:text-base font-bold text-[var(--admin-text-primary)] block truncate">
-                Step {currentStageObj.number} of 6: {currentStageObj.title}
+                {currentStageObj.title}
               </span>
               <p className="text-xs text-[var(--admin-text-secondary)] mt-0.5 truncate">
                 {currentStageObj.desc}
@@ -386,24 +385,145 @@ export default function AdminExchangeDetailView({
             </div>
           </div>
 
-          {/* Quick Stage Dropdown */}
-          <div className="relative shrink-0 w-full sm:w-auto min-w-0 sm:min-w-[240px]">
-            <select
-              id="exchange-status-dropdown"
-              value={activeStepKey}
-              onChange={(e) => handleSelectExchangeStage(e.target.value)}
-              className="w-full appearance-none bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] hover:border-[var(--admin-accent)] focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 rounded-xl px-3.5 py-2.5 pr-9 text-xs font-bold text-[var(--admin-text-primary)] shadow-2xs cursor-pointer transition-all outline-none"
-            >
-              {EXCHANGE_STAGES.map((st) => (
-                <option key={st.key} value={st.key}>
-                  Step {st.number}: {st.title}
-                </option>
-              ))}
-              <option value="rejected">✕ Reject Exchange</option>
-            </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--admin-text-tertiary)] text-[18px]">
-              unfold_more
-            </span>
+          {/* Quick Stage Controls */}
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+            {/* Contextual Action Button based on current step */}
+            {activeStepKey === 'submitted' && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={onApprove}
+                  className="px-4 py-2.5 rounded-xl bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer border-0"
+                >
+                  <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                  Approve Exchange
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsRejectOpen(true)}
+                  className="px-3.5 py-2.5 rounded-xl border border-red-200 text-red-700 hover:bg-red-50 text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer bg-white"
+                >
+                  <span className="material-symbols-outlined text-[16px]">cancel</span>
+                  Reject
+                </button>
+              </div>
+            )}
+
+            {activeStepKey === 'approved' && (
+              <button
+                type="button"
+                onClick={() => onTransitionStatus('return_picked_up')}
+                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer border-0"
+              >
+                <span className="material-symbols-outlined text-[16px]">local_shipping</span>
+                Confirm Item Picked Up
+              </button>
+            )}
+
+            {activeStepKey === 'item_picked_up' && (
+              <button
+                type="button"
+                onClick={() => onTransitionStatus('inspection_completed')}
+                className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer border-0"
+              >
+                <span className="material-symbols-outlined text-[16px]">fact_check</span>
+                Pass Quality Check
+              </button>
+            )}
+
+            {activeStepKey === 'quality_check_passed' && (
+              <div className="flex items-center gap-2">
+                {differenceAction === 'refund_difference' &&
+                  priceDifference > 0 &&
+                  !isRefundSettled && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSettleData({
+                          amount: priceDifference,
+                          paymentMethod: isCOD ? 'upi' : 'original',
+                          upiId: upiId || '',
+                          transactionId: '',
+                          notes: `Balance refund payout for Exchange #${exchangeDetails?.exchangeId || request.returnId}`,
+                        });
+                        setIsSettleModalOpen(true);
+                      }}
+                      className="px-3.5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer border-0"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">payments</span>
+                      Refund Difference (₹{formatINR(priceDifference)})
+                    </button>
+                  )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (exchangeDetails?._id) {
+                      onTransitionReplacement(exchangeDetails._id, request._id, 'shipped');
+                    } else {
+                      onTransitionStatus('inspection_completed');
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer border-0"
+                >
+                  <span className="material-symbols-outlined text-[16px]">inventory_2</span>
+                  Dispatch Replacement
+                </button>
+              </div>
+            )}
+
+            {activeStepKey === 'replacement_dispatched' && (
+              <div className="flex items-center gap-2">
+                {differenceAction === 'refund_difference' &&
+                  priceDifference > 0 &&
+                  !isRefundSettled && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSettleData({
+                          amount: priceDifference,
+                          paymentMethod: isCOD ? 'upi' : 'original',
+                          upiId: upiId || '',
+                          transactionId: '',
+                          notes: `Balance refund payout for Exchange #${exchangeDetails?.exchangeId || request.returnId}`,
+                        });
+                        setIsSettleModalOpen(true);
+                      }}
+                      className="px-3.5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer border-0"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">payments</span>
+                      Refund Difference (₹{formatINR(priceDifference)})
+                    </button>
+                  )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (exchangeDetails?._id) {
+                      onTransitionReplacement(exchangeDetails._id, request._id, 'delivered');
+                    } else {
+                      onTransitionStatus('completed');
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer border-0"
+                >
+                  <span className="material-symbols-outlined text-[16px]">verified</span>
+                  Mark Delivered & Complete
+                </button>
+              </div>
+            )}
+
+            {activeStepKey === 'completed' && (
+              <span className="px-3.5 py-2 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px]">verified</span>
+                Exchange Completed
+              </span>
+            )}
+
+            {request.status === 'rejected' && (
+              <span className="px-3.5 py-2 rounded-xl bg-red-100 text-red-800 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px]">cancel</span>
+                Exchange Rejected
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -483,9 +603,21 @@ export default function AdminExchangeDetailView({
                       Replacement Delivery
                     </h3>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--admin-accent-light)] text-[var(--admin-accent)] border border-[var(--admin-border-strong)]">
-                    {replacementStatus.replace(/_/g, ' ')}
-                  </span>
+                  {(() => {
+                    const info = getReplacementStatusInfo(
+                      replacementStatus,
+                      request.status,
+                      Boolean(exchangeDetails?.replacementItem?.reservationId),
+                    );
+                    return (
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border whitespace-nowrap ${info.badgeClass}`}
+                      >
+                        <span className="material-symbols-outlined text-[12px]">{info.icon}</span>
+                        {info.label}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <div className="p-4 sm:p-5 text-xs space-y-2">
                   <p className="text-sm font-bold text-[var(--admin-text-primary)]">
@@ -701,41 +833,41 @@ export default function AdminExchangeDetailView({
 
           {/* 3. AUTHORITATIVE FINANCIAL SETTLEMENT CARD */}
           <div className="admin-card overflow-hidden border border-[var(--admin-border)] shadow-xs bg-white rounded-2xl">
-            <div className="p-4 sm:p-5 border-b border-[var(--admin-border)] flex items-center justify-between bg-[var(--admin-bg-subtle)]/50">
+            <div className="p-4 sm:p-5 border-b border-[var(--admin-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[var(--admin-bg-subtle)]/50">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--admin-accent)] text-[20px]">
+                <span className="material-symbols-outlined text-[var(--admin-accent)] text-[20px] shrink-0">
                   account_balance_wallet
                 </span>
-                <h3 className="text-base font-bold text-[var(--admin-text-primary)]">
+                <h3 className="text-sm sm:text-base font-bold text-[var(--admin-text-primary)]">
                   Exchange Financial Settlement
                 </h3>
               </div>
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border border-[var(--admin-border)] font-mono">
+              <span className="self-start sm:self-auto text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-full bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border border-[var(--admin-border)] font-mono whitespace-nowrap">
                 Backend Action: {differenceAction.replace(/_/g, ' ')}
               </span>
             </div>
 
-            <div className="p-4 sm:p-6 space-y-5">
+            <div className="p-3.5 sm:p-6 space-y-4 sm:space-y-5">
               {/* Financial Math Comparison */}
-              <div className="grid grid-cols-3 gap-1.5 sm:gap-3 text-center p-2.5 sm:p-3.5 rounded-xl bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)]">
-                <div>
-                  <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+              <div className="grid grid-cols-3 gap-1 sm:gap-3 text-center p-2 sm:p-3.5 rounded-xl bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)]">
+                <div className="min-w-0">
+                  <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)] block leading-tight">
                     Original Credit
                   </span>
                   <p className="text-xs sm:text-base lg:text-lg font-bold text-[var(--admin-text-primary)] font-mono mt-0.5 truncate">
                     ₹{formatINR(originalTotal)}
                   </p>
                 </div>
-                <div className="border-x border-[var(--admin-border)] px-1">
-                  <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+                <div className="border-x border-[var(--admin-border)] px-1 min-w-0">
+                  <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)] block leading-tight">
                     Replacement Cost
                   </span>
                   <p className="text-xs sm:text-base lg:text-lg font-bold text-[var(--admin-accent)] font-mono mt-0.5 truncate">
                     ₹{formatINR(replacementTotal)}
                   </p>
                 </div>
-                <div>
-                  <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+                <div className="min-w-0">
+                  <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)] block leading-tight">
                     Net Difference
                   </span>
                   <p
@@ -759,13 +891,13 @@ export default function AdminExchangeDetailView({
 
               {/* Case A: Customer Needs to Pay Difference */}
               {differenceAction === 'collect_payment' && (
-                <div className="p-4 rounded-xl bg-[var(--admin-warning-light)] border border-[var(--admin-warning-border)] space-y-3">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-[var(--admin-warning-light)] border border-[var(--admin-warning-border)] space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[var(--admin-warning-light)] border border-[var(--admin-warning-border)] text-[var(--admin-warning)] flex items-center justify-center flex-shrink-0">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-[var(--admin-warning-light)] border border-[var(--admin-warning-border)] text-[var(--admin-warning)] flex items-center justify-center shrink-0">
                         <span className="material-symbols-outlined text-[22px]">payments</span>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <h4 className="text-sm font-bold text-[var(--admin-text-primary)]">
                           Customer Payment Required: ₹{formatINR(priceDifference)}
                         </h4>
@@ -774,16 +906,16 @@ export default function AdminExchangeDetailView({
                         </p>
                       </div>
                     </div>
-                    <div>
+                    <div className="self-start sm:self-auto shrink-0">
                       {paymentStatus === 'payment_paid' ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)]">
+                        <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-[var(--admin-success-light)] text-[var(--admin-success)] border border-[var(--admin-success-border)] whitespace-nowrap">
                           <span className="material-symbols-outlined text-[16px]">
                             check_circle
                           </span>
                           PAID via Razorpay
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-[var(--admin-warning-light)] text-[var(--admin-warning)] border border-[var(--admin-warning-border)]">
+                        <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-[var(--admin-warning-light)] text-[var(--admin-warning)] border border-[var(--admin-warning-border)] whitespace-nowrap">
                           <span className="material-symbols-outlined text-[16px]">
                             hourglass_empty
                           </span>
@@ -794,16 +926,16 @@ export default function AdminExchangeDetailView({
                   </div>
 
                   {exchangeDetails?.additionalPaymentId && (
-                    <div className="mt-3 pt-2.5 border-t border-[var(--admin-warning-border)] flex items-center justify-between text-xs text-[var(--admin-text-secondary)]">
+                    <div className="mt-3 pt-2.5 border-t border-[var(--admin-warning-border)] flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--admin-text-secondary)]">
                       <span>Razorpay Order ID:</span>
-                      <span className="font-mono font-bold text-[var(--admin-text-primary)] select-all">
+                      <span className="font-mono font-bold text-[var(--admin-text-primary)] select-all break-all">
                         {exchangeDetails.additionalPaymentId}
                       </span>
                     </div>
                   )}
 
                   {paymentStatus !== 'payment_paid' && (
-                    <div className="pt-2 border-t border-[var(--admin-warning-border)] flex items-center justify-between">
+                    <div className="pt-2 border-t border-[var(--admin-warning-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                       <span className="text-[11px] text-[var(--admin-text-secondary)]">
                         Customer will be prompted to complete payment before dispatch.
                       </span>
@@ -820,7 +952,7 @@ export default function AdminExchangeDetailView({
                           );
                           toast.success('Payment marked as received.');
                         }}
-                        className="admin-btn admin-btn-primary text-xs !py-1.5 !px-3"
+                        className="admin-btn admin-btn-primary text-xs !py-2 sm:!py-1.5 !px-3.5 w-full sm:w-auto text-center justify-center font-bold"
                       >
                         Mark Payment Received
                       </button>
@@ -831,31 +963,32 @@ export default function AdminExchangeDetailView({
 
               {/* Case B: Store Needs to Refund Difference to Customer */}
               {differenceAction === 'refund_difference' && (
-                <div className="p-4 rounded-xl bg-[var(--admin-success-light)] border border-[var(--admin-success-border)] space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[var(--admin-success)] text-[22px]">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-[var(--admin-success-light)] border border-[var(--admin-success-border)] space-y-3.5 sm:space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+                      <span className="material-symbols-outlined text-[var(--admin-success)] text-[22px] shrink-0 mt-0.5 sm:mt-0">
                         savings
                       </span>
-                      <div>
-                        <span className="font-bold text-sm text-[var(--admin-text-primary)]">
+                      <div className="min-w-0">
+                        <span className="font-bold text-sm text-[var(--admin-text-primary)] block">
                           Customer Due Balance Refund
                         </span>
-                        <p className="text-[11px] text-[var(--admin-text-secondary)]">
+                        <p className="text-[11px] text-[var(--admin-text-secondary)] leading-normal mt-0.5">
                           Replacement item costs less than the returned product credit value.
                         </p>
                       </div>
                     </div>
-                    <span className="text-base font-mono font-black text-[var(--admin-success)] bg-white px-3 py-1 rounded-xl border border-[var(--admin-success-border)] shadow-2xs">
+                    <span className="self-start sm:self-auto text-sm sm:text-base font-mono font-black text-[var(--admin-success)] bg-white px-3 py-1 rounded-xl border border-[var(--admin-success-border)] shadow-2xs whitespace-nowrap">
                       ₹{formatINR(priceDifference)} Refund
                     </span>
                   </div>
 
                   {/* Payment Details Container */}
-                  <div className="p-3.5 bg-white rounded-xl border border-[var(--admin-success-border)] flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+                  <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[var(--admin-success-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 text-xs">
+                    <div className="space-y-2 flex-1 min-w-0">
+                      {/* Refund Method Row */}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)] shrink-0">
                           Refund Method:
                         </span>
                         <span className="font-bold text-[var(--admin-text-primary)] uppercase">
@@ -866,24 +999,27 @@ export default function AdminExchangeDetailView({
                               : 'Original Payment Method / UPI'}
                         </span>
                         {isCOD && (
-                          <span className="px-2 py-0.5 bg-[var(--admin-warning-light)] text-[var(--admin-warning)] border border-[var(--admin-warning-border)] text-[10px] font-bold rounded">
+                          <span className="px-2 py-0.5 bg-[var(--admin-warning-light)] text-[var(--admin-warning)] border border-[var(--admin-warning-border)] text-[10px] font-bold rounded whitespace-nowrap">
                             COD Order
                           </span>
                         )}
                       </div>
+
+                      {/* Customer UPI ID Row */}
                       {upiId && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)] shrink-0">
                             Customer UPI ID:
                           </span>
-                          <span className="font-mono font-black text-sm text-[var(--admin-text-primary)] select-all">
+                          <span className="font-mono font-black text-sm text-[var(--admin-text-primary)] select-all break-all">
                             {upiId}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 flex-wrap">
+                    {/* Action Buttons Row */}
+                    <div className="flex items-stretch sm:items-center gap-2 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-stone-100 shrink-0 w-full sm:w-auto">
                       {upiId && (
                         <button
                           type="button"
@@ -891,12 +1027,12 @@ export default function AdminExchangeDetailView({
                             navigator.clipboard.writeText(upiId);
                             toast.success('UPI ID copied to clipboard!');
                           }}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] text-xs font-bold rounded-lg border border-[var(--admin-border)] transition-colors cursor-pointer"
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] text-xs font-bold rounded-lg border border-[var(--admin-border)] transition-colors cursor-pointer whitespace-nowrap"
                         >
                           <span className="material-symbols-outlined text-[16px]">
                             content_copy
                           </span>
-                          Copy UPI ID
+                          <span>Copy UPI ID</span>
                         </button>
                       )}
 
@@ -918,10 +1054,10 @@ export default function AdminExchangeDetailView({
                             });
                             setIsSettleModalOpen(true);
                           }}
-                          className="admin-btn admin-btn-primary flex items-center gap-1.5 text-xs font-bold rounded-lg shadow-xs transition-all cursor-pointer"
+                          className="flex-1 sm:flex-initial admin-btn admin-btn-primary flex items-center justify-center gap-1.5 text-xs font-bold !py-2 sm:!py-1.5 !px-3.5 rounded-lg shadow-xs transition-all cursor-pointer whitespace-nowrap"
                         >
                           <span className="material-symbols-outlined text-[16px]">verified</span>
-                          Mark Payment Done
+                          <span>Mark Payment Done</span>
                         </button>
                       ) : (
                         <button
@@ -936,10 +1072,10 @@ export default function AdminExchangeDetailView({
                             });
                             setIsSettleModalOpen(true);
                           }}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] text-xs font-bold rounded-lg border border-[var(--admin-border)] transition-colors cursor-pointer"
+                          className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 bg-white hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] text-xs font-bold rounded-lg border border-[var(--admin-border)] transition-colors cursor-pointer whitespace-nowrap"
                         >
                           <span className="material-symbols-outlined text-[15px]">edit_note</span>
-                          Update Payout Record
+                          <span>Update Payout Record</span>
                         </button>
                       )}
                     </div>
@@ -947,9 +1083,9 @@ export default function AdminExchangeDetailView({
 
                   {/* Settled Details Summary Strip if already paid */}
                   {isRefundSettled && (
-                    <div className="p-3 bg-white rounded-xl border border-[var(--admin-success-border)] flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div className="p-3 sm:p-3.5 bg-white rounded-xl border border-[var(--admin-success-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="material-symbols-outlined text-[var(--admin-success)] text-[18px]">
+                        <span className="material-symbols-outlined text-[var(--admin-success)] text-[18px] shrink-0">
                           check_circle
                         </span>
                         <span className="text-[var(--admin-text-primary)] font-bold">
@@ -959,8 +1095,8 @@ export default function AdminExchangeDetailView({
                           </span>
                         </span>
                         {settledUtr && (
-                          <span className="font-mono text-[11px] bg-[var(--admin-bg-subtle)] px-2 py-0.5 rounded border border-[var(--admin-border)] text-[var(--admin-text-primary)] font-bold">
-                            UTR / Ref: {settledUtr}
+                          <span className="font-mono text-[11px] bg-[var(--admin-bg-subtle)] px-2 py-0.5 rounded border border-[var(--admin-border)] text-[var(--admin-text-primary)] font-bold break-all">
+                            UTR: {settledUtr}
                           </span>
                         )}
                       </div>
@@ -1158,8 +1294,8 @@ export default function AdminExchangeDetailView({
 
       {/* ─── Record Refund Payment / Payout Modal ─── */}
       {isSettleModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-[var(--admin-border)]">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-[100] p-3 sm:p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto shadow-2xl border border-[var(--admin-border)]">
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--admin-border)]">
               <h3 className="text-base font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
                 <span className="material-symbols-outlined text-[var(--admin-accent)] text-[22px]">
@@ -1216,8 +1352,8 @@ export default function AdminExchangeDetailView({
                 <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
                   Amount Paid (₹) <span className="text-[var(--admin-error)]">*</span>
                 </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-tertiary)] font-bold text-sm">
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-tertiary)] font-bold text-sm pointer-events-none z-10 select-none">
                     ₹
                   </span>
                   <input
@@ -1226,7 +1362,8 @@ export default function AdminExchangeDetailView({
                     min="1"
                     required
                     placeholder="e.g. 500"
-                    className="admin-input w-full pl-7 text-sm font-mono font-black text-[var(--admin-text-primary)]"
+                    className="admin-input admin-input-currency w-full !pl-8 text-sm font-mono font-black text-[var(--admin-text-primary)]"
+                    style={{ paddingLeft: '32px' }}
                     value={settleData.amount}
                     onChange={(e) => setSettleData({ ...settleData, amount: e.target.value })}
                   />
@@ -1294,6 +1431,28 @@ export default function AdminExchangeDetailView({
                 />
               </div>
 
+              {/* Auto Complete Checkbox */}
+              <div className="p-2.5 rounded-xl bg-blue-50/60 border border-blue-200/60 flex items-start gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  id="detail-auto-complete-exchange-check"
+                  className="admin-checkbox mt-0.5"
+                  checked={Boolean(settleData.autoCompleteAfterSettle)}
+                  onChange={(e) =>
+                    setSettleData({ ...settleData, autoCompleteAfterSettle: e.target.checked })
+                  }
+                />
+                <label
+                  htmlFor="detail-auto-complete-exchange-check"
+                  className="cursor-pointer select-none text-[11px] text-blue-900 leading-tight"
+                >
+                  <strong className="font-bold block">
+                    Mark exchange as Completed immediately after recording payout
+                  </strong>
+                  Finalizes the replacement delivery and completes this exchange.
+                </label>
+              </div>
+
               <div className="flex justify-end gap-2.5 pt-3 border-t border-[var(--admin-border)]">
                 <button
                   type="button"
@@ -1306,17 +1465,19 @@ export default function AdminExchangeDetailView({
                 <button
                   type="submit"
                   disabled={isSubmittingSettle}
-                  className="admin-btn admin-btn-primary !bg-[var(--admin-accent)] hover:!bg-[var(--admin-accent-hover)] text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="admin-btn admin-btn-primary !bg-amber-600 hover:!bg-amber-700 text-white text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   {isSubmittingSettle ? (
                     <>
                       <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Registering...
+                      Recording Settlement...
                     </>
                   ) : (
                     <>
                       <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                      Confirm & Register Payment
+                      {settleData.autoCompleteAfterSettle
+                        ? 'Confirm Payout & Complete Exchange'
+                        : 'Confirm & Register Payment'}
                     </>
                   )}
                 </button>

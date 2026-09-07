@@ -7,9 +7,9 @@ import { ReturnNotificationService } from './ReturnNotificationService';
 import logger from '../../config/logger';
 
 const VALID_EXCHANGE_TRANSITIONS: Record<string, string[]> = {
-  pending_stock: ['reserved', 'cancelled'],
-  reserved: ['shipped', 'cancelled'],
-  shipped: ['delivered'],
+  pending_stock: ['reserved', 'shipped', 'delivered', 'cancelled'],
+  reserved: ['shipped', 'delivered', 'cancelled'],
+  shipped: ['delivered', 'completed'],
   delivered: ['completed'],
 };
 
@@ -27,7 +27,9 @@ export class ExchangeStateMachine {
     session.startTransaction();
 
     try {
-      const exchange = await ExchangeRequest.findById(exchangeId).session(session);
+      const isObjectId = mongoose.isValidObjectId(exchangeId);
+      const query: any = isObjectId ? { _id: exchangeId } : { exchangeId: String(exchangeId) };
+      const exchange = await ExchangeRequest.findOne(query).session(session);
       if (!exchange) {
         throw new ApiError(404, 'Exchange request not found');
       }
@@ -53,11 +55,44 @@ export class ExchangeStateMachine {
 
       exchange.replacementStatus = nextStatus as any;
 
+      if ((exchange.paymentStatus as any) === 'pending') {
+        exchange.paymentStatus =
+          exchange.differenceAction === 'collect_payment' ? 'payment_required' : 'not_applicable';
+      }
+
+      const validAdminId =
+        adminId && mongoose.Types.ObjectId.isValid(adminId)
+          ? new mongoose.Types.ObjectId(adminId)
+          : undefined;
+
       exchange.timeline.push({
         action: `Replacement marked as ${nextStatus}`,
         timestamp: new Date(),
-        performedBy: adminId ? new mongoose.Types.ObjectId(adminId) : undefined,
+        performedBy: validAdminId,
       });
+
+      if (nextStatus === 'reserved') {
+        if (!exchange.replacementItem?.reservationId && exchange.replacementItem?.productId) {
+          try {
+            const { InventoryService } = require('../InventoryService');
+            const reservation = await InventoryService.reserveInventory(
+              exchange.replacementItem.productId.toString(),
+              exchange.replacementItem.quantity || 1,
+              adminId || 'admin',
+              60 * 24 * 7,
+              session,
+            );
+            if (reservation?._id) {
+              exchange.replacementItem.reservationId = reservation._id;
+            }
+          } catch (reserveErr) {
+            logger.warn(
+              'Could not auto-reserve inventory during manual transition to reserved:',
+              reserveErr,
+            );
+          }
+        }
+      }
 
       await exchange.save({ session });
 
@@ -66,7 +101,7 @@ export class ExchangeStateMachine {
       // or at least signal that the exchange portion is done.
       // In this architecture, ReturnRequest status 'completed' implies the whole return workflow is done.
       if (nextStatus === 'delivered') {
-        if (exchange.replacementItem.reservationId) {
+        if (exchange.replacementItem?.reservationId) {
           const { InventoryService } = require('../InventoryService');
           await InventoryService.confirmReservation(
             exchange.replacementItem.reservationId.toString(),
@@ -86,7 +121,7 @@ export class ExchangeStateMachine {
           );
         }
       } else if (nextStatus === 'cancelled') {
-        if (exchange.replacementItem.reservationId) {
+        if (exchange.replacementItem?.reservationId) {
           const { InventoryService } = require('../InventoryService');
           await InventoryService.cancelReservation(
             exchange.replacementItem.reservationId.toString(),
@@ -137,7 +172,9 @@ export class ExchangeStateMachine {
     session.startTransaction();
 
     try {
-      const exchange = await ExchangeRequest.findById(exchangeId)
+      const isObjectId = mongoose.isValidObjectId(exchangeId);
+      const query: any = isObjectId ? { _id: exchangeId } : { exchangeId: String(exchangeId) };
+      const exchange = await ExchangeRequest.findOne(query)
         .populate('returnRequestId')
         .session(session);
       if (!exchange) throw new ApiError(404, 'Exchange not found');

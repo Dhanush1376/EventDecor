@@ -525,7 +525,7 @@ export function ProductCustomizationSection({ customization, onChange, _product 
           <select
             value={customization.material || ''}
             onChange={(e) => update('material', e.target.value)}
-            className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-xl px-4 py-2.5 text-[13px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all appearance-none cursor-pointer"
+            className="w-full bg-[var(--color-surface-ivory)] border border-black/10 rounded-lg px-3.5 py-2 text-[13px] outline-none focus:border-[var(--color-gold)] text-[var(--color-on-surface)] transition-all cursor-pointer"
           >
             <option value="">Select a material...</option>
             {MATERIAL_OPTIONS.map((mat) => (

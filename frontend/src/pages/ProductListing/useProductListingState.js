@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useProducts, useCategories, useDynamicFilters } from '../../hooks/useProductQueries';
 import { useVisualSearch } from '../../hooks/useVisualSearch';
 import { persistentStorage } from '../../utils/storage/persistentStorage';
+import { scrollToShopAnchor } from './shopScrollAnchor';
 
 export function useProductListingState() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -40,7 +41,7 @@ export function useProductListingState() {
     setLocalSearch(searchParam);
   }, [searchParam]);
 
-  // Debounce local typing into URL searchParams
+  // Fast debounce (180ms) for typing into URL searchParams
   useEffect(() => {
     const timer = setTimeout(() => {
       if (localSearch !== searchParam) {
@@ -55,9 +56,27 @@ export function useProductListingState() {
           { replace: true },
         );
       }
-    }, 400);
+    }, 180);
     return () => clearTimeout(timer);
   }, [localSearch, searchParam, setSearchParams]);
+
+  const commitSearch = useCallback(
+    (query) => {
+      const q = typeof query === 'string' ? query : localSearch;
+      setLocalSearch(q);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (q) next.set('search', q);
+          else next.delete('search');
+          next.delete('page');
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [localSearch, setSearchParams],
+  );
 
   const sortMap = {
     Popularity: 'rating',
@@ -162,36 +181,7 @@ export function useProductListingState() {
       );
 
       setTimeout(() => {
-        const isMobileView = window.innerWidth < 1024;
-        if (isMobileView) {
-          const mobileCategoriesEl = document.getElementById('mobile-sticky-categories');
-          const sortBar = document.getElementById('product-listing-sort-bar');
-          if (mobileCategoriesEl) {
-            const sortBarHeight = sortBar ? sortBar.getBoundingClientRect().height : 68;
-            const currentAbsoluteTop =
-              mobileCategoriesEl.getBoundingClientRect().top + window.scrollY;
-            const targetY = currentAbsoluteTop - sortBarHeight;
-            window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
-            return;
-          }
-        }
-
-        const sortBar = document.getElementById('product-listing-sort-bar');
-        if (sortBar) {
-          const topNav = document.querySelector('.top-navbar');
-          const navHeight = topNav ? topNav.getBoundingClientRect().height : 0;
-          const currentAbsoluteTop = sortBar.getBoundingClientRect().top + window.scrollY;
-          const targetY = currentAbsoluteTop - navHeight;
-          window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
-          return;
-        }
-
-        const element = document.getElementById('artisan-collection');
-        if (element) {
-          const yOffset = -80;
-          const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
-          window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-        }
+        scrollToShopAnchor({ smooth: true });
       }, 50);
     },
     [setSearchParams],
@@ -263,6 +253,7 @@ export function useProductListingState() {
       totalPages,
       totalCount,
       handleCategorySelect,
+      commitSearch,
     }),
     [
       searchParams,
@@ -274,6 +265,7 @@ export function useProductListingState() {
       pageParam,
       localSearch,
       setLocalSearch,
+      commitSearch,
       sortBy,
       setSortBy,
       filters,

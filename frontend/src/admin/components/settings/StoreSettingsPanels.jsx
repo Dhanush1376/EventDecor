@@ -15,7 +15,7 @@ const Input = ({ type = 'text', name, value, onChange, ...props }) => (
   <input
     type={type}
     name={name}
-    value={value === undefined ? '' : value}
+    value={value === undefined || value === null ? '' : value}
     onChange={onChange}
     className="admin-input"
     {...props}
@@ -45,6 +45,23 @@ export const GeneralSettingsPanel = ({ formData, handleChange, handleSave, savin
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       <FormGroup label="Store Name">
         <Input name="storeName" value={formData.storeName} onChange={handleChange} required />
+      </FormGroup>
+      <FormGroup label="Tagline">
+        <Input
+          name="tagline"
+          value={formData.tagline}
+          onChange={handleChange}
+          placeholder="e.g. Handcrafted Heritage & Artistry"
+        />
+      </FormGroup>
+      <FormGroup label="Support Email">
+        <Input
+          type="email"
+          name="supportEmail"
+          value={formData.supportEmail}
+          onChange={handleChange}
+          placeholder="e.g. support@siriartsandcrafts.com"
+        />
       </FormGroup>
       <FormGroup label="Store Enabled">
         <Checkbox
@@ -111,12 +128,28 @@ export const ShippingSettingsPanel = ({ formData, handleChange, handleSave, savi
           onChange={handleChange}
         />
       </FormGroup>
+      <FormGroup label="Express Delivery Charge (₹)">
+        <Input
+          type="number"
+          name="expressDeliveryCharge"
+          value={formData.expressDeliveryCharge}
+          onChange={handleChange}
+        />
+      </FormGroup>
       <FormGroup label="Estimated Delivery Days">
         <Input
           name="estimatedDeliveryDays"
           value={formData.estimatedDeliveryDays}
           onChange={handleChange}
           placeholder="e.g. 5-7"
+        />
+      </FormGroup>
+      <FormGroup label="Origin Pincode (Warehouse Dispatch)">
+        <Input
+          name="originPincode"
+          value={formData.originPincode}
+          onChange={handleChange}
+          placeholder="e.g. 523001"
         />
       </FormGroup>
       <FormGroup label="Default Courier Partner">
@@ -127,12 +160,18 @@ export const ShippingSettingsPanel = ({ formData, handleChange, handleSave, savi
           placeholder="e.g. Delhivery Logistics"
         />
       </FormGroup>
-      <div className="md:col-span-2">
+      <div className="md:col-span-2 space-y-3">
         <Checkbox
           name="enableFreeShipping"
           checked={formData.enableFreeShipping}
           onChange={handleChange}
           label="Enable Free Shipping Over Threshold"
+        />
+        <Checkbox
+          name="enableExpressDelivery"
+          checked={formData.enableExpressDelivery}
+          onChange={handleChange}
+          label="Enable Express Delivery Option"
         />
       </div>
     </div>
@@ -327,10 +366,11 @@ export const LoyaltySettingsPanel = ({
               <FormGroup label="Tier Name">
                 <input
                   type="text"
-                  value={tier.name}
+                  value={tier.name || ''}
                   onChange={(e) => {
-                    const newTiers = [...formData.tiers];
-                    newTiers[index].name = e.target.value;
+                    const newTiers = formData.tiers.map((t, i) =>
+                      i === index ? { ...t, name: e.target.value } : t,
+                    );
                     handleCustomChange('tiers', newTiers);
                   }}
                   className="admin-input"
@@ -339,10 +379,11 @@ export const LoyaltySettingsPanel = ({
               <FormGroup label="Min Spend (₹)">
                 <input
                   type="number"
-                  value={tier.minSpend}
+                  value={tier.minSpend === undefined ? '' : tier.minSpend}
                   onChange={(e) => {
-                    const newTiers = [...formData.tiers];
-                    newTiers[index].minSpend = Number(e.target.value);
+                    const newTiers = formData.tiers.map((t, i) =>
+                      i === index ? { ...t, minSpend: Number(e.target.value) } : t,
+                    );
                     handleCustomChange('tiers', newTiers);
                   }}
                   className="admin-input"
@@ -352,10 +393,11 @@ export const LoyaltySettingsPanel = ({
                 <input
                   type="number"
                   step="0.01"
-                  value={tier.cashbackRate}
+                  value={tier.cashbackRate === undefined ? '' : tier.cashbackRate}
                   onChange={(e) => {
-                    const newTiers = [...formData.tiers];
-                    newTiers[index].cashbackRate = Number(e.target.value);
+                    const newTiers = formData.tiers.map((t, i) =>
+                      i === index ? { ...t, cashbackRate: Number(e.target.value) } : t,
+                    );
                     handleCustomChange('tiers', newTiers);
                   }}
                   className="admin-input"
@@ -502,12 +544,44 @@ export const ContactSettingsPanel = ({ formData, handleChange, handleSave, savin
           <textarea
             name="address"
             rows={3}
-            value={formData.address}
+            value={formData.address || ''}
             onChange={handleChange}
             className="admin-textarea"
           />
         </FormGroup>
       </div>
+      <FormGroup label="City">
+        <Input
+          name="city"
+          value={formData.city}
+          onChange={handleChange}
+          placeholder="e.g. Ongole"
+        />
+      </FormGroup>
+      <FormGroup label="State">
+        <Input
+          name="state"
+          value={formData.state}
+          onChange={handleChange}
+          placeholder="e.g. Andhra Pradesh"
+        />
+      </FormGroup>
+      <FormGroup label="Postal Code">
+        <Input
+          name="postalCode"
+          value={formData.postalCode}
+          onChange={handleChange}
+          placeholder="e.g. 523001"
+        />
+      </FormGroup>
+      <FormGroup label="Country">
+        <Input
+          name="country"
+          value={formData.country}
+          onChange={handleChange}
+          placeholder="e.g. India"
+        />
+      </FormGroup>
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
       <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
@@ -520,8 +594,16 @@ export const ContactSettingsPanel = ({ formData, handleChange, handleSave, savin
 export const LegalSettingsPanel = ({ formData, handleChange, handleSave, saving }) => (
   <form onSubmit={handleSave} className="space-y-8">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-      <FormGroup label="Registered Company Name">
+      <FormGroup label="Brand / Display Name">
         <Input name="companyName" value={formData.companyName} onChange={handleChange} />
+      </FormGroup>
+      <FormGroup label="Registered Legal Company Name">
+        <Input
+          name="legalCompanyName"
+          value={formData.legalCompanyName}
+          onChange={handleChange}
+          placeholder="e.g. Siri Arts and Crafts Private Limited"
+        />
       </FormGroup>
       <FormGroup label="CIN (Corporate Identification Number)">
         <Input name="cin" value={formData.cin} onChange={handleChange} />
@@ -531,7 +613,7 @@ export const LegalSettingsPanel = ({ formData, handleChange, handleSave, saving 
           <textarea
             name="registeredAddress"
             rows={3}
-            value={formData.registeredAddress}
+            value={formData.registeredAddress || ''}
             onChange={handleChange}
             className="admin-textarea"
           />
@@ -631,7 +713,7 @@ export const StorefrontSettingsPanel = ({ formData, handleChange, handleSave, sa
           <textarea
             name="seoDescription"
             rows={3}
-            value={formData.seoDescription}
+            value={formData.seoDescription || ''}
             onChange={handleChange}
             className="admin-textarea"
           />

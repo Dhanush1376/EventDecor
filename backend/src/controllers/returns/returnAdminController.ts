@@ -65,6 +65,22 @@ export const getAllReturns = asyncHandler(async (req: Request, res: Response) =>
   });
 });
 
+// Helper for polymorphic return request lookup (by Mongo _id, returnId, or linked exchangeId/_id)
+const findReturnPolymorphic = async (paramId: string) => {
+  const isObjectId = mongoose.isValidObjectId(paramId);
+  let request = await ReturnRequest.findOne(isObjectId ? { _id: paramId } : { returnId: paramId });
+  if (!request) {
+    const ExchangeRequest = require('../../models/ExchangeRequest').default;
+    const linkedExchange = await ExchangeRequest.findOne(
+      isObjectId ? { _id: paramId } : { exchangeId: paramId },
+    );
+    if (linkedExchange) {
+      request = await ReturnRequest.findById(linkedExchange.returnRequestId);
+    }
+  }
+  return request;
+};
+
 /**
  * @desc    Get detailed return request by ID
  * @route   GET /api/v1/returns/admin/:id
@@ -83,9 +99,11 @@ export const getReturnDetails = asyncHandler(async (req: Request, res: Response)
     .populate('assignedStaff', 'name email')
     .populate('refundRecordId');
 
-  if (!returnRequest && !isObjectId) {
+  if (!returnRequest) {
     const ExchangeRequest = require('../../models/ExchangeRequest').default;
-    const linkedExchange = await ExchangeRequest.findOne({ exchangeId: paramId });
+    const linkedExchange = await ExchangeRequest.findOne(
+      isObjectId ? { _id: paramId } : { exchangeId: paramId },
+    );
     if (linkedExchange) {
       returnRequest = await ReturnRequest.findById(linkedExchange.returnRequestId)
         .populate('userId', 'name email phone avatar')
@@ -167,7 +185,7 @@ export const addInternalNote = asyncHandler(async (req: Request, res: Response) 
 
   if (!adminId) throw new ApiError(401, 'Unauthorized');
 
-  const returnRequest = await ReturnRequest.findById(req.params.id);
+  const returnRequest = await findReturnPolymorphic(req.params.id as string);
   if (!returnRequest) throw new ApiError(404, 'Return request not found');
 
   returnRequest.conversation.push({
@@ -379,7 +397,23 @@ export const triggerRefund = asyncHandler(async (req: Request, res: Response) =>
   session.startTransaction();
 
   try {
-    const returnReq = await ReturnRequest.findById(req.params.id).session(session);
+    const paramId = req.params.id;
+    const isObjectId = mongoose.isValidObjectId(paramId);
+
+    let returnReq = await ReturnRequest.findOne(
+      isObjectId ? { _id: paramId } : { returnId: paramId },
+    ).session(session);
+
+    if (!returnReq && !isObjectId) {
+      const ExchangeRequest = require('../../models/ExchangeRequest').default;
+      const linkedExchange = await ExchangeRequest.findOne({ exchangeId: paramId }).session(
+        session,
+      );
+      if (linkedExchange) {
+        returnReq = await ReturnRequest.findById(linkedExchange.returnRequestId).session(session);
+      }
+    }
+
     if (!returnReq) throw new ApiError(404, 'Return request not found');
 
     if (returnReq.status !== 'inspection_completed') {
@@ -667,7 +701,7 @@ export const updatePickupDetails = asyncHandler(async (req: Request, res: Respon
   const adminId = req.user?.id;
   if (!adminId) throw new ApiError(401, 'Unauthorized');
 
-  const returnRequest = await ReturnRequest.findById(req.params.id);
+  const returnRequest = await findReturnPolymorphic(req.params.id as string);
   if (!returnRequest) throw new ApiError(404, 'Return request not found');
 
   returnRequest.pickup = {
@@ -694,7 +728,7 @@ export const updatePickupDetails = asyncHandler(async (req: Request, res: Respon
     await returnRequest.save();
   }
 
-  const updated = await ReturnRequest.findById(req.params.id);
+  const updated = await findReturnPolymorphic(req.params.id as string);
   res.status(200).json({ success: true, data: updated });
 });
 

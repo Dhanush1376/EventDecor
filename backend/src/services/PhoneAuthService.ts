@@ -92,6 +92,10 @@ export class PhoneAuthService {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
     });
 
+    if (process.env.NODE_ENV === 'development') {
+      logger.info(`[DEV PHONE OTP] Verification code for ${normalizedPhone}: ${otp}`);
+    }
+
     const smsResult = await getSmsProvider().sendOtp(normalizedPhone, otp);
 
     if (!smsResult.success) {

@@ -1034,27 +1034,45 @@ export function OrderSuccess() {
               </p>
             </div>
 
-            {/* Required Timeline Card */}
+            {/* Required Timeline / Delivery Deadline Card */}
             {order.needByDate && (
-              <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs">
-                <div className="flex items-center justify-between text-xs">
-                  <div
-                    role="heading"
-                    aria-level={3}
-                    className="font-bold text-secondary uppercase tracking-wider font-sans"
-                    style={{ fontFamily: 'var(--font-label)' }}
-                  >
-                    Timeline Requested
+              <div className="bg-surface-bright border border-outline-variant/40 rounded-xl p-4 shadow-xs relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[var(--color-gold-dark)]/40 via-[var(--color-gold)]/60 to-transparent" />
+                <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-outline-variant/30">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-6 h-6 rounded-md bg-[var(--color-gold-dark)]/10 text-[var(--color-gold-dark)] flex items-center justify-center shrink-0">
+                      <Calendar className="w-3.5 h-3.5" strokeWidth={2} />
+                    </span>
+                    <span
+                      role="heading"
+                      aria-level={3}
+                      className="text-[11px] font-bold text-secondary uppercase tracking-wider truncate font-sans"
+                      style={{ fontFamily: 'var(--font-label)' }}
+                    >
+                      Delivery Deadline
+                    </span>
                   </div>
-                  <span className="bg-[var(--color-gold-dark)]/5 text-[var(--color-gold-dark)] px-2.5 py-1 rounded-full font-bold border border-[var(--color-gold-dark)]/25 uppercase text-[10px] flex items-center gap-1">
-                    <Calendar className="text-[12px]" strokeWidth={1.5} />
-                    Customer Request
+                  <span className="shrink-0 text-[9.5px] font-bold uppercase tracking-wider text-[var(--color-gold-dark)] bg-[var(--color-gold-dark)]/10 px-2 py-0.5 rounded border border-[var(--color-gold-dark)]/20 whitespace-nowrap">
+                    Target Date
                   </span>
                 </div>
-                <p className="text-[11px] text-secondary mt-3">
-                  By when needed:{' '}
-                  <strong className="text-on-surface font-semibold">{order.needByDate}</strong>
-                </p>
+                <div className="mt-3 bg-surface-container-lowest/90 border border-outline-variant/25 rounded-lg p-3 flex items-center justify-between gap-3">
+                  <div className="space-y-0.5 min-w-0">
+                    <span className="text-[10px] font-semibold text-secondary/70 uppercase tracking-widest block">
+                      Required By
+                    </span>
+                    <p className="text-[15px] font-bold text-on-surface tracking-tight font-display leading-tight">
+                      {order.needByDate}
+                    </p>
+                  </div>
+                  <div className="w-9 h-9 rounded-full bg-[var(--color-gold-dark)]/5 border border-[var(--color-gold-dark)]/15 flex items-center justify-center text-[var(--color-gold-dark)] shrink-0">
+                    <Clock className="w-4 h-4" strokeWidth={1.75} />
+                  </div>
+                </div>
+                <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-secondary/80 leading-normal">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" strokeWidth={2} />
+                  <span>Artisanal scheduling prioritized for this event date.</span>
+                </div>
               </div>
             )}
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Check, Box, Calendar, CreditCard, Settings, Clock, ArrowRight } from 'lucide-react';
+import { Bell, Box, Calendar, CreditCard, Settings, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/domainServices';
 import { useDashboard } from '../../context/DashboardContext';
@@ -172,22 +172,19 @@ export function NotificationsSection() {
       transition={{ duration: 0.3 }}
       className="space-y-4 text-[11px]"
     >
-      <div className="pb-4 mb-4 border-b border-outline-variant/20 flex justify-between items-end">
+      <div className="pb-3 mb-4 border-b border-outline-variant/20 flex justify-between items-center">
         <div>
-          <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5 mb-1.5">
+          <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
             <Bell className="text-[12px]" strokeWidth={1.5} />
             Notification Center
           </h2>
-          <p className="text-[11px] text-on-surface-variant/70">
-            Stay updated on your orders and bookings
-          </p>
         </div>
         <button
           onClick={handleMarkAllAsRead}
-          className="text-[10px] font-bold uppercase tracking-widest text-[#8c7335] hover:opacity-70 transition-colors flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="text-[10px] font-bold uppercase tracking-widest text-[#8c7335] hover:opacity-70 transition-colors flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           disabled={!notifications.some((n) => !n.read)}
         >
-          <Check className="w-3 h-3" strokeWidth={2} />
+          <span className="material-symbols-outlined text-[15px] leading-none">done_all</span>
           Mark all read
         </button>
       </div>

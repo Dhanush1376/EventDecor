@@ -236,7 +236,7 @@ class GoogleAuthService {
         message: `${createdUser.name || createdUser.email} registered via Google OAuth.`,
         type: 'user',
         actionLink: '/admin/users',
-      }).catch((err: any) => logger.error('Failed to create admin notification:', err));
+      })?.catch?.((err: any) => logger.error('Failed to create admin notification:', err));
     } catch (notifErr) {
       logger.error('Failed to create admin notification for Google registration:', notifErr);
     }

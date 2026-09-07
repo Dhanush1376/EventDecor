@@ -1,8 +1,6 @@
 @layer base {
   :root {
-    --visual-viewport-height: 100dvh;
-    --keyboard-offset: 0px;
-    --safe-area-bottom: max(0px, env(safe-area-inset-bottom) - var(--keyboard-offset));
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   html {
@@ -11,10 +9,6 @@
     text-size-adjust: 100%;
     overflow-x: clip;
     background: var(--color-surface);
-  }
-
-  html.keyboard-open {
-    /* Optional global overrides when keyboard is open */
   }
 
   @media (prefers-reduced-motion: reduce) {

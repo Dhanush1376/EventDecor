@@ -7,13 +7,32 @@ let ticking = false;
 let lastScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
 const listeners = new Set();
 
+let isProgrammaticScroll = false;
+let programmaticScrollTimeout = null;
+
+export function lockScrollDirection(direction, duration = 800) {
+  globalScrollDirection = direction;
+  if (direction === 'down') {
+    globalIsAtTop = false;
+  }
+  isProgrammaticScroll = true;
+  listeners.forEach((listener) =>
+    listener({ scrollDirection: globalScrollDirection, isAtTop: globalIsAtTop }),
+  );
+  if (programmaticScrollTimeout) clearTimeout(programmaticScrollTimeout);
+  programmaticScrollTimeout = setTimeout(() => {
+    isProgrammaticScroll = false;
+    lastScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+  }, duration);
+}
+
 const updateScrollDirection = () => {
   const scrollY = window.scrollY;
 
   const currentIsAtTop = scrollY < 50;
 
   let currentScrollDirection = globalScrollDirection;
-  if (Math.abs(scrollY - lastScrollY) >= 10) {
+  if (!isProgrammaticScroll && Math.abs(scrollY - lastScrollY) >= 10) {
     currentScrollDirection = scrollY > lastScrollY ? 'down' : 'up';
     lastScrollY = scrollY > 0 ? scrollY : 0;
   }

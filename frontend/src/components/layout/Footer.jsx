@@ -71,10 +71,20 @@ export function Footer() {
           { label: 'Contact', href: '/contact' },
         ];
 
+  const defaultPolicyLinks = [
+    { label: 'Shipping Policy', href: '/policy/shipping-policy' },
+    { label: 'Terms and Conditions', href: '/policy/terms-and-conditions' },
+    { label: 'Refund Policy', href: '/policy/refund-policy' },
+    { label: 'Exchange Policy', href: '/policy/exchange-policy' },
+    { label: 'Return Policy', href: '/policy/return-policy' },
+  ];
+
   const policyLinks =
     footer?.policyLinks?.length > 0
       ? footer.policyLinks
-      : policies.map((p) => ({ label: p.title, href: `/policy/${p.slug}` }));
+      : policies.length > 0
+        ? policies.map((p) => ({ label: p.title, href: `/policy/${p.slug}` }))
+        : defaultPolicyLinks;
 
   const trustBadges =
     footer?.trustBadges?.length > 0
@@ -94,7 +104,7 @@ export function Footer() {
         <MandalaElement size={400} duration={180} variant={2} skipFade={true} />
       </div>
 
-      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop pt-6 pb-[calc(var(--bottom-nav-height)+24px)] lg:pb-10 relative z-10">
+      <div className="max-w-max-width mx-auto px-margin-mobile lg:px-margin-desktop pt-6 pb-[calc(var(--bottom-nav-height,65px)+var(--safe-area-bottom,0px)+88px)] lg:pb-10 relative z-10">
         {/* Brand Soul - Left Aligned */}
         <div className="flex flex-col items-start text-left mb-5.5 lg:mb-7">
           <Link to="/" className="group flex items-center mb-4">
@@ -200,15 +210,15 @@ export function Footer() {
 
         {/* Trust Signals Strip */}
         <div className="mt-8 pt-6 border-t border-black/5">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-2 gap-y-3.5 sm:gap-4 lg:gap-6">
             {trustBadges.map((badge, idx) => (
-              <div key={idx} className="flex items-center gap-2">
+              <div key={idx} className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                 <div className="w-6 h-6 rounded-full bg-primary/5 flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined text-[12px] text-primary">
                     {badge.icon || badge.href || 'star'}
                   </span>
                 </div>
-                <span className="font-label-sm text-[10px] text-on-surface-variant/70 uppercase tracking-[0.15em] font-bold">
+                <span className="font-label-sm text-[9px] xs:text-[9.5px] sm:text-[10px] text-on-surface-variant/70 uppercase tracking-[0.06em] sm:tracking-[0.15em] font-bold whitespace-nowrap overflow-hidden text-ellipsis">
                   {badge.label}
                 </span>
               </div>
@@ -217,19 +227,19 @@ export function Footer() {
         </div>
 
         {/* Bottom Editorial Bar */}
-        <div className="mt-6 pt-4 border-t border-black/5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 text-left">
+        <div className="mt-6 pt-4 border-t border-black/5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 text-left pr-14 sm:pr-16 lg:pr-0">
           <div className="flex flex-col gap-1">
             <p className="font-label-sm text-on-surface-variant/50 tracking-[0.1em] text-[9px] uppercase font-bold">
               {footer?.copyright?.replace('{year}', currentYear.toString()) ||
                 `© ${currentYear} ${businessName}.`}
             </p>
           </div>
-          <div className="flex items-center flex-wrap gap-4">
+          <div className="flex items-center flex-wrap gap-x-3.5 gap-y-2 sm:gap-4">
             {policyLinks.map((link, idx) => (
               <Link
                 key={idx}
                 to={link.href || '#'}
-                className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface"
+                className="font-label-sm text-on-surface-variant/50 text-[9px] uppercase tracking-widest hover:text-on-surface whitespace-nowrap"
               >
                 {link.label}
               </Link>

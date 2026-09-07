@@ -28,15 +28,34 @@ import { useEffect, useId } from 'react';
 // This is intentionally NOT React state — it must survive re-renders
 // and be shared across the entire component tree.
 const activeLocks = new Set();
+let scrollYPosition = 0;
 
 function applyLock() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  scrollYPosition = window.scrollY || window.pageYOffset || 0;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${scrollYPosition}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
   document.body.style.overflow = 'hidden';
   document.documentElement.style.overflow = 'hidden';
 }
 
 function releaseLock() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  const top = document.body.style.top;
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
   document.body.style.overflow = '';
   document.documentElement.style.overflow = '';
+  if (top) {
+    const y = parseInt(top, 10) * -1;
+    window.scrollTo(0, isNaN(y) ? scrollYPosition : y);
+  }
 }
 
 /**
@@ -49,8 +68,10 @@ export function useScrollLock(isActive) {
   useEffect(() => {
     if (!isActive) return;
 
+    if (activeLocks.size === 0) {
+      applyLock();
+    }
     activeLocks.add(id);
-    applyLock();
 
     return () => {
       activeLocks.delete(id);

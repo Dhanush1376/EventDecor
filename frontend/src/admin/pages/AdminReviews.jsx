@@ -262,32 +262,32 @@ export function AdminReviews() {
               <motion.div
                 key={r._id}
                 whileHover={{ y: -2 }}
-                className="admin-card p-5 border border-[var(--admin-border)] transition-shadow shadow-xs"
+                className="admin-card p-4 sm:p-5 border border-[var(--admin-border)] transition-shadow shadow-xs"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-container/20 to-primary/10 flex items-center justify-center">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-container/20 to-primary/10 flex items-center justify-center shrink-0">
                       <span className="text-[14px] font-bold text-black">
                         {customer.substring(0, 2).toUpperCase()}
                       </span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-[14px] font-semibold text-[var(--admin-text-primary)]">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <p className="text-[14px] font-semibold text-[var(--admin-text-primary)] truncate max-w-[200px] sm:max-w-none">
                           {customer}
                         </p>
-                        <span className="text-[11px] sm:text-[11px] sm:text-[11px] text-secondary font-mono">
+                        <span className="text-[11px] text-[var(--admin-text-tertiary)] font-mono truncate max-w-[220px] sm:max-w-none">
                           ({r.customer?.email || 'N/A'})
                         </span>
                       </div>
-                      <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-tertiary)]">
+                      <p className="text-[11px] text-[var(--admin-text-tertiary)] truncate mt-0.5">
                         {product} · {date}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-0.5">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <div className="flex gap-0.5 shrink-0">
                       {[...Array(5)].map((_, i) => (
                         <span
                           key={i}
@@ -306,19 +306,19 @@ export function AdminReviews() {
                     </div>
                     {/* Amount Paid Badge */}
                     {r.status === 'approved' && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 flex items-center gap-1 shadow-3xs">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 flex items-center gap-1 shadow-3xs whitespace-nowrap">
                         <span className="material-symbols-outlined text-[13px]">paid</span>₹
                         {r.rewardPaid !== undefined ? r.rewardPaid : 20} Paid
                       </span>
                     )}
                     {r.status !== 'approved' && r.rewardPaid > 0 && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200/80 flex items-center gap-1 shadow-3xs">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200/80 flex items-center gap-1 shadow-3xs whitespace-nowrap">
                         <span className="material-symbols-outlined text-[13px]">paid</span>₹
                         {r.rewardPaid} Paid
                       </span>
                     )}
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[11px] sm:text-[11px] sm:text-[11px] uppercase tracking-wider font-bold ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] uppercase tracking-wider font-bold whitespace-nowrap ${
                         r.status === 'approved'
                           ? 'text-[var(--admin-success)] bg-[var(--admin-success-light)] border border-[var(--admin-success-border)]/50'
                           : r.status === 'rejected'
@@ -364,30 +364,33 @@ export function AdminReviews() {
                     currentApproved.some((img) => !persisted.includes(img));
 
                   return (
-                    <div className="mb-4 bg-stone-50/80 rounded-xl p-3 border border-stone-200/60">
-                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[16px] text-stone-600">
+                    <div className="mb-4 bg-stone-50/80 rounded-xl p-3 sm:p-3.5 border border-stone-200/60">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="material-symbols-outlined text-[16px] text-stone-600 shrink-0">
                             photo_library
                           </span>
-                          <span className="text-[12px] font-bold text-stone-800">
-                            Uploaded Photos ({approvedCount} of {allImages.length} approved)
+                          <span className="text-[12px] font-bold text-stone-800 truncate">
+                            Uploaded Photos{' '}
+                            <span className="text-stone-500 font-semibold font-mono text-[11px]">
+                              ({approvedCount} of {allImages.length} approved)
+                            </span>
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                           <button
                             type="button"
                             onClick={() => selectAllImages(r._id, allImages)}
-                            className="text-[11px] font-bold text-emerald-700 hover:underline cursor-pointer"
+                            className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
                           >
                             Select All
                           </button>
-                          <span className="text-stone-300">|</span>
+                          <span className="text-stone-300">·</span>
                           <button
                             type="button"
                             onClick={() => deselectAllImages(r._id)}
-                            className="text-[11px] font-bold text-stone-500 hover:underline cursor-pointer"
+                            className="text-[11px] font-bold text-stone-500 hover:text-stone-700 hover:underline cursor-pointer"
                           >
                             Exclude All
                           </button>
@@ -396,49 +399,49 @@ export function AdminReviews() {
                               type="button"
                               onClick={() => handleSaveImages(r._id)}
                               disabled={savingReviewImages[r._id]}
-                              className="ml-2 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-[11px] font-bold rounded-lg transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                              className="ml-1.5 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-[11px] font-bold rounded-lg transition-all shadow-xs cursor-pointer flex items-center gap-1"
                             >
                               <span className="material-symbols-outlined text-[13px]">save</span>
-                              {savingReviewImages[r._id] ? 'Saving...' : 'Save Photos'}
+                              <span>{savingReviewImages[r._id] ? 'Saving...' : 'Save Photos'}</span>
                             </button>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-2.5">
+                      <div className="flex flex-wrap gap-2.5 sm:gap-3">
                         {allImages.map((imgUrl, imgIdx) => {
                           const isApproved = currentApproved.includes(imgUrl);
                           return (
                             <div
                               key={imgIdx}
                               onClick={() => toggleImageApproval(r._id, imgUrl)}
-                              className={`relative group rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
+                              className={`relative group rounded-xl overflow-hidden border-2 transition-all cursor-pointer select-none ${
                                 isApproved
-                                  ? 'border-emerald-500 shadow-sm ring-2 ring-emerald-500/10'
-                                  : 'border-stone-300 opacity-55 hover:opacity-85 border-dashed bg-stone-100'
+                                  ? 'border-emerald-500 shadow-xs ring-2 ring-emerald-500/15 bg-emerald-50/20'
+                                  : 'border-stone-300 opacity-60 hover:opacity-90 border-dashed bg-stone-100'
                               }`}
                             >
                               <img
                                 src={imgUrl}
                                 alt={`Customer upload ${imgIdx + 1}`}
-                                className="w-20 h-20 sm:w-24 sm:h-24 object-cover"
+                                className="w-24 h-24 sm:w-28 sm:h-28 object-cover transition-transform duration-200 group-hover:scale-105"
                               />
 
                               {/* Status Badge */}
-                              <div className="absolute top-1.5 right-1.5 z-10 pointer-events-none">
+                              <div className="absolute top-1.5 left-1.5 z-10 pointer-events-none">
                                 {isApproved ? (
-                                  <span className="bg-emerald-600 text-white text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
-                                    <span className="material-symbols-outlined text-[11px]">
+                                  <span className="h-5 px-1.5 rounded-full bg-emerald-600/95 backdrop-blur-xs text-white text-[9px] font-bold flex items-center gap-0.5 shadow-sm ring-1 ring-white/60">
+                                    <span className="material-symbols-outlined text-[12px] font-black">
                                       check
                                     </span>
-                                    Approved
+                                    <span>Approved</span>
                                   </span>
                                 ) : (
-                                  <span className="bg-stone-700 text-white text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
-                                    <span className="material-symbols-outlined text-[11px]">
+                                  <span className="h-5 px-1.5 rounded-full bg-stone-800/85 backdrop-blur-xs text-white text-[9px] font-bold flex items-center gap-0.5 shadow-sm ring-1 ring-white/60">
+                                    <span className="material-symbols-outlined text-[12px] font-black">
                                       close
                                     </span>
-                                    Excluded
+                                    <span>Excluded</span>
                                   </span>
                                 )}
                               </div>
@@ -450,18 +453,10 @@ export function AdminReviews() {
                                   e.stopPropagation();
                                   setPreviewImage(imgUrl);
                                 }}
-                                className="absolute bottom-1.5 right-1.5 min-h-0 min-w-0 p-0 rounded-full bg-black/75 hover:bg-black text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md cursor-pointer aspect-square"
-                                style={{
-                                  width: '26px',
-                                  height: '26px',
-                                  minHeight: '26px',
-                                  maxHeight: '26px',
-                                  minWidth: '26px',
-                                  maxWidth: '26px',
-                                }}
+                                className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-black/65 hover:bg-black text-white flex items-center justify-center transition-all shadow-md cursor-pointer aspect-square"
                                 title="Zoom photo"
                               >
-                                <span className="material-symbols-outlined text-[15px] leading-none select-none flex items-center justify-center">
+                                <span className="material-symbols-outlined text-[13px] leading-none">
                                   zoom_in
                                 </span>
                               </button>
@@ -475,7 +470,7 @@ export function AdminReviews() {
 
                 <div className="flex items-center gap-3 border-t border-[var(--admin-border-subtle)] pt-3">
                   {r.status === 'pending' && (
-                    <>
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                       <button
                         onClick={() =>
                           setRewardModal({
@@ -484,36 +479,41 @@ export function AdminReviews() {
                             amount: r.rewardPaid && r.rewardPaid > 0 ? 0 : 20,
                           })
                         }
-                        className="admin-btn admin-btn-ghost admin-btn-sm group !bg-emerald-600 !text-white !border-emerald-600 !py-1.5 !px-3 !text-[11px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer rounded-lg hover:brightness-110 transition-all"
+                        className="admin-btn flex-1 sm:flex-initial !bg-emerald-600 !text-white !border-emerald-600 !py-2 sm:!py-1.5 !px-3.5 !text-[12px] sm:!text-[11px] flex items-center justify-center gap-1.5 cursor-pointer rounded-lg hover:brightness-110 transition-all font-semibold shadow-xs"
                       >
-                        <span className="material-symbols-outlined text-[14px]">check</span>
+                        <span className="material-symbols-outlined text-[15px]">check</span>
                         Approve Review
                       </button>
 
                       <button
                         onClick={() => handleModerate(r._id, 'reject')}
-                        className="admin-btn admin-btn-ghost admin-btn-sm group !text-[var(--admin-error)] !border-red-100 hover:!bg-[var(--admin-error-light)] !py-1.5 !px-3 !text-[11px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer rounded-lg transition-all"
+                        className="admin-btn flex-1 sm:flex-initial !text-[var(--admin-error)] !border-red-200 hover:!bg-[var(--admin-error-light)] !py-2 sm:!py-1.5 !px-3.5 !text-[12px] sm:!text-[11px] flex items-center justify-center gap-1.5 cursor-pointer rounded-lg transition-all font-semibold"
                       >
-                        <span className="material-symbols-outlined text-[14px]">close</span>
+                        <span className="material-symbols-outlined text-[15px]">close</span>
                         Reject
                       </button>
-                    </>
+                    </div>
                   )}
 
                   {r.status === 'approved' && (
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-[11px] text-[var(--admin-success)] font-bold flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[13px]">verified</span>
-                        Approved ·{' '}
-                        <strong className="text-emerald-800 font-extrabold">
-                          ₹{r.rewardPaid !== undefined ? r.rewardPaid : 20}
-                        </strong>{' '}
-                        cash disbursed
-                      </span>
-                      <div className="flex items-center gap-1.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full">
+                      <div className="flex items-center gap-1.5 text-[11.5px] sm:text-[12px] text-emerald-700 font-bold flex-wrap">
+                        <span className="material-symbols-outlined text-[15px] shrink-0 text-emerald-600">
+                          verified
+                        </span>
+                        <span>Approved</span>
+                        <span className="text-stone-300">·</span>
+                        <span className="inline-flex items-center gap-1 font-semibold text-stone-700">
+                          <strong className="text-emerald-700 font-extrabold">
+                            ₹{r.rewardPaid !== undefined ? r.rewardPaid : 20}
+                          </strong>{' '}
+                          cash disbursed
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                         <button
                           onClick={() => handleUndo(r._id)}
-                          className="admin-btn admin-btn-ghost admin-btn-sm !text-amber-800 !border-amber-300/80 hover:!bg-amber-50 !py-1 !px-2.5 flex items-center gap-1 cursor-pointer rounded-lg text-[11px] font-semibold transition-all shadow-3xs"
+                          className="admin-btn admin-btn-ghost admin-btn-sm !text-amber-800 !border-amber-300/80 hover:!bg-amber-50 !py-1.5 !px-2.5 flex items-center gap-1 cursor-pointer rounded-lg text-[11px] font-semibold transition-all shadow-3xs"
                           title="Undo approval and revert review to pending"
                         >
                           <span className="material-symbols-outlined text-[13px]">undo</span>
@@ -521,7 +521,7 @@ export function AdminReviews() {
                         </button>
                         <button
                           onClick={() => handleDelete(r._id)}
-                          className="admin-btn admin-btn-ghost admin-btn-sm !text-[var(--admin-text-tertiary)] hover:!text-[var(--admin-error)] !py-1 !px-2 flex items-center gap-1 cursor-pointer rounded-lg"
+                          className="admin-btn admin-btn-ghost admin-btn-sm !text-[var(--admin-text-tertiary)] hover:!text-[var(--admin-error)] hover:!bg-red-50 !py-1.5 !px-2.5 flex items-center gap-1 cursor-pointer rounded-lg border border-[var(--admin-border-subtle)]"
                           title="Delete Review"
                         >
                           <span className="material-symbols-outlined text-[14px]">delete</span>
@@ -531,15 +531,17 @@ export function AdminReviews() {
                   )}
 
                   {r.status === 'rejected' && (
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-[11px] text-[var(--admin-error)] font-bold flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[11px]">block</span>
-                        Review rejected from listing feed
-                      </span>
-                      <div className="flex items-center gap-1.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full">
+                      <div className="flex items-center gap-1.5 text-[11.5px] sm:text-[12px] text-[var(--admin-error)] font-bold flex-wrap">
+                        <span className="material-symbols-outlined text-[15px] shrink-0">
+                          block
+                        </span>
+                        <span>Review rejected from listing feed</span>
+                      </div>
+                      <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                         <button
                           onClick={() => handleUndo(r._id)}
-                          className="admin-btn admin-btn-ghost admin-btn-sm !text-amber-800 !border-amber-300/80 hover:!bg-amber-50 !py-1 !px-2.5 flex items-center gap-1 cursor-pointer rounded-lg text-[11px] font-semibold transition-all shadow-3xs"
+                          className="admin-btn admin-btn-ghost admin-btn-sm !text-amber-800 !border-amber-300/80 hover:!bg-amber-50 !py-1.5 !px-2.5 flex items-center gap-1 cursor-pointer rounded-lg text-[11px] font-semibold transition-all shadow-3xs"
                           title="Undo rejection and revert review to pending"
                         >
                           <span className="material-symbols-outlined text-[13px]">undo</span>
@@ -547,7 +549,7 @@ export function AdminReviews() {
                         </button>
                         <button
                           onClick={() => handleDelete(r._id)}
-                          className="admin-btn admin-btn-ghost admin-btn-sm !text-[var(--admin-text-tertiary)] hover:!text-[var(--admin-error)] !py-1 !px-2 flex items-center gap-1 cursor-pointer rounded-lg"
+                          className="admin-btn admin-btn-ghost admin-btn-sm !text-[var(--admin-text-tertiary)] hover:!text-[var(--admin-error)] hover:!bg-red-50 !py-1.5 !px-2.5 flex items-center gap-1 cursor-pointer rounded-lg border border-[var(--admin-border-subtle)]"
                           title="Delete Review"
                         >
                           <span className="material-symbols-outlined text-[14px]">delete</span>

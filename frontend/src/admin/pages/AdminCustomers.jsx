@@ -397,9 +397,9 @@ export function AdminCustomers() {
                   </div>
                   <div className="text-center border-l border-r border-[var(--admin-border)]">
                     <p className="text-[14px] font-bold text-[var(--admin-accent)]">
-                      {c.totalSpent >= 1000
+                      {c.totalSpent >= 10000
                         ? `₹${(c.totalSpent / 1000).toFixed(1)}K`
-                        : `₹${c.totalSpent || 0}`}
+                        : `₹${(c.totalSpent || 0).toLocaleString('en-IN')}`}
                     </p>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] mt-0.5">
                       Spent

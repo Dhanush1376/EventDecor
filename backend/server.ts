@@ -162,7 +162,7 @@ const initializeNonCriticalServices = async (httpServer: Server) => {
     }
 
     // 5. Initialize BullMQ Queues and Workers
-    if (redisReady || process.env.REQUIRE_REDIS !== 'true') {
+    if (redisReady) {
       try {
         await initQueues();
         await initWorkers();
@@ -173,6 +173,8 @@ const initializeNonCriticalServices = async (httpServer: Server) => {
           throw err;
         }
       }
+    } else {
+      logger.info('[STARTUP] Redis is not ready; BullMQ queues and workers skipped');
     }
 
     // 6. Initialize Recommendation System (warm caches — non-blocking, non-fatal)

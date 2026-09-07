@@ -1,8 +1,10 @@
+import { useState, useEffect, useRef } from 'react';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { LocationMarker } from './LocationMarker';
 import { useScrollLock } from '../../../hooks/useScrollLock';
+import { sanitizePhoneNumber } from '../../../utils/phoneUtils';
+import { detectAndResolveAddress } from '../../../utils/locationService';
 
 export function AddAddressModal({
   isAddingNewAddress,
@@ -16,8 +18,111 @@ export function AddAddressModal({
   mapPosition,
   setMapPosition,
   fetchAddressFromCoords,
+  handleAutofillLocation,
+  isResolvingLocation,
 }) {
   useScrollLock(isAddingNewAddress);
+
+  const formContainerRef = useRef(null);
+  const [maxModalHeight, setMaxModalHeight] = useState('90vh');
+  const [isInternalLocating, setIsInternalLocating] = useState(false);
+
+  // Dynamic visualViewport tracker for mobile virtual keyboard resizing
+  useEffect(() => {
+    if (!isAddingNewAddress || typeof window === 'undefined') return;
+
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const updateHeight = () => {
+      const isMobile = window.innerWidth < 1024;
+      if (isMobile) {
+        // Dynamically clamp modal height so the entire modal and footer fit within the visual viewport
+        const availableHeight = vv.height;
+        const targetHeight = Math.max(260, Math.floor(availableHeight * 0.94));
+        setMaxModalHeight(`${targetHeight}px`);
+      } else {
+        setMaxModalHeight('90vh');
+      }
+    };
+
+    updateHeight();
+    vv.addEventListener('resize', updateHeight);
+    vv.addEventListener('scroll', updateHeight);
+
+    return () => {
+      vv.removeEventListener('resize', updateHeight);
+      vv.removeEventListener('scroll', updateHeight);
+    };
+  }, [isAddingNewAddress]);
+
+  // Smoothly scroll focused input into clear visible area when mobile keyboard opens
+  const handleFocusCapture = (e) => {
+    const target = e.target;
+    if (!target) return;
+    const tag = target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+      // Allow mobile virtual keyboard animation (~250-300ms) to finish
+      setTimeout(() => {
+        if (!target || !formContainerRef.current) return;
+        const targetRect = target.getBoundingClientRect();
+        const containerRect = formContainerRef.current.getBoundingClientRect();
+
+        const isObscured =
+          targetRect.bottom > containerRect.bottom - 20 ||
+          targetRect.top < containerRect.top + 20 ||
+          (window.visualViewport && targetRect.bottom > window.visualViewport.height - 50);
+
+        if (isObscured) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+  };
+
+  const handleLocationClick = async (e) => {
+    e.preventDefault();
+    if (typeof handleAutofillLocation === 'function') {
+      await handleAutofillLocation();
+      return;
+    }
+
+    try {
+      setIsInternalLocating(true);
+      toast.loading('Detecting your location...', { id: 'gps' });
+      const res = await detectAndResolveAddress();
+      if (res.success && res.data) {
+        const d = res.data;
+        if (d.latitude && d.longitude) {
+          setMapPosition({ lat: d.latitude, lng: d.longitude });
+        }
+        setNewAddress((prev) => ({
+          ...prev,
+          latitude: d.latitude ?? prev.latitude,
+          longitude: d.longitude ?? prev.longitude,
+          pincode: d.pincode || prev.pincode,
+          city: d.city || prev.city,
+          state: d.state || prev.state,
+          locality: d.locality || prev.locality,
+          address: d.address || prev.address,
+          landmark: d.landmark || prev.landmark,
+        }));
+        const msg =
+          res.source === 'gps'
+            ? 'Location auto-filled from GPS!'
+            : 'Location detected from network!';
+        toast.success(msg, { id: 'gps' });
+      } else {
+        toast.error(res.error || 'Could not detect location. Please fill manually.', { id: 'gps' });
+      }
+    } catch {
+      toast.error('Location detection failed. Please fill manually.', { id: 'gps' });
+    } finally {
+      setIsInternalLocating(false);
+    }
+  };
+
+  const isLocating = isResolvingLocation || isInternalLocating;
 
   return (
     <AnimatePresence>
@@ -35,8 +140,10 @@ export function AddAddressModal({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:rounded-2xl lg:overflow-hidden z-[101] bg-surface-container-low rounded-t-2xl sm:rounded-t-3xl max-h-[90vh] w-full max-w-[800px] mx-auto shadow-2xl flex flex-col"
+            style={{ maxHeight: maxModalHeight }}
+            className="fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:rounded-2xl lg:overflow-hidden z-[101] bg-surface-container-low rounded-t-2xl sm:rounded-t-3xl w-full max-w-[800px] mx-auto shadow-2xl flex flex-col"
           >
+            {/* Modal Header */}
             <div className="bg-surface-bright z-10 pt-5 pb-4 px-6 flex justify-between items-center border-b border-outline-variant/20 rounded-t-2xl sm:rounded-t-3xl lg:rounded-t-none shrink-0">
               <h2 className="text-[11px] font-extrabold text-on-surface uppercase tracking-widest">
                 {newAddress?.id ? 'Edit Address' : 'Add New Address'}
@@ -50,7 +157,12 @@ export function AddAddressModal({
               </button>
             </div>
 
-            <div className="overflow-y-auto p-4 sm:p-6 pb-28">
+            {/* Scrollable Form Body */}
+            <div
+              ref={formContainerRef}
+              onFocusCapture={handleFocusCapture}
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 pb-6"
+            >
               <form id="address-form" onSubmit={handleSaveNewAddress}>
                 <div className="space-y-4">
                   <div className="py-6 border-b border-outline-variant/20">
@@ -67,7 +179,9 @@ export function AddAddressModal({
                             required
                             placeholder="Receiver full name"
                             value={newAddress.name}
-                            onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
+                            onChange={(e) =>
+                              setNewAddress((prev) => ({ ...prev, name: e.target.value }))
+                            }
                             className="form-field"
                           />
                         </div>
@@ -78,7 +192,7 @@ export function AddAddressModal({
                             placeholder="Enter email address"
                             value={newAddress.email}
                             onChange={(e) =>
-                              setNewAddress({ ...newAddress, email: e.target.value })
+                              setNewAddress((prev) => ({ ...prev, email: e.target.value }))
                             }
                             className="form-field"
                           />
@@ -90,13 +204,22 @@ export function AddAddressModal({
                           <input
                             type="tel"
                             required
-                            pattern="[0-9]{10}"
-                            title="Please enter exactly 10 digits"
+                            inputMode="numeric"
+                            maxLength={10}
                             placeholder="10-digit mobile number"
                             value={newAddress.phone}
-                            onChange={(e) =>
-                              setNewAddress({ ...newAddress, phone: e.target.value })
-                            }
+                            onChange={(e) => {
+                              const cleaned = sanitizePhoneNumber(e.target.value);
+                              setNewAddress((prev) => ({ ...prev, phone: cleaned }));
+                            }}
+                            onPaste={(e) => {
+                              const pasted = e.clipboardData?.getData('text');
+                              if (pasted) {
+                                e.preventDefault();
+                                const cleaned = sanitizePhoneNumber(pasted);
+                                setNewAddress((prev) => ({ ...prev, phone: cleaned }));
+                              }
+                            }}
                             className="form-field"
                           />
                         </div>
@@ -104,13 +227,22 @@ export function AddAddressModal({
                           <label className="form-label">Alternate Number</label>
                           <input
                             type="tel"
-                            pattern="[0-9]{10}"
-                            title="Please enter exactly 10 digits if providing an alternate number"
+                            inputMode="numeric"
+                            maxLength={10}
                             placeholder="Optional alternate number"
                             value={newAddress.alternatePhone}
-                            onChange={(e) =>
-                              setNewAddress({ ...newAddress, alternatePhone: e.target.value })
-                            }
+                            onChange={(e) => {
+                              const cleaned = sanitizePhoneNumber(e.target.value);
+                              setNewAddress((prev) => ({ ...prev, alternatePhone: cleaned }));
+                            }}
+                            onPaste={(e) => {
+                              const pasted = e.clipboardData?.getData('text');
+                              if (pasted) {
+                                e.preventDefault();
+                                const cleaned = sanitizePhoneNumber(pasted);
+                                setNewAddress((prev) => ({ ...prev, alternatePhone: cleaned }));
+                              }
+                            }}
                             className="form-field"
                           />
                         </div>
@@ -126,69 +258,15 @@ export function AddAddressModal({
                       </h2>
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          toast.loading('Finding you...', { id: 'gps' });
-                          if (navigator.geolocation) {
-                            const getPosition = (highAccuracy = true) => {
-                              navigator.geolocation.getCurrentPosition(
-                                (pos) => {
-                                  const { latitude, longitude } = pos.coords;
-                                  setMapPosition({ lat: latitude, lng: longitude });
-                                  fetchAddressFromCoords(latitude, longitude);
-                                  toast.success('Location found!', { id: 'gps' });
-                                },
-                                (err) => {
-                                  if (
-                                    highAccuracy &&
-                                    (err.code === err.TIMEOUT ||
-                                      err.code === err.POSITION_UNAVAILABLE)
-                                  ) {
-                                    toast.loading('Retrying with standard accuracy...', {
-                                      id: 'gps',
-                                    });
-                                    getPosition(false);
-                                  } else {
-                                    let errorMsg = 'Could not access GPS';
-                                    if (err.code === err.PERMISSION_DENIED) {
-                                      errorMsg = window.isSecureContext
-                                        ? 'Location permission denied. Please allow access.'
-                                        : 'Location requires a secure connection (HTTPS).';
-                                    } else if (err.code === err.TIMEOUT) {
-                                      errorMsg = 'Location request timed out.';
-                                    }
-                                    toast.error(errorMsg, { id: 'gps' });
-                                  }
-                                },
-                                {
-                                  enableHighAccuracy: highAccuracy,
-                                  timeout: highAccuracy ? 10000 : 20000,
-                                  maximumAge: highAccuracy ? 0 : 60000,
-                                },
-                              );
-                            };
-                            getPosition(true);
-                          } else {
-                            toast.error('Geolocation not supported by this browser', {
-                              id: 'gps',
-                            });
-                          }
-                        }}
-                        className="inline-flex items-center gap-1 text-[8px] text-white font-bold uppercase tracking-widest bg-[#1a1a1a] hover:bg-black px-2.5 py-1.5 rounded-full cursor-pointer transition-all shadow-sm"
+                        disabled={isLocating}
+                        onClick={handleLocationClick}
+                        className="inline-flex items-center gap-1 text-[8px] text-white font-bold uppercase tracking-widest bg-[#1a1a1a] hover:bg-black px-2.5 py-1.5 rounded-full cursor-pointer transition-all shadow-sm disabled:opacity-50"
                       >
                         <span className="material-symbols-outlined text-[10px] font-bold">
                           my_location
                         </span>
-                        <span>Use Current Location</span>
+                        <span>{isLocating ? 'Locating...' : 'Use Current Location'}</span>
                       </button>
-                    </div>
-
-                    <div className="w-full h-48 bg-surface-container-low rounded-lg mb-4 relative overflow-hidden border border-outline-variant/30 z-0">
-                      <LocationMarker
-                        position={mapPosition}
-                        setPosition={setMapPosition}
-                        fetchAddressFromCoords={fetchAddressFromCoords}
-                      />
                     </div>
 
                     {newAddress.latitude && newAddress.longitude && (
@@ -212,12 +290,13 @@ export function AddAddressModal({
                           <input
                             type="tel"
                             required
+                            inputMode="numeric"
                             maxLength={6}
                             placeholder="e.g. 560041"
                             value={newAddress.pincode}
                             onChange={(e) => {
                               const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                              const updated = { ...newAddress, pincode: val };
+                              setNewAddress((prev) => ({ ...prev, pincode: val }));
                               if (val.length === 6) {
                                 toast.loading('Looking up pincode...', { id: 'pincode' });
                                 fetch(`https://api.postalpincode.in/pincode/${val}`)
@@ -228,10 +307,11 @@ export function AddAddressModal({
                                       setNewAddress((prev) => ({
                                         ...prev,
                                         city:
+                                          prev.city ||
                                           postOffice.District ||
                                           postOffice.Block ||
                                           postOffice.Region,
-                                        state: postOffice.State,
+                                        state: prev.state || postOffice.State,
                                       }));
                                       toast.success('City & state auto-filled!', { id: 'pincode' });
                                     } else {
@@ -242,7 +322,6 @@ export function AddAddressModal({
                                     toast.dismiss('pincode');
                                   });
                               }
-                              setNewAddress(updated);
                             }}
                             className="form-field"
                           />
@@ -256,7 +335,7 @@ export function AddAddressModal({
                             placeholder="e.g. Sector 4 / Jayanagar"
                             value={newAddress.locality}
                             onChange={(e) =>
-                              setNewAddress({ ...newAddress, locality: e.target.value })
+                              setNewAddress((prev) => ({ ...prev, locality: e.target.value }))
                             }
                             className="form-field"
                           />
@@ -270,7 +349,7 @@ export function AddAddressModal({
                           placeholder="Flat, House no., Building, Apartment details"
                           value={newAddress.address}
                           onChange={(e) =>
-                            setNewAddress({ ...newAddress, address: e.target.value })
+                            setNewAddress((prev) => ({ ...prev, address: e.target.value }))
                           }
                           className="form-field min-h-[70px]"
                         />
@@ -283,7 +362,7 @@ export function AddAddressModal({
                           placeholder="e.g. Near Apollo Hospital"
                           value={newAddress.landmark}
                           onChange={(e) =>
-                            setNewAddress({ ...newAddress, landmark: e.target.value })
+                            setNewAddress((prev) => ({ ...prev, landmark: e.target.value }))
                           }
                           className="form-field"
                         />
@@ -297,7 +376,9 @@ export function AddAddressModal({
                             required
                             placeholder="City"
                             value={newAddress.city}
-                            onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                            onChange={(e) =>
+                              setNewAddress((prev) => ({ ...prev, city: e.target.value }))
+                            }
                             className="form-field"
                           />
                         </div>
@@ -310,7 +391,7 @@ export function AddAddressModal({
                             placeholder="State"
                             value={newAddress.state}
                             onChange={(e) =>
-                              setNewAddress({ ...newAddress, state: e.target.value })
+                              setNewAddress((prev) => ({ ...prev, state: e.target.value }))
                             }
                             className="form-field uppercase"
                           />
@@ -329,7 +410,9 @@ export function AddAddressModal({
                         <label className="form-label">Destination Type</label>
                         <select
                           value={newAddress.tag}
-                          onChange={(e) => setNewAddress({ ...newAddress, tag: e.target.value })}
+                          onChange={(e) =>
+                            setNewAddress((prev) => ({ ...prev, tag: e.target.value }))
+                          }
                           className="form-field cursor-pointer"
                         >
                           <option value="Home">Home</option>
@@ -346,7 +429,10 @@ export function AddAddressModal({
                         placeholder="E.g. Leave with security, call before delivery"
                         value={newAddress.deliveryInstructions}
                         onChange={(e) =>
-                          setNewAddress({ ...newAddress, deliveryInstructions: e.target.value })
+                          setNewAddress((prev) => ({
+                            ...prev,
+                            deliveryInstructions: e.target.value,
+                          }))
                         }
                         className="form-field min-h-[70px]"
                       />
@@ -357,7 +443,7 @@ export function AddAddressModal({
                         type="checkbox"
                         checked={newAddress.isDefault || false}
                         onChange={(e) =>
-                          setNewAddress({ ...newAddress, isDefault: e.target.checked })
+                          setNewAddress((prev) => ({ ...prev, isDefault: e.target.checked }))
                         }
                         className="w-4 h-4 rounded border-outline-variant/40 text-primary focus:ring-primary cursor-pointer"
                       />
@@ -370,7 +456,8 @@ export function AddAddressModal({
               </form>
             </div>
 
-            <div className="bg-surface-bright border-t border-outline-variant/20 p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] mt-auto shrink-0 z-20 absolute bottom-0 left-0 right-0">
+            {/* Modal Footer: Non-overlapping, pinned at bottom of modal flex container */}
+            <div className="bg-surface-bright border-t border-outline-variant/20 p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] shrink-0 z-20">
               {addressError && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}

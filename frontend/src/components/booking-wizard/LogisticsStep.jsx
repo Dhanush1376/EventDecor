@@ -119,7 +119,7 @@ export function LogisticsStep({ formData, handleInputChange, handleNestedInputCh
                 type="text"
                 value="India"
                 disabled
-                className="w-full px-5 py-3 rounded-full border border-black/5 bg-black/5 text-[13px] outline-none text-black/60 font-medium cursor-not-allowed"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-black/5 bg-black/5 text-[13px] outline-none text-black/60 font-medium cursor-not-allowed"
               />
             </div>
 
@@ -130,7 +130,7 @@ export function LogisticsStep({ formData, handleInputChange, handleNestedInputCh
               <select
                 value={formData.venue.state || ''}
                 onChange={handleStateChange}
-                className="w-full px-5 py-3 rounded-full border border-black/5 bg-[#fbf9f6] text-[13px] outline-none focus:border-primary/45 transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-black/5 bg-[#fbf9f6] text-[13px] outline-none focus:border-primary/45 transition-colors cursor-pointer"
                 required
               >
                 <option value="" disabled>
@@ -157,7 +157,7 @@ export function LogisticsStep({ formData, handleInputChange, handleNestedInputCh
                 placeholder="e.g. Hyderabad"
                 value={formData.venue.city || ''}
                 onChange={(e) => handleNestedInputChange('venue', 'city', e.target.value)}
-                className="w-full px-5 py-3 rounded-full border border-black/5 bg-[#fbf9f6] text-[13px] outline-none focus:border-primary/45 transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-black/5 bg-[#fbf9f6] text-[13px] outline-none focus:border-primary/45 transition-colors"
                 required
               />
             </div>
@@ -171,7 +171,7 @@ export function LogisticsStep({ formData, handleInputChange, handleNestedInputCh
                 placeholder="e.g. 500001"
                 value={formData.venue.pincode || ''}
                 onChange={(e) => handleNestedInputChange('venue', 'pincode', e.target.value)}
-                className="w-full px-5 py-3 rounded-full border border-black/5 bg-[#fbf9f6] text-[13px] outline-none focus:border-primary/45 transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-black/5 bg-[#fbf9f6] text-[13px] outline-none focus:border-primary/45 transition-colors"
               />
             </div>
 
@@ -184,7 +184,7 @@ export function LogisticsStep({ formData, handleInputChange, handleNestedInputCh
                 placeholder="Enter the complete hotel, banquet hall, or estate destination address..."
                 value={formData.venue.address}
                 onChange={(e) => handleNestedInputChange('venue', 'address', e.target.value)}
-                className="w-full px-5 py-3 rounded-2xl border border-black/5 bg-[#fbf9f6] text-[13px] outline-none focus:border-primary/45 transition-colors h-20 resize-none"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-black/5 bg-[#fbf9f6] text-[13px] outline-none focus:border-primary/45 transition-colors h-20 resize-none"
                 required
               />
             </div>

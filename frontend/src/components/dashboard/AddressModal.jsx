@@ -1,15 +1,23 @@
 import { X, Save } from 'lucide-react';
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDashboard } from '../../context/DashboardContext';
 import { userService } from '../../services/domainServices';
 import { MandalaElement } from '../ui/MandalaElement';
 import { useAddressManagement } from '../../hooks/useAddressManagement';
 import { useScrollLock } from '../../hooks/useScrollLock';
-import { MapLocationPicker } from './MapLocationPicker';
 import { AddressFormFields } from './AddressFormFields';
 
 export function AddressModal() {
+  const [mounted, setMounted] = useState(false);
+  const [maxModalHeight, setMaxModalHeight] = useState('90vh');
+  const formContainerRef = useRef(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const {
     user,
     isAddressModalOpen,
@@ -40,18 +48,69 @@ export function AddressModal() {
 
   useScrollLock(isAddressModalOpen && !!addressFormData);
 
-  if (!isAddressModalOpen || !addressFormData) return null;
+  // Dynamic visualViewport tracker for mobile virtual keyboard resizing
+  useEffect(() => {
+    if (!isAddressModalOpen || typeof window === 'undefined') return;
 
-  return (
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const updateHeight = () => {
+      const isMobile = window.innerWidth < 1024;
+      if (isMobile) {
+        const availableHeight = vv.height;
+        const targetHeight = Math.max(260, Math.floor(availableHeight * 0.94));
+        setMaxModalHeight(`${targetHeight}px`);
+      } else {
+        setMaxModalHeight('90vh');
+      }
+    };
+
+    updateHeight();
+    vv.addEventListener('resize', updateHeight);
+    vv.addEventListener('scroll', updateHeight);
+
+    return () => {
+      vv.removeEventListener('resize', updateHeight);
+      vv.removeEventListener('scroll', updateHeight);
+    };
+  }, [isAddressModalOpen]);
+
+  // Smoothly scroll focused field into visible viewport when keyboard opens
+  const handleFocusCapture = (e) => {
+    const target = e.target;
+    if (!target) return;
+    const tag = target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+      setTimeout(() => {
+        if (!target || !formContainerRef.current) return;
+        const targetRect = target.getBoundingClientRect();
+        const containerRect = formContainerRef.current.getBoundingClientRect();
+
+        const isObscured =
+          targetRect.bottom > containerRect.bottom - 20 ||
+          targetRect.top < containerRect.top + 20 ||
+          (window.visualViewport && targetRect.bottom > window.visualViewport.height - 50);
+
+        if (isObscured) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+  };
+
+  if (!mounted || !isAddressModalOpen || !addressFormData) return null;
+
+  return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-end justify-center lg:items-center p-0 lg:p-4">
+      <div className="fixed inset-0 z-[100] pointer-events-none">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => setIsAddressModalOpen(false)}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] pointer-events-auto"
         />
 
         {/* Modal Container */}
@@ -60,9 +119,13 @@ export function AddressModal() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed bottom-0 left-0 right-0 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:bottom-auto lg:max-w-2xl w-full flex flex-col z-[101]"
+          style={{ maxHeight: maxModalHeight }}
+          className="fixed bottom-0 left-0 right-0 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:bottom-auto lg:max-w-2xl w-full flex flex-col z-[101] pointer-events-auto"
         >
-          <div className="w-full bg-white rounded-t-lg lg:rounded-lg shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden max-h-[90vh] flex flex-col">
+          <div
+            style={{ maxHeight: maxModalHeight }}
+            className="w-full bg-white rounded-t-lg lg:rounded-lg shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col"
+          >
             {/* Rotating Gold Mandala Overlay */}
             <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-[0.04] z-0">
               <MandalaElement
@@ -74,6 +137,7 @@ export function AddressModal() {
               />
             </div>
 
+            {/* Modal Header */}
             <div className="bg-surface-bright z-10 pt-5 pb-4 px-6 flex justify-between items-center border-b border-outline-variant/20 rounded-t-lg shrink-0 relative">
               <h3 className="text-[11px] font-extrabold text-on-surface uppercase tracking-widest">
                 {editingAddressId === 'new' ? 'Add New Site Parameters' : 'Modify Site Parameters'}
@@ -87,8 +151,13 @@ export function AddressModal() {
               </button>
             </div>
 
-            <div className="overflow-y-auto p-6 relative z-10 flex-1 pb-24">
-              <form onSubmit={handleAddressSave} className="space-y-6">
+            {/* Scrollable Form Body */}
+            <div
+              ref={formContainerRef}
+              onFocusCapture={handleFocusCapture}
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 relative z-10 pb-6"
+            >
+              <form id="dashboard-address-form" onSubmit={handleAddressSave} className="space-y-6">
                 {/* Geolocation Section */}
                 <div className="py-5 border-b border-outline-variant/20">
                   <div className="flex items-center justify-between mb-5">
@@ -105,16 +174,8 @@ export function AddressModal() {
                       <span className="material-symbols-outlined text-[10px] font-bold">
                         my_location
                       </span>
-                      <span>Use Current Location</span>
+                      <span>{isDetectingLocation ? 'Detecting...' : 'Use Current Location'}</span>
                     </button>
-                  </div>
-
-                  <div className="w-full h-44 bg-surface-container-low rounded-lg mb-4 relative overflow-hidden border border-outline-variant/20 z-0">
-                    <MapLocationPicker
-                      position={mapPosition}
-                      setPosition={setMapPosition}
-                      fetchAddressFromCoords={fetchAddressFromCoords}
-                    />
                   </div>
 
                   {addressFormData.latitude && addressFormData.longitude && (
@@ -139,16 +200,18 @@ export function AddressModal() {
               </form>
             </div>
 
-            {/* Sticky Action Footer */}
-            <div className="bg-surface-bright border-t border-outline-variant/20 p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] mt-auto shrink-0 z-20 absolute bottom-0 left-0 right-0">
+            {/* Non-Overlapping Action Footer */}
+            <div className="bg-surface-bright border-t border-outline-variant/20 p-4 pb-[calc(1rem+var(--safe-area-bottom))] lg:pb-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] shrink-0 z-20">
               <div className="w-full flex gap-4 max-w-lg mx-auto">
                 <button
+                  type="button"
                   onClick={() => setIsAddressModalOpen(false)}
                   className="flex-1 bg-surface-bright text-secondary py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] shadow-sm border border-outline-variant/30 flex justify-center items-center cursor-pointer hover:bg-surface transition-colors"
                 >
                   Cancel
                 </button>
                 <button
+                  form="dashboard-address-form"
                   disabled={isAddressSaving}
                   onClick={handleAddressSave}
                   type="submit"
@@ -168,6 +231,7 @@ export function AddressModal() {
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

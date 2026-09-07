@@ -36,8 +36,155 @@ import {
 } from '../components/settings/StoreSettingsPanels';
 import { VisualSearchPanel } from '../components/settings/VisualSearchPanel';
 
+const DEFAULT_STORE_SETTINGS = {
+  general: {
+    storeName: 'Siri Arts & Crafts',
+    tagline: 'Handcrafted Heritage & Artistry',
+    supportEmail: 'sirisha.atmakuri@gmail.com',
+    announcementText: '',
+    announcementLink: '',
+    maintenanceMode: false,
+    storeEnabled: true,
+  },
+  shipping: {
+    deliveryCharge: 0,
+    freeShippingThreshold: 2000,
+    enableFreeShipping: true,
+    expressDeliveryCharge: 249,
+    enableExpressDelivery: true,
+    packagingFee: 0,
+    remoteAreaCharge: 0,
+    estimatedDeliveryDays: '5-7',
+    maxShippingDistance: 0,
+    enableLocalDelivery: false,
+    originPincode: '523001',
+    defaultCourierPartner: 'Delhivery Logistics',
+  },
+  payments: {
+    enableCOD: true,
+    codFee: 30,
+    codMinOrder: 500,
+    codMaxOrder: 50000,
+    enableRazorpay: true,
+    enableWallet: true,
+    enableUPI: true,
+    enableNetBanking: true,
+    enableCards: true,
+    enableEMI: false,
+  },
+  returnsExchanges: {
+    enableReturns: true,
+    enableExchanges: true,
+    returnWindowDays: 7,
+    exchangeWindowDays: 7,
+    returnProcessingDays: '3-5',
+    refundProcessingDays: '5-7 business days',
+    requireImages: true,
+    pickupAvailable: true,
+    storeCreditOption: true,
+  },
+  cancellation: {
+    allowCancellation: true,
+    cancellationWindowHours: 24,
+    refundTimeline: '5-7 business days',
+    walletRefund: true,
+    originalPaymentRefund: true,
+  },
+  loyalty: {
+    walletEnabled: true,
+    referralProgramEnabled: true,
+    reviewRewardsEnabled: true,
+    welcomeBonusEnabled: true,
+    pointsPerRupee: 0,
+    coinsPerRupee: 0.1,
+    welcomeBonus: 100,
+    referralBonusReferrer: 150,
+    referralBonusReferee: 50,
+    reviewRewardText: 10,
+    reviewRewardPhoto: 25,
+    reviewRewardVideo: 50,
+    reviewCoinsBonus: 15,
+    welcomeCouponDiscount: 10,
+    welcomeCouponMinOrder: 499,
+    welcomeCouponMaxDiscount: 200,
+    welcomeCouponExpiryDays: 30,
+    tiers: [
+      { name: 'Bronze', minSpend: 0, cashbackRate: 0.02 },
+      { name: 'Silver', minSpend: 5000, cashbackRate: 0.05 },
+      { name: 'Gold', minSpend: 15000, cashbackRate: 0.08 },
+      { name: 'Platinum', minSpend: 40000, cashbackRate: 0.12 },
+    ],
+  },
+  orders: {
+    maxItemsPerOrder: 20,
+    maxQuantityPerItem: 50,
+    minOrderValue: 0,
+    maxOrderValue: 1000000,
+    platformFee: 0,
+  },
+  taxes: {
+    gstEnabled: true,
+    gstRate: 0.18,
+    cgstRate: 0.09,
+    sgstRate: 0.09,
+    invoicePrefix: 'INV-',
+    hsnCode: '',
+    gstNumber: '29AAAES9284D1ZX',
+    taxInclusive: true,
+    invoiceFooter: '',
+  },
+  notifications: {
+    emailEnabled: true,
+    smsEnabled: true,
+    whatsappEnabled: true,
+  },
+  storefront: {
+    seoTitle: 'Siri Arts and Crafts',
+    seoDescription: 'Premium Handicrafts and Luxury Event Decor',
+    hideGallerySection: false,
+    hideProductsFromGallery: false,
+  },
+  contact: {
+    phone: '+91 98660 06648',
+    email: 'sirisha.atmakuri@gmail.com',
+    supportHours: 'Mon - Sat, 10 AM to 6 PM',
+    address: '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
+    whatsappNumber: '+91 98660 06648',
+    whatsappMessage: 'Hello! Thank you for reaching Siri Arts & Crafts.',
+    googleMapsUrl: '',
+    instagram: '',
+    facebook: '',
+    pinterest: '',
+    youtube: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: 'Ongole',
+    state: 'Andhra Pradesh',
+    country: 'India',
+    postalCode: '523001',
+  },
+  legal: {
+    companyName: 'Siri Arts & Crafts',
+    legalCompanyName: 'Siri Arts and Crafts Private Limited',
+    registeredAddress: '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh',
+    cin: '',
+  },
+};
+
+const mergeSettingsWithDefaults = (fetched) => {
+  const merged = {};
+  for (const [sectionKey, defaultSection] of Object.entries(DEFAULT_STORE_SETTINGS)) {
+    const fetchedSection = fetched?.[sectionKey] || {};
+    merged[sectionKey] = {
+      ...defaultSection,
+      ...fetchedSection,
+    };
+  }
+  return merged;
+};
+
 export function AdminSettings({ hideHeader }) {
-  const { user: authUser, setUser: setAuthUser } = useAuth();
+  const { user: authUser, updateUser, setUser: setAuthUser } = useAuth();
   const {
     activeRole,
     safetyLock,
@@ -113,13 +260,24 @@ export function AdminSettings({ hideHeader }) {
   const [activeSection, setActiveSection] = useState(0);
 
   const [profileForm, setProfileForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    role: 'manager',
+    name: authUser?.name || '',
+    email: authUser?.email || '',
+    phone: authUser?.phone || '',
+    role: authUser?.role || 'admin',
   });
 
-  const [storeSettings, setStoreSettings] = useState(null);
+  useEffect(() => {
+    if (authUser) {
+      setProfileForm((prev) => ({
+        name: prev.name || authUser.name || '',
+        email: prev.email || authUser.email || '',
+        phone: prev.phone || authUser.phone || '',
+        role: authUser.role || prev.role || 'admin',
+      }));
+    }
+  }, [authUser]);
+
+  const [storeSettings, setStoreSettings] = useState(() => mergeSettingsWithDefaults({}));
 
   const {
     formData: settings,
@@ -224,35 +382,35 @@ export function AdminSettings({ hideHeader }) {
     try {
       try {
         const profRes = await userService.getProfile();
-        if (profRes?.success && profRes?.data) {
+        const profData = profRes?.data || profRes;
+        if (profData && typeof profData === 'object') {
           setProfileForm({
-            name: profRes.data.name || authUser?.name || 'Siri Master Admin',
-            email: profRes.data.email || authUser?.email || 'admin@siriartsandcrafts.com',
-            phone: profRes.data.phone || authUser?.phone || '+91 98660 06648',
-            role: profRes.data.role || authUser?.role || 'admin',
+            name: profData.name || authUser?.name || '',
+            email: profData.email || authUser?.email || '',
+            phone: profData.phone || authUser?.phone || '',
+            role: profData.role || authUser?.role || 'admin',
           });
         }
-      } catch {}
+      } catch (profErr) {
+        logger.warn('Could not sync user profile:', profErr);
+      }
 
       try {
         const storeRes = await storeSettingsService.getAdminSettings();
-        setStoreSettings(storeRes || {});
+        if (storeRes && typeof storeRes === 'object') {
+          setStoreSettings(mergeSettingsWithDefaults(storeRes));
+        } else {
+          setStoreSettings(mergeSettingsWithDefaults({}));
+        }
       } catch (err) {
-        logger.error('Could not fetch store settings', err);
-        setStoreSettings({
-          general: {},
-          shipping: {},
-          payments: {},
-          returnsExchanges: {},
-          cancellation: {},
-          loyalty: {},
-          orders: {},
-          taxes: {},
-          notifications: {},
-          storefront: {},
-          contact: {},
-          legal: {},
-        });
+        logger.warn('Could not fetch admin store settings, attempting public fallback', err);
+        try {
+          const publicRes = await storeSettingsService.getPublicSettings();
+          setStoreSettings(mergeSettingsWithDefaults(publicRes || {}));
+        } catch (_pubErr) {
+          logger.error('Could not fetch public store settings, using defaults', _pubErr);
+          setStoreSettings(mergeSettingsWithDefaults({}));
+        }
       }
 
       try {
@@ -288,9 +446,14 @@ export function AdminSettings({ hideHeader }) {
         email: profileForm.email,
         phone: profileForm.phone,
       });
-      if (res.success) {
+      if (res.success || res.data) {
         toast.success('Profile updated');
-        if (setAuthUser && res.data) setAuthUser(res.data);
+        const updatedData = res.data || res;
+        if (updateUser) {
+          updateUser(updatedData);
+        } else if (setAuthUser) {
+          setAuthUser(updatedData);
+        }
       }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to update profile details.'));
@@ -322,7 +485,14 @@ export function AdminSettings({ hideHeader }) {
     try {
       const formData = storeSettings[sectionId];
       const res = await storeSettingsService.updateSection(sectionId, formData);
-      setStoreSettings((prev) => ({ ...prev, [sectionId]: res[sectionId] || formData }));
+      const updatedSection = res?.[sectionId] || res || formData;
+      setStoreSettings((prev) => ({
+        ...prev,
+        [sectionId]: {
+          ...(prev?.[sectionId] || {}),
+          ...updatedSection,
+        },
+      }));
       toast.success(`${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)} settings saved`);
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to save settings.'));

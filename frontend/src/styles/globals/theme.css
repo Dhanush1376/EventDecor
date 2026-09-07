@@ -57,6 +57,7 @@
   /* ─── Layout Measurements ─── */
   --navbar-height: 60px;
   --navbar-height-scrolled: 52px;
+  --bottom-nav-height: 65px;
 }
 
 @theme {

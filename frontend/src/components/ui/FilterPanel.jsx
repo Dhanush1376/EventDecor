@@ -363,17 +363,17 @@ export function FilterPanel({
         createPortal(
           <AnimatePresence>
             {isOpen && (
-              <div className="fixed inset-0 z-[1000] lg:hidden flex flex-col justify-end">
+              <div className="fixed inset-0 z-[1000] lg:hidden pointer-events-none">
                 {/* Backdrop */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={onClose}
-                  className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                  className="fixed inset-0 bg-black/60 backdrop-blur-md pointer-events-auto"
                 />
 
-                {/* Bottom Sheet Content */}
+                {/* Bottom Sheet Shell */}
                 <motion.div
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
@@ -384,9 +384,9 @@ export function FilterPanel({
                     stiffness: 300,
                     mass: 0.8,
                   }}
-                  className="relative w-full flex flex-col"
+                  className="fixed bottom-0 left-0 right-0 z-10 pointer-events-auto flex flex-col"
                 >
-                  <div className="relative w-full bg-surface rounded-t-[32px] p-5 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10">
+                  <div className="relative w-full bg-surface rounded-t-[32px] p-5 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10 pb-[calc(1.25rem+var(--safe-area-bottom))]">
                     {/* Handlebar for bottom sheet feel */}
                     <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-4 shrink-0" />
 

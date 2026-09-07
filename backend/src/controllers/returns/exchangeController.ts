@@ -189,5 +189,13 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
   const { ReturnNotificationService } = require('../../services/returns/ReturnNotificationService');
   await ReturnNotificationService.notifyCustomerExchangeVerified(exchangeRequest.returnRequestId);
 
-  res.status(200).json({ success: true, message: 'Payment verified successfully' });
+  res.status(200).json({
+    success: true,
+    message: 'Payment verified successfully',
+    data: {
+      exchangeId: exchangeRequest.exchangeId,
+      returnId: returnReq?.returnId || exchangeRequest.returnRequestId,
+      _id: exchangeRequest._id,
+    },
+  });
 });

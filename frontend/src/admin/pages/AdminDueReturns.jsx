@@ -32,6 +32,25 @@ export function AdminDueReturns() {
     navigate(`/admin/rentals/detail/${id}`);
   };
 
+  const getDueStatusBadge = (diffDays) => {
+    if (diffDays > 0) {
+      return {
+        label: 'Overdue',
+        style: 'bg-red-600 text-white',
+      };
+    }
+    if (diffDays === 0) {
+      return {
+        label: 'Due Today',
+        style: 'bg-amber-500 text-white',
+      };
+    }
+    return {
+      label: 'Due Soon',
+      style: 'bg-blue-600 text-white',
+    };
+  };
+
   const renderSection = (title, items, icon, colorClass, emptyMessage) => {
     if (!items || items.length === 0) return null;
 
@@ -63,14 +82,23 @@ export function AdminDueReturns() {
 
                   const diffTime = today - endDate;
                   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                  const dueBadge = getDueStatusBadge(diffDays);
 
                   return (
                     <tr
                       key={r._id}
-                      className="admin-table-row-clickable group bg-gray-50 border-gray-200"
+                      className="admin-table-row-clickable group transition-colors border-b border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-muted)]"
                       onClick={() => goToDetail(r._id)}
                     >
-                      <td className="font-semibold text-[var(--admin-text-primary)]">
+                      <td className="relative overflow-hidden font-semibold text-[var(--admin-text-primary)] pl-7">
+                        {/* Top-Left Diagonal Status Badge */}
+                        <div className="absolute top-0 left-0 w-14 h-14 pointer-events-none z-10 overflow-hidden">
+                          <div
+                            className={`absolute top-2.5 -left-8 w-28 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wide ${dueBadge.style}`}
+                          >
+                            {dueBadge.label}
+                          </div>
+                        </div>
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
                             #{r._id.substring(r._id.length - 8).toUpperCase()}
@@ -192,6 +220,7 @@ export function AdminDueReturns() {
 
               const diffTime = today - endDate;
               const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+              const dueBadge = getDueStatusBadge(diffDays);
               const imgSrc =
                 r.productImage ||
                 r.productImages?.[0] ||
@@ -202,18 +231,26 @@ export function AdminDueReturns() {
                 <div
                   key={r._id}
                   onClick={() => goToDetail(r._id)}
-                  className="bg-gray-50 border-gray-200 rounded-[12px] p-4 border shadow-sm hover:border-gray-500 hover:shadow-md transition-all duration-200 cursor-pointer group text-left flex flex-col relative overflow-hidden"
+                  className="bg-[var(--admin-surface)] rounded-[12px] p-4 border border-[var(--admin-border)] shadow-sm hover:border-[var(--admin-border-strong)] hover:shadow-md transition-all duration-200 cursor-pointer group text-left flex flex-col relative overflow-hidden"
                 >
-                  <div className="absolute top-0 left-0 w-12 h-12 pointer-events-none z-10 overflow-hidden rounded-tl-[12px]">
-                    <div className="absolute top-2 -left-7 w-24 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wider bg-indigo-500">
-                      RENTAL
+                  {/* Top-Left Diagonal Status Badge */}
+                  <div className="absolute top-0 left-0 w-14 h-14 pointer-events-none z-10 overflow-hidden rounded-tl-[12px]">
+                    <div
+                      className={`absolute top-2.5 -left-8 w-28 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wide ${dueBadge.style}`}
+                    >
+                      {dueBadge.label}
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[15px] font-bold text-gray-900 ml-6">
-                      #{r._id.substring(r._id.length - 8).toUpperCase()}
-                    </span>
+                  <div className="flex items-center justify-between mb-3 pl-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[15px] font-bold text-gray-900">
+                        #{r._id.substring(r._id.length - 8).toUpperCase()}
+                      </span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">
+                        RENTAL
+                      </span>
+                    </div>
                     <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-gray-200 text-gray-700">
                       {endDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                     </span>

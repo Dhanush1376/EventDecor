@@ -1,47 +1,40 @@
-import {
-  PackageCheck,
-  Ban,
-  CheckCircle2,
-  ListChecks,
-  HelpCircle,
-  CreditCard,
-  Truck,
-  Wallet,
-  Landmark,
-  Eye,
-  Info,
-  ArrowRight,
-  Minus,
-  Plus,
-  PackageX,
-  ArrowLeftRight,
-  Ruler,
-  FileQuestion,
-  RotateCcw,
-  MoreHorizontal,
-  Loader2,
-} from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+  CheckCircle2,
+  Truck,
+  CreditCard,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  Minus,
+  Plus,
+  ShieldCheck,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 import { returnService } from '../../services/api/returnService';
 import { orderService } from '../../services/domainServices';
-import toast from 'react-hot-toast';
 import { OptimizedImage } from '../../components/ui';
 import { ReturnExchangeSkeleton } from '../../components/ui/skeletons/PageSkeletons';
 import { SEO } from '../../components/seo/SEO';
 import EvidenceUploader from './components/EvidenceUploader';
 
-const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
-
 const RETURN_REASONS = [
-  { value: 'Defective / Damaged', label: 'Damaged', icon: PackageX },
-  { value: 'Wrong Item Sent', label: 'Wrong Item', icon: ArrowLeftRight },
-  { value: 'Size too small/large', label: 'Size Issue', icon: Ruler },
-  { value: "Product doesn't match description", label: 'Mismatch', icon: FileQuestion },
-  { value: 'Changed my mind', label: 'Changed Mind', icon: RotateCcw },
-  { value: 'Other', label: 'Other', icon: MoreHorizontal },
+  'Damaged item',
+  'Wrong item received',
+  'Item is different from expected',
+  'Size or fit issue',
+  'Changed my mind',
+  'Quality issue',
+  'Other',
 ];
+
+const generateSafeUUID = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'ret-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 9);
+};
 
 export const ReturnRequestPage = () => {
   const [searchParams] = useSearchParams();
@@ -49,46 +42,21 @@ export const ReturnRequestPage = () => {
   const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
+  const [returnState, setReturnState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [returnState, setReturnState] = useState(null);
 
-  // 7-Step Wizard
+  // 3 Clear Steps: 1 = Item & Reason, 2 = Pickup & Refund, 3 = Review & Submit, 4 = Success
   const [step, setStep] = useState(1);
-  const totalSteps = 6; // Step 7 is success
 
-  const [selectedItems, setSelectedItems] = useState({}); // { itemId: { ...details } }
+  // State
+  const [selectedItems, setSelectedItems] = useState({}); // { itemId: { ... } }
   const [refundMethod, setRefundMethod] = useState('original');
   const [upiId, setUpiId] = useState('');
   const [pickupAddress, setPickupAddress] = useState(null);
-
-  const DRAFT_KEY = `return_draft_${orderId}`;
-
-  useEffect(() => {
-    if (orderId) {
-      try {
-        const draft = localStorage.getItem(DRAFT_KEY);
-        if (draft) {
-          const parsed = JSON.parse(draft);
-          if (parsed.selectedItems) setSelectedItems(parsed.selectedItems);
-          if (parsed.refundMethod) setRefundMethod(parsed.refundMethod);
-          if (parsed.upiId) setUpiId(parsed.upiId);
-          if (parsed.step && parsed.step < 7) setStep(parsed.step);
-        }
-      } catch (e) {}
-    }
-  }, [orderId, DRAFT_KEY]);
-
-  useEffect(() => {
-    if (orderId && step < 7) {
-      try {
-        localStorage.setItem(
-          DRAFT_KEY,
-          JSON.stringify({ selectedItems, refundMethod, upiId, step }),
-        );
-      } catch (e) {}
-    }
-  }, [orderId, selectedItems, refundMethod, upiId, step, DRAFT_KEY]);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [createdReturn, setCreatedReturn] = useState(null);
+  const [idempotencyKey] = useState(generateSafeUUID);
 
   useEffect(() => {
     if (!orderId) {
@@ -113,9 +81,11 @@ export const ReturnRequestPage = () => {
           }
         } else {
           toast.error('Order not found');
+          navigate('/dashboard/orders');
         }
       } catch (err) {
         toast.error('Failed to load order details');
+        navigate('/dashboard/orders');
       } finally {
         setLoading(false);
       }
@@ -124,768 +94,621 @@ export const ReturnRequestPage = () => {
     fetchData();
   }, [orderId, navigate]);
 
-  const handleItemSelect = (item, checked) => {
+  if (loading) return <ReturnExchangeSkeleton />;
+  if (!order) return null;
+
+  const isCOD =
+    (order.paymentMethod || '').toLowerCase() === 'cod' ||
+    (order.paymentMethod || '').toLowerCase() === 'cash_on_delivery';
+
+  const handleItemToggle = (item, checked) => {
     if (checked) {
       setSelectedItems((prev) => ({
         ...prev,
         [item._id]: {
-          productId: item.productId._id || item.productId,
+          productId: item.productId?._id || item.productId,
+          title: item.title || item.productId?.title || 'Product',
+          imageSrc: item.imageSrc || item.productId?.imageSrc,
+          price: item.price || 0,
           returnQuantity: 1,
-          maxQuantity: item.quantity,
-          condition: '',
+          maxQuantity: item.quantity || 1,
           reason: '',
           description: '',
           evidenceImages: [],
           evidenceVideos: [],
-          resolution: 'refund',
-          title: item.title,
-          image: item.imageSrc || item.productId.imageSrc,
-          price: item.price,
         },
       }));
     } else {
-      const next = { ...selectedItems };
-      delete next[item._id];
-      setSelectedItems(next);
+      setSelectedItems((prev) => {
+        const copy = { ...prev };
+        delete copy[item._id];
+        return copy;
+      });
     }
   };
 
-  const updateItemDetails = (itemId, field, value) => {
-    setSelectedItems((prev) => ({
-      ...prev,
-      [itemId]: { ...prev[itemId], [field]: value },
-    }));
+  const updateItem = (itemId, field, val) => {
+    setSelectedItems((prev) => {
+      if (!prev[itemId]) return prev;
+      return {
+        ...prev,
+        [itemId]: { ...prev[itemId], [field]: val },
+      };
+    });
   };
 
-  const handleNext = () => {
-    if (step === 1 && Object.keys(selectedItems).length === 0) {
-      return toast.error('Please select at least one item');
-    }
-    if (step === 2 && Object.values(selectedItems).some((item) => !item.condition)) {
-      return toast.error('Please assess the condition of all items');
-    }
-    if (step === 3 && Object.values(selectedItems).some((item) => !item.reason)) {
-      return toast.error('Please provide a reason for all items');
-    }
-    if (step === 5 && refundMethod === 'original' && !upiId.trim()) {
-      return toast.error('Please provide a UPI ID for original payment refund');
-    }
+  // Calculate estimated refund
+  const estimatedRefund = Object.values(selectedItems).reduce((sum, item) => {
+    const itemTotal = (item.price || 0) * (item.returnQuantity || 1);
+    return sum + itemTotal;
+  }, 0);
 
-    setStep((s) => s + 1);
-  };
+  // Validation
+  const canProceedFromStep1 =
+    Object.keys(selectedItems).length > 0 &&
+    Object.values(selectedItems).every((i) => Boolean(i.reason));
+
+  const canProceedFromStep2 = !isCOD || refundMethod === 'wallet' || Boolean(upiId.trim());
 
   const handleSubmit = async () => {
+    if (submitting) return;
     setSubmitting(true);
-    try {
-      const idempotencyKey = window.crypto?.randomUUID
-        ? window.crypto.randomUUID()
-        : Math.random().toString();
 
+    try {
       const payload = {
         orderId,
-        refundMethod,
-        upiId: refundMethod === 'original' ? upiId.trim() : undefined,
+        refundMethod: isCOD && refundMethod === 'original' ? 'original' : refundMethod,
+        upiId: isCOD && refundMethod === 'original' ? upiId.trim() : undefined,
         pickupAddress,
         idempotencyKey,
         items: Object.values(selectedItems).map((item) => ({
           productId: item.productId,
           returnQuantity: item.returnQuantity,
           reason: item.reason,
-          description: item.description,
-          evidenceImages: item.evidenceImages,
-          evidenceVideos: item.evidenceVideos,
+          description: item.description?.trim() || undefined,
+          evidenceImages: item.evidenceImages || [],
+          evidenceVideos: item.evidenceVideos || [],
         })),
       };
 
       const res = await returnService.createReturn(payload);
-      if (res.data.success) {
-        try {
-          localStorage.removeItem(DRAFT_KEY);
-        } catch (e) {}
-        toast.success('Return request submitted');
-        setStep(7);
+      if (res.data?.success) {
+        setCreatedReturn(res.data.data);
+        setStep(4); // Success step
+        toast.success('Return request submitted successfully!');
+      } else {
+        toast.error(res.data?.message || 'Failed to submit return request');
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to submit request');
+      toast.error(err.response?.data?.message || 'Failed to submit return request');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) return <ReturnExchangeSkeleton />;
-  if (!order) return null;
+  // Success Screen
+  if (step === 4 && createdReturn) {
+    const returnReqId = createdReturn._id || createdReturn.returnId;
+    return (
+      <div className="max-w-xl mx-auto py-12 px-4 text-center">
+        <SEO title="Return Request Submitted | Siri Arts & Crafts" noindex />
+        <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-5 shadow-xs">
+          <CheckCircle2 className="w-8 h-8" />
+        </div>
+        <h1 className="text-2xl font-display font-medium text-stone-900 mb-2">
+          Return Request Submitted
+        </h1>
+        <p className="text-sm text-stone-600 mb-6">
+          Your request <strong className="text-stone-900">#{createdReturn.returnId}</strong> has
+          been received. Our team will review it shortly.
+        </p>
 
-  const renderStepIndicator = () => (
-    <div className="mb-8">
-      <div className="flex items-center gap-1.5 mb-4">
-        {[...Array(totalSteps)].map((_, i) => (
-          <div
-            key={i}
-            className={`flex-1 h-[2px] transition-colors ${i + 1 <= step ? 'bg-[#2A2927]' : 'bg-outline-variant/30'}`}
-          />
-        ))}
+        <div className="bg-white rounded-2xl border border-stone-200 p-5 text-left mb-6 space-y-3 text-xs text-stone-700">
+          <div className="flex justify-between pb-3 border-b border-stone-100">
+            <span className="text-stone-500">Items Returning:</span>
+            <span className="font-semibold text-stone-900">
+              {Object.keys(selectedItems).length} item(s)
+            </span>
+          </div>
+          <div className="flex justify-between pb-3 border-b border-stone-100">
+            <span className="text-stone-500">Refund Amount:</span>
+            <span className="font-semibold text-emerald-700">
+              ₹{Math.round(estimatedRefund).toLocaleString('en-IN')}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-stone-500">Pickup Location:</span>
+            <span className="font-medium text-stone-900 text-right">
+              {pickupAddress?.city || 'Delivery Address'}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            to={`/dashboard/returns/${returnReqId}`}
+            className="px-6 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs uppercase tracking-wider transition-colors inline-flex items-center justify-center gap-2 cursor-pointer"
+          >
+            Track Return
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            to="/dashboard/orders"
+            className="px-6 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs uppercase tracking-wider transition-colors inline-flex items-center justify-center"
+          >
+            View My Orders
+          </Link>
+        </div>
       </div>
-      <div className="flex justify-between text-[9px] font-bold text-secondary uppercase tracking-widest">
-        <span>
-          STEP {step} OF {totalSteps}
-        </span>
-        <span>
-          {step === 1 && 'SELECT ITEMS'}
-          {step === 2 && 'CONDITION'}
-          {step === 3 && 'REASON & EVIDENCE'}
-          {step === 4 && 'PICKUP ADDRESS'}
-          {step === 5 && 'REFUND METHOD'}
-          {step === 6 && 'REVIEW'}
-        </span>
-      </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="max-w-2xl text-left text-[11px] py-5">
-      <SEO title="Return Request | Siri Arts & Crafts" noindex />
+    <div className="max-w-2xl mx-auto py-8 px-4 text-left">
+      <SEO title="Return Items | Siri Arts & Crafts" noindex />
 
-      {step < 7 && renderStepIndicator()}
+      {/* Breadcrumb Header */}
+      <div className="mb-6">
+        <Link
+          to="/dashboard/orders"
+          className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-900 mb-2 transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Order
+        </Link>
+        <h1 className="text-2xl font-display font-medium text-stone-900">Return Items</h1>
+        <p className="text-xs text-stone-500 mt-1">
+          Order #{order._id?.toString().slice(-8)} • Select the items you'd like to return
+        </p>
+      </div>
 
-      <AnimatePresence mode="wait">
-        {/* Step 1: Select Items */}
-        {step === 1 && (
-          <motion.div
-            key="step1"
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            className="space-y-4"
-          >
-            <div className="pb-5 mb-5 border-b border-outline-variant/20">
-              <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <PackageCheck className="text-[12px]" strokeWidth={1.5} />
-                WHICH ITEMS WOULD YOU LIKE TO RETURN?
-              </h2>
-            </div>
+      {/* Clean 3-Step Progress Indicator */}
+      <div className="mb-8">
+        <div className="grid grid-cols-3 gap-2 mb-2">
+          <div
+            className={`h-1.5 rounded-full transition-colors ${step >= 1 ? 'bg-stone-900' : 'bg-stone-200'}`}
+          />
+          <div
+            className={`h-1.5 rounded-full transition-colors ${step >= 2 ? 'bg-stone-900' : 'bg-stone-200'}`}
+          />
+          <div
+            className={`h-1.5 rounded-full transition-colors ${step >= 3 ? 'bg-stone-900' : 'bg-stone-200'}`}
+          />
+        </div>
+        <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-stone-500">
+          <span className={step === 1 ? 'text-stone-900' : ''}>1. Select Items</span>
+          <span className={step === 2 ? 'text-stone-900' : ''}>2. Pickup & Refund</span>
+          <span className={step === 3 ? 'text-stone-900' : ''}>3. Review & Submit</span>
+        </div>
+      </div>
 
-            <div className="grid gap-4">
-              {order.items.map((item) => {
-                const productId = item.productId._id || item.productId;
-                const isNonRefundable =
-                  item.isNonRefundable === true || item.productId?.isNonRefundable === true;
+      {/* STEP 1: Select Items & Reason */}
+      {step === 1 && (
+        <div className="space-y-6">
+          <div className="space-y-4">
+            {order.items.map((item) => {
+              const productId = item.productId?._id || item.productId;
+              const isSelected = Boolean(selectedItems[item._id]);
+              const itemState = returnState?.items?.find(
+                (i) => i.productId === productId.toString(),
+              );
+              const isEligible = itemState ? itemState.isEligibleForReturn : true;
 
-                let eligibility = returnState?.items?.find((i) => i.productId === productId);
-                if (isNonRefundable) {
-                  eligibility = { isEligibleForReturn: false, reason: 'Non-Returnable Item' };
-                }
-
-                const isEligible = eligibility?.isEligibleForReturn ?? !isNonRefundable;
-                const isSelected = !!selectedItems[item._id];
-
-                return (
-                  <label
-                    key={item._id}
-                    className={`flex items-start gap-4 p-4 border rounded-[16px] transition-all ${!isEligible ? 'opacity-60 bg-surface-container-lowest border-outline-variant/20 cursor-not-allowed' : isSelected ? 'border-[#D4AF37] bg-[#FDFBF7] cursor-pointer shadow-sm' : 'bg-[#FDFBF7] border-[#E8E6E1]  hover:border-[#D4AF37] cursor-pointer'}`}
-                  >
+              return (
+                <div
+                  key={item._id}
+                  className={`border rounded-2xl p-4 transition-all ${
+                    !isEligible
+                      ? 'bg-stone-50/60 border-stone-200 opacity-60'
+                      : isSelected
+                        ? 'bg-stone-50/50 border-stone-900 shadow-xs'
+                        : 'bg-white border-stone-200 hover:border-stone-300'
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
                     <input
                       type="checkbox"
-                      className={`mt-1 w-4 h-4 accent-[#2A2927] rounded-sm ${!isEligible && 'cursor-not-allowed'}`}
                       checked={isSelected}
                       disabled={!isEligible}
-                      onChange={(e) => isEligible && handleItemSelect(item, e.target.checked)}
+                      onChange={(e) => handleItemToggle(item, e.target.checked)}
+                      className="mt-1 w-5 h-5 rounded-md text-stone-900 focus:ring-stone-900 accent-stone-900 cursor-pointer disabled:cursor-not-allowed"
                     />
-                    <div className="w-16 h-16 rounded-[12px] overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0">
+
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-stone-200">
                       <OptimizedImage
                         src={item.imageSrc || item.productId?.imageSrc}
-                        className={`w-full h-full object-cover ${!isEligible && 'grayscale'}`}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold uppercase tracking-wider text-[#2A2927] text-[10px] truncate">
-                        {item.title || item.productId?.title}
-                      </h3>
-                      <p className="text-[10px] text-secondary mt-1">
-                        ₹{item.price} • QTY: {item.quantity}
-                      </p>
-
-                      {!isEligible && eligibility && (
-                        <div className="inline-flex items-center gap-1.5 mt-2 text-error text-[9px] uppercase tracking-widest font-bold">
-                          <Ban className="text-[12px]" strokeWidth={1.5} />
-                          {eligibility.reason}
-                        </div>
-                      )}
-
-                      {isEligible && (
-                        <div className="inline-flex items-center gap-1 mt-2 text-success text-[9px] uppercase tracking-widest font-bold">
-                          <CheckCircle2 className="text-[12px]" strokeWidth={1.5} />
-                          RETURN WINDOW OPEN
-                        </div>
-                      )}
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Step 2: Condition Assessment */}
-        {step === 2 && (
-          <motion.div
-            key="step2"
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            className="space-y-6"
-          >
-            <div className="pb-5 mb-5 border-b border-outline-variant/20">
-              <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <ListChecks className="text-[12px]" strokeWidth={1.5} />
-                WHAT IS THE CONDITION OF THE ITEMS?
-              </h2>
-            </div>
-            {Object.entries(selectedItems).map(([itemId, data]) => (
-              <div key={itemId} className="p-4 border rounded-[16px] border-outline-variant/30">
-                <div className="flex items-center gap-3.5 mb-4 pb-4 border-b border-outline-variant/20">
-                  <div className="w-14 h-14 rounded-2xl overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0 shadow-2xs">
-                    <OptimizedImage
-                      src={data.image}
-                      alt={data.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold uppercase tracking-wider text-[#2A2927] text-xs leading-snug truncate">
-                      {data.title}
-                    </h3>
-                    <p className="text-[10px] text-secondary mt-1 tracking-wider uppercase font-medium">
-                      {data.price ? `₹${data.price.toLocaleString()} • ` : ''}Qty:{' '}
-                      {data.returnQuantity || 1}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {['Unopened & Sealed', 'Opened but Unused', 'Used', 'Damaged/Defective'].map(
-                    (cond) => (
-                      <div
-                        key={cond}
-                        onClick={() => updateItemDetails(itemId, 'condition', cond)}
-                        className={`p-3 border rounded-[12px] cursor-pointer transition-all text-center uppercase tracking-widest text-[9px] font-bold ${
-                          data.condition === cond
-                            ? 'border-[#D4AF37] bg-[#FDFBF7] text-[#2A2927] shadow-sm ring-1 ring-[#D4AF37]/50'
-                            : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37] text-[#2A2927]'
-                        }`}
-                      >
-                        <span>{cond}</span>
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        )}
-
-        {/* Step 3: Reason & Evidence */}
-        {step === 3 && (
-          <motion.div
-            key="step3"
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            className="space-y-6"
-          >
-            <div className="pb-5 mb-5 border-b border-outline-variant/20">
-              <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <HelpCircle className="text-[12px]" strokeWidth={1.5} />
-                WHY ARE YOU RETURNING THESE?
-              </h2>
-            </div>
-            {Object.entries(selectedItems).map(([itemId, data]) => (
-              <div
-                key={itemId}
-                className="p-4 border rounded-[16px] border-outline-variant/30 space-y-5"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline-variant/20 pb-4">
-                  <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0 shadow-2xs">
-                      <OptimizedImage
-                        src={data.image}
-                        alt={data.title}
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-bold uppercase tracking-wider text-[#2A2927] text-xs leading-snug truncate">
-                        {data.title}
-                      </h3>
-                      <p className="text-[10px] text-secondary mt-1 tracking-wider uppercase font-medium">
-                        {data.price ? `₹${data.price.toLocaleString()} • ` : ''}Max Returnable:{' '}
-                        {data.maxQuantity}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-outline-variant/15">
-                    <span className="text-[9px] uppercase tracking-widest font-bold text-secondary shrink-0 whitespace-nowrap">
-                      RETURN QTY
-                    </span>
-                    <div className="inline-flex items-center bg-[#FDFBF7] border border-outline-variant/40 rounded-xl p-1 shadow-2xs">
-                      <button
-                        type="button"
-                        disabled={(data.returnQuantity || 1) <= 1}
-                        onClick={() =>
-                          updateItemDetails(
-                            itemId,
-                            'returnQuantity',
-                            Math.max(1, (data.returnQuantity || 1) - 1),
-                          )
-                        }
-                        className="w-7 h-7 flex items-center justify-center text-[#2A2927] hover:bg-surface-container-high rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer border-0"
-                        title="Decrease quantity"
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus className="w-3.5 h-3.5" strokeWidth={2} />
-                      </button>
-                      <span className="w-8 text-center text-xs font-bold text-[#2A2927] select-none">
-                        {data.returnQuantity || 1}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={(data.returnQuantity || 1) >= data.maxQuantity}
-                        onClick={() =>
-                          updateItemDetails(
-                            itemId,
-                            'returnQuantity',
-                            Math.min(data.maxQuantity, (data.returnQuantity || 1) + 1),
-                          )
-                        }
-                        className="w-7 h-7 flex items-center justify-center text-[#2A2927] hover:bg-surface-container-high rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer border-0"
-                        title="Increase quantity"
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="w-3.5 h-3.5" strokeWidth={2} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="form-label mb-2 text-[9px] uppercase tracking-widest font-bold">
-                    PRIMARY REASON
-                  </label>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                    {RETURN_REASONS.map((r) => {
-                      const IconComponent = r.icon;
-                      const isSelected = data.reason === r.value;
-                      return (
-                        <button
-                          key={r.value}
-                          type="button"
-                          onClick={() => updateItemDetails(itemId, 'reason', r.value)}
-                          className={`p-3 border rounded-[12px] cursor-pointer flex flex-col items-center justify-center gap-2 text-center transition-all ${
-                            isSelected
-                              ? 'border-[#D4AF37] bg-[#FDFBF7] text-[#2A2927] shadow-sm ring-1 ring-[#D4AF37]/50 font-extrabold'
-                              : 'bg-[#FDFBF7] border-[#E8E6E1] text-secondary hover:border-[#D4AF37] hover:text-[#2A2927]'
-                          }`}
-                        >
-                          <IconComponent
-                            className={`w-4 h-4 ${isSelected ? 'text-[#D4AF37]' : ''}`}
-                            strokeWidth={1.5}
-                          />
-                          <span className="text-[9px] font-bold uppercase tracking-widest">
-                            {r.label}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-sm text-stone-900 truncate">
+                            {item.title || item.productId?.title}
+                          </h3>
+                          <p className="text-xs text-stone-500 mt-0.5">
+                            Ordered: {item.quantity} • ₹{item.price} each
+                          </p>
+                        </div>
+                        {!isEligible && (
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-stone-200 text-stone-600">
+                            {itemState?.returnBadge || 'Not Eligible'}
                           </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="form-label mb-2 text-[9px] uppercase tracking-widest font-bold block">
-                    ADDITIONAL COMMENTS {data.reason === 'Other' && '*'}
-                  </label>
-                  <textarea
-                    className="form-field resize-none h-20"
-                    placeholder="Provide more details..."
-                    value={data.description}
-                    onChange={(e) => updateItemDetails(itemId, 'description', e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label mb-2 text-[9px] uppercase tracking-widest font-bold block">
-                    UPLOAD EVIDENCE (OPTIONAL)
-                  </label>
-                  <EvidenceUploader
-                    images={data.evidenceImages}
-                    videos={data.evidenceVideos}
-                    onImagesChange={(imgs) => updateItemDetails(itemId, 'evidenceImages', imgs)}
-                    onVideosChange={(vids) => updateItemDetails(itemId, 'evidenceVideos', vids)}
-                  />
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        )}
-
-        {/* Step 4: Pickup */}
-        {step === 4 && (
-          <motion.div
-            key="step4"
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            className="space-y-6"
-          >
-            <div className="pb-5 mb-5 border-b border-outline-variant/20">
-              <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <Truck className="text-[12px]" strokeWidth={1.5} />
-                CONFIRM PICKUP ADDRESS
-              </h2>
-            </div>
-            <div className="border rounded-[16px] border-outline-variant/30 p-5 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-[#2A2927]"></div>
-              {pickupAddress ? (
-                <div>
-                  <h3 className="font-bold text-[11px] text-[#2A2927] uppercase tracking-wider mb-2">
-                    {pickupAddress.name}
-                  </h3>
-                  <p className="text-[10px] text-secondary leading-relaxed uppercase tracking-wider">
-                    {pickupAddress.address}
-                  </p>
-                  {(pickupAddress.locality || pickupAddress.landmark) && (
-                    <p className="text-[10px] text-secondary leading-relaxed uppercase tracking-wider">
-                      {pickupAddress.locality}{' '}
-                      {pickupAddress.landmark ? `(Near ${pickupAddress.landmark})` : ''}
-                    </p>
-                  )}
-                  <p className="text-[10px] text-secondary leading-relaxed uppercase tracking-wider">
-                    {pickupAddress.city}, {pickupAddress.state} {pickupAddress.pincode}
-                  </p>
-                  <p className="text-[10px] text-secondary mt-2 font-bold uppercase tracking-wider">
-                    PHONE: {pickupAddress.phone}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-error font-bold uppercase tracking-widest text-[9px]">
-                  No address found on order.
-                </p>
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Step 5: Refund */}
-        {step === 5 && (
-          <motion.div
-            key="step5"
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            className="space-y-6"
-          >
-            <div className="pb-5 mb-5 border-b border-outline-variant/20">
-              <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <Wallet className="text-[12px]" strokeWidth={1.5} />
-                SELECT REFUND METHOD
-              </h2>
-            </div>
-
-            <div className="space-y-4">
-              <label
-                className={`flex items-start gap-4 p-4 border rounded-[16px] transition-all cursor-pointer ${
-                  refundMethod === 'wallet'
-                    ? 'border-[#D4AF37] bg-[#FDFBF7] shadow-sm ring-1 ring-[#D4AF37]/50'
-                    : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="refundMethod"
-                  value="wallet"
-                  className="mt-1 w-4 h-4 accent-[#2A2927] cursor-pointer"
-                  checked={refundMethod === 'wallet'}
-                  onChange={(e) => setRefundMethod(e.target.value)}
-                />
-                <div className="flex-1">
-                  <div className="font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 text-[#2A2927]">
-                    <Wallet className="text-[14px]" strokeWidth={1.5} />
-                    STORE WALLET (RECOMMENDED)
-                  </div>
-                  <p className="text-[9px] uppercase tracking-wider mt-1.5 text-secondary">
-                    Instant refund to your wallet. Use it for your next purchase.
-                  </p>
-                </div>
-              </label>
-
-              <div
-                className={`border transition-all overflow-hidden rounded-[16px] ${
-                  refundMethod === 'original'
-                    ? 'border-[#D4AF37] bg-[#FDFBF7] shadow-sm ring-1 ring-[#D4AF37]/50'
-                    : 'bg-[#FDFBF7] border-[#E8E6E1] hover:border-[#D4AF37]'
-                }`}
-              >
-                <label className="flex items-start gap-4 p-4 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="refundMethod"
-                    value="original"
-                    className="mt-1 w-4 h-4 accent-[#2A2927] cursor-pointer"
-                    checked={refundMethod === 'original'}
-                    onChange={(e) => setRefundMethod(e.target.value)}
-                  />
-                  <div className="flex-1">
-                    <div className="font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 text-[#2A2927]">
-                      <Landmark className="text-[14px]" strokeWidth={1.5} />
-                      {order?.paymentMethod === 'cod'
-                        ? 'UPI / BANK TRANSFER (COD REFUND)'
-                        : 'ORIGINAL PAYMENT METHOD'}
-                    </div>
-                    <p className="text-[9px] uppercase tracking-wider mt-1.5 text-secondary">
-                      {order?.paymentMethod === 'cod'
-                        ? 'Direct refund transfer to your UPI ID for Cash on Delivery order.'
-                        : 'Refund to your original bank account or card (takes 5-7 business days).'}
-                    </p>
-                  </div>
-                </label>
-
-                <AnimatePresence>
-                  {refundMethod === 'original' && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="px-4 pb-4"
-                    >
-                      <div className="pt-3.5 border-t border-outline-variant/20">
-                        <label className="form-label mb-1.5 uppercase tracking-widest text-[9px] text-[#2A2927] block font-bold">
-                          {order?.paymentMethod === 'cod'
-                            ? 'YOUR UPI ID FOR COD REFUND *'
-                            : 'UPI ID FOR BANK TRANSFER *'}
-                        </label>
-                        <input
-                          type="text"
-                          value={upiId}
-                          onChange={(e) => setUpiId(e.target.value)}
-                          placeholder="username@bank or 9876543210@upi"
-                          className="w-full bg-white border border-[#E8E6E1] text-[#2A2927] placeholder-secondary/50 px-4 py-2.5 rounded-[32px] text-[11px] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]"
-                        />
-                        <p className="text-[9px] text-secondary mt-1.5">
-                          {order?.paymentMethod === 'cod'
-                            ? 'We will transfer the refund amount directly to this UPI ID once approved.'
-                            : 'Direct bank transfer to your UPI linked bank account.'}
-                        </p>
+                        )}
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-          </motion.div>
-        )}
 
-        {/* Step 6: Review & Submit */}
-        {step === 6 && (
-          <motion.div
-            key="step6"
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            exit="hidden"
-            className="space-y-6"
-          >
-            <div className="pb-5 mb-5 border-b border-outline-variant/20">
-              <h2 className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                <Eye className="text-[12px]" strokeWidth={1.5} />
-                REVIEW YOUR REQUEST
-              </h2>
+                      {/* Item Details Form (Shown when checked) */}
+                      {isSelected && (
+                        <div className="mt-4 pt-4 border-t border-stone-200/80 space-y-3">
+                          {/* Quantity Selector */}
+                          {item.quantity > 1 && (
+                            <div className="flex items-center gap-3 text-xs">
+                              <span className="text-stone-600 font-medium">
+                                Quantity to return:
+                              </span>
+                              <div className="flex items-center border border-stone-200 rounded-lg overflow-hidden bg-white">
+                                <button
+                                  type="button"
+                                  disabled={selectedItems[item._id].returnQuantity <= 1}
+                                  onClick={() =>
+                                    updateItem(
+                                      item._id,
+                                      'returnQuantity',
+                                      selectedItems[item._id].returnQuantity - 1,
+                                    )
+                                  }
+                                  className="px-2 py-1 hover:bg-stone-100 disabled:opacity-30"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="px-3 font-semibold text-stone-900">
+                                  {selectedItems[item._id].returnQuantity}
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={selectedItems[item._id].returnQuantity >= item.quantity}
+                                  onClick={() =>
+                                    updateItem(
+                                      item._id,
+                                      'returnQuantity',
+                                      selectedItems[item._id].returnQuantity + 1,
+                                    )
+                                  }
+                                  className="px-2 py-1 hover:bg-stone-100 disabled:opacity-30"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Reason Selector */}
+                          <div>
+                            <label className="block text-xs font-semibold text-stone-800 mb-1.5">
+                              Why are you returning this item? *
+                            </label>
+                            <select
+                              value={selectedItems[item._id].reason}
+                              onChange={(e) => updateItem(item._id, 'reason', e.target.value)}
+                              className="w-full text-xs rounded-xl border border-stone-300 p-2.5 bg-white text-stone-900 focus:border-stone-900 focus:ring-1 focus:ring-stone-900 outline-hidden"
+                            >
+                              <option value="">Select a reason...</option>
+                              {RETURN_REASONS.map((r) => (
+                                <option key={r} value={r}>
+                                  {r}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Optional Note */}
+                          <div>
+                            <label className="block text-xs font-medium text-stone-600 mb-1">
+                              Additional note (optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={selectedItems[item._id].description || ''}
+                              onChange={(e) => updateItem(item._id, 'description', e.target.value)}
+                              placeholder="e.g. Broken packaging, wrong color, etc."
+                              className="w-full text-xs rounded-xl border border-stone-200 p-2.5 bg-white placeholder-stone-400 focus:border-stone-900 outline-hidden"
+                            />
+                          </div>
+
+                          {/* Optional Photo Upload */}
+                          <div>
+                            <label className="block text-xs font-medium text-stone-600 mb-1">
+                              Photos / Evidence (optional)
+                            </label>
+                            <EvidenceUploader
+                              images={selectedItems[item._id].evidenceImages || []}
+                              videos={selectedItems[item._id].evidenceVideos || []}
+                              onImagesChange={(imgs) =>
+                                updateItem(item._id, 'evidenceImages', imgs)
+                              }
+                              onVideosChange={(vids) =>
+                                updateItem(item._id, 'evidenceVideos', vids)
+                              }
+                              maxImages={3}
+                              maxVideos={1}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <button
+              type="button"
+              disabled={!canProceedFromStep1}
+              onClick={() => setStep(2)}
+              className="px-6 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 disabled:opacity-40 text-white font-bold text-xs uppercase tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+            >
+              Continue to Pickup & Refund
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 2: Pickup Address & Refund Destination */}
+      {step === 2 && (
+        <div className="space-y-6">
+          {/* Pickup Address Card */}
+          <div className="bg-white rounded-2xl border border-stone-200 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-stone-900 flex items-center gap-2">
+                <Truck className="w-4 h-4 text-stone-600" />
+                Pickup Address
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsEditingAddress(!isEditingAddress)}
+                className="text-xs text-stone-600 underline hover:text-stone-900"
+              >
+                {isEditingAddress ? 'Done' : 'Change Address'}
+              </button>
             </div>
 
-            <div className="border rounded-[16px] border-outline-variant/30 overflow-hidden">
-              <div className="bg-surface-variant/20 p-3 border-b border-outline-variant/20">
-                <h3 className="font-bold uppercase tracking-widest text-[9px] text-[#2A2927]">
-                  ITEMS TO RETURN
-                </h3>
+            {isEditingAddress ? (
+              <div className="space-y-3 pt-2">
+                <input
+                  type="text"
+                  placeholder="Street Address"
+                  value={pickupAddress?.street || pickupAddress?.addressLine1 || ''}
+                  onChange={(e) => setPickupAddress({ ...pickupAddress, street: e.target.value })}
+                  className="w-full text-xs rounded-xl border border-stone-200 p-2.5"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    placeholder="City"
+                    value={pickupAddress?.city || ''}
+                    onChange={(e) => setPickupAddress({ ...pickupAddress, city: e.target.value })}
+                    className="w-full text-xs rounded-xl border border-stone-200 p-2.5"
+                  />
+                  <input
+                    type="text"
+                    placeholder="PIN / Postal Code"
+                    value={pickupAddress?.zipCode || pickupAddress?.postalCode || ''}
+                    onChange={(e) =>
+                      setPickupAddress({ ...pickupAddress, zipCode: e.target.value })
+                    }
+                    className="w-full text-xs rounded-xl border border-stone-200 p-2.5"
+                  />
+                </div>
               </div>
-              <div className="divide-y divide-outline-variant/20">
-                {Object.values(selectedItems).map((data, idx) => (
-                  <div key={idx} className="p-4 flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-surface-container border border-outline-variant/20 shrink-0 shadow-2xs">
-                      <OptimizedImage
-                        src={data.image}
-                        alt={data.title}
-                        className="w-full h-full object-cover"
+            ) : (
+              <div className="text-xs text-stone-600 space-y-0.5">
+                <p className="font-semibold text-stone-900">
+                  {pickupAddress?.firstName} {pickupAddress?.lastName}
+                </p>
+                <p>{pickupAddress?.street || pickupAddress?.addressLine1}</p>
+                <p>
+                  {pickupAddress?.city}, {pickupAddress?.state} -{' '}
+                  {pickupAddress?.zipCode || pickupAddress?.postalCode}
+                </p>
+                <p className="text-stone-500 pt-1">Phone: {pickupAddress?.phone}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Refund Destination Card */}
+          <div className="bg-white rounded-2xl border border-stone-200 p-5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-stone-900 mb-3 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-stone-600" />
+              Refund Destination
+            </h3>
+
+            {!isCOD ? (
+              <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+                <p className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                  Refund to Original Payment Method
+                </p>
+                <p className="text-xs text-emerald-800 leading-relaxed">
+                  Since this order was paid online, your refund of approximately{' '}
+                  <strong>₹{Math.round(estimatedRefund).toLocaleString('en-IN')}</strong> will be
+                  automatically credited back to your original payment source (Card / UPI /
+                  Netbanking) after the item is inspected.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900">
+                  This order was paid with Cash on Delivery (COD). Please provide where you would
+                  like your refund sent:
+                </div>
+
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-stone-50">
+                    <input
+                      type="radio"
+                      name="refundMethod"
+                      value="original"
+                      checked={refundMethod === 'original'}
+                      onChange={() => setRefundMethod('original')}
+                      className="accent-stone-900"
+                    />
+                    <div className="text-xs">
+                      <span className="font-semibold text-stone-900 block">UPI Direct Payout</span>
+                      <span className="text-stone-500">Transfer directly to your UPI ID</span>
+                    </div>
+                  </label>
+
+                  {refundMethod === 'original' && (
+                    <div className="pl-6">
+                      <label className="block text-xs font-semibold text-stone-800 mb-1">
+                        Your UPI ID *
+                      </label>
+                      <input
+                        type="text"
+                        value={upiId}
+                        onChange={(e) => setUpiId(e.target.value)}
+                        placeholder="e.g. yourname@okhdfcbank or 9876543210@paytm"
+                        className="w-full text-xs rounded-xl border border-stone-300 p-2.5 bg-white placeholder-stone-400 focus:border-stone-900 outline-hidden"
                       />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-bold uppercase tracking-wider text-xs text-[#2A2927] truncate">
-                        {data.title}
-                      </h4>
-                      <p className="text-[10px] uppercase tracking-wider text-secondary mt-1">
-                        QTY: {data.returnQuantity} • REASON: {data.reason}
-                      </p>
-                      <span className="inline-block mt-2 text-[8px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-[4px] bg-[#2A2927]/5 text-[#2A2927] border border-[#2A2927]/10">
-                        REQUESTING REFUND
+                  )}
+
+                  <label className="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-stone-50">
+                    <input
+                      type="radio"
+                      name="refundMethod"
+                      value="wallet"
+                      checked={refundMethod === 'wallet'}
+                      onChange={() => setRefundMethod('wallet')}
+                      className="accent-stone-900"
+                    />
+                    <div className="text-xs">
+                      <span className="font-semibold text-stone-900 block">
+                        Store Wallet Credit
+                      </span>
+                      <span className="text-stone-500">
+                        Instant credit usable on any future purchase
                       </span>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <div className="border rounded-[16px] border-outline-variant/30 p-4">
-                <h3 className="font-bold uppercase tracking-widest text-[9px] text-[#2A2927] mb-3 flex items-center gap-2">
-                  <Truck className="text-[14px]" strokeWidth={1.5} /> PICKUP ADDRESS
-                </h3>
-                <div className="text-[10px] text-secondary uppercase tracking-wider space-y-1">
-                  <p className="font-bold text-[#2A2927] mb-1">{pickupAddress?.name}</p>
-                  <p>{pickupAddress?.address}</p>
-                  {(pickupAddress?.locality || pickupAddress?.landmark) && (
-                    <p>
-                      {pickupAddress?.locality}{' '}
-                      {pickupAddress?.landmark ? `(Near ${pickupAddress.landmark})` : ''}
-                    </p>
-                  )}
-                  <p>
-                    {pickupAddress?.city}, {pickupAddress?.state} {pickupAddress?.pincode}
-                  </p>
-                  <p className="pt-1 text-[#2A2927] font-medium">PHONE: {pickupAddress?.phone}</p>
+                  </label>
                 </div>
               </div>
-
-              <div className="border rounded-[16px] border-outline-variant/30 p-4">
-                <h3 className="font-bold uppercase tracking-widest text-[9px] text-[#2A2927] mb-3 flex items-center gap-2">
-                  <CreditCard className="text-[14px]" strokeWidth={1.5} /> REFUND METHOD
-                </h3>
-                <div className="text-[10px] text-secondary uppercase tracking-wider space-y-1">
-                  <p className="font-bold text-[#2A2927] mb-1">
-                    {refundMethod === 'wallet' ? 'STORE WALLET' : 'ORIGINAL PAYMENT'}
-                  </p>
-                  {refundMethod === 'wallet' ? (
-                    <p>INSTANT REFUND</p>
-                  ) : (
-                    <>
-                      <p>5-7 BUSINESS DAYS</p>
-                      {upiId && (
-                        <p className="pt-1 text-[#2A2927] font-medium break-all">UPI: {upiId}</p>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-[#FDFBF7] border border-outline-variant/30 rounded-[16px] p-4 flex items-start gap-3 shadow-2xs">
-              <Info className="text-secondary mt-0.5 text-[14px]" strokeWidth={1.5} />
-              <p className="text-[9px] uppercase tracking-wider text-secondary font-medium leading-relaxed">
-                By submitting this request, you agree to our{' '}
-                <Link
-                  to="/policies/returns"
-                  className="underline text-[#2A2927] hover:text-[#D4AF37] transition-colors font-bold cursor-pointer"
-                >
-                  return policy
-                </Link>
-                . Items must be returned in their original packaging.
-              </p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Step 7: Success */}
-        {step === 7 && (
-          <motion.div
-            key="step7"
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            className="text-center py-10"
-          >
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 20 }}
-              className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center"
-            >
-              {/* Soft ambient success glow */}
-              <div className="absolute inset-0 rounded-full bg-emerald-500/15 blur-lg" />
-
-              {/* Outer elegant ring */}
-              <div className="relative w-20 h-20 rounded-full bg-[#FDFBF7] border border-emerald-500/30 shadow-[0_8px_20px_-6px_rgba(16,185,129,0.2)] flex items-center justify-center ring-4 ring-emerald-500/10">
-                {/* Inner jewel circle */}
-                <div className="w-12 h-12 rounded-full bg-linear-to-tr from-emerald-600 via-emerald-500 to-emerald-400 text-white flex items-center justify-center shadow-md shadow-emerald-600/30">
-                  <motion.svg
-                    className="w-6 h-6 text-white"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <motion.path
-                      d="M20 6L9 17l-5-5"
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ delay: 0.2, duration: 0.45, ease: 'easeOut' }}
-                    />
-                  </motion.svg>
-                </div>
-              </div>
-            </motion.div>
-            <h2 className="text-[14px] font-bold uppercase tracking-widest text-[#2A2927] mb-3">
-              REQUEST SUBMITTED SUCCESSFULLY
-            </h2>
-            <p className="text-[10px] uppercase tracking-wider text-secondary max-w-md mx-auto mb-8 leading-relaxed">
-              We've received your request and our team will review it shortly. You'll receive an
-              email confirmation with tracking details.
-            </p>
-            <button
-              onClick={() => navigate('/dashboard/returns')}
-              className="bg-[#2A2927] hover:bg-black text-white px-8 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer"
-            >
-              TRACK RETURN STATUS <ArrowRight className="text-[14px]" strokeWidth={1.5} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Navigation Controls */}
-      {step < 7 && (
-        <div className="mt-8 pt-5 border-t border-outline-variant/20 flex justify-between">
-          {step > 1 ? (
-            <button
-              onClick={() => setStep((s) => s - 1)}
-              className="bg-transparent border border-outline-variant/30 text-[#2A2927] px-6 py-2.5 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center transition-all hover:bg-surface-variant/30 disabled:opacity-50 cursor-pointer"
-              disabled={submitting}
-            >
-              BACK
-            </button>
-          ) : (
-            <div></div>
-          )}
-
-          <button
-            onClick={step === 6 ? handleSubmit : handleNext}
-            className="bg-[#2A2927] hover:bg-black text-white px-6 py-2.5 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-sm transition-all border-0 disabled:opacity-50 cursor-pointer"
-            disabled={submitting}
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> PROCESSING
-              </>
-            ) : step === 6 ? (
-              'SUBMIT REQUEST'
-            ) : (
-              <>
-                CONTINUE <ArrowRight className="text-[14px]" strokeWidth={1.5} />
-              </>
             )}
-          </button>
+          </div>
+
+          <div className="flex justify-between pt-4">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="px-5 py-2.5 rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-50 font-bold text-xs uppercase tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+            <button
+              type="button"
+              disabled={!canProceedFromStep2}
+              onClick={() => setStep(3)}
+              className="px-6 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 disabled:opacity-40 text-white font-bold text-xs uppercase tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+            >
+              Review Request
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3: Review & Submit */}
+      {step === 3 && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-stone-200 p-6 space-y-4">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-stone-900 pb-2 border-b border-stone-100">
+              Review Return Request
+            </h3>
+
+            {/* Items Summary */}
+            <div className="space-y-3">
+              <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                Returning Items
+              </span>
+              {Object.values(selectedItems).map((item, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-white shrink-0 border border-stone-200">
+                    <OptimizedImage src={item.imageSrc} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0 text-xs">
+                    <p className="font-semibold text-stone-900 truncate">{item.title}</p>
+                    <p className="text-stone-500">
+                      Reason: <strong className="text-stone-800">{item.reason}</strong> • Qty:{' '}
+                      {item.returnQuantity}
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-stone-900">
+                    ₹{item.price * item.returnQuantity}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Pickup & Refund info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-stone-100 text-xs">
+              <div>
+                <span className="text-stone-500 block mb-1">Pickup Address:</span>
+                <p className="font-medium text-stone-900">
+                  {pickupAddress?.street || pickupAddress?.addressLine1}, {pickupAddress?.city}
+                </p>
+              </div>
+              <div>
+                <span className="text-stone-500 block mb-1">Refund Method:</span>
+                <p className="font-medium text-stone-900">
+                  {!isCOD
+                    ? 'Original Payment Method'
+                    : refundMethod === 'wallet'
+                      ? 'Store Wallet Credit'
+                      : `UPI (${upiId})`}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-stone-100 flex justify-between items-center text-sm font-bold text-stone-900">
+              <span>Estimated Refund:</span>
+              <span className="text-emerald-700 text-base">
+                ₹{Math.round(estimatedRefund).toLocaleString('en-IN')}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex justify-between pt-4">
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={() => setStep(2)}
+              className="px-5 py-2.5 rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-50 font-bold text-xs uppercase tracking-wider transition-colors inline-flex items-center gap-2 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={handleSubmit}
+              className="px-8 py-3.5 rounded-xl bg-stone-900 hover:bg-stone-800 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-widest transition-colors inline-flex items-center gap-2 shadow-sm cursor-pointer disabled:cursor-not-allowed"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Submitting Request...
+                </>
+              ) : (
+                'Submit Return Request'
+              )}
+            </button>
+          </div>
         </div>
       )}
     </div>

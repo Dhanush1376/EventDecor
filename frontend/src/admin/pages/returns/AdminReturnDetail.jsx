@@ -26,7 +26,7 @@ const RETURN_STAGES = [
   {
     key: 'submitted',
     number: 1,
-    title: 'Request Submitted',
+    title: 'Return Submitted',
     desc: 'Customer submitted return request awaiting admin review',
     icon: 'inbox',
     color: 'text-[var(--admin-accent)]',
@@ -44,90 +44,20 @@ const RETURN_STAGES = [
     border: 'border-emerald-200',
   },
   {
-    key: 'return_courier_assigned',
+    key: 'return_picked_up',
     number: 3,
-    title: 'Courier Assigned',
-    desc: 'Reverse pickup courier partner assigned to fetch item',
+    title: 'Item Picked Up',
+    desc: 'Item collected by courier and in transit to warehouse',
     icon: 'local_shipping',
     color: 'text-blue-700',
     bg: 'bg-blue-50',
     border: 'border-blue-200',
   },
   {
-    key: 'return_picked_up',
-    number: 3,
-    title: 'Item Picked Up',
-    desc: 'Courier successfully picked up the returned item from customer',
-    icon: 'inventory',
-    color: 'text-blue-700',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-  },
-  {
-    key: 'return_in_transit',
-    number: 3,
-    title: 'In Transit',
-    desc: 'Item in transit to warehouse for inspection',
-    icon: 'commute',
-    color: 'text-indigo-700',
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-200',
-  },
-  {
-    key: 'return_received',
-    number: 4,
-    title: 'Warehouse Received',
-    desc: 'Item received at warehouse; ready for quality inspection',
-    icon: 'warehouse',
-    color: 'text-amber-700',
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
-  },
-  {
-    key: 'inspection_started',
-    number: 4,
-    title: 'Inspection in Progress',
-    desc: 'Quality check and condition inspection actively being conducted',
-    icon: 'fact_check',
-    color: 'text-amber-700',
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
-  },
-  {
-    key: 'inspection_completed',
-    number: 4,
-    title: 'Quality Check Passed',
-    desc: 'Inspection completed and verified at warehouse',
-    icon: 'task_alt',
-    color: 'text-emerald-700',
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
-  },
-  {
-    key: 'refund_initiated',
-    number: 5,
-    title: 'Refund Initiated',
-    desc: 'Refund payment initiated or queued for settlement',
-    icon: 'payments',
-    color: 'text-purple-700',
-    bg: 'bg-purple-50',
-    border: 'border-purple-200',
-  },
-  {
-    key: 'refund_completed',
-    number: 5,
-    title: 'Refund Settled',
-    desc: 'Refund successfully settled and credited to customer',
-    icon: 'savings',
-    color: 'text-emerald-700',
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
-  },
-  {
     key: 'completed',
-    number: 6,
+    number: 4,
     title: 'Return Completed',
-    desc: 'All return logistics and financial refunds successfully completed',
+    desc: 'Item verified, refund settled and return closed',
     icon: 'check_circle',
     color: 'text-emerald-800',
     bg: 'bg-emerald-100',
@@ -143,20 +73,6 @@ const RETURN_STAGES = [
     bg: 'bg-red-50',
     border: 'border-red-200',
   },
-];
-
-const STAGE_DROPDOWN_OPTIONS = [
-  { key: 'submitted', label: 'Step 1: Request Submitted' },
-  { key: 'approved', label: 'Step 2: Return Approved' },
-  { key: 'return_courier_assigned', label: 'Step 3: Assign Courier' },
-  { key: 'return_picked_up', label: 'Step 3: Item Picked Up' },
-  { key: 'return_in_transit', label: 'Step 3: In Transit' },
-  { key: 'return_received', label: 'Step 4: Warehouse Received' },
-  { key: 'inspection_started', label: 'Step 4: Inspection Started' },
-  { key: 'inspection_completed', label: 'Step 4: Inspection Completed' },
-  { key: 'refund_initiated', label: 'Step 5: Refund Initiated' },
-  { key: 'refund_completed', label: 'Step 5: Refund Settled' },
-  { key: 'completed', label: 'Step 6: Return Completed' },
 ];
 
 const AdminReturnDetail = () => {
@@ -329,28 +245,38 @@ const AdminReturnDetail = () => {
     );
   }
 
-  const currentStageObj = RETURN_STAGES.find((s) => s.key === request.status) || {
-    key: request.status || 'submitted',
-    number: 1,
-    title: (request.status || 'Submitted').replace(/_/g, ' '),
-    desc: 'Return request in progress',
-    icon: 'sync',
-    color: 'text-[var(--admin-accent)]',
-    bg: 'bg-[var(--admin-accent-light)]',
-    border: 'border-[var(--admin-border-strong)]',
+  const getActiveReturnStep = (status) => {
+    if (['completed', 'refund_completed', 'refund_initiated'].includes(status)) {
+      return 'completed';
+    }
+    if (
+      [
+        'return_picked_up',
+        'return_courier_assigned',
+        'return_in_transit',
+        'return_received',
+        'inspection_started',
+        'inspection_completed',
+      ].includes(status)
+    ) {
+      return 'return_picked_up';
+    }
+    if (status === 'approved') {
+      return 'approved';
+    }
+    if (status === 'rejected') {
+      return 'rejected';
+    }
+    return 'submitted';
   };
 
-  const handleSelectReturnStage = async (newStage) => {
-    if (newStage === 'rejected') {
-      setIsRejectOpen(true);
-      return;
-    }
-    if (newStage === 'approved') {
-      await handleApprove();
-      return;
-    }
-    await handleTransition(newStage);
-  };
+  const activeStepKey = getActiveReturnStep(request.status);
+
+  const currentStageObj =
+    RETURN_STAGES.find((s) => s.key === activeStepKey) ||
+    (request.status === 'rejected'
+      ? RETURN_STAGES.find((s) => s.key === 'rejected')
+      : RETURN_STAGES[0]);
 
   const handleTriggerRefundClick = async () => {
     if (
@@ -514,7 +440,7 @@ const AdminReturnDetail = () => {
             </div>
             <div className="min-w-0 flex-1">
               <span className="text-sm sm:text-base font-bold text-[var(--admin-text-primary)] block truncate">
-                {currentStageObj.number > 0 ? `Step ${currentStageObj.number} of 6: ` : ''}
+                {currentStageObj.number > 0 ? `Step ${currentStageObj.number} of 4: ` : ''}
                 {currentStageObj.title}
               </span>
               <p className="text-xs text-[var(--admin-text-secondary)] mt-0.5 truncate">
@@ -523,24 +449,110 @@ const AdminReturnDetail = () => {
             </div>
           </div>
 
-          {/* Quick Stage Dropdown */}
-          <div className="relative shrink-0 w-full sm:w-auto min-w-0 sm:min-w-[240px]">
-            <select
-              id="return-status-dropdown"
-              value={request.status}
-              onChange={(e) => handleSelectReturnStage(e.target.value)}
-              className="w-full appearance-none bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] hover:border-[var(--admin-accent)] focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 rounded-xl px-3.5 py-2.5 pr-9 text-xs font-bold text-[var(--admin-text-primary)] shadow-2xs cursor-pointer transition-all outline-none"
-            >
-              {STAGE_DROPDOWN_OPTIONS.map((st) => (
-                <option key={st.key} value={st.key}>
-                  {st.label}
-                </option>
-              ))}
-              <option value="rejected">✕ Reject Return</option>
-            </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--admin-text-tertiary)] text-[18px]">
-              unfold_more
-            </span>
+          {/* Contextual Action Buttons */}
+          <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+            {request.status === 'submitted' && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleApprove}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[16px]">check</span>
+                  Approve Return
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsRejectOpen(true)}
+                  className="px-3.5 py-2 rounded-xl border border-red-200 text-red-700 hover:bg-red-50 text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  Reject
+                </button>
+              </>
+            )}
+
+            {request.status === 'approved' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleTransition('return_picked_up')}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[16px]">local_shipping</span>
+                  Confirm Picked Up
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsRejectOpen(true)}
+                  className="px-3.5 py-2 rounded-xl border border-red-200 text-red-700 hover:bg-red-50 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  Reject
+                </button>
+              </>
+            )}
+
+            {(request.status === 'return_picked_up' || request.status === 'return_in_transit') && (
+              <button
+                type="button"
+                onClick={() => handleTransition('return_received')}
+                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">warehouse</span>
+                Mark Received at Facility
+              </button>
+            )}
+
+            {(request.status === 'return_received' || request.status === 'inspection_started') && (
+              <button
+                type="button"
+                onClick={() => handleTransition('inspection_completed')}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">fact_check</span>
+                Pass Inspection
+              </button>
+            )}
+
+            {request.status === 'inspection_completed' && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleTriggerRefundClick}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[16px]">payments</span>
+                  Trigger Refund
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSettleModalOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  Record Manual Payout
+                </button>
+              </>
+            )}
+
+            {['refund_initiated', 'refund_completed', 'completed'].includes(request.status) && (
+              <span className="px-3.5 py-2 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px]">verified</span>
+                Return Resolved & Closed
+              </span>
+            )}
+
+            {request.status === 'rejected' && (
+              <span className="px-3.5 py-2 rounded-xl bg-red-100 text-red-800 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px]">cancel</span>
+                Rejected
+              </span>
+            )}
+
+            {request.status === 'cancelled' && (
+              <span className="px-3.5 py-2 rounded-xl bg-stone-100 text-stone-700 text-xs font-bold uppercase tracking-wider">
+                Cancelled by Customer
+              </span>
+            )}
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { User, Home } from 'lucide-react';
 import React from 'react';
+import { sanitizePhoneNumber } from '../../utils/phoneUtils';
 
 export function AddressFormFields({ addressFormData, setAddressFormData }) {
   return (
@@ -60,15 +61,28 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
                 id="dashboard-address-phone"
                 type="tel"
                 required
+                inputMode="numeric"
+                maxLength={10}
                 placeholder="10-digit number"
                 className="form-field"
                 value={addressFormData.phone}
-                onChange={(e) =>
-                  setAddressFormData({
-                    ...addressFormData,
-                    phone: e.target.value,
-                  })
-                }
+                onChange={(e) => {
+                  const cleaned = sanitizePhoneNumber(e.target.value);
+                  setAddressFormData((prev) => ({
+                    ...prev,
+                    phone: cleaned,
+                  }));
+                }}
+                onPaste={(e) => {
+                  const pasted = e.clipboardData?.getData('text');
+                  if (pasted) {
+                    e.preventDefault();
+                    setAddressFormData((prev) => ({
+                      ...prev,
+                      phone: sanitizePhoneNumber(pasted),
+                    }));
+                  }
+                }}
               />
             </div>
             <div>
@@ -78,15 +92,28 @@ export function AddressFormFields({ addressFormData, setAddressFormData }) {
               <input
                 id="dashboard-address-alt-phone"
                 type="tel"
+                inputMode="numeric"
+                maxLength={10}
                 placeholder="Optional alternate number"
                 className="form-field"
                 value={addressFormData.alternatePhone}
-                onChange={(e) =>
-                  setAddressFormData({
-                    ...addressFormData,
-                    alternatePhone: e.target.value,
-                  })
-                }
+                onChange={(e) => {
+                  const cleaned = sanitizePhoneNumber(e.target.value);
+                  setAddressFormData((prev) => ({
+                    ...prev,
+                    alternatePhone: cleaned,
+                  }));
+                }}
+                onPaste={(e) => {
+                  const pasted = e.clipboardData?.getData('text');
+                  if (pasted) {
+                    e.preventDefault();
+                    setAddressFormData((prev) => ({
+                      ...prev,
+                      alternatePhone: sanitizePhoneNumber(pasted),
+                    }));
+                  }
+                }}
               />
             </div>
           </div>

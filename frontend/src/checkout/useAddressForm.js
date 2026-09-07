@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { reverseGeocodeCoords, detectAndResolveAddress } from '../utils/locationService';
+import { sanitizePhoneNumber } from '../utils/phoneUtils';
 
 export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddress, user }) {
   const [isSelectingList, setIsSelectingList] = useState(false);
   const [mapPosition, setMapPosition] = useState({ lat: 20.5937, lng: 78.9629 }); // Default India
+  const [isResolvingLocation, setIsResolvingLocation] = useState(false);
 
   useEffect(() => {
     if (newAddress?.latitude && newAddress?.longitude) {
@@ -11,68 +14,88 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
     }
   }, [newAddress?.latitude, newAddress?.longitude]);
 
+  /**
+   * Reverse geocodes coordinates (e.g. from map click/drag) and populates address fields.
+   * Preserves user-typed fields where new values are absent.
+   */
   const fetchAddressFromCoords = async (lat, lng) => {
     try {
-      toast.loading('Locating address...', { id: 'geocoding' });
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
-        {
-          headers: {
-            'User-Agent': 'Siri Arts & CraftsAndCrafts/1.0 (checkout address autofill)',
-          },
-        },
-      );
-      const data = await response.json();
-      if (data && data.address) {
-        const addr = data.address;
+      setIsResolvingLocation(true);
+      toast.loading('Locating address from pin...', { id: 'geocoding' });
 
-        const newPincode = addr.postcode || '';
-        const newCity =
-          addr.city || addr.town || addr.village || addr.county || addr.state_district || '';
-        const newState = addr.state || '';
-        const newLocality =
-          addr.suburb || addr.neighbourhood || addr.road || addr.residential || '';
+      const res = await reverseGeocodeCoords(lat, lng);
 
-        const streetParts = [];
-        if (addr.house_number) streetParts.push(addr.house_number);
-        if (addr.building || addr.name) streetParts.push(addr.building || addr.name);
-        if (addr.road || addr.street) streetParts.push(addr.road || addr.street);
-        if (addr.suburb) streetParts.push(addr.suburb);
-        if (addr.neighbourhood) streetParts.push(addr.neighbourhood);
-
-        const displayParts = data.display_name ? data.display_name.split(',') : [];
-        const fullAddress =
-          displayParts.length > 4
-            ? displayParts.slice(0, -4).join(',').trim()
-            : displayParts.join(',').trim() || streetParts.join(', ');
-
-        const newLandmark =
-          addr.amenity ||
-          addr.shop ||
-          addr.office ||
-          addr.tourism ||
-          addr.leisure ||
-          addr.building ||
-          '';
+      if (res.success && res.data) {
+        const d = res.data;
 
         setNewAddress((prev) => ({
           ...prev,
-          pincode: newPincode.replace(/\s/g, ''),
-          city: newCity,
-          state: newState,
-          locality: newLocality || prev.locality,
-          landmark: newLandmark || prev.landmark || newLocality || newCity,
-          address: fullAddress || prev.address,
           latitude: lat,
           longitude: lng,
+          pincode: d.pincode || prev.pincode,
+          city: d.city || prev.city,
+          state: d.state || prev.state,
+          locality: d.locality || prev.locality,
+          address: d.address || prev.address,
+          landmark: d.landmark || prev.landmark,
         }));
 
-        toast.success('Address auto-filled from map!', { id: 'geocoding' });
+        toast.success('Address updated from map!', { id: 'geocoding' });
       } else {
         toast.dismiss('geocoding');
       }
     } catch (_err) {
-      toast.error('Failed to auto-fill address from map', { id: 'geocoding' });
+      toast.error('Could not resolve address from map pin', { id: 'geocoding' });
+    } finally {
+      setIsResolvingLocation(false);
+    }
+  };
+
+  /**
+   * Detects location via GPS or network IP fallback and autofills available fields.
+   */
+  const handleAutofillLocation = async () => {
+    try {
+      setIsResolvingLocation(true);
+      toast.loading('Detecting your location...', { id: 'location-detect' });
+
+      const res = await detectAndResolveAddress();
+
+      if (res.success && res.data) {
+        const d = res.data;
+
+        if (d.latitude && d.longitude) {
+          setMapPosition({ lat: d.latitude, lng: d.longitude });
+        }
+
+        setNewAddress((prev) => ({
+          ...prev,
+          latitude: d.latitude ?? prev.latitude,
+          longitude: d.longitude ?? prev.longitude,
+          pincode: d.pincode || prev.pincode,
+          city: d.city || prev.city,
+          state: d.state || prev.state,
+          locality: d.locality || prev.locality,
+          address: d.address || prev.address,
+          landmark: d.landmark || prev.landmark,
+        }));
+
+        const successMsg =
+          res.source === 'gps'
+            ? 'Location auto-filled from GPS!'
+            : 'Location detected from network!';
+        toast.success(successMsg, { id: 'location-detect' });
+      } else {
+        toast.error(res.error || 'Could not detect location. Please fill manually.', {
+          id: 'location-detect',
+        });
+      }
+    } catch (_err) {
+      toast.error('Location detection failed. Please fill manually.', {
+        id: 'location-detect',
+      });
+    } finally {
+      setIsResolvingLocation(false);
     }
   };
 
@@ -80,8 +103,8 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
     setNewAddress({
       id: addr._id || addr.id,
       name: addr.name || '',
-      phone: addr.phone || '',
-      alternatePhone: addr.alternatePhone || '',
+      phone: sanitizePhoneNumber(addr.phone || ''),
+      alternatePhone: sanitizePhoneNumber(addr.alternatePhone || ''),
       email: addr.email || '',
       pincode: addr.pincode || '',
       locality: addr.locality || '',
@@ -102,7 +125,7 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
   const handleAddNew = () => {
     setNewAddress({
       name: user?.name && user.name !== 'Customer' ? user.name : '',
-      phone: user?.phone || '',
+      phone: sanitizePhoneNumber(user?.phone || ''),
       alternatePhone: '',
       email: user?.email || '',
       pincode: '',
@@ -139,6 +162,8 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
     mapPosition,
     setMapPosition,
     fetchAddressFromCoords,
+    handleAutofillLocation,
+    isResolvingLocation,
     handleEdit,
     handleAddNew,
     deliveryEstimates,

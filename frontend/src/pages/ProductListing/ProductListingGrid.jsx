@@ -12,6 +12,7 @@ import {
 } from '../../components/ui';
 import { ProductCard } from '../../components/shared/ProductCard';
 import { MandalaArtDecor } from '../../components/ui/MandalaArtDecor';
+import { scrollToShopAnchor } from './shopScrollAnchor';
 
 export const ProductListingGrid = React.memo(
   ({
@@ -82,6 +83,11 @@ export const ProductListingGrid = React.memo(
               </div>
             </div>
 
+            <div
+              id="mobile-categories-anchor"
+              className="h-0 w-full pointer-events-none"
+              aria-hidden="true"
+            />
             <MobileStickyCategories
               categories={categories}
               categoryParam={categoryParam}
@@ -188,7 +194,7 @@ export const ProductListingGrid = React.memo(
               )}
             </AnimatePresence>
 
-            <div id="product-results-wrapper">
+            <div id="product-results-wrapper" className="min-h-[60vh]">
               {isError ? (
                 <ErrorState
                   title="Failed to load products"
@@ -235,11 +241,7 @@ export const ProductListingGrid = React.memo(
                             return params;
                           });
                           setTimeout(() => {
-                            const el = document.getElementById('artisan-collection');
-                            if (el) {
-                              const y = el.getBoundingClientRect().top + window.scrollY - 80;
-                              window.scrollTo({ top: y, behavior: 'smooth' });
-                            }
+                            scrollToShopAnchor({ smooth: true });
                           }, 50);
                         }}
                       />

@@ -1,12 +1,14 @@
 import { SlidersHorizontal } from 'lucide-react';
 import React, { useRef, useEffect } from 'react';
 import { SearchBar, CategoryTabs, CustomDropdown } from '../../components/ui';
+import { scrollToShopAnchor } from './shopScrollAnchor';
 
 export const ProductListingSortBar = ({
   isMobile,
   searchParam,
   localSearch,
   setLocalSearch,
+  commitSearch,
   setIsFilterOpen,
   categories,
   categoryParam,
@@ -79,6 +81,14 @@ export const ProductListingSortBar = ({
             <SearchBar
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
+              onSubmit={(query) => {
+                if (commitSearch) {
+                  commitSearch(query);
+                } else {
+                  setLocalSearch(query);
+                }
+                scrollToShopAnchor({ smooth: true });
+              }}
               onCameraClick={
                 visualSearchEnabled
                   ? () => {

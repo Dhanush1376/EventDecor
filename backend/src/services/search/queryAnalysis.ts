@@ -33,7 +33,25 @@ export function isNormalSearch(query: string): boolean {
   const normalized = query.toLowerCase().trim();
   if (normalized.length < 3) return true;
 
-  const words = normalized.split(/\s+/);
+  const words = normalized.split(/\s+/).filter(Boolean);
+
+  // Fast path: direct keyword searches (<= 3 words) without conversational intent
+  if (words.length <= 3) {
+    const conversationalTriggers = [
+      'suggest',
+      'recommend',
+      'help',
+      'ideas',
+      'looking for',
+      'need for',
+    ];
+    const hasConversational = conversationalTriggers.some((trigger) =>
+      normalized.includes(trigger),
+    );
+    if (!hasConversational) {
+      return true;
+    }
+  }
 
   // Stop words to ignore
   const stopWords = new Set([

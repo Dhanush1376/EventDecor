@@ -61,7 +61,22 @@ export class ReturnStateMachine {
     metadata?: any,
     session?: mongoose.ClientSession,
   ): Promise<IReturnRequest> {
-    const request = await ReturnRequest.findById(returnId).session(session || null);
+    const isObjectId = mongoose.isValidObjectId(returnId);
+    let request = await ReturnRequest.findOne(
+      isObjectId ? { _id: returnId } : { returnId },
+    ).session(session || null);
+
+    if (!request && !isObjectId) {
+      const linkedExchange = await ExchangeRequest.findOne({ exchangeId: returnId }).session(
+        session || null,
+      );
+      if (linkedExchange) {
+        request = await ReturnRequest.findById(linkedExchange.returnRequestId).session(
+          session || null,
+        );
+      }
+    }
+
     if (!request) {
       throw new ApiError(404, 'Return request not found');
     }
@@ -178,7 +193,10 @@ export class ReturnStateMachine {
     performedBy: string,
     session?: mongoose.ClientSession,
   ): Promise<IReturnRequest> {
-    const request = await ReturnRequest.findById(returnId).session(session || null);
+    const isObjectId = mongoose.isValidObjectId(returnId);
+    const request = await ReturnRequest.findOne(
+      isObjectId ? { _id: returnId } : { returnId },
+    ).session(session || null);
     if (!request) throw new ApiError(404, 'Return request not found');
 
     if (request.status === 'completed') return request;
@@ -277,6 +295,24 @@ export class ReturnStateMachine {
         await order.save({ session });
       }
 
+      // If this is an exchange, ensure replacementStatus is marked delivered and reservation confirmed
+      if (request.returnType === 'exchange') {
+        const exchange = await ExchangeRequest.findOne({ returnRequestId: request._id }).session(
+          session || null,
+        );
+        if (exchange && exchange.replacementStatus !== 'delivered') {
+          exchange.replacementStatus = 'delivered';
+          if (exchange.replacementItem?.reservationId) {
+            const { InventoryService } = require('../InventoryService');
+            await InventoryService.confirmReservation(
+              exchange.replacementItem.reservationId.toString(),
+              session,
+            );
+          }
+          await exchange.save({ session });
+        }
+      }
+
       // Release inventory for items that were restocked or quality passed
       for (const item of request.items) {
         if (['quality_passed', 'restocked'].includes(item.warehouseStatus)) {
@@ -298,17 +334,23 @@ export class ReturnStateMachine {
         await order.save({ session });
       }
 
-      // If this is an exchange, we must release the reserved stock when the return leg is rejected/cancelled
+      // If this is an exchange, we must release the reserved stock and cancel replacement status
       if (request.returnType === 'exchange') {
         const exchange = await ExchangeRequest.findOne({ returnRequestId: request._id }).session(
           session || null,
         );
-        if (exchange && exchange.replacementItem.reservationId) {
-          const { InventoryService } = require('../InventoryService');
-          await InventoryService.cancelReservation(
-            exchange.replacementItem.reservationId.toString(),
-            session,
-          );
+        if (exchange) {
+          if (exchange.replacementStatus !== 'cancelled') {
+            exchange.replacementStatus = 'cancelled';
+            await exchange.save({ session });
+          }
+          if (exchange.replacementItem?.reservationId) {
+            const { InventoryService } = require('../InventoryService');
+            await InventoryService.cancelReservation(
+              exchange.replacementItem.reservationId.toString(),
+              session,
+            );
+          }
         }
       }
     }
@@ -426,9 +468,10 @@ export class ReturnStateMachine {
       throw new ApiError(404, 'Order not found');
     }
 
-    const isDelivered = order.orderStatus === 'Delivered';
+    const isDelivered = (order.orderStatus || '').toLowerCase() === 'delivered';
     const deliveredDate =
-      order.statusHistory?.find((h) => h.status === 'Delivered')?.timestamp || new Date();
+      order.statusHistory?.find((h) => (h.status || '').toLowerCase() === 'delivered')?.timestamp ||
+      new Date();
 
     const activeRequests = await ReturnRequest.find({
       orderId,
@@ -566,7 +609,7 @@ export class ReturnStateMachine {
     // Delegate eligibility check to the centralized state
     const orderState = await this.getOrderReturnState(orderId, userId);
 
-    if (orderState.orderStatus !== 'Delivered') {
+    if ((orderState.orderStatus || '').toLowerCase() !== 'delivered') {
       throw new ApiError(400, 'Returns/Exchanges are only available for delivered orders.');
     }
 

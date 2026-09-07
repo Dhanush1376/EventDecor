@@ -1,6 +1,7 @@
 import { Map, X, Search, MapPin, Store, Navigation } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
@@ -19,6 +20,11 @@ export function LocationSelectorModal({
   initialLocation,
   inline = false,
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useScrollLock(isOpen && !inline);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -445,7 +451,7 @@ export function LocationSelectorModal({
     onClose();
   };
 
-  return (
+  const content = (
     <AnimatePresence>
       {isOpen && (
         <div
@@ -660,4 +666,8 @@ export function LocationSelectorModal({
       )}
     </AnimatePresence>
   );
+
+  if (inline) return content;
+  if (!mounted) return null;
+  return createPortal(content, document.body);
 }

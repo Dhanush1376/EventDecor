@@ -45,8 +45,16 @@ export function DashboardProvider({ children }) {
 
   const location = useLocation();
 
-  // Sync tab from URL query params (retained for backward compatibility)
+  // Sync tab and orderId from URL query params
   useEffect(() => {
+    const orderIdParam = searchParams.get('orderId');
+    if (orderIdParam) {
+      setActiveTab('orders');
+      setSelectedOrderId(orderIdParam);
+      setMobileShowContent(true);
+      return;
+    }
+
     const tabParam = searchParams.get('tab');
     if (
       tabParam &&
@@ -85,9 +93,12 @@ export function DashboardProvider({ children }) {
   const [isPriceDetailsOpen, setIsPriceDetailsOpen] = useState(true);
 
   useEffect(() => {
-    setSelectedOrderId(null);
+    const orderIdParam = searchParams.get('orderId');
+    if (!orderIdParam) {
+      setSelectedOrderId(null);
+    }
     setSelectedEventBookingId(null);
-  }, [activeTab]);
+  }, [activeTab, searchParams]);
 
   const userId = user?._id || user?.id;
 

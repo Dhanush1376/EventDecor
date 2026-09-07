@@ -380,7 +380,10 @@ export const requireSuperAdmin = asyncHandler(
       throw new ApiError(401, 'Authentication required');
     }
 
-    const isRootAdmin = req.user.role === 'super_admin' || req.user.role === 'owner';
+    const isRootAdmin =
+      req.user.role === 'super_admin' ||
+      req.user.role === 'owner' ||
+      req.user.role === 'main_admin';
     if (isRootAdmin) {
       // Backend safetyLock check for Mutating Admin Actions
       await checkSafetyLock(req);
@@ -401,8 +404,9 @@ export const requireSuperAdminOrOwner = asyncHandler(
 
     const isOwner = req.user.role === 'owner';
     const isSuperAdmin = req.user.role === 'super_admin';
+    const isMainAdmin = req.user.role === 'main_admin';
 
-    if (isOwner || isSuperAdmin) {
+    if (isOwner || isSuperAdmin || isMainAdmin) {
       await checkSafetyLock(req);
       logAdminAudit(req, res);
       next();
@@ -425,8 +429,11 @@ export const requireRole = (allowedRoles: string[]) => {
       return next();
     }
 
-    // Owner and Super Admin always get access
-    const isRootAdmin = req.user.role === 'super_admin' || req.user.role === 'owner';
+    // Owner, Super Admin, and Main Admin always get access
+    const isRootAdmin =
+      req.user.role === 'super_admin' ||
+      req.user.role === 'owner' ||
+      req.user.role === 'main_admin';
     if (isRootAdmin || allowedRoles.includes(req.user.role)) {
       // Backend safetyLock check for Mutating Admin Actions
       await checkSafetyLock(req);

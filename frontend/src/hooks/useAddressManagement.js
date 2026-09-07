@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { sanitizePhoneNumber, isValidPhoneNumber } from '../utils/phoneUtils';
+import { reverseGeocodeCoords, detectAndResolveAddress } from '../utils/locationService';
 
 export function useAddressManagement({
   user,
@@ -18,8 +20,8 @@ export function useAddressManagement({
     if (editingAddressId === 'new') {
       setAddressFormData({
         id: 'new',
-        name: '',
-        phone: '',
+        name: user?.name && user.name !== 'Customer' ? user.name : '',
+        phone: user?.phone ? sanitizePhoneNumber(user.phone) : '',
         alternatePhone: '',
         email: user?.email || '',
         pincode: '',
@@ -40,8 +42,8 @@ export function useAddressManagement({
         setAddressFormData({
           id: addr._id || addr.id,
           name: addr.name || '',
-          phone: addr.phone || '',
-          alternatePhone: addr.alternatePhone || '',
+          phone: sanitizePhoneNumber(addr.phone || ''),
+          alternatePhone: sanitizePhoneNumber(addr.alternatePhone || ''),
           email: addr.email || user?.email || '',
           pincode: addr.pincode || '',
           locality: addr.locality || '',
@@ -73,29 +75,60 @@ export function useAddressManagement({
   const handleAddressSave = async (e) => {
     e?.preventDefault();
 
-    if (!addressFormData.phone || addressFormData.phone.length < 10) {
+    const cleanedPhone = sanitizePhoneNumber(addressFormData.phone);
+    const cleanedAltPhone = addressFormData.alternatePhone
+      ? sanitizePhoneNumber(addressFormData.alternatePhone)
+      : '';
+
+    // Normalize phone values in state
+    if (
+      cleanedPhone !== addressFormData.phone ||
+      cleanedAltPhone !== (addressFormData.alternatePhone || '')
+    ) {
+      setAddressFormData((prev) => ({
+        ...prev,
+        phone: cleanedPhone,
+        alternatePhone: cleanedAltPhone,
+      }));
+    }
+
+    if (!addressFormData.name?.trim()) {
+      toast.error('Please enter receiver full name');
+      return;
+    }
+
+    if (!isValidPhoneNumber(cleanedPhone)) {
       toast.error('Please enter a valid 10-digit mobile number');
       return;
     }
-    if (!addressFormData.pincode || addressFormData.pincode.length !== 6) {
+
+    if (addressFormData.alternatePhone && !isValidPhoneNumber(cleanedAltPhone)) {
+      toast.error('Please enter a valid 10-digit alternate mobile number');
+      return;
+    }
+
+    const cleanPincode = String(addressFormData.pincode || '')
+      .replace(/\D/g, '')
+      .slice(0, 6);
+    if (cleanPincode.length !== 6) {
       toast.error('Please enter a valid 6-digit postal pincode');
       return;
     }
 
     const payload = {
-      name: addressFormData.name,
-      phone: addressFormData.phone,
-      alternatePhone: addressFormData.alternatePhone || undefined,
-      email: addressFormData.email || user?.email || undefined,
-      pincode: addressFormData.pincode,
-      locality: addressFormData.locality,
-      addressString: addressFormData.addressString,
-      landmark: addressFormData.landmark || undefined,
-      city: addressFormData.city,
-      state: addressFormData.state,
+      name: addressFormData.name.trim(),
+      phone: cleanedPhone,
+      alternatePhone: cleanedAltPhone || undefined,
+      email: addressFormData.email?.trim() || undefined,
+      pincode: cleanPincode,
+      locality: addressFormData.locality?.trim() || '',
+      addressString: addressFormData.addressString?.trim() || '',
+      landmark: addressFormData.landmark?.trim() || undefined,
+      city: addressFormData.city?.trim() || '',
+      state: addressFormData.state?.trim() || '',
       country: addressFormData.country || 'India',
-      tag: addressFormData.tag,
-      deliveryInstructions: addressFormData.deliveryInstructions || undefined,
+      tag: addressFormData.tag || 'Home',
+      deliveryInstructions: addressFormData.deliveryInstructions?.trim() || undefined,
       latitude: addressFormData.latitude,
       longitude: addressFormData.longitude,
     };
@@ -122,53 +155,18 @@ export function useAddressManagement({
     try {
       toast.loading('Locating address...', { id: 'geocoding' });
       setIsDetectingLocation(true);
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
-        {
-          headers: {
-            'User-Agent': 'Siri Arts and Crafts/1.0 (dashboard address autofill)',
-          },
-        },
-      );
-      const data = await response.json();
-      if (data && data.address) {
-        const addr = data.address;
-        const newPincode = addr.postcode || '';
-        const newCity =
-          addr.city || addr.town || addr.village || addr.county || addr.state_district || '';
-        const newState = addr.state || '';
-        const newLocality =
-          addr.suburb || addr.neighbourhood || addr.road || addr.residential || '';
 
-        const streetParts = [];
-        if (addr.house_number) streetParts.push(addr.house_number);
-        if (addr.building) streetParts.push(addr.building);
-        if (addr.road || addr.street) streetParts.push(addr.road || addr.street);
-        if (addr.suburb) streetParts.push(addr.suburb);
-        if (addr.neighbourhood) streetParts.push(addr.neighbourhood);
-        const displayParts = data.display_name ? data.display_name.split(',') : [];
-        const fullAddress =
-          displayParts.length > 4
-            ? displayParts.slice(0, -4).join(',').trim()
-            : displayParts.join(',').trim() || streetParts.join(', ');
-
-        const landmark =
-          addr.amenity ||
-          addr.shop ||
-          addr.office ||
-          addr.tourism ||
-          addr.leisure ||
-          addr.building ||
-          '';
-
+      const res = await reverseGeocodeCoords(lat, lng);
+      if (res.success && res.data) {
+        const d = res.data;
         setAddressFormData((prev) => ({
           ...prev,
-          pincode: newPincode.replace(/\s/g, ''),
-          city: newCity,
-          state: newState,
-          locality: newLocality || prev.locality,
-          addressString: fullAddress || prev.addressString,
-          landmark: landmark || prev.landmark || newLocality || newCity,
+          pincode: d.pincode || prev.pincode,
+          city: d.city || prev.city,
+          state: d.state || prev.state,
+          locality: d.locality || prev.locality,
+          addressString: d.address || prev.addressString,
+          landmark: d.landmark || prev.landmark,
           latitude: lat,
           longitude: lng,
         }));
@@ -183,36 +181,42 @@ export function useAddressManagement({
     }
   }, []);
 
-  const handleFetchCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by your browser');
-      return;
-    }
-
-    toast.loading('Accessing device GPS location...', { id: 'gps' });
+  const handleFetchCurrentLocation = useCallback(async () => {
+    toast.loading('Detecting your location...', { id: 'gps' });
     setIsDetectingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setMapPosition({ lat: latitude, lng: longitude });
-        fetchAddressFromCoords(latitude, longitude);
-        toast.success('Location found!', { id: 'gps' });
-      },
-      (error) => {
-        let errorMsg = 'Could not access GPS';
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMsg = window.isSecureContext
-            ? 'Location permission denied. Please allow access.'
-            : 'Location requires a secure connection (HTTPS).';
-        } else if (error.code === error.TIMEOUT) {
-          errorMsg = 'Location request timed out.';
+
+    try {
+      const res = await detectAndResolveAddress();
+      if (res.success && res.data) {
+        const d = res.data;
+        if (d.latitude && d.longitude) {
+          setMapPosition({ lat: d.latitude, lng: d.longitude });
         }
-        toast.error(errorMsg, { id: 'gps' });
-        setIsDetectingLocation(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
-  }, [fetchAddressFromCoords]);
+        setAddressFormData((prev) => ({
+          ...prev,
+          latitude: d.latitude ?? prev.latitude,
+          longitude: d.longitude ?? prev.longitude,
+          pincode: d.pincode || prev.pincode,
+          city: d.city || prev.city,
+          state: d.state || prev.state,
+          locality: d.locality || prev.locality,
+          addressString: d.address || prev.addressString,
+          landmark: d.landmark || prev.landmark,
+        }));
+        const successMsg =
+          res.source === 'gps'
+            ? 'Location auto-filled from GPS!'
+            : 'Location detected from network!';
+        toast.success(successMsg, { id: 'gps' });
+      } else {
+        toast.error(res.error || 'Could not detect location. Please fill manually.', { id: 'gps' });
+      }
+    } catch (_err) {
+      toast.error('Could not detect location. Please fill manually.', { id: 'gps' });
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  }, []);
 
   return {
     addressFormData,

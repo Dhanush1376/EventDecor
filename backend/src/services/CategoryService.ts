@@ -22,6 +22,8 @@ export class CategoryService {
     return await Category.find(filter).sort({ displayOrder: 1 }).lean();
   }
 
+  private static matchCache = new Map<string, mongoose.Types.ObjectId | null>();
+
   /**
    * Intelligently matches a category name to prevent duplicates.
    * Handles exact, case-insensitive, plural/singular, and fuzzy matching.
@@ -31,6 +33,10 @@ export class CategoryService {
     const searchStr = name.trim();
     const lowerSearch = searchStr.toLowerCase();
 
+    if (this.matchCache.has(lowerSearch)) {
+      return this.matchCache.get(lowerSearch) || null;
+    }
+
     // 1. Exact or Case-Insensitive Match
     const exactMatch = await Category.findOne({
       $or: [
@@ -38,7 +44,11 @@ export class CategoryService {
         { slug: searchStr.replace(/[\s\W-]+/g, '-') },
       ],
     });
-    if (exactMatch) return exactMatch._id as mongoose.Types.ObjectId;
+    if (exactMatch) {
+      const id = exactMatch._id as mongoose.Types.ObjectId;
+      this.matchCache.set(lowerSearch, id);
+      return id;
+    }
 
     // 2. Plural / Singular match (Basic S-stripping/appending)
     const singular = lowerSearch.endsWith('s') ? lowerSearch.slice(0, -1) : lowerSearch;
@@ -50,7 +60,11 @@ export class CategoryService {
         { name: { $regex: new RegExp(`^${plural}$`, 'i') } },
       ],
     });
-    if (pluralMatch) return pluralMatch._id as mongoose.Types.ObjectId;
+    if (pluralMatch) {
+      const id = pluralMatch._id as mongoose.Types.ObjectId;
+      this.matchCache.set(lowerSearch, id);
+      return id;
+    }
 
     // 3. Partial Substring / Alias matching
     // (In a full enterprise setup, this would ping AI or a vector DB, but for now we do a text search)
@@ -60,8 +74,7 @@ export class CategoryService {
       { score: { $meta: 'textScore' } },
     ).sort({ score: { $meta: 'textScore' } });
 
-    // If the text match is very strong, we could return it, but text matching can be dangerous.
-    // For now, if we don't have exact/plural match, we return null to trigger a safe AI creation or manual fallback.
+    this.matchCache.set(lowerSearch, null);
     return null;
   }
 

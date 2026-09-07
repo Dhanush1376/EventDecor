@@ -542,7 +542,7 @@ export function DynamicCustomOrderWizard({
                             type="date"
                             value={formData.dynamicData[field.id] || ''}
                             onChange={(e) => handleUpdateDynamicField(field.id, e.target.value)}
-                            className="w-full bg-white border-2 border-black/10 hover:border-black/20 focus:border-black rounded-xl px-4 py-3 text-[13px] outline-none transition-all appearance-none"
+                            className="w-full bg-white border border-black/15 hover:border-black/25 focus:border-black rounded-lg px-3.5 py-2 text-[13px] outline-none transition-all appearance-none"
                           />
                         )}
 
@@ -550,7 +550,7 @@ export function DynamicCustomOrderWizard({
                           <select
                             value={formData.dynamicData[field.id] || ''}
                             onChange={(e) => handleUpdateDynamicField(field.id, e.target.value)}
-                            className="w-full bg-white border-2 border-black/10 hover:border-black/20 focus:border-black rounded-xl px-4 py-3 text-[13px] outline-none transition-all appearance-none cursor-pointer"
+                            className="w-full bg-white border border-black/15 hover:border-black/25 focus:border-black rounded-lg px-3.5 py-2 text-[13px] outline-none transition-all cursor-pointer"
                           >
                             <option value="">Select an option</option>
                             {field.options?.map((o) => (

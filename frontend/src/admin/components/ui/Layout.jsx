@@ -88,9 +88,9 @@ export function PageHeader({
               )}
             </h1>
             {subtitle && (
-              <p className="text-[13px] text-[var(--admin-text-secondary)] mt-1.5 font-medium leading-relaxed max-w-[500px]">
+              <div className="text-[13px] text-[var(--admin-text-secondary)] mt-1.5 font-medium leading-relaxed max-w-[500px]">
                 {subtitle}
-              </p>
+              </div>
             )}
           </div>
         </div>

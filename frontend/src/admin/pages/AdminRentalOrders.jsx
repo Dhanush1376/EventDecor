@@ -74,23 +74,25 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
     }
   };
 
-  const getCardColorClass = (status) => {
+  const getRentalStatusBadgeStyle = (status) => {
     const s = (status || '').toLowerCase();
     switch (s) {
       case 'completed':
       case 'returned':
-        return 'bg-green-50 border-green-200';
+        return 'bg-emerald-600 text-white';
       case 'active_rental':
-        return 'bg-blue-50 border-blue-200';
-      case 'pending':
+        return 'bg-blue-600 text-white';
       case 'confirmed':
+        return 'bg-purple-600 text-white';
+      case 'pending':
+        return 'bg-amber-500 text-white';
       case 'return_requested':
-        return 'bg-yellow-50 border-yellow-200';
+        return 'bg-indigo-600 text-white';
       case 'late_return':
       case 'cancelled':
-        return 'bg-red-50 border-red-200';
+        return 'bg-red-600 text-white';
       default:
-        return 'bg-gray-50 border-gray-200';
+        return 'bg-slate-600 text-white';
     }
   };
 
@@ -374,7 +376,15 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                           className="admin-table-row-clickable group bg-[var(--admin-surface)] hover:bg-[var(--admin-bg-subtle)] transition-colors border-b border-[var(--admin-border-subtle)]"
                           onClick={() => goToDetail(r._id)}
                         >
-                          <td className="font-semibold text-[var(--admin-text-primary)]">
+                          <td className="relative overflow-hidden font-semibold text-[var(--admin-text-primary)] pl-7">
+                            {/* Top-Left Diagonal Status Badge */}
+                            <div className="absolute top-0 left-0 w-14 h-14 pointer-events-none z-10 overflow-hidden">
+                              <div
+                                className={`absolute top-2.5 -left-8 w-28 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wide ${getRentalStatusBadgeStyle(r.status)}`}
+                              >
+                                {(r.status || '').replace('_', ' ')}
+                              </div>
+                            </div>
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-2">
                                 #{r._id.substring(r._id.length - 8).toUpperCase()}
@@ -581,16 +591,24 @@ export function AdminRentalOrders({ hideHeader = false, initialFilter = 'All' })
                       onClick={() => goToDetail(r._id)}
                       className="bg-[var(--admin-surface)] rounded-xl p-4 border border-[var(--admin-border-subtle)] shadow-xs hover:border-[var(--admin-border)] hover:shadow-sm transition-all duration-200 cursor-pointer group text-left flex flex-col relative overflow-hidden"
                     >
-                      <div className="absolute top-0 left-0 w-12 h-12 pointer-events-none z-10 overflow-hidden rounded-tl-[12px]">
-                        <div className="absolute top-2 -left-7 w-24 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wider bg-indigo-500">
-                          RENTAL
+                      {/* Top-Left Diagonal Status Badge */}
+                      <div className="absolute top-0 left-0 w-14 h-14 pointer-events-none z-10 overflow-hidden rounded-tl-[12px]">
+                        <div
+                          className={`absolute top-2.5 -left-8 w-28 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wide ${getRentalStatusBadgeStyle(r.status)}`}
+                        >
+                          {(r.status || '').replace('_', ' ')}
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[15px] font-bold text-gray-900 ml-6">
-                          #{r._id.substring(r._id.length - 8).toUpperCase()}
-                        </span>
+                      <div className="flex items-center justify-between mb-3 pl-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[15px] font-bold text-gray-900">
+                            #{r._id.substring(r._id.length - 8).toUpperCase()}
+                          </span>
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">
+                            RENTAL
+                          </span>
+                        </div>
                         <div className="relative inline-block">
                           <select
                             value={r.status}

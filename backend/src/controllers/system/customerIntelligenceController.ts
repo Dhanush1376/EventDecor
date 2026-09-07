@@ -11,6 +11,7 @@ import AnalyticsSnapshot from '../../models/AnalyticsSnapshot';
 import AnalyticsEvent from '../../models/AnalyticsEvent';
 import User from '../../models/User';
 import Order from '../../models/Order';
+import RentalOrder from '../../models/RentalOrder';
 import logger from '../../config/logger';
 
 /**
@@ -236,20 +237,53 @@ export const getExecutiveSummary = async (req: Request, res: Response) => {
   }
 };
 
+async function computeCustomerSpendFallback(userId: any) {
+  try {
+    const uId = userId;
+    const uIdStr = userId.toString();
+    const [orders, rentals] = await Promise.all([
+      Order.find({
+        $or: [{ user: uId }, { user: uIdStr }],
+        orderStatus: { $nin: ['Cancelled', 'Refunded'] },
+        paymentStatus: { $ne: 'failed' },
+      })
+        .select('total')
+        .lean(),
+      RentalOrder.find({
+        $or: [{ user: uId }, { user: uIdStr }],
+        status: { $ne: 'cancelled' },
+        paymentStatus: { $nin: ['failed', 'refunded'] },
+      })
+        .select('totalAmount grossTotal')
+        .lean(),
+    ]);
+
+    const ordersSpent = orders.reduce((sum: number, o: any) => sum + (Number(o.total) || 0), 0);
+    const rentalsSpent = rentals.reduce(
+      (sum: number, r: any) => sum + (Number(r.totalAmount) || Number(r.grossTotal) || 0),
+      0,
+    );
+
+    return {
+      totalSpent: ordersSpent + rentalsSpent,
+      totalOrders: orders.length + rentals.length,
+    };
+  } catch (_e) {
+    return { totalSpent: 0, totalOrders: 0 };
+  }
+}
+
 export const getCustomerList = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search as string;
+    const tier = req.query.tier as string;
+    const status = req.query.status as string;
     const sortField = (req.query.sortBy as string) || 'createdAt';
     const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
 
-    // Filters
-    const tier = req.query.tier as string;
-    const status = req.query.status as string;
-
     const query: any = { role: { $in: ['user', 'customer'] } };
-
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -257,11 +291,9 @@ export const getCustomerList = async (req: Request, res: Response) => {
         { phone: { $regex: search, $options: 'i' } },
       ];
     }
-
     if (tier && tier !== 'All') {
       query.loyaltyTier = tier;
     }
-
     if (status === 'Verified') {
       query.isVerified = true;
     } else if (status === 'Unverified') {
@@ -272,9 +304,7 @@ export const getCustomerList = async (req: Request, res: Response) => {
     sortOptions[sortField] = sortOrder;
 
     const customers = await User.find(query)
-      .select(
-        'name email phone loyaltyTier createdAt lastLogin isVerified walletBalance siriCoins addresses',
-      )
+      .select('name email phone loyaltyTier createdAt isVerified walletBalance siriCoins addresses')
       .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(limit)
@@ -284,34 +314,49 @@ export const getCustomerList = async (req: Request, res: Response) => {
 
     const populatedCustomers = await Promise.all(
       customers.map(async (c: any) => {
+        let totalSpent = 0;
+        let ordersCount = 0;
+        let health = 'Unknown';
+        let segment = 'New';
+
         try {
           const overview = await CustomerIntelligenceService.getCustomer360(c._id.toString());
-          return {
-            ...c,
-            totalSpent: overview?.overview?.totalSpent || 0,
-            orders: overview?.overview?.totalOrders || 0,
-            segment:
-              overview?.identity?.loyaltyTier === 'Platinum'
-                ? 'VIP'
-                : overview?.overview?.totalOrders > 0
-                  ? 'Regular'
-                  : 'New',
-            lastOrder: overview?.overview?.totalOrders > 0 ? overview.overview.totalSpent : null,
-            health: overview?.scores?.health || 'Unknown',
-            city: c.addresses && c.addresses.length > 0 ? c.addresses[0].city : 'Unknown',
-          };
+          totalSpent = overview?.overview?.totalSpent || 0;
+          ordersCount = overview?.overview?.totalOrders || 0;
+          health = overview?.scores?.health || 'Unknown';
+          segment =
+            overview?.identity?.loyaltyTier === 'Platinum'
+              ? 'VIP'
+              : ordersCount > 0
+                ? 'Regular'
+                : 'New';
         } catch (_err) {
-          // Fallback if 360 fails for a user (e.g. missing data)
-          return {
-            ...c,
-            totalSpent: 0,
-            orders: 0,
-            segment: 'Unknown',
-            lastOrder: null,
-            health: 'Unknown',
-            city: 'Unknown',
-          };
+          // Fallback if 360 fails
         }
+
+        // Safety fallback if totalSpent is 0 or ordersCount is 0
+        if (totalSpent === 0 || ordersCount === 0) {
+          const fallback = await computeCustomerSpendFallback(c._id);
+          if (totalSpent === 0 && fallback.totalSpent > 0) {
+            totalSpent = fallback.totalSpent;
+          }
+          if (ordersCount === 0 && fallback.totalOrders > 0) {
+            ordersCount = fallback.totalOrders;
+          }
+          if (ordersCount > 0 && segment === 'New') {
+            segment = 'Regular';
+          }
+        }
+
+        return {
+          ...c,
+          totalSpent,
+          orders: ordersCount,
+          segment,
+          lastOrder: ordersCount > 0 ? totalSpent : null,
+          health: health === 'Unknown' && ordersCount > 0 ? 'Good' : health,
+          city: c.addresses && c.addresses.length > 0 ? c.addresses[0].city : 'Unknown',
+        };
       }),
     );
 
@@ -350,28 +395,36 @@ export const exportCustomers = async (req: Request, res: Response) => {
 
     const populatedCustomers = await Promise.all(
       customers.map(async (c: any) => {
+        let totalSpent = 0;
+        let ordersCount = 0;
+
         try {
           const overview = await CustomerIntelligenceService.getCustomer360(c._id.toString());
-          return {
-            Name: c.name,
-            Email: c.email || '',
-            Phone: c.phone || '',
-            Orders: overview?.overview?.totalOrders || 0,
-            Spent: overview?.overview?.totalSpent || 0,
-            Tier: c.loyaltyTier || 'Bronze',
-            Joined: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
-          };
+          totalSpent = overview?.overview?.totalSpent || 0;
+          ordersCount = overview?.overview?.totalOrders || 0;
         } catch (_err) {
-          return {
-            Name: c.name,
-            Email: c.email || '',
-            Phone: c.phone || '',
-            Orders: 0,
-            Spent: 0,
-            Tier: c.loyaltyTier || 'Bronze',
-            Joined: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
-          };
+          // Fallback
         }
+
+        if (totalSpent === 0 || ordersCount === 0) {
+          const fallback = await computeCustomerSpendFallback(c._id);
+          if (totalSpent === 0 && fallback.totalSpent > 0) {
+            totalSpent = fallback.totalSpent;
+          }
+          if (ordersCount === 0 && fallback.totalOrders > 0) {
+            ordersCount = fallback.totalOrders;
+          }
+        }
+
+        return {
+          Name: c.name,
+          Email: c.email || '',
+          Phone: c.phone || '',
+          Orders: ordersCount,
+          Spent: totalSpent,
+          Tier: c.loyaltyTier || 'Bronze',
+          Joined: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '',
+        };
       }),
     );
 

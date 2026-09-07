@@ -1,5 +1,6 @@
 import { MessageSquare, X, MessageCircle, Send } from 'lucide-react';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
@@ -13,29 +14,36 @@ export function MobileChatDrawer({
   handleSendChat,
   chatEndRef,
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useScrollLock(isMobileChatOpen && !!selectedBooking);
-  return (
+
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isMobileChatOpen && selectedBooking && (
-        <div className="fixed inset-0 z-[100] flex flex-col justify-end lg:hidden">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-[100] lg:hidden pointer-events-none">
+          {/* Decoupled Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setIsMobileChatOpen(false)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm pointer-events-auto"
           />
 
-          {/* Sheet */}
+          {/* Bottom Sheet Shell */}
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            className="relative z-10 w-full flex flex-col"
-            style={{ height: '85%' }}
+            className="fixed bottom-0 left-0 right-0 z-10 pointer-events-auto flex flex-col max-h-[85vh] h-[85vh]"
           >
             <div className="w-full h-full bg-white rounded-t-[28px] flex flex-col relative overflow-hidden">
               {/* Drag handle pill */}
@@ -126,7 +134,7 @@ export function MobileChatDrawer({
                   placeholder="Discuss color swatches, venue details..."
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
-                  className="flex-1 bg-[#FAF9F6] border border-black/5 px-4 py-3 rounded-lg text-xs outline-none focus:border-primary/45 transition-colors"
+                  className="flex-1 bg-[#FAF9F6] border border-black/5 px-4 py-3 rounded-lg text-[16px] sm:text-xs outline-none focus:border-primary/45 transition-colors"
                   required
                 />
                 <button
@@ -140,6 +148,7 @@ export function MobileChatDrawer({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

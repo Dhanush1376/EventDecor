@@ -198,7 +198,7 @@ export function CustomizerDrawer({
               <select
                 value={placementPreference}
                 onChange={(e) => setPlacementPreference(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium"
+                className="w-full px-3.5 py-2 rounded-lg border border-black/10 bg-white text-[13px] outline-none focus:border-primary font-medium cursor-pointer"
               >
                 <option value="Side-Stage Showcase Corner">Side-Stage Showcase Corner</option>
                 <option value="Entrance Presentation Desk">Entrance Presentation Desk</option>

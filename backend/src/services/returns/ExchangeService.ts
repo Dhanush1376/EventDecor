@@ -165,6 +165,7 @@ export class ExchangeService {
 
       // Persist reservation ID for lifecycle management (confirm on delivery, cancel on rejection)
       exchangeRequest.replacementItem.reservationId = reservation._id;
+      exchangeRequest.replacementStatus = 'reserved';
       await exchangeRequest.save({ session });
 
       let razorpayOrderId;

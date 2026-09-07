@@ -46,14 +46,17 @@ export const createResponseInterceptor = ({
 
     const method = originalRequest?.method?.toLowerCase() || 'get';
     const isGet = method === 'get';
-    const status = error.response?.status;
     const isDatabaseDown = status === 503 && error.response?.data?.message?.includes('Database');
 
-    // Auto-retry database unavailability errors once after a brief wait
-    if (isDatabaseDown && !originalRequest._dbRetry) {
-      originalRequest._dbRetry = true;
-      const retryDelay = error.response?.data?.retryAfterMs || 3000;
-      logger.warn(`[API] Database temporarily unavailable. Auto-retrying in ${retryDelay}ms...`);
+    // Auto-retry database unavailability errors with backoff
+    const dbRetryCount = originalRequest?._dbRetryCount || 0;
+    if (isDatabaseDown && dbRetryCount < 3) {
+      originalRequest._dbRetryCount = dbRetryCount + 1;
+      const baseDelay = error.response?.data?.retryAfterMs || 2000;
+      const retryDelay = Math.min(Math.round(baseDelay * Math.pow(1.5, dbRetryCount)), 6000);
+      logger.warn(
+        `[API] Database temporarily unavailable. Auto-retrying (attempt ${dbRetryCount + 1}/3) in ${retryDelay}ms...`,
+      );
       await new Promise((resolve) => setTimeout(resolve, retryDelay));
       return api(originalRequest);
     }

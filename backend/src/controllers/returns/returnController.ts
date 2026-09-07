@@ -68,20 +68,46 @@ export const getMyReturns = asyncHandler(async (req: Request, res: Response) => 
  * @access  Private
  */
 export const getReturnById = asyncHandler(async (req: Request, res: Response) => {
-  const returnRequest = await ReturnRequest.findOne({
-    _id: req.params.id,
-    userId: req.user?.id,
-  })
+  const paramId = req.params.id;
+  const userId = req.user?.id;
+  if (!userId) throw new ApiError(401, 'Unauthorized');
+
+  const isObjectId = mongoose.isValidObjectId(paramId);
+  let returnRequest = await ReturnRequest.findOne(
+    isObjectId ? { _id: paramId, userId } : { returnId: paramId, userId },
+  )
     .populate('orderId')
     .populate('items.productId', 'title imageSrc');
+
+  if (!returnRequest) {
+    const ExchangeRequest = require('../../models/ExchangeRequest').default;
+    const linkedExchange = await ExchangeRequest.findOne(
+      isObjectId ? { _id: paramId } : { exchangeId: paramId },
+    );
+    if (linkedExchange) {
+      returnRequest = await ReturnRequest.findOne({ _id: linkedExchange.returnRequestId, userId })
+        .populate('orderId')
+        .populate('items.productId', 'title imageSrc');
+    }
+  }
 
   if (!returnRequest) {
     throw new ApiError(404, 'Return request not found');
   }
 
+  // Fetch exchange details if applicable
+  let exchangeDetails = null;
+  if (returnRequest.returnType === 'exchange') {
+    const ExchangeRequest = require('../../models/ExchangeRequest').default;
+    exchangeDetails = await ExchangeRequest.findOne({
+      returnRequestId: returnRequest._id,
+    }).populate('replacementItem.productId', 'title imageSrc price');
+  }
+
   // Filter out internal notes in conversation
   const safeData = returnRequest.toObject();
-  safeData.conversation = safeData.conversation.filter((msg) => !msg.isInternal);
+  safeData.conversation = (safeData.conversation || []).filter((msg: any) => !msg.isInternal);
+  (safeData as any).exchangeDetails = exchangeDetails;
 
   res.status(200).json({
     success: true,
@@ -116,13 +142,14 @@ export const checkEligibility = asyncHandler(async (req: Request, res: Response)
 export const addConversationMessage = asyncHandler(async (req: Request, res: Response) => {
   const { message, attachments } = req.body;
   const userId = req.user?.id;
+  const paramId = req.params.id;
 
   if (!userId) throw new ApiError(401, 'Unauthorized');
 
-  const returnRequest = await ReturnRequest.findOne({
-    _id: req.params.id,
-    userId,
-  });
+  const isObjectId = mongoose.isValidObjectId(paramId);
+  const returnRequest = await ReturnRequest.findOne(
+    isObjectId ? { _id: paramId, userId } : { returnId: paramId, userId },
+  );
 
   if (!returnRequest) {
     throw new ApiError(404, 'Return request not found');
@@ -153,12 +180,13 @@ export const addConversationMessage = asyncHandler(async (req: Request, res: Res
  */
 export const cancelReturn = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.id;
+  const paramId = req.params.id;
   if (!userId) throw new ApiError(401, 'Unauthorized');
 
-  const returnRequest = await ReturnRequest.findOne({
-    _id: req.params.id,
-    userId,
-  });
+  const isObjectId = mongoose.isValidObjectId(paramId);
+  const returnRequest = await ReturnRequest.findOne(
+    isObjectId ? { _id: paramId, userId } : { returnId: paramId, userId },
+  );
 
   if (!returnRequest) {
     throw new ApiError(404, 'Return request not found');
@@ -229,7 +257,10 @@ export const updateRefundMethod = asyncHandler(async (req: Request, res: Respons
 
   if (!userId) throw new ApiError(401, 'Unauthorized');
 
-  const returnRequest = await ReturnRequest.findOne({ _id: id, userId });
+  const isObjectId = mongoose.isValidObjectId(id);
+  const returnRequest = await ReturnRequest.findOne(
+    isObjectId ? { _id: id, userId } : { returnId: id, userId },
+  );
   if (!returnRequest) throw new ApiError(404, 'Return request not found');
 
   if (returnRequest.status !== 'inspection_completed') {

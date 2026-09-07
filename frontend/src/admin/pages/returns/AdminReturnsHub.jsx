@@ -7,7 +7,6 @@ import { useConfirm } from '../../../context/ConfirmProvider';
 import { useReturnManagement } from '../../hooks/useReturnManagement';
 import {
   PageHeader,
-  StatusBadge,
   EmptyState,
   SkeletonTable,
   fadeUp,
@@ -20,42 +19,6 @@ const TABS = [
   { id: 'needs_attention', label: 'Needs Attention', icon: 'error_outline' },
   { id: 'pending_pickup', label: 'Pending Pickup', icon: 'local_shipping' },
   { id: 'fraud', label: 'Fraud Flagged', icon: 'security' },
-];
-
-const RETURN_STATUS_GROUPS = [
-  {
-    label: 'Request Phase',
-    options: [
-      { value: 'submitted', label: 'Submitted' },
-      { value: 'approved', label: 'Approved' },
-      { value: 'rejected', label: 'Rejected' },
-      { value: 'cancelled', label: 'Cancelled' },
-    ],
-  },
-  {
-    label: 'Logistics Phase',
-    options: [
-      { value: 'return_courier_assigned', label: 'Courier Assigned' },
-      { value: 'return_picked_up', label: 'Picked Up' },
-      { value: 'return_in_transit', label: 'In Transit' },
-      { value: 'return_received', label: 'Received' },
-    ],
-  },
-  {
-    label: 'Quality Check Phase',
-    options: [
-      { value: 'inspection_started', label: 'Inspection Started' },
-      { value: 'inspection_completed', label: 'Inspection Completed' },
-    ],
-  },
-  {
-    label: 'Refund Phase',
-    options: [
-      { value: 'refund_initiated', label: 'Refund Initiated' },
-      { value: 'refund_completed', label: 'Refund Completed' },
-      { value: 'completed', label: 'Completed' },
-    ],
-  },
 ];
 
 const VALID_TRANSITIONS = {
@@ -74,29 +37,39 @@ const VALID_TRANSITIONS = {
   cancelled: [],
 };
 
-const getCardColorClass = (req) => {
-  if (req?.sla?.isOverdue || req?.priority === 'critical') {
-    return '!bg-red-500/10 !border-red-500/30';
-  }
-  if (req?.priority === 'high') {
-    return '!bg-orange-500/10 !border-orange-500/30';
-  }
-
+const getRequestStatusBadgeStyle = (req) => {
+  if (req?.sla?.isOverdue) return 'bg-red-600 text-white';
   const s = (req?.status || '').toLowerCase();
   switch (s) {
     case 'completed':
     case 'resolved':
-      return '!bg-[#7a8b76]/10 border-[#7a8b76]/30';
+      return 'bg-emerald-600 text-white';
     case 'approved':
-      return '!bg-[#6b8ead]/10 border-[#6b8ead]/30';
+    case 'replacement_dispatched':
+    case 'shipped':
+      return 'bg-blue-600 text-white';
+    case 'return_picked_up':
+    case 'return_in_transit':
+    case 'return_received':
+      return 'bg-purple-600 text-white';
+    case 'inspection_started':
+    case 'inspection_completed':
+      return 'bg-indigo-600 text-white';
     case 'rejected':
-      return '!bg-[#bc6c5c]/10 border-[#bc6c5c]/30';
+    case 'cancelled':
+      return 'bg-red-600 text-white';
+    case 'submitted':
+    case 'pending':
     default:
-      if (req?.returnType === 'exchange') {
-        return '!bg-[var(--admin-accent-light)] border-[var(--admin-border-strong)]';
-      }
-      return '!bg-[var(--admin-warning-light)] border-[var(--admin-warning-border)]';
+      return 'bg-amber-500 text-white';
   }
+};
+
+const getRequestStatusLabel = (req) => {
+  if (req?.sla?.isOverdue) return 'Overdue';
+  if (req?.priority === 'critical') return 'Critical';
+  const s = req?.status || 'Submitted';
+  return s.replace(/_/g, ' ');
 };
 
 const getRequestDetailUrl = (req) => {
@@ -341,27 +314,18 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                       returnsList.map((req) => (
                         <tr
                           key={req._id}
-                          className={`group ${getCardColorClass(req)} cursor-pointer`}
+                          className="admin-table-row-clickable group transition-colors cursor-pointer border-b border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-muted)]"
                           onClick={() => navigate(getRequestDetailUrl(req))}
                         >
-                          <td className="pl-5 relative overflow-hidden font-semibold text-[var(--admin-text-primary)]">
-                            {(req.sla?.isOverdue ||
-                              req.priority === 'critical' ||
-                              req.priority === 'high') && (
-                              <div className="absolute top-0 left-0 w-12 h-12 pointer-events-none z-10 overflow-hidden rounded-tl-md">
-                                <div
-                                  className={`absolute top-2 -left-7 w-24 text-[7.5px] font-bold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wider ${
-                                    req.sla?.isOverdue
-                                      ? 'bg-red-600'
-                                      : req.priority === 'critical'
-                                        ? 'bg-red-600'
-                                        : 'bg-orange-500'
-                                  }`}
-                                >
-                                  {req.sla?.isOverdue ? 'Overdue' : req.priority}
-                                </div>
+                          <td className="pl-7 relative overflow-hidden font-semibold text-[var(--admin-text-primary)]">
+                            {/* Top-Left Diagonal Status Badge */}
+                            <div className="absolute top-0 left-0 w-14 h-14 pointer-events-none z-10 overflow-hidden rounded-tl-md">
+                              <div
+                                className={`absolute top-2.5 -left-8 w-28 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wide ${getRequestStatusBadgeStyle(req)}`}
+                              >
+                                {getRequestStatusLabel(req)}
                               </div>
-                            )}
+                            </div>
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-2">
                                 {req.returnId || req._id.substring(0, 8)}
@@ -587,44 +551,25 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                                         }
                                       });
                                     }}
-                                    className="bg-white text-red-600 font-bold px-2.5 py-1 text-[10px] uppercase tracking-wider rounded border border-red-200 hover:bg-red-50 transition-colors shadow-sm"
+                                    className="admin-btn bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 !py-1 !px-2.5 text-[10px] uppercase tracking-wider font-bold shadow-2xs transition-all"
                                   >
                                     Reject
                                   </button>
                                 </div>
                               ) : (
-                                <div className="relative group w-max">
-                                  <select
-                                    value={req.status}
-                                    onChange={(e) => {
-                                      e.stopPropagation();
-                                      transitionStatus(req._id, {
-                                        nextStatus: e.target.value,
-                                        reason: 'Status updated from Returns Hub table.',
-                                      }).then(() => {
-                                        // Refresh the list after successful update to reflect changes in current tab
-                                        fetchReturnsList({ search: searchTerm });
-                                      });
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="appearance-none bg-white border border-[var(--admin-border-strong)] text-[10px] font-bold text-[var(--admin-text-primary)] rounded px-2 py-1 pr-6 cursor-pointer outline-none hover:border-blue-400 focus:border-blue-500 shadow-sm uppercase tracking-wider transition-colors"
-                                  >
-                                    {RETURN_STATUS_GROUPS.map((group) => (
-                                      <optgroup key={group.label} label={group.label}>
-                                        {group.options.map((s) => {
-                                          return (
-                                            <option key={s.value} value={s.value}>
-                                              {s.label}
-                                            </option>
-                                          );
-                                        })}
-                                      </optgroup>
-                                    ))}
-                                  </select>
-                                  <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-[14px] text-[var(--admin-text-tertiary)] pointer-events-none">
-                                    expand_more
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(getRequestDetailUrl(req));
+                                  }}
+                                  className="admin-btn bg-white hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border-strong)] !py-1 !px-2.5 text-[10px] uppercase tracking-wider font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                                >
+                                  Manage
+                                  <span className="material-symbols-outlined text-[13px]">
+                                    arrow_forward
                                   </span>
-                                </div>
+                                </button>
                               )}
                               <span className="text-[10px] text-[var(--admin-text-tertiary)] font-medium">
                                 {new Date(req.createdAt).toLocaleString('en-IN', {
@@ -780,38 +725,50 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                     <div
                       key={req._id}
                       onClick={() => navigate(getRequestDetailUrl(req))}
-                      className={`${getCardColorClass(req)} relative overflow-hidden rounded-[var(--admin-radius-lg)] p-4 shadow-sm border flex flex-col gap-3 cursor-pointer hover:shadow-md transition-all`}
+                      className="bg-[var(--admin-surface)] relative overflow-hidden rounded-[var(--admin-radius-lg)] p-4 shadow-sm border border-[var(--admin-border)] flex flex-col gap-3 cursor-pointer hover:shadow-md transition-all"
                     >
-                      {(req.sla?.isOverdue ||
-                        req.priority === 'critical' ||
-                        req.priority === 'high') && (
-                        <div className="absolute top-0 left-0 w-12 h-12 pointer-events-none z-10 overflow-hidden rounded-tl-md">
-                          <div
-                            className={`absolute top-2 -left-7 w-24 text-[7.5px] font-bold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wider ${
-                              req.sla?.isOverdue
-                                ? 'bg-red-600'
-                                : req.priority === 'critical'
-                                  ? 'bg-red-600'
-                                  : 'bg-orange-500'
-                            }`}
-                          >
-                            {req.sla?.isOverdue ? 'Overdue' : req.priority}
-                          </div>
+                      {/* Top-Left Diagonal Status Badge */}
+                      <div className="absolute top-0 left-0 w-14 h-14 pointer-events-none z-10 overflow-hidden rounded-tl-md">
+                        <div
+                          className={`absolute top-2.5 -left-8 w-28 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wide ${getRequestStatusBadgeStyle(req)}`}
+                        >
+                          {getRequestStatusLabel(req)}
                         </div>
-                      )}
+                      </div>
 
-                      <div className="flex justify-between items-start gap-2">
-                        <div>
+                      <div className="flex justify-between items-start gap-2 pl-4">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-[var(--admin-text-primary)] text-[14px] pl-3">
                               {req.returnId || req._id.substring(0, 8)}
                             </span>
+                            {req.returnType === 'exchange' && (
+                              <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold rounded">
+                                Exchange
+                              </span>
+                            )}
                           </div>
-                          <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] block mt-0.5 pl-3">
+                          <span className="text-[11px] font-medium text-[var(--admin-text-secondary)] block mt-0.5 pl-3 truncate">
                             {req.userId?.name || 'Guest User'}
                           </span>
                         </div>
-                        <StatusBadge status={req.status || 'submitted'} />
+
+                        {/* Manage Action on Mobile Card */}
+                        <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(getRequestDetailUrl(req));
+                            }}
+                            className="admin-btn bg-white hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border-strong)] !py-1 !px-2 text-[10px] uppercase tracking-wider font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                          >
+                            Manage
+                            <span className="material-symbols-outlined text-[13px]">
+                              arrow_forward
+                            </span>
+                          </button>
+                        </div>
                       </div>
 
                       {req.items && req.items.length > 0 && (
@@ -912,7 +869,7 @@ export default function AdminReturnsHub({ hideHeader = false }) {
                                     }
                                   });
                                 }}
-                                className="bg-white text-red-600 font-bold px-2.5 py-1 text-[10px] uppercase tracking-wider rounded border border-red-200 hover:bg-red-50 transition-colors shadow-sm"
+                                className="admin-btn bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 !py-1 !px-2.5 text-[10px] uppercase tracking-wider font-bold shadow-2xs transition-all"
                               >
                                 Reject
                               </button>

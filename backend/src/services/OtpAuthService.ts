@@ -161,9 +161,7 @@ class OtpAuthService {
     });
 
     if (process.env.NODE_ENV === 'development') {
-      logger.info(
-        `Verification code successfully generated for ${SecurityAuditService.hashIdentifier(cleanEmail)}`,
-      );
+      logger.info(`[DEV AUTH OTP] Verification code for ${cleanEmail}: ${otp}`);
     }
 
     return { challengeId };

@@ -418,6 +418,9 @@ export function OrderDetail() {
         icon: 'local_shipping',
         color: 'indigo',
         locked: isLocked,
+        meta: returnRequest.pickup?.courierPartner
+          ? `Courier: ${returnRequest.pickup.courierPartner}${returnRequest.pickup.trackingNumber ? ` (AWB: ${returnRequest.pickup.trackingNumber})` : ''}`
+          : null,
         timestamp:
           isPickedUp && returnRequest.pickup?.actualPickupTime
             ? new Date(returnRequest.pickup.actualPickupTime)
@@ -608,6 +611,9 @@ export function OrderDetail() {
         status: isPickupScheduled ? 'completed' : 'pending',
         icon: 'local_shipping',
         color: 'blue',
+        meta: returnRequest.pickup?.courierPartner
+          ? `Courier: ${returnRequest.pickup.courierPartner}${returnRequest.pickup.trackingNumber ? ` (AWB: ${returnRequest.pickup.trackingNumber})` : ''}`
+          : null,
       });
 
       // Step 4: Quality Check
@@ -774,7 +780,10 @@ export function OrderDetail() {
       {!isRental && <ReturnExchangeSection orderId={order._id || order.id} />}
 
       {/* Dynamic Timeline Tracker */}
-      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs relative overflow-hidden">
+      <div
+        id="journey-tracker"
+        className="bg-surface-bright border border-outline-variant/40 rounded-lg p-5 shadow-xs relative overflow-hidden"
+      >
         {/* Subtle background glow */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
 
@@ -1254,39 +1263,79 @@ export function OrderDetail() {
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
             {!isRental && (
               <>
-                {isReturnExchangeBlocked ? (
+                {returnRequest ? (
                   <button
-                    disabled
-                    className="w-full sm:w-auto px-6 py-2.5 bg-surface text-secondary font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed"
+                    onClick={() => {
+                      document
+                        .getElementById('journey-tracker')
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="w-full sm:w-auto px-6 py-2.5 bg-[#2A2927] hover:bg-black text-white font-bold uppercase tracking-widest text-[9px] rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer border-0"
                   >
-                    <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
-                    Return Items
+                    {returnRequest.returnType === 'exchange' ? (
+                      <>
+                        <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
+                        View Live Exchange Journey
+                      </>
+                    ) : (
+                      <>
+                        <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
+                        View Live Return Journey
+                      </>
+                    )}
                   </button>
                 ) : (
-                  <Link
-                    to={`/dashboard/returns/new?orderId=${order._id || order.id}`}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
-                  >
-                    <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
-                    Return Items
-                  </Link>
-                )}
-                {isReturnExchangeBlocked ? (
-                  <button
-                    disabled
-                    className="w-full sm:w-auto px-6 py-2.5 bg-surface text-secondary font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed"
-                  >
-                    <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
-                    Exchange Items
-                  </button>
-                ) : (
-                  <Link
-                    to={`/dashboard/returns/exchanges/new?orderId=${order._id || order.id}`}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
-                  >
-                    <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
-                    Exchange Items
-                  </Link>
+                  <>
+                    {isReturnExchangeBlocked ? (
+                      <button
+                        disabled
+                        title={
+                          !isDelivered
+                            ? 'Returns available after order delivery'
+                            : isNonRefundable
+                              ? 'Item is non-returnable'
+                              : 'Return window closed'
+                        }
+                        className="w-full sm:w-auto px-6 py-2.5 bg-surface text-secondary font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed"
+                      >
+                        <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
+                        Return Items
+                      </button>
+                    ) : (
+                      <Link
+                        to={`/dashboard/returns/new?orderId=${order._id || order.id}`}
+                        className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                      >
+                        <CornerDownLeft className="text-[14px]" strokeWidth={1.5} />
+                        Return Items
+                      </Link>
+                    )}
+
+                    {isReturnExchangeBlocked ? (
+                      <button
+                        disabled
+                        title={
+                          !isDelivered
+                            ? 'Exchanges available after order delivery'
+                            : isNonRefundable
+                              ? 'Item is non-exchangeable'
+                              : 'Exchange window closed'
+                        }
+                        className="w-full sm:w-auto px-6 py-2.5 bg-surface text-secondary font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap opacity-50 cursor-not-allowed"
+                      >
+                        <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
+                        Exchange Items
+                      </button>
+                    ) : (
+                      <Link
+                        to={`/dashboard/returns/exchanges/new?orderId=${order._id || order.id}`}
+                        className="w-full sm:w-auto px-6 py-2.5 bg-surface hover:bg-surface-container-low text-on-surface font-bold uppercase tracking-widest text-[9px] rounded-lg border border-outline-variant/30 shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                      >
+                        <ArrowLeftRight className="text-[14px]" strokeWidth={1.5} />
+                        Exchange Items
+                      </Link>
+                    )}
+                  </>
                 )}
               </>
             )}

@@ -48,7 +48,7 @@ export default function CheckoutPaymentStep() {
   const isCodEnabled = settings?.payments?.enableCOD ?? true;
 
   // References and state for 6-digit OTP grid
-  const otpRefs = Array.from({ length: 6 }, () => React.createRef());
+  const otpRefs = React.useRef([]);
   const [otpDigits, setOtpDigits] = React.useState(['', '', '', '', '', '']);
   const [codOtpInput, setCodOtpInput] = React.useState('');
 
@@ -74,7 +74,7 @@ export default function CheckoutPaymentStep() {
   }, [paymentOption, setCodConfirmed]);
 
   const handleDigitChange = async (index, value) => {
-    const cleanedVal = value.replace(/\D/g, '').slice(0, 1);
+    const cleanedVal = value.replace(/\D/g, '').slice(-1);
     const newDigits = [...otpDigits];
     newDigits[index] = cleanedVal;
     setOtpDigits(newDigits);
@@ -84,11 +84,11 @@ export default function CheckoutPaymentStep() {
 
     // Auto-focus next field
     if (cleanedVal !== '' && index < 5) {
-      otpRefs[index + 1].current?.focus();
+      otpRefs.current[index + 1]?.focus();
     }
 
     // Auto-verify if fully entered
-    if (code.length === 6) {
+    if (code.length === 6 && !newDigits.includes('')) {
       await handleVerifyCodOtp(code);
     }
   };
@@ -100,13 +100,39 @@ export default function CheckoutPaymentStep() {
         newDigits[index - 1] = '';
         setOtpDigits(newDigits);
         setCodOtpInput(newDigits.join(''));
-        otpRefs[index - 1].current?.focus();
+        otpRefs.current[index - 1]?.focus();
       } else {
         const newDigits = [...otpDigits];
         newDigits[index] = '';
         setOtpDigits(newDigits);
         setCodOtpInput(newDigits.join(''));
       }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = async (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData?.getData('text') || '';
+    const digits = pasteData.replace(/\D/g, '').slice(0, 6).split('');
+    if (digits.length === 0) return;
+
+    const newDigits = [...otpDigits];
+    digits.forEach((d, i) => {
+      if (i < 6) newDigits[i] = d;
+    });
+    setOtpDigits(newDigits);
+    const code = newDigits.join('');
+    setCodOtpInput(code);
+
+    const nextIdx = Math.min(digits.length, 5);
+    otpRefs.current[nextIdx]?.focus();
+
+    if (code.length === 6 && !newDigits.includes('')) {
+      await handleVerifyCodOtp(code);
     }
   };
 
@@ -488,21 +514,25 @@ export default function CheckoutPaymentStep() {
                                   . Please check your inbox or spam folder:
                                 </p>
 
-                                {/* Gorgeous 6-digit input grid */}
-                                <div className="flex justify-center gap-3 py-2">
+                                {/* Responsive 6-digit input grid */}
+                                <div
+                                  className="w-full max-w-[280px] sm:max-w-[320px] mx-auto grid grid-cols-6 gap-1.5 sm:gap-2.5 py-2.5"
+                                  onPaste={handleOtpPaste}
+                                >
                                   {otpDigits.map((digit, idx) => (
                                     <input
                                       key={idx}
-                                      ref={otpRefs[idx]}
+                                      ref={(el) => (otpRefs.current[idx] = el)}
                                       type="tel"
                                       pattern="[0-9]*"
                                       inputMode="numeric"
                                       maxLength={1}
                                       value={digit}
                                       disabled={isProcessing}
+                                      onPaste={handleOtpPaste}
                                       onChange={(e) => handleDigitChange(idx, e.target.value)}
                                       onKeyDown={(e) => handleDigitKeyDown(idx, e)}
-                                      className="w-10 h-10 bg-white border border-outline-variant/30 focus:border-primary rounded-md text-center font-bold text-base text-on-surface shadow-xs outline-none transition-all disabled:opacity-50"
+                                      className="w-full aspect-square min-w-0 bg-white border-2 border-outline-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-lg text-center font-bold text-base sm:text-lg text-on-surface shadow-2xs outline-none transition-all disabled:opacity-50"
                                     />
                                   ))}
                                 </div>

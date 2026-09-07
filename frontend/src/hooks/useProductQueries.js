@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { productService } from '../services/domainServices';
 
 export function useProducts(params, options = {}) {
@@ -8,6 +8,7 @@ export function useProducts(params, options = {}) {
       const res = await productService.getAll(params);
       return res.success ? res.data : res;
     },
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
@@ -21,6 +22,7 @@ export function useDynamicFilters(params, options = {}) {
       const res = await productService.getDynamicFilters(params);
       return res.success ? res.data : res;
     },
+    placeholderData: keepPreviousData,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     ...options,

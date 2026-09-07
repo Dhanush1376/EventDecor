@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth, requireRole } from '../../middleware/authMiddleware';
 import storeSettingsService from '../../services/StoreSettingsService';
 import logger from '../../config/logger';
+import { ADMIN_ROLES } from '../../config/adminConfig';
 
 const router = Router();
 
@@ -28,78 +29,68 @@ router.get('/public', async (req, res, next) => {
  * @desc    Get full store settings including audit logs
  * @access  Private/Admin
  */
-router.get(
-  '/admin',
-  requireAuth,
-  requireRole(['admin', 'super_admin', 'owner']),
-  async (req, res, next) => {
-    try {
-      const bypassCache = req.query.fresh === 'true';
-      const settings = await storeSettingsService.getSettings(bypassCache);
-      res.json({
-        success: true,
-        data: settings,
-      });
-    } catch (error) {
-      logger.error('Error fetching admin store settings:', error);
-      next(error);
-    }
-  },
-);
+router.get('/admin', requireAuth, requireRole([...ADMIN_ROLES]), async (req, res, next) => {
+  try {
+    const bypassCache = req.query.fresh === 'true';
+    const settings = await storeSettingsService.getSettings(bypassCache);
+    res.json({
+      success: true,
+      data: settings,
+    });
+  } catch (error) {
+    logger.error('Error fetching admin store settings:', error);
+    next(error);
+  }
+});
 
 /**
  * @route   PATCH /api/v1/settings/:section
  * @desc    Update a specific section of store settings
- * @access  Private/SuperAdmin
+ * @access  Private/Admin
  */
-router.patch(
-  '/:section',
-  requireAuth,
-  requireRole(['super_admin', 'owner']),
-  async (req, res, next) => {
-    try {
-      const { section } = req.params;
-      const data = req.body;
+router.patch('/:section', requireAuth, requireRole([...ADMIN_ROLES]), async (req, res, next) => {
+  try {
+    const { section } = req.params;
+    const data = req.body;
 
-      // Whitelist allowed sections
-      const allowedSections = [
-        'general',
-        'shipping',
-        'payments',
-        'returnsExchanges',
-        'cancellation',
-        'taxes',
-        'loyalty',
-        'orders',
-        'contact',
-        'legal',
-        'notifications',
-        'storefront',
-      ];
+    // Whitelist allowed sections
+    const allowedSections = [
+      'general',
+      'shipping',
+      'payments',
+      'returnsExchanges',
+      'cancellation',
+      'taxes',
+      'loyalty',
+      'orders',
+      'contact',
+      'legal',
+      'notifications',
+      'storefront',
+    ];
 
-      if (!allowedSections.includes(section as string)) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid settings section: ${section}`,
-        });
-      }
-
-      const updatedSettings = await storeSettingsService.updateSection(
-        section as any,
-        data,
-        req.user!.id,
-      );
-
-      res.json({
-        success: true,
-        message: `${section} settings updated successfully`,
-        data: updatedSettings,
+    if (!allowedSections.includes(section as string)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid settings section: ${section}`,
       });
-    } catch (error) {
-      logger.error(`Error updating store settings section ${req.params.section}:`, error);
-      next(error);
     }
-  },
-);
+
+    const updatedSettings = await storeSettingsService.updateSection(
+      section as any,
+      data,
+      req.user!.id,
+    );
+
+    res.json({
+      success: true,
+      message: `${section} settings updated successfully`,
+      data: updatedSettings,
+    });
+  } catch (error) {
+    logger.error(`Error updating store settings section ${req.params.section}:`, error);
+    next(error);
+  }
+});
 
 export default router;

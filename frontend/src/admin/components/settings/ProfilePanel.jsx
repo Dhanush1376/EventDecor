@@ -15,7 +15,7 @@ export function ProfilePanel({
           <input
             type="text"
             required
-            value={profileForm.name}
+            value={profileForm.name || ''}
             onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
             className="admin-input"
           />
@@ -25,7 +25,7 @@ export function ProfilePanel({
           <input
             type="text"
             disabled
-            value={profileForm.role.toUpperCase()}
+            value={(profileForm.role || 'admin').toUpperCase()}
             className="admin-input bg-[var(--admin-surface-muted)] text-[var(--admin-text-tertiary)] cursor-not-allowed border-transparent"
           />
         </div>
@@ -37,7 +37,7 @@ export function ProfilePanel({
           <input
             type="email"
             required
-            value={profileForm.email}
+            value={profileForm.email || ''}
             onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
             className="admin-input"
           />
@@ -46,7 +46,7 @@ export function ProfilePanel({
           <label className="admin-label">Phone Number</label>
           <input
             type="tel"
-            value={profileForm.phone}
+            value={profileForm.phone || ''}
             onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
             placeholder="e.g. +91 98765 43210"
             className="admin-input"

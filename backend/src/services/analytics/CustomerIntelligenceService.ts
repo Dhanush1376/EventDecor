@@ -21,6 +21,7 @@ export class CustomerIntelligenceService {
       cacheKey,
       async () => {
         const uId = new mongoose.Types.ObjectId(userId);
+        const userIdStr = userId.toString();
 
         const [
           user,
@@ -37,17 +38,19 @@ export class CustomerIntelligenceService {
           firstEvent,
         ] = await Promise.all([
           User.findById(uId).lean(),
-          Order.find({ user: uId }).lean(),
-          RentalOrder.find({ user: uId }).lean(),
-          Review.find({ customer: uId }).lean(),
-          Address.find({ user: uId }).lean(),
+          Order.find({ $or: [{ user: uId }, { user: userIdStr }] }).lean(),
+          RentalOrder.find({ $or: [{ user: uId }, { user: userIdStr }] }).lean(),
+          Review.find({ $or: [{ customer: uId }, { customer: userIdStr }] }).lean(),
+          Address.find({ $or: [{ user: uId }, { user: userIdStr }] }).lean(),
           this.getEngagementScore(uId),
           this.getHealthScore(uId),
           this.getRevenueAttribution(uId),
           this.getFraudRiskSignals(uId),
           this.getCustomerFunnelMetrics(userId),
           this.getCustomerSearchIntents(userId),
-          AnalyticsEvent.findOne({ userId: uId }).sort({ timestamp: 1 }).lean(),
+          AnalyticsEvent.findOne({ $or: [{ userId: uId }, { userId: userIdStr }] })
+            .sort({ timestamp: 1 })
+            .lean(),
         ]);
 
         if (!user) throw new Error('Customer not found');
@@ -58,12 +61,34 @@ export class CustomerIntelligenceService {
         const totalOrders = orders.length;
         const totalRentals = rentals.length;
 
-        // Use revenueAttribution to ONLY sum paid/completed orders for financial metrics
-        const totalRevenue = revenueAttribution.breakdown?.purchases || 0;
-        const rentalRevenue = revenueAttribution.breakdown?.rentals || 0;
+        // Sum all valid (non-cancelled, non-failed) purchases and rentals
+        const validOrders = (orders || []).filter((o: any) => {
+          const isCancelled = o.orderStatus === 'Cancelled' || o.orderStatus === 'Refunded';
+          const isFailed = o.paymentStatus === 'failed';
+          return !isCancelled && !isFailed;
+        });
+        const purchasesTotal = validOrders.reduce(
+          (sum: number, o: any) => sum + (Number(o.total) || 0),
+          0,
+        );
 
-        const ltv = revenueAttribution.total || 0;
-        const aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+        const validRentals = (rentals || []).filter((r: any) => {
+          const isCancelled =
+            r.status === 'cancelled' ||
+            r.paymentStatus === 'failed' ||
+            r.paymentStatus === 'refunded';
+          return !isCancelled;
+        });
+        const rentalsTotal = validRentals.reduce(
+          (sum: number, r: any) => sum + (Number(r.totalAmount) || Number(r.grossTotal) || 0),
+          0,
+        );
+
+        const eventRevenue = revenueAttribution.breakdown?.eventBookings || 0;
+        const totalSpent = purchasesTotal + rentalsTotal + eventRevenue;
+        const ltv = totalSpent;
+        const allOrdersCount = totalOrders + totalRentals;
+        const aov = allOrdersCount > 0 ? Math.round(totalSpent / allOrdersCount) : 0;
 
         const acquisition = {
           source: firstEvent?.metadata?.utm_source || 'Direct',
@@ -93,9 +118,10 @@ export class CustomerIntelligenceService {
           overview: {
             totalOrders,
             totalRentals,
-            totalSpent: totalRevenue,
-            totalRevenue,
-            rentalRevenue,
+            totalSpent,
+            totalRevenue: purchasesTotal,
+            rentalRevenue: rentalsTotal,
+            eventRevenue,
             ltv,
             aov,
             wishlistCount: user.wishlist?.length || 0,
@@ -107,16 +133,24 @@ export class CustomerIntelligenceService {
             acquisition,
             topInterests,
           },
-          revenueAttribution,
+          revenueAttribution: {
+            total: totalSpent,
+            breakdown: {
+              purchases: purchasesTotal,
+              rentals: rentalsTotal,
+              customOrders: 0,
+              eventBookings: eventRevenue,
+            },
+          },
           addresses,
           intents,
           predictions,
           funnelMetrics,
-          recentOrders: orders.slice(0, 5), // Just a snippet, frontend can query full history if needed
+          recentOrders: orders.slice(0, 5),
         };
       },
-      900,
-    ); // 15 minute cache
+      30,
+    ); // 30 second cache to ensure fresh financial metrics
   }
 
   /**
@@ -401,20 +435,38 @@ export class CustomerIntelligenceService {
    * Revenue Attribution Breakdown
    */
   static async getRevenueAttribution(uId: mongoose.Types.ObjectId) {
+    const userIdStr = uId.toString();
     const orders = await Order.aggregate([
-      { $match: { user: uId, paymentStatus: { $in: ['paid', 'COD Collected'] } } },
+      {
+        $match: {
+          $or: [{ user: uId }, { user: userIdStr }],
+          orderStatus: { $nin: ['Cancelled', 'Refunded'] },
+          paymentStatus: { $ne: 'failed' },
+        },
+      },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]);
     const purchases = orders.length > 0 ? orders[0].total : 0;
 
     const rentalsAgg = await RentalOrder.aggregate([
-      { $match: { user: uId, paymentStatus: 'paid' } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } },
+      {
+        $match: {
+          $or: [{ user: uId }, { user: userIdStr }],
+          status: { $ne: 'cancelled' },
+          paymentStatus: { $nin: ['failed', 'refunded'] },
+        },
+      },
+      { $group: { _id: null, total: { $sum: { $ifNull: ['$totalAmount', '$grossTotal'] } } } },
     ]);
     const rentals = rentalsAgg.length > 0 ? rentalsAgg[0].total : 0;
 
     const eventBookingsAgg = await EventJob.aggregate([
-      { $match: { user: uId, paymentStatus: 'paid' } },
+      {
+        $match: {
+          $or: [{ user: uId }, { user: userIdStr }],
+          paymentStatus: { $nin: ['failed', 'refunded'] },
+        },
+      },
       { $group: { _id: null, total: { $sum: '$totalAmount' } } },
     ]);
     const eventBookings = eventBookingsAgg.length > 0 ? eventBookingsAgg[0].total : 0;

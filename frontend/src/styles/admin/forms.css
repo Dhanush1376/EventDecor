@@ -26,6 +26,12 @@
   min-height: 38px;
 }
 
+.admin-section-root .admin-input.admin-input-currency,
+.admin-section-root .admin-input.pl-8,
+.admin-section-root .admin-input.\!pl-8 {
+  padding-left: 32px !important;
+}
+
 .admin-section-root .admin-search-wrapper {
   position: relative;
   display: flex;

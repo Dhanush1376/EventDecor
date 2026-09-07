@@ -344,9 +344,19 @@ export function AuthProvider({ children }) {
     [intendedAction, navigate],
   );
 
+  const updateUser = useCallback((userData) => {
+    setUser((prev) => {
+      const next = typeof userData === 'function' ? userData(prev) : { ...prev, ...userData };
+      saveCachedProfile(next);
+      return next;
+    });
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       user,
+      setUser,
+      updateUser,
       loading,
       isAuthenticated,
       logout,
@@ -361,6 +371,7 @@ export function AuthProvider({ children }) {
     }),
     [
       user,
+      updateUser,
       loading,
       isAuthenticated,
       logout,

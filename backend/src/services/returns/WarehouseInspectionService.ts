@@ -8,7 +8,17 @@ export class WarehouseInspectionService {
    * Marks a returned item as received at the warehouse.
    */
   static async recordReceipt(returnId: string, itemIndex: number, adminId: string) {
-    const request = await ReturnRequest.findById(returnId);
+    const isObjectId = mongoose.isValidObjectId(returnId);
+    let request = await ReturnRequest.findOne(isObjectId ? { _id: returnId } : { returnId });
+    if (!request) {
+      const ExchangeRequest = require('../../models/ExchangeRequest').default;
+      const linkedExchange = await ExchangeRequest.findOne(
+        isObjectId ? { _id: returnId } : { exchangeId: returnId },
+      );
+      if (linkedExchange) {
+        request = await ReturnRequest.findById(linkedExchange.returnRequestId);
+      }
+    }
     if (!request) throw new ApiError(404, 'Return request not found');
 
     if (!request.items[itemIndex]) {
@@ -61,7 +71,17 @@ export class WarehouseInspectionService {
     },
     adminId: string,
   ) {
-    const request = await ReturnRequest.findById(returnId);
+    const isObjectId = mongoose.isValidObjectId(returnId);
+    let request = await ReturnRequest.findOne(isObjectId ? { _id: returnId } : { returnId });
+    if (!request) {
+      const ExchangeRequest = require('../../models/ExchangeRequest').default;
+      const linkedExchange = await ExchangeRequest.findOne(
+        isObjectId ? { _id: returnId } : { exchangeId: returnId },
+      );
+      if (linkedExchange) {
+        request = await ReturnRequest.findById(linkedExchange.returnRequestId);
+      }
+    }
     if (!request) throw new ApiError(404, 'Return request not found');
 
     if (!request.items[itemIndex]) {

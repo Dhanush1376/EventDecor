@@ -16,6 +16,7 @@ import { ProductListingHeader, CountdownPromo } from './ProductListingHeader';
 import { ProductListingSortBar } from './ProductListingSortBar';
 import { ProductListingVisualSearch } from './ProductListingVisualSearch';
 import { ProductListingGrid } from './ProductListingGrid';
+import { scrollToShopAnchor } from './shopScrollAnchor';
 
 import '../../styles/visual-search.css';
 
@@ -34,8 +35,34 @@ export function ProductListing() {
 
   const state = useProductListingState();
   const prevSearchRef = useRef(searchParams.get('search'));
+  const prevCategoryRef = useRef(state.categoryParam);
+  const isInitialMount = useRef(true);
 
-  // Auto-scroll on mobile/tablet to the top of the page ONLY when search query itself changes
+  // Auto-scroll to shop anchor when category changes (handles side nav, drawer, and external category navigation)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      if (state.categoryParam !== 'All' || searchParams.get('search')) {
+        const timer = setTimeout(() => {
+          scrollToShopAnchor({ smooth: false });
+        }, 120);
+        return () => clearTimeout(timer);
+      }
+      return;
+    }
+
+    const isCategoryChange = prevCategoryRef.current !== state.categoryParam;
+    prevCategoryRef.current = state.categoryParam;
+
+    if (isCategoryChange) {
+      const timer = setTimeout(() => {
+        scrollToShopAnchor({ smooth: true });
+      }, 60);
+      return () => clearTimeout(timer);
+    }
+  }, [state.categoryParam, searchParams]);
+
+  // Auto-scroll to shop anchor when search query itself changes
   useEffect(() => {
     const search = searchParams.get('search');
     const isSearchChange = prevSearchRef.current !== search;
@@ -44,13 +71,13 @@ export function ProductListing() {
     const isTypingInPageSearch =
       document.activeElement?.getAttribute('placeholder') === 'Search masterworks...';
 
-    if (isMobile && isSearchChange && search && !isTypingInPageSearch) {
+    if (isSearchChange && search && !isTypingInPageSearch) {
       const timer = setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollToShopAnchor({ smooth: true });
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [searchParams, isMobile]);
+  }, [searchParams]);
 
   const { data: promoCoupon } = useQuery({
     queryKey: ['promo-coupons'],
@@ -117,11 +144,7 @@ export function ProductListing() {
       });
       // Scroll down to the grid
       setTimeout(() => {
-        const el = document.getElementById('artisan-collection');
-        if (el) {
-          const y = el.getBoundingClientRect().top + window.scrollY - 80;
-          window.scrollTo({ top: y, behavior: 'smooth' });
-        }
+        scrollToShopAnchor({ smooth: true });
       }, 50);
     }
   };
@@ -203,11 +226,17 @@ export function ProductListing() {
           shopContent={shopContent}
         />
 
+        <div
+          id="product-listing-sort-bar-anchor"
+          className="h-0 w-full pointer-events-none"
+          aria-hidden="true"
+        />
         <ProductListingSortBar
           isMobile={isMobile}
           searchParam={state.searchParam}
           localSearch={state.localSearch}
           setLocalSearch={state.setLocalSearch}
+          commitSearch={state.commitSearch}
           setIsFilterOpen={setIsFilterOpen}
           categories={state.categories}
           categoryParam={state.categoryParam}

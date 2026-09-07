@@ -222,17 +222,17 @@ export function EventFilterPanel({
         createPortal(
           <AnimatePresence>
             {isOpen && (
-              <div className="fixed inset-0 z-[1000] lg:hidden flex flex-col justify-end">
+              <div className="fixed inset-0 z-[1000] lg:hidden pointer-events-none">
                 {/* Backdrop */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={onClose}
-                  className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                  className="fixed inset-0 bg-black/60 backdrop-blur-md pointer-events-auto"
                 />
 
-                {/* Bottom Sheet Content */}
+                {/* Bottom Sheet Shell */}
                 <motion.div
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
@@ -243,28 +243,30 @@ export function EventFilterPanel({
                     stiffness: 300,
                     mass: 0.8,
                   }}
-                  className="relative w-full bg-surface rounded-t-[40px] p-6 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10"
+                  className="fixed bottom-0 left-0 right-0 z-10 pointer-events-auto flex flex-col"
                 >
-                  {/* Handlebar for bottom sheet feel */}
-                  <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-4 shrink-0" />
+                  <div className="relative w-full bg-surface rounded-t-[40px] p-6 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden border-t border-outline-variant/10 pb-[calc(1.5rem+var(--safe-area-bottom))]">
+                    {/* Handlebar for bottom sheet feel */}
+                    <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-4 shrink-0" />
 
-                  <button
-                    onClick={onClose}
-                    className="absolute top-6 right-6 w-10 h-10 min-h-0 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
-                  >
-                    <X className="text-[20px]" strokeWidth={1.5} />
-                  </button>
-
-                  <div className="flex-1 overflow-y-auto no-scrollbar pt-2">{panelContent}</div>
-
-                  {/* Bottom Action Bar */}
-                  <div className="mt-6 pt-6 border-t border-outline-variant/20">
                     <button
                       onClick={onClose}
-                      className="w-full bg-on-surface-variant text-surface py-4 rounded-full font-label text-[11px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary transition-all active:scale-[0.98]"
+                      className="absolute top-6 right-6 w-10 h-10 min-h-0 rounded-full bg-black/5 flex items-center justify-center text-on-surface hover:bg-black/10 transition-all z-10"
                     >
-                      Apply Filters
+                      <X className="text-[20px]" strokeWidth={1.5} />
                     </button>
+
+                    <div className="flex-1 overflow-y-auto no-scrollbar pt-2">{panelContent}</div>
+
+                    {/* Bottom Action Bar */}
+                    <div className="mt-6 pt-6 border-t border-outline-variant/20">
+                      <button
+                        onClick={onClose}
+                        className="w-full bg-on-surface-variant text-surface py-4 rounded-full font-label text-[11px] uppercase tracking-widest font-bold shadow-xl hover:bg-primary transition-all active:scale-[0.98]"
+                      >
+                        Apply Filters
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               </div>

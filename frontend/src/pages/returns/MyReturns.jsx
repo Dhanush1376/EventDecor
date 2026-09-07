@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { returnService } from '../../services/api/returnService';
 import { OptimizedImage, OrdersListSkeleton, StatusPill } from '../../components/ui';
-import { useDashboard } from '../../context/DashboardContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUserSocket } from '../../context/UserSocketProvider';
 
@@ -12,16 +11,13 @@ const fadeUp = { hidden: { opacity: 0, scale: 0.98 }, show: { opacity: 1, scale:
 export const MyReturns = () => {
   const [returns, setReturns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [returnFilter, setReturnFilter] = useState('RETURN');
-  const { setSelectedOrderId, setSelectedOrderItemIndex, orders } = useDashboard();
   const navigate = useNavigate();
   const socket = useUserSocket();
 
   const handleTrackJourney = (ret) => {
-    const targetOrderId = typeof ret.orderId === 'object' ? ret.orderId._id : ret.orderId;
-    if (targetOrderId) {
-      setSelectedOrderId(targetOrderId);
-      navigate('/dashboard/orders');
+    const targetId = ret.returnId || ret._id;
+    if (targetId) {
+      navigate(`/dashboard/returns/${targetId}`);
     }
   };
 
@@ -246,35 +242,43 @@ export const MyReturns = () => {
                     );
                   })}
 
-                  <div className="px-4 py-3 bg-surface-container-low/40 border-t border-outline-variant/15 flex items-center justify-between text-[10px] text-secondary font-body">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-2 sm:gap-0">
-                      <div className="flex items-center gap-1.5">
-                        <svg
-                          className="w-3.5 h-3.5 text-secondary/70 shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
+                  <div className="px-4 py-3 bg-surface-container-low/40 border-t border-outline-variant/15 flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-3 text-[10px] text-secondary font-body">
+                    <div className="flex items-center gap-4">
+                      {ret.refundBreakdown?.grandTotal > 0 && (
                         <span>
                           Refund Amount:{' '}
-                          <span className="font-bold text-on-surface">
+                          <strong className="text-on-surface">
                             ₹{(ret.refundBreakdown?.grandTotal || 0).toLocaleString()}
-                          </span>
+                          </strong>
                         </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span>Refund Method:</span>
-                        <span className="font-bold text-on-surface">
+                      )}
+                      <span>
+                        Destination:{' '}
+                        <strong className="text-on-surface capitalize">
                           {ret.refundMethod || 'original'}
-                        </span>
-                      </div>
+                        </strong>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                      <Link
+                        to={`/dashboard/orders?orderId=${typeof ret.orderId === 'object' ? ret.orderId._id || ret.orderId.id : ret.orderId}`}
+                        className="text-[10px] text-stone-500 hover:text-stone-900 font-medium hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Order #
+                        {typeof ret.orderId === 'object'
+                          ? (ret.orderId._id || ret.orderId.id || '').slice(-8)
+                          : String(ret.orderId || '').slice(-8)}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleTrackJourney(ret)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-bold text-[10px] uppercase tracking-wider transition-colors cursor-pointer border-0"
+                      >
+                        Track Details
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 </motion.div>
