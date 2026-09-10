@@ -9,6 +9,7 @@ import { isPrerendering } from './utils/performance/prerender';
 
 import logger from './utils/core/logger';
 import { patchToastError } from './utils/core/errorHelpers';
+import { handleImageError } from './utils/media/imageUtils';
 
 patchToastError();
 
@@ -33,10 +34,17 @@ if (!isPrerendering()) {
   logStartupDiagnostics();
 }
 
-// Global Error Handler for Outdated Bundles (Chunk Loading Errors)
+// Global Error Handler for Outdated Bundles (Chunk Loading Errors) & Broken Images
 window.addEventListener(
   'error',
   (event) => {
+    // Intercept broken images site-wide and apply clean Image Unavailable fallback
+    const target = event.target;
+    if (target && target.tagName === 'IMG') {
+      handleImageError(event);
+      return;
+    }
+
     const isChunkError =
       event.message?.includes('Loading chunk') ||
       event.message?.includes('Failed to fetch dynamically imported module');

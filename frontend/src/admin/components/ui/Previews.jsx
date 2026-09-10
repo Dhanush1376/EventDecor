@@ -31,9 +31,10 @@ export function PublishToast({ message }) {
     <AnimatePresence>
       {message && (
         <motion.div
-          initial={{ y: -40, x: '-50%', opacity: 0, scale: 0.95 }}
+          initial={{ y: -10, x: '-50%', opacity: 0, scale: 0.98 }}
           animate={{ y: 0, x: '-50%', opacity: 1, scale: 1 }}
-          exit={{ y: -40, x: '-50%', opacity: 0, scale: 0.95 }}
+          exit={{ y: -10, x: '-50%', opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
           className="fixed top-20 left-1/2 z-[200] bg-[var(--admin-success)] text-white border border-[var(--admin-success-border)] px-5 py-2.5 rounded-[var(--admin-radius-xl)] shadow-[var(--admin-shadow-lg)] flex items-center gap-2 text-[12px] font-semibold"
         >
           <span className="material-symbols-outlined text-[15px]">check_circle</span>

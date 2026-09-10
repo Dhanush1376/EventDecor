@@ -1,4 +1,4 @@
-import { ArrowLeft, Truck, Package, ArrowRight, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Truck, Package, ArrowRight, AlertCircle, CornerDownLeft } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { returnService } from '../../services/api/returnService';
@@ -67,49 +67,62 @@ export const ReturnDetailPage = () => {
   const exchangeDetails = returnRequest.exchangeDetails;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 text-left">
+    <div className="space-y-6 text-left font-body text-on-surface text-[11px]">
       <SEO
-        title={`${isExchange ? 'Exchange' : 'Return'} ${returnRequest.returnId} | Siri Arts & Crafts`}
+        title={`${isExchange ? 'Exchange' : 'Return'} #${returnRequest.returnId} | Siri Arts & Crafts`}
         noindex
       />
 
-      {/* Header */}
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <button
-            onClick={() => navigate('/dashboard/returns')}
-            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-stone-600 hover:text-stone-900 transition-colors mb-2 cursor-pointer"
+      {/* Top Header Card */}
+      <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 sm:p-5 shadow-xs">
+        <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-outline-variant/20">
+          <Link
+            to="/dashboard/returns"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-container-low text-secondary hover:text-on-surface text-[9.5px] font-bold uppercase tracking-widest border border-outline-variant/30 shadow-xs transition-all cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Returns & Exchanges
-          </button>
-          <h1 className="text-2xl font-display font-medium text-stone-900 flex items-center gap-3">
-            {isExchange ? 'Exchange' : 'Return'} #{returnRequest.returnId}
-          </h1>
-          <p className="text-xs text-stone-500 mt-1">
-            Associated with Order #{orderId ? orderId.toString().slice(-8) : 'N/A'}
-          </p>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Returns
+          </Link>
+          {orderId && (
+            <Link
+              to="/dashboard/orders"
+              className="inline-flex items-center gap-1 text-[9.5px] font-mono tracking-wider px-2.5 py-1 rounded-md bg-surface-container/60 border border-outline-variant/25 text-primary hover:underline"
+            >
+              ORDER #{orderId.toString().slice(-8).toUpperCase()}
+              <ArrowRight className="w-3 h-3 ml-0.5" />
+            </Link>
+          )}
         </div>
 
-        {orderId && (
-          <Link
-            to="/dashboard/orders"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold uppercase tracking-wider transition-colors"
-          >
-            View Order
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        )}
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+            <CornerDownLeft className="w-4 h-4" strokeWidth={2} />
+          </div>
+          <div className="min-w-0">
+            <h1 className="font-display font-medium text-[17px] sm:text-[20px] text-on-surface leading-snug">
+              {isExchange ? 'Exchange' : 'Return'} #{returnRequest.returnId}
+            </h1>
+            <p className="text-[11px] sm:text-xs text-secondary mt-0.5 leading-relaxed">
+              Tracking your reverse fulfillment journey and refund settlement in real time.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Timeline & Items */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Status Tracker */}
-          <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-xs">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-stone-900 mb-6">
-              Status Tracker
-            </h2>
+          {/* Status Tracker Card */}
+          <div className="bg-surface-bright border border-outline-variant/40 rounded-xl p-5 sm:p-6 shadow-xs">
+            <div className="pb-4 mb-4 border-b border-outline-variant/15 flex items-center justify-between">
+              <h2 className="text-[9.5px] font-bold uppercase tracking-widest text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-[16px] text-primary">route</span>
+                Return Journey Tracker
+              </h2>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[8.5px] font-bold uppercase tracking-widest bg-primary/10 text-primary border border-primary/20">
+                {returnRequest.status?.replace(/_/g, ' ')}
+              </span>
+            </div>
             <ReturnTimeline
               currentStatus={returnRequest.status}
               timeline={returnRequest.timeline}
@@ -118,36 +131,40 @@ export const ReturnDetailPage = () => {
             />
           </div>
 
-          {/* Original Items */}
-          <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-xs">
-            <div className="p-5 border-b border-stone-100 bg-stone-50/50 flex justify-between items-center">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-stone-800">
+          {/* Original Returning Items Card */}
+          <div className="bg-surface-bright border border-outline-variant/40 rounded-xl overflow-hidden shadow-xs">
+            <div className="p-4 sm:p-5 border-b border-outline-variant/15 flex justify-between items-center bg-surface-container-low/40">
+              <h2 className="text-[9.5px] font-bold uppercase tracking-widest text-on-surface flex items-center gap-2">
+                <Package className="w-4 h-4 text-primary" />
                 {isExchange ? 'Item to Return for Exchange' : 'Items Being Returned'}
               </h2>
+              <span className="text-[9px] text-secondary font-mono">
+                {returnRequest.items?.length || 0} piece(s)
+              </span>
             </div>
-            <div className="divide-y divide-stone-100">
+            <div className="divide-y divide-outline-variant/15">
               {returnRequest.items.map((item, idx) => (
-                <div key={idx} className="p-5 flex gap-4 items-start">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-stone-200">
+                <div key={idx} className="p-4 sm:p-5 flex gap-4 items-start">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-surface-container shrink-0 border border-outline-variant/20 shadow-2xs">
                     <OptimizedImage
                       src={item.imageSrc || item.productId?.imageSrc}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-stone-900 truncate">
+                    <h3 className="font-semibold text-xs sm:text-sm text-on-surface truncate">
                       {item.title || item.productId?.title}
                     </h3>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-stone-500">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-[11px] text-secondary">
                       <span>
-                        Reason: <strong className="text-stone-800">{item.reason}</strong>
+                        Reason: <strong className="text-on-surface">{item.reason}</strong>
                       </span>
                       <span>
-                        Qty: <strong className="text-stone-800">{item.returnQuantity}</strong>
+                        Qty: <strong className="text-on-surface">{item.returnQuantity}</strong>
                       </span>
                     </div>
                     {item.description && (
-                      <p className="mt-2 text-xs text-stone-600 bg-stone-50 p-2.5 rounded-lg border border-stone-100">
+                      <p className="mt-2 text-[11px] text-secondary bg-surface-container-low/60 p-2.5 rounded-lg border border-outline-variant/20 leading-relaxed">
                         "{item.description}"
                       </p>
                     )}
@@ -159,15 +176,15 @@ export const ReturnDetailPage = () => {
 
           {/* Replacement Item (if Exchange) */}
           {isExchange && exchangeDetails?.replacementItem && (
-            <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-xs">
-              <div className="p-5 border-b border-stone-100 bg-emerald-50/50 flex justify-between items-center">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
+            <div className="bg-surface-bright border border-outline-variant/40 rounded-xl overflow-hidden shadow-xs">
+              <div className="p-4 sm:p-5 border-b border-outline-variant/15 flex justify-between items-center bg-emerald-500/10">
+                <h2 className="text-[9.5px] font-bold uppercase tracking-widest text-emerald-900 flex items-center gap-1.5">
                   <Package className="w-4 h-4 text-emerald-700" />
                   Replacement Item Chosen
                 </h2>
               </div>
-              <div className="p-5 flex gap-4 items-start">
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-stone-200">
+              <div className="p-4 sm:p-5 flex gap-4 items-start">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-surface-container shrink-0 border border-outline-variant/20 shadow-2xs">
                   <OptimizedImage
                     src={
                       exchangeDetails.replacementItem.imageSrc ||
@@ -177,14 +194,14 @@ export const ReturnDetailPage = () => {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm text-stone-900 truncate">
+                  <h3 className="font-semibold text-xs sm:text-sm text-on-surface truncate">
                     {exchangeDetails.replacementItem.title ||
                       exchangeDetails.replacementItem.productId?.title}
                   </h3>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-stone-500">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-[11px] text-secondary">
                     <span>
                       Status:{' '}
-                      <strong className="text-stone-800 capitalize">
+                      <strong className="text-on-surface capitalize">
                         {(() => {
                           const s = exchangeDetails.replacementStatus;
                           if (
@@ -211,7 +228,7 @@ export const ReturnDetailPage = () => {
                     {exchangeDetails.priceDifference > 0 && (
                       <span>
                         Price Diff:{' '}
-                        <strong className="text-stone-800">
+                        <strong className="text-primary font-bold">
                           ₹{exchangeDetails.priceDifference} (
                           {exchangeDetails.differenceAction === 'collect_payment'
                             ? 'Payable'
@@ -230,43 +247,43 @@ export const ReturnDetailPage = () => {
         {/* Right Column: Guidance, Refund & Pickup Details */}
         <div className="space-y-6">
           {/* Helpful Next Steps Card */}
-          <div className="bg-stone-50 rounded-2xl border border-stone-200/80 p-5 text-left space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
-              <AlertCircle className="w-4 h-4 text-stone-700" />
-              What Happens Next?
-            </h3>
-            <p className="text-xs text-stone-600 leading-relaxed">
+          <div className="bg-surface-bright border border-outline-variant/40 rounded-xl p-5 shadow-xs space-y-2 relative overflow-hidden">
+            <div className="flex items-center gap-1.5 pb-2 border-b border-outline-variant/15 text-[9.5px] font-bold uppercase tracking-widest text-on-surface">
+              <AlertCircle className="w-4 h-4 text-primary" />
+              Next Steps in Fulfillment
+            </div>
+            <p className="text-[11px] text-secondary leading-relaxed pt-1">
               {(() => {
                 const s = returnRequest.status;
                 if (['submitted', 'pending'].includes(s)) {
-                  return "We've received your request! Our team will review and approve it shortly. Once approved, reverse pickup will be scheduled.";
+                  return "We've received your request! Our concierge team will review and approve it shortly. Once approved, reverse courier pickup will be scheduled automatically.";
                 }
                 if (['approved', 'return_courier_assigned'].includes(s)) {
-                  return 'Your request has been approved! Our delivery partner will visit your address to collect the packaged item.';
+                  return 'Your return has been approved! Our logistics partner will arrive at your address to collect the packaged item.';
                 }
                 if (['return_picked_up', 'return_in_transit'].includes(s)) {
-                  return 'Your item has been picked up and is currently in transit to our verification facility.';
+                  return 'Your item has been picked up and is safely in transit to our studio verification facility.';
                 }
                 if (['return_received', 'inspection_started'].includes(s)) {
-                  return 'Your item has arrived at our facility. Our quality team is verifying the contents.';
+                  return 'Your parcel has arrived at our workshop. Our artisan quality team is verifying the condition and packaging.';
                 }
                 if (s === 'inspection_completed') {
                   return isExchange
-                    ? 'Quality check passed! Your replacement is ready to be dispatched.'
-                    : 'Quality check passed! Your refund is now being processed.';
+                    ? 'Quality inspection passed! Your replacement piece is scheduled for dispatch.'
+                    : 'Quality inspection passed! Your refund is now being disbursed.';
                 }
                 if (['refund_initiated', 'refund_completed', 'completed'].includes(s)) {
                   return isExchange
-                    ? 'Your exchange journey is complete! Enjoy your new piece.'
-                    : 'Your refund has been issued to your selected payment destination.';
+                    ? 'Your exchange cycle is successfully finalized! Enjoy your artisanal creation.'
+                    : 'Your refund has been disbursed to your selected payment destination.';
                 }
                 if (s === 'rejected') {
-                  return 'This request was declined according to policy. Please contact support if you need assistance.';
+                  return 'This request was declined according to policy. Please contact customer care if you have any questions.';
                 }
                 if (s === 'cancelled') {
-                  return 'This request was cancelled.';
+                  return 'This return request was cancelled by the customer.';
                 }
-                return 'Our team is actively processing your request.';
+                return 'Our studio team is actively processing your request.';
               })()}
             </p>
           </div>
@@ -287,22 +304,22 @@ export const ReturnDetailPage = () => {
           )}
 
           {/* Pickup Details Card */}
-          <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-xs">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-stone-900 mb-4 flex items-center gap-2">
-              <Truck className="w-4 h-4 text-stone-600" />
+          <div className="bg-surface-bright border border-outline-variant/40 rounded-xl p-5 shadow-xs space-y-3">
+            <h3 className="text-[9.5px] font-bold uppercase tracking-widest text-on-surface flex items-center gap-2 pb-2 border-b border-outline-variant/15">
+              <Truck className="w-4 h-4 text-primary" />
               Pickup Information
             </h3>
             {returnRequest.pickup?.trackingId && (
-              <div className="mb-3 pb-3 border-b border-stone-100 flex items-center justify-between text-xs">
-                <span className="text-stone-500">Pickup Tracking:</span>
-                <span className="font-mono font-bold text-stone-800">
+              <div className="flex items-center justify-between text-[11px] pb-2 border-b border-outline-variant/15">
+                <span className="text-secondary">Tracking ID:</span>
+                <span className="font-mono font-bold text-on-surface">
                   {returnRequest.pickup.trackingId}
                 </span>
               </div>
             )}
             {returnRequest.pickup?.address ? (
-              <div className="space-y-2 text-xs text-stone-600">
-                <p className="font-semibold text-stone-900">
+              <div className="space-y-1 text-xs text-secondary">
+                <p className="font-bold text-on-surface text-[12px]">
                   {returnRequest.pickup.address.firstName || returnRequest.pickup.address.name}{' '}
                   {returnRequest.pickup.address.lastName || ''}
                 </p>
@@ -317,14 +334,14 @@ export const ReturnDetailPage = () => {
                     returnRequest.pickup.address.pincode ||
                     returnRequest.pickup.address.postalCode}
                 </p>
-                <p className="pt-2 text-stone-500 border-t border-stone-100">
-                  Phone:{' '}
-                  <strong className="text-stone-800">{returnRequest.pickup.address.phone}</strong>
+                <p className="pt-2 text-[10px] text-secondary/80 border-t border-outline-variant/15">
+                  Contact:{' '}
+                  <strong className="text-on-surface">{returnRequest.pickup.address.phone}</strong>
                 </p>
               </div>
             ) : (
-              <p className="text-xs text-stone-500">
-                Pickup address from original delivery will be used.
+              <p className="text-[11px] text-secondary">
+                Original delivery destination will be used for reverse courier dispatch.
               </p>
             )}
           </div>

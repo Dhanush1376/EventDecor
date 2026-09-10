@@ -4,13 +4,7 @@ import * as Sentry from '@sentry/node';
 export type RentalState =
   | 'pending'
   | 'confirmed'
-  | 'packed'
-  | 'out_for_delivery'
-  | 'delivered'
   | 'active_rental'
-  | 'late_return'
-  | 'return_requested'
-  | 'inspecting'
   | 'returned'
   | 'completed'
   | 'cancelled';
@@ -18,15 +12,9 @@ export type RentalState =
 export class RentalStateMachine {
   private static readonly validTransitions: Record<RentalState, RentalState[]> = {
     pending: ['confirmed', 'cancelled'],
-    confirmed: ['packed', 'active_rental', 'cancelled'],
-    packed: ['out_for_delivery', 'cancelled'],
-    out_for_delivery: ['delivered', 'cancelled'],
-    delivered: ['active_rental'],
-    active_rental: ['return_requested', 'returned', 'late_return'],
-    late_return: ['return_requested', 'returned'],
-    return_requested: ['inspecting', 'returned'],
-    inspecting: ['returned'],
-    returned: ['completed'],
+    confirmed: ['active_rental', 'cancelled'],
+    active_rental: ['returned', 'cancelled'],
+    returned: ['completed', 'cancelled'],
     completed: [],
     cancelled: [],
   };
@@ -101,8 +89,6 @@ export class RentalStateMachine {
       case 'confirmed':
         return { label: 'Mark as Active', action: 'activate' };
       case 'active_rental':
-      case 'late_return':
-      case 'return_requested':
         return { label: 'Mark as Returned', action: 'return' };
       case 'returned':
         if (depositStatus === 'held')

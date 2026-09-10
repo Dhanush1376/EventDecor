@@ -112,6 +112,7 @@ export const registerApiRoutes = (
 
   apiRouter.use('/settings', lazyRouter('./system/storeSettingsRoutes'));
   apiRouter.use('/categories', lazyRouter('./products/categoryRoutes'));
+  apiRouter.use('/location', lazyRouter('./system/locationRoutes'));
 
   apiRouter.use('/search/analytics', lazyRouter('./discovery/searchAnalyticsRoutes'));
   apiRouter.use('/search', lazyRouter('./discovery/searchRoutes'));

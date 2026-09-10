@@ -157,21 +157,31 @@ const ReturnTimeline = ({
                 <div className="flex flex-col items-center">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${
-                      isPassed || isCurrent
-                        ? 'bg-stone-900 border-stone-900 text-white'
-                        : 'bg-stone-100 border-stone-200 text-stone-400'
-                    } ${isCurrent ? 'ring-4 ring-stone-900/10' : ''}`}
+                      isPassed
+                        ? 'bg-emerald-600 border-emerald-600 text-white'
+                        : isCurrent
+                          ? 'bg-primary border-primary text-white ring-4 ring-primary/20 shadow-sm'
+                          : 'bg-surface-container border-outline-variant/40 text-secondary/60'
+                    }`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
-                  <span className="text-[10px] font-medium text-stone-600 mt-1.5 hidden sm:block">
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider mt-1.5 hidden sm:block ${
+                      isCurrent
+                        ? 'text-primary'
+                        : isPassed
+                          ? 'text-on-surface'
+                          : 'text-secondary/60'
+                    }`}
+                  >
                     {stg.title}
                   </span>
                 </div>
                 {i < stages.length - 1 && (
                   <div
                     className={`flex-1 h-0.5 mx-2 rounded-full transition-all ${
-                      i < currentIndex ? 'bg-stone-900' : 'bg-stone-200'
+                      i < currentIndex ? 'bg-emerald-600' : 'bg-outline-variant/30'
                     }`}
                   />
                 )}
@@ -185,7 +195,7 @@ const ReturnTimeline = ({
 
   // Full timeline variant
   return (
-    <div className="relative pl-10 space-y-7 before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-stone-200">
+    <div className="relative pl-10 space-y-7 before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-outline-variant/30">
       {stages.map((stg, i) => {
         const isPassed = i < currentIndex;
         const isCurrent = i === currentIndex;
@@ -203,8 +213,8 @@ const ReturnTimeline = ({
                 isPassed
                   ? 'bg-emerald-600 border-emerald-600 text-white'
                   : isCurrent
-                    ? 'bg-stone-900 border-stone-900 text-white shadow-[0_0_0_4px_rgba(42,41,39,0.15)]'
-                    : 'bg-white border-stone-300 text-stone-400'
+                    ? 'bg-primary border-primary text-white shadow-[0_0_12px_rgba(140,115,53,0.35)] ring-4 ring-primary/15'
+                    : 'bg-surface-bright border-outline-variant/40 text-secondary/60'
               }`}
             >
               {isPassed ? (
@@ -216,16 +226,16 @@ const ReturnTimeline = ({
 
             <div className="flex-1 text-left pt-0.5 pl-1">
               <div className="flex items-center gap-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-stone-900">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface">
                   {stg.title}
                 </h4>
                 {isCurrent && (
-                  <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-stone-900 text-white tracking-widest">
+                  <span className="text-[8.5px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-primary text-white tracking-widest shadow-2xs">
                     Current
                   </span>
                 )}
               </div>
-              <p className="text-xs text-stone-600 mt-1 leading-relaxed">{stg.description}</p>
+              <p className="text-xs text-secondary mt-1 leading-relaxed">{stg.description}</p>
             </div>
           </div>
         );

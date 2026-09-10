@@ -78,24 +78,36 @@ function CheckoutContent() {
           <AddressBarSkeleton />
         ) : (
           <div
-            className={`w-full bg-[#fbf9f6] border-b border-black/10 relative hover:bg-[#f6f2ea] transition-colors ${isAddressDropdownOpen ? 'z-50' : 'z-30'}`}
+            className={`w-full bg-[#fbf9f6] border-b border-outline-variant/30 relative hover:bg-[#f6f2ea] transition-colors ${isAddressDropdownOpen ? 'z-50' : 'z-30'}`}
           >
-            <div className="max-w-[1240px] mx-auto px-4 sm:px-8 relative">
+            <div className="max-w-[1240px] mx-auto px-4 sm:px-6 relative">
               <div
                 onClick={() => setIsAddressDropdownOpen(!isAddressDropdownOpen)}
-                className="flex items-center justify-between py-3 cursor-pointer select-none"
+                className="flex items-center justify-between sm:justify-start py-2 cursor-pointer select-none"
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <MapPin className="text-[18px] text-primary" strokeWidth={1.5} />
-                  <span className="text-[11px] lg:text-xs text-[#1a1817] font-semibold truncate leading-none">
-                    {activeSelectedAddress.name} -{' '}
-                    {activeSelectedAddress.addressString || activeSelectedAddress.address},{' '}
-                    {activeSelectedAddress.locality || ''}, {activeSelectedAddress.city}
+                <div className="flex items-center gap-2.5 min-w-0 max-w-2xl">
+                  <span className="hidden sm:inline-flex items-center gap-1 bg-primary/10 text-primary text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shrink-0">
+                    <MapPin className="w-3 h-3" strokeWidth={2.2} />
+                    Deliver to
+                  </span>
+                  <span className="text-[11px] sm:text-xs text-neutral-800 font-medium truncate leading-none">
+                    <strong className="font-semibold text-neutral-900">
+                      {activeSelectedAddress.name}
+                    </strong>
+                    <span className="text-secondary/60 mx-1.5">•</span>
+                    <span className="text-secondary/80">
+                      {activeSelectedAddress.addressString || activeSelectedAddress.address},{' '}
+                      {activeSelectedAddress.locality ? `${activeSelectedAddress.locality}, ` : ''}
+                      {activeSelectedAddress.city}
+                    </span>
                   </span>
                 </div>
-                <span className="material-symbols-outlined text-[18px] text-black/40">
-                  {isAddressDropdownOpen ? 'expand_less' : 'expand_more'}
-                </span>
+                <div className="flex items-center gap-1 text-primary text-[10px] font-bold uppercase tracking-wider shrink-0 ml-3 sm:ml-4 hover:underline">
+                  <span>Change</span>
+                  <span className="material-symbols-outlined text-[15px]">
+                    {isAddressDropdownOpen ? 'expand_less' : 'expand_more'}
+                  </span>
+                </div>
               </div>
 
               {/* Address Switcher Dropdown */}
@@ -168,13 +180,7 @@ function CheckoutContent() {
       <div className="max-w-[1240px] mx-auto w-full pt-6 lg:pt-10 px-4 sm:px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-6 items-start">
           {/* Left Column: Active Step Form Details */}
-          <div
-            className={
-              checkoutSteps[activeStep] === 'ADDRESS'
-                ? 'lg:col-span-12 xl:col-span-12 w-full'
-                : 'lg:col-span-7 xl:col-span-8'
-            }
-          >
+          <div className="col-span-1 lg:col-span-7 xl:col-span-8 w-full">
             <Suspense fallback={<StepFallback mode="address" />}>
               {checkoutSteps[activeStep] === 'DURATION' && <CheckoutRentalDurationStep />}
               {checkoutSteps[activeStep] === 'ADDRESS' && <CheckoutAddressStep />}
@@ -187,14 +193,17 @@ function CheckoutContent() {
           </div>
 
           {/* Right Column: Price Details Sidebar & Recommendations */}
-          {checkoutSteps[activeStep] !== 'ADDRESS' &&
-            checkoutSteps[activeStep] !== 'CUSTOMIZATION' && (
-              <div className="lg:col-span-5 xl:col-span-4">
-                <Suspense fallback={<CheckoutSidebarSkeleton />}>
-                  <CheckoutSidebar />
-                </Suspense>
-              </div>
-            )}
+          {checkoutSteps[activeStep] !== 'CUSTOMIZATION' && (
+            <div
+              className={`col-span-1 lg:col-span-5 xl:col-span-4 ${
+                checkoutSteps[activeStep] === 'ADDRESS' ? 'hidden lg:block' : ''
+              }`}
+            >
+              <Suspense fallback={<CheckoutSidebarSkeleton />}>
+                <CheckoutSidebar />
+              </Suspense>
+            </div>
+          )}
         </div>
       </div>
     </div>

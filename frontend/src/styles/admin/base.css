@@ -16,7 +16,7 @@
     border-radius: var(--admin-radius-lg);
   }
   .admin-section-root #admin-main-content {
-    padding: 16px 16px 100px 16px !important;
+    padding: 16px 16px 70px 16px !important;
   }
 }
 
@@ -38,25 +38,112 @@
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   font-variant-numeric: lining-nums tabular-nums;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif !important;
 }
 
 .admin-section-root.dark {
   color-scheme: dark;
 }
 
-/* Override storefront heading fonts inside admin */
+/* ═══════════════════════════════════════════════════════════════════════════
+   UNIFIED ADMIN TYPOGRAPHY — STRICTLY 1 SINGLE DEFAULT NORMAL FONT ONLY
+   Only applied inside .admin-section-root. Storefront is completely untouched.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Universal font override for all elements in admin portal except Material icon glyphs */
+.admin-section-root,
+.admin-section-root
+  *:not(.material-symbols-outlined):not(.material-icons):not([class*='material-symbols']):not(
+    [class*='material-icons']
+  ) {
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif !important;
+}
+
+/* Override all headings, text, forms, tables, buttons, code blocks */
 .admin-section-root h1,
 .admin-section-root h2,
 .admin-section-root h3,
 .admin-section-root h4,
 .admin-section-root h5,
-.admin-section-root h6 {
+.admin-section-root h6,
+.admin-section-root p,
+.admin-section-root a,
+.admin-section-root button,
+.admin-section-root input,
+.admin-section-root select,
+.admin-section-root textarea,
+.admin-section-root label,
+.admin-section-root table,
+.admin-section-root th,
+.admin-section-root td,
+.admin-section-root code,
+.admin-section-root pre,
+.admin-section-root strong,
+.admin-section-root b,
+.admin-section-root em,
+.admin-section-root i,
+.admin-section-root div,
+.admin-section-root span {
+  &:not(.material-symbols-outlined):not(.material-icons):not([class*='material-symbols']):not(
+      [class*='material-icons']
+    ) {
+    font-family:
+      'Inter',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      Helvetica,
+      Arial,
+      sans-serif !important;
+  }
+}
+
+/* Neutralize any custom font utility classes inside admin */
+.admin-section-root .font-display,
+.admin-section-root .font-serif,
+.admin-section-root .font-mono,
+.admin-section-root .font-label,
+.admin-section-root .font-label-sm,
+.admin-section-root .font-headline,
+.admin-section-root .font-signature,
+.admin-section-root [class*='font-display'],
+.admin-section-root [class*='font-serif'],
+.admin-section-root [class*='font-mono'],
+.admin-section-root [class*='font-label'] {
   font-family:
     'Inter',
     -apple-system,
     BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
     sans-serif !important;
-  letter-spacing: -0.01em;
+}
+
+/* Strictly protect Material Symbols icon font so icon glyphs render properly */
+.admin-section-root .material-symbols-outlined,
+.admin-section-root .material-icons,
+.admin-section-root [class*='material-symbols'],
+.admin-section-root [class*='material-icons'] {
+  font-family: 'Material Symbols Outlined' !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -84,4 +171,18 @@
 .admin-section-root .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PREFERS-REDUCED-MOTION SUPPORT (Accessibility)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .admin-section-root *,
+  .admin-section-root *::before,
+  .admin-section-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

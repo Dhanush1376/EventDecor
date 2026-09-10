@@ -299,9 +299,9 @@ export function AiCurationOverlay({
               <button
                 type="button"
                 onClick={handleApplyAISpecs}
-                className="w-full sm:flex-1 bg-[var(--admin-accent)] text-white py-2.5 rounded-xl text-[11px] sm:text-[11px] font-bold shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                className="w-full sm:flex-1 bg-[var(--admin-accent)] text-white py-2.5 rounded-xl text-[11px] sm:text-[11px] font-bold shadow-md hover:brightness-110 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.985]"
               >
-                <span className="material-symbols-outlined text-[15px] animate-bounce">
+                <span className="material-symbols-outlined text-[15px]">
                   published_with_changes
                 </span>
                 Apply AI Curation

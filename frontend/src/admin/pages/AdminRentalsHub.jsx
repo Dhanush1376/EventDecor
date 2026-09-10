@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { m as motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { PageHeader, stagger } from '../components/AdminUIKit';
+import { stagger } from '../components/AdminUIKit';
 import { AdminRentalOrders } from './AdminRentalOrders';
 
 export default function AdminRentalsHub() {
@@ -22,17 +22,8 @@ export default function AdminRentalsHub() {
       variants={stagger}
       className="flex flex-col flex-1 space-y-6 min-h-screen"
     >
-      <div>
-        <PageHeader
-          title="Rentals Hub"
-          subtitle="Track and manage active rental orders, security deposits, and items."
-          icon="car_rental"
-          iconColor="info"
-        />
-      </div>
-
       <div className="flex-1 relative pb-10">
-        <AdminRentalOrders hideHeader={true} />
+        <AdminRentalOrders hideHeader={false} />
       </div>
     </motion.div>
   );

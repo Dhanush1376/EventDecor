@@ -49,7 +49,9 @@ export function HeroCarousel({ previewContent }) {
   const showcaseSlides = featuredShowcases.map((sc) => ({
     id: sc.id || sc._id,
     title: sc.title,
-    subtitle: sc.category?.replace('_', ' '),
+    subtitle: sc.category
+      ? sc.category.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+      : '',
     badgeText: 'FEATURED SHOWCASE',
     ctaPrimary: { text: 'Explore Showcase', link: `/events/${sc.id || sc._id}` },
     backgroundImage: sc.image,

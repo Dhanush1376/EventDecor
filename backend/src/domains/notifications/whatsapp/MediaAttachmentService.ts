@@ -23,10 +23,16 @@ export class MediaAttachmentService {
       // 1. Generate PDF buffer
       const pdfBuffer = await PdfGenerationService.generateInvoiceBuffer(order, storeSettings);
 
+      const invoiceRef =
+        order.invoice?.number ||
+        order.invoiceNumber ||
+        order.orderNumber ||
+        (orderId ? `INV-${String(orderId).slice(-8).toUpperCase()}` : 'ORDER');
+
       // 2. Upload to Cloudinary (returns secure public URL)
       const uploadResult = await storageService.uploadBuffer(pdfBuffer, {
         folder: 'invoices',
-        originalname: `invoice_${order.orderNumber || orderId}.pdf`,
+        originalname: `invoice_${invoiceRef}.pdf`,
         isVideo: false,
       });
 

@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import React, { useState, useEffect } from 'react';
-import { SectionHeader, AdminField, AdminInput, AdminToggle } from '../AdminUIKit';
+import { AdminField, AdminInput, AdminToggle } from '../AdminUIKit';
 import { useAdmin } from '../../context/AdminContext';
 import logger from '../../../utils/core/logger';
 
@@ -96,7 +96,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
     return (
       <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-4">
         <div className="flex justify-between items-center mb-4 gap-4">
-          <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] whitespace-nowrap">
+          <span className="text-[13px] font-semibold text-[var(--admin-text-primary)] whitespace-nowrap">
             Product Feed
           </span>
           <AdminToggle
@@ -223,134 +223,316 @@ export function HomePageControllerEditor({ content, onUpdate }) {
     setDraggedIdx(null);
   };
 
-  return (
-    <div className="admin-card p-6 space-y-6">
-      <SectionHeader
-        icon="home"
-        title="Home Page"
-        description="Manage the storefront homepage layout, sections ordering, and content"
-      />
+  const SECTION_CONFIG = {
+    hero: {
+      title: 'Hero Banner',
+      icon: 'view_carousel',
+      tabKey: 'hero',
+    },
+    promoBanner: {
+      title: 'Promo Banner',
+      icon: 'campaign',
+      tabKey: 'promo',
+    },
+    categoryGrid: {
+      title: 'Category Grid',
+      icon: 'grid_view',
+      tabKey: 'categories',
+    },
+    trendingProducts: {
+      title: 'Trending Products',
+      icon: 'trending_up',
+      tabKey: 'trending',
+    },
+    shopByOccasion: {
+      title: 'Shop by Occasion',
+      icon: 'celebration',
+      tabKey: 'occasions',
+    },
+    featuredProducts: {
+      title: 'Featured Collection',
+      icon: 'star',
+      tabKey: 'featured',
+    },
+    recommendedProducts: {
+      title: 'Smart Recommendations',
+      icon: 'auto_awesome',
+      tabKey: 'recommended',
+    },
+    galleryInspiration: {
+      title: 'Inspiration Gallery',
+      icon: 'photo_library',
+      tabKey: 'gallery',
+    },
+  };
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-[var(--admin-border-subtle)] scrollbar-hide">
-        {[
-          'Layout',
-          ...homepageSections.map((sec) => {
-            const baseId = sec.id.split('_')[0];
-            switch (baseId) {
-              case 'hero':
-                return 'Hero';
-              case 'promoBanner':
-                return 'Promo';
-              case 'categoryGrid':
-                return 'Categories';
-              case 'trendingProducts':
-                return 'Trending';
-              case 'shopByOccasion':
-                return 'Occasions';
-              case 'featuredProducts':
-                return 'Featured';
-              case 'recommendedProducts':
-                return 'Recommended';
-              case 'galleryInspiration':
-                return 'Gallery';
-              default:
-                return baseId;
-            }
-          }),
-        ].map((tab, idx) => (
-          <button
-            key={`${tab}-${idx}`}
-            onClick={() => setActiveTab(tab.toLowerCase())}
-            className={`px-4 py-2 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all border shrink-0 ${
-              activeTab === tab.toLowerCase()
-                ? 'bg-[var(--admin-accent)] text-[var(--admin-text-inverse)] border-[var(--admin-accent)] shadow-sm'
-                : 'bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] border-transparent hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-primary)]'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+  const HOMEPAGE_TABS = [
+    { id: 'layout', label: 'Layout & Order', icon: 'view_agenda' },
+    { id: 'hero', label: 'Hero Banner', icon: 'view_carousel' },
+    { id: 'promo', label: 'Promo Banner', icon: 'campaign' },
+    { id: 'categories', label: 'Categories', icon: 'grid_view' },
+    { id: 'trending', label: 'Trending', icon: 'trending_up' },
+    { id: 'occasions', label: 'Occasions', icon: 'celebration' },
+    { id: 'featured', label: 'Featured', icon: 'star' },
+    { id: 'recommended', label: 'Recommended', icon: 'auto_awesome' },
+    { id: 'gallery', label: 'Gallery', icon: 'photo_library' },
+  ];
+
+  return (
+    <div className="admin-card p-3.5 sm:p-6 space-y-4 sm:space-y-6">
+      {/* Header with Title & Stats Pill */}
+      <div className="flex items-center justify-between gap-2.5 pb-3 sm:pb-4 border-b border-[var(--admin-border-subtle)]">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-[4px] bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-[18px] sm:text-[20px]">home</span>
+          </div>
+          <div>
+            <h2 className="text-[15px] sm:text-[16px] font-semibold text-[var(--admin-text-primary)] leading-snug truncate">
+              Home Page Controller
+            </h2>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="inline-flex items-center gap-1.5 text-[11.5px] sm:text-[12px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-[4px] shrink-0 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="sm:hidden">
+              {homepageSections.filter((s) => s.isVisible !== false).length}/
+              {homepageSections.length} Live
+            </span>
+            <span className="hidden sm:inline">
+              {homepageSections.filter((s) => s.isVisible !== false).length} of{' '}
+              {homepageSections.length} Sections Live
+            </span>
+          </span>
+        </div>
       </div>
 
+      {/* 42px Segmented Tabs Bar matching Orders & Products */}
+      <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] h-[42px] min-h-[42px] max-h-[42px] box-border overflow-x-auto overscroll-x-contain touch-pan-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {HOMEPAGE_TABS.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`h-[32px] min-h-[32px] max-h-[32px] px-3 sm:px-3.5 rounded-[3px] box-border text-[12px] sm:text-[12.5px] font-medium flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all shrink-0 ${
+                isActive
+                  ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-semibold'
+                  : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Layout & Order Workspace */}
       {activeTab === 'layout' && (
         <div className="space-y-3">
-          <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4 border-b border-[var(--admin-border-subtle)] pb-2">
-            Section Ordering & Visibility
-          </span>
-          {homepageSections.map((sec, idx) => (
-            <div
-              key={sec.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, idx)}
-              onDragOver={(e) => handleDragOver(e, idx)}
-              onDrop={(e) => handleDrop(e, idx)}
-              className={`flex items-center justify-between p-3 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] shadow-sm transition-all duration-300 ${draggedIdx === idx ? 'opacity-50 border-[var(--admin-accent)] scale-[0.98]' : 'opacity-100'} hover:border-[var(--admin-border-strong)]`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-[var(--admin-text-tertiary)] cursor-move">
-                  drag_indicator
-                </span>
-                <span className="font-bold text-[12px]">{sec.id.split('_')[0]}</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <AdminToggle
-                  checked={sec.isVisible !== false}
-                  onChange={() => toggleSectionVis(idx)}
-                />
-                <div className="flex flex-col gap-1">
-                  <button
-                    type="button"
-                    disabled={idx === 0}
-                    onClick={() => moveSection(idx, -1)}
-                    className="disabled:opacity-30 hover:text-[var(--admin-accent)] cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">expand_less</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={idx === homepageSections.length - 1}
-                    onClick={() => moveSection(idx, 1)}
-                    className="disabled:opacity-30 hover:text-[var(--admin-accent)] cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">expand_more</span>
-                  </button>
-                </div>
-              </div>
+          <div className="flex items-center justify-between pb-1">
+            <div>
+              <span className="text-[13px] font-semibold text-[var(--admin-text-primary)] block">
+                Section Ordering & Visibility
+              </span>
+              <span className="text-[11px] text-[var(--admin-text-tertiary)] block sm:hidden">
+                Drag or use arrows to reorder homepage sections
+              </span>
             </div>
-          ))}
+          </div>
+
+          <div className="space-y-2.5 sm:space-y-2">
+            {homepageSections.map((sec, idx) => {
+              const baseId = sec.id.split('_')[0];
+              const meta = SECTION_CONFIG[baseId] || {
+                title: baseId.charAt(0).toUpperCase() + baseId.slice(1),
+                icon: 'view_agenda',
+                tabKey: baseId.toLowerCase(),
+              };
+              const isVisible = sec.isVisible !== false;
+
+              return (
+                <div
+                  key={sec.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, idx)}
+                  onDragOver={(e) => handleDragOver(e, idx)}
+                  onDrop={(e) => handleDrop(e, idx)}
+                  className={`group relative p-3 sm:px-3.5 sm:py-2.5 rounded-[4px] border transition-all duration-150 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 ${
+                    draggedIdx === idx
+                      ? 'opacity-40 border-[var(--admin-accent)] bg-[var(--admin-surface-muted)]'
+                      : 'bg-[var(--admin-surface)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] hover:shadow-2xs'
+                  }`}
+                >
+                  {/* Row 1 on Mobile / Left Side on Desktop */}
+                  <div className="flex items-center justify-between gap-2 min-w-0 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+                      <button
+                        type="button"
+                        className="text-[var(--admin-text-tertiary)] group-hover:text-[var(--admin-text-primary)] cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-[var(--admin-surface-muted)] transition-colors shrink-0"
+                        title="Drag to reorder"
+                      >
+                        <span className="material-symbols-outlined text-[18px] block">
+                          drag_indicator
+                        </span>
+                      </button>
+
+                      <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-[3px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[11px] sm:text-[11.5px] font-semibold text-[var(--admin-text-secondary)] flex items-center justify-center shrink-0">
+                        {idx + 1}
+                      </span>
+
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-[4px] bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-[17px] sm:text-[18px]">
+                          {meta.icon}
+                        </span>
+                      </div>
+
+                      <span className="font-semibold sm:font-medium text-[13px] text-[var(--admin-text-primary)] truncate">
+                        {meta.title}
+                      </span>
+                    </div>
+
+                    {/* Status Badge (Mobile Top-Right) */}
+                    <div className="sm:hidden shrink-0">
+                      <span
+                        className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-[4px] border ${
+                          isVisible
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60'
+                            : 'bg-stone-100 text-stone-500 border-stone-200 dark:bg-stone-800 dark:text-stone-400 dark:border-stone-700'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            isVisible ? 'bg-emerald-500' : 'bg-stone-400'
+                          }`}
+                        />
+                        {isVisible ? 'Live' : 'Hidden'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Row 2 on Mobile / Right Side on Desktop */}
+                  <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t border-[var(--admin-border-subtle)] sm:border-0 shrink-0">
+                    {/* Visibility Toggle */}
+                    <div
+                      className="flex items-center gap-2 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSectionVis(idx);
+                      }}
+                    >
+                      <AdminToggle
+                        checked={isVisible}
+                        onChange={() => toggleSectionVis(idx)}
+                        aria-label={`Toggle visibility of ${meta.title}`}
+                      />
+                      <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] sm:hidden">
+                        {isVisible ? 'Visible' : 'Hidden'}
+                      </span>
+                    </div>
+
+                    {/* Actions: Desktop Status Badge, Edit Button, Reorder Steppers */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {/* Live Status Badge (Desktop only) */}
+                      <span
+                        className={`hidden sm:inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-[4px] border ${
+                          isVisible
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60'
+                            : 'bg-stone-100 text-stone-500 border-stone-200 dark:bg-stone-800 dark:text-stone-400 dark:border-stone-700'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            isVisible ? 'bg-emerald-500' : 'bg-stone-400'
+                          }`}
+                        />
+                        {isVisible ? 'Live' : 'Hidden'}
+                      </span>
+
+                      {/* Edit Button */}
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(meta.tabKey)}
+                        className="h-[32px] px-2.5 sm:px-3 rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-surface)] text-[var(--admin-text-primary)] text-[12px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:border-[var(--admin-border-strong)]"
+                        title={`Edit ${meta.title}`}
+                      >
+                        <span className="material-symbols-outlined text-[15px]">edit</span>
+                        <span>Edit</span>
+                      </button>
+
+                      {/* Stepper Buttons (Up / Down) */}
+                      <div className="flex items-center gap-0.5 bg-[var(--admin-surface-muted)] p-0.5 rounded-[4px] border border-[var(--admin-border)]">
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => moveSection(idx, -1)}
+                          className="w-7 h-7 rounded-[3px] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                          title="Move Up"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">
+                            arrow_upward
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === homepageSections.length - 1}
+                          onClick={() => moveSection(idx, 1)}
+                          className="w-7 h-7 rounded-[3px] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                          title="Move Down"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">
+                            arrow_downward
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
+      {/* Hero Tab */}
       {activeTab === 'hero' && (
         <div className="space-y-4">
-          <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] overflow-x-auto no-scrollbar mb-4 h-[46px]">
+          <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] h-[42px] min-h-[42px] max-h-[42px] box-border mb-4 w-fit">
             <button
               onClick={() => setHeroSubTab('products')}
-              className={`flex-1 sm:flex-none px-4 h-full rounded-sm text-[13px] font-bold uppercase transition-all flex items-center justify-center whitespace-nowrap shrink-0 ${
+              className={`h-[32px] min-h-[32px] max-h-[32px] px-3.5 rounded-[3px] box-border text-[12.5px] font-medium flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all ${
                 heroSubTab === 'products'
-                  ? 'bg-white text-[var(--admin-text-primary)] shadow-sm'
+                  ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-semibold'
                   : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
               }`}
             >
-              Products ({content.hero?.productIds?.length || 0}/{products ? products.length : '0'})
+              <span className="material-symbols-outlined text-[15px]">inventory_2</span>
+              <span>
+                Products ({content.hero?.productIds?.length || 0}/{products ? products.length : '0'}
+                )
+              </span>
             </button>
             <button
               onClick={() => setHeroSubTab('showcases')}
-              className={`flex-1 sm:flex-none px-4 h-full rounded-sm text-[13px] font-bold uppercase transition-all flex items-center justify-center whitespace-nowrap shrink-0 ${
+              className={`h-[32px] min-h-[32px] max-h-[32px] px-3.5 rounded-[3px] box-border text-[12.5px] font-medium flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-all ${
                 heroSubTab === 'showcases'
-                  ? 'bg-white text-[var(--admin-text-primary)] shadow-sm'
+                  ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-semibold'
                   : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
               }`}
             >
-              Showcases ({showcases?.filter((s) => s.featured).length || 0}/
-              {showcases ? showcases.length : '0'})
+              <span className="material-symbols-outlined text-[15px]">auto_awesome_motion</span>
+              <span>
+                Showcases ({showcases?.filter((s) => s.featured).length || 0}/
+                {showcases ? showcases.length : '0'})
+              </span>
             </button>
           </div>
 
           {heroSubTab === 'products' && (
             <div>
-              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4 pb-2">
+              <span className="text-[13px] font-semibold text-[var(--admin-text-primary)] block mb-4 pb-2">
                 Select Hero Products
               </span>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-1 pr-2 scrollbar-thin">
@@ -424,7 +606,7 @@ export function HomePageControllerEditor({ content, onUpdate }) {
           {/* Showcases Section */}
           {heroSubTab === 'showcases' && (
             <div>
-              <span className="text-[12px] font-bold text-[var(--admin-text-primary)] uppercase tracking-[0.1em] block mb-4 pb-2">
+              <span className="text-[13px] font-semibold text-[var(--admin-text-primary)] block mb-4 pb-2">
                 Select Hero Showcases
               </span>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[400px] overflow-y-auto p-1 pr-2 scrollbar-thin">

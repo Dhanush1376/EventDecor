@@ -5,17 +5,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { couponService } from '../../services/domainServices';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import logger from '../../utils/core/logger';
 
 export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCoupon }) {
+  const { user } = useAuth();
   const { setClaimedCoupon, claimedCoupon } = useCart();
   const [expanded, setExpanded] = useState(false);
   const [copiedCode, setCopiedCode] = useState(null);
 
   const productId = product?._id || product?.id;
+  const userId = user?._id || user?.id || 'guest';
 
   const { data, isLoading } = useQuery({
-    queryKey: ['product-coupons', productId],
+    queryKey: ['product-coupons', productId, userId],
     queryFn: () => couponService.getProductCoupons(productId),
     enabled: !!productId,
   });
@@ -83,11 +86,23 @@ export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCou
         </span>
       </div>
 
-      <div className="flex xl:grid xl:grid-cols-3 gap-3 overflow-x-auto xl:overflow-x-visible no-scrollbar pb-3 xl:pb-0 snap-x snap-mandatory -mx-[18px] pl-[18px] pr-[18px] scroll-pl-[18px] xl:mx-0 xl:px-0">
+      <div
+        className={`gap-3 no-scrollbar pb-3 xl:pb-0 ${
+          initialCoupons.length === 1
+            ? 'flex max-w-sm'
+            : initialCoupons.length === 2
+              ? 'flex sm:grid sm:grid-cols-2 max-w-2xl overflow-x-auto sm:overflow-x-visible'
+              : 'flex xl:grid xl:grid-cols-3 overflow-x-auto xl:overflow-x-visible snap-x snap-mandatory -mx-[18px] pl-[18px] pr-[18px] scroll-pl-[18px] xl:mx-0 xl:px-0'
+        }`}
+      >
         {initialCoupons.map((coupon, idx) => (
           <div
             key={coupon._id || coupon.id || idx}
-            className="w-[260px] xl:w-auto shrink-0 snap-start"
+            className={
+              initialCoupons.length === 1
+                ? 'w-full sm:w-[280px]'
+                : 'w-[260px] xl:w-auto shrink-0 snap-start'
+            }
           >
             <CouponCard
               coupon={coupon}
@@ -149,41 +164,58 @@ export function ProductCoupons({ product, localAppliedCoupon, setLocalAppliedCou
   );
 }
 
-function CouponCard({ coupon, isBest, onApply, isCopied, isEligible }) {
-  const isPercentage = coupon.discountType === 'percentage';
+export function CouponCard({
+  coupon,
+  isBest,
+  onApply,
+  isCopied,
+  isEligible = true,
+  disableHover = false,
+  showHoverByDefault = false,
+}) {
+  const isPercentage = coupon?.discountType === 'percentage';
   const discountText = isPercentage
-    ? `${coupon.discountValue}% Off`
-    : `₹${coupon.discountValue} Off`;
+    ? `${coupon?.discountValue || 0}% Off`
+    : `₹${Number(coupon?.discountValue || 0).toLocaleString('en-IN')} Off`;
 
   const minOrderText =
-    coupon.minOrderAmount > 0
-      ? `On order of ₹${coupon.minOrderAmount.toLocaleString()}`
+    (coupon?.minOrderAmount || 0) > 0
+      ? `On order of ₹${Number(coupon.minOrderAmount).toLocaleString('en-IN')}`
       : 'No min. purchase';
 
-  const expiryDate = new Date(coupon.expiryDate);
-  const formattedExpiry = expiryDate.toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-  });
+  const expiryDate = coupon?.expiryDate ? new Date(coupon.expiryDate) : null;
+  const formattedExpiry =
+    expiryDate && !isNaN(expiryDate.getTime())
+      ? expiryDate.toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+        })
+      : 'TBD';
 
   return (
     <div
-      onClick={isEligible ? onApply : undefined}
+      onClick={isEligible && !disableHover ? onApply : undefined}
       onKeyDown={(e) => {
-        if (isEligible && (e.key === 'Enter' || e.key === ' ')) {
+        if (isEligible && !disableHover && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
-          onApply();
+          onApply?.();
         }
       }}
-      role="button"
-      tabIndex={isEligible ? 0 : -1}
-      aria-label={`Coupon ${coupon.code}: ${discountText}, ${minOrderText}`}
-      className={`border-2 border-dashed rounded-xl p-3 flex flex-col justify-between gap-1 bg-[#fcfbf9]/60 backdrop-blur-md transition-all duration-300 relative overflow-hidden group select-none ${
+      role={disableHover && !showHoverByDefault ? undefined : 'button'}
+      tabIndex={isEligible && !disableHover ? 0 : -1}
+      aria-label={`Coupon ${coupon?.code || 'COUPON'}: ${discountText}, ${minOrderText}`}
+      className={`border-2 border-dashed rounded-xl p-3 flex flex-col justify-between gap-1 backdrop-blur-md transition-all duration-300 relative overflow-hidden group select-none ${
         !isEligible
-          ? 'border-outline-variant/20 opacity-60 grayscale cursor-not-allowed'
-          : isBest
-            ? 'border-primary/50 ring-1 ring-primary/20 shadow-2xs hover:shadow-xs hover:bg-[#faf6e6]/60 cursor-pointer'
-            : 'border-outline-variant/30 hover:border-primary/30 hover:bg-[#faf6e6]/60 cursor-pointer'
+          ? 'border-outline-variant/20 opacity-60 grayscale cursor-not-allowed bg-[#fcfbf9]/60 dark:bg-surface-container/40'
+          : showHoverByDefault
+            ? 'border-primary/50 ring-1 ring-primary/20 shadow-xs bg-[#faf6e6]/80 dark:bg-[#2c281e]/80 cursor-default'
+            : disableHover
+              ? isBest
+                ? 'border-primary/50 ring-1 ring-primary/20 shadow-2xs cursor-default bg-[#fcfbf9]/60 dark:bg-surface-container/40'
+                : 'border-outline-variant/30 cursor-default bg-[#fcfbf9]/60 dark:bg-surface-container/40'
+              : isBest
+                ? 'border-primary/50 ring-1 ring-primary/20 shadow-2xs hover:shadow-xs hover:bg-[#faf6e6]/60 cursor-pointer bg-[#fcfbf9]/60 dark:bg-surface-container/40'
+                : 'border-outline-variant/30 hover:border-primary/30 hover:bg-[#faf6e6]/60 cursor-pointer bg-[#fcfbf9]/60 dark:bg-surface-container/40'
       }`}
     >
       {/* Decorative Ticket Circles */}
@@ -192,10 +224,10 @@ function CouponCard({ coupon, isBest, onApply, isCopied, isEligible }) {
 
       <div>
         <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="font-label text-[10px] font-bold tracking-wider text-on-surface bg-[#e9e8e5] px-2 py-0.5 rounded uppercase">
-            {coupon.code}
+          <span className="font-label text-[10px] font-bold tracking-wider text-on-surface bg-[#e9e8e5] dark:bg-surface-container-high px-2 py-0.5 rounded uppercase">
+            {coupon?.code || 'COUPON'}
           </span>
-          {isBest && isEligible && (
+          {isBest && (
             <span className="absolute top-0 right-0 bg-[#2A2927] text-white text-[8px] font-bold uppercase tracking-widest px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-sm z-20">
               BEST OFFER
             </span>
@@ -217,13 +249,18 @@ function CouponCard({ coupon, isBest, onApply, isCopied, isEligible }) {
           Exp: {formattedExpiry}
         </span>
         <button
+          type="button"
           disabled={!isEligible}
           className={`flex items-center gap-1 text-[9px] uppercase tracking-widest font-extrabold focus:outline-none transition-colors duration-300 pointer-events-none ${
             !isEligible
               ? 'text-on-surface/40'
               : isCopied
                 ? 'text-green-700'
-                : 'text-primary group-hover:text-primary-container'
+                : showHoverByDefault
+                  ? 'text-primary-container font-black'
+                  : disableHover
+                    ? 'text-primary'
+                    : 'text-primary group-hover:text-primary-container'
           }`}
           aria-hidden="true"
         >

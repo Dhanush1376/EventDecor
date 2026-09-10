@@ -9,12 +9,6 @@ import {
 import { getBackendUrl } from '../getBackendUrl';
 import { getFrontendUrl } from '../getFrontendUrl';
 
-const textLink = (text: string, url: string) => `
-  <a href="${url}" style="color: #4f46e5; text-decoration: underline; font-size: 14px; font-weight: 500;">
-    ${text}
-  </a>
-`;
-
 const resolveImageUrl = (url: string) => {
   if (!url) return '';
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -79,38 +73,38 @@ const totalsSummary = (
   total: number,
   discount: number = 0,
 ) => `
-  <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
     <tr>
-      <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: right; width: 70%;">Subtotal:</td>
-      <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(subtotal)}</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: right; width: 65%;">Subtotal:</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace; width: 35%;">${formatCurrency(subtotal)}</td>
     </tr>
     ${
       discount > 0
         ? `
     <tr>
-      <td style="padding: 6px 0; font-size: 14px; color: #059669; text-align: right;">Discount:</td>
-      <td style="padding: 6px 0; font-size: 14px; color: #059669; text-align: right; font-family: monospace;">-${formatCurrency(discount)}</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #059669; text-align: right; width: 65%;">Discount:</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #059669; text-align: right; font-family: monospace; width: 35%;">-${formatCurrency(discount)}</td>
     </tr>
     `
         : ''
     }
     <tr>
-      <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: right;">Shipping:</td>
-      <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(shipping)}</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: right; width: 65%;">Shipping:</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace; width: 35%;">${formatCurrency(shipping)}</td>
     </tr>
     ${
       tax > 0
         ? `
     <tr>
-      <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: right;">Tax:</td>
-      <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(tax)}</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-align: right; width: 65%;">Tax:</td>
+      <td style="padding: 6px 0; font-size: 14px; color: #111827; text-align: right; font-family: monospace; width: 35%;">${formatCurrency(tax)}</td>
     </tr>
     `
         : ''
     }
     <tr style="border-top: 2px solid #e5e7eb;">
-      <td style="padding: 12px 0 0 0; font-size: 16px; font-weight: 700; color: #111827; text-align: right;">Grand Total:</td>
-      <td style="padding: 12px 0 0 0; font-size: 18px; font-weight: 700; color: #111827; text-align: right; font-family: monospace;">${formatCurrency(total)}</td>
+      <td style="padding: 12px 0 0 0; font-size: 16px; font-weight: 700; color: #111827; text-align: right; width: 65%;">Grand Total:</td>
+      <td style="padding: 12px 0 0 0; font-size: 18px; font-weight: 700; color: #111827; text-align: right; font-family: monospace; width: 35%;">${formatCurrency(total)}</td>
     </tr>
   </table>
 `;
@@ -355,20 +349,20 @@ export const buildSupportSection = () => `
 // --- Order Templates ---
 
 export const buildOrderConfirmationCustomerEmail = (order: any, user: any) => {
-  const orderId = order.orderUuid || order.orderNumber || order._id;
-  const preheader = `We've received your order #${orderId}`;
-
-  // Create a link to the invoice if it's generated
-  const invoiceLink = `<div style="text-align: center; margin-bottom: 24px;">${textLink('Download Invoice PDF', `${getBackendUrl()}/api/v1/documents/invoice/${order._id}`)}</div>`;
-
+  const displayId =
+    order.invoice?.number ||
+    order.invoiceNumber ||
+    (order._id ? `INV-${String(order._id).slice(-8).toUpperCase()}` : 'N/A');
   const primaryItem = getPrimaryEntityName(order.items);
   const headingText = primaryItem
     ? `Your ${escapeHtml(primaryItem)} Order Is Confirmed`
     : 'Your Order Is Confirmed';
+  const preheader = primaryItem
+    ? `We've received your order for ${primaryItem}.`
+    : `We've received your order.`;
 
   const body = `
     <h2>${headingText}</h2>
-    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Order #${escapeHtml(orderId)}</p>
     <p>Dear ${escapeHtml(user?.name || order.shippingAddress?.name || 'Customer')},</p>
     <p>We've received your order and are getting it ready for shipment.</p>
     
@@ -384,38 +378,64 @@ export const buildOrderConfirmationCustomerEmail = (order: any, user: any) => {
         <h3 style="color: #111827; font-size: 16px; margin-bottom: 12px;">Payment Details</h3>
         <p style="color: #374151; font-size: 14px; line-height: 1.5; margin: 0;">
           Method: ${escapeHtml(order.paymentMethod || 'Razorpay')}<br/>
-          Status: <strong>${escapeHtml(order.paymentStatus || 'Pending')}</strong>
+          Status: <strong>${escapeHtml(order.paymentStatus || 'Pending')}</strong><br/>
+          Invoice Reference: <strong>${escapeHtml(displayId)}</strong>
         </p>
       </div>
     </div>
-    
-    ${invoiceLink}
-    
   `;
   return {
-    subject: `Order Confirmation — #${orderId}`,
+    subject: primaryItem
+      ? displayId && displayId !== 'N/A'
+        ? `Order Confirmed: ${primaryItem} (${displayId})`
+        : `Order Confirmed: ${primaryItem}`
+      : `Order Confirmed — ${displayId}`,
     html: getLuxuryEmailWrapper('Order Confirmed', body, undefined, preheader),
   };
 };
 
 export const buildOrderConfirmationAdminEmail = (order: any) => {
-  const orderId = order.orderUuid || order.orderNumber || order._id;
+  const itemTitle =
+    order.items && order.items.length > 0
+      ? order.items[0].title ||
+        order.items[0].name ||
+        order.items[0].showcaseTitle ||
+        order.items[0].productTitle ||
+        'Product'
+      : 'Order';
+  const moreCount =
+    order.items && order.items.length > 1 ? ` (+${order.items.length - 1} more)` : '';
+  const productName = `${itemTitle}${moreCount}`;
+  const customerName = order.shippingAddress?.name || order.user?.name || 'A customer';
+  const invoiceNumber =
+    order.invoice?.number ||
+    order.invoiceNumber ||
+    (order._id ? `INV-${String(order._id).slice(-8).toUpperCase()}` : 'Pending');
 
   const body = `
-    <h2>New Order Received: #${orderId}</h2>
+    <h2>New Order: ${escapeHtml(productName)}</h2>
+    <p style="color: #4b5563; font-size: 14px; margin-top: -8px; margin-bottom: 20px;">
+      Invoice Reference: <strong style="color: #111827;">${escapeHtml(invoiceNumber)}</strong>
+    </p>
     <p>A new order has been placed on the store.</p>
     
     ${dataTable([
-      { label: 'Customer', value: escapeHtml(order.shippingAddress?.name || 'Unknown') },
-      { label: 'Email', value: escapeHtml(order.shippingAddress?.email || 'Unknown') },
-      { label: 'Phone', value: escapeHtml(order.shippingAddress?.phone || 'Unknown') },
+      { label: 'Product / Item', value: `<strong>${escapeHtml(productName)}</strong>` },
+      { label: 'Customer', value: escapeHtml(customerName) },
+      {
+        label: 'Email',
+        value: escapeHtml(order.shippingAddress?.email || order.user?.email || 'Unknown'),
+      },
+      {
+        label: 'Phone',
+        value: escapeHtml(order.shippingAddress?.phone || order.user?.phone || 'Unknown'),
+      },
       { label: 'Total Value', value: formatCurrency(order.total) },
       {
         label: 'Payment',
-        value: `${escapeHtml(order.paymentMethod)} (${escapeHtml(order.paymentStatus)})`,
+        value: `${escapeHtml(order.paymentMethod || 'N/A')} (${escapeHtml(order.paymentStatus || 'Pending')})`,
       },
-      { label: 'Order ID', value: escapeHtml(orderId) },
-      { label: 'Database ID', value: escapeHtml(order._id) },
+      { label: 'Invoice No', value: escapeHtml(invoiceNumber) },
     ])}
     
     <h3 style="color: #111827;">Items Ordered</h3>
@@ -424,11 +444,6 @@ export const buildOrderConfirmationAdminEmail = (order: any) => {
     ${addressBlock('Shipping Address', order.shippingAddress)}
     
   `;
-  const itemTitle =
-    order.items && order.items.length > 0 ? order.items[0].title || order.items[0].name : 'Items';
-  const moreCount = order.items && order.items.length > 1 ? ` +${order.items.length - 1} more` : '';
-  const productName = `${itemTitle}${moreCount}`;
-  const customerName = order.shippingAddress?.name || order.user?.name || 'A customer';
 
   return {
     subject: `[New Order] ${productName} placed by ${customerName}`,
@@ -437,65 +452,69 @@ export const buildOrderConfirmationAdminEmail = (order: any) => {
 };
 
 export const buildOrderStatusChangeEmail = (order: any, oldStatus: string, newStatus: string) => {
-  const orderId = order.orderUuid || order.orderNumber || order._id;
-  const preheader = `Your order #${orderId} is now ${newStatus}`;
-  const invoiceLink = `<div style="text-align: center; margin-bottom: 24px;">${textLink('Download Invoice PDF', `${getBackendUrl()}/api/v1/documents/invoice/${order._id}`)}</div>`;
+  const primaryItem = getPrimaryEntityName(order.items) || 'Order';
+  const displayRef =
+    order.invoice?.number ||
+    order.invoiceNumber ||
+    order.orderUuid ||
+    (order._id ? `ORD-${String(order._id).slice(-8).toUpperCase()}` : '');
 
-  const primaryItem = getPrimaryEntityName(order.items);
-  const headingText = primaryItem
-    ? `Your ${escapeHtml(primaryItem)} is now ${escapeHtml(newStatus)}`
-    : `Your Order is now ${escapeHtml(newStatus)}`;
+  const preheader = `The status of your ${primaryItem} has been updated to ${newStatus}.`;
+  const headingText = `Your ${escapeHtml(primaryItem)} is now ${escapeHtml(newStatus)}`;
 
   const body = `
     <h2>${headingText}</h2>
-    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Order #${escapeHtml(orderId)}</p>
     <p>Dear ${escapeHtml(order.shippingAddress?.name || 'Customer')},</p>
     <p>The status of your order has been updated to <strong>${escapeHtml(newStatus)}</strong>.</p>
     
     ${dataTable([
+      { label: 'Product / Item', value: `<strong>${escapeHtml(primaryItem)}</strong>` },
       { label: 'Previous Status', value: escapeHtml(oldStatus) },
-      { label: 'New Status', value: escapeHtml(newStatus) },
+      { label: 'New Status', value: `<strong>${escapeHtml(newStatus)}</strong>` },
+      ...(order.invoiceNumber
+        ? [{ label: 'Invoice No', value: escapeHtml(order.invoiceNumber) }]
+        : []),
+      ...(displayRef ? [{ label: 'Reference No', value: escapeHtml(displayRef) }] : []),
     ])}
     
     <h3 style="margin-top: 32px; color: #111827;">Order Summary</h3>
     ${itemsTable(order.items)}
     ${totalsSummary(order.subtotal, order.shippingFee || order.courierCharges || 0, order.tax?.totalTax || 0, order.total, order.discount || 0)}
-    
-
-    
-    ${invoiceLink}
-    
   `;
   return {
-    subject: `Your Order #${orderId} is now ${newStatus}`,
+    subject: `Your ${primaryItem} is now ${newStatus}`,
     html: getLuxuryEmailWrapper('Order Status Update', body, undefined, preheader),
   };
 };
 
 export const buildPaymentFailedEmail = (order: any, reason: string) => {
-  const orderId = order.orderUuid || order.orderNumber || order._id;
-  const preheader = `Payment failed for order #${orderId}`;
+  const primaryItem = getPrimaryEntityName(order.items) || 'Order';
+  const displayRef =
+    order.invoice?.number ||
+    order.invoiceNumber ||
+    order.orderUuid ||
+    (order._id ? `ORD-${String(order._id).slice(-8).toUpperCase()}` : '');
 
-  const primaryItem = getPrimaryEntityName(order.items);
-  const headingText = primaryItem
-    ? `Payment Failed for Your ${escapeHtml(primaryItem)}`
-    : 'Payment Failed';
+  const preheader = `Payment failed for your ${primaryItem}`;
+  const headingText = `Payment Failed for Your ${escapeHtml(primaryItem)}`;
 
   const body = `
     <h2 style="color: #dc2626;">${headingText}</h2>
-    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Order #${escapeHtml(orderId)}</p>
+    <p>Dear ${escapeHtml(order.shippingAddress?.name || 'Customer')},</p>
     <p>We were unable to process the payment for your order.</p>
     
     ${dataTable([
+      { label: 'Product / Item', value: `<strong>${escapeHtml(primaryItem)}</strong>` },
       { label: 'Reason', value: escapeHtml(reason) },
       { label: 'Order Value', value: formatCurrency(order.total || 0) },
+      ...(displayRef ? [{ label: 'Reference No', value: escapeHtml(displayRef) }] : []),
     ])}
     
     <p>Please try completing the payment again or contact support if the issue persists.</p>
     
   `;
   return {
-    subject: `Payment Failed - Order #${orderId}`,
+    subject: `Payment Failed: ${primaryItem}`,
     html: getLuxuryEmailWrapper('Payment Alert', body, undefined, preheader),
   };
 };
@@ -503,39 +522,50 @@ export const buildPaymentFailedEmail = (order: any, reason: string) => {
 // --- Custom Order Templates ---
 
 export const buildCustomOrderCustomerEmail = (order: any) => {
-  const orderId = order.orderUuid || order.customOrderId || order._id;
-  const preheader = `We've received your custom design request.`;
-
   const customName = order.productType || order.occasion || 'Custom Design';
+  const displayRef =
+    order.customOrderId ||
+    order.orderUuid ||
+    (order._id ? `REQ-${String(order._id).slice(-8).toUpperCase()}` : '');
+
+  const preheader = `We've received your custom design request for ${customName}.`;
   const headingText = `Your ${escapeHtml(customName)} Request is Received`;
 
   const body = `
     <h2>${headingText}</h2>
-    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Request #${escapeHtml(orderId)}</p>
     <p>Dear ${escapeHtml(order.customerName || 'Valued Guest')},</p>
     <p>Thank you for trusting Siri Arts & Crafts. Our design team is reviewing your requirements and will reach out shortly.</p>
     
     ${dataTable([
+      { label: 'Custom Design', value: `<strong>${escapeHtml(customName)}</strong>` },
       { label: 'Occasion', value: escapeHtml(order.occasion || 'N/A') },
       { label: 'Category', value: escapeHtml(order.productType || 'N/A') },
       { label: 'Target Budget', value: formatCurrency(order.budget) },
+      ...(displayRef ? [{ label: 'Reference No', value: escapeHtml(displayRef) }] : []),
     ])}
     
   `;
   return {
-    subject: `Custom Design Request Received — #${orderId}`,
+    subject: `Custom Design Request Received: ${customName}`,
     html: getLuxuryEmailWrapper('Custom Order Acknowledgment', body, undefined, preheader),
   };
 };
 
 export const buildCustomOrderAdminEmail = (order: any) => {
-  const orderId = order.orderUuid || order.customOrderId || order._id;
+  const customName = order.productType || order.occasion || 'Custom Design';
+  const customerName = escapeHtml(order.customerName || 'Unknown');
+  const displayRef =
+    order.customOrderId ||
+    order.orderUuid ||
+    (order._id ? `REQ-${String(order._id).slice(-8).toUpperCase()}` : '');
+
   const body = `
-    <h2>New Custom Order Request: #${orderId}</h2>
+    <h2>New Custom Order Request: ${escapeHtml(customName)}</h2>
     <p>A new custom design request has been submitted.</p>
     
     ${dataTable([
-      { label: 'Customer', value: escapeHtml(order.customerName || 'Unknown') },
+      { label: 'Custom Design', value: `<strong>${escapeHtml(customName)}</strong>` },
+      { label: 'Customer', value: customerName },
       { label: 'Email', value: escapeHtml(order.customerEmail || 'Unknown') },
       { label: 'Phone', value: escapeHtml(order.customerPhone || 'N/A') },
       { label: 'Occasion', value: escapeHtml(order.occasion || 'N/A') },
@@ -546,6 +576,7 @@ export const buildCustomOrderAdminEmail = (order: any) => {
           order.eventDate ? new Date(order.eventDate).toLocaleDateString() : 'Flexible',
         ),
       },
+      ...(displayRef ? [{ label: 'Reference No', value: escapeHtml(displayRef) }] : []),
     ])}
     
     <div style="background-color: #f9fafb; padding: 16px; border-radius: 8px; margin-top: 16px;">
@@ -554,32 +585,36 @@ export const buildCustomOrderAdminEmail = (order: any) => {
     
   `;
   return {
-    subject: `[CUSTOM ORDER] New Request #${orderId} from ${escapeHtml(order.customerName)}`,
+    subject: `[CUSTOM ORDER] New Request: ${customName} from ${customerName}`,
     html: getLuxuryEmailWrapper('Admin Alert', body),
   };
 };
 
 export const buildCustomOrderStatusChangeEmail = (order: any, previousStatus: string) => {
-  const orderId = order.orderUuid || order.customOrderId || order._id;
-  const preheader = `Status update for your custom order: ${order.status}`;
-
   const customName = order.productType || order.occasion || 'Custom Design';
+  const displayRef =
+    order.customOrderId ||
+    order.orderUuid ||
+    (order._id ? `REQ-${String(order._id).slice(-8).toUpperCase()}` : '');
+
+  const preheader = `Status update for your ${customName}: ${order.status}`;
   const headingText = `Your ${escapeHtml(customName)} is now ${escapeHtml(order.status)}`;
 
   const body = `
     <h2>${headingText}</h2>
-    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Request #${escapeHtml(orderId)}</p>
-    <p>Dear ${escapeHtml(order.customerName)},</p>
+    <p>Dear ${escapeHtml(order.customerName || 'Customer')},</p>
     <p>The status of your custom order has been updated to <strong>${escapeHtml(order.status)}</strong>.</p>
     
     ${dataTable([
+      { label: 'Custom Design', value: `<strong>${escapeHtml(customName)}</strong>` },
       { label: 'Previous Status', value: escapeHtml(previousStatus) },
-      { label: 'New Status', value: escapeHtml(order.status) },
+      { label: 'New Status', value: `<strong>${escapeHtml(order.status)}</strong>` },
+      ...(displayRef ? [{ label: 'Reference No', value: escapeHtml(displayRef) }] : []),
     ])}
     
   `;
   return {
-    subject: `Custom Order #${orderId} is now ${escapeHtml(order.status)}`,
+    subject: `Your ${customName} is now ${escapeHtml(order.status)}`,
     html: getLuxuryEmailWrapper('Custom Order Update', body, undefined, preheader),
   };
 };
@@ -622,8 +657,9 @@ export const buildInquiryAdminEmail = (inquiry: any) => {
 export const buildEventBookingInquiryEmail = (booking: any, user: any) => {
   const customerName = user?.name || booking.user?.name || 'Valued Guest';
   const bookingId = booking.bookingId || booking._id;
+  const bookingTitle = booking.title || 'Event Booking';
 
-  const preheader = `Your event booking request for ${booking.title || 'your event'} has been received.`;
+  const preheader = `Your event booking request for ${bookingTitle} has been received.`;
 
   const nextStepsHtml = `
     <ul style="margin: 0; padding-left: 20px;">
@@ -647,7 +683,9 @@ export const buildEventBookingInquiryEmail = (booking: any, user: any) => {
   `;
 
   return {
-    subject: `Booking Request Received — #${escapeHtml(bookingId)}`,
+    subject: bookingId
+      ? `Booking Request Received: ${escapeHtml(bookingTitle)} (${bookingId})`
+      : `Booking Request Received: ${escapeHtml(bookingTitle)}`,
     html: getLuxuryEmailWrapper('Inquiry Received', body, undefined, preheader),
   };
 };
@@ -655,8 +693,9 @@ export const buildEventBookingInquiryEmail = (booking: any, user: any) => {
 export const buildEventBookingConfirmedEmail = (booking: any, user: any) => {
   const customerName = user?.name || booking.user?.name || 'Valued Guest';
   const bookingId = booking.bookingId || booking._id;
+  const bookingTitle = booking.title || 'Event Booking';
 
-  const preheader = `Your event booking for ${booking.title || 'your event'} is confirmed!`;
+  const preheader = `Your event booking for ${bookingTitle} is confirmed!`;
 
   const nextStepsHtml = `
     <ul style="margin: 0; padding-left: 20px;">
@@ -680,7 +719,9 @@ export const buildEventBookingConfirmedEmail = (booking: any, user: any) => {
   `;
 
   return {
-    subject: `Your Event Booking Is Confirmed — #${escapeHtml(bookingId)}`,
+    subject: bookingId
+      ? `Your Event Booking Is Confirmed: ${escapeHtml(bookingTitle)} (${bookingId})`
+      : `Your Event Booking Is Confirmed: ${escapeHtml(bookingTitle)}`,
     html: getLuxuryEmailWrapper('Booking Confirmed', body, undefined, preheader),
   };
 };
@@ -712,17 +753,20 @@ export const buildReturnCreatedCustomerEmail = (returnRequest: any, order: any, 
   const customerName = user?.name || 'Valued Customer';
   const isExchange = returnRequest.returnType === 'exchange';
   const requestId = returnRequest.returnId || returnRequest._id;
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
 
   const rows: { label: string; value: string }[] = [
-    { label: 'Request ID', value: escapeHtml(requestId) },
+    ...(primaryItem
+      ? [{ label: 'Item(s)', value: `<strong>${escapeHtml(primaryItem)}</strong>` }]
+      : []),
     { label: 'Type', value: isExchange ? 'Exchange' : 'Return' },
-    { label: 'Items', value: `${returnRequest.items?.length || 0} item(s)` },
+    { label: 'Total Items', value: `${returnRequest.items?.length || 0} item(s)` },
     { label: 'Status', value: escapeHtml(returnRequest.status || 'Submitted') },
+    { label: 'Reference No', value: escapeHtml(requestId) },
   ];
 
-  const preheader = `Your ${isExchange ? 'exchange' : 'return'} request #${requestId} has been submitted.`;
+  const preheader = `Your ${isExchange ? 'exchange' : 'return'} request for ${primaryItem || 'your item'} has been submitted.`;
 
-  const primaryItem = getPrimaryEntityName(returnRequest.items);
   const actionText = isExchange ? 'Exchange Request Received' : 'Return Request Received';
   const headingText = primaryItem
     ? `${escapeHtml(primaryItem)} — ${actionText}`
@@ -730,7 +774,6 @@ export const buildReturnCreatedCustomerEmail = (returnRequest: any, order: any, 
 
   const body = `
     <h2>${headingText}</h2>
-    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Request #${escapeHtml(requestId)}</p>
     <p>Dear ${escapeHtml(customerName)},</p>
     <p>We've received your ${isExchange ? 'exchange' : 'return'} request and our team will review it shortly.</p>
 
@@ -766,7 +809,7 @@ export const buildReturnCreatedCustomerEmail = (returnRequest: any, order: any, 
 
   `;
   return {
-    subject: `${isExchange ? 'Exchange' : 'Return'} Request Received — #${escapeHtml(requestId)}`,
+    subject: `${isExchange ? 'Exchange' : 'Return'} Request Received: ${primaryItem || 'Your Item'}`,
     html: getLuxuryEmailWrapper(
       `${isExchange ? 'Exchange' : 'Return'} Request`,
       body,
@@ -784,6 +827,7 @@ export const buildReturnCreatedAdminEmail = (
 ) => {
   const isExchange = returnRequest.returnType === 'exchange';
   const requestId = returnRequest.returnId || returnRequest._id;
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
   const orderRef = order?.orderUuid || order?.orderNumber || returnRequest.orderId;
   const customerName = user?.name || order?.shippingAddress?.name || 'A customer';
   const customerEmail = user?.email || order?.shippingAddress?.email || 'N/A';
@@ -792,10 +836,9 @@ export const buildReturnCreatedAdminEmail = (
   const adminUrl = `${frontendUrl}/admin/returns/${isExchange ? 'exchanges' : 'requests'}/${returnRequest._id}`;
 
   const rows: { label: string; value: string }[] = [
-    {
-      label: 'Request ID',
-      value: `<strong style="font-family: monospace; color: #111827;">${escapeHtml(requestId)}</strong>`,
-    },
+    ...(primaryItem
+      ? [{ label: 'Item(s)', value: `<strong>${escapeHtml(primaryItem)}</strong>` }]
+      : []),
     {
       label: 'Type',
       value: `<span style="font-weight: 700; color: ${isExchange ? '#b45309' : '#4338ca'}; text-transform: uppercase;">${isExchange ? 'Exchange Request' : 'Return Request'}</span>`,
@@ -811,6 +854,10 @@ export const buildReturnCreatedAdminEmail = (
     {
       label: 'Current Status',
       value: `<span style="display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background-color: #fef3c7; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(returnRequest.status || 'Submitted')}</span>`,
+    },
+    {
+      label: 'Request Ref',
+      value: `<strong style="font-family: monospace; color: #111827;">${escapeHtml(requestId)}</strong>`,
     },
   ];
 
@@ -943,6 +990,7 @@ export const buildReturnStatusUpdateEmail = (
   const customerName = user?.name || 'Valued Customer';
   const isExchange = returnRequest.returnType === 'exchange';
   const requestId = returnRequest.returnId || returnRequest._id;
+  const primaryItem = getPrimaryEntityName(returnRequest.items);
 
   const formatStatus = (statusStr: string) => {
     if (!statusStr) return '';
@@ -953,9 +1001,12 @@ export const buildReturnStatusUpdateEmail = (
   };
 
   const rows: { label: string; value: string }[] = [
-    { label: 'Request ID', value: escapeHtml(requestId) },
+    ...(primaryItem
+      ? [{ label: 'Item(s)', value: `<strong>${escapeHtml(primaryItem)}</strong>` }]
+      : []),
     { label: 'Previous Status', value: formatStatus(previousStatus) },
-    { label: 'New Status', value: formatStatus(newStatus) },
+    { label: 'New Status', value: `<strong>${formatStatus(newStatus)}</strong>` },
+    { label: 'Reference No', value: escapeHtml(requestId) },
   ];
 
   if (isExchange && exchange && exchange.paymentStatus) {
@@ -965,9 +1016,8 @@ export const buildReturnStatusUpdateEmail = (
     });
   }
 
-  const preheader = `Status update for your ${isExchange ? 'exchange' : 'return'} request #${requestId}.`;
+  const preheader = `Status update for your ${isExchange ? 'exchange' : 'return'} for ${primaryItem || 'your item'}: ${formatStatus(newStatus)}.`;
 
-  const primaryItem = getPrimaryEntityName(returnRequest.items);
   const actionText = isExchange ? 'Exchange Update' : 'Return Update';
   const headingText = primaryItem
     ? `${escapeHtml(primaryItem)} — ${actionText}`
@@ -975,7 +1025,6 @@ export const buildReturnStatusUpdateEmail = (
 
   const body = `
     <h2>${headingText}</h2>
-    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Request #${escapeHtml(requestId)}</p>
     <p>Dear ${escapeHtml(customerName)},</p>
     <p>The status of your ${isExchange ? 'exchange' : 'return'} request has been updated to <strong>${formatStatus(newStatus)}</strong>.</p>
     
@@ -1028,7 +1077,7 @@ export const buildReturnStatusUpdateEmail = (
 
   `;
   return {
-    subject: `Your ${isExchange ? 'Exchange' : 'Return'} Request #${escapeHtml(requestId)} is now ${formatStatus(newStatus)}`,
+    subject: `Your ${isExchange ? 'Exchange' : 'Return'} for ${primaryItem || 'Item'} is now ${formatStatus(newStatus)}`,
     html: getLuxuryEmailWrapper(
       `${isExchange ? 'Exchange' : 'Return'} Update`,
       body,
@@ -1046,9 +1095,11 @@ export const buildEventBookingStatusUpdateEmail = (
 ) => {
   const customerName = user?.name || booking.user?.name || 'Valued Guest';
   const bookingId = booking.bookingId || booking._id;
-  const preheader = `Update on your event booking: ${booking.title || 'your event'}`;
+  const bookingTitle = booking.title || 'Event Booking';
+  const preheader = `Update on your event booking: ${bookingTitle}`;
 
-  let subject = `Booking Update — #${escapeHtml(bookingId)}`;
+  const idPart = bookingId ? ` (${bookingId})` : '';
+  let subject = `Booking Update: ${escapeHtml(bookingTitle)}${idPart}`;
   let title = 'Booking Status Update';
   let nextStepsHtml = `
     <ul style="margin: 0; padding-left: 20px;">
@@ -1059,7 +1110,7 @@ export const buildEventBookingStatusUpdateEmail = (
   // Customizations based on newStatus
   const s = newStatus.toLowerCase();
   if (s === 'team_assigned') {
-    subject = `Team Assigned — Event Booking #${escapeHtml(bookingId)}`;
+    subject = `Team Assigned — ${escapeHtml(bookingTitle)}${idPart}`;
     title = 'Team Assigned';
     nextStepsHtml = `
       <ul style="margin: 0; padding-left: 20px;">
@@ -1068,7 +1119,7 @@ export const buildEventBookingStatusUpdateEmail = (
       </ul>
     `;
   } else if (s === 'setup_in_progress') {
-    subject = `Setup Started — Event Booking #${escapeHtml(bookingId)}`;
+    subject = `Setup Started — ${escapeHtml(bookingTitle)}${idPart}`;
     title = 'Setup In Progress';
     nextStepsHtml = `
       <ul style="margin: 0; padding-left: 20px;">
@@ -1077,10 +1128,10 @@ export const buildEventBookingStatusUpdateEmail = (
       </ul>
     `;
   } else if (s === 'execution') {
-    subject = `Event In Progress — #${escapeHtml(bookingId)}`;
+    subject = `Event In Progress — ${escapeHtml(bookingTitle)}${idPart}`;
     title = 'Event In Progress';
   } else if (s === 'completed') {
-    subject = `Event Completed — #${escapeHtml(bookingId)}`;
+    subject = `Event Completed — ${escapeHtml(bookingTitle)}${idPart}`;
     title = 'Event Completed';
     nextStepsHtml = `
       <ul style="margin: 0; padding-left: 20px;">
@@ -1089,7 +1140,7 @@ export const buildEventBookingStatusUpdateEmail = (
       </ul>
     `;
   } else if (s === 'cancelled' || s === 'failed') {
-    subject = `Event Booking ${formatBookingStatus(s)} — #${escapeHtml(bookingId)}`;
+    subject = `Booking ${formatBookingStatus(s)} — ${escapeHtml(bookingTitle)}${idPart}`;
     title = `Booking ${formatBookingStatus(s)}`;
     nextStepsHtml = `
       <ul style="margin: 0; padding-left: 20px;">
@@ -1097,7 +1148,7 @@ export const buildEventBookingStatusUpdateEmail = (
       </ul>
     `;
   } else if (s === 'payment_pending' || s === 'pending_payment') {
-    subject = `Payment Pending — Event Booking #${escapeHtml(bookingId)}`;
+    subject = `Payment Pending — ${escapeHtml(bookingTitle)}${idPart}`;
     title = 'Payment Pending';
     nextStepsHtml = `
       <ul style="margin: 0; padding-left: 20px;">
@@ -1271,19 +1322,24 @@ const rentalTotalsSummary = (rentalOrder: any) => {
 };
 
 export const buildRentalOrderCustomerEmail = (rentalOrder: any, user: any) => {
-  const orderId = rentalOrder.rentalOrderId || rentalOrder._id;
-  const preheader = `Your rental order #${orderId} is confirmed`;
+  const rentalTitle =
+    rentalOrder.productTitle ||
+    rentalOrder.showcaseTitle ||
+    rentalOrder.title ||
+    rentalOrder.name ||
+    'Rental Item';
+  const orderId =
+    rentalOrder.rentalOrderId ||
+    (rentalOrder._id ? `RNT-${String(rentalOrder._id).slice(-8).toUpperCase()}` : 'N/A');
+  const preheader = `Your rental order for ${rentalTitle} is confirmed.`;
 
-  const headingText = rentalOrder.productTitle
-    ? `Your ${escapeHtml(rentalOrder.productTitle)} Rental Is Confirmed`
-    : 'Your Rental Order Is Confirmed';
+  const headingText = `Your ${escapeHtml(rentalTitle)} Rental Is Confirmed`;
 
   const customerName = escapeHtml(user?.name || rentalOrder.shippingAddress?.name || 'Customer');
   const frontendUrl = getFrontendUrl();
 
   const body = `
     <h2>${headingText}</h2>
-    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Rental #${escapeHtml(orderId)}</p>
     <p>Dear ${customerName},</p>
     <p>Your rental order has been confirmed. Here are the details of your rental.</p>
 
@@ -1300,7 +1356,8 @@ export const buildRentalOrderCustomerEmail = (rentalOrder: any, user: any) => {
         <h3 style="color: #111827; font-size: 16px; margin-bottom: 12px;">Payment Details</h3>
         <p style="color: #374151; font-size: 14px; line-height: 1.5; margin: 0;">
           Method: ${escapeHtml(rentalOrder.paymentMethod || 'Razorpay')}<br/>
-          Status: <strong>${escapeHtml(rentalOrder.paymentStatus || 'Pending')}</strong>
+          Status: <strong>${escapeHtml(rentalOrder.paymentStatus || 'Pending')}</strong><br/>
+          Rental Reference: <strong>${escapeHtml(orderId)}</strong>
         </p>
       </div>
     </div>
@@ -1321,47 +1378,66 @@ export const buildRentalOrderCustomerEmail = (rentalOrder: any, user: any) => {
   `;
 
   return {
-    subject: `Rental Order Confirmed — #${orderId}`,
+    subject: `Rental Confirmed: ${rentalTitle}`,
     html: getLuxuryEmailWrapper('Rental Confirmed', body, undefined, preheader),
   };
 };
 
 export const buildRentalOrderAdminEmail = (rentalOrder: any) => {
-  const orderId = rentalOrder.rentalOrderId || rentalOrder._id;
-  const customerName =
-    rentalOrder.shippingAddress?.name || (rentalOrder.user as any)?.name || 'A customer';
+  const productTitle =
+    rentalOrder.productTitle ||
+    rentalOrder.showcaseTitle ||
+    rentalOrder.title ||
+    rentalOrder.name ||
+    'Rental Item';
+  const customerName = rentalOrder.shippingAddress?.name || rentalOrder.user?.name || 'Customer';
+  const rentalRef =
+    rentalOrder.rentalOrderId ||
+    (rentalOrder._id ? `RNT-${String(rentalOrder._id).slice(-8).toUpperCase()}` : 'N/A');
 
-  const startDate = rentalOrder.rentalStartDate
-    ? new Date(rentalOrder.rentalStartDate).toLocaleDateString('en-IN', {
+  const startDate = rentalOrder.startDate
+    ? new Date(rentalOrder.startDate).toLocaleDateString('en-IN', {
         day: 'numeric',
-        month: 'long',
+        month: 'short',
         year: 'numeric',
       })
-    : 'Not Set';
-  const endDate = rentalOrder.rentalEndDate
-    ? new Date(rentalOrder.rentalEndDate).toLocaleDateString('en-IN', {
+    : 'N/A';
+  const endDate = rentalOrder.endDate
+    ? new Date(rentalOrder.endDate).toLocaleDateString('en-IN', {
         day: 'numeric',
-        month: 'long',
+        month: 'short',
         year: 'numeric',
       })
-    : 'Not Set';
-  const frontendUrl = getFrontendUrl();
+    : 'N/A';
 
   const body = `
-    <h2>New Rental Order: #${escapeHtml(orderId)}</h2>
+    <h2>New Rental Order: ${escapeHtml(productTitle)}</h2>
+    <p style="color: #4b5563; font-size: 14px; margin-top: -8px; margin-bottom: 20px;">
+      Rental Reference: <strong style="color: #111827;">${escapeHtml(rentalRef)}</strong>
+    </p>
     <p>A new rental order has been placed on the store.</p>
 
     ${dataTable([
-      { label: 'Customer', value: escapeHtml(rentalOrder.shippingAddress?.name || 'Unknown') },
-      { label: 'Email', value: escapeHtml(rentalOrder.shippingAddress?.email || 'Unknown') },
-      { label: 'Phone', value: escapeHtml(rentalOrder.shippingAddress?.phone || 'Unknown') },
+      { label: 'Product / Item', value: `<strong>${escapeHtml(productTitle)}</strong>` },
+      { label: 'Customer', value: escapeHtml(customerName) },
+      {
+        label: 'Email',
+        value: escapeHtml(
+          rentalOrder.shippingAddress?.email || rentalOrder.user?.email || 'Unknown',
+        ),
+      },
+      {
+        label: 'Phone',
+        value: escapeHtml(
+          rentalOrder.shippingAddress?.phone || rentalOrder.user?.phone || 'Unknown',
+        ),
+      },
       { label: 'Total Value', value: formatCurrency(rentalOrder.totalAmount) },
       {
         label: 'Payment',
         value: `${escapeHtml(rentalOrder.paymentMethod || 'N/A')} (${escapeHtml(rentalOrder.paymentStatus || 'N/A')})`,
       },
-      { label: 'Rental Order ID', value: escapeHtml(orderId) },
-      { label: 'Database ID', value: escapeHtml(rentalOrder._id) },
+      { label: 'Rental Reference', value: escapeHtml(rentalRef) },
     ])}
 
     <h3 style="color: #111827;">Rented Product</h3>
@@ -1393,7 +1469,7 @@ export const buildRentalOrderAdminEmail = (rentalOrder: any) => {
     ])}
 
     ${addressBlock('Delivery Address', rentalOrder.shippingAddress)}
-    ${button('View Rental Order', `${frontendUrl}/admin/rentals/detail/${rentalOrder._id}`)}
+    ${button('View Rental Order', `${getFrontendUrl()}/admin/rentals/detail/${rentalOrder._id}`)}
   `;
 
   return {
@@ -1407,19 +1483,32 @@ export const buildRentalStatusChangeEmail = (
   oldStatus: string,
   newStatus: string,
 ) => {
-  const orderId = rentalOrder.rentalOrderId || rentalOrder._id;
+  const rentalTitle =
+    rentalOrder.productTitle ||
+    rentalOrder.showcaseTitle ||
+    rentalOrder.title ||
+    rentalOrder.name ||
+    'Rental Item';
+  const orderId =
+    rentalOrder.rentalOrderId ||
+    (rentalOrder._id ? `RNT-${String(rentalOrder._id).slice(-8).toUpperCase()}` : 'N/A');
   const customerName = escapeHtml(rentalOrder.shippingAddress?.name || 'Customer');
   const frontendUrl = getFrontendUrl();
-  const title = escapeHtml(rentalOrder.productTitle || 'Rental Item');
+  const title = escapeHtml(rentalTitle);
 
   const formattedStatus = newStatus.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 
   const body = `
-    <h2>Your Rental Status Update</h2>
-    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Rental #${escapeHtml(orderId)}</p>
+    <h2>Your ${title} is now ${formattedStatus}</h2>
     <p>Dear ${customerName},</p>
     <p>The status of your rental for <strong>${title}</strong> has been updated to <strong>${formattedStatus}</strong>.</p>
     
+    ${dataTable([
+      { label: 'Rental Item', value: `<strong>${title}</strong>` },
+      { label: 'New Status', value: `<strong>${formattedStatus}</strong>` },
+      { label: 'Reference No', value: escapeHtml(orderId) },
+    ])}
+
     ${rentalPeriodSection(rentalOrder)}
 
     ${button('View My Rental', `${frontendUrl}/dashboard/rentals`)}
@@ -1427,15 +1516,28 @@ export const buildRentalStatusChangeEmail = (
   `;
 
   return {
-    subject: `Your Rental Status Update — #${orderId}`,
-    html: getLuxuryEmailWrapper('Rental Update', body),
+    subject: `Your ${rentalTitle} Rental is now ${formattedStatus}`,
+    html: getLuxuryEmailWrapper(
+      'Rental Update',
+      body,
+      undefined,
+      `Your rental for ${rentalTitle} is now ${formattedStatus}`,
+    ),
   };
 };
 
 export const buildRentalDepositRefundedEmail = (rentalOrder: any, refundData: any) => {
-  const orderId = rentalOrder.rentalOrderId || rentalOrder._id;
+  const rentalTitle =
+    rentalOrder.productTitle ||
+    rentalOrder.showcaseTitle ||
+    rentalOrder.title ||
+    rentalOrder.name ||
+    'Rental Item';
+  const orderId =
+    rentalOrder.rentalOrderId ||
+    (rentalOrder._id ? `RNT-${String(rentalOrder._id).slice(-8).toUpperCase()}` : 'N/A');
   const customerName = escapeHtml(rentalOrder.shippingAddress?.name || 'Customer');
-  const title = escapeHtml(rentalOrder.productTitle || 'Rental Item');
+  const title = escapeHtml(rentalTitle);
 
   const refundAmount = refundData.refundAmount || 0;
   const isForfeited = refundAmount === 0;
@@ -1445,39 +1547,47 @@ export const buildRentalDepositRefundedEmail = (rentalOrder: any, refundData: an
 
   const body = `
     <h2>${isForfeited ? 'Security Deposit Update' : 'Security Deposit Refunded'}</h2>
-    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Rental #${escapeHtml(orderId)}</p>
     <p>Dear ${customerName},</p>
     <p>Your security deposit for <strong>${title}</strong> has been processed after inspection.</p>
     
     <h3 style="color: #111827; margin-top: 24px;">Refund Details</h3>
     ${dataTable([
+      { label: 'Rental Item', value: `<strong>${title}</strong>` },
       { label: 'Deposit Held', value: formatCurrency(rentalOrder.securityDeposit) },
       { label: 'Deductions', value: formatCurrency(rentalOrder.securityDeposit - refundAmount) },
       { label: 'Refund Amount', value: `<strong>${formatCurrency(refundAmount)}</strong>` },
       ...(refundAmount > 0 ? [{ label: 'Refund Method', value: methodText }] : []),
+      { label: 'Reference No', value: escapeHtml(orderId) },
     ])}
     
     ${buildSupportSection()}
   `;
 
   return {
-    subject: `Security Deposit ${isForfeited ? 'Update' : 'Refunded'} — #${orderId}`,
+    subject: `Security Deposit ${isForfeited ? 'Update' : 'Refunded'} for ${rentalTitle}`,
     html: getLuxuryEmailWrapper('Deposit Processed', body),
   };
 };
 
 export const buildRentalPaymentReceivedEmail = (rentalOrder: any, paymentData: any) => {
-  const orderId = rentalOrder.rentalOrderId || rentalOrder._id;
+  const rentalTitle =
+    rentalOrder.productTitle ||
+    rentalOrder.showcaseTitle ||
+    rentalOrder.title ||
+    rentalOrder.name ||
+    'Rental Item';
+  const orderId =
+    rentalOrder.rentalOrderId ||
+    (rentalOrder._id ? `RNT-${String(rentalOrder._id).slice(-8).toUpperCase()}` : 'N/A');
   const customerName = escapeHtml(rentalOrder.shippingAddress?.name || 'Customer');
   const frontendUrl = getFrontendUrl();
-  const title = escapeHtml(rentalOrder.productTitle || 'Rental Item');
+  const title = escapeHtml(rentalTitle);
 
   const amountReceived = paymentData.amount || 0;
   const isPaid = rentalOrder.paymentStatus === 'paid';
 
   const body = `
-    <h2>Payment Received</h2>
-    <p style="color: #6b7280; font-size: 14px; margin-top: -10px; margin-bottom: 24px;">Rental #${escapeHtml(orderId)}</p>
+    <h2>Payment Received for ${title}</h2>
     <p>Dear ${customerName},</p>
     <p>We have successfully received a payment of <strong>${formatCurrency(amountReceived)}</strong> toward your rental for ${title}.</p>
     
@@ -1485,6 +1595,7 @@ export const buildRentalPaymentReceivedEmail = (rentalOrder: any, paymentData: a
     
     <h3 style="color: #111827; margin-top: 24px;">Payment Summary</h3>
     ${dataTable([
+      { label: 'Rental Item', value: `<strong>${title}</strong>` },
       { label: 'Total Amount', value: formatCurrency(rentalOrder.totalAmount) },
       {
         label: 'Total Paid',
@@ -1494,6 +1605,7 @@ export const buildRentalPaymentReceivedEmail = (rentalOrder: any, paymentData: a
         label: 'Remaining Due',
         value: `<strong>${formatCurrency(Math.max(0, rentalOrder.totalAmount - (rentalOrder.amountPaid || rentalOrder.totalAmount)))}</strong>`,
       },
+      { label: 'Reference No', value: escapeHtml(orderId) },
     ])}
 
     ${button('View My Rental', `${frontendUrl}/dashboard/rentals`)}
@@ -1501,7 +1613,7 @@ export const buildRentalPaymentReceivedEmail = (rentalOrder: any, paymentData: a
   `;
 
   return {
-    subject: `${isPaid ? 'Rental Payment Complete' : 'Payment Received'} — #${orderId}`,
+    subject: `${isPaid ? 'Rental Payment Complete' : 'Payment Received'} for ${rentalTitle}`,
     html: getLuxuryEmailWrapper('Payment Confirmation', body),
   };
 };

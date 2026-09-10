@@ -21,29 +21,34 @@ export function SecurityPanel({
   resetExecuting,
 }) {
   return (
-    <div className="space-y-8">
-      {/* Operational Controls Card */}
-      <div className="bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-[var(--admin-radius-xl)] p-6">
-        <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] uppercase tracking-wider mb-5 flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
-            settings_applications
+    <div className="space-y-6">
+      {/* Operational Controls Card (Order Detail Card Architecture) */}
+      <div className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
+          <h3 className="text-[13.5px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
+              settings_applications
+            </span>
+            Operational Safeguards & Timing
+          </h3>
+          <span className="text-[10px] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] px-2 py-0.5 rounded-[4px] font-bold uppercase tracking-wider border border-[var(--admin-border)] shadow-2xs">
+            Security Controls
           </span>
-          Operational Safeguards & Timing
-        </h3>
+        </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)]">
+        <div className="p-4 sm:p-5 space-y-3">
+          <div className="flex items-center justify-between p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] rounded-[4px] hover:border-[var(--admin-border)] transition-all">
             <div>
               <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)]">
                 Global Safety Lock
               </h4>
-              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
+              <p className="text-[11.5px] text-[var(--admin-text-secondary)] mt-0.5">
                 Restricts all write operations (Add, Edit, Delete) across the database portal.
               </p>
             </div>
             <button
               onClick={toggleSafetyLock}
-              className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${safetyLock ? 'bg-[var(--admin-accent)]' : 'bg-[var(--admin-border-strong)]'}`}
+              className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 shrink-0 ml-3 ${safetyLock ? 'bg-[var(--admin-accent)]' : 'bg-[var(--admin-border-strong)]'}`}
             >
               <span
                 className={`absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--admin-surface)] rounded-full transition-transform duration-200 shadow-sm ${safetyLock ? 'translate-x-5' : ''}`}
@@ -51,18 +56,18 @@ export function SecurityPanel({
             </button>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)]">
+          <div className="flex items-center justify-between p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] rounded-[4px] hover:border-[var(--admin-border)] transition-all">
             <div>
               <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)]">
                 Storefront Maintenance Mode
               </h4>
-              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
+              <p className="text-[11.5px] text-[var(--admin-text-secondary)] mt-0.5">
                 Intercepts storefront traffic and displays a customizable maintenance mode screen.
               </p>
             </div>
             <button
               onClick={toggleMaintenanceMode}
-              className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${maintenanceMode ? 'bg-[var(--admin-accent)]' : 'bg-[var(--admin-border-strong)]'}`}
+              className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 shrink-0 ml-3 ${maintenanceMode ? 'bg-[var(--admin-accent)]' : 'bg-[var(--admin-border-strong)]'}`}
             >
               <span
                 className={`absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--admin-surface)] rounded-full transition-transform duration-200 shadow-sm ${maintenanceMode ? 'translate-x-5' : ''}`}
@@ -70,19 +75,19 @@ export function SecurityPanel({
             </button>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)]">
+          <div className="flex items-center justify-between p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] rounded-[4px] hover:border-[var(--admin-border)] transition-all">
             <div>
               <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)]">
                 Auto-Publish CMS Changes
               </h4>
-              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
+              <p className="text-[11.5px] text-[var(--admin-text-secondary)] mt-0.5">
                 Instantly saves and publishes layout changes to the live database without manual
                 staging.
               </p>
             </div>
             <button
               onClick={toggleAutoPublish}
-              className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 ${autoPublish ? 'bg-[var(--admin-accent)]' : 'bg-[var(--admin-border-strong)]'}`}
+              className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none cursor-pointer min-h-0 p-0 shrink-0 ml-3 ${autoPublish ? 'bg-[var(--admin-accent)]' : 'bg-[var(--admin-border-strong)]'}`}
             >
               <span
                 className={`absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--admin-surface)] rounded-full transition-transform duration-200 shadow-sm ${autoPublish ? 'translate-x-5' : ''}`}
@@ -90,12 +95,12 @@ export function SecurityPanel({
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] items-center gap-4 p-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[var(--admin-radius-lg)]">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_200px] items-center gap-4 p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] rounded-[4px]">
             <div>
               <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)]">
                 Session Idle Timeout Heartbeat
               </h4>
-              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
+              <p className="text-[11.5px] text-[var(--admin-text-secondary)] mt-0.5">
                 Auto log out administrators after a period of inactive mouse/keyboard activity.
               </p>
             </div>
@@ -105,7 +110,7 @@ export function SecurityPanel({
                 const val = parseInt(e.target.value);
                 changeIdleTimeout(val);
               }}
-              className="admin-input h-10 py-0"
+              className="admin-input h-9 !min-h-[36px] rounded-[4px] border-[var(--admin-border)] text-[12.5px] font-semibold"
             >
               <option value="5">5 Minutes</option>
               <option value="15">15 Minutes</option>
@@ -116,23 +121,23 @@ export function SecurityPanel({
         </div>
       </div>
 
-      {/* Database Wiping Lockout Safeguard */}
-      <div className="bg-[#fff1f2] border border-[#fecdd3] rounded-[var(--admin-radius-xl)] p-6">
-        <div className="flex items-start gap-4 mb-6">
-          <div className="w-10 h-10 rounded-[var(--admin-radius-md)] bg-[#ffe4e6] flex items-center justify-center text-[#e11d48] shrink-0">
-            <span className="material-symbols-outlined text-[20px]">warning</span>
-          </div>
-          <div>
-            <h3 className="text-[14px] font-bold text-[#9f1239] uppercase tracking-wider leading-tight mt-0.5">
-              Danger Zone: Database Hard Reset Gate
-            </h3>
-            <p className="text-[12px] text-[#e11d48] mt-1.5 font-medium leading-relaxed">
-              Resets the entire store to default settings.
-            </p>
-          </div>
+      {/* Database Wiping Lockout Safeguard (Order Detail Danger Card) */}
+      <div className="bg-[var(--admin-surface)] border border-rose-200 dark:border-rose-900/60 rounded-[4px] shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-rose-100 dark:border-rose-900/40 bg-rose-50/60 dark:bg-rose-950/20 flex items-center justify-between">
+          <h3 className="text-[13.5px] font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px] text-rose-600">warning</span>
+            Danger Zone: Database Hard Reset Gate
+          </h3>
+          <span className="text-[10px] bg-rose-100/70 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-[4px] font-bold uppercase tracking-wider border border-rose-200 dark:border-rose-800">
+            Irreversible
+          </span>
         </div>
 
-        <form onSubmit={handleHardReset} className="space-y-4">
+        <form onSubmit={handleHardReset} className="p-4 sm:p-5 space-y-4">
+          <p className="text-[12px] text-rose-700 dark:text-rose-400 font-medium">
+            Resets the entire store database configuration to default factory values.
+          </p>
+
           <div className="space-y-2.5">
             <label
               htmlFor="reset-check-1"
@@ -143,9 +148,9 @@ export function SecurityPanel({
                 type="checkbox"
                 checked={resetCheck1}
                 onChange={(e) => setResetCheck1(e.target.checked)}
-                className="mt-1 w-4 h-4 rounded border-[#fecdd3] text-[#e11d48] focus:ring-[#fecdd3] cursor-pointer"
+                className="mt-1 w-4 h-4 rounded border-rose-300 text-rose-600 focus:ring-rose-200 cursor-pointer"
               />
-              <span className="text-[12px] text-[#9f1239] font-bold">
+              <span className="text-[12px] text-rose-800 dark:text-rose-300 font-bold">
                 I understand that hard resetting database data is completely irreversible.
               </span>
             </label>
@@ -159,9 +164,9 @@ export function SecurityPanel({
                 type="checkbox"
                 checked={resetCheck2}
                 onChange={(e) => setResetCheck2(e.target.checked)}
-                className="mt-1 w-4 h-4 rounded border-[#fecdd3] text-[#e11d48] focus:ring-[#fecdd3] cursor-pointer"
+                className="mt-1 w-4 h-4 rounded border-rose-300 text-rose-600 focus:ring-rose-200 cursor-pointer"
               />
-              <span className="text-[12px] text-[#9f1239] font-bold">
+              <span className="text-[12px] text-rose-800 dark:text-rose-300 font-bold">
                 I have downloaded a catalog backup configuration file to my local machine.
               </span>
             </label>
@@ -175,18 +180,18 @@ export function SecurityPanel({
                 type="checkbox"
                 checked={resetCheck3}
                 onChange={(e) => setResetCheck3(e.target.checked)}
-                className="mt-1 w-4 h-4 rounded border-[#fecdd3] text-[#e11d48] focus:ring-[#fecdd3] cursor-pointer"
+                className="mt-1 w-4 h-4 rounded border-rose-300 text-rose-600 focus:ring-rose-200 cursor-pointer"
               />
-              <span className="text-[12px] text-[#9f1239] font-bold">
+              <span className="text-[12px] text-rose-800 dark:text-rose-300 font-bold">
                 I confirm that my preview role credentials match Owner privileges.
               </span>
             </label>
           </div>
 
-          <div className="space-y-2 pt-4">
+          <div className="space-y-1.5 pt-2">
             <label
               htmlFor="reset-passphrase-input"
-              className="block text-[11px] uppercase tracking-wider text-[#e11d48] font-bold"
+              className="block text-[11px] uppercase tracking-wider text-rose-700 dark:text-rose-400 font-bold"
             >
               Enter phrase "CONFIRM HARD RESET" to unlock
             </label>
@@ -196,11 +201,11 @@ export function SecurityPanel({
               placeholder="Type the passphrase exactly..."
               value={resetCodePhrase}
               onChange={(e) => setResetCodePhrase(e.target.value)}
-              className="w-full bg-[var(--admin-surface)] border border-[#fecdd3] focus:border-[#e11d48] rounded-[var(--admin-radius-lg)] px-4 py-3 text-[13px] outline-none transition-all font-mono font-bold text-center uppercase"
+              className="w-full bg-[var(--admin-surface)] border border-rose-200 dark:border-rose-900/60 focus:border-rose-500 rounded-[4px] px-3.5 py-2 text-[13px] outline-none transition-all font-mono font-bold text-center uppercase"
             />
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end pt-3 border-t border-rose-100 dark:border-rose-900/40">
             <button
               type="submit"
               disabled={
@@ -210,7 +215,7 @@ export function SecurityPanel({
                 !resetCheck2 ||
                 !resetCheck3
               }
-              className="admin-btn h-11 bg-[#e11d48] hover:bg-[#be123c] text-white border-none disabled:bg-[#ffe4e6] disabled:text-[#fda4af]"
+              className="h-9 px-5 rounded-[4px] bg-rose-600 hover:bg-rose-700 text-white font-bold text-[12px] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
             >
               {resetExecuting ? (
                 'Executing Wipe...'

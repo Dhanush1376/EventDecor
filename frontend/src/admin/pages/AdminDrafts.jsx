@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { getAllDrafts, deleteDraft, deleteAllDrafts, formatBytes } from '../services/draftService';
 import { useDraftContext } from '../context/DraftProvider';
 import { useConfirm } from '../../context/ConfirmProvider';
+import { AdminDraftsSkeleton } from '../components/AdminUIKit';
 
 export function AdminDrafts() {
   const navigate = useNavigate();
@@ -101,6 +102,10 @@ export function AdminDrafts() {
     };
     return colors[moduleName] || 'text-gray-600 bg-gray-50 border-gray-200';
   };
+
+  if (isLoading && drafts.length === 0) {
+    return <AdminDraftsSkeleton />;
+  }
 
   return (
     <div className="admin-section-root">

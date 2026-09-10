@@ -1,4 +1,4 @@
-import { CalendarCheck, Calendar, Check } from 'lucide-react';
+import { CalendarCheck, Calendar, Check, ImageOff } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CloudinaryImage } from '../ui/CloudinaryImage';
@@ -12,6 +12,13 @@ import { parseNumericPrice, formatPrice } from '../../utils/ecommerce/priceUtils
 import { getProductRoute } from '../../utils/ecommerce/productRouteUtils';
 import { DynamicRatingBadge } from '../ui/DynamicRatingBadge';
 import { useQuickView } from '../../context/QuickViewContext';
+
+const isValidMediaUrl = (url) => {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return false;
+  return true;
+};
 
 export const ProductCard = React.memo(function ProductCard({
   id,
@@ -88,13 +95,14 @@ export const ProductCard = React.memo(function ProductCard({
   };
 
   const availableImages = React.useMemo(() => {
-    const imgs = [imageSrc];
+    const imgs = [];
+    if (isValidMediaUrl(imageSrc)) imgs.push(imageSrc);
     const imageList = images || gallery || [];
     if (imageList.length > 0) {
       imageList.forEach((img) => {
-        if (!imgs.includes(img)) imgs.push(img);
+        if (isValidMediaUrl(img) && !imgs.includes(img)) imgs.push(img);
       });
-    } else if (hoverImage && hoverImage !== imageSrc) {
+    } else if (isValidMediaUrl(hoverImage) && hoverImage !== imageSrc) {
       imgs.push(hoverImage);
     }
     return imgs;
@@ -263,27 +271,38 @@ export const ProductCard = React.memo(function ProductCard({
           onScroll={handleScroll}
           className="flex w-full h-full overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth"
         >
-          {availableImages.map((img, idx) => (
-            <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
-              <Link
-                to={getProductRoute(itemType, productId)}
-                className="block h-full w-full"
-                draggable="false"
-              >
-                <CloudinaryImage
-                  src={img}
-                  alt={`${title} - view ${idx + 1}`}
-                  className="transition-all duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover/canvas:scale-110 object-cover w-full h-full"
-                  loading={eager && idx === 0 ? 'eager' : 'lazy'}
-                  fetchPriority={eager && idx === 0 ? 'high' : 'auto'}
-                  width={800}
-                  height={1000}
-                  sizes={sizes}
-                  quality="original"
-                />
-              </Link>
+          {availableImages.length > 0 ? (
+            availableImages.map((img, idx) => (
+              <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+                <Link
+                  to={getProductRoute(itemType, productId)}
+                  className="block h-full w-full"
+                  draggable="false"
+                >
+                  <CloudinaryImage
+                    src={img}
+                    alt={`${title || 'Product'} - view ${idx + 1}`}
+                    className="transition-all duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover/canvas:scale-110 object-cover w-full h-full"
+                    loading={eager && idx === 0 ? 'eager' : 'lazy'}
+                    fetchPriority={eager && idx === 0 ? 'high' : 'auto'}
+                    width={800}
+                    height={1000}
+                    sizes={sizes}
+                    quality="original"
+                  />
+                </Link>
+              </div>
+            ))
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-[#f7f6f2] dark:bg-[#1a1917] text-[#8a877f] dark:text-[#9e9b93] gap-1.5 select-none p-4">
+              <div className="w-10 h-10 rounded-full bg-black/[0.04] dark:bg-white/[0.06] flex items-center justify-center mb-0.5">
+                <ImageOff className="w-5 h-5 opacity-70" strokeWidth={1.75} />
+              </div>
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider font-label opacity-80">
+                Image Unavailable
+              </span>
             </div>
-          ))}
+          )}
         </div>
 
         {availableImages.length > 1 && (

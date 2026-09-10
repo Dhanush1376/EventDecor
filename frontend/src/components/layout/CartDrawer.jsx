@@ -248,8 +248,8 @@ export function CartDrawer({ isOpen, onClose }) {
                                   <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                                     <div>
                                       <p
-                                        className="font-body text-[14px] font-semibold leading-snug text-[#1a1a1a] truncate group-hover:text-primary transition-colors"
-                                        style={{ fontFamily: 'var(--font-body)' }}
+                                        className="font-serif-heading text-[15px] font-medium leading-snug text-[#1a1a1a] truncate group-hover:text-primary transition-colors"
+                                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                                       >
                                         {item.title}
                                       </p>
@@ -259,8 +259,8 @@ export function CartDrawer({ isOpen, onClose }) {
                                         </p>
                                       )}
                                       <p
-                                        className="font-body text-[14px] text-[#1a1a1a] mt-1.5 font-bold"
-                                        style={{ fontFamily: 'var(--font-body)' }}
+                                        className="font-serif-heading text-[15px] text-[#1a1a1a] mt-1.5 font-bold lining-nums"
+                                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                                       >
                                         ₹{item.price?.toLocaleString()}
                                       </p>
@@ -405,8 +405,8 @@ export function CartDrawer({ isOpen, onClose }) {
                                   <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                                     <div>
                                       <p
-                                        className="font-body text-[14px] font-semibold leading-snug text-[#1a1a1a] truncate group-hover:text-[#b38235] transition-colors"
-                                        style={{ fontFamily: 'var(--font-body)' }}
+                                        className="font-serif-heading text-[15px] font-medium leading-snug text-[#1a1a1a] truncate group-hover:text-[#b38235] transition-colors"
+                                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                                       >
                                         {item.title || 'Custom Order'}
                                       </p>
@@ -416,8 +416,8 @@ export function CartDrawer({ isOpen, onClose }) {
                                         </p>
                                       )}
                                       <p
-                                        className="font-body text-[14px] text-[#1a1a1a] mt-1.5 font-bold"
-                                        style={{ fontFamily: 'var(--font-body)' }}
+                                        className="font-serif-heading text-[15px] text-[#1a1a1a] mt-1.5 font-bold lining-nums"
+                                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                                       >
                                         ₹{item.price?.toLocaleString()}
                                       </p>
@@ -530,8 +530,8 @@ export function CartDrawer({ isOpen, onClose }) {
                                   <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                                     <div>
                                       <p
-                                        className="font-body text-[14px] font-semibold leading-snug text-[#1a1a1a] truncate group-hover:text-primary transition-colors"
-                                        style={{ fontFamily: 'var(--font-body)' }}
+                                        className="font-serif-heading text-[15px] font-medium leading-snug text-[#1a1a1a] truncate group-hover:text-primary transition-colors"
+                                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                                       >
                                         {item.title}
                                       </p>
@@ -541,8 +541,8 @@ export function CartDrawer({ isOpen, onClose }) {
                                         </p>
                                       )}
                                       <p
-                                        className="font-body text-[14px] text-[#1a1a1a] mt-1.5 font-bold"
-                                        style={{ fontFamily: 'var(--font-body)' }}
+                                        className="font-serif-heading text-[15px] text-[#1a1a1a] mt-1.5 font-bold lining-nums"
+                                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                                       >
                                         ₹{item.price?.toLocaleString()}
                                       </p>
@@ -679,8 +679,8 @@ export function CartDrawer({ isOpen, onClose }) {
                 <div className="flex justify-between items-center text-[12px]">
                   <span className="font-body text-black/50 font-medium">Subtotal</span>
                   <span
-                    className="font-body font-bold text-[#1a1a1a]"
-                    style={{ fontFamily: 'var(--font-body)' }}
+                    className="font-serif-heading font-bold text-[#1a1a1a] lining-nums text-[13px]"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                   >
                     ₹{subtotal.toLocaleString()}
                   </span>
@@ -701,7 +701,10 @@ export function CartDrawer({ isOpen, onClose }) {
 
                 <div className="flex justify-between items-end">
                   <div className="space-y-0.5">
-                    <span className="font-body text-[13px] font-bold text-[#1a1a1a]">
+                    <span
+                      className="font-serif-heading text-[14px] font-bold text-[#1a1a1a]"
+                      style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                    >
                       Estimated Total
                     </span>
                     <p className="font-body text-[9px] text-black/40 uppercase tracking-[0.1em] font-bold">
@@ -709,8 +712,8 @@ export function CartDrawer({ isOpen, onClose }) {
                     </p>
                   </div>
                   <span
-                    className="font-body text-[18px] leading-none font-bold text-[#1a1a1a]"
-                    style={{ fontFamily: 'var(--font-body)' }}
+                    className="font-serif-heading text-[19px] leading-none font-bold text-[#1a1a1a] lining-nums"
+                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                   >
                     ₹{(subtotal - (appliedCoupon?.calculatedDiscount || 0)).toLocaleString()}
                   </span>

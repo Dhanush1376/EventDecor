@@ -35,7 +35,7 @@ export function ProductVariantsStep({
             value={formData.badges}
             onChange={(e) => setFormData({ ...formData, badges: e.target.value })}
             placeholder="Best Seller, Heritage Craft"
-            className="w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none border border-transparent focus:border-[var(--admin-accent)]/40 focus:bg-white transition-all "
+            className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
           />
         </div>
 
@@ -48,17 +48,17 @@ export function ProductVariantsStep({
             value={formData.tags}
             onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
             placeholder="e.g. brass, puja, diwali"
-            className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all  ${
+            className={`w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all ${
               focusedField === 'tags'
-                ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
-                : 'border border-transparent focus:border-[var(--admin-accent)]/40 focus:bg-white'
+                ? 'border border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50'
+                : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)]'
             }`}
           />
         </div>
       </div>
 
       {/* Dynamic Variant Constructor */}
-      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-3">
+      <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] space-y-3">
         <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">
           Add Variation Parameter
         </p>
@@ -68,14 +68,14 @@ export function ProductVariantsStep({
             placeholder="Attribute (e.g. Wood)"
             value={newVariant.name}
             onChange={(e) => setNewVariant({ ...newVariant, name: e.target.value })}
-            className="bg-[var(--admin-surface)] rounded-lg px-2.5 py-2.5 text-[12px] border border-[var(--admin-border)] outline-none w-full"
+            className="bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)] w-full"
           />
           <input
             type="text"
             placeholder="Value (e.g. Rosewood)"
             value={newVariant.value}
             onChange={(e) => setNewVariant({ ...newVariant, value: e.target.value })}
-            className="bg-[var(--admin-surface)] rounded-lg px-2.5 py-2.5 text-[12px] border border-[var(--admin-border)] outline-none w-full"
+            className="bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)] w-full"
           />
           <input
             type="number"
@@ -83,12 +83,12 @@ export function ProductVariantsStep({
             placeholder="+/- Price (₹)"
             value={newVariant.price}
             onChange={(e) => setNewVariant({ ...newVariant, price: e.target.value })}
-            className="bg-[var(--admin-surface)] rounded-lg px-2.5 py-2.5 text-[12px] border border-[var(--admin-border)] outline-none w-full"
+            className="bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)] w-full"
           />
           <button
             type="button"
             onClick={handleAddVariant}
-            className="bg-[var(--admin-accent)] text-white text-[11px] sm:text-[11px] font-bold uppercase py-2.5 rounded-lg hover:brightness-110 cursor-pointer w-full transition-transform active:scale-95 shadow-sm"
+            className="bg-[var(--admin-accent)] text-white text-[11px] font-bold uppercase h-9 rounded-[4px] hover:brightness-110 cursor-pointer w-full transition-transform active:scale-95 shadow-xs"
           >
             Add Option
           </button>
@@ -100,7 +100,7 @@ export function ProductVariantsStep({
             {formData.variants.map((v) => (
               <span
                 key={v.id}
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[11px] sm:text-[11px] rounded-lg text-[var(--admin-text-primary)] font-medium"
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[11px] rounded-[4px] text-[var(--admin-text-primary)] font-medium shadow-2xs"
               >
                 <span className="text-[var(--admin-text-secondary)]">{v.name}:</span> {v.value}
                 {v.price && (
@@ -111,7 +111,7 @@ export function ProductVariantsStep({
                 <button
                   type="button"
                   onClick={() => handleRemoveVariant(v.id)}
-                  className="text-[var(--admin-error)] hover:text-[var(--admin-error)] ml-1 flex items-center justify-center cursor-pointer"
+                  className="text-[var(--admin-error)] hover:opacity-80 ml-1 flex items-center justify-center cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[14px]">close</span>
                 </button>

@@ -25,10 +25,10 @@ export function DraftConflictViewer({
         className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 10 }}
+          initial={{ scale: 0.98, opacity: 0, y: 4 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 10 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          exit={{ scale: 0.98, opacity: 0, y: 4 }}
+          transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
           className="admin-card overflow-hidden max-w-2xl w-full shadow-2xl bg-white flex flex-col max-h-[85vh]"
         >
           {/* Header */}

@@ -1144,7 +1144,7 @@ export function OrderSuccess() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowStickerModal(false)}
-              className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] no-print"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] no-print"
             />
 
             {/* Modal Container */}
@@ -1153,7 +1153,7 @@ export function OrderSuccess() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 28, stiffness: 250 }}
-              className="invoice-modal-container fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:rounded-3xl mx-auto w-full max-w-3xl max-h-[92vh] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] z-[101] overflow-y-auto no-scrollbar print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white"
+              className="invoice-modal-container fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:rounded-[28px] mx-auto w-full max-w-[580px] max-h-[92vh] bg-surface rounded-t-[28px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-outline-variant/30 z-[101] overflow-y-auto no-scrollbar pt-2.5 pb-2 px-3 sm:pt-3 sm:pb-2.5 sm:px-4 print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white print:p-0 print:border-none"
             >
               {/* PRINT STYLE SHEET DETACHED AND ISOLATED */}
               <style type="text/css" media="print">
@@ -1182,19 +1182,21 @@ export function OrderSuccess() {
                   }
                   .print-invoice-area, .print-invoice-area * {
                     visibility: visible !important;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+                  }
+                  .print-invoice-area .font-mono {
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
                   }
                   .print-invoice-area {
-                    position: absolute !important;
-                    left: 0 !important;
-                    top: 0 !important;
-                    width: 100% !important;
-                    height: 100% !important;
-                    padding: 0 !important;
-                    margin: 0 !important;
+                    position: static !important;
+                    width: 540px !important;
+                    max-width: 540px !important;
+                    margin: 0 auto !important;
+                    padding: 16px !important;
                     box-shadow: none !important;
-                    border: none !important;
+                    border: 1px solid #e5e7eb !important;
                     background: white !important;
-                    overflow: hidden !important;
+                    overflow: visible !important;
                   }
                   .no-print, .no-print * {
                     display: none !important;

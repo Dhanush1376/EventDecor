@@ -444,7 +444,13 @@ export const buildReturnAdminEmail = (returnRequest: any, user: any) => {
       { label: 'Customer', value: escapeHtml(user?.name || 'Unknown') },
       { label: 'Email', value: escapeHtml(user?.email || 'Unknown') },
       { label: 'Phone', value: escapeHtml(user?.phone || 'Unknown') },
-      { label: 'Order ID', value: escapeHtml(returnRequest.orderId.toString()) },
+      {
+        label: 'Order Reference',
+        value: escapeHtml(
+          returnRequest.invoiceNumber ||
+            'INV-' + String(returnRequest.orderId).slice(-8).toUpperCase(),
+        ),
+      },
       { label: 'Value', value: formatCurrency(returnRequest.refundBreakdown?.grandTotal || 0) },
       { label: 'Status', value: 'Pending Admin Review' },
     ])}
@@ -475,7 +481,13 @@ export const buildExchangeAdminEmail = (returnRequest: any, exchangeDetails: any
     ${dataTable([
       { label: 'Customer', value: escapeHtml(user?.name || 'Unknown') },
       { label: 'Email', value: escapeHtml(user?.email || 'Unknown') },
-      { label: 'Order ID', value: escapeHtml(returnRequest.orderId.toString()) },
+      {
+        label: 'Order Reference',
+        value: escapeHtml(
+          returnRequest.invoiceNumber ||
+            'INV-' + String(returnRequest.orderId).slice(-8).toUpperCase(),
+        ),
+      },
       { label: 'Financial Adjustment', value: paymentStatusText },
       { label: 'Amount Difference', value: formatCurrency(exchangeDetails?.priceDifference || 0) },
       { label: 'Status', value: 'Pending Admin Review' },

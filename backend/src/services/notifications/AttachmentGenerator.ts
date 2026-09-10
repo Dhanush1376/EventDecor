@@ -1,27 +1,13 @@
 import logger from '../../config/logger';
-import { generateInvoicePDF } from '../../utils/pdfGenerator'; // Existing PDF generator
 
 export class AttachmentGenerator {
   /**
-   * Generates a PDF invoice attachment.
+   * Generates a PDF invoice attachment (Disabled - invoices not attached to emails).
    */
   public static async generateInvoice(
-    order: any,
+    _order: any,
   ): Promise<{ filename: string; content: Buffer; contentType: string } | null> {
-    try {
-      const buffer = await generateInvoicePDF(order);
-      return {
-        filename: `Invoice_${order.invoiceNumber || order._id}.pdf`,
-        content: buffer,
-        contentType: 'application/pdf',
-      };
-    } catch (error) {
-      logger.error(
-        `[ATTACHMENT GENERATOR] Failed to generate invoice PDF for order ${order._id}:`,
-        error,
-      );
-      return null;
-    }
+    return null;
   }
 
   /**

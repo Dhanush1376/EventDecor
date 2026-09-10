@@ -39,7 +39,7 @@ export default function AdminOrdersHub() {
   const tabs = [
     { id: 'all', label: 'All Orders', icon: 'shopping_bag' },
     { id: 'custom', label: 'Custom Orders', icon: 'architecture' },
-    { id: 'returns', label: 'Returns & Refunds', icon: 'keyboard_return' },
+    { id: 'returns', label: 'Returns', icon: 'keyboard_return' },
   ];
 
   return (

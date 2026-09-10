@@ -318,9 +318,10 @@ export const getCustomerList = async (req: Request, res: Response) => {
         let ordersCount = 0;
         let health = 'Unknown';
         let segment = 'New';
+        let overview: any = null;
 
         try {
-          const overview = await CustomerIntelligenceService.getCustomer360(c._id.toString());
+          overview = await CustomerIntelligenceService.getCustomer360(c._id.toString());
           totalSpent = overview?.overview?.totalSpent || 0;
           ordersCount = overview?.overview?.totalOrders || 0;
           health = overview?.scores?.health || 'Unknown';
@@ -348,6 +349,22 @@ export const getCustomerList = async (req: Request, res: Response) => {
           }
         }
 
+        const resolvedAddresses = overview?.addresses || c.addresses || [];
+        const validAddressCity = resolvedAddresses.find(
+          (a: any) => a.city && !['unknown', 'unknown city'].includes(a.city.toLowerCase()),
+        )?.city;
+        const validOrderCity = overview?.recentOrders?.find(
+          (o: any) =>
+            o.shippingAddress?.city &&
+            !['unknown', 'unknown city'].includes(o.shippingAddress.city.toLowerCase()),
+        )?.shippingAddress?.city;
+
+        const resolvedCity =
+          validAddressCity ||
+          validOrderCity ||
+          (c.city && !['unknown', 'unknown city'].includes(c.city.toLowerCase()) ? c.city : null) ||
+          null;
+
         return {
           ...c,
           totalSpent,
@@ -355,7 +372,8 @@ export const getCustomerList = async (req: Request, res: Response) => {
           segment,
           lastOrder: ordersCount > 0 ? totalSpent : null,
           health: health === 'Unknown' && ordersCount > 0 ? 'Good' : health,
-          city: c.addresses && c.addresses.length > 0 ? c.addresses[0].city : 'Unknown',
+          addresses: resolvedAddresses,
+          city: resolvedCity || 'Not specified',
         };
       }),
     );

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import rentalService from '../../../services/api/rentalService';
 import { m as motion, AnimatePresence } from 'framer-motion';
@@ -7,6 +8,15 @@ export function RentalActionButton({ rental, fetchRentalDetail, nextAction }) {
   const [showInspectionModal, setShowInspectionModal] = useState(false);
   const [inspectionNote, setInspectionNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   if (!nextAction) return null;
   const { label, action } = nextAction;
@@ -69,7 +79,7 @@ export function RentalActionButton({ rental, fetchRentalDetail, nextAction }) {
   if (action === 'refund_deposit' || action === 'complete') {
     // If we are waiting for refund to process or we just need to complete
     return (
-      <div className="bg-[var(--admin-surface)] rounded-xl shadow-sm border border-[var(--admin-border)] overflow-hidden relative border-l-4 border-l-emerald-500 p-5">
+      <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border)] overflow-hidden relative border-l-4 border-l-emerald-500 p-5">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)]">
@@ -85,7 +95,7 @@ export function RentalActionButton({ rental, fetchRentalDetail, nextAction }) {
             <button
               onClick={handleAction}
               disabled={isSubmitting}
-              className="admin-btn h-12 px-6 rounded-xl font-bold text-[14px] bg-emerald-600 border border-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+              className="admin-btn h-11 px-5 !rounded-[4px] font-bold text-[13px] bg-emerald-600 border border-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
             >
               {isSubmitting ? 'Completing...' : label}
             </button>
@@ -97,19 +107,19 @@ export function RentalActionButton({ rental, fetchRentalDetail, nextAction }) {
 
   return (
     <>
-      <div className="bg-[var(--admin-surface)] rounded-xl shadow-sm border border-[var(--admin-border)] overflow-hidden relative border-l-4 border-l-[var(--admin-accent)]">
+      <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border)] overflow-hidden relative border-l-4 border-l-[var(--admin-accent)]">
         <div className="px-5 py-6">
           <button
             onClick={handleAction}
             disabled={isSubmitting}
-            className="w-full h-12 rounded-xl font-bold text-[14px] flex items-center justify-center gap-2 transition-all bg-[var(--admin-accent)] border border-[var(--admin-accent)] text-white hover:opacity-90 shadow-sm"
+            className="w-full h-11 rounded-[4px] font-bold text-[13px] flex items-center justify-center gap-2 transition-all bg-[var(--admin-accent)] border border-[var(--admin-accent)] text-white hover:bg-[var(--admin-accent-hover)] shadow-sm cursor-pointer"
           >
             {isSubmitting ? (
-              <span className="material-symbols-outlined animate-spin text-[20px]">
+              <span className="material-symbols-outlined animate-spin text-[18px]">
                 progress_activity
               </span>
             ) : (
-              <span className="material-symbols-outlined text-[20px]">play_circle</span>
+              <span className="material-symbols-outlined text-[18px]">play_circle</span>
             )}
             {label}
           </button>
@@ -119,78 +129,126 @@ export function RentalActionButton({ rental, fetchRentalDetail, nextAction }) {
         </div>
       </div>
 
-      <AnimatePresence>
-        {showInspectionModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+      {showInspectionModal &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            <div
+              className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 font-sans pointer-events-none"
+              style={{
+                fontFamily:
+                  "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+              }}
             >
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
-                <h3 className="text-[16px] font-bold text-blue-900 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[20px] text-blue-600">
-                    assignment_turned_in
-                  </span>
-                  Mark Return & Inspect
-                </h3>
-                <button
-                  onClick={() => setShowInspectionModal(false)}
-                  className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors shadow-sm border border-gray-200"
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => !isSubmitting && setShowInspectionModal(false)}
+                className="fixed inset-0 bg-black/40 dark:bg-black/60 cursor-pointer pointer-events-auto"
+                style={{
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                }}
+              />
+              {/* Modal Card / Mobile App Drawer */}
+              <motion.div
+                initial={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                className={`admin-section-root ${typeof document !== 'undefined' && (document.documentElement.classList.contains('dark') || document.body.classList.contains('dark')) ? 'dark' : ''} pointer-events-auto relative bg-white dark:bg-[#1f1e1b] rounded-t-[20px] sm:rounded-[4px] shadow-2xl w-full sm:max-w-md overflow-hidden z-10 border-t sm:border border-[#e8e4d9] dark:border-white/10 font-sans max-h-[88vh] sm:max-h-none flex flex-col`}
+                style={{
+                  backgroundColor: 'var(--admin-surface, #ffffff)',
+                  borderColor: 'var(--admin-border, #e8e4d9)',
+                  fontFamily:
+                    "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Mobile Drawer Pull Indicator */}
+                <div className="pt-2.5 pb-1 sm:hidden flex justify-center w-full bg-[#f2efe5] dark:bg-[#2a2823] cursor-grab active:cursor-grabbing">
+                  <div className="w-10 h-1.5 rounded-full bg-stone-300 dark:bg-stone-600" />
+                </div>
+
+                <div
+                  className="px-5 py-3.5 sm:py-4 border-b border-[#e8e4d9] dark:border-white/10 flex items-center justify-between bg-[#f2efe5] dark:bg-[#2a2823] shrink-0"
+                  style={{
+                    backgroundColor: 'var(--admin-surface-muted, #f2efe5)',
+                    borderColor: 'var(--admin-border-subtle, #e8e4d9)',
+                  }}
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
-                </button>
-              </div>
-
-              <form onSubmit={submitReturn} className="p-6">
-                <div className="mb-6">
-                  <label className="block text-[13px] font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
-                    Inspection Note (Required)
-                  </label>
-                  <textarea
-                    required
-                    placeholder="e.g. Item returned in good condition."
-                    value={inspectionNote}
-                    onChange={(e) => setInspectionNote(e.target.value)}
-                    className="w-full h-32 p-4 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-[14px] custom-scrollbar resize-none"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-2">
+                  <h3
+                    className="text-[15px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 font-sans tracking-normal"
+                    style={{
+                      fontFamily:
+                        "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                    }}
+                  >
+                    <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">
+                      assignment_turned_in
+                    </span>
+                    Mark Return & Inspect
+                  </h3>
                   <button
-                    type="button"
                     onClick={() => setShowInspectionModal(false)}
-                    className="flex-1 h-11 rounded-xl font-bold text-[14px] bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-                    disabled={isSubmitting}
+                    className="w-7 h-7 rounded-[4px] bg-white dark:bg-[#26241f] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[#f2efe5] dark:hover:bg-[#302d27] transition-colors shadow-2xs border border-[#e8e4d9] dark:border-white/10 cursor-pointer"
+                    style={{
+                      backgroundColor: 'var(--admin-surface, #ffffff)',
+                      borderColor: 'var(--admin-border, #e8e4d9)',
+                    }}
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 h-11 rounded-xl font-bold text-[14px] bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <span className="material-symbols-outlined animate-spin text-[18px]">
-                        progress_activity
-                      </span>
-                    ) : (
-                      <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                    )}
-                    Confirm Return
+                    <span className="material-symbols-outlined text-[16px]">close</span>
                   </button>
                 </div>
-              </form>
-            </motion.div>
-          </motion.div>
+
+                <form
+                  onSubmit={submitReturn}
+                  className="p-5 font-sans overflow-y-auto custom-scrollbar flex-1 pb-8 sm:pb-5"
+                >
+                  <div className="mb-5">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] mb-1.5">
+                      Inspection Note (Required)
+                    </label>
+                    <textarea
+                      required
+                      placeholder="e.g. Item returned in good condition."
+                      value={inspectionNote}
+                      onChange={(e) => setInspectionNote(e.target.value)}
+                      className="w-full h-28 p-3 rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-bg)] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none transition-all text-[13px] custom-scrollbar resize-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-2.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowInspectionModal(false)}
+                      className="flex-1 h-10 rounded-[4px] font-bold text-[13px] bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-border-subtle)] border border-[var(--admin-border)] transition-colors cursor-pointer"
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 h-10 rounded-[4px] font-bold text-[13px] bg-[var(--admin-accent)] text-white hover:bg-[var(--admin-accent-hover)] transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <span className="material-symbols-outlined animate-spin text-[16px]">
+                          progress_activity
+                        </span>
+                      ) : (
+                        <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                      )}
+                      Confirm & Return
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
     </>
   );
 }

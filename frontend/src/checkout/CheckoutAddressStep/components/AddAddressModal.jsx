@@ -93,9 +93,10 @@ export function AddAddressModal({
       const res = await detectAndResolveAddress();
       if (res.success && res.data) {
         const d = res.data;
-        if (d.latitude && d.longitude) {
+        if (d.latitude && d.longitude && typeof setMapPosition === 'function') {
           setMapPosition({ lat: d.latitude, lng: d.longitude });
         }
+        const hasFilledFields = Boolean(d.pincode || d.city || d.state || d.locality || d.address);
         setNewAddress((prev) => ({
           ...prev,
           latitude: d.latitude ?? prev.latitude,
@@ -107,11 +108,17 @@ export function AddAddressModal({
           address: d.address || prev.address,
           landmark: d.landmark || prev.landmark,
         }));
-        const msg =
-          res.source === 'gps'
-            ? 'Location auto-filled from GPS!'
-            : 'Location detected from network!';
-        toast.success(msg, { id: 'gps' });
+        if (hasFilledFields) {
+          const msg =
+            res.source === 'gps'
+              ? 'Location & address auto-filled from GPS!'
+              : 'Location & address detected from network!';
+          toast.success(msg, { id: 'gps' });
+        } else {
+          toast.success('GPS coordinates locked! Please enter pincode and address details.', {
+            id: 'gps',
+          });
+        }
       } else {
         toast.error(res.error || 'Could not detect location. Please fill manually.', { id: 'gps' });
       }

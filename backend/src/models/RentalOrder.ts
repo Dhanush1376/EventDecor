@@ -23,15 +23,7 @@ export interface IRentalOrder extends Document {
   tax: number;
   walletDeduction?: number;
   totalAmount: number;
-  status:
-    | 'pending'
-    | 'confirmed'
-    | 'active_rental'
-    | 'late_return'
-    | 'return_requested'
-    | 'returned'
-    | 'completed'
-    | 'cancelled';
+  status: 'pending' | 'confirmed' | 'active_rental' | 'returned' | 'completed' | 'cancelled';
   paymentMethod: string;
   paymentStatus:
     | 'pending'
@@ -133,20 +125,7 @@ const RentalOrderSchema: Schema = new Schema(
     totalAmount: { type: Number, required: true },
     status: {
       type: String,
-      enum: [
-        'pending',
-        'confirmed',
-        'packed',
-        'out_for_delivery',
-        'delivered',
-        'active_rental',
-        'late_return',
-        'return_requested',
-        'inspecting',
-        'returned',
-        'completed',
-        'cancelled',
-      ],
+      enum: ['pending', 'confirmed', 'active_rental', 'returned', 'completed', 'cancelled'],
       default: 'pending',
       index: true,
     },

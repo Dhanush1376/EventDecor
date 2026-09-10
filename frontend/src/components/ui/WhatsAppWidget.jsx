@@ -6,8 +6,9 @@ export function WhatsAppWidget() {
   const { pathname } = useLocation();
   const [isVisible, setIsVisible] = useState(true);
 
-  // Hide on checkout for a distraction-free experience or if dismissed
-  if (pathname === '/checkout' || !isVisible) return null;
+  // Hide on checkout & return flows for a distraction-free experience or if dismissed
+  if (pathname === '/checkout' || pathname.startsWith('/dashboard/returns') || !isVisible)
+    return null;
 
   return (
     <AnimatePresence>

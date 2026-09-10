@@ -73,27 +73,37 @@ describe('locationService', () => {
     });
 
     it('falls back to BigDataCloud when Nominatim returns missing postcode/city', async () => {
-      const mockFetch = vi
-        .fn()
-        // 1st call: Nominatim without postcode or city
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            display_name: 'Some rural field',
-            address: {},
-          }),
-        })
-        // 2nd call: BigDataCloud returns locality details
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            city: 'Mysuru',
-            locality: 'Gokulam',
-            principalSubdivision: 'Karnataka',
-            postcode: '570002',
-            countryName: 'India',
-          }),
-        });
+      const mockFetch = vi.fn().mockImplementation(async (url) => {
+        const urlStr = String(url || '');
+        if (urlStr.includes('/api/v1/location/reverse-geocode')) {
+          return { ok: false, status: 404 };
+        }
+        if (urlStr.includes('nominatim')) {
+          return {
+            ok: true,
+            json: async () => ({
+              display_name: 'Some rural field',
+              address: {},
+            }),
+          };
+        }
+        if (urlStr.includes('photon')) {
+          return { ok: false, status: 404 };
+        }
+        if (urlStr.includes('bigdatacloud')) {
+          return {
+            ok: true,
+            json: async () => ({
+              city: 'Mysuru',
+              locality: 'Gokulam',
+              principalSubdivision: 'Karnataka',
+              postcode: '570002',
+              countryName: 'India',
+            }),
+          };
+        }
+        return { ok: false };
+      });
 
       vi.stubGlobal('fetch', mockFetch);
 
@@ -102,6 +112,37 @@ describe('locationService', () => {
       expect(res.data.city).toBe('Mysuru');
       expect(res.data.state).toBe('Karnataka');
       expect(res.data.pincode).toBe('570002');
+    });
+
+    it('uses backend reverse geocoding when endpoint is available', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockImplementation(async (url) => {
+          const urlStr = String(url || '');
+          if (urlStr.includes('/api/v1/location/reverse-geocode')) {
+            return {
+              ok: true,
+              json: async () => ({
+                success: true,
+                data: {
+                  address: 'Koti Main Road',
+                  city: 'Hyderabad',
+                  state: 'Telangana',
+                  pincode: '500095',
+                },
+              }),
+            };
+          }
+          return { ok: false };
+        }),
+      );
+
+      const res = await reverseGeocodeCoords(17.385, 78.4867);
+      expect(res.success).toBe(true);
+      expect(res.data.city).toBe('Hyderabad');
+      expect(res.data.state).toBe('Telangana');
+      expect(res.data.pincode).toBe('500095');
+      expect(res.data.source).toBe('backend-geocode');
     });
 
     it('handles reverse geocoder network failure gracefully without crashing', async () => {

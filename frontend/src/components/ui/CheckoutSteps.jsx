@@ -27,37 +27,30 @@ export function CheckoutSteps({
   };
 
   return (
-    <div className="bg-surface-bright border-b border-outline-variant/40 sticky top-[60px] lg:top-[72px] z-40 shadow-[0_2px_15px_rgba(0,0,0,0.03)] backdrop-blur-md bg-surface-bright/95 py-2.5 sm:py-3.5 px-3 sm:px-8">
-      <div className="max-w-[1240px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-4">
-        {/* Left: Brand/Title - Mobile Top Bar */}
-        <div className="w-full lg:w-auto flex items-center justify-between lg:justify-start">
-          <div className="flex items-center gap-2">
-            {currentStep > 0 && onStepClick && (
-              <button
-                onClick={() => onStepClick(currentStep - 1)}
-                className="w-10 h-10 min-h-0 rounded-full flex items-center justify-center bg-surface-container-low text-secondary hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer mr-1 -ml-2"
-                aria-label="Go back to previous step"
-              >
-                <ArrowLeft className="text-[20px]" strokeWidth={1.5} />
-              </button>
-            )}
-            {orderType === 'rental' && (
-              <span className="bg-primary/10 text-primary border border-primary/20 text-[9px] font-extrabold uppercase tracking-[0.2em] px-2 py-0.5 rounded-sm flex items-center gap-1">
-                Rental
-              </span>
-            )}
-          </div>
-
-          {/* Secure badge shows on mobile right side */}
-          <div className="lg:hidden flex items-center gap-1 text-green-700">
-            <ShieldCheck className="text-[14px]" strokeWidth={1.5} />
-            <span className="text-[9px] font-bold uppercase tracking-widest">100% Secure</span>
-          </div>
+    <div className="bg-surface-bright border-b border-outline-variant/40 sticky top-[48px] sm:top-[52px] z-40 shadow-[0_2px_10px_rgba(0,0,0,0.02)] backdrop-blur-md bg-surface-bright/95 py-2 sm:py-2.5 px-3 sm:px-6">
+      <div className="max-w-[1240px] mx-auto flex items-center justify-between gap-3 sm:gap-4">
+        {/* Left: Discreet Back Button & Badges (hidden on mobile) */}
+        <div className="hidden sm:flex items-center gap-2 min-w-[90px]">
+          {currentStep > 0 && onStepClick && (
+            <button
+              onClick={() => onStepClick(currentStep - 1)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-secondary hover:text-on-surface hover:bg-black/5 text-[11px] font-semibold transition-colors cursor-pointer"
+              aria-label="Go back to previous step"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" strokeWidth={2} />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+          )}
+          {orderType === 'rental' && (
+            <span className="bg-primary/10 text-primary border border-primary/20 text-[9px] font-extrabold uppercase tracking-[0.2em] px-2 py-0.5 rounded-sm flex items-center gap-1">
+              Rental
+            </span>
+          )}
         </div>
 
         {/* Center: Steps */}
-        <div className="w-full lg:flex-1 flex justify-center overflow-x-auto no-scrollbar pb-1 lg:pb-0 px-1">
-          <div className="flex items-center justify-between lg:justify-center w-full max-w-[600px] text-[9px] sm:text-[11px] font-bold tracking-widest text-secondary uppercase relative">
+        <div className="flex-1 flex justify-center overflow-x-auto no-scrollbar px-1">
+          <div className="flex items-center justify-center w-full max-w-[440px] text-[9px] sm:text-[10px] font-bold tracking-wider text-secondary uppercase relative">
             {steps.map((step, index) => {
               const isActive = currentStep === index;
               const isCompleted = currentStep > index;

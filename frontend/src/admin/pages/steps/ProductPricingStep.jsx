@@ -21,7 +21,7 @@ export function ProductPricingStep({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
             Curation Price (₹) <span className="text-error">*</span>
           </label>
@@ -36,12 +36,12 @@ export function ProductPricingStep({
               inputMode="decimal"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              className="w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40 "
+              className="w-full bg-[var(--admin-surface)] rounded-[4px] pl-7 pr-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
             />
           </div>
         </div>
 
-        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
             Old Striking Price (₹)
           </label>
@@ -55,12 +55,12 @@ export function ProductPricingStep({
               value={formData.oldPrice}
               onChange={(e) => setFormData({ ...formData, oldPrice: e.target.value })}
               placeholder="Optional list price"
-              className="w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40 "
+              className="w-full bg-[var(--admin-surface)] rounded-[4px] pl-7 pr-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
             />
           </div>
         </div>
 
-        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
             Available Stock <span className="text-error">*</span>
           </label>
@@ -76,14 +76,14 @@ export function ProductPricingStep({
               placeholder="Units"
               value={formData.stock}
               onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-              className="w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40 "
+              className="w-full bg-[var(--admin-surface)] rounded-[4px] pl-7 pr-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
             />
           </div>
         </div>
       </div>
 
       {formData.stock !== '' && Number(formData.stock) <= 5 && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-[11px] sm:text-[11px] text-amber-700 font-semibold">
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-[4px] flex items-center gap-2 text-[11px] text-amber-700 font-semibold">
           <span className="material-symbols-outlined text-[18px]">warning</span>
           <span>
             Stock is below threshold. A 'Low Stock' badge will trigger automatically in the catalog.
@@ -92,7 +92,7 @@ export function ProductPricingStep({
       )}
 
       {/* ═══ RENTAL SETTINGS SECTION ═══ */}
-      <div className="border-t border-[var(--admin-border)]/60 pt-5 mt-2">
+      <div className="border-t border-[var(--admin-border)] pt-5 mt-2">
         <button
           type="button"
           onClick={() => {
@@ -100,11 +100,11 @@ export function ProductPricingStep({
             if (!showRentalSettings && !formData.rentalEnabled)
               setFormData((prev) => ({ ...prev, rentalEnabled: true }));
           }}
-          className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl hover:shadow-md transition-all cursor-pointer group"
+          className="w-full flex items-center justify-between p-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] hover:bg-[var(--admin-bg-subtle)] transition-all cursor-pointer group shadow-2xs"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[20px] text-indigo-600">
+            <div className="w-9 h-9 rounded-[4px] bg-[var(--admin-accent)]/10 flex items-center justify-center border border-[var(--admin-accent)]/20">
+              <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)]">
                 event_available
               </span>
             </div>
@@ -121,7 +121,7 @@ export function ProductPricingStep({
           </div>
           <div className="flex items-center gap-2">
             {formData.rentalEnabled && (
-              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full uppercase tracking-wider">
+              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold rounded-[2px] uppercase tracking-wider">
                 Active
               </span>
             )}
@@ -144,15 +144,10 @@ export function ProductPricingStep({
             >
               <div className="mt-4 space-y-4">
                 {/* Enable Rental Toggle */}
-                <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex items-center justify-between">
-                  <div>
-                    <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
-                      Enable Rental
-                    </p>
-                    <p className="text-[11px] text-[var(--admin-text-secondary)]">
-                      Allow customers to rent this product
-                    </p>
-                  </div>
+                <div className="p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] flex items-center justify-between">
+                  <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
+                    Enable Rental
+                  </p>
                   <AdminToggle
                     checked={formData.rentalEnabled}
                     onChange={() =>
@@ -168,7 +163,7 @@ export function ProductPricingStep({
                 {formData.rentalEnabled && (
                   <>
                     {/* Availability Mode */}
-                    <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+                    <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
                       <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
                         Availability Mode
                       </label>
@@ -182,10 +177,10 @@ export function ProductPricingStep({
                             key={opt.v}
                             type="button"
                             onClick={() => setFormData({ ...formData, availabilityMode: opt.v })}
-                            className={`h-[38px] px-3 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+                            className={`h-9 px-3 rounded-[4px] text-[12px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
                               formData.availabilityMode === opt.v
-                                ? 'bg-[var(--admin-accent)] text-white border-[var(--admin-accent)] shadow-sm'
-                                : 'bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]/30 hover:text-[var(--admin-text-primary)]'
+                                ? 'bg-[var(--admin-accent)] text-white border-[var(--admin-accent)] shadow-xs'
+                                : 'bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:border-[var(--admin-accent)] hover:text-[var(--admin-text-primary)]'
                             }`}
                           >
                             <span className="material-symbols-outlined text-[16px]">{opt.i}</span>
@@ -199,7 +194,7 @@ export function ProductPricingStep({
                     <div className="space-y-4">
                       {/* Row 1: Rental Price & Duration */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
                           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
                             Rental Price (₹) <span className="text-error">*</span>
                           </label>
@@ -222,12 +217,12 @@ export function ProductPricingStep({
                                 }))
                               }
                               placeholder="0"
-                              className="w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40"
+                              className="w-full bg-[var(--admin-surface)] rounded-[4px] pl-7 pr-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
                             />
                           </div>
                         </div>
 
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
                           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
                             Rental Duration (Up to Days) <span className="text-error">*</span>
                           </label>
@@ -250,7 +245,7 @@ export function ProductPricingStep({
                                 }))
                               }
                               placeholder="1"
-                              className="w-full bg-[var(--admin-surface)] rounded-xl pl-9 pr-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40"
+                              className="w-full bg-[var(--admin-surface)] rounded-[4px] pl-9 pr-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
                             />
                           </div>
                           <span className="text-[10px] text-[var(--admin-text-secondary)]/70 mt-1 block">
@@ -261,7 +256,7 @@ export function ProductPricingStep({
 
                       {/* Row 2: Security Deposit & Refundable Toggle */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
                           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
                             Security Deposit (₹)
                           </label>
@@ -281,16 +276,16 @@ export function ProductPricingStep({
                                 }))
                               }
                               placeholder="0"
-                              className="w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40"
+                              className="w-full bg-[var(--admin-surface)] rounded-[4px] pl-7 pr-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
                             />
                           </div>
                         </div>
 
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex flex-col justify-between">
+                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] flex flex-col justify-between">
                           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
                             Deposit Refundable
                           </label>
-                          <div className="flex items-center justify-between h-[38px] px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl">
+                          <div className="flex items-center justify-between h-9 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px]">
                             <span className="text-[12.5px] font-medium text-[var(--admin-text-primary)]">
                               {formData.isDepositRefundable ? 'Refundable' : 'Non-Refundable'}
                             </span>
@@ -309,7 +304,7 @@ export function ProductPricingStep({
 
                       {/* Row 3: Stock & Booking Limits */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
                           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
                             Rental Stock
                           </label>
@@ -329,12 +324,12 @@ export function ProductPricingStep({
                                 })
                               }
                               placeholder="0"
-                              className="w-full bg-[var(--admin-surface)] rounded-xl pl-7 pr-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40"
+                              className="w-full bg-[var(--admin-surface)] rounded-[4px] pl-7 pr-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
                             />
                           </div>
                         </div>
 
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
                           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
                             Min Rental Days
                           </label>
@@ -350,11 +345,11 @@ export function ProductPricingStep({
                               })
                             }
                             placeholder="1"
-                            className="w-full bg-[var(--admin-surface)] rounded-xl px-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40"
+                            className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
                           />
                         </div>
 
-                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl">
+                        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px]">
                           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
                             Max Rental Days
                           </label>
@@ -370,7 +365,7 @@ export function ProductPricingStep({
                               })
                             }
                             placeholder="365"
-                            className="w-full bg-[var(--admin-surface)] rounded-xl px-3 py-2 text-[13px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40"
+                            className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none border border-[var(--admin-border)] focus:border-[var(--admin-accent)] transition-all"
                           />
                         </div>
                       </div>

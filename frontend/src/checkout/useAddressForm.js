@@ -80,11 +80,18 @@ export function useAddressForm({ setNewAddress, setIsAddingNewAddress, newAddres
           landmark: d.landmark || prev.landmark,
         }));
 
-        const successMsg =
-          res.source === 'gps'
-            ? 'Location auto-filled from GPS!'
-            : 'Location detected from network!';
-        toast.success(successMsg, { id: 'location-detect' });
+        const hasFilledFields = Boolean(d.pincode || d.city || d.state || d.locality || d.address);
+        if (hasFilledFields) {
+          const successMsg =
+            res.source === 'gps'
+              ? 'Location & address auto-filled from GPS!'
+              : 'Location & address detected from network!';
+          toast.success(successMsg, { id: 'location-detect' });
+        } else {
+          toast.success('GPS coordinates locked! Please enter pincode and address details.', {
+            id: 'location-detect',
+          });
+        }
       } else {
         toast.error(res.error || 'Could not detect location. Please fill manually.', {
           id: 'location-detect',

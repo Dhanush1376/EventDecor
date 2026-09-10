@@ -1,7 +1,37 @@
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import X from 'lucide-react/dist/esm/icons/x';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import toast from 'react-hot-toast';
+
+const formatDisplayDate = (dateVal) => {
+  if (!dateVal) return '';
+  try {
+    let d;
+    if (typeof dateVal === 'string') {
+      const clean = dateVal.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
+        const [y, m, day] = clean.split('-').map(Number);
+        d = new Date(y, m - 1, day);
+      } else {
+        d = new Date(clean);
+      }
+    } else {
+      d = new Date(dateVal);
+    }
+    if (isNaN(d.getTime())) {
+      return typeof dateVal === 'string' ? dateVal : '';
+    }
+    return d.toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return typeof dateVal === 'string' ? dateVal : '';
+  }
+};
 
 import { useCheckout } from './CheckoutProvider';
 
@@ -51,6 +81,20 @@ export default function CheckoutPaymentStep() {
   const otpRefs = React.useRef([]);
   const [otpDigits, setOtpDigits] = React.useState(['', '', '', '', '', '']);
   const [codOtpInput, setCodOtpInput] = React.useState('');
+
+  // Ref for target delivery date picker
+  const targetDateInputRef = React.useRef(null);
+  const handleOpenDatePicker = () => {
+    if (targetDateInputRef.current) {
+      if (typeof targetDateInputRef.current.showPicker === 'function') {
+        try {
+          targetDateInputRef.current.showPicker();
+          return;
+        } catch {}
+      }
+      targetDateInputRef.current.focus();
+    }
+  };
 
   // Sync internal digits state with global codOtpInput context state
   React.useEffect(() => {
@@ -262,33 +306,109 @@ export default function CheckoutPaymentStep() {
       )}
 
       {/* Preferred Delivery Date Input */}
-      <div className="py-4 sm:py-6 mb-2 border-b border-black/5 pr-4 sm:pr-0">
-        <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider flex items-center gap-2 mb-4">
+      <div className="py-4 sm:py-6 mb-2 border-b border-black/5">
+        <h2 className="font-display text-sm font-extrabold text-on-surface uppercase tracking-wider flex items-center gap-2 mb-3">
           <span className="material-symbols-outlined text-[18px] text-primary">calendar_clock</span>
           Target Delivery Date{' '}
           <span className="text-[10px] text-secondary font-medium tracking-normal normal-case">
             (Optional)
           </span>
         </h2>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold text-secondary uppercase tracking-wider">
+        <div className="flex flex-col gap-1.5 w-full">
+          <label className="text-[10px] font-bold text-secondary uppercase tracking-widest">
             By when do you need this order?
           </label>
-          <input
-            type="date"
-            min={new Date().toISOString().split('T')[0]}
-            value={needByDate || ''}
-            onChange={(e) => setNeedByDate(e.target.value)}
-            className="w-full max-w-sm p-3 rounded-xl border border-outline-variant/60 bg-surface-bright focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-xs font-semibold text-on-surface"
-          />
-          <p className="text-[10px] text-secondary mt-1">
+          <div
+            onClick={handleOpenDatePicker}
+            className={`group relative flex items-center justify-between w-full h-12 rounded-xl border px-3.5 shadow-2xs cursor-pointer transition-all ${
+              needByDate
+                ? 'border-primary/50 bg-primary/[0.04] ring-1 ring-primary/20'
+                : 'border-outline-variant/40 bg-surface-bright hover:border-primary/40 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15'
+            }`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
+              <span className="material-symbols-outlined text-[20px] text-primary shrink-0">
+                calendar_today
+              </span>
+              <span
+                className={`min-w-0 truncate text-[13px] sm:text-[14px] select-none ${
+                  needByDate
+                    ? 'text-neutral-900 font-bold tracking-tight'
+                    : 'text-secondary/60 font-normal'
+                }`}
+              >
+                {needByDate ? formatDisplayDate(needByDate) : 'Select preferred date...'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0 ml-2 z-20">
+              {needByDate && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setNeedByDate('');
+                  }}
+                  className="p-1.5 rounded-full text-secondary/60 hover:text-on-surface hover:bg-black/5 active:bg-black/10 transition-colors cursor-pointer"
+                  aria-label="Clear selected date"
+                  title="Clear date"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <span className="material-symbols-outlined text-[18px] text-secondary/40 group-hover:text-primary transition-colors pointer-events-none">
+                calendar_month
+              </span>
+            </div>
+
+            <input
+              ref={targetDateInputRef}
+              type="date"
+              min={new Date().toISOString().split('T')[0]}
+              value={
+                typeof needByDate === 'string'
+                  ? needByDate.includes('T')
+                    ? needByDate.split('T')[0]
+                    : needByDate
+                  : ''
+              }
+              onChange={(e) => setNeedByDate(e.target.value)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                zIndex: 10,
+                cursor: 'pointer',
+              }}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+              aria-label="Target delivery date"
+            />
+          </div>
+
+          {/* If rental order has rentalStartDate, offer a quick-select chip */}
+          {hasRentalItems && rentalStartDate && needByDate !== rentalStartDate && (
+            <button
+              type="button"
+              onClick={() => setNeedByDate(rentalStartDate)}
+              className="self-start text-[11px] font-medium text-primary hover:underline flex items-center gap-1 mt-1 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[13px]">event_available</span>
+              Set to rental start date ({formatDisplayDate(rentalStartDate)})
+            </button>
+          )}
+
+          <p className="text-[10px] text-secondary mt-0.5 leading-normal">
             Let us know your preferred timeline and we will try our best to deliver by that time.
           </p>
         </div>
       </div>
 
-      {/* Promo Savings Banner */}
-      {appliedCoupon && couponValid && backendTotals?.discount > 0 ? (
+      {/* Promo Savings Banner (only displayed if a valid coupon is active) */}
+      {appliedCoupon && couponValid && backendTotals?.discount > 0 && (
         <div className="p-3.5 bg-primary/10 border border-primary/30 rounded-xl flex items-center justify-between text-xs mb-4 shadow-xs">
           <div className="flex items-center gap-2.5">
             <span className="material-symbols-outlined text-primary text-lg">local_offer</span>
@@ -305,15 +425,6 @@ export default function CheckoutPaymentStep() {
           <span className="text-primary font-extrabold text-sm">
             −₹{backendTotals.discount.toLocaleString('en-IN')}
           </span>
-        </div>
-      ) : (
-        <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl flex items-center justify-between text-xs mb-4">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-amber-600 text-base">sell</span>
-            <span className="text-amber-900 font-medium text-[11px]">
-              Have a promo code? Check the price details sidebar to apply & save!
-            </span>
-          </div>
         </div>
       )}
 

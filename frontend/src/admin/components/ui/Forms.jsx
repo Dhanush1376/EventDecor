@@ -102,7 +102,7 @@ export function AdminToggle({
       >
         <motion.div
           animate={{ x: checked ? translateDistance : 0 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
           className={`admin-toggle-thumb ${isSm ? 'size-sm' : 'size-md'}`}
         />
       </div>

@@ -1,23 +1,11 @@
-import { X, Save } from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useDashboard } from '../../context/DashboardContext';
 import { userService } from '../../services/domainServices';
-import { MandalaElement } from '../ui/MandalaElement';
-import { useAddressManagement } from '../../hooks/useAddressManagement';
-import { useScrollLock } from '../../hooks/useScrollLock';
-import { AddressFormFields } from './AddressFormFields';
+import { sanitizePhoneNumber, isValidPhoneNumber } from '../../utils/phoneUtils';
+import { AddAddressModal } from '../../checkout/CheckoutAddressStep/components/AddAddressModal';
 
 export function AddressModal() {
-  const [mounted, setMounted] = useState(false);
-  const [maxModalHeight, setMaxModalHeight] = useState('90vh');
-  const formContainerRef = useRef(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const {
     user,
     isAddressModalOpen,
@@ -27,211 +15,208 @@ export function AddressModal() {
     refetchDashboardData,
   } = useDashboard();
 
-  const {
-    addressFormData,
-    setAddressFormData,
-    isAddressSaving,
-    isDetectingLocation,
-    mapPosition,
-    setMapPosition,
-    handleAddressSave,
-    fetchAddressFromCoords,
-    handleFetchCurrentLocation,
-  } = useAddressManagement({
-    user,
-    editingAddressId,
-    addresses,
-    userService,
-    refetchDashboardData,
-    setIsAddressModalOpen,
+  const [newAddress, setNewAddress] = useState({
+    id: '',
+    name: '',
+    phone: '',
+    alternatePhone: '',
+    email: '',
+    address: '',
+    locality: '',
+    landmark: '',
+    city: '',
+    state: '',
+    pincode: '',
+    country: 'India',
+    tag: 'Home',
+    deliveryInstructions: '',
+    isDefault: false,
+    latitude: null,
+    longitude: null,
   });
 
-  useScrollLock(isAddressModalOpen && !!addressFormData);
+  const [addressError, setAddressError] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [mapPosition, setMapPosition] = useState({ lat: 20.5937, lng: 78.9629 });
 
-  // Dynamic visualViewport tracker for mobile virtual keyboard resizing
   useEffect(() => {
-    if (!isAddressModalOpen || typeof window === 'undefined') return;
+    if (!isAddressModalOpen) {
+      setAddressError(null);
+      return;
+    }
 
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const updateHeight = () => {
-      const isMobile = window.innerWidth < 1024;
-      if (isMobile) {
-        const availableHeight = vv.height;
-        const targetHeight = Math.max(260, Math.floor(availableHeight * 0.94));
-        setMaxModalHeight(`${targetHeight}px`);
-      } else {
-        setMaxModalHeight('90vh');
-      }
-    };
-
-    updateHeight();
-    vv.addEventListener('resize', updateHeight);
-    vv.addEventListener('scroll', updateHeight);
-
-    return () => {
-      vv.removeEventListener('resize', updateHeight);
-      vv.removeEventListener('scroll', updateHeight);
-    };
-  }, [isAddressModalOpen]);
-
-  // Smoothly scroll focused field into visible viewport when keyboard opens
-  const handleFocusCapture = (e) => {
-    const target = e.target;
-    if (!target) return;
-    const tag = target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-      setTimeout(() => {
-        if (!target || !formContainerRef.current) return;
-        const targetRect = target.getBoundingClientRect();
-        const containerRect = formContainerRef.current.getBoundingClientRect();
-
-        const isObscured =
-          targetRect.bottom > containerRect.bottom - 20 ||
-          targetRect.top < containerRect.top + 20 ||
-          (window.visualViewport && targetRect.bottom > window.visualViewport.height - 50);
-
-        if (isObscured) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (editingAddressId === 'new' || !editingAddressId) {
+      setNewAddress({
+        id: '',
+        name: user?.name && user.name !== 'Customer' ? user.name : '',
+        phone: user?.phone ? sanitizePhoneNumber(user.phone) : '',
+        alternatePhone: '',
+        email: user?.email || '',
+        address: '',
+        locality: '',
+        landmark: '',
+        city: '',
+        state: '',
+        pincode: '',
+        country: 'India',
+        tag: 'Home',
+        deliveryInstructions: '',
+        isDefault: !addresses || addresses.length === 0,
+        latitude: null,
+        longitude: null,
+      });
+      setMapPosition({ lat: 20.5937, lng: 78.9629 });
+    } else if (addresses && editingAddressId) {
+      const addr = addresses.find((a) => (a._id || a.id) === editingAddressId);
+      if (addr) {
+        setNewAddress({
+          id: addr._id || addr.id,
+          name: addr.name || '',
+          phone: sanitizePhoneNumber(addr.phone || ''),
+          alternatePhone: sanitizePhoneNumber(addr.alternatePhone || ''),
+          email: addr.email || user?.email || '',
+          address: addr.addressString || addr.address || '',
+          locality: addr.locality || '',
+          landmark: addr.landmark || '',
+          city: addr.city || '',
+          state: addr.state || '',
+          pincode: addr.pincode || '',
+          country: addr.country || 'India',
+          tag: addr.tag || 'Home',
+          deliveryInstructions: addr.deliveryInstructions || '',
+          isDefault: Boolean(addr.isDefault),
+          latitude: addr.latitude || null,
+          longitude: addr.longitude || null,
+        });
+        if (addr.latitude && addr.longitude) {
+          setMapPosition({ lat: addr.latitude, lng: addr.longitude });
         }
-      }, 300);
+      }
+    }
+  }, [isAddressModalOpen, editingAddressId, addresses, user]);
+
+  const handleSaveNewAddress = async (e) => {
+    e?.preventDefault();
+    setAddressError(null);
+
+    const cleanedPhone = sanitizePhoneNumber(newAddress.phone);
+    const cleanedAltPhone = newAddress.alternatePhone
+      ? sanitizePhoneNumber(newAddress.alternatePhone)
+      : '';
+
+    if (
+      cleanedPhone !== newAddress.phone ||
+      cleanedAltPhone !== (newAddress.alternatePhone || '')
+    ) {
+      setNewAddress((prev) => ({
+        ...prev,
+        phone: cleanedPhone,
+        alternatePhone: cleanedAltPhone,
+      }));
+    }
+
+    if (
+      !newAddress.name?.trim() ||
+      !cleanedPhone ||
+      !newAddress.address?.trim() ||
+      !newAddress.locality?.trim() ||
+      !newAddress.pincode?.trim() ||
+      !newAddress.city?.trim() ||
+      !newAddress.state?.trim()
+    ) {
+      setAddressError(
+        'Please fill in all mandatory address parameters (Name, Phone, Address, Locality, Pincode, City, State).',
+      );
+      return;
+    }
+
+    if (!isValidPhoneNumber(cleanedPhone)) {
+      setAddressError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    if (newAddress.alternatePhone && !isValidPhoneNumber(cleanedAltPhone)) {
+      setAddressError('Please enter a valid 10-digit alternate mobile number.');
+      return;
+    }
+
+    if (newAddress.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newAddress.email.trim())) {
+      setAddressError('Please enter a valid email address.');
+      return;
+    }
+
+    const cleanPincode = String(newAddress.pincode || '')
+      .replace(/\D/g, '')
+      .slice(0, 6);
+    if (cleanPincode.length !== 6) {
+      setAddressError('Please enter a valid 6-digit postal pincode.');
+      return;
+    }
+
+    const payload = {
+      name: newAddress.name.trim(),
+      phone: cleanedPhone,
+      alternatePhone: cleanedAltPhone || undefined,
+      email: newAddress.email?.trim() || undefined,
+      pincode: cleanPincode,
+      locality: newAddress.locality.trim(),
+      addressString: newAddress.address.trim(),
+      landmark: newAddress.landmark?.trim() || undefined,
+      city: newAddress.city.trim(),
+      state: newAddress.state.trim(),
+      country: newAddress.country || 'India',
+      tag: newAddress.tag || 'Home',
+      deliveryInstructions: newAddress.deliveryInstructions?.trim() || undefined,
+      isDefault: Boolean(newAddress.isDefault),
+      latitude: newAddress.latitude,
+      longitude: newAddress.longitude,
+    };
+
+    setIsProcessing(true);
+    try {
+      let savedId = null;
+      if (editingAddressId && editingAddressId !== 'new') {
+        await userService.updateAddress(editingAddressId, payload);
+        savedId = editingAddressId;
+        toast.success('Address updated successfully!');
+      } else {
+        const res = await userService.addAddress(payload);
+        savedId = res?.data?._id || res?.data?.id || res?._id || res?.id;
+        toast.success('New address added successfully!');
+      }
+
+      if (newAddress.isDefault && savedId) {
+        try {
+          await userService.setDefaultAddress(savedId);
+        } catch {
+          // Handled silently
+        }
+      }
+
+      if (refetchDashboardData) await refetchDashboardData();
+      setIsAddressModalOpen(false);
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to save address';
+      setAddressError(msg);
+      toast.error(msg);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  if (!mounted || !isAddressModalOpen || !addressFormData) return null;
-
-  return createPortal(
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[100] pointer-events-none">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setIsAddressModalOpen(false)}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] pointer-events-auto"
-        />
-
-        {/* Modal Container */}
-        <motion.div
-          initial={{ y: '100%', opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: '100%', opacity: 0 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          style={{ maxHeight: maxModalHeight }}
-          className="fixed bottom-0 left-0 right-0 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:bottom-auto lg:max-w-2xl w-full flex flex-col z-[101] pointer-events-auto"
-        >
-          <div
-            style={{ maxHeight: maxModalHeight }}
-            className="w-full bg-white rounded-t-lg lg:rounded-lg shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col"
-          >
-            {/* Rotating Gold Mandala Overlay */}
-            <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-[0.04] z-0">
-              <MandalaElement
-                size={320}
-                duration={60}
-                variant={3}
-                opacity={1}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary"
-              />
-            </div>
-
-            {/* Modal Header */}
-            <div className="bg-surface-bright z-10 pt-5 pb-4 px-6 flex justify-between items-center border-b border-outline-variant/20 rounded-t-lg shrink-0 relative">
-              <h3 className="text-[11px] font-extrabold text-on-surface uppercase tracking-widest">
-                {editingAddressId === 'new' ? 'Add New Site Parameters' : 'Modify Site Parameters'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsAddressModalOpen(false)}
-                className="w-8 h-8 min-h-0 rounded-full bg-surface-container flex items-center justify-center text-secondary hover:text-primary transition-colors cursor-pointer border-0"
-              >
-                <X className="text-base" strokeWidth={1.5} />
-              </button>
-            </div>
-
-            {/* Scrollable Form Body */}
-            <div
-              ref={formContainerRef}
-              onFocusCapture={handleFocusCapture}
-              className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 relative z-10 pb-6"
-            >
-              <form id="dashboard-address-form" onSubmit={handleAddressSave} className="space-y-6">
-                {/* Geolocation Section */}
-                <div className="py-5 border-b border-outline-variant/20">
-                  <div className="flex items-center justify-between mb-5">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[12px]">pin_drop</span>
-                      Location Coordinates
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleFetchCurrentLocation}
-                      disabled={isDetectingLocation}
-                      className="inline-flex items-center gap-1 text-[8px] text-primary font-bold uppercase tracking-widest bg-primary/5 hover:bg-primary/10 px-2.5 py-1 rounded-full cursor-pointer transition-all disabled:opacity-50"
-                    >
-                      <span className="material-symbols-outlined text-[10px] font-bold">
-                        my_location
-                      </span>
-                      <span>{isDetectingLocation ? 'Detecting...' : 'Use Current Location'}</span>
-                    </button>
-                  </div>
-
-                  {addressFormData.latitude && addressFormData.longitude && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-2 text-[10px] text-green-700 bg-green-50/50 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider inline-flex"
-                    >
-                      <span className="material-symbols-outlined text-xs">share_location</span>
-                      <span>
-                        GPS Locked: {addressFormData.latitude.toFixed(6)},{' '}
-                        {addressFormData.longitude.toFixed(6)}
-                      </span>
-                    </motion.div>
-                  )}
-                </div>
-
-                <AddressFormFields
-                  addressFormData={addressFormData}
-                  setAddressFormData={setAddressFormData}
-                />
-              </form>
-            </div>
-
-            {/* Non-Overlapping Action Footer */}
-            <div className="bg-surface-bright border-t border-outline-variant/20 p-4 pb-[calc(1rem+var(--safe-area-bottom))] lg:pb-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] shrink-0 z-20">
-              <div className="w-full flex gap-4 max-w-lg mx-auto">
-                <button
-                  type="button"
-                  onClick={() => setIsAddressModalOpen(false)}
-                  className="flex-1 bg-surface-bright text-secondary py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] shadow-sm border border-outline-variant/30 flex justify-center items-center cursor-pointer hover:bg-surface transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  form="dashboard-address-form"
-                  disabled={isAddressSaving}
-                  onClick={handleAddressSave}
-                  type="submit"
-                  className="flex-1 bg-[#2A2927] hover:bg-black text-white px-6 py-3 rounded-[32px] font-bold uppercase tracking-widest text-[10px] inline-flex items-center justify-center gap-2 shadow-lg transition-all border-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isAddressSaving ? (
-                    <div className="skeleton-box inline-block w-4 h-4 rounded-md animate-pulse" />
-                  ) : (
-                    <>
-                      <Save className="text-[16px]" strokeWidth={1.5} />
-                      <span>{editingAddressId === 'new' ? 'ADD ADDRESS' : 'SAVE CHANGES'}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>,
-    document.body,
+  return (
+    <AddAddressModal
+      isAddingNewAddress={isAddressModalOpen}
+      setIsAddingNewAddress={setIsAddressModalOpen}
+      newAddress={newAddress}
+      setNewAddress={setNewAddress}
+      addressError={addressError}
+      isProcessing={isProcessing}
+      handleSaveNewAddress={handleSaveNewAddress}
+      mapPosition={mapPosition}
+      setMapPosition={setMapPosition}
+    />
   );
 }
+
+export default AddressModal;

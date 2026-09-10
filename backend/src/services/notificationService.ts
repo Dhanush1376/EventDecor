@@ -42,18 +42,19 @@ const rewriteLinks = (html: string, token: string): string => {
       url.startsWith('mailto:') ||
       url.startsWith('#') ||
       url.includes('/api/notifications/track/') ||
+      url.includes('/api/v1/notifications/track/') ||
       url.includes('/unsubscribe')
     ) {
       return match;
     }
-    return `href="${backendUrl}/api/notifications/track/click/${token}?url=${encodeURIComponent(url)}"`;
+    return `href="${backendUrl}/api/v1/notifications/track/click/${token}?url=${encodeURIComponent(url)}"`;
   });
 };
 
 // Append 1x1 tracking pixel to HTML body
 const appendTrackingPixel = (html: string, token: string): string => {
   const backendUrl = getBackendUrl();
-  const pixelUrl = `${backendUrl}/api/notifications/track/open/${token}`;
+  const pixelUrl = `${backendUrl}/api/v1/notifications/track/open/${token}`;
   const pixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none !important; visibility:hidden; width:1px; height:1px;" alt="" />`;
 
   if (html.includes('</body>')) {
@@ -332,33 +333,6 @@ export const sendDirectEmailProcessor = async (options: EmailOptions) => {
         `[EMAIL PROCESSOR] BLOCKED — empty HTML body for action=${actionVal} template=${templateNameVal}`,
       );
       throw new Error(`Email body is empty for action=${actionVal}`);
-    }
-
-    // Generate Invoice PDF if requested and order context exists
-    if (options.generatePdf && templateDataVal && templateDataVal.orderId) {
-      try {
-        const { generateInvoicePDF } = require('../utils/pdfGenerator');
-        const pdfBuffer = await generateInvoicePDF({
-          orderId: templateDataVal.orderId,
-          date: templateDataVal.orderDate || new Date(),
-          customerName: templateDataVal.customerName || 'Valued Customer',
-          shippingAddress: templateDataVal.shippingAddress || '',
-          items: templateDataVal.items || [],
-          subtotal: Number(templateDataVal.subtotal || 0),
-          shipping: Number(templateDataVal.shipping || 0),
-          total: Number(templateDataVal.total || 0),
-        });
-        const invoiceNum = `INV-${templateDataVal.orderId.substring(templateDataVal.orderId.length - 8).toUpperCase()}`;
-        attachmentsList.push({
-          filename: `${invoiceNum}.pdf`,
-          content: pdfBuffer,
-          contentType: 'application/pdf',
-        });
-      } catch (pdfErr: any) {
-        logger.error(
-          `Failed to generate invoice PDF inside sendDirectEmailProcessor: ${pdfErr.message}`,
-        );
-      }
     }
 
     // 3. Generate Tracking Token & log notification initial state

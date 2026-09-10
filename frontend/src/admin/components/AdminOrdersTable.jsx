@@ -1,8 +1,25 @@
-import React from 'react';
-import { EmptyState, formatCurrency } from '../components/AdminUIKit';
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AdminStatusPill, AdminStatusDropdown, EmptyState, formatCurrency } from './AdminUIKit';
 import { EXTERNAL_URLS } from '../../config/constants';
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
+import { InvoiceTemplate } from '../../components/ui';
 import { DeleteConfirmModal } from './ui/DeleteConfirmModal';
+
+const formatDateDMY = (dateStr) => {
+  if (!dateStr) return 'N/A';
+  if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}-${m}-${y}`;
+  }
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+};
 
 export function AdminOrdersTable({
   filteredOrders,
@@ -15,7 +32,19 @@ export function AdminOrdersTable({
   deleteOrder,
   allStatuses = [],
 }) {
-  const [orderToDelete, setOrderToDelete] = React.useState(null);
+  const [orderToDelete, setOrderToDelete] = useState(null);
+  const [invoiceOrder, setInvoiceOrder] = useState(null);
+  const [expandedCardIds, setExpandedCardIds] = useState(new Set());
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
+  const toggleExpandCard = (id) => {
+    setExpandedCardIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const handleDelete = async () => {
     if (!orderToDelete) return;
@@ -25,46 +54,57 @@ export function AdminOrdersTable({
     }
   };
 
-  const getStatusBadgeStyle = (status) => {
-    const s = (status || '').toLowerCase();
-    switch (s) {
-      case 'delivered':
-      case 'settled':
-      case 'completed':
-        return 'bg-emerald-600 text-white';
-      case 'processing':
-      case 'shipped':
-      case 'in_progress':
-        return 'bg-blue-600 text-white';
-      case 'confirmed':
-        return 'bg-purple-600 text-white';
-      case 'pending':
-        return 'bg-amber-500 text-white';
-      case 'cancelled':
-      case 'rejected':
-      case 'returned':
-      case 'refunded':
-        return 'bg-red-600 text-white';
-      default:
-        return 'bg-gray-600 text-white';
+  const handleApproveOrder = async (o) => {
+    try {
+      setUpdatingStatusId(o.id);
+      await updateOrderStatus(o.id, 'Confirmed');
+      toast.success('Order confirmed successfully!');
+    } catch (_err) {
+      toast.error('Failed to confirm order');
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
+
+  const handleCancelOrder = async (o) => {
+    try {
+      setUpdatingStatusId(o.id);
+      await updateOrderStatus(o.id, 'Cancelled');
+      toast.success('Order cancelled');
+    } catch (_err) {
+      toast.error('Failed to cancel order');
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
+
+  const handleStatusChange = async (o, newStatus) => {
+    try {
+      setUpdatingStatusId(o.id);
+      await updateOrderStatus(o.id, newStatus);
+      toast.success(`Order status updated to ${newStatus}`);
+    } catch (_err) {
+      toast.error('Failed to update status');
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
   return (
     <>
       <div className="hidden md:block admin-card overflow-x-auto">
-        <table className="admin-table w-full min-w-[900px]">
+        <table className="admin-table admin-table-compact admin-orders-table w-full">
           <thead>
             <tr>
-              <th>Order ID</th>
-              <th>Customer</th>
-              <th className="hidden md:table-cell">Items</th>
-              <th>Total</th>
-              <th className="hidden sm:table-cell">Payment</th>
-              <th>Status</th>
-              <th className="hidden lg:table-cell">Date</th>
-              <th>Required By</th>
-              <th className="text-right">Actions</th>
+              <th className="whitespace-nowrap w-[120px]">Order ID</th>
+              <th className="whitespace-nowrap min-w-[120px]">Customer</th>
+              <th className="hidden md:table-cell whitespace-nowrap w-[145px]">Items</th>
+              <th className="whitespace-nowrap w-[95px]">Total</th>
+              <th className="hidden sm:table-cell whitespace-nowrap w-[85px]">Payment</th>
+              <th className="whitespace-nowrap w-[140px]">Status</th>
+              <th className="hidden lg:table-cell whitespace-nowrap w-[105px]">Date</th>
+              <th className="whitespace-nowrap w-[115px]">Required By</th>
+              <th className="text-right whitespace-nowrap w-[115px]">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -113,15 +153,7 @@ export function AdminOrdersTable({
                     className="admin-table-row-clickable group transition-colors"
                     onClick={() => openOrderDrawer(o)}
                   >
-                    <td className="relative overflow-hidden font-semibold text-[var(--admin-text-primary)] pl-7">
-                      {/* Top-Left Diagonal Status Badge */}
-                      <div className="absolute top-0 left-0 w-14 h-14 pointer-events-none z-10 overflow-hidden">
-                        <div
-                          className={`absolute top-2.5 -left-8 w-28 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wide ${getStatusBadgeStyle(o.status)}`}
-                        >
-                          {o.status}
-                        </div>
-                      </div>
+                    <td className="font-semibold text-[var(--admin-text-primary)]">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           #{o.id.substring(o.id.length - 8).toUpperCase()}
@@ -145,37 +177,43 @@ export function AdminOrdersTable({
                         )}
                       </div>
                     </td>
-                    <td>
+                    <td className="min-w-[120px] max-w-[150px]">
                       <div className="flex flex-col">
                         <span
-                          className="font-semibold text-[var(--admin-text-primary)] truncate max-w-[150px]"
+                          className="font-semibold text-[var(--admin-text-primary)] truncate max-w-[140px] text-[13px]"
                           title={o.customer || o.shippingAddress?.name || 'User'}
                         >
                           {o.customer || o.shippingAddress?.name || 'User'}
                         </span>
-                        <span className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[12px]">call</span>
-                          {o.phone || o.shippingAddress?.phone || 'N/A'}
+                        <span className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5 flex items-center gap-1.5 truncate">
+                          <span className="w-3.5 flex items-center justify-center shrink-0">
+                            <span className="material-symbols-outlined text-[13px]">call</span>
+                          </span>
+                          <span className="truncate">
+                            {o.phone || o.shippingAddress?.phone || 'N/A'}
+                          </span>
                         </span>
                         {(o.address || o.shippingAddress?.address) && (
-                          <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1.5 flex items-start gap-1 leading-tight max-w-[150px]">
-                            <span className="material-symbols-outlined text-[11px] mt-0.5 shrink-0">
-                              location_on
+                          <span className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5 flex items-center gap-1.5 leading-tight max-w-[140px]">
+                            <span className="w-3.5 flex items-center justify-center shrink-0">
+                              <span className="material-symbols-outlined text-[13px]">
+                                location_on
+                              </span>
                             </span>
-                            <span className="truncate whitespace-normal line-clamp-2">
-                              {o.address || o.shippingAddress?.address}
-                              {o.shippingAddress?.city || o.city
-                                ? `, ${o.shippingAddress?.city || o.city}`
-                                : ''}
+                            <span className="truncate whitespace-normal line-clamp-1">
+                              {o.shippingAddress?.city ||
+                                o.city ||
+                                o.address ||
+                                o.shippingAddress?.address}
                             </span>
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="hidden md:table-cell max-w-[350px] py-3 pr-4">
-                      <div className="flex items-center gap-3 w-full">
+                    <td className="hidden md:table-cell w-[145px] max-w-[150px] py-2.5">
+                      <div className="flex items-center gap-2 w-full overflow-hidden">
                         <div className="flex items-center -space-x-2 shrink-0">
-                          {o.items.slice(0, 3).map((item, idx) => {
+                          {o.items.slice(0, 2).map((item, idx) => {
                             const imgSrc =
                               item.image ||
                               item.images?.[0] ||
@@ -186,19 +224,23 @@ export function AdminOrdersTable({
                                 key={idx}
                                 src={imgSrc}
                                 alt={item.name}
-                                className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm bg-gray-100 relative"
+                                className="w-9 h-9 rounded-[6px] object-cover border border-white dark:border-stone-800 shadow-xs bg-stone-100 dark:bg-stone-800 relative shrink-0"
                                 style={{ zIndex: 10 - idx }}
+                                onError={(e) => {
+                                  e.target.src =
+                                    'https://placehold.co/100x100/f3f4f6/a1a1aa?text=Image';
+                                }}
                               />
                             );
                           })}
-                          {o.items.length > 3 && (
-                            <div className="w-8 h-8 rounded-full bg-[var(--admin-surface-muted)] border-2 border-white shadow-sm flex items-center justify-center text-[10px] font-black text-[var(--admin-text-primary)] relative z-0">
-                              +{o.items.length - 3}
+                          {o.items.length > 2 && (
+                            <div className="w-9 h-9 rounded-[6px] bg-[var(--admin-surface-muted)] border border-white dark:border-stone-800 shadow-xs flex items-center justify-center text-[10px] font-black text-[var(--admin-text-primary)] relative z-0 shrink-0">
+                              +{o.items.length - 2}
                             </div>
                           )}
                         </div>
                         <span
-                          className="text-[12.5px] font-medium text-[var(--admin-text-secondary)] leading-snug line-clamp-2"
+                          className="text-[12px] font-medium text-[var(--admin-text-secondary)] leading-tight truncate max-w-[85px]"
                           title={o.items
                             .map((i) => `${i.name} (x${i.qty || i.quantity || 1})`)
                             .join(', ')}
@@ -209,40 +251,38 @@ export function AdminOrdersTable({
                         </span>
                       </div>
                     </td>
-                    <td className="font-bold text-[var(--admin-text-primary)]">
+                    <td className="font-bold text-[var(--admin-text-primary)] whitespace-nowrap">
                       <div className="flex flex-col items-start">
                         <span>{formatCurrency(o.total)}</span>
                         {isVip && (
-                          <span className="admin-badge admin-badge-neutral text-[8px] mt-1 p-0.5 px-1 font-extrabold uppercase bg-[var(--admin-surface-muted)]">
-                            VIP Collection
+                          <span className="admin-badge admin-badge-neutral text-[8px] mt-0.5 p-0.5 px-1 font-extrabold uppercase bg-[var(--admin-surface-muted)]">
+                            VIP
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="hidden sm:table-cell">
+                    <td className="hidden sm:table-cell whitespace-nowrap">
                       <span className="admin-badge admin-badge-neutral uppercase text-[9px] tracking-wider font-bold">
                         {o.payment}
                       </span>
                     </td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={o.status}
-                        onChange={(e) => updateOrderStatus(o.id, e.target.value)}
-                        className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-1 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border-strong)] bg-white/80 backdrop-blur-sm text-[var(--admin-text-primary)] cursor-pointer outline-none shadow-sm"
-                      >
-                        {allStatuses.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
+                    <td
+                      className="w-[150px] whitespace-nowrap"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <AdminStatusDropdown
+                        status={o.status}
+                        options={allStatuses}
+                        onChange={(newStatus) => handleStatusChange(o, newStatus)}
+                        loading={updatingStatusId === o.id}
+                      />
                     </td>
-                    <td className="hidden lg:table-cell text-[var(--admin-text-secondary)]">
-                      {o.date}
+                    <td className="hidden lg:table-cell text-[var(--admin-text-secondary)] text-[12px] whitespace-nowrap w-[105px]">
+                      {formatDateDMY(o.date)}
                     </td>
-                    <td>
+                    <td className="whitespace-nowrap w-[115px]">
                       {o.needByDate ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[var(--admin-radius-sm)] bg-[var(--admin-info-light)] text-[var(--admin-info)] border border-[var(--admin-info-border)] text-[10px] font-bold uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-[var(--admin-info-light)] text-[var(--admin-info)] border border-[var(--admin-info-border)] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
                           <span className="material-symbols-outlined text-[12px]">
                             calendar_today
                           </span>
@@ -255,43 +295,45 @@ export function AdminOrdersTable({
                         <span className="text-[var(--admin-text-tertiary)]">—</span>
                       )}
                     </td>
-                    <td className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td
+                      className="text-right whitespace-nowrap w-[115px]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-end gap-1 w-[104px] ml-auto">
                         <button
+                          type="button"
                           onClick={() => openOrderDrawer(o)}
-                          className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
+                          className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] p-0 !rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-bg-subtle)] transition-colors flex items-center justify-center shrink-0 cursor-pointer"
                           title="Quick Details"
                         >
-                          <span className="material-symbols-outlined text-[16px]">visibility</span>
+                          <span className="material-symbols-outlined text-[17px]">visibility</span>
                         </button>
                         <button
-                          onClick={() => navigate(`/admin/orders/${o.id}`)}
-                          className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
-                          title="Full Invoice"
+                          type="button"
+                          onClick={() => setInvoiceOrder(o.rawOrder || o)}
+                          className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] p-0 !rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-accent)] hover:bg-[var(--admin-bg-subtle)] transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                          title="View Invoice"
                         >
-                          <span className="material-symbols-outlined text-[16px]">
+                          <span className="material-symbols-outlined text-[17px]">
                             receipt_long
                           </span>
                         </button>
-                        <a
-                          href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${o.phone.replace(/[^0-9]/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-success)]"
-                          title="WhatsApp"
-                        >
-                          <WhatsAppIcon className="w-[16px] h-[16px]" />
-                        </a>
                         {['Cancelled', 'Returned', 'Refunded', 'Exchanged', 'Delivered'].includes(
                           o.status,
-                        ) && (
+                        ) ? (
                           <button
+                            type="button"
                             onClick={() => setOrderToDelete(o)}
-                            className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)]"
+                            className="admin-btn-icon w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] p-0 !rounded-[4px] text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] transition-colors flex items-center justify-center shrink-0 cursor-pointer"
                             title="Move to Recycle Bin"
                           >
-                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                            <span className="material-symbols-outlined text-[17px]">delete</span>
                           </button>
+                        ) : (
+                          <div
+                            className="w-8 h-8 min-w-[32px] max-w-[32px] min-h-[32px] max-h-[32px] shrink-0 pointer-events-none"
+                            aria-hidden="true"
+                          />
                         )}
                       </div>
                     </td>
@@ -303,9 +345,10 @@ export function AdminOrdersTable({
         </table>
       </div>
 
-      <div className="flex md:hidden flex-col gap-3 px-1 py-3">
+      {/* Mobile Cards View */}
+      <div className="flex md:hidden flex-col gap-3 px-0.5 py-1 pb-12">
         {filteredOrders.length === 0 ? (
-          <div className="py-10 text-center flex flex-col items-center justify-center bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)]">
+          <div className="py-10 text-center flex flex-col items-center justify-center bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)]">
             <EmptyState
               icon={searchQuery || filterStatus !== 'All' ? 'search_off' : 'shopping_bag'}
               title={searchQuery || filterStatus !== 'All' ? 'No Matches Found' : 'No Orders Yet'}
@@ -337,154 +380,520 @@ export function AdminOrdersTable({
         ) : (
           filteredOrders.map((o) => {
             const isNew = o.date && o.date.includes('Today');
+            const isExpanded = expandedCardIds.has(o.id);
+            const isVip = o.total >= 15000;
+            const firstItem = o.items?.[0] || {};
+            const firstImg =
+              firstItem.image || firstItem.images?.[0] || firstItem.thumbnail || '/placeholder.png';
+            const isPaid = ['Paid', 'PAID', 'COD Collected'].includes(o.payment);
+
             return (
               <div
                 key={o.id}
                 onClick={() => openOrderDrawer(o)}
-                className="bg-[var(--admin-surface)] rounded-md p-4 border border-[var(--admin-border)] shadow-sm hover:border-[var(--admin-border-strong)] hover:shadow-md transition-all duration-200 cursor-pointer group text-left flex flex-col relative overflow-hidden"
+                className="relative overflow-hidden rounded-[4px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 cursor-pointer hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm transition-all"
               >
-                {/* Top-Left Diagonal Status Badge */}
-                <div className="absolute top-0 left-0 w-14 h-14 pointer-events-none z-10 overflow-hidden rounded-tl-md">
-                  <div
-                    className={`absolute top-2.5 -left-8 w-28 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wide ${getStatusBadgeStyle(o.status)}`}
-                  >
-                    {o.status}
+                {/* Header: Order ID + Tag + Customer + Status Pill */}
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
+                        #{o.orderCode || o.id.substring(o.id.length - 8).toUpperCase()}
+                      </span>
+                      {o.orderType && o.orderType !== 'purchase' && (
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                            o.orderType === 'rental'
+                              ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:border-indigo-800'
+                              : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800'
+                          }`}
+                        >
+                          {o.orderType}
+                        </span>
+                      )}
+                      {isVip && (
+                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 uppercase">
+                          VIP
+                        </span>
+                      )}
+                      {isNew && (
+                        <span
+                          className="w-1.5 h-1.5 rounded-full bg-[var(--admin-accent)] animate-ping"
+                          title="Recent order"
+                        />
+                      )}
+                    </div>
+                    <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] block mt-0.5 truncate">
+                      {o.customer || o.shippingAddress?.name || 'Customer'}
+                    </span>
                   </div>
+                  <AdminStatusPill status={o.status} className="shrink-0" />
                 </div>
 
-                <div className="flex items-center justify-between mb-3 pl-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[15px] font-bold text-gray-900">
-                      #{o.id.substring(o.id.length - 8).toUpperCase()}
-                    </span>
-                    {o.orderType && o.orderType !== 'purchase' && (
-                      <span
-                        className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                          o.orderType === 'rental'
-                            ? 'bg-indigo-100 text-indigo-700'
-                            : 'bg-purple-100 text-purple-700'
-                        }`}
-                      >
-                        {o.orderType}
+                {/* Product Item Box */}
+                <div className="bg-[#FAF9F5] dark:bg-stone-800/60 p-2.5 rounded-[4px] border border-stone-200/80 dark:border-stone-700/60 flex items-center gap-2.5">
+                  <img
+                    src={firstImg}
+                    alt=""
+                    className="w-11 h-11 rounded-[4px] object-cover border border-stone-200 bg-white shrink-0 shadow-2xs"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.src = '/placeholder.png';
+                    }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[9px] font-extrabold text-amber-700 uppercase tracking-wider block leading-tight">
+                        ORDER ITEM
+                      </span>
+                      {o.items?.length > 1 && (
+                        <span className="text-[9px] font-bold text-stone-500 bg-white dark:bg-stone-700 px-1.5 py-0.5 rounded border border-stone-200 dark:border-stone-600 shrink-0">
+                          +{o.items.length - 1} more
+                        </span>
+                      )}
+                    </div>
+                    <p
+                      className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate mt-0.5"
+                      title={firstItem.name}
+                    >
+                      {firstItem.name || 'Order Item'}
+                      <span className="ml-1 text-[var(--admin-text-secondary)] font-medium">
+                        (x{firstItem.qty || firstItem.quantity || 1})
+                      </span>
+                    </p>
+                    {o.needByDate ? (
+                      <span className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold truncate block mt-0.5 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[12px]">
+                          calendar_today
+                        </span>
+                        Required by{' '}
+                        {new Date(o.needByDate).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-stone-500 dark:text-stone-400 truncate block mt-0.5">
+                        {o.items?.length || 1} item{o.items?.length > 1 ? 's' : ''} in this order
                       </span>
                     )}
                   </div>
-                  <div className="relative inline-block">
-                    <select
-                      value={o.status}
-                      onChange={(e) => {
-                        updateOrderStatus(o.id, e.target.value);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="appearance-none bg-white border border-[#E0E2D9] text-gray-900 text-[10px] font-bold uppercase tracking-wider rounded-[6px] py-1.5 pl-3 pr-8 cursor-pointer shadow-sm outline-none"
-                    >
-                      {allStatuses.map((st) => (
-                        <option key={st} value={st}>
-                          {st}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-900">
-                      <svg
-                        className="h-[14px] w-[14px]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="3"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="flex items-center gap-4 mb-2 text-gray-800">
-                  <span className="text-[12px] font-medium uppercase tracking-wide truncate max-w-[140px]">
-                    {o.customer || o.shippingAddress?.name || 'User'}
-                  </span>
-                  <div className="flex items-center gap-1.5 text-[12px] font-medium">
-                    <span className="material-symbols-outlined text-[15px]">call</span>
-                    {(o.phone || o.shippingAddress?.phone || 'N/A').replace('+91', '').trim()}
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-1.5 mb-4 text-gray-800">
-                  <span className="material-symbols-outlined text-[15px] mt-0.5 shrink-0">
-                    location_on
-                  </span>
-                  <span className="text-[11px] leading-snug line-clamp-2">
-                    {o.address || o.shippingAddress?.address || 'Address not provided'}
-                  </span>
-                </div>
-
-                <div className="border-y border-black/5 py-3 mb-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex items-center -space-x-1 shrink-0">
-                      {o.items.slice(0, 3).map((item, idx) => {
-                        const imgSrc =
-                          item.image || item.images?.[0] || item.thumbnail || '/placeholder.png';
-                        return (
-                          <img
-                            key={idx}
-                            src={imgSrc}
-                            alt=""
-                            className="w-[34px] h-[34px] rounded-md object-cover border border-white shadow-sm bg-gray-100 z-10"
-                            style={{ zIndex: 3 - idx }}
-                          />
-                        );
-                      })}
-                      {o.items.length > 3 && (
-                        <div className="w-[34px] h-[34px] rounded-md bg-gray-200 border border-white shadow-sm flex items-center justify-center text-[9px] font-bold z-0">
-                          +{o.items.length - 3}
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-[11px] text-gray-800 leading-snug line-clamp-2 mt-0.5">
-                      {o.items.map((i) => `${i.name} (x${i.qty || i.quantity || 1})`).join(', ')}
+                {/* Financial Total & Payment Strip */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5 text-xs">
+                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                    <span className="text-[11px] text-[var(--admin-text-secondary)] font-medium">
+                      Total:
+                    </span>
+                    <span className="font-extrabold text-[var(--admin-text-primary)] text-[13px] whitespace-nowrap">
+                      {formatCurrency(o.total)}
                     </span>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between mt-auto pt-1">
-                  <span className="text-[15px] font-bold text-gray-900">
-                    {o.total >= 1000 ? `₹${(o.total / 1000).toFixed(1)}K` : formatCurrency(o.total)}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-[4px] bg-[var(--admin-bg)] border border-[var(--admin-border)] text-gray-800 shadow-sm">
+                  <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                    <span
+                      className={`inline-flex items-center gap-1 h-[22px] text-[9.5px] font-bold uppercase tracking-wider px-2 rounded-[4px] border whitespace-nowrap shrink-0 leading-none ${
+                        isPaid
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-amber-50 text-amber-800 border-amber-200'
+                      }`}
+                    >
+                      {isPaid && (
+                        <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                      )}
                       {o.payment || 'COD PENDING'}
                     </span>
-
-                    <button
-                      className="text-gray-700 hover:text-red-600 transition-colors ml-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOrderToDelete(o);
-                      }}
-                      title="Delete Order"
-                    >
-                      <span className="material-symbols-outlined text-[20px]">delete</span>
-                    </button>
-
-                    <button
-                      className="text-gray-700 hover:text-black transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openOrderDrawer(o);
-                      }}
-                    >
-                      <span className="material-symbols-outlined text-[20px]">visibility</span>
-                    </button>
                   </div>
                 </div>
+
+                {/* Status Action Section:
+                    - When Pending: show APPROVE ORDER & CANCEL buttons + Details toggle
+                    - When Confirmed/other: Symmetrical 2-column grid (36px height, 50% width each)
+                */}
+                {o.status === 'Pending' ? (
+                  <div
+                    className="flex items-center justify-between pt-2 border-t border-stone-200/70 dark:border-stone-700/60 gap-2 w-full"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      {/* APPROVE ORDER Button (Emerald with 4px radius) */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApproveOrder(o);
+                        }}
+                        disabled={updatingStatusId === o.id}
+                        className="flex-1 min-w-0 h-9 rounded-[4px] bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 px-3 shadow-2xs cursor-pointer border-0 disabled:opacity-50"
+                      >
+                        {updatingStatusId === o.id ? (
+                          <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                        ) : (
+                          <span className="material-symbols-outlined text-[16px] shrink-0">
+                            check_circle
+                          </span>
+                        )}
+                        <span className="truncate">Approve Order</span>
+                      </button>
+
+                      {/* CANCEL Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancelOrder(o);
+                        }}
+                        disabled={updatingStatusId === o.id}
+                        className="h-9 px-3 rounded-[4px] border border-red-200 text-red-700 bg-white hover:bg-red-50 active:scale-95 text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1 cursor-pointer shadow-2xs shrink-0 disabled:opacity-50"
+                      >
+                        <span className="material-symbols-outlined text-[16px] text-red-600">
+                          cancel
+                        </span>
+                        <span>Cancel</span>
+                      </button>
+                    </div>
+
+                    {/* Details Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpandCard(o.id);
+                      }}
+                      className={`h-9 px-2.5 rounded-[4px] border text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-2xs shrink-0 ${
+                        isExpanded
+                          ? 'border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200'
+                          : 'border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50'
+                      }`}
+                      title="Toggle Order Details"
+                    >
+                      <span>{isExpanded ? 'Hide' : 'Details'}</span>
+                      <span className="material-symbols-outlined text-[16px] shrink-0 text-stone-500">
+                        {isExpanded ? 'expand_less' : 'expand_more'}
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    className="flex items-center gap-2 pt-2 border-t border-stone-200/70 dark:border-stone-700/60 w-full"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="text-[10px] uppercase font-bold text-stone-500 dark:text-stone-400 shrink-0">
+                      Status:
+                    </span>
+
+                    {/* Symmetrical 2-Column Grid: Exact Equal Width & Height for both Status Dropdown and Details Button */}
+                    <div className="grid grid-cols-2 gap-2 flex-1 min-w-0">
+                      {/* Box 1: Status Dropdown */}
+                      <div className="relative w-full h-9">
+                        <select
+                          value={o.status || 'Confirmed'}
+                          onChange={(e) => handleStatusChange(o, e.target.value)}
+                          disabled={updatingStatusId === o.id}
+                          style={{ backgroundImage: 'none' }}
+                          className="admin-no-arrow w-full h-9 !min-h-[36px] !max-h-[36px] !appearance-none !bg-none bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 border border-stone-300 dark:border-stone-600 text-stone-800 dark:text-stone-200 text-[11px] font-bold rounded-[4px] pl-2.5 pr-7 cursor-pointer shadow-2xs outline-none focus:border-amber-500 transition-colors disabled:opacity-50 truncate"
+                        >
+                          {allStatuses.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-stone-500">
+                          {updatingStatusId === o.id ? (
+                            <span className="w-3.5 h-3.5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <span className="material-symbols-outlined text-[16px]">
+                              expand_more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Box 2: Details Toggle Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExpandCard(o.id);
+                        }}
+                        className={`w-full h-9 !min-h-[36px] !max-h-[36px] rounded-[4px] border text-[11px] font-bold flex items-center justify-between px-2.5 transition-colors cursor-pointer shadow-2xs ${
+                          isExpanded
+                            ? 'border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200'
+                            : 'border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50'
+                        }`}
+                        title="Toggle Order Details"
+                      >
+                        <span className="truncate">{isExpanded ? 'Hide' : 'Details'}</span>
+                        <span className="material-symbols-outlined text-[16px] shrink-0 text-stone-500">
+                          {isExpanded ? 'expand_less' : 'expand_more'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Expandable Details Panel */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      key={`expanded-${o.id}`}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div
+                        className="pt-2 border-t border-dashed border-stone-200 dark:border-stone-700 flex flex-col gap-2 text-xs"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* Customer Contact: Equally aligned 2-column grid matching controls sideways */}
+                        <div className="grid grid-cols-2 gap-2 items-center text-[11px] text-stone-600 dark:text-stone-300 bg-stone-50 dark:bg-stone-800/50 px-2.5 py-2 rounded-[4px] border border-stone-200/60 dark:border-stone-700/60">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="material-symbols-outlined !text-[15px] !leading-none text-stone-400 shrink-0 select-none">
+                              call
+                            </span>
+                            <a
+                              href={`tel:${o.phone || o.shippingAddress?.phone || ''}`}
+                              className="font-semibold text-stone-800 dark:text-stone-200 hover:underline truncate leading-tight inline-flex items-center"
+                            >
+                              {(o.phone || o.shippingAddress?.phone || 'No phone')
+                                .replace('+91', '')
+                                .trim()}
+                            </a>
+                          </div>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <WhatsAppIcon className="w-3.5 h-3.5 shrink-0 text-[#25D366]" />
+                            <a
+                              href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${(o.phone || o.shippingAddress?.phone || '').replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline truncate leading-tight inline-flex items-center"
+                            >
+                              WhatsApp
+                            </a>
+                          </div>
+                        </div>
+
+                        {/* Delivery Address */}
+                        {(o.address || o.shippingAddress?.address) && (
+                          <div className="text-[11px] bg-stone-50 dark:bg-stone-800 p-2 rounded-[4px] border border-stone-200/70 dark:border-stone-700/70 flex items-start gap-1.5">
+                            <span className="material-symbols-outlined text-[14px] mt-0.5 text-stone-400 shrink-0">
+                              location_on
+                            </span>
+                            <div className="text-stone-700 dark:text-stone-300 leading-snug">
+                              <span className="font-bold text-stone-900 dark:text-stone-100">
+                                Address:
+                              </span>{' '}
+                              {o.address || o.shippingAddress?.address}
+                              {o.shippingAddress?.city || o.city
+                                ? `, ${o.shippingAddress?.city || o.city}`
+                                : ''}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Order Items List (if multiple) */}
+                        {o.items?.length > 1 && (
+                          <div className="bg-stone-50 dark:bg-stone-800/60 p-2 rounded-[4px] border border-stone-200/60 dark:border-stone-700/60 flex flex-col gap-1 text-[10.5px]">
+                            <span className="font-bold text-stone-500 uppercase tracking-wider text-[9px]">
+                              All Items ({o.items.length})
+                            </span>
+                            {o.items.map((it, i) => (
+                              <div key={i} className="flex justify-between items-center py-0.5">
+                                <span className="truncate text-stone-800 dark:text-stone-200 font-medium max-w-[200px]">
+                                  {it.name}{' '}
+                                  <span className="text-stone-400">
+                                    x{it.qty || it.quantity || 1}
+                                  </span>
+                                </span>
+                                <span className="font-bold text-stone-700 dark:text-stone-300 shrink-0">
+                                  {it.price
+                                    ? formatCurrency(it.price * (it.qty || it.quantity || 1))
+                                    : ''}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Dates & Actions Strip */}
+                        <div className="pt-2.5 border-t border-stone-200/80 dark:border-stone-700/80 space-y-2.5">
+                          {/* Date & Meta Row */}
+                          <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400 px-0.5">
+                            <span className="flex items-center gap-1.5 font-medium">
+                              <span className="material-symbols-outlined text-[14px] text-stone-400">
+                                schedule
+                              </span>
+                              Placed on{' '}
+                              <strong className="text-stone-800 dark:text-stone-200 font-semibold">
+                                {formatDateDMY(o.date)}
+                              </strong>
+                            </span>
+                            {o.needByDate && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-[var(--admin-info-light)] text-[var(--admin-info)] border border-[var(--admin-info-border)] text-[9.5px] font-bold uppercase tracking-wider">
+                                <span className="material-symbols-outlined text-[11px]">
+                                  calendar_today
+                                </span>
+                                {new Date(o.needByDate).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                })}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Action Buttons Row */}
+                          <div
+                            className={`grid gap-2 ${
+                              [
+                                'Cancelled',
+                                'Returned',
+                                'Refunded',
+                                'Exchanged',
+                                'Delivered',
+                              ].includes(o.status)
+                                ? 'grid-cols-3'
+                                : 'grid-cols-2'
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openOrderDrawer(o);
+                              }}
+                              className="h-9 px-2.5 rounded-[4px] border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/90 hover:bg-stone-100 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 text-[11.5px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-[0.98]"
+                              title="Quick View Details"
+                            >
+                              <span className="material-symbols-outlined text-[15px] text-stone-500 dark:text-stone-400 shrink-0">
+                                visibility
+                              </span>
+                              <span className="truncate">Quick View</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setInvoiceOrder(o.rawOrder || o);
+                              }}
+                              className="h-9 px-2.5 rounded-[4px] border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/90 hover:bg-stone-100 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-200 text-[11.5px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-[0.98]"
+                              title="View & Download Invoice"
+                            >
+                              <span className="material-symbols-outlined text-[15px] text-stone-500 dark:text-stone-400 shrink-0">
+                                receipt_long
+                              </span>
+                              <span className="truncate">Invoice</span>
+                            </button>
+
+                            {[
+                              'Cancelled',
+                              'Returned',
+                              'Refunded',
+                              'Exchanged',
+                              'Delivered',
+                            ].includes(o.status) && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOrderToDelete(o);
+                                }}
+                                className="h-9 px-2.5 rounded-[4px] border border-red-200 dark:border-red-900/50 bg-red-50/70 dark:bg-red-950/30 hover:bg-red-100 text-red-600 dark:text-red-400 text-[11.5px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-[0.98]"
+                                title="Move to Recycle Bin"
+                              >
+                                <span className="material-symbols-outlined text-[15px] shrink-0">
+                                  delete
+                                </span>
+                                <span className="truncate">Delete</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })
         )}
       </div>
+
+      {/* Invoice Modal */}
+      <AnimatePresence>
+        {invoiceOrder && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setInvoiceOrder(null)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] no-print"
+            />
+            {/* Modal Container */}
+            <motion.div
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="invoice-modal-container fixed bottom-0 left-0 right-0 lg:top-0 lg:bottom-0 lg:my-auto lg:h-fit lg:rounded-[6px] mx-auto w-full max-w-[580px] max-h-[92vh] bg-[var(--admin-surface)] rounded-t-[6px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-outline-variant/30 z-[101] overflow-y-auto custom-scrollbar pt-2.5 pb-2 px-3 sm:pt-3 sm:pb-2.5 sm:px-4 print:static print:translate-x-0 print:translate-y-0 print:h-auto print:max-w-none print:shadow-none print:bg-white print:p-0 print:border-none"
+            >
+              <style type="text/css" media="print">
+                {`
+                  @page { size: A4 portrait; margin: 10mm; }
+                  html, body { 
+                    height: 100vh !important; 
+                    overflow: hidden !important; 
+                    margin: 0 !important; 
+                    padding: 0 !important;
+                  }
+                  body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white !important; }
+                  body * { visibility: hidden !important; }
+                  .invoice-modal-container {
+                    position: fixed !important;
+                    left: 0 !important;
+                    top: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    transform: none !important;
+                    overflow: hidden !important;
+                    background: transparent !important;
+                    box-shadow: none !important;
+                  }
+                  .print-invoice-area, .print-invoice-area * {
+                    visibility: visible !important;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+                  }
+                  .print-invoice-area .font-mono {
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+                  }
+                  .print-invoice-area {
+                    position: static !important;
+                    width: 540px !important;
+                    max-width: 540px !important;
+                    margin: 0 auto !important;
+                    padding: 16px !important;
+                    box-shadow: none !important;
+                    border: 1px solid #e5e7eb !important;
+                    background: white !important;
+                    overflow: visible !important;
+                  }
+                  .no-print, .no-print * { display: none !important; }
+                `}
+              </style>
+              <InvoiceTemplate
+                order={invoiceOrder}
+                onClose={() => setInvoiceOrder(null)}
+                isAdmin={true}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <DeleteConfirmModal
         isOpen={!!orderToDelete}

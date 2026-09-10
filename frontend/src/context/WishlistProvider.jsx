@@ -73,7 +73,7 @@ export function WishlistProvider({ children }) {
         // Instant feedback for removal
         toast.success('Removed from Wishlist');
       } else {
-        updatedWishlist = [...previousWishlist, product];
+        updatedWishlist = [product, ...previousWishlist];
         // Trigger heart animation instantly on optimistic update
         setShowHeartOverlay(true);
         setTimeout(() => setShowHeartOverlay(false), 1200);

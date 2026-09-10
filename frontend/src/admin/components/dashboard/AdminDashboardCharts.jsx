@@ -12,7 +12,19 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
-import { ChartCard, ChartTooltip, formatCurrency } from '../AdminUIKit';
+import { ChartTooltip, formatCurrency } from '../AdminUIKit';
+
+// Curated Luxury Cream & Ivory Decor Palette
+const PALETTE = [
+  '#5a7d9a', // Warm Slate Blue
+  '#826237', // Heritage Gold
+  '#58856b', // Deep Sage Olive
+  '#b8647c', // Dusty Antique Rose
+  '#c2944b', // Warm Ochre
+  '#47828d', // Mineral Teal
+  '#7d6899', // Royal Amethyst
+  '#b86a51', // Terracotta Clay
+];
 
 export function AdminDashboardCharts({
   orders,
@@ -24,26 +36,32 @@ export function AdminDashboardCharts({
   return (
     <>
       {/* Charts Row */}
-      <div className="admin-grid-charts">
-        {/* Revenue Chart */}
-        <ChartCard
-          title="Sales Overview"
-          subtitle="Monthly sales & order trends"
-          legend={
-            <>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Sales Overview (2 Cols on Desktop) */}
+        <div className="admin-card lg:col-span-2 p-4 sm:p-5 !rounded-[4px] border border-[var(--admin-border)] shadow-xs flex flex-col justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-[var(--admin-border-subtle)]">
+            <div>
+              <h3 className="text-[13.5px] sm:text-[14px] font-bold text-[var(--admin-text-primary)]">
+                Sales Overview
+              </h3>
+              <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5">
+                Monthly revenue and volume trajectory
+              </p>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] font-semibold text-[var(--admin-text-secondary)]">
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
-                Sales
+                <span className="w-2.5 h-2.5 rounded-[2px] bg-[#5a7d9a]" />
+                Revenue
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[var(--admin-border-strong)]" />
+                <span className="w-2.5 h-2.5 rounded-[2px] bg-[#c2944b]" />
                 Orders
               </span>
-            </>
-          }
-        >
+            </div>
+          </div>
+
           {orders.length === 0 ? (
-            <div className="h-[280px] flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
+            <div className="h-[280px] flex flex-col items-center justify-center bg-[var(--admin-surface-muted)] rounded-[4px] border border-dashed border-[var(--admin-border)]">
               <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
                 analytics
               </span>
@@ -55,12 +73,12 @@ export function AdminDashboardCharts({
             <ResponsiveContainer width="100%" height={isMobile ? 220 : 280}>
               <AreaChart
                 data={revenueChartData}
-                margin={{ top: 10, right: 0, left: -20, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: isMobile ? -20 : -5, bottom: 0 }}
               >
                 <defs>
-                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--admin-accent)" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="var(--admin-accent)" stopOpacity={0} />
+                  <linearGradient id="colorSalesModern" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#5a7d9a" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#5a7d9a" stopOpacity={0.01} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
@@ -70,13 +88,13 @@ export function AdminDashboardCharts({
                 />
                 <XAxis
                   dataKey="month"
-                  tick={{ fontSize: 10, fill: 'var(--admin-text-tertiary)' }}
+                  tick={{ fontSize: 10.5, fill: 'var(--admin-text-tertiary)' }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   hide={isMobile}
-                  tick={{ fontSize: 10, fill: 'var(--admin-text-tertiary)' }}
+                  tick={{ fontSize: 10.5, fill: 'var(--admin-text-tertiary)' }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={formatCurrency}
@@ -85,29 +103,38 @@ export function AdminDashboardCharts({
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="var(--admin-accent)"
-                  fill="url(#colorSales)"
+                  stroke="#5a7d9a"
+                  fill="url(#colorSalesModern)"
                   strokeWidth={2}
-                  name="Sales"
+                  name="Revenue"
                 />
                 <Area
                   type="monotone"
                   dataKey="orders"
-                  stroke="var(--admin-border-strong)"
+                  stroke="#c2944b"
                   fill="transparent"
                   strokeWidth={1.5}
-                  strokeDasharray="4 4"
+                  strokeDasharray="3 3"
                   name="Orders"
                 />
               </AreaChart>
             </ResponsiveContainer>
           )}
-        </ChartCard>
+        </div>
 
-        {/* Category Performance */}
-        <ChartCard title="Top Categories" subtitle="Sales distribution by category">
+        {/* Category Performance (1 Col on Desktop) */}
+        <div className="admin-card p-4 sm:p-5 !rounded-[4px] border border-[var(--admin-border)] shadow-xs flex flex-col justify-between">
+          <div className="mb-4 pb-3 border-b border-[var(--admin-border-subtle)]">
+            <h3 className="text-[13.5px] sm:text-[14px] font-bold text-[var(--admin-text-primary)]">
+              Top Categories
+            </h3>
+            <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5">
+              Sales distribution by category
+            </p>
+          </div>
+
           {categoryChartData.length === 0 ? (
-            <div className="h-[240px] flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
+            <div className="h-[240px] flex flex-col items-center justify-center bg-[var(--admin-surface-muted)] rounded-[4px] border border-dashed border-[var(--admin-border)]">
               <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
                 pie_chart
               </span>
@@ -117,57 +144,76 @@ export function AdminDashboardCharts({
             </div>
           ) : (
             <>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie
                     data={categoryChartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={80}
+                    innerRadius={50}
+                    outerRadius={75}
                     dataKey="value"
-                    paddingAngle={2}
+                    paddingAngle={3}
                     strokeWidth={0}
                   >
                     {categoryChartData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
+                      <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
                     ))}
                   </Pie>
                   <Tooltip content={<ChartTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="space-y-2.5 mt-4">
+              <div className="space-y-2 mt-3 pt-3 border-t border-[var(--admin-border-subtle)]">
                 {categoryChartData.slice(0, 4).map((cat, i) => (
-                  <div key={i} className="flex items-center justify-between text-[11px]">
-                    <span className="flex items-center gap-2">
+                  <div key={i} className="flex items-center justify-between text-[11.5px]">
+                    <span className="flex items-center gap-2 min-w-0">
                       <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: cat.fill }}
+                        className="w-2.5 h-2.5 rounded-[2px] shrink-0"
+                        style={{ backgroundColor: PALETTE[i % PALETTE.length] }}
                       />
-                      <span className="text-[var(--admin-text-secondary)] font-medium truncate max-w-[120px]">
+                      <span className="text-[var(--admin-text-secondary)] font-medium truncate max-w-[130px]">
                         {cat.name}
                       </span>
                     </span>
-                    <span className="font-bold text-[var(--admin-text-primary)]">{cat.value}%</span>
+                    <span className="font-bold text-[var(--admin-text-primary)] font-mono">
+                      {cat.value}%
+                    </span>
                   </div>
                 ))}
               </div>
             </>
           )}
-        </ChartCard>
+        </div>
       </div>
 
-      {/* Weekly Order & Sales Volume Chart */}
-      <ChartCard
-        title="Weekly Order Velocity"
-        subtitle="Orders and sales this week"
-        className="p-4 sm:p-6"
-      >
-        <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
+      {/* Weekly Order & Sales Volume Velocity */}
+      <div className="admin-card p-4 sm:p-5 !rounded-[4px] border border-[var(--admin-border)] shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-[var(--admin-border-subtle)]">
+          <div>
+            <h3 className="text-[13.5px] sm:text-[14px] font-bold text-[var(--admin-text-primary)]">
+              Weekly Order Velocity
+            </h3>
+            <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5">
+              Daily customer orders and product volume over the past 7 days
+            </p>
+          </div>
+          <div className="flex items-center gap-3 text-[11px] font-semibold text-[var(--admin-text-secondary)]">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-[2px] bg-[#5a7d9a]" />
+              Orders Placed
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-[2px] bg-[#826237]" />
+              Products Sold
+            </span>
+          </div>
+        </div>
+
+        <ResponsiveContainer width="100%" height={isMobile ? 180 : 210}>
           <BarChart
             data={weeklyOrderStats}
             barGap={isMobile ? 4 : 6}
-            margin={{ top: 10, right: 5, left: isMobile ? -20 : -10, bottom: 0 }}
+            margin={{ top: 10, right: 10, left: isMobile ? -20 : -10, bottom: 0 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -176,34 +222,24 @@ export function AdminDashboardCharts({
             />
             <XAxis
               dataKey="day"
-              tick={{ fontSize: 10, fill: 'var(--admin-text-tertiary)' }}
+              tick={{ fontSize: 10.5, fill: 'var(--admin-text-tertiary)' }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
               hide={isMobile}
               allowDecimals={false}
-              tick={{ fontSize: 10, fill: 'var(--admin-text-tertiary)' }}
+              tick={{ fontSize: 10.5, fill: 'var(--admin-text-tertiary)' }}
               axisLine={false}
               tickLine={false}
               width={25}
             />
             <Tooltip content={<ChartTooltip />} />
-            <Bar
-              dataKey="ordersCount"
-              fill="var(--admin-accent)"
-              radius={[4, 4, 0, 0]}
-              name="Orders Placed"
-            />
-            <Bar
-              dataKey="itemsCount"
-              fill="var(--admin-border-strong)"
-              radius={[4, 4, 0, 0]}
-              name="Products Sold"
-            />
+            <Bar dataKey="ordersCount" fill="#5a7d9a" radius={[3, 3, 0, 0]} name="Orders Placed" />
+            <Bar dataKey="itemsCount" fill="#826237" radius={[3, 3, 0, 0]} name="Products Sold" />
           </BarChart>
         </ResponsiveContainer>
-      </ChartCard>
+      </div>
     </>
   );
 }

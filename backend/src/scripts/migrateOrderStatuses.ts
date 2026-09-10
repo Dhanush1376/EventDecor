@@ -2,9 +2,13 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Order from '../models/Order'; // Assuming this is exported or we can just import the connection
 
+import path from 'path';
+
+dotenv.config({ path: path.join(__dirname, '../../.env.local') });
 dotenv.config();
 
-const MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/eventdecor';
+const MONGO_URI =
+  process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/eventdecor';
 
 const statusMapping: Record<string, string> = {
   'Payment Pending': 'Pending',

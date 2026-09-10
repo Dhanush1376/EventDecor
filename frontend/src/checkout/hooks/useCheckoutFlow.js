@@ -82,14 +82,20 @@ export function useCheckoutFlow({
     });
   });
   const [needByDate, setNeedByDate] = useState(() => {
-    return persistentStorage.getItem('siri_checkout_need_by_date', { session: true, fallback: '' });
+    const raw = persistentStorage.getItem('siri_checkout_need_by_date', {
+      session: true,
+      fallback: '',
+    });
+    if (!raw || typeof raw !== 'string') return '';
+    if (raw.includes('T')) return raw.split('T')[0];
+    return raw.trim();
   });
 
   useEffect(() => {
     persistentStorage.setItem('siri_checkout_whatsapp_updates', sendUpdatesToWhatsApp, {
       session: true,
     });
-    persistentStorage.setItem('siri_checkout_need_by_date', needByDate, { session: true });
+    persistentStorage.setItem('siri_checkout_need_by_date', needByDate || '', { session: true });
   }, [sendUpdatesToWhatsApp, needByDate]);
 
   const [upiId, setUpiId] = useState('');

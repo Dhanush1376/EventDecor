@@ -1,15 +1,23 @@
-import React, { useState } from 'react';
-import Download from 'lucide-react/dist/esm/icons/download';
-import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
-import X from 'lucide-react/dist/esm/icons/x';
-import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
-import Info from 'lucide-react/dist/esm/icons/info';
+import { useState } from 'react';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { useRecycleBin } from '../hooks/useRecycleBin';
 import { useConfirm } from '../../context/ConfirmProvider';
 import { useAdminSecurity } from '../hooks/useAdminSecurity';
 import { recycleBinApi } from '../services/recycleBinService';
-import { m as motion } from 'framer-motion';
-import { PageHeader, EmptyState, SkeletonTable, fadeUp, stagger } from '../components/AdminUIKit';
+import { PageHeader, EmptyState, fadeUp, stagger } from '../components/AdminUIKit';
+import { AdminRecycleBinSkeleton } from '../components/skeletons/pages/AdminRecycleBinSkeleton';
+import toast from 'react-hot-toast';
+
+const ENTITY_TYPE_CONFIG = {
+  all: { label: 'All Items', icon: 'auto_awesome', variant: 'neutral' },
+  Product: { label: 'Products', icon: 'inventory_2', variant: 'info' },
+  Category: { label: 'Categories', icon: 'category', variant: 'neutral' },
+  Order: { label: 'Orders', icon: 'shopping_bag', variant: 'primary' },
+  User: { label: 'Customers', icon: 'person', variant: 'success' },
+  Review: { label: 'Reviews', icon: 'rate_review', variant: 'warning' },
+  Gallery: { label: 'Gallery', icon: 'photo_library', variant: 'neutral' },
+};
+
 const getThumbnail = (item) => {
   if (!item) return null;
   if (item.entityThumbnail) return item.entityThumbnail;
@@ -19,61 +27,27 @@ const getThumbnail = (item) => {
     item.entityData.image ||
     item.entityData.heroImage ||
     item.entityData.thumbnail ||
+    item.entityData.images?.[0] ||
     null
   );
 };
 
-const renderDetails = (data) => {
-  if (!data) return null;
-  let parsed = data;
-  if (typeof data === 'string') {
-    try {
-      parsed = JSON.parse(data);
-    } catch (e) {}
+const formatEntityValue = (val) => {
+  if (val === null || val === undefined) return '—';
+  if (typeof val === 'boolean') return val ? 'Yes' : 'No';
+  if (typeof val === 'object') {
+    if (Array.isArray(val)) return `Array (${val.length} items)`;
+    return JSON.stringify(val);
   }
-  if (typeof parsed !== 'object' || parsed === null) {
-    return <span className="text-[13px]">{String(parsed)}</span>;
-  }
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {Object.entries(parsed).map(([key, value]) => {
-        if (
-          key === '_id' ||
-          key === '__v' ||
-          key === 'createdAt' ||
-          key === 'updatedAt' ||
-          key === 'image' ||
-          key === 'imageSrc'
-        )
-          return null;
-        let displayValue = String(value);
-        if (typeof value === 'object' && value !== null) {
-          displayValue = JSON.stringify(value);
-        }
-        return (
-          <div
-            key={key}
-            className="flex flex-col gap-1 border-b border-[var(--admin-border-subtle)] pb-2"
-          >
-            <span className="text-[11px] text-[var(--admin-text-tertiary)] uppercase font-semibold tracking-wider">
-              {key}
-            </span>
-            <span className="text-[13px] text-[var(--admin-text-primary)] break-all">
-              {displayValue}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
+  return String(val);
 };
 
-const AdminRecycleBin = () => {
+export default function AdminRecycleBin() {
   const {
     items,
     stats,
-    purgePreview,
     loading,
+    totalCount,
     page,
     limit,
     filters,
@@ -96,653 +70,1051 @@ const AdminRecycleBin = () => {
   const isOwner = activeRole === 'owner';
   const confirm = useConfirm();
 
-  // Modal states
-  const [previewModal, setPreviewModal] = useState({ isOpen: false, item: null });
+  // Local UI states
+  const [searchInput, setSearchInput] = useState(filters.search || '');
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    item: null,
+    activeTab: 'data',
+  });
   const [restoreModal, setRestoreModal] = useState({ isOpen: false, item: null, conflicts: null });
-  const [deleteModal, setDeleteModal] = useState({ isOpen: false, item: null });
   const [emptyBinModal, setEmptyBinModal] = useState(false);
   const [cleanupReportModal, setCleanupReportModal] = useState({ isOpen: false, report: null });
+  const [isExporting, setIsExporting] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
 
-  // ── Render Stats ──
-  const renderStats = () => {
-    if (!stats) return null;
-    return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        <div className="admin-card p-3 sm:p-5 flex flex-col xl:flex-row items-center xl:items-start gap-2 sm:gap-4 border-t-4 xl:border-t-0 xl:border-l-4 border-[var(--admin-border)] text-center xl:text-left">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[var(--admin-surface-muted)] flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-[var(--admin-text-secondary)] text-[16px] sm:text-[20px]">
-              delete_sweep
-            </span>
-          </div>
-          <div className="w-full">
-            <p className="text-[9px] sm:text-[11px] font-bold text-[var(--admin-text-secondary)] tracking-wider uppercase mb-0.5 sm:mb-1 truncate">
-              Total Deleted
-            </p>
-            <p className="text-lg sm:text-2xl font-bold text-[var(--admin-text-primary)]">
-              {stats.totalDeleted}
-            </p>
-          </div>
-        </div>
-        <div className="admin-card p-3 sm:p-5 flex flex-col xl:flex-row items-center xl:items-start gap-2 sm:gap-4 border-t-4 xl:border-t-0 xl:border-l-4 border-emerald-500 text-center xl:text-left">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 text-emerald-600">
-            <span className="material-symbols-outlined text-[16px] sm:text-[20px]">restore</span>
-          </div>
-          <div className="w-full">
-            <p className="text-[9px] sm:text-[11px] font-bold text-[var(--admin-text-secondary)] tracking-wider uppercase mb-0.5 sm:mb-1 truncate">
-              Restored (30d)
-            </p>
-            <p className="text-lg sm:text-2xl font-bold text-[var(--admin-text-primary)]">
-              {stats.restoredThisMonth}
-            </p>
-          </div>
-        </div>
-        <div className="admin-card p-3 sm:p-5 flex flex-col xl:flex-row items-center xl:items-start gap-2 sm:gap-4 border-t-4 xl:border-t-0 xl:border-l-4 border-amber-500 text-center xl:text-left">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-50 flex items-center justify-center shrink-0 text-amber-600">
-            <span className="material-symbols-outlined text-[16px] sm:text-[20px]">schedule</span>
-          </div>
-          <div className="w-full">
-            <p className="text-[9px] sm:text-[11px] font-bold text-[var(--admin-text-secondary)] tracking-wider uppercase mb-0.5 sm:mb-1 truncate">
-              Expiring Week
-            </p>
-            <p className="text-lg sm:text-2xl font-bold text-[var(--admin-text-primary)]">
-              {stats.expiringThisWeek}
-            </p>
-          </div>
-        </div>
-        <div className="admin-card p-3 sm:p-5 flex flex-col xl:flex-row items-center xl:items-start gap-2 sm:gap-4 border-t-4 xl:border-t-0 xl:border-l-4 border-rose-500 text-center xl:text-left">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0 text-rose-600">
-            <span className="material-symbols-outlined text-[16px] sm:text-[20px]">
-              auto_delete
-            </span>
-          </div>
-          <div className="w-full">
-            <p className="text-[9px] sm:text-[11px] font-bold text-[var(--admin-text-secondary)] tracking-wider uppercase mb-0.5 sm:mb-1 truncate">
-              Auto-Purged
-            </p>
-            <p className="text-lg sm:text-2xl font-bold text-[var(--admin-text-primary)]">
-              {stats.autoPurgedThisMonth}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+  const onSearchSubmit = (e) => {
+    e.preventDefault();
   };
 
-  // ── Handlers ──
-  const handleRestoreClick = async (item) => {
+  const handleClearSearch = () => {
+    setSearchInput('');
+    handleSearchChange({ target: { value: '' } });
+  };
+
+  const handleExport = async () => {
     try {
-      // Direct optimistic restore first
-      const result = await restoreItem(item._id);
+      setIsExporting(true);
+      await recycleBinApi.exportAuditLogs();
+      toast.success('Recycle bin audit log exported successfully');
     } catch (err) {
-      if (err.message.includes('HTTP 409')) {
-        // Conflict detected, open conflict resolution modal
+      toast.error('Failed to export audit log');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Restore flow with conflict handling
+  const handleRestoreClick = async (item) => {
+    setActionLoadingId(item._id);
+    try {
+      await restoreItem(item._id);
+    } catch (err) {
+      if (err.message && err.message.includes('HTTP 409')) {
         try {
           const res = await recycleBinApi.checkConflicts(item._id);
           setRestoreModal({ isOpen: true, item, conflicts: res.data });
         } catch (e) {
-          console.error(e);
+          toast.error('Failed to verify restore dependencies');
         }
       }
-    }
-  };
-
-  const handlePermanentDeleteClick = async (item) => {
-    if (
-      await confirm({
-        title: 'Permanent Delete',
-        message: `Are you sure you want to permanently delete ${item.entityName}? This action cannot be undone.`,
-        type: 'danger',
-      })
-    ) {
-      const result = await permanentDelete(item._id);
-      if (result.success && result.report) {
-        setCleanupReportModal({ isOpen: true, report: result.report });
-      }
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
   const executeRestoreWithResolution = async (autoRename, restoreDependencies) => {
     const item = restoreModal.item;
     setRestoreModal({ isOpen: false, item: null, conflicts: null });
+    if (!item) return;
 
-    await restoreItem(item._id, { autoRenameConflicts: autoRename, restoreDependencies });
+    setActionLoadingId(item._id);
+    try {
+      await restoreItem(item._id, { autoRenameConflicts: autoRename, restoreDependencies });
+    } catch (e) {
+      toast.error('Could not auto-resolve conflict: ' + (e.message || 'Unknown error'));
+    } finally {
+      setActionLoadingId(null);
+    }
   };
 
-  // ── Render Modals ──
-  const renderPreviewModal = () => {
-    if (!previewModal.isOpen || !previewModal.item) return null;
-    const { item } = previewModal;
+  // Permanent delete flow
+  const handlePermanentDeleteClick = async (item) => {
+    const confirmed = await confirm({
+      title: 'Permanent Deletion',
+      message: `Permanently destroy "${item.entityName}"? This action bypasses the recycle bin and CANNOT be recovered.`,
+      confirmText: 'Permanently Delete',
+      type: 'danger',
+    });
 
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-        onClick={() => setPreviewModal({ isOpen: false, item: null })}
-      >
-        <div
-          className="bg-[var(--admin-surface)] w-full max-w-lg rounded-xl shadow-2xl border border-[var(--admin-border)] flex flex-col overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between p-4 border-b border-[var(--admin-border-subtle)]">
-            <h2>{item.entityName} Preview</h2>
-            <button
-              className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] transition-colors"
-              onClick={() => setPreviewModal({ isOpen: false, item: null })}
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
-          </div>
-          <div className="p-6 overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-[var(--admin-text-secondary)] text-[14px]">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="rounded-xl overflow-hidden bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center min-h-[200px]">
-                {getThumbnail(item) ? (
-                  <img
-                    src={getThumbnail(item)}
-                    className="w-full h-full object-cover"
-                    alt="Thumbnail"
-                  />
-                ) : (
-                  <div className="entity-icon-fallback" style={{ width: '100%', height: '150px' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '3rem' }}>
-                      image
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1 text-[13px]">
-                  <label>Type</label>
-                  <span>{item.entityTypeDisplay}</span>
-                </div>
-                <div className="flex flex-col gap-1 text-[13px]">
-                  <label>Deleted Date</label>
-                  <span>{new Date(item.deletedAt).toLocaleString()}</span>
-                </div>
-                <div className="flex flex-col gap-1 text-[13px]">
-                  <label>Deleted By</label>
-                  <span>{item.deletedBy?.email || 'System'}</span>
-                </div>
-                {item.deleteReason && (
-                  <div className="flex flex-col gap-1 text-[13px]">
-                    <label>Reason</label>
-                    <span>{item.deleteReason}</span>
-                  </div>
-                )}
-              </div>
-            </div>
+    if (!confirmed) return;
 
-            {item.entityData && (
-              <>
-                <h3 style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
-                  Original Data
-                </h3>
-                <div className="bg-[var(--admin-surface-muted)] p-4 rounded-xl border border-[var(--admin-border)]">
-                  {renderDetails(item.entityData)}
-                </div>
-              </>
-            )}
-
-            <h3 style={{ marginTop: '2rem', marginBottom: '1rem', fontSize: '1.1rem' }}>
-              Version History
-            </h3>
-            <div className="flex flex-col gap-3 border-l-2 border-[var(--admin-border)] pl-4 ml-2">
-              {item.versionHistory?.map((entry, idx) => (
-                <div key={idx} className={`history-item ${entry.action}`}>
-                  <div style={{ fontWeight: 600, textTransform: 'capitalize' }}>{entry.action}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    by {entry.performedBy?.email || 'System'} on{' '}
-                    {new Date(entry.performedAt).toLocaleString()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]">
-            <button
-              className="admin-btn admin-btn-outline"
-              onClick={() => setPreviewModal({ isOpen: false, item: null })}
-            >
-              Close
-            </button>
-            <button
-              className="admin-btn admin-btn-primary"
-              onClick={() => {
-                setPreviewModal({ isOpen: false, item: null });
-                handleRestoreClick(item);
-              }}
-            >
-              <span className="material-symbols-outlined">restore</span> Restore
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    setActionLoadingId(item._id);
+    try {
+      const result = await permanentDelete(item._id);
+      if (result?.success && result?.report) {
+        setCleanupReportModal({ isOpen: true, report: result.report });
+      }
+    } finally {
+      setActionLoadingId(null);
+    }
   };
 
-  const renderConflictModal = () => {
-    if (!restoreModal.isOpen || !restoreModal.item) return null;
-    const { item, conflicts } = restoreModal;
-
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-        onClick={() => setRestoreModal({ isOpen: false, item: null, conflicts: null })}
-      >
-        <div
-          className="bg-[var(--admin-surface)] w-full max-w-lg rounded-xl shadow-2xl border border-[var(--admin-border)] flex flex-col overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between p-4 border-b border-[var(--admin-border-subtle)]">
-            <h2>Restore Conflict Detected</h2>
-            <button
-              className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] transition-colors"
-              onClick={() => setRestoreModal({ isOpen: false, item: null, conflicts: null })}
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="p-6 overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-[var(--admin-text-secondary)] text-[14px]">
-            <p>
-              We cannot restore <strong>{item.entityName}</strong> normally because it conflicts
-              with existing data.
-            </p>
-
-            {conflicts?.conflicts?.length > 0 && (
-              <div className="flex gap-3 p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-700">
-                <AlertCircle className="w-5 h-5 shrink-0" />
-                <div>
-                  <strong>Unique Field Conflict</strong>
-                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>
-                    Another item is already using the following field(s):
-                  </p>
-                  <ul style={{ margin: '0.5rem 0 0 1rem', padding: 0 }}>
-                    {conflicts.conflicts.map((c, i) => (
-                      <li key={i}>
-                        {c.field}: {c.existingValue}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-
-            {conflicts?.dependencyWarnings?.length > 0 && (
-              <div
-                className="flex gap-3 p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-700"
-                style={{
-                  background: 'var(--info-light)',
-                  borderColor: 'var(--info-main)',
-                  color: 'var(--info-dark)',
-                }}
-              >
-                <Info className="w-5 h-5 shrink-0" />
-                <div>
-                  <strong>Missing Dependencies</strong>
-                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>
-                    The parent entity for this item has also been deleted:
-                  </p>
-                  <ul style={{ margin: '0.5rem 0 0 1rem', padding: 0 }}>
-                    {conflicts.dependencyWarnings.map((d, i) => (
-                      <li key={i}>
-                        {d.entityName} ({d.entityType})
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]">
-            <button
-              className="admin-btn admin-btn-outline"
-              onClick={() => setRestoreModal({ isOpen: false, item: null, conflicts: null })}
-            >
-              Cancel
-            </button>
-            <button
-              className="admin-btn admin-btn-primary"
-              onClick={() => executeRestoreWithResolution(true, true)}
-            >
-              Auto-Resolve & Restore
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+  // Empty Bin flow
+  const handleEmptyBinConfirm = async () => {
+    setEmptyBinModal(false);
+    await emptyBin();
   };
 
-  const renderDeleteModal = () => {
-    return null;
-  };
+  const totalPages = Math.ceil(totalCount / limit) || 1;
 
-  const renderCleanupReportModal = () => {
-    if (!cleanupReportModal.isOpen || !cleanupReportModal.report) return null;
+  // Render initial skeleton
+  if (loading && items.length === 0) {
+    return <AdminRecycleBinSkeleton />;
+  }
 
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-        onClick={() => setCleanupReportModal({ isOpen: false, report: null })}
-      >
-        <div
-          className="bg-[var(--admin-surface)] w-full max-w-lg rounded-xl shadow-2xl border border-[var(--admin-border)] flex flex-col overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between p-4 border-b border-[var(--admin-border-subtle)]">
-            <h2>Cleanup Report</h2>
-            <button
-              className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] transition-colors"
-              onClick={() => setCleanupReportModal({ isOpen: false, report: null })}
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
-          </div>
-          <div className="p-6 overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-[var(--admin-text-secondary)] text-[14px]">
-            <p>
-              The permanent deletion process has completed. Here is the summary of cleared
-              resources:
-            </p>
-            <div className="flex flex-col gap-3 mt-4">
-              {cleanupReportModal.report.map((step, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-[var(--admin-surface-muted)] border border-[var(--admin-border)]"
-                >
-                  <span className={`material-symbols-outlined ${step.status}`}>
-                    {step.status === 'success'
-                      ? 'check_circle'
-                      : step.status === 'failed'
-                        ? 'error'
-                        : 'remove_circle_outline'}
-                  </span>
-                  <div className="flex flex-col gap-1 text-[13px]">
-                    <strong>{step.step}</strong>
-                    {step.count !== undefined && <span>Count: {step.count}</span>}
-                    {step.details && <span>{step.details}</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]">
-            <button
-              className="admin-btn admin-btn-primary"
-              onClick={() => setCleanupReportModal({ isOpen: false, report: null })}
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // ── Render ──
   return (
-    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
-      <PageHeader title="Recycle Bin" icon="delete_sweep" iconColor="danger" mobileRow={true} />
-
-      <motion.div variants={fadeUp}>{renderStats()}</motion.div>
-
-      <motion.div
-        variants={fadeUp}
-        className="flex flex-col sm:flex-row items-stretch gap-2 w-full mb-6"
-      >
-        <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] flex items-center px-3">
-          <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
-            search
-          </span>
-          <input
-            type="text"
-            placeholder="Search deleted items..."
-            onChange={handleSearchChange}
-            className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-10"
-          />
-        </div>
-        <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0">
-          <div className="relative flex items-stretch shrink-0">
-            <select
-              className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none min-w-0 max-w-[150px] truncate"
-              value={filters.entityType}
-              onChange={(e) => handleFilterChange('entityType', e.target.value)}
-            >
-              <option value="all">All Types</option>
-              <option value="Product">Products</option>
-              <option value="Category">Categories</option>
-              <option value="Order">Orders</option>
-              <option value="User">Customers</option>
-              <option value="Review">Reviews</option>
-              <option value="Gallery">Gallery</option>
-            </select>
-            <span
-              className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"
-              style={{ top: '50%', transform: 'translateY(-50%)' }}
-            >
-              expand_more
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+      className="space-y-6 pb-12 sm:pb-8"
+    >
+      {/* ── 1. Page Header (Styled like Orders Section - No Icon) ── */}
+      <PageHeader
+        title="Recycle Bin"
+        subtitle={
+          <div className="flex flex-wrap items-center gap-2 text-[13px]">
+            <span className="font-semibold text-[var(--admin-text-primary)]">
+              {totalCount} Total Deleted {totalCount === 1 ? 'Record' : 'Records'}
             </span>
-          </div>
-          <div className="relative flex items-stretch shrink-0">
-            <select
-              className="bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] text-[12px] font-semibold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-10 sm:h-10 appearance-none min-w-0 max-w-[160px] truncate"
-              value={filters.timeRange}
-              onChange={(e) => handleFilterChange('timeRange', e.target.value)}
-            >
-              <option value="">Any Time</option>
-              <option value="today">Deleted Today</option>
-              <option value="7days">Deleted Last 7 Days</option>
-              <option value="expiring_soon">Expiring Soon (3d)</option>
-              <option value="expired">Expired</option>
-            </select>
-            <span
-              className="material-symbols-outlined absolute right-2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none"
-              style={{ top: '50%', transform: 'translateY(-50%)' }}
-            >
-              expand_more
-            </span>
-          </div>
-          <div className="flex items-center gap-1 shrink-0 lg:ml-auto">
-            <button
-              className="px-3 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded border border-[var(--admin-border)] flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 gap-1.5 font-semibold text-[13px] h-10 sm:h-10"
-              onClick={() => recycleBinApi.exportAuditLogs()}
-              title="Export Logs"
-            >
-              <Download className="w-4 h-4" strokeWidth={2} />
-              <span className="hidden sm:inline">Export</span>
-            </button>
-            {isOwner && (
-              <button
-                className="px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded border border-red-200 flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 gap-1.5 font-semibold text-[13px] h-10 sm:h-10 dark:bg-red-950/30 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/50"
-                onClick={() => setEmptyBinModal(true)}
-                title="Empty Bin"
-              >
-                <Trash2 className="w-4 h-4" strokeWidth={2} />
-                <span className="hidden sm:inline">Empty</span>
-              </button>
+            {stats?.expiringThisWeek > 0 && (
+              <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                {stats.expiringThisWeek} Expiring Soon
+              </span>
+            )}
+            {(stats?.restoredThisMonth || 0) > 0 && (
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {stats.restoredThisMonth} Restored (30d)
+              </span>
             )}
           </div>
-        </div>
-      </motion.div>
+        }
+      />
 
-      {selectedIds.size > 0 && (
-        <motion.div
-          variants={fadeUp}
-          className="flex items-center justify-between bg-[var(--admin-surface-muted)] p-4 rounded-xl border border-[var(--admin-border)]"
-        >
-          <div className="flex items-center gap-2 text-[var(--admin-text-primary)] font-medium">
-            <span className="material-symbols-outlined text-[20px]">check_box</span>
-            {selectedIds.size} items selected
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={bulkRestore}>
-              Restore Selected
-            </button>
-            {isSuperAdmin && (
+      {/* ── 2. Sticky 42px Toolbar with Search & Controls ── */}
+      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md">
+        <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
+          {/* Unified Search & Action Bar */}
+          <form
+            onSubmit={onSearchSubmit}
+            className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center pl-3 pr-1.5 h-[42px] min-h-[42px] max-h-[42px] shadow-2xs"
+          >
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+              search
+            </span>
+            <input
+              type="text"
+              placeholder="Search deleted records by name, ID, or user..."
+              value={searchInput}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                handleSearchChange(e);
+              }}
+              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2.5 h-full min-w-0"
+            />
+            {searchInput && (
               <button
-                className="admin-btn admin-btn-danger admin-btn-sm"
-                onClick={bulkPermanentDelete}
+                type="button"
+                onClick={handleClearSearch}
+                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0 mr-1"
+                title="Clear search"
               >
-                Delete Selected
+                <span className="material-symbols-outlined text-[16px]">close</span>
               </button>
             )}
+
+            {/* Embedded Action Controls */}
+            <div className="flex items-center gap-0.5 pl-1.5 border-l border-[var(--admin-border)] shrink-0">
+              {/* Export CSV */}
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={isExporting}
+                className="w-8 h-8 rounded-[3px] hover:bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] flex items-center justify-center cursor-pointer transition-colors shrink-0 disabled:opacity-40"
+                title="Export Audit Logs as CSV"
+              >
+                {isExporting ? (
+                  <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span className="material-symbols-outlined text-[17px]">download</span>
+                )}
+              </button>
+
+              {/* Empty Bin (Owner Only) */}
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={() => setEmptyBinModal(true)}
+                  disabled={items.length === 0}
+                  className="w-8 h-8 rounded-[3px] hover:bg-rose-100 dark:hover:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center cursor-pointer transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Permanently empty recycle bin"
+                >
+                  <span className="material-symbols-outlined text-[17px]">delete_forever</span>
+                </button>
+              )}
+
+              {/* Refresh */}
+              <button
+                type="button"
+                onClick={refresh}
+                className="w-8 h-8 rounded-[3px] hover:bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] flex items-center justify-center cursor-pointer transition-colors shrink-0"
+                title="Refresh Data"
+              >
+                <span className="material-symbols-outlined text-[17px]">refresh</span>
+              </button>
+            </div>
+          </form>
+
+          {/* Filter Dropdowns Group */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Entity Type Filter Select */}
+            <div className="relative flex items-stretch shrink-0">
+              <select
+                className="bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] text-[12px] font-bold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-[42px] min-h-[42px] max-h-[42px] appearance-none min-w-[125px] max-w-[145px] truncate shadow-2xs"
+                value={filters.entityType}
+                onChange={(e) => handleFilterChange('entityType', e.target.value)}
+              >
+                <option value="all">All Entity Types</option>
+                <option value="Product">Products</option>
+                <option value="Category">Categories</option>
+                <option value="Order">Orders</option>
+                <option value="User">Customers</option>
+                <option value="Review">Reviews</option>
+                <option value="Gallery">Gallery</option>
+              </select>
+              <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none">
+                expand_more
+              </span>
+            </div>
+
+            {/* Time / Retention Range Filter */}
+            <div className="relative flex items-stretch shrink-0">
+              <select
+                className="bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] text-[12px] font-bold text-[var(--admin-text-primary)] focus:outline-none cursor-pointer transition-all pl-2.5 pr-7 h-[42px] min-h-[42px] max-h-[42px] appearance-none min-w-[130px] max-w-[155px] truncate shadow-2xs"
+                value={filters.timeRange}
+                onChange={(e) => handleFilterChange('timeRange', e.target.value)}
+              >
+                <option value="">Any Retention Time</option>
+                <option value="today">Deleted Today</option>
+                <option value="7days">Last 7 Days</option>
+                <option value="expiring_soon">Expiring Soon (≤3d)</option>
+                <option value="expired">Expired</option>
+              </select>
+              <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-[var(--admin-text-tertiary)] pointer-events-none">
+                expand_more
+              </span>
+            </div>
           </div>
         </motion.div>
-      )}
+      </div>
 
+      {/* ── 4. Floating / Sticky Bulk Action Bar ── */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="flex items-center justify-between bg-stone-900 text-stone-100 dark:bg-stone-800 dark:text-stone-100 px-4 py-3 rounded-[6px] shadow-lg border border-stone-700/60"
+          >
+            <div className="flex items-center gap-3">
+              <span className="w-6 h-6 rounded-full bg-stone-700 flex items-center justify-center text-[12px] font-bold text-amber-400">
+                {selectedIds.size}
+              </span>
+              <span className="text-[12.5px] font-bold">
+                {selectedIds.size} {selectedIds.size === 1 ? 'item' : 'items'} selected
+              </span>
+              <button
+                type="button"
+                onClick={() => selectAll([])}
+                className="text-[11px] text-stone-400 hover:text-stone-200 underline cursor-pointer"
+              >
+                Deselect all
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={bulkRestore}
+                className="h-8 px-3 rounded-[4px] bg-emerald-600 hover:bg-emerald-500 text-white text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm active:scale-95"
+              >
+                <span className="material-symbols-outlined text-[16px]">restore</span>
+                <span>Restore Selected</span>
+              </button>
+
+              {isSuperAdmin && (
+                <button
+                  type="button"
+                  onClick={bulkPermanentDelete}
+                  className="h-8 px-3 rounded-[4px] bg-rose-600 hover:bg-rose-500 text-white text-[12px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[16px]">delete_forever</span>
+                  <span>Delete Selected</span>
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 5. Main Content: Desktop Table & Mobile Cards ── */}
       <motion.div variants={fadeUp}>
-        {loading ? (
-          <SkeletonTable rows={5} cols={5} />
-        ) : items.length === 0 ? (
+        {items.length === 0 ? (
           <EmptyState
-            icon="auto_awesome"
-            title="Recycle Bin is Empty"
-            description="No deleted items found matching your criteria."
+            icon={filters.search || filters.entityType !== 'all' ? 'search_off' : 'delete_sweep'}
+            title={
+              filters.search || filters.entityType !== 'all'
+                ? 'No Matching Deleted Records'
+                : 'Recycle Bin is Completely Empty'
+            }
+            description={
+              filters.search || filters.entityType !== 'all'
+                ? 'No deleted records matched your current query or filters. Try resetting the filters.'
+                : 'Everything is in order! When products, orders, or categories are soft-deleted, they will appear here.'
+            }
+            action={
+              (filters.search || filters.entityType !== 'all' || filters.timeRange) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchInput('');
+                    handleSearchChange({ target: { value: '' } });
+                    handleFilterChange('entityType', 'all');
+                    handleFilterChange('timeRange', '');
+                  }}
+                  className="admin-btn admin-btn-outline text-[12px]"
+                >
+                  Reset Filters
+                </button>
+              )
+            }
           />
         ) : (
-          <div className="admin-card divide-y divide-[var(--admin-border-subtle)] p-0">
-            <div className="overflow-x-auto">
-              <table className="admin-table w-full min-w-[700px]">
-                <thead>
-                  <tr>
-                    <th className="pl-6 w-12">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.size === items.length && items.length > 0}
-                        onChange={() => selectAll(items.map((i) => i._id))}
-                        className="rounded border-[var(--admin-border)] text-[var(--admin-accent)] focus:ring-[var(--admin-accent)]"
-                      />
-                    </th>
-                    <th>Entity</th>
-                    <th>Deleted By</th>
-                    <th>Deleted Date</th>
-                    <th>Status</th>
-                    <th className="text-right pr-6">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item) => (
-                    <tr
-                      key={item._id}
-                      className="hover:bg-[var(--admin-surface-muted)] transition-colors"
-                    >
-                      <td className="pl-6">
+          <>
+            {/* Desktop Table View (≥ md screen) */}
+            <div className="hidden md:block admin-card p-0 overflow-hidden border border-[var(--admin-border)] shadow-xs rounded-[6px]">
+              <div className="overflow-x-auto">
+                <table className="admin-table admin-table-compact w-full text-left">
+                  <thead>
+                    <tr className="border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)] text-[11.5px] font-bold text-[var(--admin-text-secondary)]">
+                      <th className="py-2.5 px-4 w-10">
                         <input
                           type="checkbox"
-                          checked={selectedIds.has(item._id)}
-                          onChange={() => toggleSelection(item._id)}
-                          className="rounded border-[var(--admin-border)] text-[var(--admin-accent)] focus:ring-[var(--admin-accent)]"
+                          checked={selectedIds.size === items.length && items.length > 0}
+                          onChange={() => selectAll(items.map((i) => i._id))}
+                          className="rounded border-[var(--admin-border)] text-amber-600 focus:ring-amber-500 cursor-pointer"
+                          title="Select all on page"
                         />
-                      </td>
-                      <td>
-                        <div className="flex items-center gap-3">
-                          {getThumbnail(item) ? (
-                            <>
-                              <img
-                                src={getThumbnail(item)}
-                                className="w-10 h-10 rounded-md object-cover border border-[var(--admin-border)] shrink-0"
-                                alt=""
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  if (e.target.nextSibling)
-                                    e.target.nextSibling.style.display = 'flex';
-                                }}
-                              />
-                              <div className="w-10 h-10 rounded-md bg-[var(--admin-surface)] hidden items-center justify-center border border-[var(--admin-border)] shrink-0">
-                                <span className="material-symbols-outlined text-[var(--admin-text-tertiary)] text-[18px]">
-                                  image_not_supported
+                      </th>
+                      <th className="py-2.5 px-4 min-w-[200px]">Item</th>
+                      <th className="py-2.5 px-4 w-[160px]">Deleted By</th>
+                      <th className="py-2.5 px-4 w-[120px]">Date</th>
+                      <th className="py-2.5 px-4 w-[110px]">Expires</th>
+                      <th className="py-2.5 px-4 text-right pr-5 w-[110px]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--admin-border-subtle)] bg-[var(--admin-surface)]">
+                    {items.map((item) => {
+                      const thumb = getThumbnail(item);
+                      const isSelected = selectedIds.has(item._id);
+                      const isItemLoading = actionLoadingId === item._id;
+                      const typeCfg = ENTITY_TYPE_CONFIG[item.entityType] || ENTITY_TYPE_CONFIG.all;
+
+                      return (
+                        <tr
+                          key={item._id}
+                          className={`hover:bg-[var(--admin-surface-muted)]/60 transition-colors ${
+                            isSelected ? 'bg-amber-500/5' : ''
+                          }`}
+                        >
+                          {/* Checkbox */}
+                          <td className="py-2.5 px-4">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelection(item._id)}
+                              className="rounded border-[var(--admin-border)] text-amber-600 focus:ring-amber-500 cursor-pointer"
+                            />
+                          </td>
+
+                          {/* Entity Info */}
+                          <td className="py-2.5 px-4">
+                            <div className="flex items-center gap-2.5">
+                              {thumb ? (
+                                <img
+                                  src={thumb}
+                                  alt=""
+                                  className="w-8 h-8 rounded-[4px] object-cover border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] shrink-0"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    if (e.target.nextSibling) {
+                                      e.target.nextSibling.style.display = 'flex';
+                                    }
+                                  }}
+                                />
+                              ) : null}
+                              <div
+                                className={`w-8 h-8 rounded-[4px] bg-[var(--admin-surface-muted)] flex items-center justify-center border border-[var(--admin-border)] shrink-0 ${
+                                  thumb ? 'hidden' : 'flex'
+                                }`}
+                              >
+                                <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-tertiary)]">
+                                  {typeCfg.icon || 'inventory_2'}
                                 </span>
                               </div>
-                            </>
-                          ) : (
-                            <div className="w-10 h-10 rounded-md bg-[var(--admin-surface)] flex items-center justify-center border border-[var(--admin-border)] shrink-0">
-                              <span className="material-symbols-outlined text-[var(--admin-text-tertiary)] text-[18px]">
-                                inventory_2
-                              </span>
+                              <div className="min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPreviewModal({ isOpen: true, item, activeTab: 'data' })
+                                  }
+                                  className="font-medium text-[13px] text-[var(--admin-text-primary)] hover:text-amber-600 dark:hover:text-amber-400 truncate text-left block cursor-pointer max-w-[240px]"
+                                  title={item.entityName}
+                                >
+                                  {item.entityName || 'Unnamed Record'}
+                                </button>
+                                <span className="text-[11px] text-[var(--admin-text-tertiary)]">
+                                  {item.entityTypeDisplay || item.entityType}
+                                </span>
+                              </div>
                             </div>
-                          )}
-                          <div className="flex flex-col">
-                            <span className="font-bold text-[var(--admin-text-primary)] text-[13px]">
-                              {item.entityName}
-                            </span>
-                            <span className="text-[11px] text-[var(--admin-text-secondary)]">
-                              {item.entityTypeDisplay}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="text-[12px] text-[var(--admin-text-secondary)]">
-                          {item.deletedBy?.email || 'System'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="text-[12px] text-[var(--admin-text-secondary)]">
-                          {new Date(item.deletedAt).toLocaleDateString()}
-                        </span>
-                      </td>
-                      <td>
-                        {item.isExpired ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-rose-50 text-rose-600 border border-rose-200">
-                            Expired
-                          </span>
-                        ) : (
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border ${
-                              item.daysRemaining > 7
-                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                                : item.daysRemaining > 3
-                                  ? 'bg-amber-50 text-amber-600 border-amber-200'
-                                  : 'bg-rose-50 text-rose-600 border-rose-200'
-                            }`}
-                          >
-                            <span className="material-symbols-outlined text-[12px]">timer</span>
-                            {item.daysRemaining} days left
-                          </span>
-                        )}
-                      </td>
-                      <td className="text-right pr-6">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            className="flex shrink-0 items-center justify-center w-8 h-8 rounded-full hover:bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] transition-colors"
-                            onClick={() => setPreviewModal({ isOpen: true, item })}
-                            title="Preview"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">
-                              visibility
-                            </span>
-                          </button>
-                          <button
-                            className="flex shrink-0 items-center justify-center w-8 h-8 rounded-full hover:bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-emerald-600 transition-colors"
-                            onClick={() => handleRestoreClick(item)}
-                            title="Restore"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">restore</span>
-                          </button>
-                          {isSuperAdmin && (
-                            <button
-                              className="flex shrink-0 items-center justify-center w-8 h-8 rounded-full hover:bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] hover:text-rose-600 transition-colors"
-                              onClick={() => handlePermanentDeleteClick(item)}
-                              title="Permanent Delete"
+                          </td>
+
+                          {/* Deleted By */}
+                          <td className="py-2.5 px-4">
+                            <span
+                              className="text-[12px] text-[var(--admin-text-secondary)] truncate block max-w-[150px]"
+                              title={item.deletedBy?.email}
                             >
-                              <span className="material-symbols-outlined text-[18px]">
-                                delete_forever
+                              {item.deletedBy?.email || 'System'}
+                            </span>
+                          </td>
+
+                          {/* Deleted Date */}
+                          <td className="py-2.5 px-4 text-[12px] text-[var(--admin-text-secondary)] whitespace-nowrap">
+                            {new Date(item.deletedAt).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </td>
+
+                          {/* Retention Status */}
+                          <td className="py-2.5 px-4 whitespace-nowrap">
+                            {item.isExpired ? (
+                              <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                                Expired
                               </span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                            ) : item.daysRemaining <= 3 ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/50">
+                                {item.daysRemaining}d left
+                              </span>
+                            ) : item.daysRemaining <= 7 ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/50">
+                                {item.daysRemaining}d left
+                              </span>
+                            ) : (
+                              <span className="text-[12px] text-[var(--admin-text-tertiary)] font-medium">
+                                {item.daysRemaining} days left
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Actions Column */}
+                          <td className="py-2.5 px-4 text-right pr-5 whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Restore */}
+                              <button
+                                type="button"
+                                onClick={() => handleRestoreClick(item)}
+                                disabled={isItemLoading}
+                                className="h-7 px-2.5 rounded text-[11.5px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/80 transition-colors cursor-pointer flex items-center gap-1 active:scale-95 disabled:opacity-50"
+                                title="Restore to production"
+                              >
+                                {isItemLoading ? (
+                                  <span className="w-3 h-3 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <span className="material-symbols-outlined text-[15px]">
+                                    restore
+                                  </span>
+                                )}
+                                <span>Restore</span>
+                              </button>
+
+                              {/* Permanent Delete */}
+                              {isSuperAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => handlePermanentDeleteClick(item)}
+                                  disabled={isItemLoading}
+                                  className="w-7 h-7 rounded text-[var(--admin-text-tertiary)] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center transition-colors cursor-pointer"
+                                  title="Permanently Delete"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]">
+                                    delete
+                                  </span>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+
+            {/* Mobile Cards View (< md screen) */}
+            <div className="block md:hidden space-y-2.5">
+              {items.map((item) => {
+                const thumb = getThumbnail(item);
+                const isSelected = selectedIds.has(item._id);
+                const isItemLoading = actionLoadingId === item._id;
+                const typeCfg = ENTITY_TYPE_CONFIG[item.entityType] || ENTITY_TYPE_CONFIG.all;
+
+                return (
+                  <div
+                    key={item._id}
+                    className={`admin-card p-3 border transition-all ${
+                      isSelected
+                        ? 'border-amber-500/60 bg-amber-500/5'
+                        : 'border-[var(--admin-border)]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelection(item._id)}
+                          className="rounded border-[var(--admin-border)] text-amber-600 focus:ring-amber-500 cursor-pointer"
+                        />
+                        {thumb ? (
+                          <img
+                            src={thumb}
+                            alt=""
+                            className="w-8 h-8 rounded-[4px] object-cover border border-[var(--admin-border)] shrink-0"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className={`w-8 h-8 rounded-[4px] bg-[var(--admin-surface-muted)] flex items-center justify-center border border-[var(--admin-border)] shrink-0 ${
+                            thumb ? 'hidden' : 'flex'
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-tertiary)]">
+                            {typeCfg.icon || 'inventory_2'}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviewModal({ isOpen: true, item, activeTab: 'data' })
+                            }
+                            className="font-medium text-[13px] text-[var(--admin-text-primary)] truncate text-left block cursor-pointer"
+                          >
+                            {item.entityName || 'Unnamed Record'}
+                          </button>
+                          <span className="text-[10.5px] text-[var(--admin-text-tertiary)]">
+                            {item.entityTypeDisplay || item.entityType} •{' '}
+                            {new Date(item.deletedAt).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleRestoreClick(item)}
+                          disabled={isItemLoading}
+                          className="h-7 px-2 rounded text-[11.5px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 flex items-center gap-1 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">restore</span>
+                          <span>Restore</span>
+                        </button>
+                        {isSuperAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => handlePermanentDeleteClick(item)}
+                            disabled={isItemLoading}
+                            className="w-7 h-7 rounded text-stone-400 hover:text-rose-600 flex items-center justify-center cursor-pointer"
+                            title="Delete"
+                          >
+                            <span className="material-symbols-outlined text-[15px]">delete</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── 6. Pagination Controls ── */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 px-1 text-[12px] text-[var(--admin-text-secondary)]">
+                <span>
+                  Showing page <strong className="text-[var(--admin-text-primary)]">{page}</strong>{' '}
+                  of <strong className="text-[var(--admin-text-primary)]">{totalPages}</strong> (
+                  {totalCount} total)
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="h-8 px-3 rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-2 font-bold text-[var(--admin-text-primary)]">{page}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    className="h-8 px-3 rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </motion.div>
 
-      {renderPreviewModal()}
-      {renderConflictModal()}
-      {renderDeleteModal()}
-      {renderCleanupReportModal()}
+      {/* ── 7. Item Data Preview Modal ── */}
+      <AnimatePresence>
+        {previewModal.isOpen && previewModal.item && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+            onClick={() => setPreviewModal({ isOpen: false, item: null, activeTab: 'data' })}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="bg-[var(--admin-surface)] w-full max-w-2xl rounded-[8px] shadow-2xl border border-[var(--admin-border)] flex flex-col overflow-hidden max-h-[85vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]/50">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="material-symbols-outlined text-[20px] text-amber-600">
+                    inventory_2
+                  </span>
+                  <h2 className="text-[15px] font-bold text-[var(--admin-text-primary)] truncate">
+                    {previewModal.item.entityName}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewModal({ isOpen: false, item: null, activeTab: 'data' })}
+                  className="w-8 h-8 rounded-full hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-5 overflow-y-auto space-y-4 custom-scrollbar">
+                {/* Hero / Thumbnail Banner */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 rounded-[6px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)]">
+                  {getThumbnail(previewModal.item) ? (
+                    <img
+                      src={getThumbnail(previewModal.item)}
+                      alt=""
+                      className="w-20 h-20 rounded-[4px] object-cover border border-[var(--admin-border)] bg-[var(--admin-surface)] shrink-0"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-[4px] bg-[var(--admin-surface)] flex items-center justify-center border border-[var(--admin-border)] shrink-0">
+                      <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)]">
+                        inventory_2
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1 flex-1 text-center sm:text-left min-w-0">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      <span className="font-extrabold text-[14px] text-[var(--admin-text-primary)]">
+                        {previewModal.item.entityName}
+                      </span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-[3px] text-[10px] font-bold uppercase tracking-wider bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] border border-[var(--admin-border)]">
+                        {previewModal.item.entityTypeDisplay || previewModal.item.entityType}
+                      </span>
+                    </div>
+                    <p className="text-[12px] text-[var(--admin-text-secondary)]">
+                      Deleted on {new Date(previewModal.item.deletedAt).toLocaleString()} by{' '}
+                      <strong className="text-[var(--admin-text-primary)]">
+                        {previewModal.item.deletedBy?.email || 'System Operator'}
+                      </strong>
+                    </p>
+                    {previewModal.item.deleteReason && (
+                      <p className="text-[11.5px] text-[var(--admin-text-tertiary)] italic">
+                        Reason: &quot;{previewModal.item.deleteReason}&quot;
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tab Switcher */}
+                <div className="flex items-center border-b border-[var(--admin-border-subtle)] gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewModal((p) => ({ ...p, activeTab: 'data' }))}
+                    className={`pb-2 px-1 text-[12.5px] font-bold border-b-2 transition-colors cursor-pointer ${
+                      previewModal.activeTab === 'data'
+                        ? 'border-amber-600 text-[var(--admin-text-primary)]'
+                        : 'border-transparent text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-secondary)]'
+                    }`}
+                  >
+                    Original Entity Data
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewModal((p) => ({ ...p, activeTab: 'history' }))}
+                    className={`pb-2 px-1 text-[12.5px] font-bold border-b-2 transition-colors cursor-pointer ${
+                      previewModal.activeTab === 'history'
+                        ? 'border-amber-600 text-[var(--admin-text-primary)]'
+                        : 'border-transparent text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-secondary)]'
+                    }`}
+                  >
+                    Version History ({previewModal.item.versionHistory?.length || 0})
+                  </button>
+                </div>
+
+                {/* Tab 1: Formatted Original Data */}
+                {previewModal.activeTab === 'data' && (
+                  <div className="space-y-3">
+                    {previewModal.item.entityData ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {Object.entries(
+                          typeof previewModal.item.entityData === 'string'
+                            ? JSON.parse(previewModal.item.entityData)
+                            : previewModal.item.entityData,
+                        ).map(([key, val]) => {
+                          if (['_id', '__v', 'createdAt', 'updatedAt'].includes(key)) return null;
+                          return (
+                            <div
+                              key={key}
+                              className="p-2.5 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] space-y-0.5"
+                            >
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] block">
+                                {key.replace(/([A-Z])/g, ' $1')}
+                              </span>
+                              <span className="text-[12px] font-medium text-[var(--admin-text-primary)] break-all block">
+                                {formatEntityValue(val)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-[12px] text-[var(--admin-text-tertiary)] italic">
+                        No snapshot data available for this record.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Tab 2: Version History */}
+                {previewModal.activeTab === 'history' && (
+                  <div className="space-y-2.5">
+                    {previewModal.item.versionHistory?.length ? (
+                      <div className="border-l-2 border-[var(--admin-border)] pl-4 ml-2 space-y-3">
+                        {previewModal.item.versionHistory.map((h, i) => (
+                          <div key={i} className="relative space-y-0.5">
+                            <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500" />
+                            <div className="text-[12.5px] font-bold text-[var(--admin-text-primary)] capitalize">
+                              {h.action || 'Audit Event'}
+                            </div>
+                            <div className="text-[11px] text-[var(--admin-text-secondary)]">
+                              By {h.performedBy?.email || 'System'} on{' '}
+                              {new Date(h.performedAt).toLocaleString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[12px] text-[var(--admin-text-tertiary)] italic">
+                        No prior version history logged.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-2.5 px-5 py-3 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]">
+                <button
+                  type="button"
+                  onClick={() => setPreviewModal({ isOpen: false, item: null, activeTab: 'data' })}
+                  className="h-9 px-4 rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] font-bold text-[12px] transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const itm = previewModal.item;
+                    setPreviewModal({ isOpen: false, item: null, activeTab: 'data' });
+                    handleRestoreClick(itm);
+                  }}
+                  className="h-9 px-4 rounded-[4px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[12px] flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[16px]">restore</span>
+                  <span>Restore Record</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 8. Conflict Resolution Modal ── */}
+      <AnimatePresence>
+        {restoreModal.isOpen && restoreModal.item && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+            onClick={() => setRestoreModal({ isOpen: false, item: null, conflicts: null })}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="bg-[var(--admin-surface)] w-full max-w-lg rounded-[8px] shadow-2xl border border-[var(--admin-border)] flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--admin-border-subtle)] bg-amber-50 dark:bg-amber-950/30">
+                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
+                  <span className="material-symbols-outlined text-[20px]">warning</span>
+                  <h2 className="text-[14.5px] font-bold">Restore Conflict Detected</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRestoreModal({ isOpen: false, item: null, conflicts: null })}
+                  className="text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+
+              <div className="p-5 space-y-3.5 text-[13px] text-[var(--admin-text-secondary)]">
+                <p>
+                  We cannot restore{' '}
+                  <strong className="text-[var(--admin-text-primary)]">
+                    {restoreModal.item.entityName}
+                  </strong>{' '}
+                  directly because of colliding unique fields or missing parent dependencies in the
+                  live database.
+                </p>
+
+                {restoreModal.conflicts?.conflicts?.length > 0 && (
+                  <div className="p-3 rounded-[4px] bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900/60 text-rose-800 dark:text-rose-300 space-y-1">
+                    <strong className="text-[12px] uppercase tracking-wider block">
+                      Field Collisions:
+                    </strong>
+                    <ul className="list-disc pl-4 text-[12px] space-y-0.5">
+                      {restoreModal.conflicts.conflicts.map((c, idx) => (
+                        <li key={idx}>
+                          <strong>{c.field}:</strong> Already used by &quot;{c.existingValue}&quot;
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {restoreModal.conflicts?.dependencyWarnings?.length > 0 && (
+                  <div className="p-3 rounded-[4px] bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-900/60 text-blue-800 dark:text-blue-300 space-y-1">
+                    <strong className="text-[12px] uppercase tracking-wider block">
+                      Parent Dependencies Missing:
+                    </strong>
+                    <ul className="list-disc pl-4 text-[12px] space-y-0.5">
+                      {restoreModal.conflicts.dependencyWarnings.map((d, idx) => (
+                        <li key={idx}>
+                          {d.entityName} ({d.entityType})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 px-5 py-3 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]">
+                <button
+                  type="button"
+                  onClick={() => setRestoreModal({ isOpen: false, item: null, conflicts: null })}
+                  className="h-9 px-4 rounded-[4px] border border-[var(--admin-border)] font-bold text-[12px] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => executeRestoreWithResolution(true, true)}
+                  className="h-9 px-4 rounded-[4px] bg-amber-600 hover:bg-amber-500 text-white font-bold text-[12px] cursor-pointer shadow-2xs active:scale-95"
+                >
+                  Auto-Resolve & Restore
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 9. Empty Bin Confirmation Modal (Owner Only) ── */}
+      <AnimatePresence>
+        {emptyBinModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+            onClick={() => setEmptyBinModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="bg-[var(--admin-surface)] w-full max-w-md rounded-[8px] shadow-2xl border border-rose-300 dark:border-rose-900/60 flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-5 space-y-3">
+                <div className="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+                  <span className="material-symbols-outlined text-[24px]">delete_forever</span>
+                </div>
+                <div className="text-center space-y-1">
+                  <h3 className="text-[15px] font-bold text-[var(--admin-text-primary)]">
+                    Permanently Empty Entire Recycle Bin?
+                  </h3>
+                  <p className="text-[12.5px] text-[var(--admin-text-secondary)] leading-relaxed">
+                    This will permanently destroy all {totalCount} records currently in the bin,
+                    clearing image assets and database logs. This operation cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 px-5 py-3 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]">
+                <button
+                  type="button"
+                  onClick={() => setEmptyBinModal(false)}
+                  className="h-9 px-4 rounded-[4px] border border-[var(--admin-border)] font-bold text-[12px] text-[var(--admin-text-secondary)] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEmptyBinConfirm}
+                  className="h-9 px-4 rounded-[4px] bg-rose-600 hover:bg-rose-500 text-white font-bold text-[12px] cursor-pointer shadow-2xs active:scale-95"
+                >
+                  Yes, Empty All
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 10. Cleanup Report Modal ── */}
+      <AnimatePresence>
+        {cleanupReportModal.isOpen && cleanupReportModal.report && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+            onClick={() => setCleanupReportModal({ isOpen: false, report: null })}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="bg-[var(--admin-surface)] w-full max-w-lg rounded-[8px] shadow-2xl border border-[var(--admin-border)] flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--admin-border-subtle)]">
+                <h2 className="text-[14.5px] font-bold text-[var(--admin-text-primary)]">
+                  Cleanup Report
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setCleanupReportModal({ isOpen: false, report: null })}
+                  className="text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+
+              <div className="p-5 space-y-2.5 max-h-[60vh] overflow-y-auto">
+                <p className="text-[12.5px] text-[var(--admin-text-secondary)]">
+                  Resource cleanup summary for this permanent deletion:
+                </p>
+                <div className="space-y-2 pt-2">
+                  {cleanupReportModal.report.map((step, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-2.5 p-2.5 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] text-[12px]"
+                    >
+                      <span
+                        className={`material-symbols-outlined text-[18px] shrink-0 ${
+                          step.status === 'success'
+                            ? 'text-emerald-600'
+                            : step.status === 'failed'
+                              ? 'text-rose-600'
+                              : 'text-stone-400'
+                        }`}
+                      >
+                        {step.status === 'success' ? 'check_circle' : 'remove_circle_outline'}
+                      </span>
+                      <div className="space-y-0.5">
+                        <strong className="text-[var(--admin-text-primary)] block">
+                          {step.step}
+                        </strong>
+                        {step.count !== undefined && (
+                          <span className="text-[var(--admin-text-secondary)]">
+                            Count: {step.count}
+                          </span>
+                        )}
+                        {step.details && (
+                          <span className="text-[var(--admin-text-tertiary)] block text-[11px]">
+                            {step.details}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end px-5 py-3 border-t border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)]">
+                <button
+                  type="button"
+                  onClick={() => setCleanupReportModal({ isOpen: false, report: null })}
+                  className="h-8 px-4 rounded-[4px] bg-[var(--admin-accent)] text-white font-bold text-[12px] cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
-};
-
-export default AdminRecycleBin;
+}

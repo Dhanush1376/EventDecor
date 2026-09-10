@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, Profiler } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
@@ -22,6 +22,7 @@ import '../../styles/visual-search.css';
 
 export function ProductListing() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
 
   const isMobile = useMediaQuery('(max-width: 1023px)');
   const { scrollDirection, isAtTop } = useScrollDirection();
@@ -36,31 +37,70 @@ export function ProductListing() {
   const state = useProductListingState();
   const prevSearchRef = useRef(searchParams.get('search'));
   const prevCategoryRef = useRef(state.categoryParam);
+  const prevCouponRef = useRef(searchParams.get('coupon'));
+  const prevCollectionRef = useRef(searchParams.get('collection'));
+  const prevIdsRef = useRef(searchParams.get('ids'));
   const isInitialMount = useRef(true);
 
-  // Auto-scroll to shop anchor when category changes (handles side nav, drawer, and external category navigation)
+  // Auto-scroll to shop anchor when category, coupon, collection, ids, or external promo link changes
   useEffect(() => {
+    const hasCoupon = Boolean(searchParams.get('coupon'));
+    const hasCategory = state.categoryParam && state.categoryParam !== 'All';
+    const hasSearch = Boolean(searchParams.get('search'));
+    const hasCollection = Boolean(searchParams.get('collection'));
+    const hasIds = Boolean(searchParams.get('ids'));
+    const hasScrollState = Boolean(location.state?.scrollToShop);
+
+    const hasActiveFilter =
+      hasCoupon || hasCategory || hasSearch || hasCollection || hasIds || hasScrollState;
+
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      if (state.categoryParam !== 'All' || searchParams.get('search')) {
-        const timer = setTimeout(() => {
+      if (hasActiveFilter) {
+        // Immediate and staged scroll to guarantee exact position as DOM and lazy images settle
+        scrollToShopAnchor({ smooth: false });
+        const timer1 = setTimeout(() => {
           scrollToShopAnchor({ smooth: false });
         }, 120);
-        return () => clearTimeout(timer);
+        const timer2 = setTimeout(() => {
+          scrollToShopAnchor({ smooth: true });
+        }, 320);
+        return () => {
+          clearTimeout(timer1);
+          clearTimeout(timer2);
+        };
       }
       return;
     }
 
+    const currentCoupon = searchParams.get('coupon');
+    const isCouponChange = prevCouponRef.current !== currentCoupon;
+    prevCouponRef.current = currentCoupon;
+
+    const currentCollection = searchParams.get('collection');
+    const isCollectionChange = prevCollectionRef.current !== currentCollection;
+    prevCollectionRef.current = currentCollection;
+
+    const currentIds = searchParams.get('ids');
+    const isIdsChange = prevIdsRef.current !== currentIds;
+    prevIdsRef.current = currentIds;
+
     const isCategoryChange = prevCategoryRef.current !== state.categoryParam;
     prevCategoryRef.current = state.categoryParam;
 
-    if (isCategoryChange) {
+    if (
+      isCategoryChange ||
+      (isCouponChange && currentCoupon) ||
+      isCollectionChange ||
+      isIdsChange ||
+      hasScrollState
+    ) {
       const timer = setTimeout(() => {
         scrollToShopAnchor({ smooth: true });
       }, 60);
       return () => clearTimeout(timer);
     }
-  }, [state.categoryParam, searchParams]);
+  }, [state.categoryParam, searchParams, location.state]);
 
   // Auto-scroll to shop anchor when search query itself changes
   useEffect(() => {

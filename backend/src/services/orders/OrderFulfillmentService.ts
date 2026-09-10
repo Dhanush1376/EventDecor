@@ -19,6 +19,7 @@ export class OrderFulfillmentService {
     note?: string,
     courierCharges?: number,
     isPrivileged: boolean = true,
+    collectedAmount?: number,
   ) {
     const session = await mongoose.startSession();
     let finalOrder: any;
@@ -51,7 +52,8 @@ export class OrderFulfillmentService {
         if (!order) throw new ApiError(404, 'Order not found');
 
         // State Machine Validation
-        const oldStatus = order.orderStatus as any;
+        const oldStatus = OrderStateMachine.normalizeState(order.orderStatus as string);
+        finalStatus = OrderStateMachine.normalizeState(finalStatus as string);
 
         // Evaluate rules before confirming
         if (finalStatus === 'Confirmed' && oldStatus === 'Pending') {
@@ -64,7 +66,7 @@ export class OrderFulfillmentService {
           }
         }
 
-        OrderStateMachine.validateTransition(id, oldStatus, finalStatus as any);
+        OrderStateMachine.validateTransition(id, oldStatus, finalStatus as any, isPrivileged);
 
         // Track successful state transitions for analytics and audit
         if (oldStatus !== finalStatus) {
@@ -147,6 +149,10 @@ export class OrderFulfillmentService {
           order.courierCharges = courierCharges;
         }
 
+        if (collectedAmount !== undefined && collectedAmount !== null) {
+          order.collectedAmount = collectedAmount;
+        }
+
         // Automatic COD Remittance Transitions
         if (order.paymentMethod?.toLowerCase() === 'cod') {
           if (finalStatus === 'Delivered') {
@@ -174,12 +180,21 @@ export class OrderFulfillmentService {
                 : order.courierCharges ||
                   Math.round((order.shippingFee || settings.shipping.deliveryCharge) + 30);
             order.courierCharges = charges;
-            order.settledAmount = Math.max(0, order.total - charges);
+            const totalCollected =
+              collectedAmount !== undefined && collectedAmount !== null
+                ? Number(collectedAmount)
+                : order.collectedAmount !== undefined && order.collectedAmount !== null
+                  ? Number(order.collectedAmount)
+                  : order.total;
+            order.collectedAmount = totalCollected;
+            order.settledAmount = Math.max(0, totalCollected - charges);
             order.earnings = order.settledAmount;
             order.statusHistory.push({
               status: 'Settled',
               timestamp: new Date(),
-              note: `COD Remittance Settled. Received amount: ₹${order.settledAmount} (Total: ₹${order.total} - Courier fee: ₹${charges})`,
+              note:
+                note ||
+                `COD Remittance Settled. Received amount: ₹${order.settledAmount} (Collected: ₹${totalCollected} - Courier fee: ₹${charges})`,
             });
           }
         }

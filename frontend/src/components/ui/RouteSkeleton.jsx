@@ -70,7 +70,11 @@ const LazySkeletons = {
   'order-tracking': lazy(() =>
     import('./Skeleton').then((m) => ({ default: m.OrderTrackingSkeleton })),
   ),
-  admin: lazy(() => import('./Skeleton').then((m) => ({ default: m.DashboardSkeleton }))),
+  admin: lazy(() =>
+    import('../../admin/components/skeletons/AdminRouteSuspenseFallback').then((m) => ({
+      default: m.AdminRouteSuspenseFallback,
+    })),
+  ),
 };
 
 /** Lightweight route transition skeleton — avoids blank screens during lazy route loads. */

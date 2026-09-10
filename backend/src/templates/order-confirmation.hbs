@@ -209,7 +209,7 @@
 </head>
 <body>
   <div style="display: none; max-height: 0px; overflow: hidden; font-size: 1px; line-height: 1px; color: #fff; opacity: 0;">
-    Your order #{{orderId}} has been successfully placed.
+    Your order for {{#if items.[0].name}}{{items.[0].name}}{{else}}your items{{/if}} has been confirmed.
     &zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;&zwnj;&nbsp;&thinsp;
   </div>
   <table border="0" cellpadding="0" cellspacing="0" width="100%" class="wrapper-table">
@@ -236,7 +236,11 @@
               </p>
 
               <div class="order-details-box">
-                <strong style="color: #0f172a; display: block; margin-bottom: 8px;">Order Reference: #{{orderId}}</strong>
+                {{#if invoiceNumber}}
+                <strong style="color: #0f172a; display: block; margin-bottom: 8px;">Invoice No: {{invoiceNumber}}</strong>
+                {{else}}
+                <strong style="color: #0f172a; display: block; margin-bottom: 8px;">Invoice Reference: {{orderId}}</strong>
+                {{/if}}
                 <strong style="color: #0f172a;">Date:</strong> {{formatDate orderDate}}<br/>
                 <strong style="color: #0f172a;">Payment Method:</strong> {{paymentMethod}}
               </div>

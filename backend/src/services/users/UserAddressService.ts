@@ -12,12 +12,17 @@ export class UserAddressService {
     const email = data.email || emailFallback;
     const country = data.country || 'India';
 
+    const shouldBeDefault = Boolean(data.isDefault) || existingAddressesCount === 0;
+    if (shouldBeDefault) {
+      await Address.updateMany({ user: userId }, { isDefault: false });
+    }
+
     await Address.create({
       ...data,
       email,
       country,
       user: userId,
-      isDefault: existingAddressesCount === 0,
+      isDefault: shouldBeDefault,
     });
 
     return Address.find({ user: userId });
@@ -35,6 +40,9 @@ export class UserAddressService {
     }
     if (updateData.country === undefined) {
       updateData.country = 'India';
+    }
+    if (updateData.isDefault) {
+      await Address.updateMany({ user: userId, _id: { $ne: addressId } }, { isDefault: false });
     }
 
     const address = await Address.findOneAndUpdate({ _id: addressId, user: userId }, updateData, {

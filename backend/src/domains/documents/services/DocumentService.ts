@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import PDFDocument from 'pdfkit';
-import { s3Upload } from '../../../utils/s3Upload'; // Assuming this utility exists
+import { s3Upload } from '../../../utils/s3Upload';
+import { generateInvoicePDF } from '../../../utils/pdfGenerator';
 import OrderDocument from '../models/OrderDocument';
 import logger from '../../../config/logger';
 import Order from '../../../models/Order';
@@ -10,7 +11,7 @@ import bwipjs from 'bwip-js';
 
 export class DocumentService {
   /**
-   * Generates a PDF invoice for an order and uploads it to S3
+   * Generates a PDF invoice for an order and uploads it to S3 using the canonical PDF generator
    */
   static async generateInvoice(orderId: string): Promise<any> {
     try {
@@ -21,39 +22,20 @@ export class DocumentService {
       const existing = await OrderDocument.findOne({ orderId, documentType: 'invoice' });
       if (existing) return existing;
 
-      // 2. Generate PDF locally
-      const fileName = `invoice_${orderId}.pdf`;
-      const tempPath = path.join('/tmp', fileName);
-
-      await new Promise<void>((resolve, reject) => {
-        const doc = new PDFDocument();
-        const stream = fs.createWriteStream(tempPath);
-        doc.pipe(stream);
-
-        // Simple PDF layout
-        const storeName = order.store?.displayName || 'Invoice';
-        doc.fontSize(20).text(`${storeName} - Invoice`, { align: 'center' });
-        doc.moveDown();
-        doc
-          .fontSize(12)
-          .text(`Invoice: ${order.invoice?.number || order.invoiceNumber || orderId}`);
-        doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`);
-        doc.text(`Total Amount: INR ${order.total}`);
-        doc.moveDown();
-        doc.text('Items:');
-        order.items.forEach((item: any) => {
-          doc.text(
-            `- ${item.title || `Product ${item.productId}`} x ${item.quantity} (INR ${item.price})`,
-          );
-        });
-
-        doc.end();
-        stream.on('finish', resolve);
-        stream.on('error', reject);
-      });
-
-      // 3. Upload to S3
-      const fileBuffer = fs.readFileSync(tempPath);
+      // 2. Generate canonical PDF Buffer
+      const invoiceRef =
+        order.invoice?.number ||
+        order.invoiceNumber ||
+        (orderId ? `INV-${String(orderId).slice(-8).toUpperCase()}` : 'ORDER');
+      const fileName = `invoice_${invoiceRef}.pdf`;
+      const orderObj = order.toObject ? order.toObject() : order;
+      const orderData: any = {
+        ...orderObj,
+        orderId: order._id?.toString() || (order as any).orderId || orderId,
+        date: order.createdAt || new Date(),
+        customerName: order.shippingAddress?.name || (order.user as any)?.name || 'Customer',
+      };
+      const fileBuffer = await generateInvoicePDF(orderData);
       const s3Response = await s3Upload(
         {
           buffer: fileBuffer,
@@ -71,9 +53,6 @@ export class DocumentService {
         fileUrl: s3Response.url || s3Response.Location,
         s3Key: s3Response.key || s3Response.Key,
       });
-
-      // Cleanup
-      fs.unlinkSync(tempPath);
 
       return orderDoc;
     } catch (error) {

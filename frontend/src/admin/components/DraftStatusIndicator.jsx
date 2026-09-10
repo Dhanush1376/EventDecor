@@ -1,12 +1,12 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-export function DraftStatusIndicator({ status, lastSavedAt }) {
+export function DraftStatusIndicator({ status, lastSavedAt, compact = false }) {
   // status: 'idle' | 'saving' | 'saved' | 'unsaved' | 'error'
 
   if (status === 'idle') return null;
 
   const config = {
     saving: {
-      text: 'Saving draft...',
+      text: compact ? 'Saving...' : 'Saving draft...',
       icon: 'sync',
       color: 'text-slate-500',
       dotColor: 'bg-slate-400',
@@ -14,9 +14,11 @@ export function DraftStatusIndicator({ status, lastSavedAt }) {
       pulse: true,
     },
     saved: {
-      text: lastSavedAt
-        ? `Draft saved at ${new Intl.DateTimeFormat('en-IN', { timeStyle: 'short' }).format(new Date(lastSavedAt))}`
-        : 'Draft saved',
+      text: compact
+        ? 'Saved'
+        : lastSavedAt
+          ? `Draft saved at ${new Intl.DateTimeFormat('en-IN', { timeStyle: 'short' }).format(new Date(lastSavedAt))}`
+          : 'Draft saved',
       icon: 'cloud_done',
       color: 'text-emerald-600',
       dotColor: 'bg-emerald-500',
@@ -24,7 +26,7 @@ export function DraftStatusIndicator({ status, lastSavedAt }) {
       pulse: false,
     },
     unsaved: {
-      text: 'Unsaved changes',
+      text: 'Unsaved',
       icon: 'edit_document',
       color: 'text-amber-600',
       dotColor: 'bg-amber-500',
@@ -32,7 +34,7 @@ export function DraftStatusIndicator({ status, lastSavedAt }) {
       pulse: false,
     },
     error: {
-      text: 'Failed to save draft',
+      text: compact ? 'Failed' : 'Failed to save draft',
       icon: 'error',
       color: 'text-red-500',
       dotColor: 'bg-red-500',
@@ -52,9 +54,11 @@ export function DraftStatusIndicator({ status, lastSavedAt }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 4 }}
         transition={{ duration: 0.2 }}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-100 shadow-sm"
+        className={`flex items-center rounded-full bg-white dark:bg-[var(--admin-surface)] border border-gray-100 dark:border-[var(--admin-border)] shadow-xs ${
+          compact ? 'gap-1.5 px-2 py-0.5' : 'gap-2 px-3 py-1.5'
+        }`}
       >
-        <div className="relative flex items-center justify-center w-3 h-3">
+        <div className="relative flex items-center justify-center w-2.5 h-2.5">
           {current.pulse && (
             <span
               className={`absolute w-full h-full rounded-full ${current.dotColor} opacity-30 animate-ping`}
@@ -63,7 +67,11 @@ export function DraftStatusIndicator({ status, lastSavedAt }) {
           <span className={`w-1.5 h-1.5 rounded-full ${current.dotColor}`} />
         </div>
 
-        <span className={`text-[11px] font-medium tracking-wide ${current.color}`}>
+        <span
+          className={`font-medium tracking-wide ${current.color} ${
+            compact ? 'text-[10px]' : 'text-[11px]'
+          }`}
+        >
           {current.text}
         </span>
       </motion.div>

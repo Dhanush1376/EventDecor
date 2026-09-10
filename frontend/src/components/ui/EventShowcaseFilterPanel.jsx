@@ -110,7 +110,7 @@ export function EventShowcaseFilterPanel({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6 pb-3 border-b border-outline-variant/30">
         <div className="flex flex-col">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface font-normal">
+          <h2 className="font-serif-heading text-[22px] sm:text-[24px] text-on-surface font-normal leading-tight">
             Showcase Filters
           </h2>
           {isOpen && (

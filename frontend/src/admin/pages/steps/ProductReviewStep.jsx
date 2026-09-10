@@ -15,19 +15,14 @@ export function ProductReviewStep({ formData, setFormData }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Visibility Status Toggle */}
-        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex items-center justify-between">
-          <div>
-            <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
-              Visibility Status
-            </p>
-            <p className="text-[11px] text-[var(--admin-text-secondary)]">
-              Controls visible storefront availability
-            </p>
-          </div>
+        <div className="p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] flex items-center justify-between">
+          <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
+            Visibility Status
+          </p>
           <select
             value={formData.isActive ? 'active' : 'draft'}
             onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}
-            className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl px-3 py-1.5 text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)] cursor-pointer outline-none"
+            className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] px-3 h-8 text-[11px] font-bold text-[var(--admin-text-primary)] cursor-pointer outline-none"
           >
             <option value="active">Active (Visible)</option>
             <option value="draft">Draft (Private)</option>
@@ -35,15 +30,10 @@ export function ProductReviewStep({ formData, setFormData }) {
         </div>
 
         {/* Curation Highlight Toggle */}
-        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex items-center justify-between">
-          <div>
-            <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
-              Featured Collection
-            </p>
-            <p className="text-[11px] text-[var(--admin-text-secondary)]">
-              Pin to Homepage Hero Carousel
-            </p>
-          </div>
+        <div className="p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] flex items-center justify-between">
+          <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
+            Featured Collection
+          </p>
           <AdminToggle
             checked={formData.featured}
             onChange={() => setFormData({ ...formData, featured: !formData.featured })}
@@ -51,15 +41,10 @@ export function ProductReviewStep({ formData, setFormData }) {
         </div>
 
         {/* Show in Gallery Toggle */}
-        <div className="p-4 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl flex items-center justify-between col-span-1 sm:col-span-2">
-          <div>
-            <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
-              Show in Gallery Also
-            </p>
-            <p className="text-[11px] text-[var(--admin-text-secondary)]">
-              Automatically sync and display this product in the Inspiration Gallery
-            </p>
-          </div>
+        <div className="p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] flex items-center justify-between col-span-1 sm:col-span-2">
+          <p className="text-[12.5px] font-bold text-[var(--admin-text-primary)]">
+            Show in Inspiration Gallery
+          </p>
           <AdminToggle
             checked={formData.showInGallery}
             onChange={() => setFormData({ ...formData, showInGallery: !formData.showInGallery })}
@@ -67,25 +52,25 @@ export function ProductReviewStep({ formData, setFormData }) {
         </div>
 
         {/* Summary Data Review list */}
-        <div className="col-span-1 sm:col-span-2 p-5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-2xl space-y-4 text-[12px]">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] border-b border-[var(--admin-border)]/60 pb-1.5 mb-4">
+        <div className="col-span-1 sm:col-span-2 p-5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[4px] space-y-4 text-[12px]">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] border-b border-[var(--admin-border)] pb-1.5 mb-4">
             Curation Credentials Summary
           </p>
 
-          <div className="flex items-start gap-4 mb-4 pb-4 border-b border-[var(--admin-border)]/40">
+          <div className="flex items-start gap-4 mb-4 pb-4 border-b border-[var(--admin-border)]">
             {formData.images && formData.images.length > 0 ? (
-              <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-[var(--admin-accent)]/20 shadow-sm shrink-0">
+              <div className="relative w-20 h-20 rounded-[4px] overflow-hidden border border-[var(--admin-border)] shadow-xs shrink-0">
                 <img
                   src={formData.images[0]}
                   className="w-full h-full object-cover"
                   alt="Primary Cover"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-[var(--admin-accent)]/90 backdrop-blur-sm text-white text-[8px] font-extrabold tracking-widest text-center py-0.5 uppercase">
+                <div className="absolute bottom-0 left-0 right-0 bg-[var(--admin-accent)] text-white text-[8px] font-bold tracking-widest text-center py-0.5 uppercase">
                   Primary
                 </div>
               </div>
             ) : (
-              <div className="w-20 h-20 rounded-xl bg-[var(--admin-surface)] border border-dashed border-[var(--admin-border)] flex flex-col items-center justify-center shrink-0">
+              <div className="w-20 h-20 rounded-[4px] bg-[var(--admin-surface)] border border-dashed border-[var(--admin-border)] flex flex-col items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-[var(--admin-text-tertiary)] text-[20px]">
                   image_not_supported
                 </span>
@@ -109,7 +94,7 @@ export function ProductReviewStep({ formData, setFormData }) {
           </div>
 
           <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
               <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
                 English Title
               </span>
@@ -118,7 +103,7 @@ export function ProductReviewStep({ formData, setFormData }) {
               </span>
             </div>
             {formData.teluguTitle && (
-              <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+              <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
                 <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
                   Telugu Title
                 </span>
@@ -127,7 +112,7 @@ export function ProductReviewStep({ formData, setFormData }) {
                 </span>
               </div>
             )}
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
               <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
                 Category
               </span>
@@ -135,7 +120,7 @@ export function ProductReviewStep({ formData, setFormData }) {
                 {formData.category || 'Unassigned'}
               </span>
             </div>
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
               <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
                 Retail Price
               </span>
@@ -143,7 +128,7 @@ export function ProductReviewStep({ formData, setFormData }) {
                 ₹{Number(formData.price || 0).toLocaleString()}
               </span>
             </div>
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
               <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
                 Stock Quantity
               </span>
@@ -152,7 +137,7 @@ export function ProductReviewStep({ formData, setFormData }) {
               </span>
             </div>
             {formData.material && (
-              <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+              <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
                 <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
                   Core Material
                 </span>
@@ -161,7 +146,7 @@ export function ProductReviewStep({ formData, setFormData }) {
                 </span>
               </div>
             )}
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
               <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
                 Featured
               </span>
@@ -169,7 +154,7 @@ export function ProductReviewStep({ formData, setFormData }) {
                 {formData.featured ? 'Yes' : 'No'}
               </span>
             </div>
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
               <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
                 Show in Gallery
               </span>
@@ -180,7 +165,7 @@ export function ProductReviewStep({ formData, setFormData }) {
 
             {/* New Added Fields */}
             {formData.customerNote && (
-              <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+              <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
                 <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
                   Customer Note
                 </span>
@@ -190,7 +175,7 @@ export function ProductReviewStep({ formData, setFormData }) {
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)]/40 pb-2 gap-1">
+            <div className="flex flex-col sm:flex-row sm:justify-between border-b border-[var(--admin-border)] pb-2 gap-1">
               <span className="font-semibold text-[var(--admin-text-secondary)] uppercase tracking-wider text-[11px]">
                 Personalization
               </span>

@@ -1,13 +1,13 @@
 import React from 'react';
 export function OrderItems({ order }) {
   return (
-    <div className="bg-[var(--admin-surface)] rounded-xl shadow-sm border border-[var(--admin-border)] overflow-hidden">
+    <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border)] overflow-hidden">
       <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
         <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
           <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
           Order Items
         </h3>
-        <span className="text-[12px] font-bold text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] px-3 py-1 rounded-full border border-[var(--admin-border-subtle)]">
+        <span className="text-[12px] font-bold text-[var(--admin-text-secondary)] bg-[var(--admin-surface-muted)] px-2.5 py-0.5 rounded-[4px] border border-[var(--admin-border-subtle)]">
           {order.items?.length || 0} Items
         </span>
       </div>
@@ -19,7 +19,7 @@ export function OrderItems({ order }) {
             className="px-3 py-4 sm:p-5 flex flex-row gap-3 sm:gap-5 hover:bg-[var(--admin-surface-muted)] transition-colors group"
           >
             {/* Image */}
-            <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-xl bg-gray-100 border border-[var(--admin-border)] shrink-0 overflow-hidden relative shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+            <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-[4px] bg-gray-100 border border-[var(--admin-border)] shrink-0 overflow-hidden relative shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
               {item.image ? (
                 <img
                   src={item.image}
@@ -32,7 +32,7 @@ export function OrderItems({ order }) {
                 </div>
               )}
               {item.type && item.type.toLowerCase() !== 'purchase' && (
-                <div className="absolute top-0 right-0 bg-[var(--admin-text-primary)] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-bl-lg">
+                <div className="absolute top-0 right-0 bg-[var(--admin-text-primary)] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-bl-[4px]">
                   {item.type}
                 </div>
               )}

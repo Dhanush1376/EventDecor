@@ -66,7 +66,7 @@ export const getAllOrders = asyncHandler(async (req: Request, res: Response) => 
 });
 
 export const updateOrderStatus = asyncHandler(async (req: Request, res: Response) => {
-  const { status, note, courierCharges } = req.body;
+  const { status, note, courierCharges, collectedAmount } = req.body;
 
   // We need the previous status for the audit log
   const Order = require('../../models/Order').default;
@@ -78,6 +78,8 @@ export const updateOrderStatus = asyncHandler(async (req: Request, res: Response
     status,
     note,
     courierCharges,
+    true,
+    collectedAmount,
   );
 
   // If performed by an admin, log it

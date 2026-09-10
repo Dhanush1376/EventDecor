@@ -221,7 +221,9 @@ export function FilterPanel({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-outline-variant/30">
         <div className="flex flex-col">
-          <h2 className="font-label font-headline-md text-on-surface font-normal">Filters</h2>
+          <h2 className="font-serif-heading text-[22px] sm:text-[24px] text-on-surface font-normal leading-tight">
+            Filters
+          </h2>
           {isOpen && (
             <span className="font-label text-[10px] text-primary uppercase tracking-[0.3em] mt-1">
               {mobileSubtitle}

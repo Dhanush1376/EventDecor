@@ -144,6 +144,12 @@ router.post(
   authorize('super_admin', 'main_admin', 'admin'),
   returnAdminController.createReplacementOrder,
 );
+router.post(
+  '/admin/exchanges/:id/record-payment',
+  requireAuth,
+  authorize('super_admin', 'main_admin', 'admin', 'editor'),
+  returnAdminController.recordExchangePayment,
+);
 
 // Parameterized routes MUST be at the bottom
 router.get(

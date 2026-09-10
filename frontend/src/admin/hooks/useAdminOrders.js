@@ -5,7 +5,7 @@ import logger from '../../utils/core/logger';
 
 const mapDbOrderToFrontend = (o) => {
   if (!o) return null;
-  if (o.id && o.customer && o.status) return o;
+  if (o.id && typeof o.id === 'string' && o.customer && o.status) return o;
 
   const dateStr = o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : '';
 
@@ -48,8 +48,10 @@ const mapDbOrderToFrontend = (o) => {
       }))
     : [];
 
+  const orderIdStr = String(o._id?.toString ? o._id.toString() : o._id || o.id || 'ORD-UNKNOWN');
+
   return {
-    id: o._id || o.id || 'ORD-UNKNOWN',
+    id: orderIdStr,
     customer: o.shippingAddress?.name || o.user?.name || 'Store Customer',
     email: o.shippingAddress?.email || o.user?.email || 'customer@email.com',
     phone: o.shippingAddress?.phone || o.user?.phone || '',
@@ -69,6 +71,9 @@ const mapDbOrderToFrontend = (o) => {
       ? `${o.shippingAddress.address}, ${o.shippingAddress.city}, ${o.shippingAddress.state} - ${o.shippingAddress.pincode}`
       : 'Ongole',
     rawOrder: o,
+    courierCharges: o.courierCharges,
+    collectedAmount: o.collectedAmount,
+    settledAmount: o.settledAmount,
     invoiceNumber: o.invoiceNumber,
     trackingNumber: o.trackingNumber,
     courierPartner: o.courierPartner,
@@ -100,7 +105,7 @@ export function useAdminOrders({
   const [orders, setOrders] = useState([]);
 
   const updateOrderStatus = useCallback(
-    async (orderId, newStatus, note, courierCharges) => {
+    async (orderId, newStatus, note, courierCharges, collectedAmount) => {
       if (activeRole === 'viewer') {
         toast.error('Viewer Role: Write operations are restricted!');
         return;
@@ -114,7 +119,13 @@ export function useAdminOrders({
           setGlobalActionMessage(`Updating order status to ${newStatus}...`);
           setGlobalActionLoading(true);
         }
-        const res = await orderService.updateStatus(orderId, newStatus, note, courierCharges);
+        const res = await orderService.updateStatus(
+          orderId,
+          newStatus,
+          note,
+          courierCharges,
+          collectedAmount,
+        );
         if (res.success) {
           const mapped = res.data ? mapDbOrderToFrontend(res.data) : null;
           setOrders((prev) =>

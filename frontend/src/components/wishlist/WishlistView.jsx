@@ -142,6 +142,16 @@ export function WishlistView({ isEmbedded = false }) {
       result.sort((a, b) => a.price - b.price);
     } else if (sortBy === 'price-high') {
       result.sort((a, b) => b.price - a.price);
+    } else if (sortBy === 'latest') {
+      const hasAddedAt = result.some((item) => item.addedAt);
+      if (hasAddedAt) {
+        result.sort((a, b) => {
+          if (!a.addedAt && !b.addedAt) return 0;
+          if (!a.addedAt) return 1;
+          if (!b.addedAt) return -1;
+          return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
+        });
+      }
     }
     return result;
   }, [enhancedItems, itemTypeFilter, selectedCategory, sortBy]);

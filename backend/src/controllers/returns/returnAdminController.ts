@@ -847,3 +847,107 @@ export const createReplacementOrder = asyncHandler(async (req: Request, res: Res
     data: order,
   });
 });
+
+/**
+ * @desc    Record manual customer difference payment for exchange and auto-reserve stock
+ * @route   POST /api/v1/returns/admin/exchanges/:id/record-payment
+ * @access  Admin
+ */
+export const recordExchangePayment = asyncHandler(async (req: Request, res: Response) => {
+  const adminId = req.user?.id;
+  if (!adminId) throw new ApiError(401, 'Unauthorized');
+
+  const { amount, paymentMethod = 'upi', transactionId, notes, autoReserve = true } = req.body;
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const paramId = req.params.id;
+    const isObjectId = mongoose.isValidObjectId(paramId);
+
+    const ExchangeRequest = require('../../models/ExchangeRequest').default;
+    const exchange = await ExchangeRequest.findOne(
+      isObjectId ? { _id: paramId } : { exchangeId: paramId },
+    ).session(session);
+
+    if (!exchange) throw new ApiError(404, 'Exchange request not found');
+
+    const paidAmount = Number(amount) || Number(exchange.priceDifference) || 0;
+    const effectiveTxId = transactionId?.trim() || `MANUAL-PAY-${Date.now()}`;
+
+    // 1. Mark payment as paid
+    exchange.paymentStatus = 'payment_paid';
+    exchange.paidAt = new Date();
+
+    const paymentLog = `Additional payment of ₹${paidAmount} received via ${paymentMethod.toUpperCase()}. Ref: ${effectiveTxId}.${notes ? ` Note: ${notes}` : ''}`;
+
+    exchange.timeline.push({
+      action: paymentLog,
+      timestamp: new Date(),
+      performedBy: new mongoose.Types.ObjectId(adminId),
+    });
+
+    // 2. Auto-reserve stock if requested and not already reserved
+    if (
+      autoReserve &&
+      exchange.replacementStatus !== 'reserved' &&
+      exchange.replacementStatus !== 'delivered'
+    ) {
+      exchange.replacementStatus = 'reserved';
+      if (!exchange.replacementItem?.reservationId && exchange.replacementItem?.productId) {
+        try {
+          const { InventoryService } = require('../InventoryService');
+          const reservation = await InventoryService.reserveInventory(
+            exchange.replacementItem.productId.toString(),
+            exchange.replacementItem.quantity || 1,
+            adminId,
+            60 * 24 * 7,
+            session,
+          );
+          if (reservation?._id) {
+            exchange.replacementItem.reservationId = reservation._id;
+          }
+        } catch (reserveErr) {
+          logger.warn('Could not auto-reserve inventory on payment registration:', reserveErr);
+        }
+      }
+    }
+
+    await exchange.save({ session });
+
+    // 3. Update ReturnRequest timeline
+    if (exchange.returnRequestId) {
+      const returnReq = await ReturnRequest.findById(exchange.returnRequestId).session(session);
+      if (returnReq) {
+        returnReq.timeline.push({
+          action: 'payment_received',
+          description: paymentLog,
+          performedBy: new mongoose.Types.ObjectId(adminId),
+          performedByName: (req.user as any)?.name || 'Admin',
+          performedByRole: (req.user as any)?.role || 'admin',
+          metadata: {
+            amount: paidAmount,
+            paymentMethod,
+            transactionId: effectiveTxId,
+          },
+          timestamp: new Date(),
+        });
+        await returnReq.save({ session });
+      }
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({
+      success: true,
+      message: 'Payment recorded and stock reserved successfully',
+      data: exchange,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+});

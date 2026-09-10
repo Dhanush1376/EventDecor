@@ -134,6 +134,11 @@ export function UserSocketProvider({ children }) {
           queryClient.invalidateQueries({ queryKey: ['returns'] });
         });
 
+        socket.on('notification:new', (data) => {
+          logger.dev('[WEBSOCKET] New notification received:', data);
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        });
+
         socket.on('connect_error', (err) => {
           if (err.message.includes('Token missing')) return;
           logger.warn('[WEBSOCKET] User connection error:', err.message);

@@ -18,62 +18,90 @@ export function CustomOrderPreviewModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--admin-surface-overlay)] backdrop-blur-sm p-4"
         >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
+            initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-[var(--color-surface-ivory)] w-full h-[95vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden max-w-[1400px]"
+            exit={{ scale: 0.98, opacity: 0 }}
+            className="bg-[var(--admin-surface)] w-full h-[92vh] rounded-[4px] shadow-2xl border border-[var(--admin-border)] flex flex-col overflow-hidden max-w-[1300px] text-left"
           >
             {/* Modal Header */}
-            <div className="bg-black text-white p-4 flex justify-between items-center shrink-0">
-              <div className="flex items-center gap-4">
-                <h3 className="font-display text-[20px]">Live Storefront Preview</h3>
+            <div className="bg-[var(--admin-bg-subtle)] border-b border-[var(--admin-border-subtle)] px-5 py-3.5 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">
+                    visibility
+                  </span>
+                  <h3 className="font-bold text-[14px] text-[var(--admin-text-primary)]">
+                    Storefront Wizard Live Preview
+                  </h3>
+                </div>
+
                 {/* Device Toggles */}
-                <div className="flex gap-1 bg-white/10 p-1 rounded-lg">
+                <div className="flex items-center gap-1 bg-[var(--admin-surface-muted)] p-1 rounded-[4px] border border-[var(--admin-border)]">
                   <button
+                    type="button"
                     onClick={() => setPreviewDevice('desktop')}
-                    className={`p-1.5 rounded flex items-center justify-center ${previewDevice === 'desktop' ? 'bg-[var(--color-gold)]' : 'hover:bg-white/10'}`}
+                    className={`h-7 px-2.5 rounded-[4px] flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                      previewDevice === 'desktop'
+                        ? 'bg-[var(--admin-accent)] text-white shadow-xs'
+                        : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                    }`}
                   >
-                    <span className="material-symbols-outlined text-[18px]">desktop_mac</span>
+                    <span className="material-symbols-outlined text-[15px]">desktop_mac</span>
+                    <span className="hidden sm:inline">Desktop</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => setPreviewDevice('tablet')}
-                    className={`p-1.5 rounded flex items-center justify-center ${previewDevice === 'tablet' ? 'bg-[var(--color-gold)]' : 'hover:bg-white/10'}`}
+                    className={`h-7 px-2.5 rounded-[4px] flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                      previewDevice === 'tablet'
+                        ? 'bg-[var(--admin-accent)] text-white shadow-xs'
+                        : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                    }`}
                   >
-                    <span className="material-symbols-outlined text-[18px]">tablet_mac</span>
+                    <span className="material-symbols-outlined text-[15px]">tablet_mac</span>
+                    <span className="hidden sm:inline">Tablet</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => setPreviewDevice('mobile')}
-                    className={`p-1.5 rounded flex items-center justify-center ${previewDevice === 'mobile' ? 'bg-[var(--color-gold)]' : 'hover:bg-white/10'}`}
+                    className={`h-7 px-2.5 rounded-[4px] flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                      previewDevice === 'mobile'
+                        ? 'bg-[var(--admin-accent)] text-white shadow-xs'
+                        : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                    }`}
                   >
-                    <span className="material-symbols-outlined text-[18px]">smartphone</span>
+                    <span className="material-symbols-outlined text-[15px]">smartphone</span>
+                    <span className="hidden sm:inline">Mobile</span>
                   </button>
                 </div>
               </div>
+
               <button
+                type="button"
                 onClick={() => setShowPreviewModal(false)}
-                className="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                className="admin-btn-icon !rounded-[4px] w-8 h-8 text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+                title="Close Preview"
               >
-                <span className="material-symbols-outlined">close</span>
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
             {/* Modal Body / Device Container */}
-            <div className="flex-1 overflow-y-auto bg-[#e5e5e5] flex items-center justify-center p-6">
+            <div className="flex-1 overflow-y-auto bg-[var(--admin-bg-subtle)] flex items-center justify-center p-4 sm:p-6 custom-scrollbar">
               <div
-                className={`bg-[var(--color-surface-ivory)] shadow-2xl rounded-3xl overflow-y-auto transition-all duration-500 ${
+                className={`bg-[var(--admin-surface)] shadow-md border border-[var(--admin-border)] rounded-[4px] overflow-y-auto transition-all duration-300 ${
                   previewDevice === 'desktop'
-                    ? 'w-[1200px] h-[800px] max-w-full'
+                    ? 'w-[1100px] h-[750px] max-w-full'
                     : previewDevice === 'tablet'
-                      ? 'w-[768px] h-[1024px]'
-                      : 'w-[375px] h-[812px]' // mobile
+                      ? 'w-[720px] h-[850px]'
+                      : 'w-[375px] h-[720px]'
                 }`}
                 style={{ maxHeight: '100%' }}
               >
-                <div className="p-8">
-                  {/* Pass the current builder config directly to the wizard! */}
+                <div className="p-6">
                   <DynamicCustomOrderWizard
                     previewConfig={config}
                     initialProductPayload={activeTypeTab === 'product' ? { preview: true } : null}

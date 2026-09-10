@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { SkeletonWizard } from '../components/AdminUIKit';
-import { ProductCard } from '../../components/shared/ProductCard';
+import { ShowcaseCard } from '../../components/ui/ShowcaseCard';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
@@ -79,7 +79,11 @@ export function AdminAddShowcase() {
   }, [formData, isEditMode]);
 
   const handleCancelAction = useCallback(() => {
-    navigate('/admin/events');
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/admin/events?tab=showcases');
+    }
   }, [navigate]);
 
   // 2. AI Vision Logic
@@ -153,21 +157,78 @@ export function AdminAddShowcase() {
   }
 
   return (
-    <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+    <div className="max-w-[1280px] mx-auto flex flex-col gap-4 sm:gap-6 pb-16 sm:pb-0">
+      {/* Mobile Merged Header & Progress Card */}
+      <div className="lg:hidden bg-[var(--admin-surface)] p-3 rounded-[4px] border border-[var(--admin-border)] shadow-xs flex flex-col gap-2.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/admin/events?tab=showcases');
+                }
+              }}
+              className="w-8 h-8 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)] cursor-pointer transition-all active:scale-95 shadow-xs shrink-0"
+              title="Back to Showcases"
+            >
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            </button>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[15px] font-bold text-[var(--admin-text-primary)] tracking-tight leading-tight whitespace-nowrap">
+                {isEditMode ? 'Edit Showcase' : 'New Showcase'}
+              </h2>
+              <p className="text-[11.5px] text-[var(--admin-text-secondary)] font-medium truncate mt-0.5 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[14px] text-[var(--admin-accent)]">
+                  {WIZARD_STEPS[currentStep].icon}
+                </span>
+                <span className="font-semibold text-[var(--admin-text-primary)]">
+                  {WIZARD_STEPS[currentStep].label}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0 flex flex-col items-end justify-center gap-1">
+            <span className="text-[10px] font-bold text-[var(--admin-accent)] bg-[var(--admin-surface-muted)] px-2 py-0.5 rounded-[3px] border border-[var(--admin-border)] tracking-wider uppercase">
+              Step {currentStep + 1} of {WIZARD_STEPS.length}
+            </span>
+            <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} compact />
+          </div>
+        </div>
+
+        {/* Integrated Progress Bar */}
+        <div className="w-full bg-[var(--admin-surface-muted)] h-1.5 rounded-[2px] overflow-hidden border border-[var(--admin-border)]">
+          <div
+            className="bg-[var(--admin-accent)] h-full transition-all duration-300"
+            style={{ width: `${((currentStep + 1) / WIZARD_STEPS.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden lg:flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/admin/events')}
-            className="w-10 h-10 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)] cursor-pointer transition-all active:scale-95"
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/admin/events?tab=showcases');
+              }
+            }}
+            className="w-8 h-8 rounded-[4px] bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)] cursor-pointer transition-all active:scale-95 shadow-xs shrink-0"
+            title="Back to Showcases"
           >
-            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
           </button>
           <div>
-            <h2 className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)]">
+            <h2 className="text-[16px] sm:text-[18px] font-bold text-[var(--admin-text-primary)] tracking-tight leading-tight">
               {isEditMode ? 'Edit Showcase Collection' : 'Create Traditional Design'}
             </h2>
-            <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]">
+            <p className="text-[11px] sm:text-[12px] text-[var(--admin-text-secondary)] mt-0.5">
               {isEditMode
                 ? `Modifying Showcase #${id.substring(id.length - 8).toUpperCase()}`
                 : 'Configure side-stage tambulams and occasion decor layouts'}
@@ -186,18 +247,18 @@ export function AdminAddShowcase() {
           <div className="hidden md:flex">
             <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
           </div>
-          <div className="hidden md:flex items-center gap-2 text-[11px] text-[var(--admin-text-secondary)] font-semibold bg-[var(--admin-surface)] border border-[var(--admin-border)] px-3 py-1.5 rounded-full uppercase tracking-wider">
-            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded text-[11px] sm:text-[11px]">
+          <div className="hidden md:flex items-center gap-2 text-[11px] text-[var(--admin-text-secondary)] font-semibold bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 py-1 rounded-[4px] uppercase tracking-wider">
+            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[3px] text-[11px]">
               Alt + →
             </span>
             <span>Next</span>
-            <span className="text-[#E5E7EB]">|</span>
-            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded text-[11px] sm:text-[11px]">
+            <span className="text-[var(--admin-border)]">|</span>
+            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[3px] text-[11px]">
               Ctrl+S
             </span>
             <span>Save</span>
-            <span className="text-[#E5E7EB]">|</span>
-            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded text-[11px] sm:text-[11px]">
+            <span className="text-[var(--admin-border)]">|</span>
+            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[3px] text-[11px]">
               Esc
             </span>
             <span>Back</span>
@@ -206,7 +267,7 @@ export function AdminAddShowcase() {
       </div>
 
       {/* Guided Progress Bar (Desktop & Mobile Responsive) */}
-      <div className="admin-card p-4 border border-[var(--admin-border)]/80 shadow-[var(--admin-shadow-sm)] lg:block hidden overflow-x-auto">
+      <div className="bg-[var(--admin-surface)] p-3 sm:p-4 rounded-[4px] border border-[var(--admin-border)] shadow-xs lg:block hidden overflow-x-auto">
         <div className="flex items-center justify-between min-w-[700px] px-2">
           {WIZARD_STEPS.map((step, index) => {
             const isCompleted = index < currentStep;
@@ -226,9 +287,9 @@ export function AdminAddShowcase() {
                   className="flex items-center gap-2 group cursor-pointer text-left outline-none"
                 >
                   <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                    className={`w-8 h-8 rounded-[4px] flex items-center justify-center transition-all ${
                       isActive
-                        ? 'bg-[var(--admin-accent)] text-white scale-105 shadow-sm'
+                        ? 'bg-[var(--admin-accent)] text-white shadow-xs font-bold'
                         : isCompleted
                           ? 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]'
                           : 'bg-[var(--admin-bg-subtle)] text-[var(--admin-text-tertiary)] border border-[var(--admin-border-subtle)]'
@@ -240,16 +301,16 @@ export function AdminAddShowcase() {
                   </div>
                   <div>
                     <p
-                      className={`text-[11px] sm:text-[11px] font-bold uppercase tracking-wider ${
+                      className={`text-[10.5px] font-bold uppercase tracking-wider ${
                         isActive
-                          ? 'text-[var(--admin-text-primary)]'
+                          ? 'text-[var(--admin-accent)]'
                           : 'text-[var(--admin-text-tertiary)]'
                       }`}
                     >
                       Step {index + 1}
                     </p>
                     <p
-                      className={`text-[11px] sm:text-[11px] font-bold ${
+                      className={`text-[12px] font-bold ${
                         isActive
                           ? 'text-[var(--admin-text-primary)]'
                           : 'text-[var(--admin-text-secondary)]'
@@ -261,8 +322,8 @@ export function AdminAddShowcase() {
                 </button>
                 {index < WIZARD_STEPS.length - 1 && (
                   <div
-                    className={`flex-1 h-[2px] mx-4 rounded-full ${
-                      isCompleted ? 'bg-black' : 'bg-[var(--admin-surface-muted)]'
+                    className={`flex-1 h-[2px] mx-4 ${
+                      isCompleted ? 'bg-[var(--admin-accent)]' : 'bg-[var(--admin-border-subtle)]'
                     }`}
                   />
                 )}
@@ -272,55 +333,26 @@ export function AdminAddShowcase() {
         </div>
       </div>
 
-      {/* Guided Progress Bar (Mobile) */}
-      <div className="lg:hidden admin-card p-4 border border-[var(--admin-border)]/80 shadow-[var(--admin-shadow-sm)] flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[var(--admin-accent)] text-white flex items-center justify-center shadow-sm">
-            <span className="material-symbols-outlined text-[18px]">
-              {WIZARD_STEPS[currentStep].icon}
-            </span>
-          </div>
-          <div>
-            <span className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest block">
-              Step {currentStep + 1} of {WIZARD_STEPS.length}
-            </span>
-            <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)]">
-              {WIZARD_STEPS[currentStep].label}
-            </h4>
-          </div>
-        </div>
-        <div className="w-24 bg-[var(--admin-surface-muted)] h-1.5 rounded-full overflow-hidden border border-[var(--admin-border)]/40">
-          <div
-            className="bg-black h-full transition-all duration-300"
-            style={{ width: `${((currentStep + 1) / WIZARD_STEPS.length) * 100}%` }}
-          />
-        </div>
-      </div>
-
       {/* Mobile Form/Preview Tab Switcher */}
-      <div className="flex lg:hidden bg-[var(--admin-surface-muted)] p-1 rounded-xl border border-[var(--admin-border)]/60 w-full">
+      <div className="flex items-center gap-1 lg:hidden bg-[var(--admin-surface-muted)] p-1 rounded-[4px] border border-[var(--admin-border)] h-[42px] min-h-[42px] max-h-[42px] box-border w-full">
         <button
           type="button"
-          onClick={() => {
-            setMobileTab('form');
-          }}
-          className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+          onClick={() => setMobileTab('form')}
+          className={`flex-1 h-[32px] min-h-[32px] max-h-[32px] rounded-[3px] text-[11px] font-bold uppercase tracking-wider flex items-center justify-center transition-all box-border ${
             mobileTab === 'form'
-              ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]/40'
-              : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+              ? 'bg-[var(--admin-surface)] text-[var(--admin-accent)] shadow-xs border border-[var(--admin-border)]'
+              : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
           }`}
         >
           Edit Showcase
         </button>
         <button
           type="button"
-          onClick={() => {
-            setMobileTab('preview');
-          }}
-          className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+          onClick={() => setMobileTab('preview')}
+          className={`flex-1 h-[32px] min-h-[32px] max-h-[32px] rounded-[3px] text-[11px] font-bold uppercase tracking-wider flex items-center justify-center transition-all box-border ${
             mobileTab === 'preview'
-              ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]/40'
-              : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+              ? 'bg-[var(--admin-surface)] text-[var(--admin-accent)] shadow-xs border border-[var(--admin-border)]'
+              : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
           }`}
         >
           Live Preview
@@ -331,7 +363,7 @@ export function AdminAddShowcase() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
         {/* Form Wizard Frame */}
         <div
-          className={`admin-card p-4 sm:p-6 shadow-sm min-h-[480px] flex-col justify-between relative overflow-hidden ${mobileTab === 'form' ? 'flex' : 'hidden lg:flex'}`}
+          className={`bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border)] shadow-xs p-4 sm:p-6 min-h-0 lg:min-h-[480px] flex-col justify-between relative overflow-hidden ${mobileTab === 'form' ? 'flex' : 'hidden lg:flex'}`}
         >
           {/* Compression / Upload Overlay */}
           <AnimatePresence>
@@ -452,100 +484,122 @@ export function AdminAddShowcase() {
             </AnimatePresence>
           </div>
 
-          {/* Footer Controls: Back & Next / Save */}
-          <div className="border-t border-[var(--admin-border)]/60 pt-4 mt-6 flex items-center justify-between bg-[var(--admin-surface)]">
-            <button
-              type="button"
-              onClick={handlePrev}
-              disabled={currentStep === 0 || isCompressing || isLoading}
-              className="px-5 py-2.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] rounded-full text-[12px] font-bold hover:bg-[#E5E7EB]/45 cursor-pointer disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95"
-            >
-              Back
-            </button>
+          {/* Footer Controls: Back & Next / Save - Sticky above bottom nav on mobile */}
+          <div className="admin-wizard-sticky-footer">
+            <div className="flex items-center justify-between max-w-7xl mx-auto w-full">
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={currentStep === 0 || isCompressing || isLoading || isSaving}
+                className="h-9 sm:h-[38px] px-3.5 sm:px-4 bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] rounded-[4px] text-[12px] sm:text-[12.5px] font-bold cursor-pointer disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95 shadow-xs"
+              >
+                Back
+              </button>
 
-            {currentStep < WIZARD_STEPS.length - 1 ? (
-              <div className="flex items-center gap-3">
+              {currentStep < WIZARD_STEPS.length - 1 ? (
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={(e) => handleSubmit(e, { stayOnPage: true })}
+                    disabled={isLoading || isCompressing || isSaving}
+                    className="h-9 sm:h-[38px] px-3 sm:px-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] rounded-[4px] text-[12px] sm:text-[12.5px] font-bold hover:bg-[var(--admin-surface-muted)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 disabled:opacity-50 shadow-xs"
+                  >
+                    {isSaving ? (
+                      <>
+                        <div className="skeleton-box inline-block w-4 h-4 rounded-[2px]" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[16px]">
+                          {isEditMode ? 'save' : 'publish'}
+                        </span>
+                        <span>{isEditMode ? 'Update' : 'Publish'}</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={isCompressing || isLoading || isSaving}
+                    className="h-9 sm:h-[38px] px-3.5 sm:px-5 bg-[var(--admin-accent)] hover:opacity-95 text-white rounded-[4px] text-[12px] sm:text-[12.5px] font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-xs disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    <span>Continue</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </button>
+                </div>
+              ) : (
                 <button
                   type="button"
-                  onClick={(e) => handleSubmit(e, { stayOnPage: true })}
+                  onClick={(e) => handleSubmit(e, { stayOnPage: false })}
                   disabled={isLoading || isCompressing || isSaving}
-                  className="px-5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] rounded-full text-[12px] font-bold hover:bg-[var(--admin-bg-subtle)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+                  className="h-9 sm:h-[38px] px-4 sm:px-6 bg-[var(--admin-accent)] hover:opacity-95 text-white rounded-[4px] text-[12px] sm:text-[12.5px] font-bold uppercase tracking-wider transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer shadow-xs active:scale-95"
                 >
                   {isSaving ? (
                     <>
-                      <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
-                      Saving...
+                      <div className="skeleton-box inline-block w-4 h-4 rounded-[2px]" />
+                      <span>Saving Design...</span>
                     </>
                   ) : (
                     <>
-                      <span className="material-symbols-outlined text-[16px]">
-                        {isEditMode ? 'save' : 'publish'}
+                      <span className="material-symbols-outlined text-[18px] text-white">
+                        done_all
                       </span>
-                      {isEditMode ? 'Update' : 'Publish'}
+                      <span>{isEditMode ? 'Update Design' : 'Publish to Gallery'}</span>
                     </>
                   )}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={isCompressing || isLoading || isSaving}
-                  className="px-6 py-2.5 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold hover:brightness-110 flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  Continue
-                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={(e) => handleSubmit(e, { stayOnPage: false })}
-                disabled={isLoading || isCompressing || isSaving}
-                className="px-7 py-3 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold uppercase tracking-wider hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-sm"
-              >
-                {isSaving ? (
-                  <>
-                    <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
-                    Saving Design...
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-[18px] text-white">
-                      done_all
-                    </span>
-                    {isEditMode ? 'Update Design' : 'Publish to Gallery'}
-                  </>
-                )}
-              </button>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
         {/* Live Catalog Preview Card */}
         <div
-          className={`lg:sticky lg:top-24 space-y-6 w-full ${mobileTab === 'preview' ? 'block' : 'hidden lg:block'}`}
+          className={`lg:sticky lg:top-24 space-y-4 w-full ${mobileTab === 'preview' ? 'block' : 'hidden lg:block'}`}
         >
-          <div className="text-center lg:text-left">
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--admin-text-secondary)]">
-              Storefront Preview
+          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[var(--admin-border)]">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-[var(--admin-accent)]">
+                visibility
+              </span>
+              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">
+                Storefront Preview
+              </h3>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live
             </span>
-            <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]/75 mt-0.5">
-              Real-time catalog rendition of your showcase design
-            </p>
           </div>
 
-          {/* Luxury Card Rendering using real ProductCard */}
-          <div className="w-full max-w-[340px] mx-auto bg-white rounded-2xl shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border)]/60 p-2">
-            <ProductCard
+          {/* Exact Storefront Showcase Card without outer card background */}
+          <div
+            className="w-full max-w-[340px] sm:max-w-[380px] mx-auto pointer-events-auto"
+            onClickCapture={(e) => {
+              // Prevent navigating away from the form when clicking in preview
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <ShowcaseCard
+              id={id || 'preview-showcase'}
+              _id={id || 'preview-showcase'}
               title={formData.title || 'Showcase Title'}
-              rentalPrice={Number(formData.rentalPrice || 0)}
-              oldPrice={Number(formData.strikingPrice || 0)}
-              imageSrc={formData.image}
-              category={formData.category?.replace('_', ' ') || 'Category'}
-              setupTimeHours={Number(formData.setupTimeHours || 0)}
-              inclusions={(formData.inclusions || []).map((i) => i.name).filter(Boolean)}
-              itemType="event"
+              subtitle={formData.subtitle || ''}
+              description={formData.description || ''}
+              rentalPrice={formData.rentalPrice ? Number(formData.rentalPrice) : 0}
+              originalPrice={formData.strikingPrice ? Number(formData.strikingPrice) : 0}
+              setupTimeHours={Number(formData.setupTimeHours || 2)}
+              image={formData.image || ''}
+              images={[formData.image, ...(formData.galleryImages || [])].filter(Boolean)}
+              category={formData.category?.replace('_', ' ') || 'Traditional'}
+              inclusions={formData.inclusions || []}
               rating={0}
-              onQuickView={(e) => e.preventDefault()}
+              reviews={0}
+              onOpenShowcase={(e) => {
+                if (e && e.preventDefault) e.preventDefault();
+              }}
             />
           </div>
         </div>

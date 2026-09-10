@@ -79,7 +79,7 @@ export function PageHeader({
                 ))}
               </nav>
             )}
-            <h1 className="text-[20px] sm:text-[26px] font-bold text-[var(--admin-text-primary)] font-display tracking-tight leading-tight flex items-center gap-2">
+            <h1 className="text-[20px] sm:text-[26px] font-bold text-[var(--admin-text-primary)] tracking-tight leading-tight flex items-center gap-2">
               {title}
               {badge !== undefined && (
                 <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-[var(--admin-surface-hover)] border border-[var(--admin-border-strong)] text-[var(--admin-text-secondary)] text-[12px] font-bold ml-1">

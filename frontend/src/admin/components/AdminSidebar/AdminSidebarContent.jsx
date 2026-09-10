@@ -157,13 +157,23 @@ export function AdminSidebarContent({
                       .map((item, ii) => {
                         // We only want exact match or if it's not a root hub path.
                         // To prevent 'Active Rentals' from highlighting when 'Due Returns' is selected.
-                        const isExact = location.pathname === item.path;
+                        const currentFullPath = location.pathname + location.search;
+                        const isExact = item.path.includes('?')
+                          ? currentFullPath === item.path ||
+                            (location.pathname === item.path.split('?')[0] &&
+                              !location.search &&
+                              item.path.endsWith('tab=dashboard'))
+                          : location.pathname === item.path;
                         const isSubPath =
+                          !item.path.includes('?') &&
                           item.path !== '/admin' &&
                           item.path !== '/admin/rentals' &&
                           item.path !== '/admin/orders' &&
                           item.path !== '/admin/system' &&
-                          location.pathname.startsWith(item.path);
+                          item.path !== '/admin/analytics' &&
+                          (location.pathname.startsWith(item.path) ||
+                            (item.matchPaths &&
+                              item.matchPaths.some((p) => location.pathname.startsWith(p))));
                         const isActive = isExact || isSubPath;
                         return (
                           <NavLink

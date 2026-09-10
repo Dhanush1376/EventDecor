@@ -159,28 +159,73 @@ export function AdminAddProduct({ editId }) {
 
   if (isLoading && isEditMode && !formData.title) {
     return (
-      <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0 px-2 sm:px-4">
+      <div className="max-w-[1280px] mx-auto space-y-5 pb-2 sm:pb-0 px-2 sm:px-4">
         <SkeletonWizard steps={WIZARD_STEPS.length} />
       </div>
     );
   }
 
   const mainLayout = (
-    <div className="max-w-[1280px] mx-auto space-y-6 pb-20 sm:pb-0">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+    <div className="flex flex-col gap-4 sm:gap-6 max-w-7xl mx-auto pb-16 sm:pb-0">
+      {/* Mobile Merged Header & Progress Card */}
+      <div className="lg:hidden bg-[var(--admin-surface)] p-3 rounded-[4px] border border-[var(--admin-border)] shadow-xs flex flex-col gap-2.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/products')}
+              className="w-8 h-8 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)] cursor-pointer transition-all active:scale-95 shadow-xs shrink-0"
+              title="Back to Products"
+            >
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            </button>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[15px] font-bold text-[var(--admin-text-primary)] tracking-tight leading-tight whitespace-nowrap">
+                {isEditMode ? 'Edit Product' : 'New Product'}
+              </h2>
+              <p className="text-[11.5px] text-[var(--admin-text-secondary)] font-medium truncate mt-0.5 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[14px] text-[var(--admin-accent)]">
+                  {WIZARD_STEPS[currentStep].icon}
+                </span>
+                <span className="font-semibold text-[var(--admin-text-primary)]">
+                  {WIZARD_STEPS[currentStep].label}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0 flex flex-col items-end justify-center gap-1">
+            <span className="text-[10px] font-bold text-[var(--admin-accent)] bg-[var(--admin-surface-muted)] px-2 py-0.5 rounded-[3px] border border-[var(--admin-border)] tracking-wider uppercase">
+              Step {currentStep + 1} of {WIZARD_STEPS.length}
+            </span>
+            <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} compact />
+          </div>
+        </div>
+
+        {/* Integrated Progress Bar */}
+        <div className="w-full bg-[var(--admin-surface-muted)] h-1.5 rounded-[2px] overflow-hidden border border-[var(--admin-border)]">
+          <div
+            className="bg-[var(--admin-accent)] h-full transition-all duration-300"
+            style={{ width: `${((currentStep + 1) / WIZARD_STEPS.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden lg:flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/admin/products')}
-            className="w-10 h-10 rounded-full bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)] cursor-pointer transition-all active:scale-95"
+            className="w-8 h-8 rounded-[4px] bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)] cursor-pointer transition-all active:scale-95 shadow-xs shrink-0"
+            title="Back to Products"
           >
-            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
           </button>
           <div>
-            <h2 className="text-[11px] sm:text-[11px] font-bold text-[var(--admin-text-primary)]">
+            <h2 className="text-[16px] sm:text-[18px] font-bold text-[var(--admin-text-primary)] tracking-tight leading-tight">
               {isEditMode ? 'Edit Product' : 'New Product'}
             </h2>
-            <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]">
+            <p className="text-[11px] sm:text-[12px] text-[var(--admin-text-secondary)] mt-0.5">
               {isEditMode
                 ? `Modifying #${id.substring(id.length - 8).toUpperCase()}`
                 : 'Add or update product'}
@@ -191,7 +236,7 @@ export function AdminAddProduct({ editId }) {
         {/* Keyboard Shortcut Banner + Auto-save */}
         <div className="flex items-center gap-3">
           {globalAiConfig && !globalAiConfig.selectedProviderId && (
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200 text-orange-700 text-[11px] font-semibold">
+            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-orange-50 border border-orange-200 text-orange-700 text-[11px] font-semibold">
               <span className="material-symbols-outlined text-[14px]">warning</span>
               AI Offline
             </div>
@@ -199,18 +244,18 @@ export function AdminAddProduct({ editId }) {
           <div className="hidden md:flex">
             <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
           </div>
-          <div className="hidden md:flex items-center gap-2 text-[11px] text-[var(--admin-text-secondary)] font-semibold bg-[var(--admin-surface)] border border-[var(--admin-border)] px-3 py-1.5 rounded-full uppercase tracking-wider">
-            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded text-[11px] sm:text-[11px] sm:text-[11px]">
+          <div className="hidden md:flex items-center gap-2 text-[11px] text-[var(--admin-text-secondary)] font-semibold bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 py-1 rounded-[4px] uppercase tracking-wider">
+            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[3px] text-[11px]">
               Alt + →
             </span>
             <span>Next</span>
-            <span className="text-[#E5E7EB]">|</span>
-            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded text-[11px] sm:text-[11px] sm:text-[11px]">
+            <span className="text-[var(--admin-border)]">|</span>
+            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[3px] text-[11px]">
               Ctrl+S
             </span>
             <span>Save</span>
-            <span className="text-[#E5E7EB]">|</span>
-            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded text-[11px] sm:text-[11px] sm:text-[11px]">
+            <span className="text-[var(--admin-border)]">|</span>
+            <span className="px-1.5 py-0.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] rounded-[3px] text-[11px]">
               Esc
             </span>
             <span>Back</span>
@@ -219,7 +264,7 @@ export function AdminAddProduct({ editId }) {
       </div>
 
       {/* Guided Progress Bar (Desktop & Mobile Responsive) */}
-      <div className="admin-card p-4 border border-[var(--admin-border)]/80 shadow-[var(--admin-shadow-sm)] lg:block hidden overflow-x-auto">
+      <div className="bg-[var(--admin-surface)] p-3 sm:p-4 rounded-[4px] border border-[var(--admin-border)] shadow-xs lg:block hidden overflow-x-auto">
         <div className="flex items-center justify-between min-w-[700px] px-2">
           {WIZARD_STEPS.map((step, index) => {
             const isCompleted = index < currentStep;
@@ -236,12 +281,12 @@ export function AdminAddProduct({ editId }) {
                       toast.error('Please complete previous steps first');
                     }
                   }}
-                  className="flex items-center gap-2 group cursor-pointer text-left outline-none"
+                  className="flex items-center gap-2.5 group cursor-pointer text-left outline-none"
                 >
                   <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-[4px] flex items-center justify-center transition-all ${
                       isActive
-                        ? 'bg-[var(--admin-accent)] text-white scale-105 shadow-sm'
+                        ? 'bg-[var(--admin-accent)] text-white shadow-xs font-bold'
                         : isCompleted
                           ? 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]'
                           : 'bg-[var(--admin-bg-subtle)] text-[var(--admin-text-tertiary)] border border-[var(--admin-border-subtle)]'
@@ -253,16 +298,16 @@ export function AdminAddProduct({ editId }) {
                   </div>
                   <div>
                     <p
-                      className={`text-[11px] sm:text-[11px] sm:text-[11px] font-bold uppercase tracking-wider ${
+                      className={`text-[10.5px] font-bold uppercase tracking-wider ${
                         isActive
-                          ? 'text-[var(--admin-text-primary)]'
+                          ? 'text-[var(--admin-accent)]'
                           : 'text-[var(--admin-text-tertiary)]'
                       }`}
                     >
                       Step {index + 1}
                     </p>
                     <p
-                      className={`text-[11px] sm:text-[11px] font-bold ${
+                      className={`text-[12px] font-bold ${
                         isActive
                           ? 'text-[var(--admin-text-primary)]'
                           : 'text-[var(--admin-text-secondary)]'
@@ -274,8 +319,8 @@ export function AdminAddProduct({ editId }) {
                 </button>
                 {index < WIZARD_STEPS.length - 1 && (
                   <div
-                    className={`flex-1 h-[2px] mx-4 rounded-full ${
-                      isCompleted ? 'bg-black' : 'bg-[var(--admin-surface-muted)]'
+                    className={`flex-1 h-[2px] mx-3 ${
+                      isCompleted ? 'bg-[var(--admin-accent)]' : 'bg-[var(--admin-border-subtle)]'
                     }`}
                   />
                 )}
@@ -285,40 +330,15 @@ export function AdminAddProduct({ editId }) {
         </div>
       </div>
 
-      {/* Guided Progress Bar (Mobile) */}
-      <div className="lg:hidden admin-card p-4 border border-[var(--admin-border)]/80 shadow-[var(--admin-shadow-sm)] flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[var(--admin-accent)] text-white flex items-center justify-center shadow-sm">
-            <span className="material-symbols-outlined text-[18px]">
-              {WIZARD_STEPS[currentStep].icon}
-            </span>
-          </div>
-          <div>
-            <span className="text-[11px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-widest block">
-              Step {currentStep + 1} of {WIZARD_STEPS.length}
-            </span>
-            <h4 className="text-[13px] font-bold text-[var(--admin-text-primary)]">
-              {WIZARD_STEPS[currentStep].label}
-            </h4>
-          </div>
-        </div>
-        <div className="w-24 bg-[var(--admin-surface-muted)] h-1.5 rounded-full overflow-hidden border border-[var(--admin-border)]/40">
-          <div
-            className="bg-black h-full transition-all duration-300"
-            style={{ width: `${((currentStep + 1) / WIZARD_STEPS.length) * 100}%` }}
-          />
-        </div>
-      </div>
-
       {/* Mobile Form/Preview Tab Switcher */}
-      <div className="flex lg:hidden bg-[var(--admin-surface-muted)] p-1 rounded-xl border border-[var(--admin-border)]/60 w-full">
+      <div className="flex items-center gap-1 lg:hidden bg-[var(--admin-surface-muted)] p-1 rounded-[4px] border border-[var(--admin-border)] h-[42px] min-h-[42px] max-h-[42px] box-border w-full">
         <button
           type="button"
           onClick={() => setMobileTab('form')}
-          className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+          className={`flex-1 h-[32px] min-h-[32px] max-h-[32px] rounded-[3px] text-[11px] font-bold uppercase tracking-wider flex items-center justify-center transition-all box-border ${
             mobileTab === 'form'
-              ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]/40'
-              : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+              ? 'bg-[var(--admin-surface)] text-[var(--admin-accent)] shadow-xs border border-[var(--admin-border)]'
+              : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
           }`}
         >
           Edit Product
@@ -326,10 +346,10 @@ export function AdminAddProduct({ editId }) {
         <button
           type="button"
           onClick={() => setMobileTab('preview')}
-          className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+          className={`flex-1 h-[32px] min-h-[32px] max-h-[32px] rounded-[3px] text-[11px] font-bold uppercase tracking-wider flex items-center justify-center transition-all box-border ${
             mobileTab === 'preview'
-              ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-sm border border-[var(--admin-border)]/40'
-              : 'text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]'
+              ? 'bg-[var(--admin-surface)] text-[var(--admin-accent)] shadow-xs border border-[var(--admin-border)]'
+              : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
           }`}
         >
           Live Preview
@@ -340,7 +360,7 @@ export function AdminAddProduct({ editId }) {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
         {/* Form Wizard Frame */}
         <div
-          className={`admin-card p-4 sm:p-6 shadow-sm min-h-[480px] flex-col justify-between relative overflow-hidden ${mobileTab === 'form' ? 'flex' : 'hidden lg:flex'}`}
+          className={`bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border)] shadow-xs p-4 sm:p-6 min-h-0 lg:min-h-[480px] flex-col justify-between relative overflow-hidden ${mobileTab === 'form' ? 'flex' : 'hidden lg:flex'}`}
         >
           {/* Compression / Upload Overlay */}
           <AnimatePresence>
@@ -360,7 +380,7 @@ export function AdminAddProduct({ editId }) {
                 </p>
 
                 {compressionStats.length > 0 && (
-                  <div className="w-full max-w-sm mt-6 text-left space-y-2 bg-[var(--admin-surface)] p-3 rounded-xl border border-[var(--admin-border)] shadow-sm">
+                  <div className="w-full max-w-sm mt-6 text-left space-y-2 bg-[var(--admin-surface)] p-3 rounded-[4px] border border-[var(--admin-border)] shadow-xs">
                     {compressionStats.map((stat, i) => (
                       <div
                         key={i}
@@ -388,7 +408,7 @@ export function AdminAddProduct({ editId }) {
                   <span>Upload Progress</span>
                   <span>{compressionProgress}%</span>
                 </div>
-                <div className="w-full max-w-sm bg-[#E5E7EB] h-1.5 rounded-full overflow-hidden">
+                <div className="w-full max-w-sm bg-[#E5E7EB] h-1.5 rounded-[2px] overflow-hidden">
                   <div
                     className="bg-[var(--admin-accent)] h-full transition-all duration-300"
                     style={{ width: `${compressionProgress}%` }}
@@ -461,6 +481,9 @@ export function AdminAddProduct({ editId }) {
                     setFormData={setFormData}
                     showRentalSettings={showRentalSettings}
                     setShowRentalSettings={setShowRentalSettings}
+                    focusedField={focusedField}
+                    handleAIFill={handleAIFill}
+                    isAIGenerating={isAIGenerating}
                   />
                 )}
 
@@ -475,6 +498,8 @@ export function AdminAddProduct({ editId }) {
                     formData={formData}
                     setFormData={setFormData}
                     focusedField={focusedField}
+                    handleAIFill={handleAIFill}
+                    isAIGenerating={isAIGenerating}
                   />
                 )}
 
@@ -486,71 +511,73 @@ export function AdminAddProduct({ editId }) {
             </AnimatePresence>
           </div>
 
-          {/* Footer Controls: Back & Next / Save */}
-          <div className="sticky bottom-0 z-20 border-t border-[var(--admin-border-strong)] p-4 flex items-center justify-between bg-[var(--admin-surface)]/95 backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.05)] rounded-b-xl mt-4">
-            <button
-              type="button"
-              onClick={handlePrev}
-              disabled={currentStep === 0 || isCompressing || isLoading}
-              className="px-5 py-2.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] text-[var(--admin-text-secondary)] rounded-full text-[12px] font-bold hover:bg-[#E5E7EB]/45 cursor-pointer disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95"
-            >
-              Back
-            </button>
+          {/* Footer Controls: Back & Next / Save - Sticky above bottom nav on mobile */}
+          <div className="admin-wizard-sticky-footer">
+            <div className="flex items-center justify-between max-w-7xl mx-auto w-full">
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={currentStep === 0 || isCompressing || isLoading}
+                className="h-9 sm:h-[38px] px-3.5 sm:px-4 bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] rounded-[4px] text-[12px] sm:text-[12.5px] font-bold cursor-pointer disabled:opacity-30 disabled:pointer-events-none transition-all active:scale-95 shadow-xs"
+              >
+                Back
+              </button>
 
-            {currentStep < WIZARD_STEPS.length - 1 ? (
-              <div className="flex items-center gap-3">
+              {currentStep < WIZARD_STEPS.length - 1 ? (
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={(e) => handleSubmit(e, { stayOnPage: true })}
+                    disabled={isLoading || isCompressing}
+                    className="h-9 sm:h-[38px] px-3 sm:px-4 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] rounded-[4px] text-[12px] sm:text-[12.5px] font-bold hover:bg-[var(--admin-surface-muted)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 disabled:opacity-50 shadow-xs"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="skeleton-box inline-block w-4 h-4 rounded-[2px]" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[16px]">
+                          {isEditMode ? 'save' : 'publish'}
+                        </span>
+                        <span>{isEditMode ? 'Update Draft' : 'Save Draft'}</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={isCompressing || isLoading}
+                    className="h-9 sm:h-[38px] px-3.5 sm:px-5 bg-[var(--admin-accent)] hover:opacity-95 text-white rounded-[4px] text-[12px] sm:text-[12.5px] font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-xs disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    <span>Continue</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </button>
+                </div>
+              ) : (
                 <button
                   type="button"
-                  onClick={(e) => handleSubmit(e, { stayOnPage: true })}
+                  onClick={(e) => handleSubmit(e, { stayOnPage: false })}
                   disabled={isLoading || isCompressing}
-                  className="px-5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[var(--admin-text-primary)] rounded-full text-[12px] font-bold hover:bg-[var(--admin-bg-subtle)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 disabled:opacity-50 shadow-sm"
+                  className="h-9 sm:h-[38px] px-4 sm:px-6 bg-[var(--admin-accent)] hover:opacity-95 text-white rounded-[4px] text-[12px] sm:text-[12.5px] font-bold uppercase tracking-wider transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer shadow-xs active:scale-95"
                 >
                   {isLoading ? (
                     <>
-                      <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
-                      Saving...
+                      <div className="skeleton-box inline-block w-4 h-4 rounded-[2px]" />
+                      <span>Saving...</span>
                     </>
                   ) : (
                     <>
-                      <span className="material-symbols-outlined text-[16px]">
-                        {isEditMode ? 'save' : 'publish'}
+                      <span className="material-symbols-outlined text-[18px] text-white">
+                        done_all
                       </span>
-                      {isEditMode ? 'Update' : 'Publish'}
+                      <span>{isEditMode ? 'Update Product' : 'Publish Product'}</span>
                     </>
                   )}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={isCompressing || isLoading}
-                  className="px-6 py-2.5 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold hover:brightness-110 flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  Continue
-                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={(e) => handleSubmit(e, { stayOnPage: false })}
-                disabled={isLoading || isCompressing}
-                className="px-7 py-3 bg-[var(--admin-accent)] text-white rounded-full text-[12px] font-bold uppercase tracking-wider hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-sm"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="skeleton-box inline-block w-4 h-4 rounded-md" />
-                    Saving Curation...
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-[18px] text-white">
-                      done_all
-                    </span>
-                    {isEditMode ? 'Update Curation' : 'Publish to Shop'}
-                  </>
-                )}
-              </button>
-            )}
+              )}
+            </div>
           </div>
         </div>
 

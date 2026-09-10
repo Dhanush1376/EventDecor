@@ -13,7 +13,7 @@ export function MainDeliveryView({
   isAddressesLoading,
 }) {
   return (
-    <div className="bg-surface-container-low -mt-2">
+    <div className="bg-surface-container-low -mt-2 pb-24 lg:pb-6">
       <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-6 shadow-xs mb-4 relative min-h-[160px]">
         {isAddressesLoading ? (
           <div className="animate-pulse flex flex-col gap-4">
@@ -105,8 +105,8 @@ export function MainDeliveryView({
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-4 shadow-lg z-40 flex justify-center">
-        <div className="max-w-[1240px] w-full mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-outline-variant/20 p-4 shadow-lg z-40 flex justify-center lg:static lg:bg-transparent lg:border-none lg:shadow-none lg:p-0 lg:mt-6">
+        <div className="max-w-[1240px] w-full mx-auto lg:max-w-none">
           <button
             onClick={() => {
               if (!activeSelectedAddress) {
@@ -117,7 +117,7 @@ export function MainDeliveryView({
               setActiveStep(nextIndex);
             }}
             disabled={!activeSelectedAddress}
-            className={`w-full py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm transition-colors text-center cursor-pointer ${
+            className={`w-full py-3.5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-sm transition-colors text-center cursor-pointer ${
               !activeSelectedAddress
                 ? 'bg-outline-variant text-on-surface/40 opacity-50 cursor-not-allowed'
                 : 'btn-primary !text-white'

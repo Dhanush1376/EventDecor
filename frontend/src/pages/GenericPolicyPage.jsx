@@ -90,18 +90,20 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
       <div className="max-w-[1400px] mx-auto px-4 lg:px-8 lg:px-12 relative z-10">
         {/* Help Center Header */}
         <div className="mb-12 lg:mb-20 text-center lg:text-left">
-          <nav className="text-[10px] uppercase font-bold text-on-surface-variant tracking-[0.2em] mb-6 flex items-center justify-center lg:justify-start gap-3">
+          <nav className="text-[8px] sm:text-[8.5px] uppercase font-medium text-on-surface-variant/60 tracking-[0.12em] mb-2 sm:mb-3 flex items-center justify-center lg:justify-start gap-1.5 sm:gap-2 select-none">
             <Link to="/" className="hover:text-primary transition-colors">
               Home
             </Link>
-            <span className="w-1 h-1 rounded-full bg-outline-variant/50"></span>
+            <span className="w-0.5 h-0.5 rounded-full bg-outline-variant/50"></span>
             <span>Help Center</span>
-            <span className="w-1 h-1 rounded-full bg-outline-variant/50"></span>
-            <span className="text-on-surface">{defaultTitle || policy?.title || 'Policy'}</span>
+            <span className="w-0.5 h-0.5 rounded-full bg-outline-variant/50"></span>
+            <span className="text-on-surface/70 truncate max-w-[150px] sm:max-w-none">
+              {defaultTitle || policy?.title || 'Policy'}
+            </span>
           </nav>
-          <h2 className="text-2xl lg:text-3xl font-body font-semibold text-on-surface mb-4">
+          <h1 className="text-3xl lg:text-4xl font-serif-heading font-normal text-on-surface mb-3 tracking-tight">
             {isLoading ? <Skeleton className="h-10 w-64" /> : policy.title}
-          </h2>
+          </h1>
           <div className="text-[12px] text-on-surface-variant uppercase tracking-widest font-medium">
             {isLoading ? (
               <Skeleton className="h-4 w-40" />
@@ -117,7 +119,7 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
           <PolicySidebar />
 
           <main className="lg:col-span-8 xl:col-span-7">
-            <div className="prose prose-sm max-w-none prose-headings:font-body prose-headings:font-bold prose-headings:text-on-surface prose-p:text-on-surface/80 prose-p:leading-relaxed prose-p:font-normal prose-li:text-on-surface/80 prose-li:font-normal prose-li:leading-relaxed space-y-8">
+            <div className="prose prose-sm max-w-none prose-headings:font-serif-heading prose-headings:font-medium prose-headings:text-on-surface prose-p:text-on-surface/80 prose-p:leading-relaxed prose-p:font-normal prose-li:text-on-surface/80 prose-li:font-normal prose-li:leading-relaxed space-y-8">
               {isLoading ? (
                 <div className="space-y-12">
                   <div className="space-y-4">
@@ -146,7 +148,7 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
                           {sets.map((set, i) => (
                             <div key={i} className="space-y-3">
                               {set.heading && (
-                                <h2 className="font-bold text-[15px] text-on-surface">
+                                <h2 className="font-serif-heading font-medium text-base sm:text-[17px] text-on-surface">
                                   {set.heading}
                                 </h2>
                               )}
@@ -165,7 +167,7 @@ export function GenericPolicyPage({ slug: propSlug, defaultTitle }) {
                   // Fallback for legacy raw HTML content
                   return (
                     <div
-                      className="text-[13px] text-on-surface/80 leading-relaxed font-normal space-y-3 [&_h2]:font-bold [&_h2]:text-[15px] [&_h2]:text-on-surface [&_h2]:mt-8 [&_h2:first-child]:mt-0 [&_h2]:mb-3 [&_p]:mb-4"
+                      className="text-[13px] text-on-surface/80 leading-relaxed font-normal space-y-3 [&_h2]:font-serif-heading [&_h2]:font-medium [&_h2]:text-base [&_h2]:sm:text-[17px] [&_h2]:text-on-surface [&_h2]:mt-8 [&_h2:first-child]:mt-0 [&_h2]:mb-3 [&_p]:mb-4"
                       dangerouslySetInnerHTML={createSafeHtml(policy.content)}
                     />
                   );

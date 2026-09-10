@@ -251,6 +251,18 @@ export function ProductReviewImages() {
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
               >
+                {/* Floating Close Button on Image */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActivePhotoIndex(null);
+                  }}
+                  className="absolute top-3.5 right-3.5 z-30 w-8 h-8 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-colors cursor-pointer shadow-md"
+                  aria-label="Close viewer"
+                >
+                  <X className="w-4 h-4" strokeWidth={2} />
+                </button>
+
                 <img
                   src={activePhoto.imgUrl}
                   alt="Customer Upload"
@@ -264,9 +276,10 @@ export function ProductReviewImages() {
                       e.stopPropagation();
                       handlePrev();
                     }}
-                    className="absolute left-4 w-11 h-11 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
+                    className="absolute left-3 sm:left-4 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer z-20"
+                    aria-label="Previous image"
                   >
-                    <ChevronLeft className="text-[20px]" strokeWidth={1.5} />
+                    <ChevronLeft className="w-5 h-5" strokeWidth={1.75} />
                   </button>
                 )}
                 {activePhotoIndex < photos.length - 1 && (
@@ -275,102 +288,127 @@ export function ProductReviewImages() {
                       e.stopPropagation();
                       handleNext();
                     }}
-                    className="absolute right-4 w-11 h-11 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
+                    className="absolute right-3 sm:right-4 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer z-20"
+                    aria-label="Next image"
                   >
-                    <ChevronRight className="text-[20px]" strokeWidth={1.5} />
+                    <ChevronRight className="w-5 h-5" strokeWidth={1.75} />
                   </button>
                 )}
               </div>
 
               {/* Review Context Details Column */}
               <div
-                className={`w-full lg:w-[420px] bg-white/95 backdrop-blur-xl flex flex-col shrink-0 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] lg:shadow-[-10px_0_30px_rgba(0,0,0,0.03)] z-10 rounded-t-[32px] lg:rounded-none lg:rounded-tr-[28px] lg:rounded-br-[28px] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                className={`w-full lg:w-[400px] bg-white/95 backdrop-blur-xl flex flex-col shrink-0 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] lg:shadow-[-10px_0_30px_rgba(0,0,0,0.03)] z-10 rounded-t-2xl sm:rounded-t-[28px] lg:rounded-none lg:rounded-tr-[28px] lg:rounded-br-[28px] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] relative ${
                   isMobileDrawerOpen
-                    ? 'max-h-[60vh] lg:max-h-full p-8 pt-10 lg:pt-8 opacity-100 overflow-y-auto'
-                    : 'max-h-0 lg:max-h-full p-0 lg:p-8 opacity-0 lg:opacity-100 overflow-hidden'
+                    ? 'max-h-[38vh] sm:max-h-[42vh] lg:max-h-full px-4 py-3 pt-5 sm:px-5 sm:py-4 sm:pt-6 lg:p-6 opacity-100 overflow-y-auto'
+                    : 'max-h-0 lg:max-h-full p-0 lg:p-6 opacity-0 lg:opacity-100 overflow-hidden'
                 }`}
               >
                 {/* Mobile Drawer Drag Handle */}
                 <div
-                  className="lg:hidden absolute top-0 left-0 right-0 flex justify-center py-3 cursor-pointer"
+                  className="lg:hidden absolute top-1 left-0 right-0 flex justify-center py-1 cursor-pointer"
                   onClick={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
                 >
-                  <div className="w-12 h-1.5 bg-neutral-300 rounded-full opacity-60"></div>
+                  <div className="w-10 h-1 bg-neutral-300 rounded-full opacity-70"></div>
                 </div>
 
                 {/* Close Button Header */}
-                <div className="flex justify-between items-center pb-6 border-b border-neutral-200/60">
-                  <h4 className="font-display font-semibold text-[22px] tracking-tight text-neutral-800 capitalize">
+                <div className="flex justify-between items-center pb-2 sm:pb-2.5 lg:pb-3 border-b border-neutral-200/60">
+                  <h4 className="font-display font-semibold text-sm sm:text-base lg:text-lg tracking-tight text-neutral-800 capitalize truncate pr-2">
                     {activePhoto.review.title || 'Customer Review'}
                   </h4>
                   <button
                     onClick={() => setActivePhotoIndex(null)}
-                    className="w-10 h-10 min-h-0 rounded-full bg-neutral-100 hover:bg-neutral-800 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-neutral-100 hover:bg-neutral-800 hover:text-white flex items-center justify-center transition-all duration-200 shadow-2xs shrink-0"
+                    aria-label="Close details"
                   >
-                    <X className="text-[20px] transition-colors" strokeWidth={1.5} />
+                    <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={1.75} />
                   </button>
                 </div>
 
-                {/* Reviewer Meta */}
-                <div className="py-6 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0 shadow-inner">
-                    <span className="font-display text-primary text-base font-bold tracking-wider">
-                      {(activePhoto.review.customer?.name || activePhoto.review.customerName || 'C')
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2)}
-                    </span>
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <h5 className="font-body text-base font-medium text-neutral-900 leading-tight">
-                      {activePhoto.review.customer?.name ||
-                        activePhoto.review.customerName ||
-                        'Customer'}
-                    </h5>
-                    <div className="flex items-center gap-2 mt-1">
-                      {activePhoto.review.verified && (
-                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full border border-emerald-200/50 shadow-sm">
-                          <BadgeCheck className="text-[12px]" strokeWidth={1.5} />
-                          Verified Purchase
-                        </span>
-                      )}
+                {/* Reviewer Meta & Rating Row */}
+                <div className="py-2 sm:py-2.5 lg:py-3 flex items-center justify-between gap-2 border-b border-neutral-100">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0 shadow-inner">
+                      <span className="font-display text-primary text-[11px] sm:text-xs font-bold tracking-wider">
+                        {(
+                          activePhoto.review.customer?.name ||
+                          activePhoto.review.customerName ||
+                          'C'
+                        )
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')
+                          .toUpperCase()
+                          .slice(0, 2)}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex flex-col justify-center">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h5 className="font-body text-xs sm:text-sm font-semibold text-neutral-900 leading-tight truncate">
+                          {activePhoto.review.customer?.name ||
+                            activePhoto.review.customerName ||
+                            'Customer'}
+                        </h5>
+                        {activePhoto.review.verified && (
+                          <span className="inline-flex items-center gap-0.5 bg-emerald-50 text-emerald-600 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full border border-emerald-200/50">
+                            <BadgeCheck
+                              className="w-2.5 h-2.5 text-emerald-600"
+                              strokeWidth={1.5}
+                            />
+                            Verified
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-label text-[10px] text-neutral-400 font-medium tracking-wide block sm:hidden mt-0.5">
+                        {activePhoto.review.createdAt
+                          ? new Date(activePhoto.review.createdAt).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })
+                          : ''}
+                      </span>
                     </div>
                   </div>
-                </div>
 
-                {/* Rating / Date */}
-                <div className="pb-4 flex justify-between items-center border-b border-neutral-200/60">
-                  <div className="flex items-center gap-1.5 p-1.5 px-3 bg-yellow-50/50 rounded-full border border-yellow-100/50">
-                    <StarRating value={activePhoto.review.rating} size={16} />
+                  {/* Rating & Date (Right) */}
+                  <div className="flex flex-col items-end shrink-0 gap-0.5">
+                    <div className="flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-1 bg-yellow-50/70 rounded-full border border-yellow-100/60">
+                      <StarRating value={activePhoto.review.rating} size={11} />
+                    </div>
+                    <span className="font-label text-[10px] text-neutral-400 font-medium tracking-wide hidden sm:block">
+                      {activePhoto.review.createdAt
+                        ? new Date(activePhoto.review.createdAt).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })
+                        : ''}
+                    </span>
                   </div>
-                  <span className="font-label text-[11px] text-neutral-400 font-medium tracking-wide">
-                    {activePhoto.review.createdAt
-                      ? new Date(activePhoto.review.createdAt).toLocaleDateString('en-IN', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })
-                      : ''}
-                  </span>
                 </div>
 
                 {/* Comment Text */}
-                <div className="flex-1 mt-6 relative">
-                  <Quote
-                    className="absolute -top-2 -left-2 text-[40px] text-neutral-100 -z-10 select-none"
-                    strokeWidth={1.5}
-                  />
-                  <p className="font-body text-[15px] text-neutral-700 leading-[1.8] whitespace-pre-line z-10 relative">
-                    {activePhoto.review.comment}
-                  </p>
-                </div>
+                {activePhoto.review.comment && (
+                  <div className="mt-2 sm:mt-2.5 lg:mt-3 relative">
+                    <Quote
+                      className="absolute -top-1 -left-1 text-neutral-200/60 w-4 h-4 -z-10 select-none pointer-events-none"
+                      strokeWidth={1.5}
+                    />
+                    <p className="font-body text-xs sm:text-[13px] lg:text-sm text-neutral-700 leading-relaxed whitespace-pre-line z-10 relative pl-3">
+                      {activePhoto.review.comment}
+                    </p>
+                  </div>
+                )}
 
                 {/* Related Masterpiece Info */}
                 {product && (
-                  <div className="mt-8 p-3 bg-white hover:bg-neutral-50 rounded-2xl border border-neutral-200/80 flex items-center gap-3 shrink-0 cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group">
-                    <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border border-neutral-100 relative">
+                  <Link
+                    to={`/product/${id}`}
+                    className="mt-2 sm:mt-2.5 lg:mt-3.5 p-2 sm:p-2.5 bg-neutral-50/80 hover:bg-neutral-100/80 rounded-xl sm:rounded-2xl border border-neutral-200/70 flex items-center gap-2.5 shrink-0 cursor-pointer transition-all duration-200 hover:shadow-2xs group"
+                  >
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg overflow-hidden shrink-0 shadow-2xs border border-neutral-200/60 relative">
                       <OptimizedImage
                         src={product.imageSrc}
                         alt={product.title}
@@ -379,17 +417,17 @@ export function ProductReviewImages() {
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] uppercase tracking-widest text-primary/80 font-bold font-label mb-0.5">
+                      <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-primary font-bold font-label leading-none mb-0.5">
                         masterpiece
                       </p>
-                      <p className="text-[13px] font-semibold text-neutral-800 truncate leading-tight group-hover:text-primary transition-colors">
+                      <p className="text-xs sm:text-[13px] font-semibold text-neutral-800 truncate leading-tight group-hover:text-primary transition-colors">
                         {product.title}
                       </p>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                      <ArrowRight className="text-[16px]" strokeWidth={1.5} />
+                    <div className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-full bg-white shadow-2xs flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
+                      <ArrowRight className="w-3 h-3" strokeWidth={1.75} />
                     </div>
-                  </div>
+                  </Link>
                 )}
               </div>
             </motion.div>

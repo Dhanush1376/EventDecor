@@ -315,8 +315,6 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -326,10 +324,10 @@ export function GlobalSearchPalette({ isOpen, onClose }) {
           onClick={onClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.97, y: -8 }}
+            initial={{ opacity: 0, scale: 0.98, y: -4 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: -8 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            exit={{ opacity: 0, scale: 0.98, y: -4 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
             className="w-full max-w-[480px] h-auto max-h-[min(500px,calc(100vh-32px))] overflow-hidden flex flex-col shadow-2xl admin-search-palette rounded-[var(--admin-radius-xl)]"
             style={{
               background: 'var(--admin-surface)',

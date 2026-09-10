@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import Check from 'lucide-react/dist/esm/icons/check';
+import { Banknote } from 'lucide-react';
 import { useCheckout } from './CheckoutProvider';
 import { useActiveCoupons } from '../hooks/useActiveCoupons';
-import { CustomerContactGate } from '../components/shared/CustomerContactGate';
 
 export default function CheckoutSidebar() {
   const {
@@ -24,8 +24,6 @@ export default function CheckoutSidebar() {
     _loadingCoupons,
     activeStep,
     paymentOption,
-    isProcessing,
-    handleConfirmOrder,
     activeItems,
     fetchBackendTotals,
     _hasRentalItems,
@@ -39,12 +37,6 @@ export default function CheckoutSidebar() {
 
   const { data: activeCoupons = [] } = useActiveCoupons();
   const checkoutCoupons = activeCoupons.filter((c) => c.displayLocations?.includes('checkout'));
-
-  const siriCoinEarnRate = (settings?.loyalty?.coinsPerRupee || 0.1) * 100;
-  const userTier = user?.loyaltyTier || settings?.loyalty?.tiers?.[0]?.name;
-  const currentTier =
-    settings?.loyalty?.tiers?.find((t) => t.name === userTier) || settings?.loyalty?.tiers?.[0];
-  const cashbackRate = currentTier?.cashbackRate ? currentTier.cashbackRate * 100 : 0;
 
   const grossRentalAmount = rentalCostBreakdown?.totalAmount || 0;
   const availableWalletBalance = (backendTotals?.walletBalance ?? user?.walletBalance) || 0;
@@ -61,8 +53,6 @@ export default function CheckoutSidebar() {
 
   const totalItemUnits = activeItems.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
 
-  const estimatedCoins = Math.round(activeTotal * (siriCoinEarnRate / 100));
-  const estimatedCashback = Math.round(activeTotal * (cashbackRate / 100));
   return (
     <>
       {/* Right Column: PRICE DETAILS & promo code side card */}
@@ -73,208 +63,216 @@ export default function CheckoutSidebar() {
         className="lg:col-span-5 xl:col-span-4 space-y-4"
       >
         {/* Wallet Balance Card */}
-        {user && (user.walletBalance > 0 || (backendTotals && backendTotals.walletBalance > 0)) && (
-          <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="checkout-use-wallet-checkbox"
-                  checked={useWallet}
-                  onChange={(e) => setUseWallet(e.target.checked)}
-                  className="mt-1 rounded text-primary focus:ring-0 cursor-pointer h-4 w-4"
-                />
-                <label
-                  htmlFor="checkout-use-wallet-checkbox"
-                  className="cursor-pointer select-none"
-                >
-                  <span className="text-xs font-bold text-on-surface block uppercase tracking-wider">
-                    Use Siri Pay Wallet
-                  </span>
-                  <span className="text-[10px] text-secondary font-light">
-                    Available Balance:{' '}
-                    <strong className="text-on-surface font-semibold">
-                      ₹
-                      {((backendTotals?.walletBalance ?? user?.walletBalance) || 0).toLocaleString(
-                        'en-IN',
-                      )}
-                    </strong>
-                  </span>
-                </label>
+        {user &&
+          (user.walletBalance > 0 || (backendTotals && backendTotals.walletBalance > 0)) &&
+          checkoutSteps[activeStep] !== 'ADDRESS' && (
+            <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="checkout-use-wallet-checkbox"
+                    checked={useWallet}
+                    onChange={(e) => setUseWallet(e.target.checked)}
+                    className="mt-1 rounded text-primary focus:ring-0 cursor-pointer h-4 w-4"
+                  />
+                  <label
+                    htmlFor="checkout-use-wallet-checkbox"
+                    className="cursor-pointer select-none"
+                  >
+                    <span className="text-xs font-bold text-on-surface block uppercase tracking-wider">
+                      Use Siri Pay Wallet
+                    </span>
+                    <span className="text-[10px] text-secondary font-light">
+                      Available Balance:{' '}
+                      <strong className="text-on-surface font-semibold">
+                        ₹
+                        {(
+                          (backendTotals?.walletBalance ?? user?.walletBalance) ||
+                          0
+                        ).toLocaleString('en-IN')}
+                      </strong>
+                    </span>
+                  </label>
+                </div>
+                <span className="material-symbols-outlined text-primary text-sm">stars</span>
               </div>
-              <span className="material-symbols-outlined text-primary text-sm">stars</span>
-            </div>
 
-            {useWallet && currentWalletDeduction > 0 && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="mt-3 pt-3 border-t border-outline-variant/30 text-[11px] text-primary font-bold flex justify-between"
-              >
-                <span>Wallet Deducted:</span>
-                <span>− ₹{currentWalletDeduction.toLocaleString('en-IN')}</span>
-              </motion.div>
-            )}
-          </div>
-        )}
+              {useWallet && currentWalletDeduction > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mt-3 pt-3 border-t border-outline-variant/30 text-[11px] text-primary font-bold flex justify-between"
+                >
+                  <span>Wallet Deducted:</span>
+                  <span>− ₹{currentWalletDeduction.toLocaleString('en-IN')}</span>
+                </motion.div>
+              )}
+            </div>
+          )}
 
         {/* Promo Coupon Card */}
-        {orderType !== 'rental' && checkoutSteps[activeStep] !== 'PAYMENT' && (
-          <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs relative">
-            <h4 className="text-[10px] font-label font-bold text-on-surface uppercase tracking-widest pb-2 border-b border-outline-variant/40 mb-3 flex items-center justify-between">
-              <span>Apply Promo Coupon</span>
-              <span className="material-symbols-outlined text-[15px] text-primary">sell</span>
-            </h4>
+        {orderType !== 'rental' &&
+          checkoutSteps[activeStep] !== 'PAYMENT' &&
+          checkoutSteps[activeStep] !== 'ADDRESS' && (
+            <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs relative">
+              <h4 className="text-[10px] font-label font-bold text-on-surface uppercase tracking-widest pb-2 border-b border-outline-variant/40 mb-3 flex items-center justify-between">
+                <span>Apply Promo Coupon</span>
+                <span className="material-symbols-outlined text-[15px] text-primary">sell</span>
+              </h4>
 
-            {!appliedCoupon || !couponValid ? (
-              <>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="COUPON CODE"
-                    value={couponInput}
-                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                    className="flex-1 bg-white border border-outline-variant/30 rounded-lg px-3 py-1.5 text-xs outline-none uppercase font-bold focus:border-primary transition-colors"
-                  />
+              {!appliedCoupon || !couponValid ? (
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="COUPON CODE"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      className="flex-1 bg-white border border-outline-variant/30 rounded-lg px-3 py-1.5 text-xs outline-none uppercase font-bold focus:border-primary transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      className="btn-primary rounded-full font-bold text-[10px] sm:text-xs uppercase tracking-wider px-4 py-1.5 transition-colors cursor-pointer shadow-md"
+                    >
+                      Apply
+                    </button>
+                  </div>
+
+                  {/* Coupon Choice Tray */}
+                  {checkoutCoupons.length > 0 && (!appliedCoupon || !couponValid) && (
+                    <div className="mt-4 pt-3 border-t border-outline-variant/30">
+                      <h5 className="text-[9px] uppercase tracking-widest font-bold text-secondary mb-2">
+                        Available Coupons
+                      </h5>
+                      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x">
+                        {checkoutCoupons.map((coupon) => (
+                          <div
+                            key={coupon.code}
+                            onClick={() => {
+                              setCouponInput(coupon.code);
+                              fetchBackendTotals(coupon.code, true);
+                            }}
+                            className="snap-start shrink-0 w-[180px] p-2.5 rounded-lg border border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
+                          >
+                            <div className="flex justify-between items-center mb-0.5">
+                              <span className="font-mono text-[11px] font-bold text-on-surface bg-white/60 px-1 rounded shadow-sm">
+                                {coupon.code}
+                              </span>
+                              <span className="text-[9px] font-bold text-primary">Tap to use</span>
+                            </div>
+                            <p className="text-[10px] text-secondary leading-tight">
+                              {coupon.discountType === 'percentage'
+                                ? `${coupon.discountValue}% OFF`
+                                : `₹${coupon.discountValue} OFF`}
+                              {coupon.minOrderAmount > 0 && ` on ₹${coupon.minOrderAmount}+`}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg flex items-center justify-between text-xs text-primary">
+                  <div className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px] text-primary">
+                      check_circle
+                    </span>
+                    <span>
+                      Applied{' '}
+                      <strong className="font-mono text-primary font-bold">{appliedCoupon}</strong>{' '}
+                      successfully!
+                    </span>
+                  </div>
                   <button
                     type="button"
-                    onClick={handleApplyCoupon}
-                    className="btn-primary rounded-full font-bold text-[10px] sm:text-xs uppercase tracking-wider px-4 py-1.5 transition-colors cursor-pointer shadow-md"
+                    onClick={handleRemoveCoupon}
+                    className="text-red-600 font-extrabold hover:text-red-800 transition-colors uppercase text-[9px] tracking-wider cursor-pointer"
                   >
-                    Apply
+                    Remove
                   </button>
                 </div>
+              )}
 
-                {/* Coupon Choice Tray */}
-                {checkoutCoupons.length > 0 && (!appliedCoupon || !couponValid) && (
-                  <div className="mt-4 pt-3 border-t border-outline-variant/30">
-                    <h5 className="text-[9px] uppercase tracking-widest font-bold text-secondary mb-2">
-                      Available Coupons
-                    </h5>
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x">
-                      {checkoutCoupons.map((coupon) => (
-                        <div
-                          key={coupon.code}
-                          onClick={() => {
-                            setCouponInput(coupon.code);
-                            fetchBackendTotals(coupon.code, true);
-                          }}
-                          className="snap-start shrink-0 w-[180px] p-2.5 rounded-lg border border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
-                        >
-                          <div className="flex justify-between items-center mb-0.5">
-                            <span className="font-mono text-[11px] font-bold text-on-surface bg-white/60 px-1 rounded shadow-sm">
-                              {coupon.code}
-                            </span>
-                            <span className="text-[9px] font-bold text-primary">Tap to use</span>
-                          </div>
-                          <p className="text-[10px] text-secondary leading-tight">
-                            {coupon.discountType === 'percentage'
-                              ? `${coupon.discountValue}% OFF`
-                              : `₹${coupon.discountValue} OFF`}
-                            {coupon.minOrderAmount > 0 && ` on ₹${coupon.minOrderAmount}+`}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg flex items-center justify-between text-xs text-primary">
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[16px] text-primary">
-                    check_circle
-                  </span>
-                  <span>
-                    Applied{' '}
-                    <strong className="font-mono text-primary font-bold">{appliedCoupon}</strong>{' '}
-                    successfully!
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleRemoveCoupon}
-                  className="text-red-600 font-extrabold hover:text-red-800 transition-colors uppercase text-[9px] tracking-wider cursor-pointer"
+              {couponMessage && (!appliedCoupon || !couponValid) && (
+                <div
+                  className={`mt-2 text-[11px] font-semibold ${couponValid ? 'text-primary' : 'text-red-600'}`}
                 >
-                  Remove
-                </button>
-              </div>
-            )}
+                  {couponValid ? (
+                    <Check className="w-3.5 h-3.5 inline-block -mt-0.5" />
+                  ) : (
+                    <AlertTriangle
+                      className="w-3.5 h-3.5 inline-block -mt-0.5"
+                      aria-hidden="true"
+                    />
+                  )}{' '}
+                  {couponMessage}
+                </div>
+              )}
 
-            {couponMessage && (!appliedCoupon || !couponValid) && (
-              <div
-                className={`mt-2 text-[11px] font-semibold ${couponValid ? 'text-primary' : 'text-red-600'}`}
-              >
-                {couponValid ? (
-                  <Check className="w-3.5 h-3.5 inline-block -mt-0.5" />
-                ) : (
-                  <AlertTriangle className="w-3.5 h-3.5 inline-block -mt-0.5" aria-hidden="true" />
-                )}{' '}
-                {couponMessage}
-              </div>
-            )}
+              {/* Dynamic Available Store Coupons List */}
+              {availableCoupons.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-outline-variant/35 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-secondary/70 block flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[11px]">local_activity</span>
+                    Available Offers ({availableCoupons.length})
+                  </span>
 
-            {/* Dynamic Available Store Coupons List */}
-            {availableCoupons.length > 0 && (
-              <div className="mt-4 pt-3 border-t border-outline-variant/35 space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-secondary/70 block flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[11px]">local_activity</span>
-                  Available Offers ({availableCoupons.length})
-                </span>
-
-                <div className="max-h-[160px] overflow-y-auto space-y-2 pr-1 no-scrollbar">
-                  {availableCoupons.map((c) => {
-                    const isCurrent = appliedCoupon === c.code;
-                    return (
-                      <div
-                        key={c._id || c.id}
-                        className={`p-2.5 rounded-lg border text-xs flex justify-between items-center transition-all ${
-                          isCurrent
-                            ? 'bg-primary/5 border-primary/30'
-                            : 'bg-surface-bright border-outline-variant/30 hover:border-primary/20'
-                        }`}
-                      >
-                        <div className="min-w-0 pr-2">
-                          <span className="font-mono font-bold text-on-surface text-[10px] bg-surface px-1.5 py-0.5 rounded border border-outline-variant/30 tracking-wider">
-                            {c.code}
-                          </span>
-                          <p className="text-[10px] text-on-surface font-semibold mt-1">
-                            {c.discountType === 'percentage'
-                              ? `${c.discountValue}% Off`
-                              : `Flat ₹${c.discountValue} Off`}
-                            {c.maxDiscount ? ` up to ₹${c.maxDiscount}` : ''}
-                          </p>
-                          <p className="text-[9px] text-outline mt-0.5 font-light">
-                            Min purchase: ₹{c.minOrderAmount || 0}
-                          </p>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (isCurrent) {
-                              handleRemoveCoupon();
-                            } else {
-                              setCouponInput(c.code);
-                              fetchBackendTotals(c.code);
-                            }
-                          }}
-                          className={`text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1.5 rounded-full transition-colors cursor-pointer shrink-0 shadow-sm ${
+                  <div className="max-h-[160px] overflow-y-auto space-y-2 pr-1 no-scrollbar">
+                    {availableCoupons.map((c) => {
+                      const isCurrent = appliedCoupon === c.code;
+                      return (
+                        <div
+                          key={c._id || c.id}
+                          className={`p-2.5 rounded-lg border text-xs flex justify-between items-center transition-all ${
                             isCurrent
-                              ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
-                              : 'btn-primary'
+                              ? 'bg-primary/5 border-primary/30'
+                              : 'bg-surface-bright border-outline-variant/30 hover:border-primary/20'
                           }`}
                         >
-                          {isCurrent ? 'Remove' : 'Apply'}
-                        </button>
-                      </div>
-                    );
-                  })}
+                          <div className="min-w-0 pr-2">
+                            <span className="font-mono font-bold text-on-surface text-[10px] bg-surface px-1.5 py-0.5 rounded border border-outline-variant/30 tracking-wider">
+                              {c.code}
+                            </span>
+                            <p className="text-[10px] text-on-surface font-semibold mt-1">
+                              {c.discountType === 'percentage'
+                                ? `${c.discountValue}% Off`
+                                : `Flat ₹${c.discountValue} Off`}
+                              {c.maxDiscount ? ` up to ₹${c.maxDiscount}` : ''}
+                            </p>
+                            <p className="text-[9px] text-outline mt-0.5 font-light">
+                              Min purchase: ₹{c.minOrderAmount || 0}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isCurrent) {
+                                handleRemoveCoupon();
+                              } else {
+                                setCouponInput(c.code);
+                                fetchBackendTotals(c.code);
+                              }
+                            }}
+                            className={`text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1.5 rounded-full transition-colors cursor-pointer shrink-0 shadow-sm ${
+                              isCurrent
+                                ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                                : 'btn-primary'
+                            }`}
+                          >
+                            {isCurrent ? 'Remove' : 'Apply'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
 
         {/* Price Details Card */}
         <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 shadow-xs sticky top-28 relative overflow-hidden">
@@ -485,28 +483,17 @@ export default function CheckoutSidebar() {
               </>
             )}
 
-            {/* Instant Gamified Incentives Banner */}
-            {estimatedCoins > 0 && (
-              <div className="bg-primary/10 text-primary rounded-lg p-3 text-[10px] sm:text-[11px] border border-primary/20 flex items-center justify-between shadow-sm mt-3">
+            {/* Gamified Cashback Incentive Banner */}
+            {activeTotal > 0 && (
+              <div className="bg-primary/10 text-primary rounded-lg p-3 text-[10px] sm:text-[11px] border border-primary/20 flex items-center justify-between shadow-2xs mt-3">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-xs">stars</span>
-                  <span>
-                    Earn{' '}
-                    <strong className="font-bold">
-                      {estimatedCoins.toLocaleString('en-IN')} Siri Coins
-                    </strong>{' '}
-                    &{' '}
-                    <strong className="font-bold">
-                      ₹{estimatedCashback.toLocaleString('en-IN')} Cashback
-                    </strong>
+                  <Banknote className="w-3.5 h-3.5 text-primary shrink-0" strokeWidth={1.8} />
+                  <span className="font-semibold text-primary">
+                    Earn cashback after placing this order
                   </span>
                 </div>
               </div>
             )}
-          </div>
-
-          <div className="bg-green-50/70 text-green-700 text-[12px] font-bold rounded-lg p-2.5 mt-4 text-center border border-green-200">
-            Total Savings: ₹{backendTotals?.discount?.toLocaleString() || 0}
           </div>
 
           {orderType === 'rental' ? (
@@ -527,10 +514,12 @@ export default function CheckoutSidebar() {
               </div>
             )
           ) : (
-            <div className="mt-4 pt-3 border-t border-surface-container-low text-[11px] text-secondary space-y-1.5">
-              <p className="flex items-center gap-1.5 font-medium">
-                <span className="material-symbols-outlined text-sm text-primary">verified</span>
-                Secure delivery
+            <div className="mt-4 pt-3 border-t border-surface-container-low text-[11px] text-secondary grid grid-cols-2 gap-x-3 gap-y-2">
+              <p className="flex items-center gap-1.5 font-medium truncate">
+                <span className="material-symbols-outlined text-sm text-primary shrink-0">
+                  verified
+                </span>
+                <span className="truncate">Secure delivery</span>
               </p>
               {activeItems.some((item) =>
                 Boolean(
@@ -542,96 +531,35 @@ export default function CheckoutSidebar() {
                   orderType === 'rental',
                 ),
               ) ? (
-                <p className="flex items-center gap-1.5 font-medium text-[#d97706]">
-                  <span className="material-symbols-outlined text-sm text-[#d97706]">block</span>
-                  Contains Non-Refundable Items
+                <p className="flex items-center gap-1.5 font-medium text-[#d97706] truncate">
+                  <span className="material-symbols-outlined text-sm text-[#d97706] shrink-0">
+                    block
+                  </span>
+                  <span className="truncate">Non-refundable</span>
                 </p>
               ) : (
-                <p className="flex items-center gap-1.5 font-medium">
-                  <span className="material-symbols-outlined text-sm text-primary">
+                <p className="flex items-center gap-1.5 font-medium truncate">
+                  <span className="material-symbols-outlined text-sm text-primary shrink-0">
                     change_circle
                   </span>
-                  Easy{' '}
-                  {activeItems.reduce(
-                    (min, item) =>
-                      Math.min(
-                        min,
-                        item.product?.returnSettings?.returnWindow ||
-                          item.product?.returnSettings?.returnWindowDays ||
-                          settings?.returnsExchanges?.returnWindowDays ||
-                          14,
-                      ),
-                    Infinity,
-                  ) === Infinity
-                    ? settings?.returnsExchanges?.returnWindowDays || 14
-                    : activeItems.reduce(
-                        (min, item) =>
-                          Math.min(
-                            min,
-                            item.product?.returnSettings?.returnWindow ||
-                              item.product?.returnSettings?.returnWindowDays ||
-                              settings?.returnsExchanges?.returnWindowDays ||
-                              14,
-                          ),
-                        Infinity,
-                      )}
-                  -day returns
+                  <span className="truncate">Easy returns</span>
                 </p>
               )}
-            </div>
-          )}
-
-          {/* Integrated Payment Button at the bottom of the Price Details Card */}
-          {checkoutSteps[activeStep] === 'PAYMENT' && (
-            <div className="mt-4 pt-4 border-t border-outline-variant/30">
-              <CustomerContactGate onAction={handleConfirmOrder} className="w-full">
-                <motion.button
-                  whileHover={!isProcessing ? { scale: 1.01 } : {}}
-                  whileTap={!isProcessing ? { scale: 0.99 } : {}}
-                  type="button"
-                  disabled={isProcessing}
-                  className="w-full btn-primary py-3 rounded-full font-bold text-xs uppercase tracking-widest shadow-md transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group relative overflow-hidden"
-                >
-                  {isProcessing ? (
-                    <>
-                      <div className="skeleton-box inline-block w-5 h-5 rounded-md" />
-                      <span>Processing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>
-                        {paymentOption === 'razorpay' ? 'Pay & Place Order' : 'Place Order'}
-                      </span>
-                      <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">
-                        arrow_forward
-                      </span>
-                    </>
-                  )}
-                </motion.button>
-              </CustomerContactGate>
+              <p className="flex items-center gap-1.5 font-medium truncate">
+                <span className="material-symbols-outlined text-sm text-primary shrink-0">
+                  brush
+                </span>
+                <span className="truncate">Handcrafted quality</span>
+              </p>
+              <p className="flex items-center gap-1.5 font-medium truncate">
+                <span className="material-symbols-outlined text-sm text-primary shrink-0">
+                  lock
+                </span>
+                <span className="truncate">Secure payments</span>
+              </p>
             </div>
           )}
         </div>
-
-        {/* Total Amount card shown specifically on Step 2 below Price Details */}
-        {checkoutSteps[activeStep] === 'PAYMENT' && (
-          <div className="bg-surface-bright p-5 border border-outline-variant/40 rounded-lg shadow-xs mt-4">
-            <div className="flex justify-between items-center">
-              <span className="text-[11px] text-secondary font-bold uppercase tracking-widest">
-                Total Amount
-              </span>
-              <span className="text-[15px] font-extrabold text-on-surface">
-                {totalsError ? (
-                  <span className="text-red-600 text-xs font-semibold">Load Error</span>
-                ) : isTotalsLoading ? (
-                  <span className="inline-block w-12 h-4 bg-outline-variant/20 animate-pulse rounded"></span>
-                ) : (
-                  `₹${backendTotals?.total?.toLocaleString() || 0}`
-                )}
-              </span>
-            </div>
-          </div>
-        )}
       </motion.div>
     </>
   );

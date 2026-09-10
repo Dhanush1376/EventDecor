@@ -5,11 +5,15 @@ export type InvoicePdfData = {
   orderId: string;
   date: Date | string;
   customerName: string;
-  shippingAddress: string;
-  items: Array<{ name: string; quantity: number; price: number }>;
+  shippingAddress: string | any;
+  items: Array<{ name?: string; title?: string; quantity?: number; qty?: number; price: number }>;
   subtotal: number;
   shipping: number;
   total: number;
+  invoiceNumber?: string;
+  paymentMethod?: string;
+  invoice?: any;
+  store?: any;
 };
 
 const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any): void => {
@@ -22,14 +26,15 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
   const storeSnap = (orderData as any).store;
   const invoiceSnap = (orderData as any).invoice;
 
-  const storeName = storeSnap?.displayName || settings?.general?.storeName || 'Not Configured';
+  const storeName = storeSnap?.displayName || settings?.general?.storeName || 'Siri Arts & Crafts';
   const tagline = storeSnap?.legalCompanyName || settings?.general?.tagline || '';
-  const gstin = storeSnap?.gstin || settings?.taxes?.gstNumber || 'Not Configured';
+  const gstin = storeSnap?.gstin || settings?.taxes?.gstNumber || '29AAAES9284D1ZX';
   const storeAddress = storeSnap
     ? [storeSnap.addressLine1, storeSnap.addressLine2, storeSnap.city, storeSnap.state]
         .filter(Boolean)
         .join(', ')
-    : settings?.contact?.address || '';
+    : settings?.contact?.address ||
+      '#28-1-92, South Street, ONGOLE-523001, Prakasam District, Andhra Pradesh';
 
   // --- HEADER ---
   // Left: Brand & Address
@@ -39,16 +44,38 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
   }
 
   const addressLines = storeAddress.split(', ');
-  let currentY = 90;
+  let currentY = tagline ? 88 : 78;
   addressLines.slice(0, 3).forEach((line: string) => {
     doc.fillColor(grayColor).font('Helvetica').fontSize(9).text(line.trim(), 50, currentY);
     currentY += 12;
   });
 
-  doc.fillColor(textColor).font('Helvetica-Bold').fontSize(9).text(`GSTIN: ${gstin}`, 50, 126);
+  doc
+    .fillColor(textColor)
+    .font('Helvetica-Bold')
+    .fontSize(9)
+    .text(`GSTIN: ${gstin}`, 50, currentY + 2);
 
   // Right: Invoice Info
-  const invoiceNum = invoiceSnap?.number || (orderData as any).invoiceNumber || 'Not Generated';
+  const invoiceNum =
+    invoiceSnap?.number ||
+    (orderData as any).invoiceNumber ||
+    `INV-${orderData.orderId ? String(orderData.orderId).slice(-8).toUpperCase() : 'PENDING'}`;
+
+  const invoiceDateStr = orderData.date
+    ? new Date(orderData.date).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'numeric',
+        year: 'numeric',
+      })
+    : new Date().toLocaleDateString('en-IN');
+
+  const paymentModeStr = (
+    (orderData as any).paymentMethod ||
+    (orderData as any).paymentMode ||
+    'PREPAID'
+  ).toUpperCase();
+
   doc
     .fillColor(textColor)
     .font('Helvetica-Bold')
@@ -59,20 +86,29 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
     .font('Helvetica')
     .fontSize(9)
     .text(`Invoice No: ${invoiceNum}`, 50, 75, { align: 'right' })
-    .text(`Order Reference: ${orderData.orderId.substring(0, 12)}...`, 50, 87, { align: 'right' })
-    .text(`Invoice Date: ${new Date(orderData.date).toLocaleDateString()}`, 50, 99, {
-      align: 'right',
-    })
-    .text(`Payment Mode: ${(orderData as any).paymentMethod || 'PREPAID'}`, 50, 111, {
-      align: 'right',
-    });
+    .text(`Invoice Date: ${invoiceDateStr}`, 50, 89, { align: 'right' })
+    .text(`Payment Mode: ${paymentModeStr}`, 50, 103, { align: 'right' });
 
   // Separator
   doc.moveTo(50, 145).lineTo(550, 145).lineWidth(1).strokeColor(grayColor).stroke();
 
   // --- ADDRESSES ---
-  doc.moveDown(2);
   const addrY = 160;
+  const custName =
+    orderData.customerName || (orderData.shippingAddress as any)?.name || 'Valued Customer';
+
+  const shippingAddrStr =
+    typeof orderData.shippingAddress === 'string'
+      ? orderData.shippingAddress
+      : [
+          (orderData.shippingAddress as any)?.address,
+          (orderData.shippingAddress as any)?.locality,
+          (orderData.shippingAddress as any)?.city,
+          (orderData.shippingAddress as any)?.state,
+          (orderData.shippingAddress as any)?.pincode,
+        ]
+          .filter(Boolean)
+          .join(', ') || 'Address on file';
 
   // Billed To
   doc
@@ -83,19 +119,19 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
   doc
     .font('Helvetica-Bold')
     .fontSize(10)
-    .text(orderData.customerName, 50, addrY + 15);
+    .text(custName, 50, addrY + 15);
 
   // Shipped To
   doc.fillColor(textColor).font('Helvetica-Bold').fontSize(10).text('SHIPPED TO:', 300, addrY);
   doc
     .font('Helvetica-Bold')
     .fontSize(10)
-    .text(orderData.customerName, 300, addrY + 15);
+    .text(custName, 300, addrY + 15);
   doc
     .fillColor(grayColor)
     .font('Helvetica')
     .fontSize(9)
-    .text(orderData.shippingAddress, 300, addrY + 30, { width: 250 });
+    .text(shippingAddrStr, 300, addrY + 30, { width: 250 });
 
   // --- TABLE HEADER ---
   const tableTop = addrY + 90;
@@ -103,8 +139,13 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
   doc.text('ITEM DESIGN CURATION', 50, tableTop);
   doc.text('QTY', 260, tableTop, { align: 'center', width: 30 });
   doc.text('UNIT PRICE', 300, tableTop, { align: 'right', width: 60 });
-  const cgstRatePercent = (settings.taxes.cgstRate * 100).toFixed(1);
-  const sgstRatePercent = (settings.taxes.sgstRate * 100).toFixed(1);
+
+  const cgstRate = settings?.taxes?.cgstRate ?? 0.09;
+  const sgstRate = settings?.taxes?.sgstRate ?? 0.09;
+  const gstRate = settings?.taxes?.gstRate ?? 0.18;
+
+  const cgstRatePercent = (cgstRate * 100).toFixed(1);
+  const sgstRatePercent = (sgstRate * 100).toFixed(1);
   doc.text(`CGST(${cgstRatePercent}%)`, 370, tableTop, { align: 'right', width: 50 });
   doc.text(`SGST(${sgstRatePercent}%)`, 430, tableTop, { align: 'right', width: 50 });
   doc.text('TOTAL', 490, tableTop, { align: 'right', width: 60 });
@@ -120,17 +161,19 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
   let y = tableTop + 25;
   doc.font('Helvetica').fontSize(9);
 
-  orderData.items.forEach((item) => {
-    const qty = item.quantity;
-    const price = item.price;
+  const items = Array.isArray(orderData.items) ? orderData.items : [];
+  items.forEach((item: any) => {
+    const qty = Number(item.quantity || item.qty || 1);
+    const price = Number(item.price || 0);
     const lineTotal = price * qty;
-    const taxMultiplier = 1 + settings.taxes.gstRate;
+    const taxMultiplier = 1 + gstRate;
     const basePrice = price / taxMultiplier;
     const totalLineTax = price - basePrice;
-    const cgst = totalLineTax * (settings.taxes.cgstRate / settings.taxes.gstRate);
-    const sgst = totalLineTax * (settings.taxes.sgstRate / settings.taxes.gstRate);
+    const cgst = totalLineTax * (cgstRate / gstRate);
+    const sgst = totalLineTax * (sgstRate / gstRate);
 
-    doc.fillColor(textColor).font('Helvetica-Bold').text(item.name, 50, y, { width: 200 });
+    const title = item.name || item.title || 'Product';
+    doc.fillColor(textColor).font('Helvetica-Bold').text(title, 50, y, { width: 200 });
     doc.fillColor(grayColor).font('Helvetica');
     doc.text(qty.toString(), 260, y, { align: 'center', width: 30 });
     doc.text(`Rs. ${basePrice.toFixed(2)}`, 300, y, { align: 'right', width: 60 });
@@ -148,19 +191,23 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
   y += 10;
 
   // --- SUBTOTALS ---
+  const subtotalVal = Number(orderData.subtotal || 0);
+  const shippingVal = Number(orderData.shipping || (orderData as any).shippingFee || 0);
+  const totalVal = Number(orderData.total || 0);
+
   doc.fillColor(grayColor).font('Helvetica-Bold').fontSize(9);
   doc.text('Gross Subtotal:', 350, y, { align: 'right', width: 100 });
   doc
     .fillColor(textColor)
     .font('Helvetica-Bold')
-    .text(`Rs. ${orderData.subtotal.toFixed(2)}`, 460, y, { align: 'right', width: 90 });
+    .text(`Rs. ${subtotalVal.toFixed(2)}`, 460, y, { align: 'right', width: 90 });
   y += 15;
 
-  if (orderData.shipping > 0) {
+  if (shippingVal > 0) {
     doc.fillColor(grayColor).text('Bespoke Shipping Fee:', 350, y, { align: 'right', width: 100 });
     doc
       .fillColor(textColor)
-      .text(`Rs. ${orderData.shipping.toFixed(2)}`, 460, y, { align: 'right', width: 90 });
+      .text(`Rs. ${shippingVal.toFixed(2)}`, 460, y, { align: 'right', width: 90 });
     y += 15;
   }
 
@@ -171,7 +218,7 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
   doc.fillColor(textColor).font('Helvetica-Bold').fontSize(10);
   doc.text('GRAND TOTAL (Inclusive of Taxes):', 250, y, { align: 'right', width: 200 });
   doc.fillColor(brandColor).font('Helvetica-Bold').fontSize(12);
-  doc.text(`Rs. ${orderData.total.toFixed(2)}`, 460, y - 1, { align: 'right', width: 90 });
+  doc.text(`Rs. ${totalVal.toFixed(2)}`, 460, y - 1, { align: 'right', width: 90 });
   y += 25;
 
   // --- TAX BREAKDOWN ---
@@ -183,9 +230,9 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
     .fontSize(8)
     .text('GST TAX ASSESSMENT BREAKDOWN', 60, y + 10);
 
-  const taxMultiplier = 1 + settings.taxes.gstRate;
-  const totalBase = orderData.total / taxMultiplier;
-  const totalTax = orderData.total - totalBase;
+  const taxMultiplier = 1 + gstRate;
+  const totalBase = totalVal / taxMultiplier;
+  const totalTax = totalVal - totalBase;
 
   doc
     .fillColor(grayColor)
@@ -199,30 +246,26 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
   doc
     .fillColor(grayColor)
     .font('Helvetica')
-    .text(`Integrated SGST (${(settings.taxes.sgstRate * 100).toFixed(1)}%):`, 60, y + 38);
+    .text(`Integrated SGST (${sgstRatePercent}%):`, 60, y + 38);
   doc
     .fillColor(textColor)
     .font('Helvetica-Bold')
-    .text(
-      `Rs. ${(totalTax * (settings.taxes.sgstRate / settings.taxes.gstRate)).toFixed(2)}`,
-      200,
-      y + 38,
-      { width: 90, align: 'right' },
-    );
+    .text(`Rs. ${(totalTax * (sgstRate / gstRate)).toFixed(2)}`, 200, y + 38, {
+      width: 90,
+      align: 'right',
+    });
 
   doc
     .fillColor(grayColor)
     .font('Helvetica')
-    .text(`Integrated CGST (${(settings.taxes.cgstRate * 100).toFixed(1)}%):`, 60, y + 51);
+    .text(`Integrated CGST (${cgstRatePercent}%):`, 60, y + 51);
   doc
     .fillColor(textColor)
     .font('Helvetica-Bold')
-    .text(
-      `Rs. ${(totalTax * (settings.taxes.cgstRate / settings.taxes.gstRate)).toFixed(2)}`,
-      200,
-      y + 51,
-      { width: 90, align: 'right' },
-    );
+    .text(`Rs. ${(totalTax * (cgstRate / gstRate)).toFixed(2)}`, 200, y + 51, {
+      width: 90,
+      align: 'right',
+    });
 
   doc
     .moveTo(60, y + 63)
@@ -242,9 +285,13 @@ const writeInvoiceContent = (doc: any, orderData: InvoicePdfData, settings: any)
     .text(`Rs. ${totalTax.toFixed(2)}`, 200, y + 68, { width: 90, align: 'right' });
 
   // --- FOOTER ---
-  const footerStoreName = storeSnap?.displayName || settings?.general?.storeName || 'the store';
+  const footerStoreName =
+    storeSnap?.displayName || settings?.general?.storeName || 'Siri Arts & Crafts';
   const footerEmail =
-    storeSnap?.email || settings?.general?.supportEmail || settings?.contact?.email || '';
+    storeSnap?.email ||
+    settings?.general?.supportEmail ||
+    settings?.contact?.email ||
+    'sirisha.atmakuri@gmail.com';
   const footerText = `This is a secure computer generated tax invoice issued under ${footerStoreName} regulations and requires no physical signatures.${footerEmail ? ` For inquiry, reach ${footerEmail}.` : ''}`;
   doc.fillColor(lightGray).font('Helvetica').fontSize(8).text(footerText, 50, 720, {
     align: 'center',

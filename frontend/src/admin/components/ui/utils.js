@@ -1,9 +1,9 @@
 export const fadeUp = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
+  hidden: { opacity: 0, y: 4 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } },
 };
 export const stagger = {
-  show: { transition: { staggerChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.03 } },
 };
 
 export function formatCurrency(val) {

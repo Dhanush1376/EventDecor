@@ -3,7 +3,7 @@ import { AdminToggle } from '../../../components/AdminUIKit';
 export function PublishStep({ formData, setFormData }) {
   return (
     <div className="space-y-5">
-      <div className="admin-card-inset p-4 rounded-[var(--admin-radius-lg)] max-w-sm">
+      <div className="admin-card-inset p-4 rounded-[4px] border border-[var(--admin-border)] shadow-xs max-w-sm">
         <AdminToggle
           label="Coupon Status"
           description="Enable to activate this coupon in production"

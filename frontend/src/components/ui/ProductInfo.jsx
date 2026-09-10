@@ -35,14 +35,15 @@ export function ProductInfo({
   const navigate = useNavigate();
   const { attemptAddToCart, claimedCoupon } = useCart();
   const { toggleItem, isWishlisted } = useWishlist();
-  const { runProtectedAction } = useAuth();
+  const { runProtectedAction, user } = useAuth();
   const [quantity, _setQuantity] = React.useState(1);
   const [added, setAdded] = React.useState(false);
   const [_startingChat, _setStartingChat] = React.useState(false);
 
   const productId = product?._id || product?.id;
+  const userId = user?._id || user?.id || 'guest';
   const { data: couponsData } = useQuery({
-    queryKey: ['product-coupons', productId],
+    queryKey: ['product-coupons', productId, userId],
     queryFn: () => couponService.getProductCoupons(productId),
     enabled: !!productId,
   });

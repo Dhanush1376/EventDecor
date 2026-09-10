@@ -183,7 +183,9 @@ const AdminEvents = lazy(() =>
   import('../admin/pages/AdminEvents').then((m) => ({ default: m.AdminEvents })),
 );
 const AdminBookingDetail = lazy(() =>
-  import('../admin/pages/AdminBookingDetail').then((m) => ({ default: m.AdminBookingDetail })),
+  import('../admin/pages/AdminBookingDetail/index').then((m) => ({
+    default: m.AdminBookingDetail,
+  })),
 );
 const AdminPolicies = lazy(() =>
   import('../admin/pages/AdminPolicies').then((m) => ({ default: m.AdminPolicies })),
@@ -275,6 +277,8 @@ const AdminRecycleBin = lazy(() =>
   import('../admin/pages/AdminRecycleBin').then((m) => ({ default: m.default })),
 );
 
+const InvoicePreviewPage = lazy(() => import('../pages/InvoicePreviewPage'));
+
 export function AppRoutes() {
   return (
     <>
@@ -291,6 +295,7 @@ export function AppRoutes() {
       <ErrorBoundary>
         <Suspense fallback={<AppRouteFallback />}>
           <Routes>
+            <Route path="/invoice-preview" element={<InvoicePreviewPage />} />
             <Route element={<MaintenanceGate />}>
               <Route element={<MainLayout />}>
                 <Route path="/" element={<Home />} />
@@ -392,8 +397,8 @@ export function AppRoutes() {
               <Route path="settings" element={<AdminSettings />} />
 
               <Route path="policies" element={<AdminPolicies />} />
-              <Route path="policies/add" element={<AdminPolicyEditor />} />
-              <Route path="policies/edit/:id" element={<AdminPolicyEditor />} />
+              <Route path="policies/add" element={<AdminPolicies />} />
+              <Route path="policies/edit/:id" element={<AdminPolicies />} />
               <Route path="products/add" element={<AdminAddProduct />} />
               <Route path="products/edit/:id" element={<AdminAddProduct />} />
               <Route path="orders/*" element={<AdminOrdersHub />} />
@@ -412,8 +417,8 @@ export function AppRoutes() {
               <Route path="gallery/add" element={<AdminAddGalleryItem />} />
               <Route path="gallery/edit/:id" element={<AdminAddGalleryItem />} />
               <Route path="categories" element={<AdminCategories />} />
-              <Route path="categories/add" element={<AdminAddCategory />} />
-              <Route path="categories/edit/:id" element={<AdminAddCategory />} />
+              <Route path="categories/add" element={<AdminCategories />} />
+              <Route path="categories/edit/:id" element={<AdminCategories />} />
               <Route path="events" element={<AdminEvents />} />
               <Route path="events/add" element={<AdminAddEvent />} />
               <Route path="events/edit/:id" element={<AdminAddEvent />} />
@@ -470,7 +475,10 @@ export function AppRoutes() {
               <Route path="system/roles" element={<AdminSystemHub />} />
               <Route path="system/notifications" element={<AdminSystemHub />} />
               <Route path="system/settings" element={<AdminSystemHub />} />
-              <Route path="system/audit" element={<AdminSystemHub />} />
+              <Route
+                path="system/audit"
+                element={<Navigate to="/admin/analytics/operations?actor=staff" replace />}
+              />
 
               <Route path="recycle-bin" element={<AdminRecycleBin />} />
               <Route path="trash" element={<Navigate to="/admin/recycle-bin" replace />} />

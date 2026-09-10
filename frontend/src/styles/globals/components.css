@@ -226,7 +226,7 @@
 }
 
 /* ─── Standardize Date Inputs Across Devices ─── */
-input[type='date'] {
+input[type='date']:not(.absolute) {
   position: relative;
 }
 
@@ -242,4 +242,14 @@ input[type='date']::-webkit-calendar-picker-indicator {
   cursor: pointer;
   color: transparent;
   background: transparent;
+}
+
+/* ─── Global Image Fallback Styling ─── */
+img.image-fallback-active {
+  object-fit: cover !important;
+  background-color: #f7f6f2 !important;
+}
+
+.dark img.image-fallback-active {
+  background-color: #1a1917 !important;
 }

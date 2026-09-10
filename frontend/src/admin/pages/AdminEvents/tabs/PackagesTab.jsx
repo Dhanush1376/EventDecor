@@ -1,6 +1,6 @@
 import { m as motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { SkeletonDashboard, fadeUp } from '../../../components/AdminUIKit';
+import { AdminEventsPackagesTabSkeleton, fadeUp } from '../../../components/AdminUIKit';
 
 export function PackagesTab({ events, loadingPortfolio }) {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export function PackagesTab({ events, loadingPortfolio }) {
       </div>
 
       {loadingPortfolio ? (
-        <SkeletonDashboard />
+        <AdminEventsPackagesTabSkeleton />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {events.map((ev) => (

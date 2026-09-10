@@ -89,11 +89,11 @@ export function useShowcaseForm({ id, isEditMode, navigate }) {
             });
           } else {
             toast.error('Showcase design not found');
-            navigate('/admin/events');
+            navigate('/admin/events?tab=showcases');
           }
         } catch (_err) {
           toast.error('Failed to load design details');
-          navigate('/admin/events');
+          navigate('/admin/events?tab=showcases');
         } finally {
           setIsLoading(false);
         }

@@ -6,10 +6,11 @@ import { useConfirm } from '../../../context/ConfirmProvider';
 import { m as motion } from 'framer-motion';
 import {
   PageHeader,
-  SkeletonList,
   StatusBadge,
-  stagger,
   fadeUp,
+  stagger,
+  SkeletonList,
+  AdminLoyaltySkeleton,
 } from '../../components/AdminUIKit';
 
 export default function CampaignManager() {
@@ -77,6 +78,10 @@ export default function CampaignManager() {
       toast.error('Failed to delete campaign');
     }
   };
+
+  if (loading && campaigns.length === 0) {
+    return <AdminLoyaltySkeleton />;
+  }
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6 pb-20">

@@ -120,6 +120,7 @@ const OrderSchema: Schema = new Schema(
       default: 'Not Applicable',
     },
     settledAmount: { type: Number, default: 0 },
+    collectedAmount: { type: Number },
     courierCharges: { type: Number, default: 0 },
     earnings: { type: Number, default: 0 },
     reservationIds: [{ type: Schema.Types.ObjectId, ref: 'InventoryReservation' }],

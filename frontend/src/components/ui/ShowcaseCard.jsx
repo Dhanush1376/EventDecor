@@ -1,4 +1,4 @@
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ImageOff } from 'lucide-react';
 import { m as motion } from 'framer-motion';
 import { CloudinaryImage } from './CloudinaryImage';
 import React, { useState, useRef } from 'react';
@@ -8,6 +8,14 @@ import { DynamicRatingBadge } from './DynamicRatingBadge';
 import { useLongPress } from '../../hooks/useLongPress';
 import { useNavigate } from 'react-router-dom';
 import { getProductRoute } from '../../utils/ecommerce/productRouteUtils';
+
+const isValidMediaUrl = (url) => {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return false;
+  return true;
+};
+
 export const ShowcaseCard = React.memo(function ShowcaseCard({
   id,
   _id,
@@ -40,22 +48,25 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
 
   const availableImages = React.useMemo(() => {
     const imgs = [];
-    if (image) imgs.push(image);
+    if (isValidMediaUrl(image)) imgs.push(image);
     if (images && images.length > 0) {
       images.forEach((img) => {
-        if (!imgs.includes(img)) imgs.push(img);
+        if (isValidMediaUrl(img) && !imgs.includes(img)) imgs.push(img);
       });
     }
     return imgs;
   }, [image, images]);
 
-  const displayOriginalPrice = originalPrice || Math.round(rentalPrice * 1.25);
+  const displayOriginalPrice =
+    originalPrice !== undefined ? originalPrice : rentalPrice ? Math.round(rentalPrice * 1.25) : 0;
   const displayDiscount =
     discountPercentage ||
-    Math.round(((displayOriginalPrice - rentalPrice) / displayOriginalPrice) * 100);
+    (displayOriginalPrice > rentalPrice && rentalPrice > 0
+      ? Math.round(((displayOriginalPrice - rentalPrice) / displayOriginalPrice) * 100)
+      : 0);
 
   const formatPrice = (val) => {
-    if (!val) return '15,000';
+    if (val === undefined || val === null || val === '') return '0';
     return Number(val).toLocaleString('en-IN');
   };
 
@@ -135,20 +146,31 @@ export const ShowcaseCard = React.memo(function ShowcaseCard({
           onScroll={handleScroll}
           className="flex w-full h-full overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth"
         >
-          {availableImages.map((img, idx) => (
-            <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
-              <CloudinaryImage
-                src={img || ''}
-                alt={`${title} - view ${idx + 1}`}
-                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover/canvas:scale-110"
-                containerClassName="w-full h-full"
-                loading={idx === 0 ? 'eager' : 'lazy'}
-                width={1200}
-                sizes="(max-width: 640px) 100vw, 50vw"
-                quality="auto:best"
-              />
+          {availableImages.length > 0 ? (
+            availableImages.map((img, idx) => (
+              <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+                <CloudinaryImage
+                  src={img}
+                  alt={`${title || 'Showcase'} - view ${idx + 1}`}
+                  className="w-full h-full object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.2,1,0.2,1)] group-hover/canvas:scale-110"
+                  containerClassName="w-full h-full"
+                  loading={idx === 0 ? 'eager' : 'lazy'}
+                  width={1200}
+                  sizes="(max-width: 640px) 100vw, 50vw"
+                  quality="auto:best"
+                />
+              </div>
+            ))
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-[#f7f6f2] dark:bg-[#1a1917] text-[#8a877f] dark:text-[#9e9b93] gap-1.5 select-none p-4">
+              <div className="w-10 h-10 rounded-full bg-black/[0.04] dark:bg-white/[0.06] flex items-center justify-center mb-0.5">
+                <ImageOff className="w-5 h-5 opacity-70" strokeWidth={1.75} />
+              </div>
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider font-label opacity-80">
+                Image Unavailable
+              </span>
             </div>
-          ))}
+          )}
         </div>
 
         {availableImages.length > 1 && (

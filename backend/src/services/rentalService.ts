@@ -175,17 +175,12 @@ class RentalService {
     const rental = await RentalOrder.findOne({ _id: rentalId, user: userId });
     if (!rental) throw new ApiError(404, 'Rental order not found');
 
-    const returnableStatuses = ['active_rental', 'late_return'];
+    const returnableStatuses = ['active_rental'];
     if (!returnableStatuses.includes(rental.status)) {
       throw new ApiError(400, `Cannot request return when status is "${rental.status}"`);
     }
 
-    RentalStateMachine.transition(
-      rental,
-      'return_requested',
-      'Customer requested product return',
-      userId,
-    );
+    RentalStateMachine.transition(rental, 'returned', 'Customer requested product return', userId);
     rental.returnRequestedAt = new Date();
 
     await rental.save();
@@ -320,8 +315,12 @@ class RentalService {
       throw new ApiError(400, 'Deposit has already been refunded for this order');
     }
 
-    if (rental.status !== 'returned') {
-      throw new ApiError(400, 'Deposit can only be released after the product is returned');
+    const allowedDepositStates = ['active_rental', 'returned', 'completed'];
+    if (!allowedDepositStates.includes(rental.status)) {
+      throw new ApiError(
+        400,
+        `Deposit can only be released for active, returned, or completed rentals (current status: ${rental.status})`,
+      );
     }
 
     if (rental.depositStatus !== 'held') {
@@ -358,12 +357,14 @@ class RentalService {
         };
         rental.depositStatus = 'forfeited';
 
-        RentalStateMachine.transition(
-          rental,
-          'completed',
-          `Deposit fully forfeited. Reason: ${deductionReason}`,
-          adminId,
-        );
+        if (rental.status === 'returned') {
+          RentalStateMachine.transition(
+            rental,
+            'completed',
+            `Deposit fully forfeited. Reason: ${deductionReason}`,
+            adminId,
+          );
+        }
 
         await rental.save({ session });
 
@@ -379,23 +380,25 @@ class RentalService {
           ],
           { session },
         );
-      } else if (method === 'cash') {
+      } else if (method !== 'razorpay') {
         rental.depositRefund = {
           amount: refundAmount,
           date: new Date(),
           reason: deductionReason ? `Deduction: ${deductionReason}` : 'Full refund',
           processedBy: adminId,
-          method: 'cash',
+          method: method || 'cash',
           status: 'completed',
         };
         rental.depositStatus = 'refunded';
 
-        RentalStateMachine.transition(
-          rental,
-          'completed',
-          `Deposit of ₹${refundAmount} released via Cash. ${deductionReason ? 'Deduction: ' + deductionReason : ''}`,
-          adminId,
-        );
+        if (rental.status === 'returned') {
+          RentalStateMachine.transition(
+            rental,
+            'completed',
+            `Deposit of ₹${refundAmount} released via ${method || 'Cash'}. ${deductionReason ? 'Deduction: ' + deductionReason : ''}`,
+            adminId,
+          );
+        }
 
         await rental.save({ session });
 
@@ -607,15 +610,12 @@ class RentalService {
 
         rental.lateFee += additionalFee;
         rental.lateFeeAppliedDays = overdueDays;
-        rental.status = 'late_return';
 
-        if (rental.statusHistory[rental.statusHistory.length - 1]?.status !== 'late_return') {
-          rental.statusHistory.push({
-            status: 'late_return',
-            note: `Late fee of ₹${additionalFee} applied (${newDays} day(s) overdue)`,
-            performedBy: 'system',
-          } as any);
-        }
+        rental.statusHistory.push({
+          status: rental.status,
+          note: `Late fee of ₹${additionalFee} applied (${newDays} day(s) overdue)`,
+          performedBy: 'system',
+        } as any);
 
         await rental.save();
         processed++;
@@ -640,7 +640,7 @@ class RentalService {
     ] = await Promise.all([
       RentalOrder.countDocuments(),
       RentalOrder.countDocuments({ status: 'active_rental' }),
-      RentalOrder.countDocuments({ status: 'late_return' }),
+      RentalOrder.countDocuments({ status: 'active_rental', rentalEndDate: { $lt: new Date() } }),
       RentalOrder.countDocuments({ status: 'completed' }),
       RentalOrder.aggregate([
         { $match: { paymentStatus: 'paid' } },
@@ -651,15 +651,7 @@ class RentalService {
           $match: {
             paymentStatus: 'paid',
             status: {
-              $in: [
-                'confirmed',
-                'packed',
-                'out_for_delivery',
-                'delivered',
-                'active_rental',
-                'late_return',
-                'return_requested',
-              ],
+              $in: ['confirmed', 'active_rental'],
             },
           },
         },
@@ -697,7 +689,7 @@ class RentalService {
         .select('rentalOrderId productTitle rentalEndDate status paymentStatus user quantity')
         .lean(),
       RentalOrder.find({
-        status: { $in: ['active_rental', 'late_return'] },
+        status: 'active_rental',
         rentalEndDate: { $lt: todayStart },
       })
         .populate('user', 'name email phone')

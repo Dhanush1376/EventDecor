@@ -102,6 +102,7 @@ export interface IOrder extends ISoftDeleted {
   codCollected?: boolean;
   settlementStatus?: 'Pending' | 'Settled' | 'Not Applicable';
   settledAmount?: number;
+  collectedAmount?: number;
   courierCharges?: number;
   earnings?: number;
   reservationIds?: mongoose.Types.ObjectId[];

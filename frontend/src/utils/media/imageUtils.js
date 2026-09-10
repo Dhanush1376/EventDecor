@@ -238,6 +238,41 @@ export const getBlurDataUri = (width = 400, height = 300) => {
 };
 
 /**
+ * Generates an elegant, lightweight SVG fallback for unavailable images
+ */
+export const getImageUnavailableSvg = (width = 400, height = 300) => {
+  const w = Number(width) || 400;
+  const h = Number(height) || 300;
+  const scale = Math.max(0.65, Math.min(1.2, Math.min(w, h) / 220));
+  const fontSize = Math.max(9, Math.min(13, Math.round(11 * scale)));
+  const circleR = Math.round(22 * scale);
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="100%" height="100%">
+    <defs>
+      <linearGradient id="unavail_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f8f7f4" />
+        <stop offset="100%" stop-color="#eceae4" />
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#unavail_grad)" />
+    <g transform="translate(${w / 2}, ${h / 2 - 12 * scale})">
+      <circle cx="0" cy="0" r="${circleR}" fill="#000000" fill-opacity="0.04" />
+      <g transform="scale(${scale}) translate(-12, -12)" stroke="#8f8b82" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <line x1="2" y1="2" x2="22" y2="22" />
+        <path d="M10.41 10.41a2 2 0 0 0-2.83 2.83" />
+        <line x1="13.5" y1="13.5" x2="6" y2="21" />
+        <line x1="18" y1="12" x2="21" y2="15" />
+        <path d="M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.05-.22 1.41-.59" />
+        <path d="M21 15V5a2 2 0 0 0-2-2H9" />
+      </g>
+    </g>
+    <text x="${w / 2}" y="${h / 2 + 28 * scale}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="${fontSize}" font-weight="700" letter-spacing="1.2" fill="#8f8b82" text-anchor="middle">IMAGE UNAVAILABLE</text>
+  </svg>`;
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+};
+
+/**
  * Generate a srcset for responsive images, capping at max requested width to save bandwidth
  */
 export const getSrcSet = (url, maxWidth = null, quality = 'auto', format = 'auto') => {
@@ -311,9 +346,10 @@ export const getResponsiveImageProps = (
   };
 };
 
-const SVG_FALLBACK = getBlurDataUri(400, 300);
+export const SVG_FALLBACK = getImageUnavailableSvg(400, 300);
 
 export const handleImageError = (e) => {
+  if (!e || !e.target) return;
   if (e.target.dataset.errorHandled === 'true') {
     e.target.onerror = null;
     return;
@@ -321,8 +357,9 @@ export const handleImageError = (e) => {
 
   e.target.dataset.errorHandled = 'true';
   e.target.onerror = null;
-  e.target.src = SVG_FALLBACK;
   e.target.removeAttribute('srcset');
   e.target.removeAttribute('sizes');
+  e.target.alt = 'Image unavailable';
+  e.target.src = SVG_FALLBACK;
   e.target.classList.add('image-fallback-active');
 };

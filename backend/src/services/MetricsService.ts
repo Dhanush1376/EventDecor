@@ -44,8 +44,11 @@ export class MetricsService {
         createdAt: { $gte: oneHourAgo },
         paymentStatus: 'failed',
       });
+      const lateRentals = await RentalOrder.countDocuments({
+        status: 'active_rental',
+        rentalEndDate: { $lt: new Date() },
+      });
       const rentalFailureRate = newRentals > 0 ? (failedRentals / newRentals) * 100 : 0;
-      const lateRentals = await RentalOrder.countDocuments({ status: 'late_return' });
 
       // Refunds
       const RefundRecord = require('../models/RefundRecord').default;

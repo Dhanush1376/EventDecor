@@ -1,4 +1,4 @@
-import { SlidersHorizontal, X, Calendar, ChevronDown } from 'lucide-react';
+import { SlidersHorizontal, X, Calendar } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { m as motion, AnimatePresence } from 'framer-motion';
@@ -100,7 +100,6 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/50 pointer-events-none" />
                   </div>
                 </div>
 
@@ -114,7 +113,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                       placeholder="e.g. Baby Shower, Housewarming..."
                       value={state.customOccasion}
                       onChange={(e) => actions.setCustomOccasion(e.target.value)}
-                      className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-[16px] sm:text-xs outline-none focus:border-black font-medium"
+                      className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium"
                     />
                   </div>
                 )}
@@ -128,7 +127,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                     placeholder="e.g. 9876543210"
                     value={state.contactPhone || ''}
                     onChange={(e) => actions.setContactPhone(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-full border border-black/10 bg-white text-[16px] sm:text-xs outline-none focus:border-black font-medium"
+                    className="w-full px-4 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium"
                   />
                 </div>
 
@@ -141,7 +140,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                       type="date"
                       value={state.bookingDate}
                       onChange={(e) => actions.setBookingDate(e.target.value)}
-                      className="w-full px-4 pr-10 py-2.5 rounded-full border border-black/10 bg-white text-[16px] sm:text-xs outline-none focus:border-black font-medium appearance-none uppercase relative z-10 bg-transparent"
+                      className="w-full px-4 pr-10 py-2 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-black font-medium appearance-none uppercase relative z-10 bg-transparent"
                     />
                     <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-black/50 pointer-events-none z-0" />
                   </div>
@@ -181,7 +180,6 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                         <option value="09:00 AM">09:00 AM</option>
                         <option value="12:00 PM">12:00 PM</option>
                       </select>
-                      <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-black/50 pointer-events-none" />
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -198,7 +196,6 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                         <option value="05:00 PM">05:00 PM</option>
                         <option value="09:00 PM">09:00 PM</option>
                       </select>
-                      <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-black/50 pointer-events-none" />
                     </div>
                   </div>
                 </div>
@@ -215,7 +212,6 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                       <option value="Side-Stage Showcase Corner">Side-Stage Showcase Corner</option>
                       <option value="Entrance Presentation Desk">Entrance Presentation Desk</option>
                     </select>
-                    <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-black/50 pointer-events-none" />
                   </div>
                 </div>
               </div>
@@ -265,7 +261,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                         actions.setManualVenueName(e.target.value);
                         actions.handleManualFieldChange('name', e.target.value);
                       }}
-                      className="w-full px-4 py-2 rounded-full border border-black/10 text-[16px] sm:text-xs"
+                      className="w-full px-4 py-2 rounded-full border border-black/10 text-xs"
                     />
                     <input
                       type="text"
@@ -275,7 +271,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                         actions.setManualAddress(e.target.value);
                         actions.handleManualFieldChange('address', e.target.value);
                       }}
-                      className="w-full px-4 py-2 rounded-full border border-black/10 text-[16px] sm:text-xs"
+                      className="w-full px-4 py-2 rounded-full border border-black/10 text-xs"
                     />
                     <div className="grid grid-cols-3 gap-2">
                       <input
@@ -286,7 +282,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                           actions.setManualCity(e.target.value);
                           actions.handleManualFieldChange('city', e.target.value);
                         }}
-                        className="w-full px-3 py-2 rounded-full border border-black/10 text-[16px] sm:text-xs"
+                        className="w-full px-3 py-2 rounded-full border border-black/10 text-xs"
                       />
                       <input
                         type="text"
@@ -296,7 +292,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                           actions.setManualState(e.target.value);
                           actions.handleManualFieldChange('state', e.target.value);
                         }}
-                        className="w-full px-3 py-2 rounded-full border border-black/10 text-[16px] sm:text-xs"
+                        className="w-full px-3 py-2 rounded-full border border-black/10 text-xs"
                       />
                       <input
                         type="text"
@@ -306,7 +302,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                           actions.setManualPincode(e.target.value);
                           actions.handleManualFieldChange('pincode', e.target.value);
                         }}
-                        className="w-full px-3 py-2 rounded-full border border-black/10 text-[16px] sm:text-xs"
+                        className="w-full px-3 py-2 rounded-full border border-black/10 text-xs"
                       />
                     </div>
                   </div>
@@ -316,7 +312,7 @@ export function EventCustomizerDrawer({ event, bookingForm }) {
                   placeholder="Arrangement Notes..."
                   value={state.customNote}
                   onChange={(e) => actions.setCustomNote(e.target.value)}
-                  className="w-full p-4 rounded-2xl border border-black/10 bg-stone-50/20 text-[16px] sm:text-xs h-20 resize-none focus:border-black outline-none"
+                  className="w-full p-4 rounded-2xl border border-black/10 bg-stone-50/20 text-xs h-20 resize-none focus:border-black outline-none"
                 />
               </div>
             )}

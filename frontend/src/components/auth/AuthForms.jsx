@@ -148,7 +148,7 @@ export function OtpVerificationForm({
   return (
     <form onSubmit={handleVerifyOTP} className="space-y-5">
       <div
-        className={`flex justify-between gap-2 xs:gap-3 transition-transform duration-300 ${error ? 'translate-x-1' : ''}`}
+        className={`grid grid-cols-6 gap-1.5 xs:gap-2 sm:gap-2.5 w-full max-w-[340px] mx-auto transition-transform duration-300 ${error ? 'translate-x-1' : ''}`}
         onPaste={handlePaste}
       >
         {otp.map((digit, idx) => (
@@ -165,12 +165,12 @@ export function OtpVerificationForm({
             onKeyDown={(e) => handleKeyDown(e, idx)}
             onPaste={handlePaste}
             aria-label={`Digit ${idx + 1} of verification code`}
-            className={`w-10 h-12 xs:w-12 xs:h-14 text-center font-mono text-[20px] xs:text-[22px] rounded-xl outline-none transition-all duration-300 shadow-sm focus:shadow-md ${
+            className={`w-full aspect-[1/1.18] min-w-0 max-w-[46px] mx-auto text-center font-mono text-[18px] xs:text-[20px] rounded-xl outline-none transition-all duration-200 shadow-sm focus:shadow-md ${
               error
                 ? 'border-2 border-error text-error bg-error/5'
                 : digit
-                  ? 'border-2 border-primary text-primary font-bold bg-primary/5 scale-105'
-                  : 'border border-outline-variant/40 text-on-surface-variant bg-surface focus:border-primary focus:ring-4 focus:ring-primary/10'
+                  ? 'border-2 border-primary text-primary font-bold bg-primary/5 ring-1 ring-primary/20'
+                  : 'border border-outline-variant/40 text-on-surface-variant bg-surface focus:border-primary focus:ring-2 focus:ring-primary/15'
             }`}
           />
         ))}

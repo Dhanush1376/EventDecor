@@ -77,21 +77,23 @@ export function AdminOrdersKanban({
                       onClick={() => openOrderDrawer(o)}
                       className={`${getCardColorClass(o.status, o.cardState)} rounded-sm p-4 border-2 shadow-sm hover:border-gray-500 hover:shadow-md transition-all duration-200 cursor-pointer group text-left flex flex-col relative overflow-hidden`}
                     >
-                      {o.orderType && o.orderType !== 'purchase' && (
-                        <div className="absolute top-0 left-0 w-12 h-12 pointer-events-none z-10 overflow-hidden rounded-tl-[var(--admin-radius-lg)]">
-                          <div
-                            className={`absolute top-2 -left-7 w-24 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wider ${
-                              o.orderType === 'rental' ? 'bg-indigo-500' : 'bg-purple-500'
-                            }`}
-                          >
-                            {o.orderType}
-                          </div>
-                        </div>
-                      )}
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-[15px] font-bold text-gray-900">
-                          #{o.id.substring(o.id.length - 8).toUpperCase()}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[15px] font-bold text-gray-900">
+                            #{o.id.substring(o.id.length - 8).toUpperCase()}
+                          </span>
+                          {o.orderType && o.orderType !== 'purchase' && (
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                                o.orderType === 'rental'
+                                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:border-indigo-800'
+                                  : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800'
+                              }`}
+                            >
+                              {o.orderType}
+                            </span>
+                          )}
+                        </div>
                         <div className="relative inline-block">
                           <select
                             value={o.status}

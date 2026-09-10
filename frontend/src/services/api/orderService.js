@@ -36,8 +36,13 @@ export const orderService = {
     const response = await api.get('/orders', { params });
     return response.data;
   },
-  updateStatus: async (id, status, note, courierCharges) => {
-    const response = await api.patch(`/orders/${id}/status`, { status, note, courierCharges });
+  updateStatus: async (id, status, note, courierCharges, collectedAmount) => {
+    const response = await api.patch(`/orders/${id}/status`, {
+      status,
+      note,
+      courierCharges,
+      collectedAmount,
+    });
     return response.data;
   },
   getPublicTrack: async (id, token) => {

@@ -256,7 +256,7 @@
   }
 
   /* Prevent native input type=date from overflowing parent containers, especially on Safari and mobile devices */
-  input[type='date'] {
+  input[type='date']:not(.absolute) {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;

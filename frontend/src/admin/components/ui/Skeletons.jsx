@@ -240,3 +240,157 @@ export function SkeletonWizard({ steps = 4, className = '' }) {
     </div>
   );
 }
+
+export function SkeletonBox({
+  width = 'w-10',
+  height = 'h-10',
+  rounded = 'md',
+  className = '',
+  style,
+}) {
+  const isWidthClass =
+    typeof width === 'string' &&
+    (width.startsWith('w-') || width.startsWith('max-w') || width.startsWith('min-w'));
+  const isHeightClass =
+    typeof height === 'string' &&
+    (height.startsWith('h-') || height.startsWith('max-h') || height.startsWith('min-h'));
+
+  const roundedClass =
+    rounded === 'full'
+      ? 'rounded-full'
+      : rounded === 'sm'
+        ? 'rounded-[3px]'
+        : rounded === 'lg'
+          ? 'rounded-lg'
+          : rounded === 'xl'
+            ? 'rounded-xl'
+            : rounded === 'xs'
+              ? 'rounded-[2px]'
+              : 'rounded-[4px]';
+
+  const computedStyle = {
+    ...(!isWidthClass && width ? { width } : {}),
+    ...(!isHeightClass && height ? { height } : {}),
+    ...style,
+  };
+
+  const computedClasses = [
+    isWidthClass ? width : '',
+    isHeightClass ? height : '',
+    roundedClass,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return <AdminSkeleton className={computedClasses} style={computedStyle} />;
+}
+
+export function SkeletonTextLine({ width = 'w-24', height = 'h-3.5', className = '', style }) {
+  const isWidthClass =
+    typeof width === 'string' &&
+    (width.startsWith('w-') || width.startsWith('max-w') || width.startsWith('min-w'));
+  const isHeightClass =
+    typeof height === 'string' &&
+    (height.startsWith('h-') || height.startsWith('max-h') || height.startsWith('min-h'));
+
+  const computedStyle = {
+    ...(!isWidthClass && width ? { width } : {}),
+    ...(!isHeightClass && height ? { height } : {}),
+    ...style,
+  };
+
+  const computedClasses = [
+    isWidthClass ? width : '',
+    isHeightClass ? height : '',
+    'rounded',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return <AdminSkeleton className={computedClasses} style={computedStyle} />;
+}
+
+export function SkeletonBadge({ width = 'w-16', height = 'h-5', className = '', style }) {
+  const isWidthClass =
+    typeof width === 'string' &&
+    (width.startsWith('w-') || width.startsWith('max-w') || width.startsWith('min-w'));
+  const isHeightClass =
+    typeof height === 'string' &&
+    (height.startsWith('h-') || height.startsWith('max-h') || height.startsWith('min-h'));
+
+  const computedStyle = {
+    ...(!isWidthClass && width ? { width } : {}),
+    ...(!isHeightClass && height ? { height } : {}),
+    ...style,
+  };
+
+  const computedClasses = [
+    isWidthClass ? width : '',
+    isHeightClass ? height : 'h-5',
+    'rounded-full',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return <AdminSkeleton className={computedClasses} style={computedStyle} />;
+}
+
+export function SkeletonButton({ width = 'w-24', height = 'h-[42px]', className = '' }) {
+  return <AdminSkeleton className={`${width} ${height} rounded-[4px] shrink-0 ${className}`} />;
+}
+
+export function SkeletonAvatar({ size = 'w-10 h-10', className = '' }) {
+  return <AdminSkeleton className={`${size} rounded-full shrink-0 ${className}`} />;
+}
+
+export function SkeletonInput({ height = 'h-10', className = '' }) {
+  return <AdminSkeleton className={`w-full ${height} rounded-[4px] ${className}`} />;
+}
+
+export function SkeletonHeader({
+  titleWidth = 'w-44',
+  subtitleWidth = 'w-64',
+  hasAction = true,
+  actionWidth = 'w-32',
+  className = '',
+}) {
+  return (
+    <div
+      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 ${className}`}
+    >
+      <div className="space-y-2">
+        <AdminSkeleton className={`${titleWidth} h-7 rounded-[4px]`} />
+        <AdminSkeleton className={`${subtitleWidth} h-4 rounded-[4px]`} />
+      </div>
+      {hasAction && <AdminSkeleton className={`${actionWidth} h-[42px] rounded-[4px] shrink-0`} />}
+    </div>
+  );
+}
+
+export function SkeletonToolbar({
+  hasFilters = true,
+  hasExport = false,
+  hasSecondary = false,
+  className = '',
+}) {
+  return (
+    <div
+      className={`sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md mb-6 ${className}`}
+    >
+      <div className="flex flex-row items-center gap-2 w-full">
+        <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-3 h-[42px]">
+          <AdminSkeleton className="w-5 h-5 rounded shrink-0 mr-2" />
+          <AdminSkeleton className="w-1/3 h-3.5 rounded" />
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {hasFilters && <SkeletonButton width="w-24 sm:w-28" />}
+          {hasExport && <SkeletonButton width="w-10 sm:w-28" />}
+          {hasSecondary && <SkeletonButton width="w-10 sm:w-24" />}
+        </div>
+      </div>
+    </div>
+  );
+}

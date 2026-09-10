@@ -17,14 +17,18 @@
 }
 
 .admin-section-root .admin-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  position: relative;
+  z-index: 1;
 }
 
 .admin-section-root .admin-table thead tr {
   background: var(--admin-bg-subtle);
   border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-section-root .admin-table.admin-table-clean-header thead tr,
+.admin-section-root .admin-table thead tr.admin-table-clean-header {
+  background: transparent;
 }
 
 .admin-section-root .admin-table th {
@@ -35,8 +39,14 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--admin-text-tertiary);
+  background: var(--admin-bg-subtle);
   white-space: nowrap;
   user-select: none;
+}
+
+.admin-section-root .admin-table.admin-table-clean-header th,
+.admin-section-root .admin-table thead tr.admin-table-clean-header th {
+  background: transparent;
 }
 
 .admin-section-root .admin-table td {
@@ -44,6 +54,11 @@
   text-align: left;
   color: var(--admin-text-primary);
   vertical-align: middle;
+}
+
+.admin-section-root .admin-table.admin-table-compact th,
+.admin-section-root .admin-table.admin-table-compact td {
+  padding: 8px 10px;
 }
 
 .admin-section-root .admin-table tbody tr {
@@ -184,6 +199,7 @@
   border: 1px dashed var(--admin-border);
   border-radius: var(--admin-radius-xl);
   background: var(--admin-bg-subtle);
+  animation: admin-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Divider */
@@ -239,12 +255,25 @@
 }
 
 /* Dropdown / popover panel */
+@keyframes admin-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .admin-section-root .admin-dropdown {
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-xl);
   box-shadow: var(--admin-shadow-xl);
   overflow: hidden;
+  animation: admin-dropdown-in 120ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top;
 }
 
 .admin-section-root .admin-dropdown-item {
@@ -424,39 +453,6 @@
   }
 }
 
-/* ── Settings Sidebar → Horizontal Tabs on Mobile ──────────────────────── */
-@media (max-width: 1023px) {
-  .admin-section-root .admin-settings-nav {
-    display: flex !important;
-    flex-direction: row !important;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    gap: 4px !important;
-    padding: 8px !important;
-    white-space: nowrap;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .admin-section-root .admin-settings-nav::-webkit-scrollbar {
-    display: none;
-  }
-  .admin-section-root .admin-settings-nav > button {
-    flex: 0 0 auto;
-    scroll-snap-align: start;
-    min-width: auto !important;
-    width: auto !important;
-    padding: 8px 14px !important;
-    font-size: 11px !important;
-  }
-  /* Hide the long label text on mobile, show icon + short title */
-  .admin-section-root .admin-settings-nav > button > span:last-child {
-    max-width: 80px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-
 /* ── Drawer / Panel safe-area padding ──────────────────────────────────── */
 @supports (padding: var(--safe-area-bottom, env(safe-area-inset-bottom))) {
   @media (max-width: 640px) {
@@ -578,4 +574,40 @@
   box-shadow:
     0 0 0 2px var(--admin-surface, #ffffff),
     0 0 0 4px rgba(51, 65, 85, 0.3) !important;
+}
+
+/* ── Wizard Sticky Action Bar ────────────────────────────────────────── */
+.admin-wizard-sticky-footer {
+  position: fixed;
+  bottom: calc(var(--admin-bottom-nav-height, 60px) + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--admin-border);
+  padding: 8px 16px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.admin-section-root.dark .admin-wizard-sticky-footer {
+  background: rgba(38, 36, 31, 0.95);
+}
+
+@media (min-width: 1024px) {
+  .admin-wizard-sticky-footer {
+    position: static;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    z-index: auto;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-top: 1px solid var(--admin-border-subtle);
+    padding: 16px 0 0 0;
+    margin-top: 24px;
+    box-shadow: none;
+  }
 }

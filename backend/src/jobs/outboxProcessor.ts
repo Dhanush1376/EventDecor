@@ -8,6 +8,74 @@ import CustomOrder from '../models/CustomOrder';
 import EventJob from '../domains/event_operations/models/EventJob';
 import ReturnRequest from '../models/ReturnRequest';
 import RentalOrder from '../models/RentalOrder';
+import ShowcaseCollection from '../models/ShowcaseCollection';
+import Event from '../models/Event';
+import Product from '../models/Product';
+
+const resolveBookingImage = async (booking: any): Promise<string | null> => {
+  let img =
+    booking.inspirationImages?.[0] ||
+    (booking.eventPackage as any)?.image ||
+    (booking.eventPackage as any)?.imageSrc ||
+    (booking.eventPackage as any)?.images?.[0];
+
+  if (!img && booking.eventPackage) {
+    try {
+      const pkgId = booking.eventPackage._id || booking.eventPackage;
+      const showcase = await ShowcaseCollection.findById(pkgId).lean();
+      if (showcase) {
+        img = showcase.image || showcase.gallery?.[0];
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!img) {
+      try {
+        const pkgId = booking.eventPackage._id || booking.eventPackage;
+        const ev = await Event.findById(pkgId).lean();
+        if (ev) {
+          img = ev.image || ev.gallery?.[0];
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  if (!img && booking.title) {
+    try {
+      const cleanTitle = booking.title
+        .replace(/^rent:\s*/i, '')
+        .replace(/\s*booking$/i, '')
+        .trim();
+      const showcase = await ShowcaseCollection.findOne({
+        title: { $regex: new RegExp(cleanTitle, 'i') },
+      }).lean();
+      if (showcase) {
+        img = showcase.image || showcase.gallery?.[0];
+      } else {
+        const ev = await Event.findOne({
+          title: { $regex: new RegExp(cleanTitle, 'i') },
+        }).lean();
+        if (ev) {
+          img = ev.image;
+        } else {
+          const prod = await Product.findOne({
+            title: { $regex: new RegExp(cleanTitle, 'i') },
+          }).lean();
+          if (prod) {
+            img = prod.imageSrc || prod.images?.[0];
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return img || null;
+};
 
 /**
  * OutboxProcessor — Processes ALL outbox event types.
@@ -306,9 +374,12 @@ export async function processEvent(event: any): Promise<void> {
       if (eventName === 'ORDER_ORDERCREATED') {
         const order = await Order.findById(event.aggregateId).populate('user');
         if (order) {
+          const firstTitle = order.items?.[0]?.title || (order.items?.[0] as any)?.name;
+          const moreCount = order.items?.length > 1 ? ` (+${order.items.length - 1} more)` : '';
+          const productTitle = firstTitle ? `${firstTitle}${moreCount}` : 'Order';
           await createAdminNotification({
-            title: 'New Order',
-            message: `Order #${order.orderUuid || order._id} placed by ${(order.user as any)?.name || order.shippingAddress?.name || 'Customer'} (₹${order.total})`,
+            title: `New Order: ${productTitle}`,
+            message: `${productTitle} placed by ${(order.user as any)?.name || order.shippingAddress?.name || 'Customer'} (₹${order.total})`,
             type: 'order',
             actionLink: `/admin/orders/${order._id}`,
             metadata: { outboxEventId: event._id.toString() },
@@ -317,9 +388,12 @@ export async function processEvent(event: any): Promise<void> {
       } else if (eventName === 'ORDER_ORDERSTATUSUPDATED') {
         const order = await Order.findById(event.aggregateId);
         if (order && event.payload) {
+          const firstTitle = order.items?.[0]?.title || (order.items?.[0] as any)?.name;
+          const moreCount = order.items?.length > 1 ? ` (+${order.items.length - 1} more)` : '';
+          const productTitle = firstTitle ? `${firstTitle}${moreCount}` : 'Order';
           await createAdminNotification({
-            title: 'Order Status Updated',
-            message: `Order #${order.orderUuid || order._id} status changed: ${event.payload.oldStatus} → ${event.payload.newStatus}`,
+            title: `${productTitle} Status Updated`,
+            message: `${productTitle} status changed: ${event.payload.oldStatus} → ${event.payload.newStatus}`,
             type: 'order',
             actionLink: `/admin/orders/${order._id}`,
             metadata: { outboxEventId: event._id.toString() },
@@ -355,11 +429,7 @@ export async function processEvent(event: any): Promise<void> {
             actionLink: `/admin/events/${booking._id}`,
             metadata: {
               outboxEventId: event._id.toString(),
-              image:
-                (booking as any).eventPackage?.image ||
-                (booking.inspirationImages && booking.inspirationImages.length > 0
-                  ? booking.inspirationImages[0]
-                  : null),
+              image: await resolveBookingImage(booking),
             },
           });
         }
@@ -375,11 +445,7 @@ export async function processEvent(event: any): Promise<void> {
             actionLink: `/admin/events/${booking._id}`,
             metadata: {
               outboxEventId: event._id.toString(),
-              image:
-                (booking as any).eventPackage?.image ||
-                (booking.inspirationImages && booking.inspirationImages.length > 0
-                  ? booking.inspirationImages[0]
-                  : null),
+              image: await resolveBookingImage(booking),
             },
           });
         }
@@ -417,9 +483,10 @@ export async function processEvent(event: any): Promise<void> {
       } else if (eventName === 'ORDER_PAYMENTFAILED') {
         const order = await Order.findById(event.aggregateId);
         if (order) {
+          const firstTitle = order.items?.[0]?.title || (order.items?.[0] as any)?.name || 'Order';
           await createAdminNotification({
             title: 'Payment Failed',
-            message: `Payment failed for Order #${order.orderUuid || order._id}`,
+            message: `Payment failed for ${firstTitle}`,
             type: 'payment',
             actionLink: `/admin/orders/${order._id}`,
             metadata: {
@@ -431,9 +498,10 @@ export async function processEvent(event: any): Promise<void> {
       } else if (eventName === 'ORDER_REFUNDREQUESTED') {
         const order = await Order.findById(event.aggregateId);
         if (order) {
+          const firstTitle = order.items?.[0]?.title || (order.items?.[0] as any)?.name || 'Order';
           await createAdminNotification({
             title: 'Refund Requested',
-            message: `Refund requested for Order #${order.orderUuid || order._id}`,
+            message: `Refund requested for ${firstTitle}`,
             type: 'payment',
             actionLink: `/admin/orders/${order._id}`,
             metadata: {
@@ -447,7 +515,7 @@ export async function processEvent(event: any): Promise<void> {
         if (booking && event.payload) {
           await createAdminNotification({
             title: 'Booking Status Updated',
-            message: `Booking ${booking.bookingId || booking._id} for ${booking.title} is now ${event.payload.status || event.payload.newStatus}`,
+            message: `Booking for ${booking.title || 'Event'} is now ${event.payload.status || event.payload.newStatus}`,
             type: 'booking',
             actionLink: `/admin/events/${booking._id}`,
             metadata: {
@@ -463,9 +531,10 @@ export async function processEvent(event: any): Promise<void> {
       } else if (eventName === 'ORDER_PAYMENTCAPTURED') {
         const order = await Order.findById(event.aggregateId);
         if (order) {
+          const firstTitle = order.items?.[0]?.title || (order.items?.[0] as any)?.name || 'Order';
           await createAdminNotification({
             title: 'Payment Captured',
-            message: `Payment successful for Order #${order.orderUuid || order._id}`,
+            message: `Payment successful for ${firstTitle}`,
             type: 'payment',
             actionLink: `/admin/orders/${order._id}`,
             metadata: { outboxEventId: event._id.toString() },
@@ -476,7 +545,7 @@ export async function processEvent(event: any): Promise<void> {
         if (rentalOrder) {
           await createAdminNotification({
             title: 'New Rental Order',
-            message: `Rental #${rentalOrder.rentalOrderId || rentalOrder._id} — ${rentalOrder.productTitle} (₹${rentalOrder.totalAmount})`,
+            message: `${rentalOrder.productTitle || 'Rental Item'} rented (₹${rentalOrder.totalAmount})`,
             type: 'order',
             actionLink: '/admin/rentals',
             metadata: {
@@ -509,11 +578,14 @@ export async function processEvent(event: any): Promise<void> {
         const order = await Order.findById(event.aggregateId);
         if (order) {
           targetUserId = order.user.toString();
+          const firstTitle = order.items?.[0]?.title || (order.items?.[0] as any)?.name;
+          const moreCount = order.items?.length > 1 ? ` (+${order.items.length - 1} more)` : '';
+          const productTitle = firstTitle ? `${firstTitle}${moreCount}` : 'Order';
           customerNotificationPayload = {
             user: targetUserId,
             event: 'ORDER_CREATED',
-            title: 'Order Confirmed',
-            message: `Your order #${order.orderUuid || order._id} has been successfully placed.`,
+            title: `Order Confirmed: ${productTitle}`,
+            message: `Your order for ${productTitle} has been placed successfully.`,
             type: 'order',
             actionUrl: `/dashboard/orders/${order._id}`,
             metadata: {
@@ -528,11 +600,14 @@ export async function processEvent(event: any): Promise<void> {
         const order = await Order.findById(event.aggregateId);
         if (order && event.payload) {
           targetUserId = order.user.toString();
+          const firstTitle = order.items?.[0]?.title || (order.items?.[0] as any)?.name;
+          const moreCount = order.items?.length > 1 ? ` (+${order.items.length - 1} more)` : '';
+          const productTitle = firstTitle ? `${firstTitle}${moreCount}` : 'Order';
           customerNotificationPayload = {
             user: targetUserId,
             event: 'ORDER_UPDATED',
-            title: 'Order Status Update',
-            message: `Your order #${order.orderUuid || order._id} is now ${event.payload.newStatus}.`,
+            title: `${productTitle} is now ${event.payload.newStatus}`,
+            message: `The status of your ${productTitle} has been updated to ${event.payload.newStatus}.`,
             type: 'order',
             actionUrl: `/dashboard/orders/${order._id}`,
             metadata: {
@@ -576,6 +651,7 @@ export async function processEvent(event: any): Promise<void> {
         if (booking) {
           targetUserId = (booking as any).user?.toString();
           if (targetUserId) {
+            const bookingImg = await resolveBookingImage(booking);
             customerNotificationPayload = {
               user: targetUserId,
               event: 'BOOKING_CREATED',
@@ -587,10 +663,8 @@ export async function processEvent(event: any): Promise<void> {
                 outboxEventId: event._id.toString(),
                 bookingId: booking._id.toString(),
                 entityId: booking.bookingId || booking._id.toString(),
-                imageSrc:
-                  booking.inspirationImages?.[0] ||
-                  (booking.eventPackage as any)?.imageSrc ||
-                  (booking.eventPackage as any)?.images?.[0],
+                imageSrc: bookingImg || undefined,
+                image: bookingImg || undefined,
               },
             };
           }
@@ -600,6 +674,7 @@ export async function processEvent(event: any): Promise<void> {
         if (booking) {
           targetUserId = (booking as any).user?.toString();
           if (targetUserId) {
+            const bookingImg = await resolveBookingImage(booking);
             customerNotificationPayload = {
               user: targetUserId,
               event: 'BOOKING_UPDATED',
@@ -611,10 +686,8 @@ export async function processEvent(event: any): Promise<void> {
                 outboxEventId: event._id.toString(),
                 bookingId: booking._id.toString(),
                 entityId: booking.bookingId || booking._id.toString(),
-                imageSrc:
-                  booking.inspirationImages?.[0] ||
-                  (booking.eventPackage as any)?.imageSrc ||
-                  (booking.eventPackage as any)?.images?.[0],
+                imageSrc: bookingImg || undefined,
+                image: bookingImg || undefined,
               },
             };
           }
@@ -624,21 +697,20 @@ export async function processEvent(event: any): Promise<void> {
         if (booking && event.payload) {
           targetUserId = (booking as any).user?.toString();
           if (targetUserId) {
+            const bookingImg = await resolveBookingImage(booking);
             customerNotificationPayload = {
               user: targetUserId,
               event: 'BOOKING_UPDATED',
-              title: 'Booking Status Update',
-              message: `Your booking ${booking.bookingId || booking._id} status is now ${event.payload.newStatus}.`,
+              title: `${booking.title || 'Event Booking'} Status Update`,
+              message: `Your booking for ${booking.title || 'your event'} is now ${event.payload.newStatus}.`,
               type: 'booking',
               actionUrl: `/events/dashboard`,
               metadata: {
                 outboxEventId: event._id.toString(),
                 bookingId: booking._id.toString(),
                 entityId: booking.bookingId || booking._id.toString(),
-                imageSrc:
-                  booking.inspirationImages?.[0] ||
-                  (booking.eventPackage as any)?.imageSrc ||
-                  (booking.eventPackage as any)?.images?.[0],
+                imageSrc: bookingImg || undefined,
+                image: bookingImg || undefined,
               },
             };
           }
@@ -654,7 +726,7 @@ export async function processEvent(event: any): Promise<void> {
               returnReq.returnType === 'exchange'
                 ? 'Exchange Request Submitted'
                 : 'Return Request Submitted',
-            message: `Your ${returnReq.returnType} request ${returnReq.returnId || returnReq._id} has been submitted.`,
+            message: `Your ${returnReq.returnType} request has been submitted.`,
             type: 'order',
             actionUrl: `/dashboard/orders/${returnReq.orderId}`,
             metadata: {
@@ -676,7 +748,7 @@ export async function processEvent(event: any): Promise<void> {
               returnReq.returnType === 'exchange'
                 ? 'Exchange Status Update'
                 : 'Return Status Update',
-            message: `Your ${returnReq.returnType} request ${returnReq.returnId || returnReq._id} is now ${event.payload.status || event.payload.newStatus}.`,
+            message: `Your ${returnReq.returnType} request is now ${(event.payload.status || event.payload.newStatus || '').replace(/_/g, ' ')}.`,
             type: 'order',
             actionUrl: `/dashboard/orders/${returnReq.orderId}`,
             metadata: {
@@ -691,11 +763,13 @@ export async function processEvent(event: any): Promise<void> {
         const order = await Order.findById(event.aggregateId);
         if (order) {
           targetUserId = order.user.toString();
+          const firstTitle =
+            order.items?.[0]?.title || (order.items?.[0] as any)?.name || 'your order';
           customerNotificationPayload = {
             user: targetUserId,
             event: 'PAYMENT_SUCCESSFUL',
             title: 'Payment Successful',
-            message: `Payment for order #${order.orderUuid || order._id} was successful.`,
+            message: `Payment for ${firstTitle} was successful.`,
             type: 'payment',
             actionUrl: `/dashboard/orders/${order._id}`,
             metadata: {
@@ -710,11 +784,13 @@ export async function processEvent(event: any): Promise<void> {
         const order = await Order.findById(event.aggregateId);
         if (order) {
           targetUserId = order.user.toString();
+          const firstTitle =
+            order.items?.[0]?.title || (order.items?.[0] as any)?.name || 'your order';
           customerNotificationPayload = {
             user: targetUserId,
             event: 'PAYMENT_FAILED',
             title: 'Payment Failed',
-            message: `Payment for order #${order.orderUuid || order._id} failed. Please retry.`,
+            message: `Payment for ${firstTitle} failed. Please retry.`,
             type: 'payment',
             actionUrl: `/dashboard/orders/${order._id}`,
             metadata: {

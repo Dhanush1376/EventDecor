@@ -35,6 +35,8 @@ export const returnService = {
     api.patch(`/returns/admin/exchanges/${id}/transition`, data),
 
   createReplacementOrder: (id) => api.post(`/returns/admin/exchanges/${id}/replacement-order`),
+  recordExchangePayment: (id, data) =>
+    api.post(`/returns/admin/exchanges/${id}/record-payment`, data),
 
   getAllExchanges: (params) => api.get('/exchanges/admin/all', { params }),
 

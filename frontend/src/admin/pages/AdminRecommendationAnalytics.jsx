@@ -13,47 +13,67 @@ import { Pie } from 'recharts';
 import { Cell } from 'recharts';
 import { m as motion } from 'framer-motion';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import api from '../../services/api';
 import logger from '../../utils/core/logger';
 import AdminCustomerProfileModal from '../components/AdminCustomerProfileModal';
 import {
   PageHeader,
-  StatCard,
   ChartCard,
   ChartTooltip,
-  SkeletonDashboard,
+  AdminRecommendationAnalyticsSkeleton,
   stagger,
   fadeUp,
   getRelativeTime,
 } from '../components/AdminUIKit';
 
+// Curated Luxury Multi-Color Palette (Tuned to Cream & Ivory decor theme)
 const VIBRANT_MULTI_COLORS = [
-  '#3b82f6', // Bright Blue
-  '#8b5cf6', // Vivid Purple
-  '#ec4899', // Pink
-  '#f59e0b', // Amber / Gold
-  '#10b981', // Emerald
-  '#06b6d4', // Cyan
-  '#f97316', // Orange
-  '#6366f1', // Indigo
-  '#14b8a6', // Teal
-  '#e11d48', // Crimson Red
-  '#84cc16', // Lime Green
-  '#a855f7', // Violet
-  '#0284c7', // Sky Blue
-  '#eab308', // Warm Yellow
-  '#d946ef', // Fuchsia
-  '#22c55e', // Green
+  '#5a7d9a', // Warm Slate Blue (matches theme slate)
+  '#7d6899', // Muted Royal Amethyst
+  '#b8647c', // Dusty Antique Rose
+  '#c2944b', // Warm Heritage Gold / Ochre
+  '#58856b', // Deep Sage Olive
+  '#47828d', // Vintage Mineral Teal
+  '#b86a51', // Warm Terracotta Clay
+  '#5b658c', // Muted Slate Indigo
+  '#457e79', // Dusty Eucalyptus
+  '#a64956', // Vintage Brick Crimson
+  '#78854c', // Warm Olive Leaf
+  '#8e658e', // Dusty Mauve
+  '#4f7994', // Muted Lake Blue
+  '#ba964e', // Warm Tuscan Sand
+  '#a1598b', // Mulberry Mauve
+  '#4e7f5e', // Forest Jade
 ];
 
-// Human-understandable names for recommendation sources
-const RECOMMENDATION_SOURCE_NAMES = {
-  trending: 'Trending Decor',
-  similar: 'Similar Items',
-  feed: 'Personalized Feed',
-  seasonal: 'Festive & Seasonal',
+// Rich human-understandable metadata for recommendation sources tuned to theme shades
+const RECOMMENDATION_SOURCE_META = {
+  trending: {
+    name: 'Trending Decor',
+    location: 'Homepage & Top Curations',
+    description: 'Visitors discovering popular catalog pieces',
+    color: '#5a7d9a', // Warm Slate Blue
+  },
+  similar: {
+    name: 'Similar Items',
+    location: 'Product Page "You May Also Like"',
+    description: 'Shoppers exploring related items',
+    color: '#b8647c', // Dusty Antique Rose
+  },
+  feed: {
+    name: 'Personalized Feed',
+    location: 'Recommended For You Feed',
+    description: 'AI tailored to browsing history',
+    color: '#58856b', // Deep Sage Olive
+  },
+  seasonal: {
+    name: 'Festive & Seasonal',
+    location: 'Festival Collections & Occasions',
+    description: 'Seasonal celebration collections',
+    color: '#c2944b', // Warm Heritage Gold / Ochre
+  },
 };
 
 function AffinityTooltip({ active, payload }) {
@@ -157,7 +177,29 @@ function isRedundantDetail(action, details, orderCode) {
   return false;
 }
 
+function isStaffLog(log) {
+  if (!log) return false;
+  const role = (log.userRole || '').toLowerCase();
+  const user = (log.user || '').toLowerCase();
+  return (
+    role === 'admin' ||
+    role === 'staff' ||
+    role === 'super_admin' ||
+    role === 'main_admin' ||
+    user.includes('staff') ||
+    user.includes('admin')
+  );
+}
+
 export function AdminRecommendationAnalytics() {
+  const [searchParams] = useSearchParams();
+  const initialActor =
+    searchParams.get('actor') === 'staff'
+      ? 'staff'
+      : searchParams.get('actor') === 'users'
+        ? 'users'
+        : 'all';
+
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -172,10 +214,20 @@ export function AdminRecommendationAnalytics() {
   const [logsLoading, setLogsLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [searchFilter, setSearchFilter] = useState('');
-  const [selectedActorScope, setSelectedActorScope] = useState('all'); // 'all', 'users', 'staff'
+  const [selectedActorScope, setSelectedActorScope] = useState(initialActor); // 'all', 'users', 'staff'
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastSyncTime, setLastSyncTime] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+  // Sync actor scope if URL search param updates dynamically
+  useEffect(() => {
+    const actorParam = searchParams.get('actor');
+    if (actorParam === 'staff') {
+      setSelectedActorScope('staff');
+    } else if (actorParam === 'users') {
+      setSelectedActorScope('users');
+    }
+  }, [searchParams]);
 
   const KNOWN_EVENT_CATEGORIES = useMemo(
     () => [
@@ -310,16 +362,7 @@ export function AdminRecommendationAnalytics() {
 
     userLogs.forEach((log) => {
       const role = (log.userRole || '').toLowerCase();
-      const user = (log.user || '').toLowerCase();
-      const isStaffLog =
-        role === 'admin' ||
-        role === 'staff' ||
-        role === 'super_admin' ||
-        role === 'main_admin' ||
-        user.includes('staff') ||
-        user.includes('admin');
-
-      if (isStaffLog) {
+      if (isStaffLog(log)) {
         staff++;
       } else {
         const isCustomerLog =
@@ -344,28 +387,6 @@ export function AdminRecommendationAnalytics() {
 
   const filteredLogs = useMemo(() => {
     let result = userLogs;
-
-    const isStaffLog = (log) => {
-      const role = (log.userRole || '').toLowerCase();
-      const user = (log.user || '').toLowerCase();
-      return (
-        role === 'admin' ||
-        role === 'staff' ||
-        role === 'super_admin' ||
-        role === 'main_admin' ||
-        user.includes('staff') ||
-        user.includes('admin')
-      );
-    };
-
-    const isCustomerLog = (log) => {
-      const role = (log.userRole || '').toLowerCase();
-      return (
-        role === 'customer' ||
-        role === 'user' ||
-        Boolean(log.customerId || log.customerEmail || log.customerPhone)
-      );
-    };
 
     // 1. Filter by Actor Scope (Staff vs Users)
     if (selectedActorScope === 'staff') {
@@ -473,28 +494,35 @@ export function AdminRecommendationAnalytics() {
     fetchAnalytics();
   }, []);
 
-  // Map CTR array for charts with human-understandable source names
+  // Map CTR array for charts with plain-English store locations and sorted by highest performance
   const ctrData = useMemo(() => {
     if (!stats?.conversionMetrics?.clickThroughRateByType) return [];
-    return Object.keys(stats.conversionMetrics.clickThroughRateByType).map((key, idx) => {
-      const rawKey = key.toLowerCase();
-      const displayName =
-        RECOMMENDATION_SOURCE_NAMES[rawKey] ||
-        key
-          .replace(/[-_]+/g, ' ')
-          .split(' ')
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-          .join(' ');
-      const val = parseFloat(
-        (stats.conversionMetrics.clickThroughRateByType[key] * 100).toFixed(1),
-      );
-      return {
-        key: rawKey,
-        name: displayName,
-        ctr: val,
-        color: VIBRANT_MULTI_COLORS[(idx * 2) % VIBRANT_MULTI_COLORS.length],
-      };
-    });
+    return Object.keys(stats.conversionMetrics.clickThroughRateByType)
+      .map((key, idx) => {
+        const rawKey = key.toLowerCase();
+        const meta = RECOMMENDATION_SOURCE_META[rawKey] || {
+          name: key
+            .replace(/[-_]+/g, ' ')
+            .split(' ')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            .join(' '),
+          location: 'Storefront Area',
+          description: 'Shopper interaction',
+          color: VIBRANT_MULTI_COLORS[(idx * 2) % VIBRANT_MULTI_COLORS.length],
+        };
+        const val = parseFloat(
+          (stats.conversionMetrics.clickThroughRateByType[key] * 100).toFixed(1),
+        );
+        return {
+          key: rawKey,
+          name: meta.name,
+          location: meta.location,
+          description: meta.description,
+          ctr: val,
+          color: meta.color,
+        };
+      })
+      .sort((a, b) => b.ctr - a.ctr);
   }, [stats]);
 
   // Process and clean User Top Affinities with multi-colors and clean labels
@@ -538,188 +566,239 @@ export function AdminRecommendationAnalytics() {
   }, [stats]);
 
   if (loading || !stats) {
-    return (
-      <div className="p-4 sm:p-6 lg:p-8">
-        <SkeletonDashboard />
-      </div>
-    );
+    return <AdminRecommendationAnalyticsSkeleton />;
   }
 
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       <PageHeader
         title="Live Customer Activity"
-        subtitle={`Real-time visitor clicks, searches, cart items & orders · ${
-          lastSyncTime
-            ? `Synced ${lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
-            : ''
-        }`}
+        actionRowMobile={true}
+        subtitle={
+          <div className="flex flex-wrap items-center gap-1.5 text-[12px] sm:text-[12.5px] mt-0.5">
+            <span className="hidden sm:inline text-[var(--admin-text-secondary)]">
+              Real-time clicks, searches, cart items & orders
+            </span>
+            <span className="hidden sm:inline text-[var(--admin-border-strong)]">•</span>
+            <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              {lastSyncTime
+                ? `Synced ${lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+                : 'Live stream active'}
+            </span>
+          </div>
+        }
         headerAction={
-          <div className="flex items-center justify-end gap-2 w-full sm:w-auto ml-auto">
-            <button
-              type="button"
-              onClick={() => setAutoRefresh((prev) => !prev)}
-              className={`px-3 py-1.5 rounded-[var(--admin-radius-md)] text-[11px] font-bold border transition-all flex items-center gap-1.5 ${
-                autoRefresh
-                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                  : 'bg-[var(--admin-surface)] text-[var(--admin-text-tertiary)] border-[var(--admin-border)]'
-              }`}
-              title={autoRefresh ? 'Live Auto-Sync every 15s (Active)' : 'Auto-Sync is paused'}
-            >
-              <span className="material-symbols-outlined text-[14px]">
-                {autoRefresh ? 'autorenew' : 'pause_circle'}
-              </span>
-              <span>{autoRefresh ? 'Live Sync (15s)' : 'Sync Paused'}</span>
-            </button>
-
+          <div className="flex items-center justify-end gap-2 shrink-0">
             <button
               type="button"
               onClick={() => fetchLogs(selectedFilter)}
               disabled={logsLoading}
-              className="w-9 h-9 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-md flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0 disabled:opacity-50"
-              title="Refresh logs now"
+              className="h-[38px] sm:h-[42px] px-2.5 sm:px-3.5 bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] rounded-[4px] border border-[var(--admin-border)] shadow-2xs flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer transition-all active:scale-95 disabled:opacity-60 shrink-0"
+              title="Live telemetry updates automatically every 15s. Click to sync immediately."
             >
               <span
-                className={`material-symbols-outlined text-[18px] ${logsLoading ? 'animate-spin' : ''}`}
+                className={`material-symbols-outlined text-[16px] sm:text-[17px] text-[var(--admin-accent)] ${
+                  logsLoading ? 'animate-spin' : ''
+                }`}
               >
                 sync
               </span>
+              <span className="text-[11px] sm:text-[12px] font-bold whitespace-nowrap">
+                Sync Now
+              </span>
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"
+                title="Live Auto-Sync Active (15s)"
+              />
             </button>
           </div>
         }
       />
 
-      {/* KPI Cards */}
-      <motion.div variants={stagger} className="admin-grid-stats">
-        <StatCard
-          icon="touch_app"
-          label="Total Interactions"
-          value={stats.engagementMetrics?.totalInteractions || 0}
-          change={stats.engagementMetrics?.change ? `${stats.engagementMetrics.change}%` : ''}
-          changeType={
-            stats.engagementMetrics?.change > 0
-              ? 'up'
-              : stats.engagementMetrics?.change < 0
-                ? 'down'
-                : ''
-          }
-          color="var(--admin-info)"
-        />
-        <StatCard
-          icon="psychology"
-          label="Active Profiles"
-          value={stats.userMetrics?.activeProfiles || 0}
-          change={stats.userMetrics?.change ? `${stats.userMetrics.change}%` : ''}
-          changeType={
-            stats.userMetrics?.change > 0 ? 'up' : stats.userMetrics?.change < 0 ? 'down' : ''
-          }
-          color="var(--admin-accent)"
-        />
-        <StatCard
-          icon="ads_click"
-          label="Avg Global CTR"
-          value={`${((stats.conversionMetrics?.globalClickThroughRate || 0) * 100).toFixed(1)}%`}
-          change={stats.conversionMetrics?.change ? `${stats.conversionMetrics.change}%` : ''}
-          changeType={
-            stats.conversionMetrics?.change > 0
-              ? 'up'
-              : stats.conversionMetrics?.change < 0
-                ? 'down'
-                : ''
-          }
-          color="var(--admin-success)"
-        />
-        <StatCard
-          icon="groups"
-          label="Website Visitors"
-          value={stats.generalMetrics?.websiteVisitors || 0}
-          change=""
-          changeType="neutral"
-          color="var(--admin-warning)"
-        />
+      {/* ─── Real-time Customer Telemetry Ledger (Orders Page Kind) ─── */}
+      <motion.div
+        variants={fadeUp}
+        className="admin-card overflow-hidden text-left relative p-0 !rounded-[4px] border border-[var(--admin-border)] shadow-xs"
+      >
+        <div className="absolute top-0 left-0 w-full h-[3px] bg-[var(--admin-border-strong)] z-10" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 bg-[var(--admin-surface)]">
+          {/* Total Interactions */}
+          <div className="p-3.5 sm:p-5 space-y-1 border-r border-b lg:border-b-0 border-[var(--admin-border-subtle)]">
+            <span className="text-[10px] sm:text-[10.5px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider block">
+              Total Interactions
+            </span>
+            <p className="text-[16px] sm:text-[18px] font-bold text-[var(--admin-text-primary)] tracking-tight">
+              {(stats.engagementMetrics?.totalInteractions || 0).toLocaleString()}
+            </p>
+            <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-[var(--admin-text-secondary)] mt-1">
+              <span className="truncate">Clicks & touches</span>
+              {stats.engagementMetrics?.change ? (
+                <span
+                  className={`font-semibold shrink-0 ml-1 ${
+                    stats.engagementMetrics.change > 0
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-rose-600 dark:text-rose-400'
+                  }`}
+                >
+                  {stats.engagementMetrics.change > 0
+                    ? `+${stats.engagementMetrics.change}%`
+                    : `${stats.engagementMetrics.change}%`}
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Active Profiles */}
+          <div className="p-3.5 sm:p-5 space-y-1 border-r border-b lg:border-b-0 border-[var(--admin-border-subtle)]">
+            <span className="text-[10px] sm:text-[10.5px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider block">
+              Active Profiles
+            </span>
+            <p className="text-[16px] sm:text-[18px] font-bold text-[var(--admin-text-primary)] tracking-tight">
+              {(stats.userMetrics?.activeProfiles || 0).toLocaleString()}
+            </p>
+            <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-[var(--admin-text-secondary)] mt-1">
+              <span className="truncate">Identified shoppers</span>
+              {stats.userMetrics?.change ? (
+                <span
+                  className={`font-semibold shrink-0 ml-1 ${
+                    stats.userMetrics.change > 0
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-rose-600 dark:text-rose-400'
+                  }`}
+                >
+                  {stats.userMetrics.change > 0
+                    ? `+${stats.userMetrics.change}%`
+                    : `${stats.userMetrics.change}%`}
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Avg Global CTR */}
+          <div className="p-3.5 sm:p-5 space-y-1 border-r border-b sm:border-b-0 border-[var(--admin-border-subtle)]">
+            <span className="text-[10px] sm:text-[10.5px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider block">
+              Avg Global CTR
+            </span>
+            <p className="text-[16px] sm:text-[18px] font-bold text-[var(--admin-text-primary)] tracking-tight">
+              {((stats.conversionMetrics?.globalClickThroughRate || 0) * 100).toFixed(1)}%
+            </p>
+            <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-[var(--admin-text-secondary)] mt-1">
+              <span className="truncate">Recommendation CTR</span>
+              {stats.conversionMetrics?.change ? (
+                <span
+                  className={`font-semibold shrink-0 ml-1 ${
+                    stats.conversionMetrics.change > 0
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-rose-600 dark:text-rose-400'
+                  }`}
+                >
+                  {stats.conversionMetrics.change > 0
+                    ? `+${stats.conversionMetrics.change}%`
+                    : `${stats.conversionMetrics.change}%`}
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Website Visitors */}
+          <div className="p-3.5 sm:p-5 space-y-1 bg-[var(--admin-success-light)] border-l-0">
+            <span className="text-[10px] sm:text-[10.5px] text-[var(--admin-success)] font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--admin-success)] animate-pulse shrink-0" />
+              <span className="truncate">Website Visitors</span>
+            </span>
+            <p className="text-[16px] sm:text-[18px] font-bold text-[var(--admin-success)] tracking-tight">
+              {(stats.generalMetrics?.websiteVisitors || 0).toLocaleString()}
+            </p>
+            <span className="text-[10px] sm:text-[11px] text-[var(--admin-success)] opacity-80 mt-1 block truncate">
+              Live storefront sessions
+            </span>
+          </div>
+        </div>
       </motion.div>
 
       {/* Live User Activity & Clickstream Feed */}
-      <motion.div variants={fadeUp} className="admin-card p-5 sm:p-6 flex flex-col">
+      <motion.div
+        variants={fadeUp}
+        className="admin-card p-3.5 sm:p-5 lg:p-6 flex flex-col !rounded-[4px] border border-[var(--admin-border)] shadow-xs"
+      >
         {/* Panel Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 pb-3 mb-3 border-b border-[var(--admin-border-subtle)]">
-          <div className="flex items-center gap-2">
-            <h3 className="text-[15px] sm:text-[16px] font-bold text-[var(--admin-text-primary)]">
+        <div className="flex flex-row items-center justify-between gap-2 pb-2 mb-2.5 border-b border-[var(--admin-border-subtle)]">
+          <div className="flex items-center gap-1.5 whitespace-nowrap min-w-0 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <h3 className="text-[13.5px] sm:text-[15px] font-bold text-[var(--admin-text-primary)] tracking-tight whitespace-nowrap">
               Live Activity
             </h3>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="hidden sm:inline-flex items-center px-1.5 py-0.2 rounded-[3px] text-[9.5px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               LIVE
             </span>
           </div>
 
           {/* Beside Live Activity: Filter by Staff and Users */}
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-            {/* Staff & Users Pills */}
-            <div className="inline-flex items-center p-0.5 rounded-lg bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[11.5px] font-semibold">
-              <button
-                type="button"
-                onClick={() => setSelectedActorScope('all')}
-                className={`px-3 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
-                  selectedActorScope === 'all'
-                    ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-2xs font-bold'
-                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                }`}
-              >
-                <span>All</span>
-                <span className="text-[10px] font-mono opacity-70">({userLogs.length})</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedActorScope('users')}
-                className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
-                  selectedActorScope === 'users'
-                    ? 'bg-[var(--admin-surface)] text-blue-600 dark:text-blue-400 shadow-2xs font-bold'
-                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                }`}
-                title="Filter by Storefront Users (Customers & Visitors)"
-              >
-                <span className="material-symbols-outlined text-[13px]">person</span>
-                <span>Users</span>
-                <span className="text-[10px] font-mono opacity-70">({usersCount})</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedActorScope('staff')}
-                className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
-                  selectedActorScope === 'staff'
-                    ? 'bg-[var(--admin-surface)] text-purple-600 dark:text-purple-400 shadow-2xs font-bold'
-                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
-                }`}
-                title="Filter by Admin & Store Staff"
-              >
-                <span className="material-symbols-outlined text-[13px]">shield_person</span>
-                <span>Staff</span>
-                <span className="text-[10px] font-mono opacity-70">({staffCount})</span>
-              </button>
-            </div>
+          <div className="inline-flex items-center p-0.5 rounded-[4px] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] text-[10px] sm:text-[11px] font-semibold shrink-0">
+            <button
+              type="button"
+              onClick={() => setSelectedActorScope('all')}
+              className={`px-1.5 sm:px-2.5 py-1 rounded-[3px] transition-all cursor-pointer whitespace-nowrap ${
+                selectedActorScope === 'all'
+                  ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-2xs font-bold'
+                  : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+              }`}
+            >
+              All <span className="opacity-60 text-[9px] font-mono">({userLogs.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedActorScope('users')}
+              className={`px-1.5 sm:px-2.5 py-1 rounded-[3px] transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap ${
+                selectedActorScope === 'users'
+                  ? 'bg-[var(--admin-surface)] text-blue-600 dark:text-blue-400 shadow-2xs font-bold'
+                  : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+              }`}
+              title="Filter by Storefront Users"
+            >
+              <span className="hidden sm:inline material-symbols-outlined text-[13px]">person</span>
+              <span>Users</span>{' '}
+              <span className="opacity-60 text-[9px] font-mono">({usersCount})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedActorScope('staff')}
+              className={`px-1.5 sm:px-2.5 py-1 rounded-[3px] transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap ${
+                selectedActorScope === 'staff'
+                  ? 'bg-[var(--admin-surface)] text-purple-600 dark:text-purple-400 shadow-2xs font-bold'
+                  : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+              }`}
+              title="Filter by Admin & Store Staff"
+            >
+              <span className="hidden sm:inline material-symbols-outlined text-[13px]">
+                shield_person
+              </span>
+              <span>Staff</span>{' '}
+              <span className="opacity-60 text-[9px] font-mono">({staffCount})</span>
+            </button>
           </div>
         </div>
 
-        {/* Search Bar & Filter Tabs: Stacked on mobile, side-by-side on laptop */}
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5 w-full mb-4">
-          {/* Search Box: 1st at Top on mobile, flex-1 side-by-side on laptop */}
-          <div className="activity-search-box relative flex-1 w-full bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] flex items-center px-3.5 h-14 lg:h-11 transition-all focus-within:border-[var(--admin-accent)] focus-within:ring-1 focus-within:ring-[var(--admin-accent)]/20 shadow-2xs min-w-0">
-            <span className="material-symbols-outlined text-[24px] text-[var(--admin-text-tertiary)] shrink-0">
+        {/* Unified Search & Category Row (Side-by-Side on Mobile & Desktop) */}
+        <div className="flex items-center gap-2 w-full mb-3">
+          {/* Search Box */}
+          <div className="activity-search-box relative flex-1 min-w-0 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 h-[36px] min-h-[36px] max-h-[36px] transition-all focus-within:border-[var(--admin-accent)] focus-within:ring-1 focus-within:ring-[var(--admin-accent)]/20 shadow-2xs">
+            <span className="material-symbols-outlined text-[17px] text-[var(--admin-text-tertiary)] shrink-0">
               search
             </span>
             <input
               type="text"
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
-              placeholder="Search customer, order, action, email, phone..."
-              className="bg-transparent border-none outline-none w-full text-[14.5px] sm:text-[13.5px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2.5 h-full min-w-0"
+              placeholder="Search activity..."
+              className="bg-transparent border-none outline-none w-full text-[12px] sm:text-[12.5px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
             />
             {searchFilter && (
               <button
                 type="button"
                 onClick={() => setSearchFilter('')}
-                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] text-[20px] cursor-pointer p-1 transition-colors leading-none"
+                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] text-[16px] cursor-pointer p-0.5 transition-colors leading-none"
                 title="Clear search"
               >
                 ×
@@ -727,8 +806,33 @@ export function AdminRecommendationAnalytics() {
             )}
           </div>
 
-          {/* Category Tabs: Side-by-side with matching height on laptop */}
-          <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] h-[44px] sm:h-[46px] w-full lg:w-auto shrink-0">
+          {/* Category Selector on Mobile: Compact Dropdown Pill */}
+          <div className="relative sm:hidden shrink-0">
+            <select
+              value={selectedFilter}
+              onChange={(e) => setSelectedFilter(e.target.value)}
+              className="h-[36px] min-h-[36px] max-h-[36px] pl-2.5 pr-6 bg-[var(--admin-surface)] text-[var(--admin-text-primary)] font-bold text-[11px] rounded-[4px] border border-[var(--admin-border)] shadow-2xs appearance-none cursor-pointer focus:outline-none focus:border-[var(--admin-accent)]"
+            >
+              <option value="all">
+                All (
+                {(logsSummary.viewsCount || 0) +
+                  (logsSummary.cartCount || 0) +
+                  (logsSummary.searchesCount || 0) +
+                  (logsSummary.authCount || 0)}
+                )
+              </option>
+              <option value="views">Views ({logsSummary.viewsCount || 0})</option>
+              <option value="cart">Orders ({logsSummary.cartCount || 0})</option>
+              <option value="searches">Searches ({logsSummary.searchesCount || 0})</option>
+              <option value="auth">Accounts & Staff ({logsSummary.authCount || 0})</option>
+            </select>
+            <span className="material-symbols-outlined text-[15px] text-[var(--admin-text-tertiary)] absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none">
+              expand_more
+            </span>
+          </div>
+
+          {/* Category Tabs on Tablet/Desktop: Horizontal Pill Bar */}
+          <div className="hidden sm:flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[5px] border border-[var(--admin-border)] shrink-0 h-[36px] max-h-[36px]">
             {[
               {
                 key: 'all',
@@ -748,7 +852,12 @@ export function AdminRecommendationAnalytics() {
                 icon: 'search',
                 count: logsSummary.searchesCount,
               },
-              { key: 'auth', label: 'Accounts', icon: 'person', count: logsSummary.authCount },
+              {
+                key: 'auth',
+                label: 'Accounts & Staff',
+                icon: 'shield_person',
+                count: logsSummary.authCount,
+              },
             ].map((f) => {
               const isActive = selectedFilter === f.key;
               return (
@@ -756,17 +865,20 @@ export function AdminRecommendationAnalytics() {
                   key={f.key}
                   type="button"
                   onClick={() => setSelectedFilter(f.key)}
-                  className={`px-3 h-full rounded-sm text-[12px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  className={`min-h-0 !min-h-0 h-[28px] max-h-[28px] px-2.5 rounded-[3px] text-[11px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer leading-none ${
                     isActive
-                      ? 'bg-white dark:bg-[var(--admin-surface)] text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
+                      ? 'bg-[var(--admin-surface)] text-[var(--admin-accent)] shadow-xs border border-[var(--admin-border)]'
                       : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
                   }`}
+                  style={{ minHeight: '28px', height: '28px', maxHeight: '28px' }}
                 >
-                  <span className="material-symbols-outlined text-[15px]">{f.icon}</span>
+                  <span className="material-symbols-outlined !text-[13px] leading-none">
+                    {f.icon}
+                  </span>
                   <span>{f.label}</span>
                   {f.count !== undefined && (
                     <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      className={`px-1.5 py-0.5 rounded-[3px] text-[9.5px] font-bold leading-none ${
                         isActive
                           ? 'bg-[var(--admin-accent-muted)] text-[var(--admin-accent)]'
                           : 'bg-[var(--admin-border-subtle)] text-[var(--admin-text-tertiary)]'
@@ -793,7 +905,7 @@ export function AdminRecommendationAnalytics() {
               </p>
             </div>
           ) : filteredLogs.length === 0 ? (
-            <div className="py-10 flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)] text-center p-5">
+            <div className="py-10 flex flex-col items-center justify-center bg-[var(--admin-bg)] rounded-[4px] border border-dashed border-[var(--admin-border)] text-center p-5">
               <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
                 manage_search
               </span>
@@ -812,14 +924,14 @@ export function AdminRecommendationAnalytics() {
               return (
                 <div
                   key={log.id}
-                  className="p-2.5 sm:p-3 rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)] hover:bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)] transition-all flex items-start gap-2.5 sm:gap-3 group"
+                  className="p-2.5 sm:p-3 rounded-[4px] bg-[var(--admin-bg)] hover:bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] transition-all flex items-start gap-2.5 sm:gap-3 group"
                 >
                   {/* Action Icon */}
                   <div
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 shadow-2xs mt-0.5"
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-[4px] flex items-center justify-center shrink-0 shadow-2xs mt-0.5 border"
                     style={{
                       backgroundColor: `${bgBadge}18`,
-                      border: `1px solid ${bgBadge}33`,
+                      borderColor: `${bgBadge}33`,
                       color: bgBadge,
                     }}
                   >
@@ -838,7 +950,7 @@ export function AdminRecommendationAnalytics() {
                         </span>
 
                         <span
-                          className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded tracking-wider ${
+                          className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded-[3px] tracking-wider ${
                             log.userRole === 'admin'
                               ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20'
                               : log.userRole === 'customer'
@@ -873,7 +985,7 @@ export function AdminRecommendationAnalytics() {
                     {/* Optional Non-Redundant Detail Badge */}
                     {log.details && !isRedundantDetail(log.action, log.details, log.orderCode) && (
                       <div className="mt-1">
-                        <span className="inline-flex items-center gap-1 text-[10.5px] px-1.5 py-0.2 rounded bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] font-medium max-w-full truncate">
+                        <span className="inline-flex items-center gap-1 text-[10.5px] px-1.5 py-0.2 rounded-[3px] bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] font-medium max-w-full truncate">
                           <span className="material-symbols-outlined text-[12px] text-[var(--admin-text-tertiary)]">
                             info
                           </span>
@@ -928,16 +1040,17 @@ export function AdminRecommendationAnalytics() {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all"
+                              className="inline-flex items-center gap-1 min-h-0 !min-h-0 !h-[22px] !max-h-[22px] px-2 rounded-[3px] text-[10.5px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all leading-none"
+                              style={{ minHeight: '22px', height: '22px', maxHeight: '22px' }}
                               title={`Open Order #${log.orderCode}`}
                             >
-                              <span className="material-symbols-outlined text-[12px]">
+                              <span className="material-symbols-outlined !text-[12px] leading-none">
                                 package_2
                               </span>
                               <span>Order #{log.orderCode}</span>
                             </Link>
                           )}
-                          {(log.customerId || log.customerEmail) && (
+                          {!isStaffLog(log) && (log.customerId || log.customerEmail) && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -949,12 +1062,29 @@ export function AdminRecommendationAnalytics() {
                                   phone: log.customerPhone,
                                 });
                               }}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 transition-all cursor-pointer"
+                              className="inline-flex items-center gap-1 min-h-0 !min-h-0 !h-[22px] !max-h-[22px] px-2 rounded-[3px] text-[10.5px] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 transition-all cursor-pointer leading-none"
+                              style={{ minHeight: '22px', height: '22px', maxHeight: '22px' }}
                               title="Open Customer 360 profile"
                             >
-                              <span className="material-symbols-outlined text-[12px]">person</span>
+                              <span className="material-symbols-outlined !text-[12px] leading-none">
+                                person
+                              </span>
                               <span>Profile</span>
                             </button>
+                          )}
+                          {isStaffLog(log) && (
+                            <Link
+                              to="/admin/system/users"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 min-h-0 !min-h-0 !h-[22px] !max-h-[22px] px-2 rounded-[3px] text-[10.5px] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 transition-all leading-none"
+                              style={{ minHeight: '22px', height: '22px', maxHeight: '22px' }}
+                              title="View Staff Team & Permissions"
+                            >
+                              <span className="material-symbols-outlined !text-[12px] leading-none">
+                                shield_person
+                              </span>
+                              <span>Staff</span>
+                            </Link>
                           )}
                         </div>
                       </div>
@@ -989,8 +1119,8 @@ export function AdminRecommendationAnalytics() {
                 <AreaChart data={stats.engagementMetrics.interactionsByDay}>
                   <defs>
                     <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#826237" stopOpacity={0.28} />
+                      <stop offset="95%" stopColor="#826237" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid
@@ -1013,7 +1143,7 @@ export function AdminRecommendationAnalytics() {
                   <Area
                     type="monotone"
                     dataKey="count"
-                    stroke="#3b82f6"
+                    stroke="#826237"
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorCount)"
@@ -1024,78 +1154,106 @@ export function AdminRecommendationAnalytics() {
           </div>
         </ChartCard>
 
-        {/* CTR by Recommendation Type with Multi-Colors */}
+        {/* Storefront Recommendation Clicks (CTR) - Clear, Intuitive, and Human-Readable */}
         <ChartCard
-          title="Algorithm Performance (CTR)"
-          subtitle="Click-through rates by recommendation source"
+          title="Storefront Recommendation Clicks"
+          subtitle="% of shoppers who clicked items shown in each storefront section"
         >
-          <div className="min-h-[200px] sm:h-[300px] flex flex-col justify-center">
+          <div className="min-h-[220px] flex flex-col justify-center">
             {ctrData.length === 0 ? (
               <div className="h-full min-h-[180px] flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
                 <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
                   bar_chart
                 </span>
                 <span className="text-[11px] uppercase font-bold text-[var(--admin-text-secondary)] tracking-wider">
-                  No CTR Data
+                  No Recommendation Click Data
                 </span>
               </div>
             ) : (
               <>
-                {/* Mobile View: High-clarity, spacious full-width bars (prevents compressed SVG) */}
-                <div className="flex flex-col gap-4 py-2 sm:hidden">
+                {/* Mobile View: Intuitive cards with storefront context, benchmarks & honest scale */}
+                <div className="flex flex-col gap-2.5 py-1 sm:hidden">
+                  <div className="flex items-center justify-between text-[10.5px] font-semibold text-[var(--admin-text-tertiary)] px-1 pb-1 border-b border-[var(--admin-border-subtle)]">
+                    <span>Recommendation Area</span>
+                    <span>Click Rate (Avg ~3-5%)</span>
+                  </div>
+
                   {ctrData.map((item, index) => {
-                    const maxCtr = Math.max(...ctrData.map((d) => d.ctr), 10);
-                    const fillPercent = Math.max(
-                      Math.min(Math.round((item.ctr / (maxCtr * 1.08)) * 100), 100),
-                      12,
-                    );
+                    // Benchmark out of 20% max CTR so 11.5% looks like ~58% of the bar (honest visual scale)
+                    const fillPercent = Math.min(Math.round((item.ctr / 20) * 100), 100);
 
                     return (
-                      <div key={item.key || index} className="space-y-1.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span
-                              className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
-                              style={{ backgroundColor: item.color }}
-                            />
-                            <span className="text-[13px] font-bold text-[var(--admin-text-primary)] truncate">
-                              {item.name}
-                            </span>
+                      <div
+                        key={item.key || index}
+                        className="p-2.5 rounded-[6px] bg-[var(--admin-surface-muted)]/50 border border-[var(--admin-border-subtle)] space-y-2"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs"
+                                style={{ backgroundColor: item.color }}
+                              />
+                              <span className="text-[13px] font-bold text-[var(--admin-text-primary)]">
+                                {item.name}
+                              </span>
+                              {index === 0 && (
+                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 uppercase tracking-wide">
+                                  #1 Top Pick
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-[var(--admin-text-tertiary)] pl-4 font-normal mt-0.5">
+                              {item.location}
+                            </p>
                           </div>
-                          <span
-                            className="text-[12px] font-extrabold px-2 py-0.5 rounded-md border shrink-0 tracking-tight"
-                            style={{
-                              backgroundColor: `${item.color}15`,
-                              color: item.color,
-                              borderColor: `${item.color}35`,
-                            }}
-                          >
-                            {item.ctr}%
-                          </span>
+
+                          <div className="text-right shrink-0">
+                            <span
+                              className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11.5px] font-extrabold border tracking-tight"
+                              style={{
+                                backgroundColor: `${item.color}15`,
+                                color: item.color,
+                                borderColor: `${item.color}35`,
+                              }}
+                            >
+                              {item.ctr}% CTR
+                            </span>
+                            <p className="text-[9.5px] text-[var(--admin-text-tertiary)] mt-0.5 font-medium">
+                              {Math.round(item.ctr)} in 100 clicked
+                            </p>
+                          </div>
                         </div>
 
-                        {/* Full-width bar */}
-                        <div className="w-full h-3.5 bg-[var(--admin-surface-muted)] rounded-full overflow-hidden p-[2px] border border-[var(--admin-border-subtle)]">
-                          <div
-                            className="h-full rounded-full transition-all duration-700 ease-out"
-                            style={{
-                              width: `${fillPercent}%`,
-                              backgroundColor: item.color,
-                            }}
-                          />
+                        {/* Proportional visual bar with 0-20% scale indicator */}
+                        <div className="space-y-1">
+                          <div className="w-full h-2.5 bg-[var(--admin-surface)] rounded-full overflow-hidden p-[1.5px] border border-[var(--admin-border)]">
+                            <div
+                              className="h-full rounded-full transition-all duration-700 ease-out"
+                              style={{
+                                width: `${fillPercent}%`,
+                                backgroundColor: item.color,
+                              }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-[9px] text-[var(--admin-text-placeholder)] px-0.5 font-mono">
+                            <span>0%</span>
+                            <span>10%</span>
+                            <span>20% CTR scale</span>
+                          </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Desktop/Tablet View: Recharts BarChart */}
+                {/* Desktop/Tablet View: Recharts BarChart with contextual labels */}
                 <div className="hidden sm:block h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={ctrData}
                       layout="vertical"
-                      margin={{ top: 8, right: 48, left: 10, bottom: 8 }}
+                      margin={{ top: 8, right: 64, left: 10, bottom: 8 }}
                     >
                       <CartesianGrid
                         strokeDasharray="3 3"
@@ -1112,7 +1270,7 @@ export function AdminRecommendationAnalytics() {
                           fill: 'var(--admin-text-tertiary)',
                           fontWeight: 600,
                         }}
-                        domain={[0, (dataMax) => Math.max(Math.ceil(dataMax + 1), 6)]}
+                        domain={[0, 20]}
                       />
                       <YAxis
                         dataKey="name"
@@ -1132,12 +1290,12 @@ export function AdminRecommendationAnalytics() {
                         radius={[0, 6, 6, 0]}
                         barSize={24}
                         minPointSize={5}
-                        name="CTR (%)"
+                        name="Click-Through Rate (%)"
                       >
                         <LabelList
                           dataKey="ctr"
                           position="right"
-                          formatter={(v) => `${v}%`}
+                          formatter={(v) => `${v}% CTR`}
                           style={{
                             fontSize: '11px',
                             fontWeight: 700,
@@ -1151,14 +1309,32 @@ export function AdminRecommendationAnalytics() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
+
+                {/* Explanatory insight banner demystifying CTR */}
+                <div className="mt-3.5 pt-2.5 border-t border-[var(--admin-border-subtle)] flex items-start gap-2 text-[11.5px] text-[var(--admin-text-secondary)]">
+                  <span className="material-symbols-outlined text-[15px] text-[var(--admin-accent)] shrink-0 mt-0.5">
+                    info
+                  </span>
+                  <p className="leading-snug">
+                    <span className="font-semibold text-[var(--admin-text-primary)]">
+                      What is CTR?
+                    </span>{' '}
+                    Click-Through Rate measures how effectively recommendations attract shopper
+                    clicks. An 11.5% CTR means ~11–12 of every 100 visitors clicked an item in that
+                    section (e-commerce benchmark is ~3%–5%).
+                  </p>
+                </div>
               </>
             )}
           </div>
         </ChartCard>
 
-        {/* Top Trending Categories with Multi-Colors */}
-        <ChartCard title="Top Trending Categories" subtitle="Based on recent real-time velocity">
-          <div className="h-[300px]">
+        {/* Top Trending Categories with Curated Theme Shades */}
+        <ChartCard
+          title="Top Trending Categories"
+          subtitle="Most viewed & clicked categories by store visitors"
+        >
+          <div className="h-[280px] sm:h-[300px]">
             {formattedTrending.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center bg-[var(--admin-bg-subtle)] rounded-[var(--admin-radius-lg)] border border-dashed border-[var(--admin-border)]">
                 <span className="material-symbols-outlined text-[32px] text-[var(--admin-text-tertiary)] mb-2">
@@ -1175,12 +1351,13 @@ export function AdminRecommendationAnalytics() {
                     data={formattedTrending}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
+                    innerRadius={62}
+                    outerRadius={102}
                     paddingAngle={3}
                     dataKey="count"
                     nameKey="displayName"
-                    strokeWidth={0}
+                    stroke="var(--admin-surface)"
+                    strokeWidth={2}
                   >
                     {formattedTrending.map((entry, index) => (
                       <Cell key={`trending-cell-${index}`} fill={entry.color} />
@@ -1192,14 +1369,14 @@ export function AdminRecommendationAnalytics() {
             )}
           </div>
           {formattedTrending.length > 0 && (
-            <div className="flex flex-wrap gap-2 justify-center mt-4 p-1">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center mt-3 sm:mt-4 p-1">
               {formattedTrending.map((entry, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-[11px] font-semibold text-[var(--admin-text-secondary)] shadow-2xs hover:border-[var(--admin-border)] transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--admin-surface-muted)]/70 dark:bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[11px] sm:text-[11.5px] font-medium text-[var(--admin-text-primary)] shadow-2xs hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-surface)] transition-all cursor-default"
                 >
                   <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                    className="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/5 dark:ring-white/10"
                     style={{ backgroundColor: entry.color }}
                   />
                   <span>{entry.displayName}</span>

@@ -22,10 +22,10 @@ export function DescriptionStep({ formData, setFormData, focusedField }) {
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Describe the aesthetics, craftsmanship, and occasion contexts..."
-          className={`w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all resize-none ${
+          className={`w-full bg-[var(--admin-surface)] rounded-[4px] p-3 text-[12.5px] outline-none transition-all resize-none ${
             focusedField === 'description'
-              ? 'border-2 border-[var(--admin-accent)] shadow-[0_0_15px_rgba(99,102,241,0.4)] scale-[1.01] bg-[var(--admin-surface)]'
-              : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] focus:ring-2 focus:ring-[var(--admin-accent)]/20'
+              ? 'border border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/30'
+              : 'border border-[var(--admin-border)] focus:border-[var(--admin-accent)]'
           }`}
         />
       </div>

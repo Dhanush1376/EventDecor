@@ -100,7 +100,11 @@
   font-size: 2.25rem;
   font-weight: 700;
   color: #ffffff;
-  font-family: 'JetBrains Mono', monospace;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   margin-bottom: 0.25rem;
 }
 
@@ -230,7 +234,11 @@
 }
 
 .code-font {
-  font-family: 'JetBrains Mono', monospace;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   font-size: 0.8rem;
   color: #93c5fd;
 }

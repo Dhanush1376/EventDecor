@@ -1,7 +1,6 @@
 import logger from '../config/logger';
 import { getActiveAdminEmailsFromDB } from '../config/adminConfig';
 import crypto from 'crypto';
-import { generateInvoicePDF } from '../utils/pdfGenerator';
 import {
   buildOrderConfirmationCustomerEmail,
   buildOrderConfirmationAdminEmail,
@@ -119,44 +118,6 @@ export class TransactionalEmailService {
       const customerHash = this.hashEmail(customerEmail);
       const notificationKey = `ORDER_CREATED:${eventId}:CUSTOMER:${customerHash}`;
 
-      let attachments: any[] = [];
-      try {
-        const orderData = {
-          orderId: order.orderUuid || order.orderNumber || order._id.toString(),
-          date: order.createdAt || new Date(),
-          customerName: user?.name || order.shippingAddress?.name || 'Customer',
-          shippingAddress: order.shippingAddress
-            ? `${order.shippingAddress.name}, ${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.pincode}`
-            : 'Not Provided',
-          items: order.items.map((i: any) => ({
-            name: i.title || i.name || 'Item',
-            quantity: i.quantity || 1,
-            price: i.price || 0,
-          })),
-          subtotal: order.subtotal || 0,
-          shipping: order.shippingFee || order.courierCharges || 0,
-          total: order.total || 0,
-          store: order.store,
-          invoice: order.invoice,
-        };
-        const pdfBuffer = await generateInvoicePDF(orderData);
-        attachments = [
-          {
-            filename: `Invoice_${orderData.orderId}.pdf`,
-            content: pdfBuffer,
-            contentType: 'application/pdf',
-          },
-        ];
-        logger.info(
-          `[TransactionalEmailService] Successfully generated invoice PDF for ${order._id}`,
-        );
-      } catch (pdfErr) {
-        logger.error(
-          `[TransactionalEmailService] Failed to generate invoice PDF for ${order._id}:`,
-          pdfErr,
-        );
-      }
-
       await this.enqueueEmail(
         customerEmail,
         subject,
@@ -164,7 +125,6 @@ export class TransactionalEmailService {
         'order',
         'order_confirmation_customer',
         notificationKey,
-        attachments,
       );
     }
 

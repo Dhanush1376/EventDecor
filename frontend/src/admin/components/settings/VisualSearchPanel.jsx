@@ -3,7 +3,7 @@ import { m as motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { visualSearchService } from '../../../services/domainServices';
 import { useAdmin } from '../../context/AdminContext';
-import { SkeletonDashboard, fadeUp } from '../AdminUIKit';
+import { SettingsPanelSkeleton, fadeUp } from '../AdminUIKit';
 
 export function VisualSearchPanel() {
   const { activeRole, logAdminAction } = useAdmin();
@@ -117,7 +117,7 @@ export function VisualSearchPanel() {
     }
   };
 
-  if (loading) return <SkeletonDashboard />;
+  if (loading) return <SettingsPanelSkeleton />;
 
   return (
     <form onSubmit={handleSaveConfig} className="space-y-6">
@@ -313,17 +313,22 @@ export function VisualSearchPanel() {
               type="button"
               onClick={handleValidateProvider}
               disabled={isValidating}
-              className="admin-btn admin-btn-outline flex-1 flex items-center justify-center gap-2"
+              className="h-9 px-4 rounded-[4px] border border-[var(--admin-border)] hover:bg-[var(--admin-bg-subtle)] text-[var(--admin-text-primary)] font-bold text-[12px] flex-1 flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
             >
               {isValidating ? (
-                <span className="animate-spin material-symbols-outlined text-[18px]">sync</span>
+                <span className="animate-spin material-symbols-outlined text-[16px]">sync</span>
               ) : (
-                <span className="material-symbols-outlined text-[18px]">verified_user</span>
+                <span className="material-symbols-outlined text-[16px]">verified_user</span>
               )}
               Test Connection
             </button>
-            <button type="submit" disabled={saving} className="admin-btn admin-btn-primary flex-1">
-              {saving ? 'Saving...' : 'Save & Apply'}
+            <button
+              type="submit"
+              disabled={saving}
+              className="h-9 px-4 rounded-[4px] bg-[var(--admin-accent)] hover:opacity-95 text-white font-bold text-[12px] flex-1 flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-all disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined text-[16px]">save</span>
+              <span>{saving ? 'Saving...' : 'Save & Apply'}</span>
             </button>
           </div>
 

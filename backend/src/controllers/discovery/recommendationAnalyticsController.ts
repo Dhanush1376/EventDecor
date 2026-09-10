@@ -8,6 +8,7 @@ import logger from '../../config/logger';
 import AnalyticsEvent from '../../models/AnalyticsEvent';
 import Order from '../../models/Order';
 import User from '../../models/User';
+import AdminAuditLog from '../../models/AdminAuditLog';
 
 /**
  * GET /analytics/recommendations/overview — Overall recommendation system stats.
@@ -712,6 +713,71 @@ function humanizeWebActivity(
 }
 
 /**
+ * Helper to convert backend administrative audit logs into clear plain-English action sentences
+ */
+const formatStaffAuditAction = (log: any): string => {
+  if (log.action && !log.action.startsWith('/') && !log.action.includes('_')) {
+    return log.action;
+  }
+  const path = (log.path || '').toLowerCase();
+  const method = (log.method || 'GET').toUpperCase();
+  const entity = log.entityType || '';
+  const actionType = log.action || '';
+
+  if (actionType === 'status_update') {
+    return `Updated ${entity ? entity.toLowerCase() : 'order'} operational status`;
+  }
+  if (actionType === 'refund_initiated') {
+    return 'Initiated payment refund';
+  }
+  if (actionType === 'team_assigned') {
+    return 'Assigned staff team member to event job';
+  }
+  if (path.includes('/coupons')) {
+    return method === 'POST'
+      ? 'Created promotional discount coupon'
+      : method === 'PUT'
+        ? 'Updated coupon terms & limits'
+        : method === 'DELETE'
+          ? 'Deleted discount coupon'
+          : 'Reviewed coupons & offers';
+  }
+  if (path.includes('/customer-intelligence') || path.includes('/customers')) {
+    return 'Inspected customer profile & telemetry';
+  }
+  if (path.includes('/products')) {
+    return method === 'POST'
+      ? 'Added new product to catalog'
+      : method === 'PUT'
+        ? 'Updated product inventory & details'
+        : method === 'DELETE'
+          ? 'Removed product from catalog'
+          : 'Managed store catalog';
+  }
+  if (path.includes('/orders')) {
+    return method === 'PUT'
+      ? 'Updated customer order status'
+      : method === 'POST'
+        ? 'Created manual customer order'
+        : 'Reviewed customer order records';
+  }
+  if (path.includes('/analytics')) return 'Generated business performance analytics';
+  if (path.includes('/settings')) return 'Adjusted store operational settings';
+  if (path.includes('/backup')) return 'Verified backup center integrity';
+  if (path.includes('/events')) return 'Updated event booking catalog';
+  if (path.includes('/reviews')) return 'Moderated customer product reviews';
+  if (path.includes('/returns')) return 'Processed customer return or exchange';
+  if (path.includes('/team')) return 'Updated staff permissions & team members';
+
+  if (log.action) {
+    return log.action.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+  }
+
+  const endpointName = path.replace('/api/v1/', '').split('/')[0] || 'System activity';
+  return `${method === 'GET' ? 'Inspected' : method === 'POST' ? 'Created' : method === 'PUT' ? 'Modified' : 'Deleted'} ${endpointName}`;
+};
+
+/**
  * GET /analytics/recommendations/live-user-logs — Real-time stream of all user website actions
  */
 export const getLiveUserLogs = async (req: Request, res: Response) => {
@@ -719,29 +785,37 @@ export const getLiveUserLogs = async (req: Request, res: Response) => {
     const limit = Math.min(Number(req.query.limit) || 60, 100);
     const filter = (req.query.type as string) || 'all';
 
-    const [interactions, analyticsEvents, recentOrders, recentUsers] = await Promise.all([
-      UserInteraction.find()
-        .sort({ timestamp: -1 })
-        .limit(40)
-        .populate('userId', 'name email phone role')
-        .lean(),
-      AnalyticsEvent.find()
-        .sort({ timestamp: -1 })
-        .limit(40)
-        .populate('userId', 'name email phone role')
-        .lean(),
-      Order.find()
-        .sort({ createdAt: -1 })
-        .limit(25)
-        .populate('user', 'name email phone role')
-        .select('_id orderNumber orderUuid shippingAddress total orderStatus items createdAt user')
-        .lean(),
-      User.find()
-        .sort({ createdAt: -1 })
-        .limit(15)
-        .select('_id name email phone role createdAt')
-        .lean(),
-    ]);
+    const [interactions, analyticsEvents, recentOrders, recentUsers, recentAuditLogs] =
+      await Promise.all([
+        UserInteraction.find()
+          .sort({ timestamp: -1 })
+          .limit(40)
+          .populate('userId', 'name email phone role')
+          .lean(),
+        AnalyticsEvent.find()
+          .sort({ timestamp: -1 })
+          .limit(40)
+          .populate('userId', 'name email phone role')
+          .lean(),
+        Order.find()
+          .sort({ createdAt: -1 })
+          .limit(25)
+          .populate('user', 'name email phone role')
+          .select(
+            '_id orderNumber orderUuid shippingAddress total orderStatus items createdAt user',
+          )
+          .lean(),
+        User.find()
+          .sort({ createdAt: -1 })
+          .limit(15)
+          .select('_id name email phone role createdAt')
+          .lean(),
+        AdminAuditLog.find()
+          .sort({ createdAt: -1 })
+          .limit(30)
+          .populate('actorId', 'name email phone role')
+          .lean(),
+      ]);
 
     // Collect order / tracking tokens from analytics events to resolve customer identities
     const orderTokens = new Set<string>();
@@ -1064,6 +1138,43 @@ export const getLiveUserLogs = async (req: Request, res: Response) => {
         details: 'Registered Customer',
         domain: 'general',
         category: 'Account Registration',
+      });
+    });
+
+    // 5. Staff Administrative & Audit Actions
+    recentAuditLogs.forEach((al: any) => {
+      const actorUser = al.actorId as any;
+      const staffEmail = al.actorEmail || actorUser?.email || 'staff@eventdecor.com';
+      const staffName =
+        actorUser?.name || (staffEmail.includes('@') ? staffEmail.split('@')[0] : 'Store Staff');
+      const staffRole = al.actorRole || actorUser?.role || 'admin';
+      const actionText = formatStaffAuditAction(al);
+      const entityStr = al.entityType
+        ? `${al.entityType}${al.entityId ? ` #${String(al.entityId).slice(-6).toUpperCase()}` : ''}`
+        : '';
+      const detailText = entityStr || (al.path ? al.path.replace('/api/v1', '') : 'Admin Console');
+
+      formattedLogs.push({
+        id: `aud_${al._id}`,
+        timestamp: al.createdAt,
+        user: staffName,
+        userRole: staffRole.toLowerCase(),
+        customerName: staffName,
+        customerEmail: staffEmail,
+        customerPhone: actorUser?.phone || null,
+        customerId: al.actorId?._id || al.actorId || null,
+        orderCode:
+          al.entityType?.toLowerCase() === 'order' && al.entityId
+            ? String(al.entityId).slice(-5).toUpperCase()
+            : null,
+        action: actionText,
+        type: 'auth',
+        icon: 'admin_panel_settings',
+        badgeColor: '#7d6899',
+        device: al.ip ? `Admin Console (${al.ip})` : 'Admin Console',
+        details: detailText,
+        domain: 'general',
+        category: 'Staff Operations',
       });
     });
 

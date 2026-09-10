@@ -35,14 +35,25 @@ export class UserWishlistService {
         .lean(),
     ]);
 
-    const combinedWishlist = [
-      ...products.map((p: any) => ({
+    const itemMap = new Map<string, any>();
+    products.forEach((p: any) => {
+      itemMap.set(p._id.toString(), {
         ...p,
         itemType: 'product',
         category: p.primaryCategory?.name || 'Event Decor',
-      })),
-      ...showcases.map((s: any) => ({ ...s, itemType: 'event' })),
-    ];
+      });
+    });
+    showcases.forEach((s: any) => {
+      itemMap.set(s._id.toString(), {
+        ...s,
+        itemType: 'event',
+      });
+    });
+
+    // Map wishlist items in exact sequence of wishlistArray (latest first at index 0)
+    const combinedWishlist = wishlistArray
+      .map((id: any) => itemMap.get(id.toString()))
+      .filter(Boolean);
 
     await cacheWishlist(userId, combinedWishlist);
     return { data: combinedWishlist, cacheStatus: 'MISS' };
@@ -63,7 +74,7 @@ export class UserWishlistService {
       if (user.wishlist.length >= 100) {
         throw new ApiError(400, 'Wishlist capacity reached. Maximum 100 items allowed.');
       }
-      user.wishlist.push(productId as any);
+      user.wishlist.unshift(productId as any);
     } else {
       user.wishlist.splice(index, 1);
       action = 'Removed from wishlist';

@@ -1,5 +1,5 @@
 import { m as motion } from 'framer-motion';
-import { PageHeader, SkeletonDashboard, fadeUp, stagger } from '../components/AdminUIKit';
+import { PageHeader, AdminSettingsSkeleton, fadeUp, stagger } from '../components/AdminUIKit';
 import { DraftStatusIndicator } from '../components/DraftStatusIndicator';
 import { DraftRestoreModal } from '../components/DraftRestoreModal';
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard';
@@ -258,6 +258,8 @@ export function AdminSettings({ hideHeader }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
+  const [mobileSectionOpen, setMobileSectionOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [profileForm, setProfileForm] = useState({
     name: authUser?.name || '',
@@ -523,13 +525,12 @@ export function AdminSettings({ hideHeader }) {
   };
 
   if (loading || !storeSettings) {
-    return <SkeletonDashboard />;
+    return <AdminSettingsSkeleton />;
   }
 
   const sectionsList = [
     { id: 'profile', title: 'Profile & Account', icon: 'person' },
     { id: 'general', title: 'General Info', icon: 'store' },
-
     { id: 'shipping', title: 'Shipping & Delivery', icon: 'local_shipping' },
     { id: 'payments', title: 'Payment Methods', icon: 'payments' },
     { id: 'returnsExchanges', title: 'Returns & Exchanges', icon: 'sync' },
@@ -548,6 +549,11 @@ export function AdminSettings({ hideHeader }) {
     { id: 'aiPlatform', title: 'Global AI Platform', icon: 'memory' },
   ];
 
+  const filteredSections = sectionsList.filter((sec) => {
+    if (!searchQuery.trim()) return true;
+    return sec.title.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   return (
     <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
       {!hideHeader && (
@@ -557,13 +563,15 @@ export function AdminSettings({ hideHeader }) {
           icon="settings"
           actions={
             <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto min-w-[300px]">
-              <div className="relative flex-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] flex items-center px-3">
+              <div className="relative flex-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-3">
                 <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
                   search
                 </span>
                 <input
                   type="text"
                   placeholder="Search settings..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
                 />
               </div>
@@ -573,228 +581,314 @@ export function AdminSettings({ hideHeader }) {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+        {/* Left Navigation Card (Desktop Sidebar & Mobile Settings Master List) */}
         <motion.div
           variants={fadeUp}
-          className="admin-card p-3 h-fit lg:sticky lg:top-24 space-y-1 admin-settings-nav"
+          className={`bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border)] shadow-sm overflow-hidden h-fit lg:sticky lg:top-24 ${
+            mobileSectionOpen ? 'hidden lg:block' : 'block'
+          }`}
         >
-          {sectionsList.map((sec, i) => (
-            <button
-              key={sec.id}
-              onClick={() => setActiveSection(i)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-[var(--admin-radius-lg)] text-left cursor-pointer transition-all ${
-                activeSection === i
-                  ? 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] font-bold shadow-sm'
-                  : 'text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-subtle)] hover:text-[var(--admin-text-primary)]'
-              }`}
-            >
-              <span
-                className={`material-symbols-outlined text-[18px] ${
-                  activeSection === i
-                    ? 'text-[var(--admin-text-primary)]'
-                    : 'text-[var(--admin-text-tertiary)]'
-                }`}
-              >
-                {sec.icon}
+          {/* Card Header */}
+          <div className="px-3.5 py-3 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
+            <h3 className="text-[13px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
+              <span className="material-symbols-outlined text-[17px] text-[var(--admin-accent)]">
+                tune
               </span>
-              <span className="text-[13px]">{sec.title}</span>
-            </button>
-          ))}
+              Settings Menu
+            </h3>
+            <span className="text-[10px] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] px-2 py-0.5 rounded-[4px] font-bold border border-[var(--admin-border)] shadow-2xs">
+              {filteredSections.length}
+            </span>
+          </div>
+
+          {/* Desktop Navigation (Compact Segmented List) */}
+          <div className="hidden lg:block p-2 space-y-0.5">
+            {filteredSections.map((sec) => {
+              const originalIndex = sectionsList.findIndex((s) => s.id === sec.id);
+              const isActive = activeSection === originalIndex;
+              return (
+                <button
+                  key={sec.id}
+                  type="button"
+                  onClick={() => setActiveSection(originalIndex)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[4px] text-left cursor-pointer transition-all box-border ${
+                    isActive
+                      ? 'bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] font-bold border-l-2 border-[var(--admin-accent)] shadow-2xs'
+                      : 'text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-muted)] hover:text-[var(--admin-text-primary)] font-medium'
+                  }`}
+                >
+                  <span
+                    className={`material-symbols-outlined text-[18px] shrink-0 ${
+                      isActive ? 'text-[var(--admin-accent)]' : 'text-[var(--admin-text-tertiary)]'
+                    }`}
+                  >
+                    {sec.icon}
+                  </span>
+                  <span className="text-[12.5px] truncate">{sec.title}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Mobile Navigation (App-like Settings Button Rows with Chevron) */}
+          <div className="lg:hidden divide-y divide-[var(--admin-border-subtle)]">
+            {filteredSections.map((sec) => {
+              const originalIndex = sectionsList.findIndex((s) => s.id === sec.id);
+              return (
+                <button
+                  key={sec.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveSection(originalIndex);
+                    setMobileSectionOpen(true);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="w-full flex items-center justify-between p-3.5 text-left cursor-pointer hover:bg-[var(--admin-bg-subtle)] transition-colors active:bg-[var(--admin-surface-muted)] group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-[4px] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] group-hover:border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-accent)] shrink-0 transition-colors shadow-2xs">
+                      <span className="material-symbols-outlined text-[20px]">{sec.icon}</span>
+                    </div>
+                    <span className="text-[13.5px] font-bold text-[var(--admin-text-primary)] leading-tight truncate">
+                      {sec.title}
+                    </span>
+                  </div>
+                  <span className="material-symbols-outlined text-[20px] text-[var(--admin-text-tertiary)] group-hover:text-[var(--admin-accent)] group-hover:translate-x-0.5 transition-all shrink-0 ml-2">
+                    chevron_right
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </motion.div>
 
-        <motion.div variants={fadeUp} className="admin-card p-6 md:p-8 min-h-[600px]">
-          <div className="flex items-center gap-4 mb-8 pb-5 border-b border-[var(--admin-border-subtle)]">
-            <div className="w-12 h-12 rounded-[var(--admin-radius-md)] bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-text-primary)]">
-              <span className="material-symbols-outlined text-[24px]">
-                {sectionsList[activeSection].icon}
-              </span>
-            </div>
-            <div>
-              <h2 className="text-[18px] font-bold text-[var(--admin-text-primary)] leading-tight">
-                {sectionsList[activeSection].title}
-              </h2>
-              <div className="flex items-center gap-3 mt-1">
-                <p className="text-[12px] text-[var(--admin-text-secondary)] font-medium">
-                  Update details for {sectionsList[activeSection].title} in database
-                </p>
-                {sectionsList[activeSection].id === 'whatsapp' && (
-                  <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
-                )}
+        {/* Right Settings Content Card (Order Detail Card Architecture) */}
+        <motion.div
+          variants={fadeUp}
+          className={`bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border)] overflow-hidden min-h-[600px] flex-col ${
+            mobileSectionOpen ? 'flex' : 'hidden lg:flex'
+          }`}
+        >
+          {/* Mobile Back Header Bar */}
+          <div className="lg:hidden sticky top-[var(--admin-topbar-height,56px)] z-20 px-4 py-2.5 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => {
+                setMobileSectionOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[4px] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] font-bold text-[12px] border border-[var(--admin-border)] shadow-2xs cursor-pointer transition-all active:scale-95"
+            >
+              <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+              <span>All Settings</span>
+            </button>
+            <span className="text-[11px] font-bold text-[var(--admin-text-secondary)]">
+              {activeSection + 1} of {sectionsList.length}
+            </span>
+          </div>
+
+          {/* Order Detail Header */}
+          <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-[4px] bg-[var(--admin-surface)] border border-[var(--admin-border)] flex items-center justify-center text-[var(--admin-accent)] shadow-2xs shrink-0">
+                <span className="material-symbols-outlined text-[20px]">
+                  {sectionsList[activeSection].icon}
+                </span>
               </div>
+              <div>
+                <h3 className="text-[14px] sm:text-[15px] font-bold text-[var(--admin-text-primary)] leading-tight flex items-center gap-2">
+                  {sectionsList[activeSection].title}
+                </h3>
+                <p className="text-[11.5px] text-[var(--admin-text-secondary)] mt-0.5">
+                  Update configuration details and rules for {sectionsList[activeSection].title}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] px-2.5 py-1 rounded-[4px] font-bold uppercase tracking-wider border border-[var(--admin-border)] shadow-2xs">
+                Live Configuration
+              </span>
+              {sectionsList[activeSection].id === 'whatsapp' && (
+                <DraftStatusIndicator status={draftStatus} lastSavedAt={lastSavedAt} />
+              )}
             </div>
           </div>
 
-          {sectionsList[activeSection].id === 'profile' && (
-            <ProfilePanel
-              profileForm={profileForm}
-              setProfileForm={setProfileForm}
-              handleProfileSave={handleProfileSave}
-              syncSettingsData={syncSettingsData}
-              saving={saving}
-            />
-          )}
+          <div className="p-4 sm:p-6 lg:p-7 flex-1">
+            {sectionsList[activeSection].id === 'profile' && (
+              <ProfilePanel
+                profileForm={profileForm}
+                setProfileForm={setProfileForm}
+                handleProfileSave={handleProfileSave}
+                syncSettingsData={syncSettingsData}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'general' && (
-            <GeneralSettingsPanel
-              formData={storeSettings.general || {}}
-              handleChange={handleStoreSettingsChange('general')}
-              handleSave={handleStoreSettingsSave('general')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'general' && (
+              <GeneralSettingsPanel
+                formData={storeSettings.general || {}}
+                handleChange={handleStoreSettingsChange('general')}
+                handleSave={handleStoreSettingsSave('general')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'shipping' && (
-            <ShippingSettingsPanel
-              formData={storeSettings.shipping || {}}
-              handleChange={handleStoreSettingsChange('shipping')}
-              handleSave={handleStoreSettingsSave('shipping')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'shipping' && (
+              <ShippingSettingsPanel
+                formData={storeSettings.shipping || {}}
+                handleChange={handleStoreSettingsChange('shipping')}
+                handleSave={handleStoreSettingsSave('shipping')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'payments' && (
-            <PaymentSettingsPanel
-              formData={storeSettings.payments || {}}
-              handleChange={handleStoreSettingsChange('payments')}
-              handleSave={handleStoreSettingsSave('payments')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'payments' && (
+              <PaymentSettingsPanel
+                formData={storeSettings.payments || {}}
+                handleChange={handleStoreSettingsChange('payments')}
+                handleSave={handleStoreSettingsSave('payments')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'returnsExchanges' && (
-            <ReturnSettingsPanel
-              formData={storeSettings.returnsExchanges || {}}
-              handleChange={handleStoreSettingsChange('returnsExchanges')}
-              handleSave={handleStoreSettingsSave('returnsExchanges')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'returnsExchanges' && (
+              <ReturnSettingsPanel
+                formData={storeSettings.returnsExchanges || {}}
+                handleChange={handleStoreSettingsChange('returnsExchanges')}
+                handleSave={handleStoreSettingsSave('returnsExchanges')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'cancellation' && (
-            <CancellationSettingsPanel
-              formData={storeSettings.cancellation || {}}
-              handleChange={handleStoreSettingsChange('cancellation')}
-              handleSave={handleStoreSettingsSave('cancellation')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'cancellation' && (
+              <CancellationSettingsPanel
+                formData={storeSettings.cancellation || {}}
+                handleChange={handleStoreSettingsChange('cancellation')}
+                handleSave={handleStoreSettingsSave('cancellation')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'loyalty' && (
-            <LoyaltySettingsPanel
-              formData={storeSettings.loyalty || {}}
-              handleChange={handleStoreSettingsChange('loyalty')}
-              handleCustomChange={handleStoreSettingsCustomChange('loyalty')}
-              handleSave={handleStoreSettingsSave('loyalty')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'loyalty' && (
+              <LoyaltySettingsPanel
+                formData={storeSettings.loyalty || {}}
+                handleChange={handleStoreSettingsChange('loyalty')}
+                handleCustomChange={handleStoreSettingsCustomChange('loyalty')}
+                handleSave={handleStoreSettingsSave('loyalty')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'orders' && (
-            <OrderSettingsPanel
-              formData={storeSettings.orders || {}}
-              handleChange={handleStoreSettingsChange('orders')}
-              handleSave={handleStoreSettingsSave('orders')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'orders' && (
+              <OrderSettingsPanel
+                formData={storeSettings.orders || {}}
+                handleChange={handleStoreSettingsChange('orders')}
+                handleSave={handleStoreSettingsSave('orders')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'taxes' && (
-            <TaxSettingsPanel
-              formData={storeSettings.taxes || {}}
-              handleChange={handleStoreSettingsChange('taxes')}
-              handleSave={handleStoreSettingsSave('taxes')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'taxes' && (
+              <TaxSettingsPanel
+                formData={storeSettings.taxes || {}}
+                handleChange={handleStoreSettingsChange('taxes')}
+                handleSave={handleStoreSettingsSave('taxes')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'notifications' && (
-            <NotificationSettingsPanel
-              formData={storeSettings.notifications || {}}
-              handleChange={handleStoreSettingsChange('notifications')}
-              handleSave={handleStoreSettingsSave('notifications')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'notifications' && (
+              <NotificationSettingsPanel
+                formData={storeSettings.notifications || {}}
+                handleChange={handleStoreSettingsChange('notifications')}
+                handleSave={handleStoreSettingsSave('notifications')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'storefront' && (
-            <StorefrontSettingsPanel
-              formData={storeSettings.storefront || {}}
-              handleChange={handleStoreSettingsChange('storefront')}
-              handleSave={handleStoreSettingsSave('storefront')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'storefront' && (
+              <StorefrontSettingsPanel
+                formData={storeSettings.storefront || {}}
+                handleChange={handleStoreSettingsChange('storefront')}
+                handleSave={handleStoreSettingsSave('storefront')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'contact' && (
-            <ContactSettingsPanel
-              formData={storeSettings.contact || {}}
-              handleChange={handleStoreSettingsChange('contact')}
-              handleSave={handleStoreSettingsSave('contact')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'contact' && (
+              <ContactSettingsPanel
+                formData={storeSettings.contact || {}}
+                handleChange={handleStoreSettingsChange('contact')}
+                handleSave={handleStoreSettingsSave('contact')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'legal' && (
-            <LegalSettingsPanel
-              formData={storeSettings.legal || {}}
-              handleChange={handleStoreSettingsChange('legal')}
-              handleSave={handleStoreSettingsSave('legal')}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'legal' && (
+              <LegalSettingsPanel
+                formData={storeSettings.legal || {}}
+                handleChange={handleStoreSettingsChange('legal')}
+                handleSave={handleStoreSettingsSave('legal')}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'whatsapp' && (
-            <WhatsAppPanel
-              settings={settings}
-              setSettings={setSettings}
-              handleGlobalSettingsSave={handleGlobalSettingsSave}
-              syncSettingsData={syncSettingsData}
-              saving={saving}
-            />
-          )}
+            {sectionsList[activeSection].id === 'whatsapp' && (
+              <WhatsAppPanel
+                settings={settings}
+                setSettings={setSettings}
+                handleGlobalSettingsSave={handleGlobalSettingsSave}
+                syncSettingsData={syncSettingsData}
+                saving={saving}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'security' && (
-            <SecurityPanel
-              safetyLock={safetyLock}
-              toggleSafetyLock={toggleSafetyLock}
-              maintenanceMode={maintenanceMode}
-              toggleMaintenanceMode={toggleMaintenanceMode}
-              autoPublish={autoPublish}
-              toggleAutoPublish={toggleAutoPublish}
-              idleTimeoutMinutes={idleTimeoutMinutes}
-              changeIdleTimeout={changeIdleTimeout}
-              auditLogs={auditLogs}
-              clearAuditLogs={clearAuditLogs}
-              handleBackupDownload={handleBackupDownload}
-              auditSearchQuery={auditSearchQuery}
-              setAuditSearchQuery={setAuditSearchQuery}
-              auditActorFilter={auditActorFilter}
-              setAuditActorFilter={setAuditActorFilter}
-              handleHardReset={handleHardReset}
-              resetCheck1={resetCheck1}
-              setResetCheck1={setResetCheck1}
-              resetCheck2={resetCheck2}
-              setResetCheck2={setResetCheck2}
-              resetCheck3={resetCheck3}
-              setResetCheck3={setResetCheck3}
-              resetCodePhrase={resetCodePhrase}
-              setResetCodePhrase={setResetCodePhrase}
-              resetExecuting={resetExecuting}
-            />
-          )}
+            {sectionsList[activeSection].id === 'security' && (
+              <SecurityPanel
+                safetyLock={safetyLock}
+                toggleSafetyLock={toggleSafetyLock}
+                maintenanceMode={maintenanceMode}
+                toggleMaintenanceMode={toggleMaintenanceMode}
+                autoPublish={autoPublish}
+                toggleAutoPublish={toggleAutoPublish}
+                idleTimeoutMinutes={idleTimeoutMinutes}
+                changeIdleTimeout={changeIdleTimeout}
+                auditLogs={auditLogs}
+                clearAuditLogs={clearAuditLogs}
+                handleBackupDownload={handleBackupDownload}
+                auditSearchQuery={auditSearchQuery}
+                setAuditSearchQuery={setAuditSearchQuery}
+                auditActorFilter={auditActorFilter}
+                setAuditActorFilter={setAuditActorFilter}
+                handleHardReset={handleHardReset}
+                resetCheck1={resetCheck1}
+                setResetCheck1={setResetCheck1}
+                resetCheck2={resetCheck2}
+                setResetCheck2={setResetCheck2}
+                resetCheck3={resetCheck3}
+                setResetCheck3={setResetCheck3}
+                resetCodePhrase={resetCodePhrase}
+                setResetCodePhrase={setResetCodePhrase}
+                resetExecuting={resetExecuting}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'email' && (
-            <EmailSmtpPanel
-              testRecipientEmail={testRecipientEmail}
-              setTestRecipientEmail={setTestRecipientEmail}
-              handleSmtpTest={handleSmtpTest}
-              testingSmtp={testingSmtp}
-              smtpTestResult={smtpTestResult}
-            />
-          )}
+            {sectionsList[activeSection].id === 'email' && (
+              <EmailSmtpPanel
+                testRecipientEmail={testRecipientEmail}
+                setTestRecipientEmail={setTestRecipientEmail}
+                handleSmtpTest={handleSmtpTest}
+                testingSmtp={testingSmtp}
+                smtpTestResult={smtpTestResult}
+              />
+            )}
 
-          {sectionsList[activeSection].id === 'visualSearch' && <VisualSearchPanel />}
+            {sectionsList[activeSection].id === 'visualSearch' && <VisualSearchPanel />}
 
-          {sectionsList[activeSection].id === 'aiPlatform' && <AiSettingsPanel />}
+            {sectionsList[activeSection].id === 'aiPlatform' && <AiSettingsPanel />}
+          </div>
         </motion.div>
       </div>
 

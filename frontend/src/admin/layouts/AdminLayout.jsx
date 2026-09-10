@@ -12,7 +12,7 @@ import { PublishToast } from '../components/AdminUIKit';
 import { AdminErrorBoundary } from '../components/AdminErrorBoundary';
 import { GlobalSearchPalette } from '../components/GlobalSearchPalette';
 import { GlobalActionLoader } from '../components/GlobalActionLoader';
-import { AdminLoader } from '../../components/ui/PageLoader';
+import { AdminRouteSuspenseFallback } from '../components/skeletons/AdminRouteSuspenseFallback';
 import { lazyWithRetry as lazy } from '../../utils/performance/lazyWithRetry';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -139,12 +139,20 @@ function AdminLayoutInner() {
           <main
             id="admin-main-content"
             tabIndex={-1}
-            className="flex-1 p-4 sm:p-5 md:p-6 lg:p-8 pb-24 lg:pb-12 relative w-full min-w-0"
+            className="flex-1 p-4 sm:p-5 md:p-6 lg:p-8 relative w-full min-w-0"
             style={{ maxWidth: 'var(--admin-max-content-width)', margin: '0 auto' }}
           >
             <AdminErrorBoundary>
-              <Suspense fallback={<AdminLoader />}>
-                <Outlet />
+              <Suspense fallback={<AdminRouteSuspenseFallback />}>
+                <motion.div
+                  key={pathname}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                  className="w-full min-w-0"
+                >
+                  <Outlet />
+                </motion.div>
               </Suspense>
             </AdminErrorBoundary>
           </main>
@@ -169,12 +177,13 @@ function AdminLayoutInner() {
         {showIdleWarning && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.98, opacity: 0, y: 4 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.98, opacity: 0, y: 4 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
               className="admin-card p-6 max-w-sm w-full text-center space-y-4"
             >
-              <div className="w-12 h-12 rounded-full bg-[var(--admin-warning-light)] border border-[var(--admin-warning-border)] flex items-center justify-center mx-auto text-[var(--admin-warning)] animate-bounce">
+              <div className="w-12 h-12 rounded-full bg-[var(--admin-warning-light)] border border-[var(--admin-warning-border)] flex items-center justify-center mx-auto text-[var(--admin-warning)]">
                 <span className="material-symbols-outlined text-[24px]">hourglass_empty</span>
               </div>
               <div>

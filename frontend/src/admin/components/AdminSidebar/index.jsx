@@ -31,11 +31,12 @@ export function AdminSidebar() {
     ];
   } else {
     fabActions = [
-      { label: 'Invite', icon: 'person_add', path: '/admin/team?invite=true' },
-      { label: 'Coupon', icon: 'sell', path: '/admin/coupons/create' },
-      { label: 'Showcase', icon: 'view_carousel', path: '/admin/showcases/add' },
       { label: 'Product', icon: 'inventory_2', path: '/admin/products/add' },
+      { label: 'Showcase', icon: 'view_carousel', path: '/admin/showcases/add' },
+      { label: 'Coupon', icon: 'sell', path: '/admin/coupons/create' },
+      { label: 'Invite', icon: 'person_add', path: '/admin/team?invite=true' },
       { label: 'Category', icon: 'category', path: '/admin/categories/add' },
+      { label: 'Policy', icon: 'policy', path: '/admin/policies/add' },
     ];
   }
 
@@ -100,7 +101,7 @@ export function AdminSidebar() {
       {/* Desktop Sidebar */}
       <motion.aside
         animate={{ width: sidebarOpen ? 260 : 72 }}
-        transition={{ type: 'spring', damping: 26, stiffness: 280 }}
+        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
         className="hidden lg:flex flex-col fixed left-0 top-0 h-screen z-40 overflow-hidden"
         style={{
           background: 'var(--admin-surface)',
@@ -139,7 +140,7 @@ export function AdminSidebar() {
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="fixed left-0 top-0 h-dvh w-[min(82vw,300px)] z-[110] lg:hidden overflow-hidden"
               style={{ background: 'var(--admin-surface)', boxShadow: 'var(--admin-shadow-2xl)' }}
             >

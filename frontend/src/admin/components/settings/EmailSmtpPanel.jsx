@@ -76,9 +76,13 @@ export function EmailSmtpPanel({
                 placeholder="e.g. admin@siriartsandcrafts.com"
                 value={testRecipientEmail}
                 onChange={(e) => setTestRecipientEmail(e.target.value)}
-                className="admin-input flex-1"
+                className="admin-input h-9 flex-1 !min-h-[36px] rounded-[4px] text-[13px] border-[var(--admin-border)]"
               />
-              <button type="submit" disabled={testingSmtp} className="admin-btn h-11 shrink-0 px-6">
+              <button
+                type="submit"
+                disabled={testingSmtp}
+                className="h-9 px-4 rounded-[4px] bg-[var(--admin-accent)] hover:opacity-95 text-white font-bold text-[12px] shrink-0 flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-all disabled:opacity-50"
+              >
                 {testingSmtp ? (
                   'Verifying...'
                 ) : (

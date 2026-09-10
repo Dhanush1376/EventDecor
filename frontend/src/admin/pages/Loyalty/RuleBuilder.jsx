@@ -4,6 +4,7 @@ import { Plus, Trash2, ArrowLeft, Save } from 'lucide-react';
 import api from '../../../services/api';
 import toast from 'react-hot-toast';
 import { useConfirm } from '../../../context/ConfirmProvider';
+import { AdminLoyaltySkeleton } from '../../components/AdminUIKit';
 
 export default function RuleBuilder() {
   const { campaignId } = useParams();
@@ -131,7 +132,7 @@ export default function RuleBuilder() {
     }
   };
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading) return <AdminLoyaltySkeleton isRuleBuilder={true} />;
 
   return (
     <div className="p-6 max-w-5xl mx-auto pb-20">

@@ -225,13 +225,6 @@ export function OrderDetail() {
       color: 'emerald',
     },
     {
-      key: 'return_requested',
-      title: 'Return Requested',
-      description: 'Return process initiated',
-      icon: 'sync_alt',
-      color: 'amber',
-    },
-    {
       key: 'returned',
       title: 'Returned',
       description: 'Item safely returned to facility',
@@ -1061,6 +1054,71 @@ export function OrderDetail() {
         </div>
       )}
 
+      {/* Rental Security Deposit Status Card */}
+      {isRental &&
+        (Number(item.securityDeposit || 0) > 0 || Number(order.securityDeposit || 0) > 0) && (
+          <div className="bg-surface-bright border border-outline-variant/40 rounded-lg p-4 sm:p-5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-outline-variant/20">
+              <div className="flex items-center gap-2">
+                <ShieldCheck
+                  className={`w-4 h-4 ${order.depositStatus === 'refunded' ? 'text-emerald-600' : 'text-primary'}`}
+                  strokeWidth={1.5}
+                />
+                <h3 className="text-[9.5px] font-bold uppercase tracking-widest text-on-surface">
+                  Security Deposit Status
+                </h3>
+              </div>
+              <span
+                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[8.5px] font-bold uppercase tracking-widest border ${
+                  order.depositStatus === 'refunded'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : order.depositStatus === 'forfeited'
+                      ? 'bg-red-50 text-red-800 border-red-200'
+                      : 'bg-amber-50 text-amber-800 border-amber-200'
+                }`}
+              >
+                {order.depositStatus === 'refunded' ? (
+                  <>
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    Deposit Refunded
+                  </>
+                ) : order.depositStatus === 'forfeited' ? (
+                  'Deposit Forfeited'
+                ) : (
+                  'Deposit Held (Active)'
+                )}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-lg bg-surface-container-lowest border border-outline-variant/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-on-surface">Deposit Amount:</span>
+                  <span className="font-mono font-bold text-[13px] text-primary">
+                    ₹
+                    {(
+                      order.depositRefund?.amount ??
+                      (item.securityDeposit || order.securityDeposit || 0)
+                    ).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <p className="text-[10px] text-secondary leading-relaxed">
+                  {order.depositStatus === 'refunded'
+                    ? `Your refundable security deposit was processed on ${order.depositRefund?.date ? new Date(order.depositRefund.date).toLocaleDateString('en-IN') : 'inspection'}${order.depositRefund?.method ? ` via ${order.depositRefund.method.replace(/_/g, ' ').toUpperCase()}` : ''}.`
+                    : 'Your security deposit is safely held and will be returned after product return and inspection.'}
+                </p>
+              </div>
+
+              {order.depositStatus === 'refunded' && (
+                <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-[9.5px] uppercase tracking-wider bg-emerald-50 px-3 py-1.5 rounded-md border border-emerald-200 shrink-0">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Returned to Customer</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
       {/* Split Panels: Delivery Address & Map Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Address Card */}
@@ -1182,11 +1240,23 @@ export function OrderDetail() {
                         ).toLocaleString()}
                       </span>
                     </div>
-                    {item.securityDeposit > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-secondary">Refundable Security Deposit</span>
-                        <span className="font-semibold">
-                          ₹{item.securityDeposit.toLocaleString()}
+                    {(Number(item.securityDeposit || 0) > 0 ||
+                      Number(order.securityDeposit || 0) > 0) && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-secondary flex items-center gap-1.5">
+                          Refundable Security Deposit
+                          <span
+                            className={`text-[8.5px] font-bold uppercase px-1.5 py-0.2 rounded border leading-none ${
+                              order.depositStatus === 'refunded'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                            }`}
+                          >
+                            {order.depositStatus === 'refunded' ? 'Refunded' : 'Held'}
+                          </span>
+                        </span>
+                        <span className="font-semibold font-mono">
+                          ₹{(item.securityDeposit || order.securityDeposit || 0).toLocaleString()}
                         </span>
                       </div>
                     )}

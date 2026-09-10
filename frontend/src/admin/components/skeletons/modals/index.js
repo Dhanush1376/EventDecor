@@ -1,0 +1,1 @@
+export { AdminCustomerProfileModalSkeleton } from './AdminCustomerProfileModalSkeleton';

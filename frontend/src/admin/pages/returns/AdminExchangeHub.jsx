@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { m as motion } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { returnService } from '../../../services/api/returnService';
 import toast from 'react-hot-toast';
 import {
   PageHeader,
   EmptyState,
   SkeletonTable,
+  AdminStatusPill,
   fadeUp,
   stagger,
 } from '../../components/AdminUIKit';
+import { isWithinPeriod } from '../../utils/dateFilters';
 
 import { useConfirm } from '../../../context/ConfirmProvider';
 import { useReturnManagement } from '../../hooks/useReturnManagement';
@@ -40,27 +43,6 @@ const getActiveExchangeStep = (status, replacementStatus) => {
     return 'rejected';
   }
   return 'submitted';
-};
-
-const getExchangeStatusBadgeStyle = (status, replacementStatus) => {
-  const step = getActiveExchangeStep(status, replacementStatus);
-  switch (step) {
-    case 'completed':
-      return 'bg-emerald-600 text-white';
-    case 'replacement_dispatched':
-      return 'bg-blue-600 text-white';
-    case 'quality_check_passed':
-      return 'bg-purple-600 text-white';
-    case 'item_picked_up':
-      return 'bg-indigo-600 text-white';
-    case 'approved':
-      return 'bg-amber-600 text-white';
-    case 'rejected':
-      return 'bg-red-600 text-white';
-    case 'submitted':
-    default:
-      return 'bg-stone-500 text-white';
-  }
 };
 
 const getExchangeStatusLabel = (status, replacementStatus) => {
@@ -138,12 +120,127 @@ const getReplacementStatusInfo = (replacementStatus, returnStatus, hasReservatio
     icon: 'hourglass_empty',
   };
 };
+
+const RETURN_STATUS_OPTIONS = [
+  { value: 'submitted', label: 'Submitted' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'return_courier_assigned', label: 'Courier Assigned' },
+  { value: 'return_picked_up', label: 'Item Picked Up' },
+  { value: 'return_in_transit', label: 'In Transit' },
+  { value: 'return_received', label: 'Item Received' },
+  { value: 'inspection_completed', label: 'QC Passed' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'rejected', label: 'Rejected' },
+];
+
+const isExchangeUnderReview = (ex) => {
+  if (!ex) return false;
+  const returnStatus = ex.returnRequestId?.status || ex.status;
+  if (!returnStatus || ['submitted', 'under_review', 'pending'].includes(returnStatus)) {
+    return true;
+  }
+  const info = getReplacementStatusInfo(
+    ex.replacementStatus,
+    returnStatus,
+    Boolean(ex.replacementItem?.reservationId || ex.reservedInventoryId || ex.isInventoryReserved),
+  );
+  if (info.label === 'Under Review') {
+    return true;
+  }
+  const activeApprovedStatuses = [
+    'approved',
+    'return_courier_assigned',
+    'return_picked_up',
+    'return_in_transit',
+    'return_received',
+    'inspection_started',
+    'inspection_completed',
+    'refund_initiated',
+    'refund_completed',
+    'completed',
+  ];
+  return !activeApprovedStatuses.includes(returnStatus);
+};
+
 export default function AdminExchangeHub({ hideHeader = false }) {
   const navigate = useNavigate();
   const confirm = useConfirm();
   const [exchanges, setExchanges] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedCardIds, setExpandedCardIds] = useState(new Set());
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
+  // View & Advanced Filter States (Matches AdminOrders)
+  const [viewMode, setViewMode] = useState('table'); // 'table' | 'kanban'
+  const [showFiltersMenu, setShowFiltersMenu] = useState(false);
+  const [savedView, setSavedView] = useState('All Exchanges');
+  const [sortBy, setSortBy] = useState('Newest first');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [diffFilter, setDiffFilter] = useState('All'); // 'All' | 'zero' | 'collect' | 'refund'
+  const [dateFilter, setDateFilter] = useState('All Time');
+  const [customDateRange, setCustomDateRange] = useState({ from: '', to: '' });
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false,
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const toggleExpandCard = (id) => {
+    setExpandedCardIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSavedViewChange = (e) => {
+    const view = e.target.value;
+    setSavedView(view);
+    if (view === 'All Exchanges') {
+      setStatusFilter('All');
+      setDiffFilter('All');
+    } else if (view === 'Needs Attention') {
+      setStatusFilter('under_review');
+      setDiffFilter('All');
+    } else if (view === 'Pending Pickups') {
+      setStatusFilter('pickups');
+      setDiffFilter('All');
+    } else if (view === 'Replacement Dispatched') {
+      setStatusFilter('dispatched');
+      setDiffFilter('All');
+    } else if (view === 'Payment Required') {
+      setStatusFilter('All');
+      setDiffFilter('collect');
+    } else if (view === 'Completed') {
+      setStatusFilter('completed');
+      setDiffFilter('All');
+    }
+  };
+
+  const handleResetAllFilters = () => {
+    setSavedView('All Exchanges');
+    setSortBy('Newest first');
+    setStatusFilter('All');
+    setDiffFilter('All');
+    setDateFilter('All Time');
+    setCustomDateRange({ from: '', to: '' });
+  };
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (savedView !== 'All Exchanges') count++;
+    if (sortBy !== 'Newest first') count++;
+    if (statusFilter !== 'All') count++;
+    if (diffFilter !== 'All') count++;
+    if (dateFilter !== 'All Time') count++;
+    return count;
+  }, [savedView, sortBy, statusFilter, diffFilter, dateFilter]);
 
   const fetchExchanges = async () => {
     try {
@@ -166,6 +263,11 @@ export default function AdminExchangeHub({ hideHeader = false }) {
     transitionExchangeReplacement,
     settleRefund,
   } = useReturnManagement();
+
+  const isDark =
+    typeof document !== 'undefined' &&
+    (document.documentElement.classList.contains('dark') ||
+      document.body.classList.contains('dark'));
 
   // Manual Refund Settlement Modal State
   const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
@@ -253,6 +355,69 @@ export default function AdminExchangeHub({ hideHeader = false }) {
     }
   };
 
+  // Collect Customer Payment Modal State
+  const [isCollectPaymentModalOpen, setIsCollectPaymentModalOpen] = useState(false);
+  const [collectPaymentExchange, setCollectPaymentExchange] = useState(null);
+  const [collectPaymentData, setCollectPaymentData] = useState({
+    amount: '',
+    paymentMethod: 'upi',
+    note: '',
+    autoReserve: true,
+  });
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+
+  const openCollectPaymentModal = (ex) => {
+    const priceDiff = Number(ex.priceDifference || 0);
+    setCollectPaymentExchange(ex);
+    setCollectPaymentData({
+      amount: priceDiff > 0 ? String(priceDiff) : '',
+      paymentMethod: 'upi',
+      note: '',
+      autoReserve: true,
+    });
+    setIsCollectPaymentModalOpen(true);
+  };
+
+  const handleCollectPaymentSubmit = async (e) => {
+    e.preventDefault();
+    if (!collectPaymentExchange) return;
+
+    const exchangeId = collectPaymentExchange._id || collectPaymentExchange.exchangeId;
+    if (!exchangeId) {
+      toast.error('Missing exchange request ID');
+      return;
+    }
+
+    const amt = Number(collectPaymentData.amount);
+    if (!amt || amt <= 0) {
+      toast.error('Please enter a valid payment amount');
+      return;
+    }
+
+    setIsSubmittingPayment(true);
+    try {
+      const { returnService: adminReturnService } =
+        await import('../../../services/api/returnService');
+      await adminReturnService.recordExchangePayment(exchangeId, {
+        amount: amt,
+        paymentMethod: collectPaymentData.paymentMethod,
+        transactionId: collectPaymentData.note?.trim() || undefined,
+        notes: collectPaymentData.note?.trim() || undefined,
+        autoReserve: true,
+      });
+
+      toast.success(`Payment of ₹${amt} recorded successfully!`);
+      setIsCollectPaymentModalOpen(false);
+      setCollectPaymentExchange(null);
+      await fetchExchanges();
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to record payment');
+    } finally {
+      setIsSubmittingPayment(false);
+    }
+  };
+
   useEffect(() => {
     fetchExchanges();
     fetchDashboardStats();
@@ -282,29 +447,391 @@ export default function AdminExchangeHub({ hideHeader = false }) {
     }
   };
 
-  const filteredExchanges = exchanges.filter((ex) => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
-    return (
-      (ex.exchangeId || '').toLowerCase().includes(search) ||
-      (ex.originalItem?.title || '').toLowerCase().includes(search) ||
-      (ex.replacementItem?.title || '').toLowerCase().includes(search)
-    );
-  });
+  const handleReturnStatusChange = async (ex, targetStatus) => {
+    const reqId = ex.returnRequestId?._id || ex.returnRequestId;
+    if (!reqId) {
+      toast.error('Return request record not found');
+      return;
+    }
+    const currentStatus = ex.returnRequestId?.status || 'submitted';
+    if (targetStatus === currentStatus) return;
+
+    if (targetStatus === 'rejected') {
+      const reason = await confirm({
+        title: 'Reject Exchange Request',
+        message: 'Please provide a reason for rejecting this exchange:',
+        isPrompt: true,
+        promptPlaceholder: 'Enter rejection reason...',
+        confirmText: 'Reject Request',
+        type: 'danger',
+      });
+      if (reason && typeof reason === 'string') {
+        try {
+          setUpdatingStatusId(ex._id);
+          await transitionStatus(reqId, {
+            nextStatus: 'rejected',
+            reason,
+          });
+          await fetchExchanges();
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setUpdatingStatusId(null);
+        }
+      }
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: 'Update Request Status',
+      message: `Change request status to "${targetStatus.replace(/_/g, ' ')}"? This will update the status shown in the user's profile.`,
+      confirmText: 'Update Status',
+      type: 'info',
+    });
+    if (!confirmed) return;
+
+    try {
+      setUpdatingStatusId(ex._id);
+      const directTransitions = {
+        submitted: ['approved', 'rejected', 'cancelled'],
+        approved: ['return_courier_assigned', 'return_picked_up', 'rejected', 'cancelled'],
+        return_courier_assigned: ['return_picked_up', 'rejected', 'cancelled'],
+        return_picked_up: ['return_in_transit', 'return_received', 'inspection_completed'],
+        return_in_transit: ['return_received', 'inspection_completed'],
+        return_received: ['inspection_started', 'inspection_completed'],
+        inspection_started: ['inspection_completed', 'rejected'],
+        inspection_completed: ['refund_initiated', 'refund_completed', 'completed'],
+        refund_initiated: ['refund_completed', 'completed'],
+        refund_completed: ['completed'],
+      };
+
+      if (directTransitions[currentStatus]?.includes(targetStatus)) {
+        await transitionStatus(reqId, {
+          nextStatus: targetStatus,
+          reason: `Status updated to ${targetStatus.replace(/_/g, ' ')} from Exchanges`,
+        });
+      } else {
+        const stepChain = [
+          'submitted',
+          'approved',
+          'return_picked_up',
+          'return_received',
+          'inspection_completed',
+          'completed',
+        ];
+        const curIdx = stepChain.indexOf(currentStatus);
+        const targetIdx = stepChain.indexOf(targetStatus);
+
+        if (curIdx !== -1 && targetIdx !== -1 && targetIdx > curIdx) {
+          for (let i = curIdx + 1; i <= targetIdx; i++) {
+            await transitionStatus(reqId, {
+              nextStatus: stepChain[i],
+              reason: `Auto step transition to ${stepChain[i].replace(/_/g, ' ')}`,
+            });
+          }
+        } else {
+          await transitionStatus(reqId, {
+            nextStatus: targetStatus,
+            reason: `Status updated to ${targetStatus.replace(/_/g, ' ')}`,
+          });
+        }
+      }
+      await fetchExchanges();
+    } catch (err) {
+      console.error('Failed to transition status:', err);
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
+
+  const handleApproveExchange = async (ex) => {
+    const reqId = ex.returnRequestId?._id || ex.returnRequestId;
+    if (!reqId) {
+      toast.error('Return request record not found');
+      return;
+    }
+    const confirmed = await confirm({
+      title: 'Approve Exchange',
+      message: 'Are you sure you want to approve this exchange request?',
+      confirmText: 'Approve',
+      type: 'info',
+    });
+    if (confirmed) {
+      try {
+        setUpdatingStatusId(ex._id);
+        await transitionStatus(reqId, {
+          nextStatus: 'approved',
+          reason: 'Approved from Exchanges',
+        });
+        await fetchExchanges();
+        toast.success('Exchange request approved successfully!');
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setUpdatingStatusId(null);
+      }
+    }
+  };
+
+  const handleRejectExchange = async (ex) => {
+    const reqId = ex.returnRequestId?._id || ex.returnRequestId;
+    if (!reqId) {
+      toast.error('Return request record not found');
+      return;
+    }
+    const reason = await confirm({
+      title: 'Reject Exchange',
+      message: 'Please provide a reason for rejecting this exchange:',
+      isPrompt: true,
+      promptPlaceholder: 'Enter rejection reason...',
+      confirmText: 'Reject',
+      type: 'danger',
+    });
+    if (reason && typeof reason === 'string') {
+      try {
+        setUpdatingStatusId(ex._id);
+        await transitionStatus(reqId, {
+          nextStatus: 'rejected',
+          reason,
+        });
+        await fetchExchanges();
+        toast.success('Exchange request rejected.');
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setUpdatingStatusId(null);
+      }
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (!filteredExchanges.length) {
+      toast.error('No exchanges to export');
+      return;
+    }
+    const headers = [
+      'Exchange ID',
+      'Customer',
+      'Phone',
+      'Original Item',
+      'Replacement Item',
+      'Price Diff',
+      'Status',
+      'Replacement Status',
+      'Created At',
+    ];
+    const rows = filteredExchanges.map((ex) => [
+      ex.exchangeId || ex._id,
+      `"${(ex.returnRequestId?.userId?.name || ex.userId?.name || 'Customer').replace(/"/g, '""')}"`,
+      ex.returnRequestId?.userId?.phone || ex.userId?.phone || '',
+      `"${(ex.originalItem?.title || '').replace(/"/g, '""')}"`,
+      `"${(ex.replacementItem?.title || '').replace(/"/g, '""')}"`,
+      ex.priceDifference || 0,
+      ex.returnRequestId?.status || ex.status || '',
+      ex.replacementStatus || '',
+      ex.createdAt ? new Date(ex.createdAt).toISOString().split('T')[0] : '',
+    ]);
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `exchanges_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Exchanges exported successfully');
+  };
+
+  const filteredExchanges = useMemo(() => {
+    let result = [...exchanges];
+
+    // Search query
+    if (searchTerm && searchTerm.trim() !== '') {
+      const search = searchTerm.toLowerCase().trim();
+      result = result.filter((ex) => {
+        const idMatch = (ex.exchangeId || ex._id || '').toLowerCase().includes(search);
+        const orderMatch = (
+          ex.orderId?.orderCode ||
+          ex.orderId?.orderId ||
+          (ex.orderId?._id || ex.orderId)?.toString() ||
+          ''
+        )
+          .toLowerCase()
+          .includes(search);
+        const customerMatch = (
+          ex.returnRequestId?.userId?.name ||
+          ex.userId?.name ||
+          ex.customerName ||
+          ''
+        )
+          .toLowerCase()
+          .includes(search);
+        const phoneMatch = (ex.returnRequestId?.userId?.phone || ex.userId?.phone || '')
+          .toLowerCase()
+          .includes(search);
+        const origTitleMatch = (ex.originalItem?.title || '').toLowerCase().includes(search);
+        const replTitleMatch = (ex.replacementItem?.title || '').toLowerCase().includes(search);
+
+        return (
+          idMatch || orderMatch || customerMatch || phoneMatch || origTitleMatch || replTitleMatch
+        );
+      });
+    }
+
+    // Saved View Filter
+    if (savedView === 'Needs Attention') {
+      result = result.filter(isExchangeUnderReview);
+    } else if (savedView === 'Pending Pickups') {
+      result = result.filter((ex) =>
+        ['approved', 'return_courier_assigned', 'return_picked_up', 'return_in_transit'].includes(
+          ex.returnRequestId?.status || ex.status,
+        ),
+      );
+    } else if (savedView === 'Replacement Dispatched') {
+      result = result.filter((ex) =>
+        ['shipped', 'out_for_delivery'].includes(ex.replacementStatus),
+      );
+    } else if (savedView === 'Payment Required') {
+      result = result.filter(
+        (ex) =>
+          ex.differenceAction === 'collect_payment' &&
+          Number(ex.priceDifference) > 0 &&
+          ex.paymentStatus !== 'payment_paid',
+      );
+    } else if (savedView === 'Completed') {
+      result = result.filter(
+        (ex) =>
+          ex.replacementStatus === 'delivered' ||
+          ['completed', 'refund_completed'].includes(ex.returnRequestId?.status || ex.status),
+      );
+    }
+
+    // Status Lifecycle Filter
+    if (statusFilter !== 'All') {
+      if (statusFilter === 'under_review') {
+        result = result.filter(isExchangeUnderReview);
+      } else if (statusFilter === 'pickups') {
+        result = result.filter((ex) =>
+          ['approved', 'return_courier_assigned', 'return_picked_up', 'return_in_transit'].includes(
+            ex.returnRequestId?.status || ex.status,
+          ),
+        );
+      } else if (statusFilter === 'qc') {
+        result = result.filter((ex) =>
+          ['return_received', 'inspection_started', 'inspection_completed'].includes(
+            ex.returnRequestId?.status || ex.status,
+          ),
+        );
+      } else if (statusFilter === 'dispatched') {
+        result = result.filter((ex) =>
+          ['shipped', 'out_for_delivery'].includes(ex.replacementStatus),
+        );
+      } else if (statusFilter === 'completed') {
+        result = result.filter(
+          (ex) =>
+            ex.replacementStatus === 'delivered' ||
+            ['completed', 'refund_completed'].includes(ex.returnRequestId?.status || ex.status),
+        );
+      } else if (statusFilter === 'rejected') {
+        result = result.filter((ex) => (ex.returnRequestId?.status || ex.status) === 'rejected');
+      } else {
+        result = result.filter((ex) => (ex.returnRequestId?.status || ex.status) === statusFilter);
+      }
+    }
+
+    // Difference Filter
+    if (diffFilter !== 'All') {
+      if (diffFilter === 'zero') {
+        result = result.filter((ex) => Number(ex.priceDifference || 0) === 0);
+      } else if (diffFilter === 'collect') {
+        result = result.filter(
+          (ex) => ex.differenceAction === 'collect_payment' || Number(ex.priceDifference || 0) > 0,
+        );
+      } else if (diffFilter === 'refund') {
+        result = result.filter(
+          (ex) =>
+            ex.differenceAction === 'refund_difference' || Number(ex.priceDifference || 0) < 0,
+        );
+      }
+    }
+
+    // Date Filter
+    if (dateFilter !== 'All Time') {
+      result = result.filter((ex) => isWithinPeriod(ex.createdAt, dateFilter, customDateRange));
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      if (sortBy === 'Newest first') {
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      }
+      if (sortBy === 'Oldest first') {
+        return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+      }
+      if (sortBy === 'Price Difference: High to Low') {
+        return Number(b.priceDifference || 0) - Number(a.priceDifference || 0);
+      }
+      if (sortBy === 'Price Difference: Low to High') {
+        return Number(a.priceDifference || 0) - Number(b.priceDifference || 0);
+      }
+      return 0;
+    });
+
+    return result;
+  }, [
+    exchanges,
+    searchTerm,
+    savedView,
+    statusFilter,
+    diffFilter,
+    dateFilter,
+    customDateRange,
+    sortBy,
+  ]);
 
   const stats = dashboardStats?.stats || {};
 
-  if (isLoading) {
+  const pendingApprovalCount = useMemo(() => {
+    return exchanges.filter(isExchangeUnderReview).length || stats.pendingReturns || 0;
+  }, [exchanges, stats.pendingReturns]);
+
+  const logisticsPendingCount = useMemo(() => {
     return (
-      <div className="flex flex-col h-full">
+      exchanges.filter((ex) =>
+        ['approved', 'return_courier_assigned', 'return_picked_up', 'return_in_transit'].includes(
+          ex.returnRequestId?.status || ex.status,
+        ),
+      ).length ||
+      stats.pendingPickups ||
+      0
+    );
+  }, [exchanges, stats.pendingPickups]);
+
+  const replacementsDispatchedCount = useMemo(() => {
+    return (
+      exchanges.filter((ex) =>
+        ['shipped', 'out_for_delivery', 'reserved'].includes(ex.replacementStatus),
+      ).length || 0
+    );
+  }, [exchanges]);
+
+  const completedCount = useMemo(() => {
+    return (
+      exchanges.filter(
+        (ex) =>
+          ex.replacementStatus === 'delivered' ||
+          ['completed', 'refund_completed'].includes(ex.returnRequestId?.status || ex.status),
+      ).length || 0
+    );
+  }, [exchanges]);
+
+  if (isLoading && !exchanges.length) {
+    return (
+      <div className="space-y-6 pb-12 sm:pb-8 text-left">
         {!hideHeader && (
-          <PageHeader
-            title="Exchange Hub"
-            subtitle="Manage replacement fulfillments"
-            icon="swap_horiz"
-            iconColor="primary"
-            mobileRow={false}
-          />
+          <PageHeader title="Exchanges" subtitle={<span>Loading exchanges summary...</span>} />
         )}
         <SkeletonTable rows={5} cols={6} />
       </div>
@@ -312,111 +839,460 @@ export default function AdminExchangeHub({ hideHeader = false }) {
   }
 
   return (
-    <motion.div initial="hidden" animate="show" variants={stagger} className="flex flex-col h-full">
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+      className="space-y-6 pb-12 sm:pb-8 text-left"
+    >
+      {/* ─── EXECUTIVE PAGE HEADER (Matches Orders & Returns) ─── */}
       {!hideHeader && (
-        <div className="shrink-0 pb-2">
-          <PageHeader
-            title="Exchange Hub"
-            subtitle="Manage replacement fulfillments"
-            icon="swap_horiz"
-            iconColor="primary"
-            mobileRow={false}
-            headerAction={
-              <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
-                <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-3">
-                  <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
-                    search
+        <PageHeader
+          title="Exchanges"
+          actionRowMobile
+          headerAction={
+            <div className="hidden sm:inline-flex items-center bg-[var(--admin-surface-muted)] dark:bg-stone-800/60 p-0.5 rounded-[6px] border border-[var(--admin-border)] shrink-0">
+              <button
+                type="button"
+                onClick={() => navigate('/admin/returns')}
+                className="h-[26px] sm:h-[28px] px-2 sm:px-2.5 rounded-[4px] flex items-center gap-1 sm:gap-1.5 transition-all cursor-pointer text-[11px] sm:text-[12px] font-medium text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-black/5 dark:hover:bg-white/5"
+                title="Switch to Returns"
+              >
+                <span className="material-symbols-outlined text-[14px] leading-none">
+                  assignment_return
+                </span>
+                <span>Returns</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/admin/exchanges')}
+                className="h-[26px] sm:h-[28px] px-2 sm:px-2.5 rounded-[4px] flex items-center gap-1 sm:gap-1.5 transition-all cursor-pointer text-[11px] sm:text-[12px] font-bold bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs border border-stone-200/90 dark:border-stone-700/80"
+                title="Exchanges Page"
+              >
+                <span className="material-symbols-outlined text-[14px] leading-none">
+                  swap_horiz
+                </span>
+                <span>Exchanges</span>
+              </button>
+            </div>
+          }
+          subtitle={
+            isLoading && !exchanges.length ? (
+              <span>Loading exchanges summary...</span>
+            ) : (
+              <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+                <span className="font-semibold text-[var(--admin-text-primary)]">
+                  {filteredExchanges.length} Total Exchanges
+                </span>
+                <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  {pendingApprovalCount} Awaiting Action
+                </span>
+                {completedCount > 0 && (
+                  <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {completedCount} Completed
                   </span>
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search exchanges..."
-                    className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
-                  />
-                </div>
-                <button
-                  onClick={fetchExchanges}
-                  className="admin-btn admin-btn-outline shrink-0 whitespace-nowrap hidden sm:flex"
-                >
-                  <span className="material-symbols-outlined text-[16px]">refresh</span>
-                  Refresh
-                </button>
+                )}
               </div>
-            }
-          />
-        </div>
+            )
+          }
+        />
       )}
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide space-y-6 pb-10 pr-1">
-        <motion.div variants={fadeUp} className="admin-card overflow-hidden text-left relative p-0">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-[var(--admin-border-strong)] z-10" />
-          <div className="grid grid-cols-2 md:grid-cols-4 bg-[var(--admin-surface)]">
-            <div className="p-5 space-y-1 border-r border-b md:border-b-0 border-[var(--admin-border-subtle)]">
-              <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
-                Pending Returns
-              </span>
-              <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                {stats.pendingReturns || 0}
-              </p>
-              <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
-                Awaiting approval
-              </span>
+      {/* ─── STICKY SEARCH & ACTIONS BAR (Matches Orders 42px bar) ─── */}
+      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2 sm:py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md flex flex-col gap-2">
+        {/* Mobile Combined Switcher on top of search bar */}
+        <div className="flex sm:hidden items-center bg-[var(--admin-surface-muted)] dark:bg-stone-800/60 p-1 rounded-[6px] border border-[var(--admin-border)] w-full">
+          <button
+            type="button"
+            onClick={() => navigate('/admin/returns')}
+            className="flex-1 h-[32px] rounded-[4px] flex items-center justify-center gap-1.5 text-[12px] font-medium text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] transition-all cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[15px] leading-none">
+              assignment_return
+            </span>
+            <span>Returns</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/exchanges')}
+            className="flex-1 h-[32px] rounded-[4px] flex items-center justify-center gap-1.5 text-[12px] font-bold transition-all cursor-pointer bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs border border-stone-200/90 dark:border-stone-700/80"
+          >
+            <span className="material-symbols-outlined text-[15px] leading-none">swap_horiz</span>
+            <span>Exchanges</span>
+          </button>
+        </div>
+
+        <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
+          {/* Search Bar - Height exactly matches FilterBar/Actions (42px) */}
+          <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+              search
+            </span>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search exchanges by ID, order, customer, product..."
+              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            )}
+          </div>
+
+          {/* Action Controls Group */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Filters Button */}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowFiltersMenu(!showFiltersMenu)}
+                className={`h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 rounded-[4px] border transition-colors shrink-0 cursor-pointer ${
+                  showFiltersMenu || activeFilterCount > 0
+                    ? 'bg-[var(--admin-accent)] text-white border-transparent shadow-sm font-semibold'
+                    : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)]'
+                }`}
+                title="Exchange Filters"
+              >
+                <span className="material-symbols-outlined text-[18px]">tune</span>
+                <span className="font-semibold text-[13px] hidden sm:inline">
+                  {activeFilterCount > 0 ? `${activeFilterCount} Filters` : 'Filters'}
+                </span>
+                {activeFilterCount > 0 && (
+                  <span className="min-w-[16px] h-4 px-1 rounded-full bg-white text-[var(--admin-accent)] text-[10px] font-bold flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Filters Dropdown Modal */}
+              <AnimatePresence>
+                {showFiltersMenu && (
+                  <>
+                    <div
+                      onClick={() => setShowFiltersMenu(false)}
+                      className="fixed inset-0 z-[120] bg-black/30 sm:bg-transparent"
+                    />
+
+                    <motion.div
+                      initial={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
+                      animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
+                      exit={isMobile ? { y: '100%' } : { opacity: 0, y: -8, scale: 0.98 }}
+                      transition={{ duration: 0.15 }}
+                      className="fixed sm:absolute bottom-0 inset-x-0 sm:top-full sm:bottom-auto sm:right-0 sm:left-auto z-[130] sm:mt-2 w-full sm:w-[320px] bg-[var(--admin-surface)] rounded-t-[8px] sm:rounded-[4px] shadow-2xl border border-[var(--admin-border-strong)] flex flex-col p-5 sm:p-4 text-left"
+                    >
+                      <div className="flex justify-between items-center mb-4 sm:mb-3">
+                        <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[18px]">tune</span>
+                          Exchange Filters
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => setShowFiltersMenu(false)}
+                          className="sm:hidden p-1 hover:bg-[var(--admin-border-subtle)] rounded-[4px]"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-4 max-h-[60vh] overflow-y-auto scrollbar-hide pr-0.5">
+                        {/* Saved Views */}
+                        <div>
+                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                            Saved Views
+                          </label>
+                          <select
+                            value={savedView}
+                            onChange={handleSavedViewChange}
+                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] font-medium outline-none text-[var(--admin-accent)]"
+                          >
+                            <option value="All Exchanges">View: All Exchanges</option>
+                            <option value="Needs Attention">Needs Action / Under Review</option>
+                            <option value="Pending Pickups">Pending Return Pickups</option>
+                            <option value="Replacement Dispatched">Replacement Dispatched</option>
+                            <option value="Payment Required">Customer Payment Required</option>
+                            <option value="Completed">Completed & Settled</option>
+                          </select>
+                        </div>
+
+                        {/* Sort */}
+                        <div>
+                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                            Sort By
+                          </label>
+                          <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
+                          >
+                            <option value="Newest first">Newest first</option>
+                            <option value="Oldest first">Oldest first</option>
+                            <option value="Price Difference: High to Low">
+                              Difference: High to Low
+                            </option>
+                            <option value="Price Difference: Low to High">
+                              Difference: Low to High
+                            </option>
+                          </select>
+                        </div>
+
+                        {/* Status Filter */}
+                        <div>
+                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                            Status Lifecycle
+                          </label>
+                          <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
+                          >
+                            <option value="All">All Statuses</option>
+                            <option value="under_review">Under Review</option>
+                            <option value="approved">Approved</option>
+                            <option value="pickups">Pickup In Transit</option>
+                            <option value="qc">QC / Warehouse Received</option>
+                            <option value="dispatched">Replacement Dispatched</option>
+                            <option value="completed">Completed</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
+                        </div>
+
+                        {/* Price Difference Filter */}
+                        <div>
+                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                            Price Difference
+                          </label>
+                          <select
+                            value={diffFilter}
+                            onChange={(e) => setDiffFilter(e.target.value)}
+                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
+                          >
+                            <option value="All">All Amounts</option>
+                            <option value="zero">Even Swap (₹0 Diff)</option>
+                            <option value="collect">Customer Collect Due (+)</option>
+                            <option value="refund">Refund to Customer Due (-)</option>
+                          </select>
+                        </div>
+
+                        {/* Date Filter */}
+                        <div>
+                          <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider mb-2 block">
+                            Creation Date
+                          </label>
+                          <select
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                            className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-3 py-2 text-[12px] outline-none"
+                          >
+                            <option value="All Time">All Time</option>
+                            <option value="Today">Today</option>
+                            <option value="Last 7 Days">Last 7 Days</option>
+                            <option value="Last 30 Days">Last 30 Days</option>
+                            <option value="This Month">This Month</option>
+                            <option value="Custom">Custom Range...</option>
+                          </select>
+                        </div>
+
+                        {dateFilter === 'Custom' && (
+                          <div className="grid grid-cols-2 gap-2 pt-1">
+                            <input
+                              type="date"
+                              value={customDateRange.from}
+                              onChange={(e) =>
+                                setCustomDateRange((prev) => ({
+                                  ...prev,
+                                  from: e.target.value,
+                                }))
+                              }
+                              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none"
+                            />
+                            <input
+                              type="date"
+                              value={customDateRange.to}
+                              onChange={(e) =>
+                                setCustomDateRange((prev) => ({
+                                  ...prev,
+                                  to: e.target.value,
+                                }))
+                              }
+                              className="w-full bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-[4px] px-2 py-1.5 text-[11px] outline-none"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-[var(--admin-border-subtle)] flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleResetAllFilters}
+                          className="admin-btn-outline flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
+                        >
+                          Clear All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowFiltersMenu(false)}
+                          className="admin-btn-primary flex-1 justify-center py-2.5 !rounded-[4px] text-[13px]"
+                        >
+                          Apply Filters
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
-            <div className="p-5 space-y-1 border-b md:border-b-0 md:border-r border-[var(--admin-border-subtle)]">
-              <span className="text-[10px] text-[var(--admin-warning)] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[var(--admin-warning)] animate-pulse" />
-                Pending Pickups
-              </span>
-              <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                {stats.pendingPickups || 0}
-              </p>
-              <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
-                Logistics scheduled
-              </span>
+
+            {/* View Mode Toggle (Table / Kanban) - Hidden on Mobile */}
+            <div className="hidden md:flex items-center gap-1 shrink-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] p-1 h-[42px] min-h-[42px] max-h-[42px] box-border">
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
+                  viewMode === 'table'
+                    ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                }`}
+                title="Table View"
+              >
+                <span className="material-symbols-outlined text-[18px] leading-none">
+                  view_list
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('kanban')}
+                className={`h-[32px] w-[32px] min-h-[32px] min-w-[32px] max-h-[32px] max-w-[32px] rounded-[3px] box-border flex items-center justify-center transition-all cursor-pointer ${
+                  viewMode === 'kanban'
+                    ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                }`}
+                title="Kanban View"
+              >
+                <span className="material-symbols-outlined text-[18px] leading-none">
+                  view_kanban
+                </span>
+              </button>
             </div>
-            <div className="p-5 space-y-1 border-r border-[var(--admin-border-subtle)]">
-              <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
-                Exchange Requests
+
+            {/* Refresh Button - Hidden on Mobile */}
+            <button
+              type="button"
+              onClick={fetchExchanges}
+              className="hidden md:flex h-[42px] min-h-[42px] max-h-[42px] px-3 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-[4px] items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0 gap-1.5 font-semibold text-[13px]"
+              title="Refresh exchanges"
+            >
+              <span
+                className={`material-symbols-outlined text-[18px] ${isLoading ? 'animate-spin' : ''}`}
+              >
+                refresh
               </span>
-              <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                {stats.exchangeRequests || 0}
-              </p>
-              <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
-                Product swaps
-              </span>
-            </div>
-            <div className="p-5 space-y-1 bg-[var(--admin-danger)]/5 border-l-0">
-              <span className="text-[10px] text-[var(--admin-danger)] font-bold uppercase tracking-wider">
-                High Fraud Risk
-              </span>
-              <p className="text-[14px] font-bold text-[var(--admin-danger)]">
-                {stats.fraudAlerts || 0}
-              </p>
-              <span className="text-[10px] text-[var(--admin-danger)] opacity-80 mt-1 block">
-                Needs investigation
-              </span>
-            </div>
+              <span>Refresh</span>
+            </button>
+
+            {/* Export CSV Button */}
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="h-[42px] min-h-[42px] max-h-[42px] w-[42px] sm:w-auto px-0 sm:px-3 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-[4px] flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0 gap-1.5 font-semibold text-[13px]"
+              title="Export CSV"
+            >
+              <span className="material-symbols-outlined text-[18px]">download</span>
+              <span className="hidden sm:inline">Export</span>
+            </button>
           </div>
         </motion.div>
+      </div>
 
-        <motion.div variants={fadeUp} className="admin-card overflow-hidden text-left relative p-0">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-[var(--admin-border-strong)] z-10" />
+      {/* ─── REAL-TIME OPERATIONS LEDGER (Matches Orders COD/Operations Ledger) ─── */}
+      <motion.div
+        variants={fadeUp}
+        className="admin-card overflow-hidden text-left relative p-0 !rounded-[4px] border border-[var(--admin-border)] shadow-xs"
+      >
+        <div className="absolute top-0 left-0 w-full h-[3px] bg-[var(--admin-border-strong)] z-10" />
+        <div className="grid grid-cols-2 md:grid-cols-4 bg-[var(--admin-surface)]">
+          <div className="p-5 space-y-1 border-r border-b md:border-b-0 border-[var(--admin-border-subtle)]">
+            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
+              Pending Exchanges
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+              {pendingApprovalCount}
+            </p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
+              Awaiting review
+            </span>
+          </div>
+          <div className="p-5 space-y-1 border-b md:border-b-0 md:border-r border-[var(--admin-border-subtle)]">
+            <span className="text-[10px] text-[var(--admin-warning)] font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[var(--admin-warning)] animate-pulse" />
+              Logistics Pending
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+              {logisticsPendingCount}
+            </p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
+              Pickup / In Transit
+            </span>
+          </div>
+          <div className="p-5 space-y-1 border-r border-[var(--admin-border-subtle)]">
+            <span className="text-[10px] text-[var(--admin-text-tertiary)] font-bold uppercase tracking-wider">
+              Replacement Shipped
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
+              {replacementsDispatchedCount}
+            </p>
+            <span className="text-[10px] text-[var(--admin-text-secondary)] mt-1 block">
+              Fulfillment in transit
+            </span>
+          </div>
+          <div className="p-5 space-y-1 bg-[var(--admin-success-light)] border-l-0">
+            <span className="text-[10px] text-[var(--admin-success)] font-bold uppercase tracking-wider">
+              Completed Swaps
+            </span>
+            <p className="text-[14px] font-bold text-[var(--admin-success)]">{completedCount}</p>
+            <span className="text-[10px] text-[var(--admin-success)] opacity-80 mt-1 block">
+              Delivered & Settled
+            </span>
+          </div>
+        </div>
+      </motion.div>
 
+      {/* Desktop Table View */}
+      {viewMode === 'table' && (
+        <motion.div
+          variants={fadeUp}
+          className="hidden md:block admin-card overflow-x-auto p-0 !rounded-[4px] border border-[var(--admin-border)] shadow-xs text-left"
+        >
           <div className="overflow-x-auto custom-scrollbar">
-            <table className="admin-table w-full min-w-[1100px]">
+            <table className="admin-table w-full min-w-[1100px] text-left">
               <thead>
-                <tr>
-                  <th className="w-10 pl-5">
-                    <input type="checkbox" className="admin-checkbox" disabled />
+                <tr className="border-b border-[var(--admin-border-subtle)] bg-[var(--admin-surface-muted)] text-[11px] uppercase tracking-wider font-bold text-[var(--admin-text-tertiary)]">
+                  <th className="py-3 px-4 whitespace-nowrap min-w-[130px] pl-5 !bg-[var(--admin-surface-muted)]">
+                    Exchange ID
                   </th>
-                  <th className="whitespace-nowrap min-w-[130px]">Exchange ID</th>
-                  <th className="whitespace-nowrap min-w-[160px]">Customer</th>
-                  <th className="min-w-[280px]">Item Details</th>
-                  <th className="whitespace-nowrap min-w-[160px]">Difference</th>
-                  <th className="whitespace-nowrap min-w-[190px]">Req. Status</th>
-                  <th className="whitespace-nowrap min-w-[140px]">Replacement</th>
-                  <th className="whitespace-nowrap text-right pr-5 min-w-[80px]">Actions</th>
+                  <th className="py-3 px-4 whitespace-nowrap min-w-[160px] !bg-[var(--admin-surface-muted)]">
+                    Customer
+                  </th>
+                  <th className="py-3 px-4 min-w-[280px] !bg-[var(--admin-surface-muted)]">
+                    Item Details
+                  </th>
+                  <th className="py-3 px-4 whitespace-nowrap min-w-[160px] !bg-[var(--admin-surface-muted)]">
+                    Difference
+                  </th>
+                  <th className="py-3 px-4 whitespace-nowrap min-w-[190px] !bg-[var(--admin-surface-muted)]">
+                    Req. Status
+                  </th>
+                  <th className="py-3 px-4 whitespace-nowrap text-right pr-5 min-w-[80px] !bg-[var(--admin-surface-muted)]">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -446,21 +1322,7 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                         }
                       }}
                     >
-                      <td className="pl-5">
-                        <input type="checkbox" className="admin-checkbox" />
-                      </td>
-                      <td className="relative overflow-hidden font-semibold text-[var(--admin-text-primary)] pl-7">
-                        {/* Top-Left Diagonal Status Badge */}
-                        <div className="absolute top-0 left-0 w-14 h-14 pointer-events-none z-10 overflow-hidden">
-                          <div
-                            className={`absolute top-2.5 -left-8 w-28 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wide ${getExchangeStatusBadgeStyle(ex.returnRequestId?.status, ex.replacementStatus)}`}
-                          >
-                            {getExchangeStatusLabel(
-                              ex.returnRequestId?.status,
-                              ex.replacementStatus,
-                            )}
-                          </div>
-                        </div>
+                      <td className="font-semibold text-[var(--admin-text-primary)]">
                         <div className="flex items-center gap-2 text-[var(--admin-accent)]">
                           <span className="material-symbols-outlined text-[14px]">swap_horiz</span>
                           {ex.exchangeId || ex._id.substring(0, 8)}
@@ -487,7 +1349,7 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                           </span>
                         </div>
                       </td>
-                      <td>
+                      <td className="min-w-[280px] py-3">
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2 flex-1 bg-[var(--admin-surface-muted)] p-2 rounded border border-[var(--admin-border-subtle)]">
@@ -536,15 +1398,17 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                               </div>
                             </div>
                           </div>
-                          {ex.returnRequestId?.items?.[0]?.reason && (
-                            <div className="flex items-start gap-1 text-[11px] text-[var(--admin-text-secondary)]">
-                              <span className="material-symbols-outlined text-[14px] mt-[1px]">
+                          {(ex.returnRequestId?.items?.[0]?.reason || ex.reason) && (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-[11px] font-medium bg-amber-500/10 text-amber-900 dark:text-amber-300 border border-amber-500/20 w-fit max-w-full">
+                              <span className="material-symbols-outlined text-[13px] text-amber-600 dark:text-amber-400 shrink-0">
                                 info
                               </span>
-                              <div>
-                                <span className="font-medium">Reason:</span>{' '}
-                                {ex.returnRequestId.items[0].reason}
-                              </div>
+                              <span className="truncate">
+                                <span className="font-semibold text-amber-950 dark:text-amber-200">
+                                  Reason:
+                                </span>{' '}
+                                {ex.returnRequestId?.items?.[0]?.reason || ex.reason}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -569,7 +1433,7 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                                 </span>
                                 Refund Settled
                               </span>
-                            ) : (
+                            ) : !isExchangeUnderReview(ex) ? (
                               <div className="flex flex-col gap-1 mt-0.5">
                                 <button
                                   type="button"
@@ -604,6 +1468,31 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                                   </button>
                                 )}
                               </div>
+                            ) : null
+                          ) : ex.differenceAction === 'collect_payment' &&
+                            Number(ex.priceDifference) > 0 ? (
+                            ex.paymentStatus === 'payment_paid' ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded w-max">
+                                <span className="material-symbols-outlined text-[12px]">
+                                  check_circle
+                                </span>
+                                Paid
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openCollectPaymentModal(ex);
+                                }}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300/80 rounded-md transition-all shadow-2xs cursor-pointer w-max"
+                                title="Click to register payment collected from customer"
+                              >
+                                <span className="material-symbols-outlined text-[13px] text-amber-700">
+                                  payments
+                                </span>
+                                Collect ₹{ex.priceDifference}
+                              </button>
                             )
                           ) : (
                             <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--admin-text-tertiary)] bg-[var(--admin-surface-muted)] px-1.5 py-0.5 rounded w-max">
@@ -614,95 +1503,72 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                       </td>
                       <td className="whitespace-nowrap min-w-[190px]">
                         <div className="flex flex-col items-start gap-1.5">
-                          {ex.returnRequestId?.status === 'submitted' ? (
+                          {isExchangeUnderReview(ex) ? (
                             <div className="flex items-center gap-1.5 w-max">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  confirm({
-                                    title: 'Approve Exchange',
-                                    message:
-                                      'Are you sure you want to approve this exchange request?',
-                                    confirmText: 'Approve',
-                                    type: 'info',
-                                  }).then((confirmed) => {
-                                    if (confirmed && ex.returnRequestId?._id) {
-                                      transitionStatus(ex.returnRequestId._id, {
-                                        nextStatus: 'approved',
-                                        reason: 'Approved from Exchange Hub',
-                                      }).then(() => fetchExchanges());
-                                    }
-                                  });
+                                  handleApproveExchange(ex);
                                 }}
-                                className="admin-btn admin-btn-primary !py-1 !px-2.5 text-[10px] uppercase tracking-wider font-bold shadow-2xs"
+                                disabled={updatingStatusId === ex._id}
+                                className="h-9 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-[6px] flex items-center justify-center gap-1.5 px-3 shadow-2xs cursor-pointer border-0 disabled:opacity-50 transition-colors"
                               >
-                                Approve
+                                {updatingStatusId === ex._id ? (
+                                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <span className="material-symbols-outlined text-[16px]">
+                                    check_circle
+                                  </span>
+                                )}
+                                <span>Approve</span>
                               </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  confirm({
-                                    title: 'Reject Exchange',
-                                    message: 'Please provide a reason for rejecting this exchange:',
-                                    isPrompt: true,
-                                    promptPlaceholder: 'Enter rejection reason...',
-                                    confirmText: 'Reject',
-                                    type: 'danger',
-                                  }).then((reason) => {
-                                    if (
-                                      reason &&
-                                      typeof reason === 'string' &&
-                                      ex.returnRequestId?._id
-                                    ) {
-                                      transitionStatus(ex.returnRequestId._id, {
-                                        nextStatus: 'rejected',
-                                        reason,
-                                      }).then(() => fetchExchanges());
-                                    }
-                                  });
+                                  handleRejectExchange(ex);
                                 }}
-                                className="admin-btn bg-white hover:bg-red-50 text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 !py-1 !px-2.5 text-[10px] uppercase tracking-wider font-bold shadow-2xs transition-all"
+                                disabled={updatingStatusId === ex._id}
+                                className="h-9 bg-white dark:bg-stone-800 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 font-bold text-xs rounded-[6px] border border-red-200 dark:border-red-800/60 px-3 shadow-2xs cursor-pointer disabled:opacity-50 transition-colors flex items-center justify-center gap-1"
                               >
-                                Reject
+                                <span className="material-symbols-outlined text-[15px]">close</span>
+                                <span>Reject</span>
                               </button>
                             </div>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(
-                                  `/admin/exchanges/requests/${ex.returnRequestId?._id || ex.returnRequestId || ex._id}`,
-                                );
-                              }}
-                              className="admin-btn bg-white hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border-strong)] !py-1 !px-2.5 text-[10px] uppercase tracking-wider font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                            <div
+                              className="flex items-center gap-1.5 w-max"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              Manage
-                              <span className="material-symbols-outlined text-[13px]">
-                                arrow_forward
-                              </span>
-                            </button>
+                              <div className="relative w-[170px] h-9">
+                                <select
+                                  value={ex.returnRequestId?.status || 'approved'}
+                                  onChange={(e) => handleReturnStatusChange(ex, e.target.value)}
+                                  disabled={updatingStatusId === ex._id}
+                                  className="w-full h-9 !min-h-[36px] !max-h-[36px] appearance-none bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 border border-stone-300 dark:border-stone-600 text-stone-800 dark:text-stone-200 text-[11px] font-bold rounded-[6px] pl-2.5 pr-7 cursor-pointer shadow-2xs outline-none focus:border-amber-500 transition-colors disabled:opacity-50 truncate"
+                                >
+                                  {RETURN_STATUS_OPTIONS.map((opt) => (
+                                    <option
+                                      key={opt.value}
+                                      value={opt.value}
+                                      disabled={opt.value === 'submitted'}
+                                    >
+                                      {opt.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-stone-500">
+                                  {updatingStatusId === ex._id ? (
+                                    <span className="w-3.5 h-3.5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <span className="material-symbols-outlined text-[16px]">
+                                      expand_more
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           )}
                         </div>
-                      </td>
-                      <td className="whitespace-nowrap min-w-[140px]">
-                        {(() => {
-                          const info = getReplacementStatusInfo(
-                            ex.replacementStatus,
-                            ex.returnRequestId?.status,
-                            Boolean(ex.replacementItem?.reservationId),
-                          );
-                          return (
-                            <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border whitespace-nowrap ${info.badgeClass}`}
-                            >
-                              <span className="material-symbols-outlined text-[12px]">
-                                {info.icon}
-                              </span>
-                              {info.label}
-                            </span>
-                          );
-                        })()}
                       </td>
                       <td className="text-right pr-5">
                         <div
@@ -770,128 +1636,205 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                 )}
               </tbody>
             </table>
+          </div>
+        </motion.div>
+      )}
 
-            {/* Mobile Cards View with 4-Step Dropdown */}
-            <div className="md:hidden flex flex-col gap-3 px-1 py-3">
-              {filteredExchanges.length === 0 ? (
-                <div className="py-10 text-center flex flex-col items-center justify-center bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)]">
-                  <EmptyState
-                    icon={searchTerm ? 'search_off' : 'swap_horiz'}
-                    title={searchTerm ? 'No Matches Found' : 'No Exchanges Found'}
-                    description={
-                      searchTerm
-                        ? 'No exchanges match your search.'
-                        : 'There are no active exchanges currently registered.'
-                    }
+      {/* Cards View (Responsive Grid in kanban mode, mobile list in table mode) */}
+      <motion.div
+        variants={fadeUp}
+        className={
+          viewMode === 'kanban'
+            ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pt-1'
+            : 'md:hidden flex flex-col gap-3 px-0.5 py-1'
+        }
+      >
+        {filteredExchanges.length === 0 ? (
+          <div className="py-10 text-center flex flex-col items-center justify-center bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border)]">
+            <EmptyState
+              icon={searchTerm ? 'search_off' : 'swap_horiz'}
+              title={searchTerm ? 'No Matches Found' : 'No Exchanges Found'}
+              description={
+                searchTerm
+                  ? 'No exchanges match your search.'
+                  : 'There are no active exchanges currently registered.'
+              }
+            />
+          </div>
+        ) : (
+          filteredExchanges.map((ex) => {
+            const returnImg =
+              ex.originalItem?.imageSrc || ex.originalItem?.image || ex.originalItem?.images?.[0];
+            const replaceImg =
+              ex.replacementItem?.imageSrc ||
+              ex.replacementItem?.image ||
+              ex.replacementItem?.images?.[0];
+            const isExpanded = expandedCardIds.has(ex._id);
+
+            return (
+              <div
+                key={ex._id}
+                onClick={() => {
+                  const requestId = ex.returnRequestId?._id || ex.returnRequestId || ex._id;
+                  if (requestId) navigate(`/admin/exchanges/requests/${requestId}`);
+                }}
+                className="relative overflow-hidden rounded-[8px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 cursor-pointer hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm transition-all"
+              >
+                {/* Header: EXC ID + Order + Status Pill */}
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-bold text-[var(--admin-text-primary)] text-[14px]">
+                        {ex.exchangeId || ex._id.substring(0, 8)}
+                      </span>
+                      <span className="font-mono text-[11px] text-[var(--admin-text-secondary)] font-medium">
+                        #
+                        {ex.orderId?.orderCode ||
+                          ex.orderId?.orderId ||
+                          (ex.orderId?._id || ex.orderId)?.toString().substring(0, 8) ||
+                          'Order'}
+                      </span>
+                    </div>
+                    <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] block mt-0.5 truncate">
+                      {ex.returnRequestId?.userId?.name || ex.userId?.name || 'Customer'}
+                    </span>
+                  </div>
+                  <AdminStatusPill
+                    status={getExchangeStatusLabel(
+                      ex.returnRequestId?.status,
+                      ex.replacementStatus,
+                    )}
+                    className="shrink-0"
                   />
                 </div>
-              ) : (
-                filteredExchanges.map((ex) => (
-                  <div
-                    key={ex._id}
-                    onClick={() => {
-                      const requestId = ex.returnRequestId?._id || ex.returnRequestId;
-                      if (requestId) navigate(`/admin/exchanges/requests/${requestId}`);
-                    }}
-                    className="relative overflow-hidden rounded-[var(--admin-radius-lg)] p-4 shadow-sm border border-[var(--admin-border)] bg-white flex flex-col gap-3 cursor-pointer hover:shadow-md transition-all"
-                  >
-                    {/* Top-Left Diagonal Status Badge */}
-                    <div className="absolute top-0 left-0 w-14 h-14 pointer-events-none z-10 overflow-hidden rounded-tl-[var(--admin-radius-lg)]">
-                      <div
-                        className={`absolute top-2.5 -left-8 w-28 text-[7px] font-extrabold text-white text-center uppercase py-[2px] -rotate-45 shadow-sm tracking-wide ${getExchangeStatusBadgeStyle(ex.returnRequestId?.status, ex.replacementStatus)}`}
-                      >
-                        {getExchangeStatusLabel(ex.returnRequestId?.status, ex.replacementStatus)}
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-start gap-2 pl-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-[var(--admin-text-primary)] text-sm">
-                            {ex.exchangeId || ex._id.substring(0, 8)}
-                          </span>
-                          <span className="font-mono text-xs text-[var(--admin-text-secondary)]">
-                            #{ex.orderId?.orderCode || ex.orderId?._id?.slice(-8) || 'Order'}
-                          </span>
-                        </div>
-                        <span className="text-xs font-medium text-[var(--admin-text-secondary)] block mt-0.5 truncate">
-                          {ex.userId?.name || 'Customer'}
-                        </span>
-                      </div>
 
-                      {/* Step selector pill on the card (matching first page) */}
-                      <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                {/* Swap Box with Product Images */}
+                <div className="bg-[#FAF9F5] dark:bg-stone-800/60 p-2.5 rounded-[6px] border border-stone-200/80 dark:border-stone-700/60 flex items-center gap-2">
+                  {/* Return Item Thumbnail & Title */}
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {returnImg ? (
+                      <img
+                        src={returnImg}
+                        alt=""
+                        className="w-11 h-11 rounded-[4px] object-cover border border-stone-200 bg-white shrink-0 shadow-2xs"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-11 h-11 rounded-[4px] bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-400 shrink-0">
+                        <span className="material-symbols-outlined text-[18px]">inventory_2</span>
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[9px] font-extrabold text-amber-700 uppercase tracking-wider block leading-tight">
+                        RETURN
+                      </span>
+                      <p
+                        className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate mt-0.5"
+                        title={ex.originalItem?.title}
+                      >
+                        {ex.originalItem?.title || 'Returned Item'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Center Swap Arrow */}
+                  <div className="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-stone-700 border border-stone-200/90 dark:border-stone-600 shadow-2xs text-stone-500 dark:text-stone-300">
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </div>
+
+                  {/* Replacement Item Thumbnail & Title */}
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {replaceImg ? (
+                      <img
+                        src={replaceImg}
+                        alt=""
+                        className="w-11 h-11 rounded-[4px] object-cover border border-blue-200 bg-white shrink-0 shadow-2xs"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-11 h-11 rounded-[4px] bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-400 shrink-0">
+                        <span className="material-symbols-outlined text-[18px]">swap_horiz</span>
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[9px] font-extrabold text-blue-600 uppercase tracking-wider block leading-tight">
+                        REPLACEMENT
+                      </span>
+                      <p
+                        className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate mt-0.5"
+                        title={ex.replacementItem?.title}
+                      >
+                        {ex.replacementItem?.title || 'Replacement Item'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial Difference & Status Badge */}
+                <div className="flex items-center justify-between pt-0.5 text-xs">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11px] text-[var(--admin-text-secondary)] font-medium">
+                      Difference:
+                    </span>
+                    <span className="font-extrabold text-[var(--admin-text-primary)] text-[13px]">
+                      ₹{ex.priceDifference || 0}
+                    </span>
+                    {ex.differenceAction === 'refund_difference' &&
+                      Number(ex.priceDifference) > 0 &&
+                      (Boolean(ex.additionalRefundId) ||
+                      ex.paymentStatus === 'payment_paid' ||
+                      ['completed', 'refund_completed'].includes(ex.returnRequestId?.status) ||
+                      Boolean(ex.returnRequestId?.refundRecordId) ? (
+                        <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-[4px]">
+                          <span className="material-symbols-outlined text-[11px]">verified</span>
+                          Settled
+                        </span>
+                      ) : !isExchangeUnderReview(ex) ? (
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(
-                              `/admin/exchanges/requests/${ex.returnRequestId?._id || ex.returnRequestId || ex._id}`,
-                            );
+                            openManualSettleModal(ex, false);
                           }}
-                          className="admin-btn bg-white hover:bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border-strong)] !py-1 !px-2 text-[10px] uppercase tracking-wider font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                          className="px-2 py-0.5 text-[9.5px] font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-[4px] shadow-2xs cursor-pointer flex items-center gap-0.5"
                         >
-                          Manage
-                          <span className="material-symbols-outlined text-[13px]">
-                            arrow_forward
+                          <span className="material-symbols-outlined text-[11px]">
+                            currency_rupee
                           </span>
+                          Settle
                         </button>
-                      </div>
-                    </div>
+                      ) : null)}
+                    {ex.differenceAction === 'collect_payment' &&
+                      Number(ex.priceDifference) > 0 &&
+                      ex.paymentStatus === 'payment_paid' && (
+                        <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-[4px]">
+                          <span className="material-symbols-outlined text-[11px]">
+                            check_circle
+                          </span>
+                          Paid
+                        </span>
+                      )}
+                  </div>
 
-                    {/* Items comparison preview */}
-                    <div className="flex items-center gap-2 bg-[var(--admin-surface-muted)] p-2.5 rounded-lg border border-[var(--admin-border-subtle)] text-xs">
-                      <div className="flex-1 min-w-0">
-                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">
-                          Return
-                        </span>
-                        <p className="font-bold text-[var(--admin-text-primary)] truncate mt-0.5">
-                          {ex.originalItem?.title || 'Returned Item'}
-                        </p>
-                      </div>
-                      <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-tertiary)] shrink-0">
-                        arrow_forward
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider block">
-                          Replacement
-                        </span>
-                        <p className="font-bold text-[var(--admin-text-primary)] truncate mt-0.5">
-                          {ex.replacementItem?.title || 'Replacement Item'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-1 border-t border-[var(--admin-border-subtle)] text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] text-[var(--admin-text-secondary)]">
-                          Difference:
-                        </span>
-                        <span className="font-mono font-bold text-[var(--admin-text-primary)]">
-                          ₹{ex.priceDifference || 0}
-                        </span>
-                        {ex.differenceAction === 'refund_difference' &&
-                          Number(ex.priceDifference) > 0 &&
-                          !(
-                            Boolean(ex.additionalRefundId) ||
-                            ex.paymentStatus === 'payment_paid' ||
-                            ['completed', 'refund_completed'].includes(
-                              ex.returnRequestId?.status,
-                            ) ||
-                            Boolean(ex.returnRequestId?.refundRecordId)
-                          ) && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openManualSettleModal(ex, false);
-                              }}
-                              className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-500 hover:bg-amber-600 text-white rounded cursor-pointer"
-                            >
-                              Settle
-                            </button>
-                          )}
-                      </div>
-                      {(() => {
+                  <div>
+                    {/* Instead of reserve stock badge, show Collect Payment button if customer needs to pay and has not paid yet */}
+                    {ex.differenceAction === 'collect_payment' &&
+                    Number(ex.priceDifference) > 0 &&
+                    ex.paymentStatus !== 'payment_paid' ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openCollectPaymentModal(ex);
+                        }}
+                        className="px-2.5 py-1 text-[10px] font-bold bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-[6px] shadow-2xs cursor-pointer flex items-center gap-1 border border-amber-600 transition-all uppercase tracking-wider"
+                        title="Click to register customer difference payment"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">payments</span>
+                        Collect ₹{ex.priceDifference}
+                      </button>
+                    ) : (
+                      (() => {
                         const info = getReplacementStatusInfo(
                           ex.replacementStatus,
                           ex.returnRequestId?.status,
@@ -899,302 +1842,856 @@ export default function AdminExchangeHub({ hideHeader = false }) {
                         );
                         return (
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border whitespace-nowrap shrink-0 ${info.badgeClass}`}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-[4px] text-[10px] font-bold uppercase tracking-wider border whitespace-nowrap shrink-0 ${info.badgeClass}`}
                           >
-                            <span className="material-symbols-outlined text-[11px]">
+                            <span className="material-symbols-outlined text-[12px]">
                               {info.icon}
                             </span>
                             {info.label}
                           </span>
                         );
-                      })()}
-                    </div>
+                      })()
+                    )}
                   </div>
-                ))
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </div>
-      {/* ─── Manual Refund Settlement Modal ─── */}
-      {isSettleModalOpen && settleExchange && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[110] p-3 sm:p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget && !isSubmittingSettle) {
-              setIsSettleModalOpen(false);
-            }
-          }}
-        >
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-[var(--admin-border)] overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200">
-            {/* Header */}
-            <div className="p-4 sm:p-5 border-b border-[var(--admin-border)] flex items-center justify-between bg-amber-500/5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-800 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[22px]">payments</span>
                 </div>
-                <div>
-                  <h3 className="text-sm sm:text-base font-bold text-[var(--admin-text-primary)]">
-                    Settle Refund & Record Payment
-                  </h3>
-                  <p className="text-[11px] text-[var(--admin-text-secondary)]">
-                    Record money payout before completing Exchange #
-                    {settleExchange.exchangeId || settleExchange._id?.slice(-8)}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSettleModalOpen(false)}
-                disabled={isSubmittingSettle}
-                className="w-8 h-8 rounded-lg text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            </div>
 
-            {/* Body */}
-            <div className="p-4 sm:p-5 overflow-y-auto space-y-4">
-              {/* Notice Banner */}
-              <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-xl text-xs space-y-1">
-                <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                  <span className="material-symbols-outlined text-[16px] text-amber-600">info</span>
-                  Manual Refund Balance Settlement
-                </div>
-                <p className="text-amber-800 text-[11px] leading-relaxed">
-                  The customer returned a higher-value item and is owed a price difference refund of{' '}
-                  <strong className="font-bold text-amber-950">
-                    ₹{settleExchange.priceDifference || 0}
-                  </strong>
-                  . Record the manual transfer details below to reconcile your records and fulfill
-                  the exchange.
-                </p>
-              </div>
-
-              {/* Customer & Items Recap */}
-              <div className="p-3 bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] rounded-xl space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[var(--admin-text-tertiary)] font-medium">Customer:</span>
-                  <span className="font-bold text-[var(--admin-text-primary)]">
-                    {settleExchange.returnRequestId?.userId?.name || 'Customer'}{' '}
-                    {settleExchange.returnRequestId?.userId?.phone
-                      ? `(${settleExchange.returnRequestId.userId.phone})`
-                      : ''}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-1 border-t border-[var(--admin-border-subtle)]">
-                  <span className="text-[var(--admin-text-tertiary)] font-medium">Returning:</span>
-                  <span className="font-semibold text-[var(--admin-text-primary)] truncate max-w-[240px]">
-                    {settleExchange.originalItem?.title || 'Returned Item'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-1 border-t border-[var(--admin-border-subtle)]">
-                  <span className="text-blue-600 font-medium">Replacement:</span>
-                  <span className="font-semibold text-[var(--admin-text-primary)] truncate max-w-[240px]">
-                    {settleExchange.replacementItem?.title || 'Replacement Item'}
-                  </span>
-                </div>
-                {(settleExchange.upiId || settleExchange.returnRequestId?.upiId) && (
-                  <div className="flex items-center justify-between pt-1 border-t border-[var(--admin-border-subtle)]">
-                    <span className="text-[var(--admin-text-tertiary)] font-medium">
-                      Customer UPI:
-                    </span>
-                    <div className="flex items-center gap-1.5 font-mono font-bold text-[var(--admin-text-primary)]">
-                      <span>{settleExchange.upiId || settleExchange.returnRequestId?.upiId}</span>
+                {/* Status Action Section:
+                      - When submitted: show APPROVE EXCHANGE & REJECT pill buttons, plus Details toggle
+                      - Only after approval does the full status dropdown activate:
+                        Both Status Dropdown & Details Button are placed in a 2-column grid to strictly match size equally (36px height, 50% width each)
+                  */}
+                {isExchangeUnderReview(ex) ? (
+                  <div
+                    className="flex items-center justify-between pt-2 border-t border-stone-200/70 dark:border-stone-700/60 gap-2 w-full"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      {/* APPROVE EXCHANGE Button (Green / Emerald with 6px border-radius) */}
                       <button
                         type="button"
-                        onClick={() => {
-                          const upi = settleExchange.upiId || settleExchange.returnRequestId?.upiId;
-                          navigator.clipboard.writeText(upi);
-                          toast.success(`Copied UPI ID: ${upi}`);
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApproveExchange(ex);
                         }}
-                        className="text-amber-800 hover:text-amber-900 cursor-pointer"
-                        title="Copy UPI ID"
+                        disabled={updatingStatusId === ex._id}
+                        className="flex-1 min-w-0 h-9 rounded-[6px] bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 px-3 shadow-2xs cursor-pointer border-0 disabled:opacity-50"
                       >
-                        <span className="material-symbols-outlined text-[14px]">content_copy</span>
+                        {updatingStatusId === ex._id ? (
+                          <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                        ) : (
+                          <span className="material-symbols-outlined text-[16px] shrink-0">
+                            check_circle
+                          </span>
+                        )}
+                        <span className="truncate">Approve Exchange</span>
+                      </button>
+
+                      {/* REJECT Button (Matching 6px border-radius) */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRejectExchange(ex);
+                        }}
+                        disabled={updatingStatusId === ex._id}
+                        className="h-9 px-3 rounded-[6px] border border-red-200 text-red-700 bg-white hover:bg-red-50 active:scale-95 text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1 cursor-pointer shadow-2xs shrink-0 disabled:opacity-50"
+                      >
+                        <span className="material-symbols-outlined text-[16px] text-red-600">
+                          cancel
+                        </span>
+                        <span>Reject</span>
+                      </button>
+                    </div>
+
+                    {/* Expandable Details Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => toggleExpandCard(ex._id)}
+                      className={`h-9 px-2.5 rounded-[6px] border text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-2xs shrink-0 ${
+                        isExpanded
+                          ? 'border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200'
+                          : 'border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50'
+                      }`}
+                      title="Toggle Order Details"
+                    >
+                      <span>{isExpanded ? 'Hide' : 'Details'}</span>
+                      <span className="material-symbols-outlined text-[16px] shrink-0 text-stone-500">
+                        {isExpanded ? 'expand_less' : 'expand_more'}
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    className="flex items-center gap-2 pt-2 border-t border-stone-200/70 dark:border-stone-700/60 w-full"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="text-[10px] uppercase font-bold text-stone-500 dark:text-stone-400 shrink-0">
+                      Status:
+                    </span>
+
+                    {/* Symmetrical 2-Column Grid: Exact Equal Width & Height for both Status Dropdown and Details Button */}
+                    <div className="grid grid-cols-2 gap-2 flex-1 min-w-0">
+                      {/* Box 1: Status Dropdown */}
+                      <div className="relative w-full h-9">
+                        <select
+                          value={ex.returnRequestId?.status || 'approved'}
+                          onChange={(e) => handleReturnStatusChange(ex, e.target.value)}
+                          disabled={updatingStatusId === ex._id}
+                          className="w-full h-9 !min-h-[36px] !max-h-[36px] appearance-none bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 border border-stone-300 dark:border-stone-600 text-stone-800 dark:text-stone-200 text-[11px] font-bold rounded-[6px] pl-2.5 pr-7 cursor-pointer shadow-2xs outline-none focus:border-amber-500 transition-colors disabled:opacity-50 truncate"
+                        >
+                          {RETURN_STATUS_OPTIONS.map((opt) => (
+                            <option
+                              key={opt.value}
+                              value={opt.value}
+                              disabled={opt.value === 'submitted'}
+                            >
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-stone-500">
+                          {updatingStatusId === ex._id ? (
+                            <span className="w-3.5 h-3.5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <span className="material-symbols-outlined text-[16px]">
+                              expand_more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Box 2: Details Toggle Button (Matching 36px Height, 50% Width, and 6px Radius) */}
+                      <button
+                        type="button"
+                        onClick={() => toggleExpandCard(ex._id)}
+                        className={`w-full h-9 !min-h-[36px] !max-h-[36px] rounded-[6px] border text-[11px] font-bold flex items-center justify-between px-2.5 transition-colors cursor-pointer shadow-2xs ${
+                          isExpanded
+                            ? 'border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200'
+                            : 'border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50'
+                        }`}
+                        title="Toggle Order Details"
+                      >
+                        <span className="truncate">{isExpanded ? 'Hide' : 'Details'}</span>
+                        <span className="material-symbols-outlined text-[16px] shrink-0 text-stone-500">
+                          {isExpanded ? 'expand_less' : 'expand_more'}
+                        </span>
                       </button>
                     </div>
                   </div>
                 )}
+
+                {/* Expandable Details Panel */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      key={`exchange-expanded-${ex._id}`}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div
+                        className="pt-2 border-t border-dashed border-stone-200 dark:border-stone-700 flex flex-col gap-2 text-xs"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* Customer Contact: Equally aligned 2-column grid matching controls sideways */}
+                        <div className="grid grid-cols-2 gap-2 items-center text-[11px] text-stone-600 dark:text-stone-300 bg-stone-50 dark:bg-stone-800/50 px-2.5 py-2 rounded-[6px] border border-stone-200/60 dark:border-stone-700/60">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="material-symbols-outlined !text-[15px] !leading-none text-stone-400 shrink-0 select-none">
+                              call
+                            </span>
+                            <a
+                              href={`tel:${ex.returnRequestId?.userId?.phone || ex.userId?.phone || ''}`}
+                              className="font-semibold text-stone-800 dark:text-stone-200 hover:underline truncate leading-tight inline-flex items-center"
+                            >
+                              {ex.returnRequestId?.userId?.phone || ex.userId?.phone || 'No phone'}
+                            </a>
+                          </div>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="material-symbols-outlined !text-[15px] !leading-none text-stone-400 shrink-0 select-none">
+                              mail
+                            </span>
+                            <a
+                              href={`mailto:${ex.returnRequestId?.userId?.email || ex.userId?.email || ''}`}
+                              className="font-medium text-stone-700 dark:text-stone-300 hover:underline truncate leading-tight inline-flex items-center"
+                              title={ex.returnRequestId?.userId?.email || ex.userId?.email}
+                            >
+                              {ex.returnRequestId?.userId?.email || ex.userId?.email || 'No email'}
+                            </a>
+                          </div>
+                        </div>
+
+                        {/* Return Reason */}
+                        {ex.returnRequestId?.items?.[0]?.reason && (
+                          <div className="text-[11px] bg-amber-500/5 border border-amber-500/20 p-2 rounded-[6px] text-amber-900 dark:text-amber-300 flex items-start gap-1.5">
+                            <span className="material-symbols-outlined text-[14px] shrink-0 text-amber-600 dark:text-amber-400 mt-0.5">
+                              info
+                            </span>
+                            <div className="leading-tight">
+                              <span className="font-semibold text-stone-700 dark:text-stone-300 block mb-0.5">
+                                Return Reason:
+                              </span>
+                              {ex.returnRequestId.items[0].reason}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Customer UPI for Balance Refund */}
+                        {(ex.upiId || ex.returnRequestId?.upiId) && (
+                          <div className="text-[11px] bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700 p-2 rounded-[6px] flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="material-symbols-outlined text-[14px] shrink-0 text-stone-400">
+                                account_balance_wallet
+                              </span>
+                              <span className="truncate text-stone-600 dark:text-stone-300 font-mono text-[10.5px]">
+                                UPI: {ex.upiId || ex.returnRequestId?.upiId}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(
+                                  ex.upiId || ex.returnRequestId?.upiId,
+                                );
+                                toast.success('UPI ID copied!');
+                              }}
+                              className="text-amber-700 dark:text-amber-400 font-bold hover:underline flex items-center gap-0.5 shrink-0"
+                            >
+                              <span className="material-symbols-outlined text-[12px]">
+                                content_copy
+                              </span>
+                              Copy
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-
-              {/* Form */}
-              <form id="settle-refund-form" onSubmit={handleSettleSubmit} className="space-y-3.5">
-                <div>
-                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
-                    Refund Amount (₹) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-tertiary)] font-bold text-sm pointer-events-none z-10 select-none">
-                      ₹
-                    </span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="1"
-                      required
-                      placeholder="e.g. 500"
-                      className="admin-input admin-input-currency w-full !pl-8 text-sm font-mono font-black text-[var(--admin-text-primary)]"
-                      style={{ paddingLeft: '32px' }}
-                      value={settleData.amount}
-                      onChange={(e) => setSettleData({ ...settleData, amount: e.target.value })}
-                    />
+            );
+          })
+        )}
+      </motion.div>
+      {/* ─── Manual Refund Settlement Modal (Standardized Rental Style) ─── */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {isSettleModalOpen && settleExchange && (
+              <div
+                key="settle-refund-modal-portal"
+                className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 font-sans pointer-events-none"
+                style={{
+                  fontFamily:
+                    "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                }}
+              >
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={!isSubmittingSettle ? () => setIsSettleModalOpen(false) : undefined}
+                  className="fixed inset-0 bg-black/40 dark:bg-black/60 cursor-pointer pointer-events-auto"
+                  style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className={`admin-section-root ${isDark ? 'dark' : ''} pointer-events-auto relative w-full sm:max-w-md bg-white dark:bg-[#1f1e1b] rounded-t-[6px] sm:rounded-[4px] shadow-2xl overflow-hidden z-10 border-t sm:border border-[#e8e4d9] dark:border-white/10 font-sans max-h-[88vh] sm:max-h-none flex flex-col`}
+                  style={{
+                    backgroundColor: 'var(--admin-surface, #ffffff)',
+                    borderColor: 'var(--admin-border, #e8e4d9)',
+                    fontFamily:
+                      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Mobile Drawer Pull Indicator */}
+                  <div className="pt-2.5 pb-1 sm:hidden flex justify-center w-full bg-[#f2efe5] dark:bg-[#2a2823] cursor-grab active:cursor-grabbing">
+                    <div className="w-10 h-1.5 rounded-full bg-stone-300 dark:bg-stone-600" />
                   </div>
-                </div>
 
-                <div>
-                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
-                    Payment Mode
-                  </label>
-                  <select
-                    className="admin-input w-full text-xs font-semibold"
-                    value={settleData.paymentMethod}
-                    onChange={(e) =>
-                      setSettleData({ ...settleData, paymentMethod: e.target.value })
-                    }
+                  {/* Header */}
+                  <div
+                    className="px-5 py-3.5 sm:py-4 border-b border-[#e8e4d9] dark:border-white/10 flex items-center justify-between shrink-0"
+                    style={{
+                      borderColor: 'var(--admin-border-subtle, #e8e4d9)',
+                    }}
                   >
-                    <option value="upi">Direct UPI (GPay / PhonePe / Paytm / BHIM)</option>
-                    <option value="bank_transfer">Direct Bank Transfer (IMPS / NEFT)</option>
-                    <option value="cash">Cash Handover / In-Person</option>
-                    <option value="wallet">Customer Store Wallet Credit</option>
-                  </select>
-                </div>
+                    <div className="min-w-0 pr-2">
+                      <h3
+                        className="text-[14.5px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 !font-sans tracking-normal"
+                        style={{
+                          fontFamily:
+                            "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                        }}
+                      >
+                        <span className="material-symbols-outlined text-[20px] text-[var(--admin-accent)]">
+                          payments
+                        </span>
+                        Record Balance Refund
+                      </h3>
+                      <p className="text-[11px] text-[var(--admin-text-secondary)] font-medium truncate mt-0.5 !font-sans">
+                        Exchange #{settleExchange.exchangeId || settleExchange._id?.slice(-8)}{' '}
+                        &bull; Customer Balance Settlement
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsSettleModalOpen(false)}
+                      disabled={isSubmittingSettle}
+                      className="w-7 h-7 rounded-[4px] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">close</span>
+                    </button>
+                  </div>
 
-                {settleData.paymentMethod === 'upi' && (
-                  <div>
-                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
-                      Customer Destination UPI ID <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative flex items-center">
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. 9154691315@ybl"
-                        className="admin-input w-full text-xs font-mono font-bold pr-8"
-                        value={settleData.upiId}
-                        onChange={(e) => setSettleData({ ...settleData, upiId: e.target.value })}
-                      />
-                      {settleData.upiId && (
+                  {/* Form */}
+                  <form
+                    onSubmit={handleSettleSubmit}
+                    className="p-5 sm:p-6 space-y-4 font-sans overflow-y-auto custom-scrollbar flex-1 pb-8 sm:pb-6"
+                  >
+                    {/* Summary Box */}
+                    <div
+                      className="bg-[#f6f4eb] dark:bg-[#211f1b] rounded-[4px] p-3.5 border border-[#e8e4d9] dark:border-white/10 space-y-2 text-xs"
+                      style={{
+                        backgroundColor: 'var(--admin-bg-subtle, #f6f4eb)',
+                        borderColor: 'var(--admin-border-subtle, #e8e4d9)',
+                      }}
+                    >
+                      <div className="flex justify-between items-center text-[13px]">
+                        <span className="text-[var(--admin-text-secondary)] font-medium">
+                          Customer
+                        </span>
+                        <span className="font-bold text-[var(--admin-text-primary)]">
+                          {settleExchange.returnRequestId?.userId?.name || 'Customer'}
+                        </span>
+                      </div>
+                      {(settleExchange.upiId || settleExchange.returnRequestId?.upiId) && (
+                        <div className="flex justify-between items-center text-[12px] pt-1 border-t border-[var(--admin-border-subtle)]">
+                          <span className="text-[var(--admin-text-secondary)] font-medium">
+                            Customer UPI
+                          </span>
+                          <div className="flex items-center gap-1 font-mono font-bold text-[var(--admin-text-primary)]">
+                            <span>
+                              {settleExchange.upiId || settleExchange.returnRequestId?.upiId}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const upi =
+                                  settleExchange.upiId || settleExchange.returnRequestId?.upiId;
+                                navigator.clipboard.writeText(upi);
+                                toast.success(`Copied UPI ID: ${upi}`);
+                              }}
+                              className="text-[var(--admin-accent)] hover:underline cursor-pointer p-0.5"
+                              title="Copy UPI ID"
+                            >
+                              <span className="material-symbols-outlined text-[13px]">
+                                content_copy
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-[14px] pt-1.5 mt-1 border-t border-[var(--admin-border-subtle)]">
+                        <span className="font-bold text-[var(--admin-text-primary)]">
+                          Refund Due
+                        </span>
+                        <span className="font-bold text-amber-700 dark:text-amber-400 text-[15px] font-mono">
+                          ₹{settleExchange.priceDifference || 0}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Amount to Refund */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                          Refund Amount (₹) *
+                        </label>
+                        {settleExchange.priceDifference > 0 &&
+                          String(settleData.amount) !== String(settleExchange.priceDifference) && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSettleData({
+                                  ...settleData,
+                                  amount: settleExchange.priceDifference,
+                                })
+                              }
+                              className="text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer"
+                            >
+                              Fill Due (₹{settleExchange.priceDifference})
+                            </button>
+                          )}
+                      </div>
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-tertiary)] font-bold text-[14px] pointer-events-none select-none">
+                          ₹
+                        </span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="1"
+                          required
+                          value={settleData.amount}
+                          onChange={(e) => setSettleData({ ...settleData, amount: e.target.value })}
+                          placeholder={`e.g. ${settleExchange.priceDifference || 500}`}
+                          disabled={isSubmittingSettle}
+                          className="w-full h-10 pl-8 pr-3 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[14px] font-semibold transition-all font-mono"
+                          style={{
+                            backgroundColor: 'var(--admin-bg, #ffffff)',
+                            borderColor: 'var(--admin-border, #e8e4d9)',
+                            color: 'var(--admin-text-primary, #000000)',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Payment Mode */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                        Payment Mode *
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={settleData.paymentMethod}
+                          onChange={(e) =>
+                            setSettleData({ ...settleData, paymentMethod: e.target.value })
+                          }
+                          disabled={isSubmittingSettle}
+                          className="w-full h-10 px-3 pr-9 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[13px] cursor-pointer font-medium"
+                          style={{
+                            backgroundColor: 'var(--admin-bg, #ffffff)',
+                            borderColor: 'var(--admin-border, #e8e4d9)',
+                            color: 'var(--admin-text-primary, #000000)',
+                            WebkitAppearance: 'none',
+                            MozAppearance: 'none',
+                            appearance: 'none',
+                            backgroundImage: 'none',
+                          }}
+                        >
+                          <option value="upi">Direct UPI (GPay / PhonePe / Paytm / BHIM)</option>
+                          <option value="bank_transfer">Direct Bank Transfer (IMPS / NEFT)</option>
+                          <option value="cash">Cash Handover / In-Person</option>
+                          <option value="wallet">Customer Store Wallet Credit</option>
+                        </select>
+                        <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[var(--admin-text-secondary)] pointer-events-none select-none">
+                          expand_more
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Customer UPI if UPI mode */}
+                    {settleData.paymentMethod === 'upi' && (
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                          Customer Destination UPI ID *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. user@okhdfcbank"
+                          value={settleData.upiId}
+                          onChange={(e) => setSettleData({ ...settleData, upiId: e.target.value })}
+                          disabled={isSubmittingSettle}
+                          className="w-full h-10 px-3 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[13px] font-mono transition-all"
+                          style={{
+                            backgroundColor: 'var(--admin-bg, #ffffff)',
+                            borderColor: 'var(--admin-border, #e8e4d9)',
+                            color: 'var(--admin-text-primary, #000000)',
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* UTR / Transaction Reference */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                          Transaction Reference / UTR
+                        </label>
                         <button
                           type="button"
                           onClick={() => {
-                            navigator.clipboard.writeText(settleData.upiId);
-                            toast.success(`Copied UPI ID: ${settleData.upiId}`);
+                            const randomRef = `REF-${Date.now().toString().slice(-8)}`;
+                            setSettleData({ ...settleData, transactionId: randomRef });
                           }}
-                          className="absolute right-2 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
-                          title="Copy UPI"
+                          className="text-[11px] font-semibold text-[var(--admin-accent)] hover:underline cursor-pointer"
                         >
-                          <span className="material-symbols-outlined text-[14px]">
-                            content_copy
-                          </span>
+                          Auto-fill Ref
                         </button>
-                      )}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="e.g. UPI-5601315 or 423589123456"
+                        value={settleData.transactionId}
+                        onChange={(e) =>
+                          setSettleData({ ...settleData, transactionId: e.target.value })
+                        }
+                        disabled={isSubmittingSettle}
+                        className="w-full h-10 px-3 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[13px] font-mono transition-all"
+                        style={{
+                          backgroundColor: 'var(--admin-bg, #ffffff)',
+                          borderColor: 'var(--admin-border, #e8e4d9)',
+                          color: 'var(--admin-text-primary, #000000)',
+                        }}
+                      />
                     </div>
-                  </div>
-                )}
 
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider">
-                      Transaction Reference / UTR Number
+                    {/* Internal Note */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                        Admin Internal Note (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Verified transfer in bank portal..."
+                        value={settleData.notes}
+                        onChange={(e) => setSettleData({ ...settleData, notes: e.target.value })}
+                        disabled={isSubmittingSettle}
+                        className="w-full h-10 px-3 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[13px] transition-all"
+                        style={{
+                          backgroundColor: 'var(--admin-bg, #ffffff)',
+                          borderColor: 'var(--admin-border, #e8e4d9)',
+                          color: 'var(--admin-text-primary, #000000)',
+                        }}
+                      />
+                    </div>
+
+                    {/* Auto Complete Checkbox */}
+                    <label className="flex items-start gap-2.5 p-3 rounded-[4px] border border-[#e8e4d9] dark:border-white/10 bg-[#f6f4eb] dark:bg-[#211f1b] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settleData.autoComplete}
+                        onChange={(e) =>
+                          setSettleData({ ...settleData, autoComplete: e.target.checked })
+                        }
+                        className="mt-0.5 rounded-[3px] accent-[var(--admin-accent)]"
+                      />
+                      <div className="text-[11.5px] leading-tight text-[var(--admin-text-primary)]">
+                        <strong className="block font-bold">
+                          Mark exchange as Completed immediately
+                        </strong>
+                        <span className="text-[10.5px] text-[var(--admin-text-secondary)]">
+                          Finalizes the exchange request and records payout in audit log.
+                        </span>
+                      </div>
                     </label>
+
+                    {/* Submit Button */}
+                    <div className="pt-2">
+                      <button
+                        type="submit"
+                        disabled={isSubmittingSettle || Number(settleData.amount) <= 0}
+                        className="w-full h-10 rounded-[4px] bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white font-bold text-[13px] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          backgroundColor: 'var(--admin-accent, #826237)',
+                        }}
+                      >
+                        {isSubmittingSettle ? (
+                          <>
+                            <span className="material-symbols-outlined animate-spin text-[16px]">
+                              progress_activity
+                            </span>
+                            <span>Recording Refund...</span>
+                          </>
+                        ) : (
+                          <span>
+                            {settleData.autoComplete
+                              ? 'Confirm Refund & Complete Exchange'
+                              : 'Record Refund Only'}
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
+
+      {/* ─── Collect Customer Difference Payment Modal (Standardized Rental Style) ─── */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {isCollectPaymentModalOpen && collectPaymentExchange && (
+              <div
+                key="collect-payment-modal-portal"
+                className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 font-sans pointer-events-none"
+                style={{
+                  fontFamily:
+                    "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                }}
+              >
+                {/* Full-screen Backdrop */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={
+                    !isSubmittingPayment ? () => setIsCollectPaymentModalOpen(false) : undefined
+                  }
+                  className="fixed inset-0 bg-black/40 dark:bg-black/60 cursor-pointer pointer-events-auto"
+                  style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
+                />
+
+                {/* Modal Card / Mobile App Drawer */}
+                <motion.div
+                  initial={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: isMobile ? '100%' : 4, scale: isMobile ? 1 : 0.98 }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative w-full sm:max-w-md bg-[var(--admin-bg)] dark:bg-[#1a1815] rounded-t-[6px] sm:rounded-[4px] shadow-2xl border border-[#e8e4d9] dark:border-white/10 overflow-hidden z-10 pointer-events-auto flex flex-col max-h-[90vh] sm:max-h-[85vh] font-sans"
+                  style={{
+                    backgroundColor: 'var(--admin-bg, #ffffff)',
+                    borderColor: 'var(--admin-border, #e8e4d9)',
+                    fontFamily:
+                      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                    boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.2)',
+                  }}
+                >
+                  {/* Top Drag Handle for Mobile */}
+                  <div className="w-10 h-1 bg-stone-300 dark:bg-stone-600 rounded-full mx-auto mt-2.5 mb-1 sm:hidden shrink-0" />
+
+                  {/* Header: Title + Close Button (Clean & Transparent BG) */}
+                  <div
+                    className="flex items-center justify-between px-5 py-3.5 sm:py-4 border-b border-[#e8e4d9] dark:border-white/10 shrink-0"
+                    style={{
+                      borderColor: 'var(--admin-border-subtle, #e8e4d9)',
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-[4px] bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-[18px]">payments</span>
+                      </div>
+                      <div>
+                        <h3
+                          className="text-[14.5px] font-bold text-[var(--admin-text-primary)] leading-tight tracking-normal !font-sans"
+                          style={{
+                            fontFamily:
+                              "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                          }}
+                        >
+                          Collect Customer Payment
+                        </h3>
+                        <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5 font-medium !font-sans">
+                          Exchange #
+                          {collectPaymentExchange.exchangeId ||
+                            collectPaymentExchange._id?.slice(-8)}{' '}
+                          &bull; Required Difference: ₹{collectPaymentExchange.priceDifference}
+                        </p>
+                      </div>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => {
-                        const randomRef = `UPI-${Date.now().toString().slice(-8)}`;
-                        setSettleData({ ...settleData, transactionId: randomRef });
-                      }}
-                      className="text-[10px] font-bold text-[var(--admin-accent)] hover:underline cursor-pointer"
+                      onClick={() => setIsCollectPaymentModalOpen(false)}
+                      disabled={isSubmittingPayment}
+                      className="w-7 h-7 rounded-[4px] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
                     >
-                      Auto-fill Ref
+                      <span className="material-symbols-outlined text-[16px]">close</span>
                     </button>
                   </div>
-                  <input
-                    type="text"
-                    placeholder="e.g. 423589123456, UPI-1315, or CASH-PAID"
-                    className="admin-input w-full text-xs font-mono"
-                    value={settleData.transactionId}
-                    onChange={(e) =>
-                      setSettleData({ ...settleData, transactionId: e.target.value })
-                    }
-                  />
-                  <p className="text-[10px] text-[var(--admin-text-tertiary)] mt-0.5">
-                    Reference number from your UPI app, bank receipt, or cash voucher.
-                  </p>
-                </div>
 
-                <div>
-                  <label className="text-[10px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block mb-1">
-                    Admin Internal Note (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Paid from business account to customer UPI..."
-                    className="admin-input w-full text-xs"
-                    value={settleData.notes}
-                    onChange={(e) => setSettleData({ ...settleData, notes: e.target.value })}
-                  />
-                </div>
-
-                {/* Auto Complete Checkbox */}
-                <div className="p-2.5 rounded-xl bg-blue-50/60 border border-blue-200/60 flex items-start gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    id="auto-complete-exchange-check"
-                    className="admin-checkbox mt-0.5"
-                    checked={settleData.autoComplete}
-                    onChange={(e) =>
-                      setSettleData({ ...settleData, autoComplete: e.target.checked })
-                    }
-                  />
-                  <label
-                    htmlFor="auto-complete-exchange-check"
-                    className="cursor-pointer select-none text-[11px] text-blue-900 leading-tight"
+                  {/* Form */}
+                  <form
+                    onSubmit={handleCollectPaymentSubmit}
+                    className="p-5 sm:p-6 space-y-4 font-sans overflow-y-auto custom-scrollbar flex-1 pb-8 sm:pb-6"
                   >
-                    <strong className="font-bold block">
-                      Mark exchange as Completed immediately after recording refund
-                    </strong>
-                    Finalizes the replacement delivery and closes this exchange ticket without
-                    further steps.
-                  </label>
-                </div>
-              </form>
-            </div>
+                    {/* Price Difference Summary Box (Clean, Warm & Polished) */}
+                    <div
+                      className="bg-[#faf8f2] dark:bg-[#201e19] rounded-[4px] p-3.5 border border-[#e8e4d9] dark:border-white/10 space-y-2.5 text-xs shadow-2xs"
+                      style={{
+                        backgroundColor: 'var(--admin-bg-subtle, #faf8f2)',
+                        borderColor: 'var(--admin-border-subtle, #e8e4d9)',
+                        fontFamily:
+                          "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                      }}
+                    >
+                      <div className="space-y-2">
+                        {/* Original Item */}
+                        <div className="flex justify-between items-start text-[12.5px] gap-2">
+                          <span className="text-stone-500 dark:text-stone-400 font-medium shrink-0 flex items-center gap-1.5 pt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-stone-400"></span>
+                            Original Item
+                          </span>
+                          <span className="font-semibold text-[var(--admin-text-primary)] text-right truncate max-w-[220px]">
+                            {collectPaymentExchange.originalItem?.title || 'Original Item'}
+                          </span>
+                        </div>
 
-            {/* Footer */}
-            <div className="p-4 sm:p-5 border-t border-[var(--admin-border)] bg-[var(--admin-surface)] flex items-center justify-end gap-2.5">
-              <button
-                type="button"
-                className="admin-btn admin-btn-outline text-xs"
-                onClick={() => setIsSettleModalOpen(false)}
-                disabled={isSubmittingSettle}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="settle-refund-form"
-                disabled={isSubmittingSettle}
-                className="admin-btn admin-btn-primary !bg-amber-600 hover:!bg-amber-700 text-white text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
-              >
-                {isSubmittingSettle ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Recording Refund...
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                    {settleData.autoComplete
-                      ? 'Confirm Refund & Complete Exchange'
-                      : 'Record Refund Only'}
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                        {/* Replacement Item */}
+                        <div className="flex justify-between items-start text-[12.5px] gap-2">
+                          <span className="text-emerald-700 dark:text-emerald-400 font-medium shrink-0 flex items-center gap-1.5 pt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Replacement Item
+                          </span>
+                          <span className="font-semibold text-emerald-700 dark:text-emerald-300 text-right truncate max-w-[220px]">
+                            {collectPaymentExchange.replacementItem?.title || 'Replacement Item'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Highlighted Difference Banner */}
+                      <div className="flex justify-between items-center px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-[4px] mt-1">
+                        <span className="font-bold text-[12px] text-amber-900 dark:text-amber-200">
+                          Price Difference Due
+                        </span>
+                        <span className="font-extrabold text-amber-700 dark:text-amber-400 font-mono text-[15px]">
+                          ₹{collectPaymentExchange.priceDifference || 0}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Amount Input */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                          Payment Amount (₹) *
+                        </label>
+                        {collectPaymentExchange.priceDifference > 0 &&
+                          String(collectPaymentData.amount) !==
+                            String(collectPaymentExchange.priceDifference) && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setCollectPaymentData({
+                                  ...collectPaymentData,
+                                  amount: String(collectPaymentExchange.priceDifference),
+                                })
+                              }
+                              className="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
+                            >
+                              Pay Full (₹{collectPaymentExchange.priceDifference})
+                            </button>
+                          )}
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] font-bold text-[var(--admin-text-secondary)]">
+                          ₹
+                        </span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          required
+                          value={collectPaymentData.amount}
+                          onChange={(e) =>
+                            setCollectPaymentData({ ...collectPaymentData, amount: e.target.value })
+                          }
+                          placeholder={`e.g. ${collectPaymentExchange.priceDifference || 500}`}
+                          disabled={isSubmittingPayment}
+                          className="w-full h-10 pl-8 pr-3 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[14px] font-bold font-mono transition-all"
+                          style={{
+                            backgroundColor: 'var(--admin-bg, #ffffff)',
+                            borderColor: 'var(--admin-border, #e8e4d9)',
+                            color: 'var(--admin-text-primary, #000000)',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Payment Mode */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                        Payment Method *
+                      </label>
+                      <div className="relative">
+                        <select
+                          required
+                          value={collectPaymentData.paymentMethod}
+                          onChange={(e) =>
+                            setCollectPaymentData({
+                              ...collectPaymentData,
+                              paymentMethod: e.target.value,
+                            })
+                          }
+                          disabled={isSubmittingPayment}
+                          className="w-full h-10 pl-3 pr-9 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[13px] font-medium transition-all cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--admin-bg, #ffffff)',
+                            borderColor: 'var(--admin-border, #e8e4d9)',
+                            color: 'var(--admin-text-primary, #000000)',
+                            WebkitAppearance: 'none',
+                            MozAppearance: 'none',
+                            appearance: 'none',
+                            backgroundImage: 'none',
+                          }}
+                        >
+                          <option value="upi">UPI / QR Code Scan</option>
+                          <option value="bank_transfer">Direct Bank Transfer / NEFT / IMPS</option>
+                          <option value="cash">Cash in Hand</option>
+                          <option value="card">POS / Debit / Credit Card</option>
+                          <option value="other">Other Payment Mode</option>
+                        </select>
+                        <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[var(--admin-text-secondary)] pointer-events-none select-none">
+                          expand_more
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Note / Reference (Optional, matching RentalPaymentModal) */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] block">
+                        Note / Reference (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Handed over at counter / UPI Ref #123"
+                        value={collectPaymentData.note}
+                        onChange={(e) =>
+                          setCollectPaymentData({ ...collectPaymentData, note: e.target.value })
+                        }
+                        disabled={isSubmittingPayment}
+                        className="w-full h-10 px-3 rounded-[4px] border border-[var(--admin-border)] bg-white dark:bg-[#1a1815] text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)] outline-none text-[13px] transition-all"
+                        style={{
+                          backgroundColor: 'var(--admin-bg, #ffffff)',
+                          borderColor: 'var(--admin-border, #e8e4d9)',
+                          color: 'var(--admin-text-primary, #000000)',
+                        }}
+                      />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="pt-2">
+                      <button
+                        type="submit"
+                        disabled={isSubmittingPayment || Number(collectPaymentData.amount) <= 0}
+                        className="w-full h-10 rounded-[4px] bg-[var(--admin-accent)] hover:bg-[var(--admin-accent-hover)] text-white font-bold text-[13px] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          backgroundColor: 'var(--admin-accent, #826237)',
+                        }}
+                      >
+                        {isSubmittingPayment ? (
+                          <>
+                            <span className="material-symbols-outlined animate-spin text-[16px]">
+                              progress_activity
+                            </span>
+                            <span>Recording Payment...</span>
+                          </>
+                        ) : (
+                          <span>
+                            Record Payment{' '}
+                            {Number(collectPaymentData.amount) > 0
+                              ? `(₹${collectPaymentData.amount})`
+                              : ''}
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
     </motion.div>
   );
 }

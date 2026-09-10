@@ -13,54 +13,77 @@ import { EventBookingManagementService } from '../../services/eventBooking/Event
 import { EventJobCheckoutService } from '../../services/eventBooking/EventJobCheckoutService';
 
 const resolveMissingPackages = async (bookings: any[]) => {
-  const bookingsMissingPackage = bookings.filter((b: any) => !b.eventPackage && b.title);
+  const bookingsMissingPackage = bookings.filter(
+    (b: any) => (!b.eventPackage || !b.eventPackage.image) && (b.title || b.eventType),
+  );
   if (bookingsMissingPackage.length > 0) {
     const Product = require('../../models/Product').default;
-    const products = await Product.find({}).select('title imageSrc').lean();
+    const products = await Product.find({}).select('title imageSrc category').lean();
 
     const ShowcaseCollection =
       mongoose.models.ShowcaseCollection || require('../../models/ShowcaseCollection').default;
-    const showcases = await ShowcaseCollection.find({}).select('title image').lean();
+    const showcases = await ShowcaseCollection.find({}).select('title image category').lean();
 
     const Event = mongoose.models.Event || require('../../models/Event').default;
-    const events = await Event.find({}).select('title image').lean();
+    const events = await Event.find({}).select('title image category').lean();
+
+    const allPool = [
+      ...showcases.map((s: any) => ({ ...s, imageSrc: s.image })),
+      ...events.map((e: any) => ({ ...e, imageSrc: e.image })),
+      ...products,
+    ];
 
     for (const booking of bookingsMissingPackage) {
-      const cleanTitle = booking.title
+      const cleanTitle = (booking.title || '')
         .replace(/^rent:\s*/i, '')
         .replace(/\s*booking$/i, '')
+        .replace(/\s*setup$/i, '')
         .trim()
         .toLowerCase();
 
-      let matchedItem = products.find((p: any) => p.title.toLowerCase().trim() === cleanTitle);
-      if (!matchedItem) {
-        matchedItem = products.find(
-          (p: any) =>
-            p.title.toLowerCase().includes(cleanTitle) ||
-            cleanTitle.includes(p.title.toLowerCase()),
-        );
-      }
+      // 1. Exact or substring match
+      let matchedItem = allPool.find(
+        (p: any) =>
+          p.title &&
+          (p.title.toLowerCase().trim() === cleanTitle ||
+            cleanTitle.includes(p.title.toLowerCase()) ||
+            p.title.toLowerCase().includes(cleanTitle)),
+      );
 
-      if (!matchedItem) {
-        matchedItem = showcases.find((s: any) => s.title.toLowerCase().trim() === cleanTitle);
-        if (!matchedItem) {
-          matchedItem = showcases.find(
-            (s: any) =>
-              s.title.toLowerCase().includes(cleanTitle) ||
-              cleanTitle.includes(s.title.toLowerCase()),
-          );
+      // 2. Keyword/token overlap match (if title was edited)
+      if (!matchedItem && cleanTitle) {
+        const words = cleanTitle.split(/\s+/).filter((w: string) => w.length > 2);
+        let bestScore = 0;
+        for (const item of allPool) {
+          if (!item.title) continue;
+          const iTitle = item.title.toLowerCase();
+          let score = 0;
+          for (const w of words) {
+            if (iTitle.includes(w)) score++;
+          }
+          if (score > bestScore) {
+            bestScore = score;
+            matchedItem = item;
+          }
         }
       }
 
-      if (!matchedItem) {
-        matchedItem = events.find((e: any) => e.title.toLowerCase().trim() === cleanTitle);
-        if (!matchedItem) {
-          matchedItem = events.find(
-            (e: any) =>
-              e.title.toLowerCase().includes(cleanTitle) ||
-              cleanTitle.includes(e.title.toLowerCase()),
+      // 3. Category / Event Type match
+      if (!matchedItem && booking.eventType) {
+        const bType = booking.eventType.toLowerCase().replace(/[-_]+/g, ' ').trim();
+        matchedItem = allPool.find((item: any) => {
+          const cat = (item.category || '').toLowerCase().replace(/[-_]+/g, ' ').trim();
+          return (
+            cat &&
+            (cat === bType || bType.includes(cat) || cat.includes(bType)) &&
+            (item.imageSrc || item.image)
           );
-        }
+        });
+      }
+
+      // 4. Fallback to any available showcase/event image
+      if (!matchedItem && allPool.length > 0) {
+        matchedItem = allPool.find((i: any) => i.imageSrc || i.image) || allPool[0];
       }
 
       if (matchedItem) {
@@ -68,7 +91,7 @@ const resolveMissingPackages = async (bookings: any[]) => {
         if (image) {
           booking.eventPackage = {
             _id: matchedItem._id,
-            title: booking.title,
+            title: booking.title || matchedItem.title,
             image: image,
           };
         }

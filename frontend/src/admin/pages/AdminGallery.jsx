@@ -246,33 +246,52 @@ export function AdminGallery() {
       {/* ─── Page Header ─── */}
       <PageHeader
         title="Gallery Curation"
-        subtitle={`${items.length} items cataloged · Manage design inspirations and real event showcases`}
+        subtitle={
+          isLoading ? (
+            <span>Loading gallery...</span>
+          ) : (
+            <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+              <span className="font-semibold text-[var(--admin-text-primary)]">
+                {items.length} Total Items
+              </span>
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {items.filter((i) => i.featured).length} Featured
+              </span>
+              <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                {categories.length} Categories
+              </span>
+            </div>
+          )
+        }
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
+            type="button"
             onClick={() => setShowSettingsModal(true)}
-            className="admin-btn admin-btn-outline"
+            className="h-[38px] px-3.5 rounded-[4px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-[var(--admin-border)] font-semibold text-[13px] flex items-center justify-center cursor-pointer transition-all active:scale-95 gap-1.5 shrink-0"
           >
             <span className="material-symbols-outlined text-[16px]">settings</span>
-            Settings <span className="text-[10px] ml-1">▾</span>
+            <span>Settings</span>
+            <span className="text-[10px]">▾</span>
           </button>
           <button
+            type="button"
             onClick={() => navigate('/admin/gallery/add')}
-            className="admin-btn admin-btn-primary"
+            className="h-[38px] px-4 rounded-[4px] bg-[var(--admin-accent)] hover:opacity-95 text-white text-[13px] font-bold inline-flex items-center gap-2 shadow-xs cursor-pointer transition-all active:scale-95 shrink-0"
           >
-            <span className="material-symbols-outlined text-[16px]">add_photo_alternate</span>
-            Add Item
+            <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+            <span>Add Item</span>
           </button>
         </div>
       </PageHeader>
 
-      {/* Upload/Edit Drawer Removed in favor of Router Navigation */}
-
-      {/* ─── Filters ─── */}
-      <motion.div variants={fadeUp} className="space-y-4">
-        {/* Search & Type Filter Row */}
-        <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full">
-          <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] flex items-center px-3">
+      {/* ─── Sticky 42px Search, Type & Category Toolbar ─── */}
+      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md space-y-2.5">
+        <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
+          {/* Search Bar - 42px height matching Orders standard */}
+          <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
             <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
               search
             </span>
@@ -281,41 +300,53 @@ export function AdminGallery() {
               placeholder="Search by title, event, tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
+              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0"
+                title="Clear search"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            )}
           </div>
 
-          <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-hidden">
-            <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full sm:w-auto">
-              {[
-                { id: 'All', label: 'All Items' },
-                { id: 'inspiration', label: 'Inspirations' },
-                { id: 'real-event', label: 'Real Events' },
-              ].map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setTypeFilter(t.id)}
-                  className={`flex-1 sm:flex-none px-4 py-1 rounded-sm text-[13px] font-bold transition-all whitespace-nowrap ${
-                    typeFilter === t.id
-                      ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
-                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+          {/* Type Segmented Pill Switcher - 42px container with 32px pills */}
+          <div className="flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] shrink-0 h-[42px] min-h-[42px] max-h-[42px] box-border">
+            {[
+              { id: 'All', label: 'All Items' },
+              { id: 'inspiration', label: 'Inspirations' },
+              { id: 'real-event', label: 'Real Events' },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTypeFilter(t.id)}
+                className={`h-[32px] min-h-[32px] max-h-[32px] px-3 sm:px-3.5 rounded-[3px] text-[12px] sm:text-[13px] font-bold transition-all whitespace-nowrap cursor-pointer box-border flex items-center justify-center leading-none ${
+                  typeFilter === t.id
+                    ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                    : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
-        </div>
+        </motion.div>
 
-        {/* Category Filter */}
-        <div className="flex items-center justify-between gap-4">
-          <FilterBar filters={categories} value={filter} onChange={setFilter} />
-          <span className="text-[11px] text-[var(--admin-text-tertiary)] font-medium shrink-0 hidden sm:block">
-            {filtered.length} items
+        {/* Category Filter Bar */}
+        <div className="flex items-center justify-between gap-3 overflow-hidden">
+          <div className="flex-1 min-w-0">
+            <FilterBar filters={categories} value={filter} onChange={setFilter} />
+          </div>
+          <span className="text-[12px] font-medium text-[var(--admin-text-tertiary)] shrink-0 hidden sm:block">
+            Showing {filtered.length} of {items.length} items
           </span>
         </div>
-      </motion.div>
+      </div>
 
       {/* ─── Gallery Grid ─── */}
       <motion.div

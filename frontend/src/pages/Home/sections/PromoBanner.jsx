@@ -94,7 +94,7 @@ export function PromoBanner({ previewContent }) {
       });
     }
     if (promoLink) {
-      navigate(promoLink);
+      navigate(promoLink, { state: { scrollToShop: true } });
     }
   };
 

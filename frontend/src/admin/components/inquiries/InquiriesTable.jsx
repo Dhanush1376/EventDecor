@@ -1,98 +1,124 @@
-import React from 'react';
-import { m as motion } from 'framer-motion';
-import { FilterBar } from '../AdminUIKit';
+import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import { formatCurrency } from '../AdminUIKit';
 import { EXTERNAL_URLS } from '../../../config/constants';
 import { WhatsAppIcon } from '../../../components/ui/WhatsAppIcon';
-const fadeUp = { hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } };
+import { customOrderService } from '../../../services/domainServices';
+import { getErrorMessage } from '../../../utils/core/errorHelpers';
 
-const getCardColorClass = (status) => {
-  switch (status) {
-    case 'Pending':
-      return 'bg-[#d97706]/15 border-[#d97706]/30'; // Ochre
-    case 'Reviewing':
-    case 'Quote Sent':
-      return 'bg-[#64748b]/15 border-[#64748b]/30'; // Slate Blue
-    case 'Approved':
-    case 'In Progress':
-    case 'Ready':
-    case 'Delivered':
-      return 'bg-[#7a8b76]/15 border-[#7a8b76]/30'; // Sage Green
-    case 'Cancelled':
-      return 'bg-[#9e5b5b]/15 border-[#9e5b5b]/30'; // Terracotta
-    default:
-      return 'bg-[var(--admin-bg-subtle)] border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-hover)]';
-  }
-};
+const ALL_STATUSES = [
+  'Pending',
+  'Reviewing',
+  'Quote Sent',
+  'Approved',
+  'In Progress',
+  'Ready',
+  'Delivered',
+  'Cancelled',
+];
 
 export function InquiriesTable({
-  orders,
+  orders = [],
   statusFilter,
   setStatusFilter,
   setSelectedOrder,
   handleUpdatePriority,
-  page,
-  setPage,
-  totalPages,
-  totalItems,
+  refetchOrders,
+  page: _page,
+  setPage: _setPage,
+  totalPages: _totalPages,
+  totalItems = 0,
 }) {
-  const tabs = [
-    'All',
-    'Pending',
-    'Reviewing',
-    'Quote Sent',
-    'Approved',
-    'In Progress',
-    'Ready',
-    'Delivered',
-    'Cancelled',
-  ];
+  const queryClient = useQueryClient();
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    setUpdatingStatusId(orderId);
+    try {
+      const res = await customOrderService.adminUpdateStatus(orderId, newStatus);
+      if (res?.success || res?.data) {
+        toast.success(`Inquiry status updated to ${newStatus}`);
+        refetchOrders?.();
+        queryClient.invalidateQueries({ queryKey: ['adminCustomOrders'] });
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update status'));
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
+
+  const handleApproveOrder = async (order) => {
+    await handleStatusChange(order._id, 'Approved');
+  };
+
+  const handleCancelOrder = async (order) => {
+    await handleStatusChange(order._id, 'Cancelled');
+  };
+
+  const getStatusBadgeStyle = (status) => {
+    const s = (status || '').toLowerCase();
+    switch (s) {
+      case 'approved':
+      case 'delivered':
+      case 'ready':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800';
+      case 'in progress':
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:border-indigo-800';
+      case 'quote sent':
+        return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:border-blue-800';
+      case 'reviewing':
+        return 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800';
+      case 'pending':
+        return 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800';
+      case 'cancelled':
+        return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:border-rose-800';
+      default:
+        return 'bg-stone-50 text-stone-600 border-stone-200 dark:bg-stone-800 dark:border-stone-700';
+    }
+  };
 
   return (
     <>
-      {/* Luxury Status Pipeline Segment Controls */}
-      <motion.div
-        variants={fadeUp}
-        className="mb-6 border-b border-[var(--admin-border-subtle)] w-full"
-      >
-        <FilterBar
-          filters={tabs}
-          value={statusFilter}
-          onChange={setStatusFilter}
-          counts={{ [statusFilter]: totalItems }}
-        />
-      </motion.div>
-
       {/* Desktop Table View */}
       <div className="hidden md:block admin-card overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className="admin-table w-full min-w-[900px]">
+          <table className="admin-table admin-table-compact admin-orders-table w-full">
             <thead>
-              <tr className="">
-                <th className="p-4.5 pl-6">Customer Name</th>
-                <th className="p-4.5">Type</th>
-                <th className="p-4.5">Request Details</th>
-                <th className="p-4.5">Event Date</th>
-                <th className="p-4.5">Priority</th>
-                <th className="p-4.5">Status</th>
-                <th className="p-4.5 text-right">Total Price</th>
-                <th className="p-4.5 text-right pr-6">Actions</th>
+              <tr>
+                <th className="whitespace-nowrap w-[230px]" style={{ paddingLeft: '24px' }}>
+                  Inquiry ID & Customer
+                </th>
+                <th className="whitespace-nowrap w-[110px]">Type</th>
+                <th className="whitespace-nowrap min-w-[160px]">Occasion & Scope</th>
+                <th className="whitespace-nowrap w-[120px]">Event Date</th>
+                <th className="whitespace-nowrap w-[100px]">Priority</th>
+                <th className="whitespace-nowrap w-[160px]">Status</th>
+                <th className="text-right whitespace-nowrap w-[120px]">Total Quote</th>
+                <th
+                  className="text-right whitespace-nowrap w-[100px]"
+                  style={{ paddingRight: '24px' }}
+                >
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
               {orders.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
-                    className="p-20 text-center text-[var(--admin-text-secondary)] bg-[var(--admin-surface)]"
+                    colSpan={8}
+                    className="p-16 text-center text-[var(--admin-text-secondary)] bg-[var(--admin-surface)]"
                   >
-                    <span className="material-symbols-outlined text-[48px] text-[var(--admin-text-tertiary)] mb-2 block">
+                    <span className="material-symbols-outlined text-[44px] text-[var(--admin-text-tertiary)] mb-2 block">
                       search_off
                     </span>
                     <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                      Data Not Found
+                      No Inquiries Found
                     </p>
                     <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1 max-w-[280px] mx-auto">
-                      No custom orders found matching your search.
+                      No custom orders match your current filter or search criteria.
                     </p>
                   </td>
                 </tr>
@@ -106,67 +132,86 @@ export function InquiriesTable({
                       })
                     : 'TBD';
                   const customerInitial = (order.customerName || 'C').charAt(0).toUpperCase();
+                  const orderCode =
+                    order.customOrderNumber || `#${order._id.slice(-6).toUpperCase()}`;
 
                   return (
                     <tr
                       key={order._id}
                       onClick={() => setSelectedOrder(order)}
-                      className={`border-b border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all duration-300 border-l-4 border-l-transparent hover:border-l-[var(--admin-accent)] ${getCardColorClass(order.status)}`}
+                      className="border-b border-[var(--admin-border-subtle)] hover:bg-[var(--admin-surface-muted)] cursor-pointer transition-colors duration-150"
                     >
-                      <td className="p-4.5 pl-6 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-[var(--admin-accent)] flex items-center justify-center font-bold text-[13px] shadow-sm">
-                          {customerInitial}
-                        </div>
-                        <div>
-                          <p className="font-bold text-[var(--admin-text-primary)]">
-                            {order.customerName}
-                          </p>
-                          <span className="text-[11px] text-[var(--admin-text-secondary)]/70 tracking-tight">
-                            {order.customerEmail}
-                          </span>
+                      {/* ID & Customer */}
+                      <td className="py-3 pl-6 pr-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-[var(--admin-accent)] flex items-center justify-center font-bold text-[12px] shrink-0">
+                            {customerInitial}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[11px] font-mono font-bold text-[var(--admin-accent)] block">
+                              {orderCode}
+                            </span>
+                            <p className="font-bold text-[var(--admin-text-primary)] text-[13px] truncate">
+                              {order.customerName || 'Customer'}
+                            </p>
+                            <span className="text-[11px] text-[var(--admin-text-secondary)] block truncate">
+                              {order.customerPhone || order.customerEmail || 'No contact'}
+                            </span>
+                          </div>
                         </div>
                       </td>
 
-                      <td className="p-4.5 font-bold uppercase tracking-wider">
+                      {/* Type Badge */}
+                      <td className="py-3 px-4">
                         <span
-                          className={`px-2 py-1 rounded-[6px] text-[10px] ${
+                          className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase tracking-wider border ${
                             order.customOrderType === 'product'
-                              ? 'bg-[#e3f2fd] text-[#1565c0]'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:border-blue-800'
                               : order.customOrderType === 'event'
-                                ? 'bg-[#f3e5f5] text-[#7b1fa2]'
-                                : order.customOrderType === 'general'
-                                  ? 'bg-[#fff8e1] text-[#f57f17]'
-                                  : 'bg-[var(--admin-bg-subtle)] text-[var(--admin-text-secondary)]'
+                                ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:border-purple-800'
+                                : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800'
                           }`}
                         >
-                          {order.customOrderType || 'Legacy'}
+                          {order.customOrderType || 'Custom'}
                         </span>
                       </td>
-                      <td className="p-4.5 text-[12px] text-[var(--admin-text-secondary)]">
-                        <div>
-                          <span className="font-bold text-[var(--admin-text-primary)] uppercase text-[10px]">
-                            {order.occasion || 'Custom'}
-                          </span>
+
+                      {/* Occasion & Scope */}
+                      <td className="py-3 px-4 text-[12px]">
+                        <div className="font-bold text-[var(--admin-text-primary)] text-[12px] truncate max-w-[200px]">
+                          {order.occasion || 'Special Request'}
                         </div>
-                        <div>{order.productType || 'N/A'}</div>
+                        <div className="text-[11px] text-[var(--admin-text-secondary)] truncate max-w-[200px]">
+                          {order.productSnapshot?.title ||
+                            order.productType ||
+                            'Bespoke Decor Setup'}
+                        </div>
                       </td>
-                      <td className="p-4.5 text-[var(--admin-text-primary)] font-light">
-                        {dateStr}
+
+                      {/* Event Date */}
+                      <td className="py-3 px-4 text-[12px] whitespace-nowrap">
+                        <span className="flex items-center gap-1 text-[var(--admin-text-secondary)] font-medium">
+                          <span className="material-symbols-outlined text-[15px] text-[var(--admin-text-tertiary)]">
+                            calendar_today
+                          </span>
+                          {dateStr}
+                        </span>
                       </td>
-                      <td className="p-4.5">
+
+                      {/* Priority */}
+                      <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                         <select
-                          value={order.priority}
+                          value={order.priority || 'low'}
                           onChange={(e) => {
                             e.stopPropagation();
-                            handleUpdatePriority(order._id, e.target.value);
+                            handleUpdatePriority?.(order._id, e.target.value);
                           }}
-                          onClick={(e) => e.stopPropagation()}
-                          className={`px-3 py-1 rounded-xl text-[11px] font-bold uppercase tracking-wider border cursor-pointer outline-none transition-all ${
+                          className={`h-7 px-2 rounded-[4px] text-[10px] font-bold uppercase tracking-wider border cursor-pointer outline-none transition-all ${
                             order.priority === 'high'
-                              ? 'bg-[var(--admin-error-light)] text-[var(--admin-error)] border-[var(--admin-error-border)]'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:border-rose-800'
                               : order.priority === 'medium'
-                                ? 'admin-badge admin-badge-warning border-[var(--admin-warning-border)]'
-                                : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border-[var(--admin-border)]'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800'
+                                : 'bg-stone-50 text-stone-600 border-stone-200 dark:bg-stone-800 dark:border-stone-700'
                           }`}
                         >
                           <option value="low">Low</option>
@@ -174,60 +219,96 @@ export function InquiriesTable({
                           <option value="high">High</option>
                         </select>
                       </td>
-                      <td className="p-4.5">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
-                            order.status === 'Pending'
-                              ? 'admin-badge admin-badge-warning'
-                              : order.status === 'Approved'
-                                ? 'bg-[var(--admin-success-light)] text-[var(--admin-success)]'
-                                : order.status === 'Cancelled'
-                                  ? 'admin-badge admin-badge-error'
-                                  : 'bg-[var(--admin-info-light)] text-[var(--admin-info)]'
-                          }`}
-                        >
-                          {order.status}
-                        </span>
+
+                      {/* Status */}
+                      <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                        {order.status === 'Pending' ? (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleApproveOrder(order)}
+                              disabled={updatingStatusId === order._id}
+                              className="h-8 px-2.5 rounded-[4px] bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                              title="Approve Inquiry"
+                            >
+                              {updatingStatusId === order._id ? (
+                                <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <span className="material-symbols-outlined text-[13px]">check</span>
+                              )}
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCancelOrder(order)}
+                              disabled={updatingStatusId === order._id}
+                              className="h-8 px-2 rounded-[4px] border border-rose-200 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/30 text-rose-600 text-[10px] font-bold uppercase tracking-wider flex items-center gap-0.5 transition-all cursor-pointer disabled:opacity-50"
+                              title="Cancel Inquiry"
+                            >
+                              <span className="material-symbols-outlined text-[13px]">close</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="relative inline-block w-34">
+                            <select
+                              value={order.status}
+                              onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                              disabled={updatingStatusId === order._id}
+                              className="w-full h-8 rounded-[4px] pl-2.5 pr-6 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[10.5px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)] cursor-pointer appearance-none shadow-2xs hover:border-[var(--admin-border-strong)] focus:outline-none disabled:opacity-50"
+                            >
+                              {ALL_STATUSES.map((st) => (
+                                <option key={st} value={st}>
+                                  {st}
+                                </option>
+                              ))}
+                            </select>
+                            <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-[14px] text-[var(--admin-text-tertiary)] pointer-events-none">
+                              {updatingStatusId === order._id ? (
+                                <span className="w-3 h-3 border-2 border-[var(--admin-accent)] border-t-transparent rounded-full animate-spin inline-block" />
+                              ) : (
+                                'expand_more'
+                              )}
+                            </span>
+                          </div>
+                        )}
                       </td>
-                      <td className="p-4.5 text-right pr-6 font-bold text-[var(--admin-accent)]">
+
+                      {/* Total Quote */}
+                      <td className="py-3 px-4 text-right font-bold text-[var(--admin-accent)] text-[13px] whitespace-nowrap">
                         {order.quotation?.total > 0
-                          ? `₹${order.quotation.total.toLocaleString('en-IN')}`
-                          : 'Custom Quote'}
+                          ? formatCurrency(order.quotation.total)
+                          : 'Pending'}
                       </td>
-                      <td className="p-4.5 text-right" onClick={(e) => e.stopPropagation()}>
+
+                      {/* Action buttons */}
+                      <td
+                        className="py-3 pl-4 pr-6 text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => setSelectedOrder(order)}
-                            className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)]"
-                            title="Quick Details"
+                            className="admin-btn-icon w-8 h-8 !rounded-[4px] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]"
+                            title="View Inquiry Details & Quotation"
                           >
-                            <span className="material-symbols-outlined text-[16px]">
+                            <span className="material-symbols-outlined text-[18px]">
                               visibility
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => console.log('Invoice view')}
-                            className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] opacity-50 cursor-not-allowed"
-                            title="Full Invoice (Coming Soon)"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">
-                              receipt_long
                             </span>
                           </button>
                           <a
                             href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${(order.customerPhone || order.phone || '').replace(/[^0-9]/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="admin-btn-icon w-8 h-8 p-0 min-h-0 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-success)]"
-                            title="WhatsApp"
+                            className="admin-btn-icon w-8 h-8 !rounded-[4px] text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                            title="Chat on WhatsApp"
                             onClick={(e) => {
                               if (!order.customerPhone && !order.phone) {
                                 e.preventDefault();
-                                alert('No phone number available for this inquiry.');
+                                toast.error('No phone number recorded for this inquiry');
                               }
                             }}
                           >
-                            <WhatsAppIcon className="w-[16px] h-[16px]" />
+                            <WhatsAppIcon className="w-[15px] h-[15px]" />
                           </a>
                         </div>
                       </td>
@@ -240,16 +321,18 @@ export function InquiriesTable({
         </div>
       </div>
 
-      {/* Mobile Card Deck View */}
+      {/* Mobile Card View (Unified with AdminOrders and AdminRentalOrders) */}
       <div className="block md:hidden space-y-3">
         {orders.length === 0 ? (
-          <div className="admin-card p-12 text-center text-[var(--admin-text-secondary)]">
+          <div className="admin-card !rounded-[4px] p-12 text-center text-[var(--admin-text-secondary)]">
             <span className="material-symbols-outlined text-[40px] text-[var(--admin-text-tertiary)] mb-2 block">
               search_off
             </span>
-            <p className="text-[13px] font-bold text-[var(--admin-text-primary)]">Data Not Found</p>
+            <p className="text-[13px] font-bold text-[var(--admin-text-primary)]">
+              No Inquiries Found
+            </p>
             <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">
-              No custom orders found matching search.
+              No custom orders match the current filter or search.
             </p>
           </div>
         ) : (
@@ -261,174 +344,218 @@ export function InquiriesTable({
                   year: 'numeric',
                 })
               : 'TBD';
-            const customerInitial = (order.customerName || 'C').charAt(0).toUpperCase();
+            const orderCode = order.customOrderNumber || `#${order._id.slice(-6).toUpperCase()}`;
+            const thumbnail =
+              order.productSnapshot?.imageSrc || order.inspirationImages?.[0] || null;
+            const hasQuote = (order.quotation?.total || 0) > 0;
 
             return (
               <div
                 key={order._id}
                 onClick={() => setSelectedOrder(order)}
-                className={`admin-card p-4 hover:border-[var(--admin-border-strong)] cursor-pointer transition-all duration-300 border-l-4 border-l-transparent hover:border-l-[var(--admin-accent)] active:scale-[0.99] space-y-3 ${getCardColorClass(order.status)}`}
+                className="rounded-[4px] p-4 shadow-xs border border-[var(--admin-border)] bg-[var(--admin-surface)] flex flex-col gap-3 cursor-pointer hover:border-[var(--admin-border-strong)] transition-all"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-[var(--admin-accent)] flex items-center justify-center font-bold text-[12px] shadow-sm shrink-0">
-                      {customerInitial}
+                {/* Header Row: ID + Type Badge + Status Pill */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <span className="font-mono font-bold text-[var(--admin-accent)] text-[13px]">
+                      {orderCode}
+                    </span>
+                    {order.customOrderType && (
+                      <span
+                        className={`text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border ${
+                          order.customOrderType === 'product'
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : order.customOrderType === 'event'
+                              ? 'bg-purple-50 text-purple-700 border-purple-200'
+                              : 'bg-amber-50 text-amber-800 border-amber-200'
+                        }`}
+                      >
+                        {order.customOrderType}
+                      </span>
+                    )}
+                    {order.priority === 'high' && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-[4px] bg-rose-50 text-rose-700 border border-rose-200 uppercase">
+                        HIGH
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Status Badge */}
+                  <span
+                    className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase tracking-wider border shrink-0 ${getStatusBadgeStyle(
+                      order.status,
+                    )}`}
+                  >
+                    {order.status}
+                  </span>
+                </div>
+
+                {/* Customer Row */}
+                <div className="flex items-center justify-between text-[12px] pt-1 border-t border-[var(--admin-border-subtle)]">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] text-[var(--admin-accent)] font-bold text-[11px] flex items-center justify-center shrink-0">
+                      {(order.customerName || 'C').charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <h4 className="font-bold text-[var(--admin-text-primary)] text-[13px] truncate">
-                        {order.customerName}
-                      </h4>
-                      <p className="text-[10px] text-[var(--admin-text-secondary)] truncate">
-                        {order.customerEmail}
+                      <p className="font-bold text-[var(--admin-text-primary)] truncate">
+                        {order.customerName || 'Customer'}
                       </p>
+                      <span className="text-[10px] text-[var(--admin-text-secondary)] truncate block">
+                        {order.customerPhone || order.customerEmail || 'No contact'}
+                      </span>
                     </div>
                   </div>
-                  <span className="text-[10px] text-[var(--admin-text-tertiary)] shrink-0">
+
+                  <span className="text-[11px] text-[var(--admin-text-secondary)] font-medium flex items-center gap-1 shrink-0">
+                    <span className="material-symbols-outlined text-[13px]">calendar_today</span>
                     {dateStr}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[11px] border-t border-b border-[var(--admin-border-subtle)] py-2">
-                  <div className="min-w-0">
-                    <span className="text-[9px] uppercase tracking-wider text-[var(--admin-text-tertiary)] font-bold block">
-                      Occasion
-                    </span>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="font-bold text-[var(--admin-text-primary)]/80 truncate block">
-                        {order.occasion}
-                      </span>
-                      {order.productSnapshot && (
-                        <span
-                          className="bg-[var(--admin-accent)]/10 text-[var(--admin-accent)] border border-[var(--admin-accent)]/20 px-1.5 py-0.5 rounded-[4px] text-[8px] font-bold uppercase tracking-wider shrink-0"
-                          title="Based on a Catalog Product"
-                        >
-                          Catalog
-                        </span>
-                      )}
+                {/* Scope / Item Box */}
+                <div className="bg-[var(--admin-bg-subtle)] p-3 rounded-[4px] border border-[var(--admin-border-subtle)] flex items-center gap-3">
+                  {thumbnail ? (
+                    <img
+                      src={thumbnail}
+                      alt="Thumbnail"
+                      className="w-12 h-12 rounded-[4px] object-cover border border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] shrink-0"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-[4px] border border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] flex items-center justify-center shrink-0 text-[var(--admin-accent)]">
+                      <span className="material-symbols-outlined text-[22px]">architecture</span>
                     </div>
-                  </div>
-                  <div className="min-w-0 flex flex-col items-end justify-center">
-                    {order.productSnapshot?.imageSrc || order.inspirationImages?.[0] ? (
-                      <img
-                        src={order.productSnapshot?.imageSrc || order.inspirationImages?.[0]}
-                        alt="Product"
-                        className="w-10 h-10 object-cover rounded-md border border-[var(--admin-border-subtle)]"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-md bg-[var(--admin-surface-muted)] border border-[var(--admin-border-subtle)] flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[16px] text-[var(--admin-text-tertiary)]">
-                          image
-                        </span>
-                      </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[9.5px] font-bold text-[var(--admin-text-tertiary)] uppercase tracking-wider block">
+                        {order.occasion || 'CUSTOM REQUEST'}
+                      </span>
+                    </div>
+                    <p className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate mt-0.5">
+                      {order.productSnapshot?.title || order.productType || 'Custom Order Inquiry'}
+                    </p>
+                    {order.customRequirements && (
+                      <p className="text-[11px] text-[var(--admin-text-secondary)] italic truncate mt-0.5">
+                        "{order.customRequirements}"
+                      </p>
                     )}
                   </div>
                 </div>
 
-                {order.customRequirements && (
-                  <div className="bg-[var(--admin-surface-muted)] p-2 rounded-md border border-[var(--admin-border-subtle)]">
-                    <p className="text-[10px] text-[var(--admin-text-secondary)] italic line-clamp-2">
-                      "{order.customRequirements}"
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between gap-2 pt-1">
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={order.priority}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        handleUpdatePriority(order._id, e.target.value);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border cursor-pointer outline-none transition-all ${
-                        order.priority === 'high'
-                          ? 'bg-[var(--admin-error-light)] text-[var(--admin-error)] border-[var(--admin-error-border)]'
-                          : order.priority === 'medium'
-                            ? 'admin-badge admin-badge-warning border-[var(--admin-warning-border)] py-0.5'
-                            : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)] border-[var(--admin-border)]'
-                      }`}
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Med</option>
-                      <option value="high">High</option>
-                    </select>
-
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        order.status === 'Pending'
-                          ? 'admin-badge admin-badge-warning'
-                          : order.status === 'Approved'
-                            ? 'bg-[var(--admin-success-light)] text-[var(--admin-success)]'
-                            : order.status === 'Cancelled'
-                              ? 'admin-badge admin-badge-error'
-                              : 'bg-[var(--admin-info-light)] text-[var(--admin-info)]'
-                      }`}
-                    >
-                      {order.status}
+                {/* Quotation & Pricing Strip */}
+                <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-[var(--admin-text-secondary)] font-medium">
+                      Total Quote:
+                    </span>
+                    <span className="font-bold text-[var(--admin-text-primary)] text-[13px]">
+                      {hasQuote ? formatCurrency(order.quotation.total) : 'Pending Calculation'}
                     </span>
                   </div>
 
-                  <span className="font-bold text-[12px] text-[var(--admin-accent)]">
-                    {order.quotation?.total > 0
-                      ? `₹${order.quotation.total.toLocaleString('en-IN')}`
-                      : 'Custom Quote'}
+                  <span
+                    className={`inline-flex items-center gap-0.5 text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border ${
+                      hasQuote
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                    }`}
+                  >
+                    {hasQuote ? 'Quote Sent' : 'Quote Pending'}
                   </span>
+                </div>
+
+                {/* Action Row */}
+                <div
+                  className="flex items-center gap-2 pt-2 border-t border-[var(--admin-border-subtle)]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {order.status === 'Pending' ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApproveOrder(order);
+                        }}
+                        disabled={updatingStatusId === order._id}
+                        className="flex-1 h-9 rounded-[4px] bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        {updatingStatusId === order._id ? (
+                          <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <span className="material-symbols-outlined text-[15px]">check</span>
+                        )}
+                        Approve
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancelOrder(order);
+                        }}
+                        disabled={updatingStatusId === order._id}
+                        className="px-3 h-9 rounded-[4px] border border-rose-200 text-rose-600 hover:bg-rose-50 text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="relative flex-1">
+                        <select
+                          value={order.status}
+                          onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                          disabled={updatingStatusId === order._id}
+                          className="w-full h-9 rounded-[4px] pl-2.5 pr-6 bg-[var(--admin-surface)] border border-[var(--admin-border)] text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)] cursor-pointer appearance-none"
+                        >
+                          {ALL_STATUSES.map((st) => (
+                            <option key={st} value={st}>
+                              {st}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[14px] text-[var(--admin-text-tertiary)] pointer-events-none">
+                          expand_more
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedOrder(order)}
+                        className="h-9 px-3 rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer hover:bg-[var(--admin-border-subtle)]"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">visibility</span>
+                        Details
+                      </button>
+                    </>
+                  )}
+
+                  {/* WhatsApp Quick Action */}
+                  <a
+                    href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${(order.customerPhone || order.phone || '').replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-9 px-2.5 rounded-[4px] bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center cursor-pointer hover:opacity-80 shrink-0"
+                    title="WhatsApp"
+                    onClick={(e) => {
+                      if (!order.customerPhone && !order.phone) {
+                        e.preventDefault();
+                        toast.error('No phone number recorded');
+                      }
+                    }}
+                  >
+                    <WhatsAppIcon className="w-[15px] h-[15px]" />
+                  </a>
                 </div>
               </div>
             );
           })
         )}
       </div>
-
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-[var(--admin-border)] pt-4 mt-4 px-2">
-          <div className="text-[12px] text-[var(--admin-text-secondary)]">
-            Showing{' '}
-            <span className="font-bold text-[var(--admin-text-primary)]">
-              {(page - 1) * 15 + 1}
-            </span>{' '}
-            to{' '}
-            <span className="font-bold text-[var(--admin-text-primary)]">
-              {Math.min(page * 15, totalItems)}
-            </span>{' '}
-            of <span className="font-bold text-[var(--admin-text-primary)]">{totalItems}</span>{' '}
-            orders
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-[var(--admin-surface)] cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-            </button>
-            <div className="flex items-center gap-1">
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i + 1}
-                  onClick={() => setPage(i + 1)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg text-[12px] font-bold transition-colors cursor-pointer ${
-                    page === i + 1
-                      ? 'bg-[var(--admin-surface)] text-[var(--admin-text-primary)] shadow-[var(--admin-shadow-xs)] border border-[var(--admin-border-subtle)]'
-                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] border border-transparent'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-border)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-[var(--admin-surface)] cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }

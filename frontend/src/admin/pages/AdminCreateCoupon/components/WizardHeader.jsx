@@ -1,37 +1,63 @@
-import { m as motion } from 'framer-motion';
+import React from 'react';
 
 export function WizardHeader({ steps, currentStep, setCurrentStep }) {
   return (
-    <div className="flex border-b border-[var(--admin-border-subtle)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      {steps.map((step, idx) => {
-        const isActive = idx === currentStep;
-        const isPast = idx < currentStep;
-        return (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => setCurrentStep(idx)}
-            className={`flex-none sm:flex-1 shrink-0 min-w-[90px] sm:min-w-0 px-2 sm:px-4 py-4 flex flex-col items-center justify-center gap-1 relative transition-all ${isActive ? 'bg-[var(--admin-surface)]' : 'hover:bg-[var(--admin-surface-muted)]'}`}
-          >
-            <span
-              className={`material-symbols-outlined text-[20px] transition-colors ${isActive ? 'text-[var(--admin-accent)]' : isPast ? 'text-success' : 'text-[var(--admin-text-tertiary)]'}`}
-            >
-              {isPast ? 'check_circle' : step.icon}
-            </span>
-            <span
-              className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${isActive ? 'text-[var(--admin-accent)]' : 'text-[var(--admin-text-secondary)]'}`}
-            >
-              {step.label}
-            </span>
-            {isActive && (
-              <motion.div
-                layoutId="activeStepIndicator"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--admin-accent)]"
-              />
-            )}
-          </button>
-        );
-      })}
+    <div className="bg-[var(--admin-surface)] p-3 sm:p-4 rounded-[4px] border border-[var(--admin-border)] shadow-xs lg:block hidden overflow-x-auto">
+      <div className="flex items-center justify-between min-w-[700px] px-2">
+        {steps.map((step, index) => {
+          const isCompleted = index < currentStep;
+          const isActive = index === currentStep;
+
+          return (
+            <React.Fragment key={index}>
+              <button
+                type="button"
+                onClick={() => setCurrentStep(index)}
+                className="flex items-center gap-2.5 group cursor-pointer text-left outline-none"
+              >
+                <div
+                  className={`w-8 h-8 rounded-[4px] flex items-center justify-center transition-all ${
+                    isActive
+                      ? 'bg-[var(--admin-accent)] text-white shadow-xs font-bold'
+                      : isCompleted
+                        ? 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border)]'
+                        : 'bg-[var(--admin-bg-subtle)] text-[var(--admin-text-tertiary)] border border-[var(--admin-border-subtle)]'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[15px]">
+                    {isCompleted ? 'check' : step.icon}
+                  </span>
+                </div>
+                <div>
+                  <p
+                    className={`text-[10.5px] font-bold uppercase tracking-wider ${
+                      isActive ? 'text-[var(--admin-accent)]' : 'text-[var(--admin-text-tertiary)]'
+                    }`}
+                  >
+                    Step {index + 1}
+                  </p>
+                  <p
+                    className={`text-[12px] font-bold ${
+                      isActive
+                        ? 'text-[var(--admin-text-primary)]'
+                        : 'text-[var(--admin-text-secondary)]'
+                    }`}
+                  >
+                    {step.label}
+                  </p>
+                </div>
+              </button>
+              {index < steps.length - 1 && (
+                <div
+                  className={`flex-1 h-[2px] mx-4 ${
+                    isCompleted ? 'bg-[var(--admin-accent)]' : 'bg-[var(--admin-border-subtle)]'
+                  }`}
+                />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
     </div>
   );
 }

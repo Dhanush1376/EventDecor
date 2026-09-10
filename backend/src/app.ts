@@ -21,6 +21,7 @@ import { getSocketAdapterMode } from './config/socketState';
 import { generateSitemap } from './utils/sitemapGenerator';
 import { PrometheusService } from './services/PrometheusService';
 import * as Sentry from '@sentry/node';
+import notificationRoutes from './routes/notifications/notificationRoutes';
 import { requestTrackerMiddleware } from './middleware/requestTracker';
 import { requestLogger } from './middleware/requestLogger';
 import { issueCsrfToken, validateCsrf } from './middleware/csrfMiddleware';
@@ -351,6 +352,7 @@ app.use('/api/v1/upload', (req: Request, res: Response, next: express.NextFuncti
 
 // API Routes Registration
 app.use('/api/docs', requireAuth, requireAdmin, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api/notifications', notificationRoutes);
 registerApiRoutes(app, '/api/v1', 'v1');
 
 // Sentry Error Handler (must be before any other error middleware)

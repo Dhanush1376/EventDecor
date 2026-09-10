@@ -20,9 +20,18 @@ export const escapeHtml = (unsafe: any) => {
 
 export const getPrimaryEntityName = (items: any[]): string | null => {
   if (!items || !Array.isArray(items) || items.length === 0) return null;
-  if (items.length === 1)
-    return items[0].title || items[0].name || items[0].productId?.title || null;
-  return null;
+  const first =
+    items[0].title ||
+    items[0].name ||
+    items[0].showcaseTitle ||
+    items[0].productTitle ||
+    items[0].productId?.title ||
+    null;
+  if (!first) return null;
+  if (items.length > 1) {
+    return `${first} (+${items.length - 1} more)`;
+  }
+  return first;
 };
 
 export const button = (text: string, url: string) => `
@@ -283,9 +292,6 @@ export const getOrderConfirmationTemplate = (orderDetails: any): string => {
     <div class="button-wrapper">
       <a href="${orderDetails.orderLink}" class="cta-button" target="_blank">Track Order Status</a>
     </div>
-    <p style="color: #6b7280; font-size: 13px;">
-      A PDF invoice has been attached to this email for your reference.
-    </p>
   `;
   return getLuxuryEmailWrapper('Order Confirmation', body, undefined, preheader);
 };

@@ -57,7 +57,7 @@ export function MaintenanceGateway() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden admin-section-root">
       {/* Background Effects */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-red-900/20 rounded-full blur-[120px]" />
@@ -78,7 +78,7 @@ export function MaintenanceGateway() {
               <span className="material-symbols-outlined text-[14px]">gpp_maybe</span>
               System Maintenance
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2 font-display">Secure Gateway</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">Secure Gateway</h1>
             <p className="text-white/50 text-sm">Authorized Super Admin access only</p>
           </div>
 

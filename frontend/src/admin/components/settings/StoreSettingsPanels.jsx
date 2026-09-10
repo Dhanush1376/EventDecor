@@ -2,10 +2,14 @@ import React from 'react';
 import { AdminToggle } from '../AdminUIKit';
 
 const FormGroup = ({ label, description, children }) => (
-  <div className="space-y-2">
-    <label className="admin-label">{label}</label>
+  <div className="space-y-1.5">
+    <label className="text-[12.5px] font-bold text-[var(--admin-text-primary)] block leading-tight">
+      {label}
+    </label>
     {description && (
-      <p className="text-[12px] text-[var(--admin-text-tertiary)] -mt-1 mb-2">{description}</p>
+      <p className="text-[11.5px] text-[var(--admin-text-secondary)] -mt-0.5 mb-1.5">
+        {description}
+      </p>
     )}
     {children}
   </div>
@@ -17,27 +21,40 @@ const Input = ({ type = 'text', name, value, onChange, ...props }) => (
     name={name}
     value={value === undefined || value === null ? '' : value}
     onChange={onChange}
-    className="admin-input"
+    className="admin-input h-9 !min-h-[36px] rounded-[4px] border-[var(--admin-border)] focus:border-[var(--admin-accent)] text-[13px]"
     {...props}
   />
 );
 
 const Checkbox = ({ label, name, checked, onChange, description }) => (
-  <div className="flex items-start gap-3 p-4 admin-card-interactive rounded-[var(--admin-radius-lg)]">
+  <div className="flex items-start gap-3 p-3.5 bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border)] rounded-[4px] transition-all">
     <AdminToggle
       checked={!!checked}
       onChange={() => onChange({ target: { name, type: 'checkbox', checked: !checked } })}
       size="sm"
     />
-    <div className="pt-0.5">
-      <label className="text-[14px] font-medium text-[var(--admin-text-primary)] leading-none">
+    <div className="pt-0.5 flex-1 min-w-0">
+      <label className="text-[13px] font-bold text-[var(--admin-text-primary)] leading-tight cursor-pointer select-none block">
         {label}
       </label>
       {description && (
-        <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-1">{description}</p>
+        <p className="text-[11.5px] text-[var(--admin-text-secondary)] mt-1 leading-normal">
+          {description}
+        </p>
       )}
     </div>
   </div>
+);
+
+export const SaveButton = ({ saving, label = 'Save Settings' }) => (
+  <button
+    type="submit"
+    disabled={saving}
+    className="h-9 px-4 rounded-[4px] bg-[var(--admin-accent)] hover:opacity-95 text-white font-bold text-[12px] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-all disabled:opacity-50"
+  >
+    <span className="material-symbols-outlined text-[16px]">save</span>
+    <span>{saving ? 'Saving...' : label}</span>
+  </button>
 );
 
 export const GeneralSettingsPanel = ({ formData, handleChange, handleSave, saving }) => (
@@ -102,9 +119,7 @@ export const GeneralSettingsPanel = ({ formData, handleChange, handleSave, savin
       </div>
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );
@@ -176,9 +191,7 @@ export const ShippingSettingsPanel = ({ formData, handleChange, handleSave, savi
       </div>
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );
@@ -225,9 +238,7 @@ export const PaymentSettingsPanel = ({ formData, handleChange, handleSave, savin
       )}
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );
@@ -281,9 +292,7 @@ export const ReturnSettingsPanel = ({ formData, handleChange, handleSave, saving
       </FormGroup>
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );
@@ -409,9 +418,7 @@ export const LoyaltySettingsPanel = ({
       </div>
     )}
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );
@@ -461,9 +468,7 @@ export const OrderSettingsPanel = ({ formData, handleChange, handleSave, saving 
       </FormGroup>
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );
@@ -517,9 +522,7 @@ export const TaxSettingsPanel = ({ formData, handleChange, handleSave, saving })
       </FormGroup>
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );
@@ -584,9 +587,7 @@ export const ContactSettingsPanel = ({ formData, handleChange, handleSave, savin
       </FormGroup>
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );
@@ -621,9 +622,7 @@ export const LegalSettingsPanel = ({ formData, handleChange, handleSave, saving 
       </div>
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );
@@ -661,9 +660,7 @@ export const CancellationSettingsPanel = ({ formData, handleChange, handleSave, 
       )}
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );
@@ -693,9 +690,7 @@ export const NotificationSettingsPanel = ({ formData, handleChange, handleSave, 
       </div>
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );
@@ -721,9 +716,7 @@ export const StorefrontSettingsPanel = ({ formData, handleChange, handleSave, sa
       </div>
     </div>
     <div className="flex justify-end border-t border-[var(--admin-border-subtle)] pt-6">
-      <button type="submit" disabled={saving} className="admin-btn admin-btn-primary">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </button>
+      <SaveButton saving={saving} />
     </div>
   </form>
 );

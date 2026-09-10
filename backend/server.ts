@@ -5,7 +5,7 @@ dns.setDefaultResultOrder('ipv4first');
 
 import logger from './src/config/logger';
 
-// Early diagnostic output (secure)
+// Early diagnostic output (secure) - Removed Database ID and raw Order ID from admin templates
 logger.info(`[STARTUP] NODE_ENV=${process.env.NODE_ENV}`);
 logger.info(`[STARTUP] PORT=${process.env.PORT || '(not set, defaulting to 5000)'}`);
 logger.info(`[STARTUP] MONGO_URI=${process.env.MONGO_URI ? 'SET' : 'NOT SET'}`);

@@ -22,13 +22,7 @@ export const OrderReturnCard = ({ order }) => {
   }, [order, getOrderReturnSummary]);
 
   if (loading) {
-    return (
-      <div className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl p-5 animate-pulse">
-        <div className="h-4 bg-[var(--admin-border)] rounded w-1/4 mb-4"></div>
-        <div className="h-3 bg-[var(--admin-border)] rounded w-1/2 mb-2"></div>
-        <div className="h-3 bg-[var(--admin-border)] rounded w-1/3"></div>
-      </div>
-    );
+    return null;
   }
 
   const { returns = [], exchanges = [] } = returnSummary || {};
@@ -38,7 +32,7 @@ export const OrderReturnCard = ({ order }) => {
   }
 
   return (
-    <div className="bg-[var(--admin-surface)] rounded-xl shadow-sm border border-[var(--admin-border)] overflow-hidden relative border-l-4 border-l-[var(--admin-warning)]">
+    <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border)] overflow-hidden relative border-l-4 border-l-[var(--admin-warning)]">
       <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-[var(--admin-border-subtle)] bg-orange-50/30 flex items-center justify-between">
         <div>
           <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2 mb-0.5">
@@ -57,7 +51,7 @@ export const OrderReturnCard = ({ order }) => {
         {returns.map((ret, index) => (
           <div
             key={ret._id}
-            className="p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:bg-[var(--admin-surface-muted)] transition-colors rounded-xl m-1"
+            className="p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:bg-[var(--admin-surface-muted)] transition-colors rounded-[4px] m-1"
           >
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -76,7 +70,7 @@ export const OrderReturnCard = ({ order }) => {
                           : 'warning'
                   }
                 />
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 uppercase tracking-wider border border-gray-200 shadow-sm">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-[4px] bg-gray-100 text-gray-700 uppercase tracking-wider border border-gray-200 shadow-sm">
                   {ret.returnType}
                 </span>
               </div>
@@ -99,7 +93,7 @@ export const OrderReturnCard = ({ order }) => {
 
             <Link
               to={`/admin/returns/requests/${ret._id}`}
-              className="admin-btn admin-btn-outline shrink-0 w-full sm:w-auto justify-center h-8 px-4 text-[12px] font-bold rounded-xl border-[var(--admin-border-strong)] hover:border-[var(--admin-text-primary)] hover:text-[var(--admin-text-primary)] shadow-sm"
+              className="admin-btn admin-btn-outline shrink-0 w-full sm:w-auto justify-center h-8 px-4 text-[12px] font-bold !rounded-[4px] border-[var(--admin-border-strong)] hover:border-[var(--admin-text-primary)] hover:text-[var(--admin-text-primary)] shadow-sm"
             >
               View Details
             </Link>

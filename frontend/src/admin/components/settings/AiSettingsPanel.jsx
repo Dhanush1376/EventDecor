@@ -62,7 +62,7 @@ const AiSettingsPanel = () => {
       <div className="flex justify-end mb-4">
         <button
           onClick={openAddForm}
-          className="flex justify-center items-center gap-2 bg-[var(--admin-accent)] text-white px-4 py-2 rounded-md text-[13px] font-bold hover:brightness-110 transition-all active:scale-95 shadow-sm w-full sm:w-auto"
+          className="h-9 px-4 rounded-[4px] bg-[var(--admin-accent)] hover:opacity-95 text-white font-bold text-[12px] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-all active:scale-95 w-full sm:w-auto"
         >
           <span className="material-symbols-outlined text-[18px]">add</span>
           Add Provider

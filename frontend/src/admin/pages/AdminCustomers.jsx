@@ -1,6 +1,5 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../context/AdminContext';
 import { useConfirm } from '../../context/ConfirmProvider';
@@ -8,7 +7,7 @@ import { customerIntelligenceService } from '../../services/domainServices';
 import {
   PageHeader,
   EmptyState,
-  FilterBar,
+  AdminStatusPill,
   formatCurrency,
   fadeUp,
   stagger,
@@ -20,29 +19,9 @@ import { getAccessToken } from '../../services/api';
 import { getApiRootUrl } from '../../config/apiConfig';
 import { acquireAdminSocket, releaseAdminSocket } from '../services/adminSocket';
 import AdminCustomerProfileModal from '../components/AdminCustomerProfileModal';
-
 import { WhatsAppIcon } from '../../components/ui/WhatsAppIcon';
 
-const StatCard = ({ title, value, icon, color }) => (
-  <div className="bg-[var(--admin-surface)] p-5 rounded-xl border border-[var(--admin-border)] shadow-sm flex items-center justify-between">
-    <div>
-      <p className="text-sm font-medium text-[var(--admin-text-secondary)]">{title}</p>
-      <p className="text-2xl font-bold text-[var(--admin-text-primary)] mt-1">{value}</p>
-    </div>
-    <div
-      className="w-10 h-10 rounded-lg flex items-center justify-center"
-      style={{
-        background: `color-mix(in srgb, ${color} 10%, transparent)`,
-        color: color,
-      }}
-    >
-      <span className="material-symbols-outlined text-[20px]">{icon}</span>
-    </div>
-  </div>
-);
-
 export function AdminCustomers() {
-  const navigate = useNavigate();
   const { searchQuery, setSearchQuery } = useAdmin();
   const confirm = useConfirm();
 
@@ -50,14 +29,24 @@ export function AdminCustomers() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  const [expandedCardIds, setExpandedCardIds] = useState(new Set());
 
   const [customers, setCustomers] = useState([]);
   const [meta, setMeta] = useState({});
   const [dataLoading, setDataLoading] = useState(true);
 
-  const [kpi, setKpi] = useState(null);
-  const [kpiLoading, setKpiLoading] = useState(true);
+  const [, setKpi] = useState(null);
+  const [, setKpiLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+
+  const toggleExpandCard = (id) => {
+    setExpandedCardIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const fetchCustomers = useCallback(async () => {
     setDataLoading(true);
@@ -70,7 +59,7 @@ export function AdminCustomers() {
       });
       setCustomers(res?.data || []);
       setMeta(res?.meta || {});
-    } catch (err) {
+    } catch {
       toast.error('Failed to load customers');
     } finally {
       setDataLoading(false);
@@ -155,7 +144,7 @@ export function AdminCustomers() {
         link.click();
         toast.success('Customers export completed');
       }
-    } catch (err) {
+    } catch {
       toast.error('Export failed');
     } finally {
       setIsExporting(false);
@@ -192,57 +181,166 @@ export function AdminCustomers() {
     }
   };
 
+  const getTierLabel = (tier) => {
+    return (tier || 'BRONZE').toUpperCase();
+  };
+
+  const tierCounts = {
+    All: meta.total || customers.length,
+    Platinum: customers.filter((c) => (c.loyaltyTier || '').toLowerCase() === 'platinum').length,
+    Gold: customers.filter((c) => (c.loyaltyTier || '').toLowerCase() === 'gold').length,
+    Silver: customers.filter((c) => (c.loyaltyTier || '').toLowerCase() === 'silver').length,
+    Bronze: customers.filter(
+      (c) => !c.loyaltyTier || (c.loyaltyTier || '').toLowerCase() === 'bronze',
+    ).length,
+  };
+
   return (
-    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+      className="space-y-6 pb-12 sm:pb-8"
+    >
       <PageHeader
         title="Customers"
-        badge={meta.total || customers.length || 0}
-        subtitle="Manage your customer base"
-        icon="group"
-        iconColor="users"
-        headerAction={
-          <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64 shrink-0 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] flex items-center px-3">
-              <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
-                search
+        subtitle={
+          dataLoading ? (
+            <span>Loading customers...</span>
+          ) : (
+            <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+              <span className="font-semibold text-[var(--admin-text-primary)]">
+                {meta.total !== undefined ? meta.total : customers.length || 0} Total Customers
               </span>
-              <input
-                type="text"
-                placeholder="Search customers..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(1);
-                }}
-                className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-10 sm:h-8"
-              />
-            </div>
-            <div className="flex items-stretch gap-2 w-full sm:w-auto overflow-hidden">
-              <FilterBar
-                filters={['All', 'Platinum', 'Gold', 'Silver', 'Bronze']}
-                value={tierFilter}
-                onChange={(v) => {
-                  setTierFilter(v);
-                  setPage(1);
-                }}
-                className="flex-1 min-w-0"
-              />
-              <button
-                className="w-10 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-md flex items-center justify-center cursor-pointer transition-all active:scale-95 border border-[var(--admin-border)] shrink-0"
-                title="Export Customers"
-                onClick={handleExport}
-                disabled={isExporting}
-              >
-                <span
-                  className={`material-symbols-outlined text-[18px] ${isExporting ? 'animate-spin' : ''}`}
-                >
-                  {isExporting ? 'sync' : 'download'}
+              {tierCounts.Platinum > 0 && (
+                <span className="inline-flex items-center gap-1 font-semibold text-cyan-600 dark:text-cyan-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+                  {tierCounts.Platinum} Platinum
                 </span>
-              </button>
+              )}
+              {tierCounts.Gold > 0 && (
+                <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  {tierCounts.Gold} Gold
+                </span>
+              )}
+              {tierCounts.Bronze > 0 && (
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {tierCounts.Bronze} Bronze
+                </span>
+              )}
             </div>
-          </div>
+          )
         }
       />
+
+      {/* Sticky 42px Search & Controls Bar */}
+      <div className="sticky top-[var(--admin-topbar-height,56px)] z-20 -my-2 py-2.5 bg-[var(--admin-bg)]/95 backdrop-blur-md mb-5">
+        <motion.div variants={fadeUp} className="flex flex-row items-center gap-2 w-full">
+          {/* Search Bar */}
+          <div className="relative flex-1 min-w-0 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] flex items-center px-2.5 sm:px-3 h-[42px] min-h-[42px] max-h-[42px]">
+            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
+              search
+            </span>
+            <input
+              type="text"
+              placeholder="Search customers by name, email, phone, or location..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
+              className="bg-transparent border-none outline-none w-full text-[13px] text-[var(--admin-text-primary)] placeholder-[var(--admin-text-tertiary)] font-medium px-2 h-full min-w-0"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setPage(1);
+                }}
+                className="text-[var(--admin-text-tertiary)] hover:text-[var(--admin-text-primary)] cursor-pointer p-1 flex items-center justify-center shrink-0"
+                title="Clear search"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            )}
+          </div>
+
+          {/* Controls Group */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Tier Segmented Pill Switcher (Desktop & Tablet) */}
+            <div className="hidden sm:flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] h-[42px] min-h-[42px] max-h-[42px] box-border">
+              {['All', 'Platinum', 'Gold', 'Silver', 'Bronze'].map((tier) => {
+                const isActive = tierFilter === tier;
+                const count = tierCounts[tier] || 0;
+
+                return (
+                  <button
+                    key={tier}
+                    type="button"
+                    onClick={() => {
+                      setTierFilter(tier);
+                      setPage(1);
+                    }}
+                    className={`h-[32px] min-h-[32px] max-h-[32px] px-2.5 sm:px-3 rounded-[3px] text-[12px] font-semibold cursor-pointer transition-all flex items-center gap-1.5 whitespace-nowrap box-border ${
+                      isActive
+                        ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                        : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+                    }`}
+                  >
+                    <span>{tier}</span>
+                    <span
+                      className={`min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                        isActive
+                          ? 'bg-[var(--admin-accent)] text-white'
+                          : 'bg-[var(--admin-surface)] text-[var(--admin-text-tertiary)] border border-[var(--admin-border-subtle)]'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Mobile Tier Select Dropdown */}
+            <div className="sm:hidden relative shrink-0">
+              <select
+                value={tierFilter}
+                onChange={(e) => {
+                  setTierFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="h-[42px] px-2.5 bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] rounded-[4px] text-[12px] font-semibold outline-none cursor-pointer"
+              >
+                {['All', 'Platinum', 'Gold', 'Silver', 'Bronze'].map((tier) => (
+                  <option key={tier} value={tier}>
+                    {tier} ({tierCounts[tier] || 0})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Export CSV Button */}
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="h-[42px] min-h-[42px] max-h-[42px] px-3 sm:px-3.5 bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-[4px] border border-[var(--admin-border)] flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-xs shrink-0 gap-1.5 font-semibold text-[13px] disabled:opacity-50"
+              title="Export Customers CSV"
+            >
+              <span
+                className={`material-symbols-outlined text-[18px] ${isExporting ? 'animate-spin' : ''}`}
+              >
+                {isExporting ? 'sync' : 'download'}
+              </span>
+              <span className="hidden md:inline">{isExporting ? 'Exporting...' : 'Export'}</span>
+            </button>
+          </div>
+        </motion.div>
+      </div>
 
       <AnimatePresence mode="wait">
         {dataLoading ? (
@@ -252,7 +350,7 @@ export function AdminCustomers() {
             animate="show"
             exit="hidden"
             variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
           >
             {[...Array(6)].map((_, i) => (
               <SkeletonCard key={i} className="h-[280px]" />
@@ -282,14 +380,14 @@ export function AdminCustomers() {
                       setTierFilter('All');
                       setPage(1);
                     }}
-                    className="admin-btn admin-btn-outline"
+                    className="admin-btn admin-btn-outline rounded-[6px]"
                   >
                     Clear Filters
                   </button>
                 ) : (
                   <button
                     onClick={() => window.location.reload()}
-                    className="admin-btn admin-btn-outline"
+                    className="admin-btn admin-btn-outline rounded-[6px]"
                   >
                     <span className="material-symbols-outlined text-[16px]">refresh</span>
                     Refresh Page
@@ -305,159 +403,319 @@ export function AdminCustomers() {
             animate="show"
             exit="hidden"
             variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
           >
-            {customers.map((c) => (
-              <motion.div
-                key={c._id}
-                variants={fadeUp}
-                className="admin-card p-6 group hover:border-[var(--admin-border-strong)] hover:shadow-[var(--admin-shadow-md)] transition-all duration-300"
-              >
-                <div className="flex items-start justify-between gap-3 mb-5">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-[var(--admin-radius-lg)] bg-[var(--admin-bg-subtle)] border border-[var(--admin-border-subtle)] flex items-center justify-center shrink-0 group-hover:border-[var(--admin-accent)] group-hover:text-[var(--admin-accent)] transition-colors">
-                      <span className="text-[14px] font-bold text-[var(--admin-text-primary)] group-hover:text-[var(--admin-accent)]">
-                        {c.name
-                          ?.split(' ')
-                          .filter(Boolean)
-                          .map((n) => n[0])
-                          .join('')
-                          .slice(0, 2)
-                          .toUpperCase()}
+            {customers.map((c) => {
+              const cId = c._id;
+              const isExpanded = expandedCardIds.has(cId);
+              const tier = c.loyaltyTier || 'Bronze';
+              const isVip = c.segment === 'VIP';
+              const isNew = c.segment === 'New';
+              const initials =
+                c.name
+                  ?.split(' ')
+                  .filter(Boolean)
+                  .map((n) => n[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase() || 'CU';
+
+              const customerCity =
+                (c.city && !['unknown', 'unknown city'].includes(c.city.toLowerCase())
+                  ? c.city
+                  : null) ||
+                c.addresses?.find(
+                  (a) => a.city && !['unknown', 'unknown city'].includes(a.city.toLowerCase()),
+                )?.city ||
+                (c.shippingAddress?.city &&
+                !['unknown', 'unknown city'].includes(c.shippingAddress.city.toLowerCase())
+                  ? c.shippingAddress.city
+                  : null) ||
+                (c.location &&
+                !['unknown', 'unknown city', 'location unknown'].includes(c.location.toLowerCase())
+                  ? c.location
+                  : null) ||
+                (c.state ? `${c.state}` : null) ||
+                null;
+
+              return (
+                <motion.div
+                  key={cId}
+                  variants={fadeUp}
+                  className="relative overflow-hidden rounded-[8px] p-3.5 shadow-xs border border-stone-200/90 dark:border-stone-700/80 bg-white dark:bg-stone-900 flex flex-col gap-3 transition-all hover:border-stone-300 dark:hover:border-stone-600 hover:shadow-sm"
+                >
+                  {/* Header: Name + Badges + Subtitle + Tier Status Pill */}
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-[var(--admin-text-primary)] text-[14px] truncate">
+                          {c.name || 'Anonymous Customer'}
+                        </span>
+
+                        {isVip && (
+                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 uppercase">
+                            VIP
+                          </span>
+                        )}
+
+                        {isNew && (
+                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                            NEW
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[12px] font-medium text-[var(--admin-text-secondary)] block mt-0.5 truncate">
+                        {customerCity || 'Location not specified'} {c.email ? `• ${c.email}` : ''}
                       </span>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[14px] font-bold text-[var(--admin-text-primary)] leading-tight truncate">
-                        {c.name}
+                    <AdminStatusPill
+                      status={tier}
+                      label={getTierLabel(tier)}
+                      className="shrink-0"
+                    />
+                  </div>
+
+                  {/* 3. Customer Profile & Wallet Snapshot Box */}
+                  <div className="bg-[#FAF9F5] dark:bg-stone-800/60 p-2.5 rounded-[6px] border border-stone-200/80 dark:border-stone-700/60 flex items-center gap-2.5">
+                    <div className="w-11 h-11 rounded-[4px] border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 flex items-center justify-center shrink-0 shadow-2xs font-extrabold text-amber-700 dark:text-amber-400 text-[13px]">
+                      {initials}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[9px] font-extrabold text-amber-700 uppercase tracking-wider block leading-tight">
+                          CUSTOMER WALLET
+                        </span>
+                        <span className="text-[9px] font-bold text-stone-600 bg-white dark:bg-stone-700 px-1.5 py-0.5 rounded border border-stone-200 dark:border-stone-600 shrink-0 uppercase">
+                          {tier} Tier
+                        </span>
+                      </div>
+                      <p className="text-[12px] font-bold text-[var(--admin-text-primary)] truncate mt-0.5">
+                        Balance: {formatCurrency(c.walletBalance || 0)}
+                        <span className="ml-1.5 font-semibold text-amber-600 dark:text-amber-400">
+                          ({c.siriCoins || 0} Coins)
+                        </span>
                       </p>
-                      <p className="text-[11px] text-[var(--admin-text-tertiary)] font-medium uppercase tracking-wider mt-0.5">
-                        {c.city || 'Unknown'}
-                      </p>
-                      {c.lastLogin && (
-                        <p className="text-[10px] text-[var(--admin-text-secondary)] mt-1 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[12px]">schedule</span>
-                          Active {formatDistanceToNow(new Date(c.lastLogin), { addSuffix: true })}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <span
-                      className={`admin-badge h-5 px-2 font-bold text-[8px] border-none shadow-sm ${
-                        c.segment === 'VIP'
-                          ? 'bg-[var(--admin-text-primary)] text-white'
-                          : c.segment === 'New'
-                            ? 'bg-[var(--admin-success-light)] text-[var(--admin-success)]'
-                            : 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-secondary)]'
-                      }`}
-                    >
-                      {c.segment}
-                    </span>
-                    <span
-                      className={`admin-badge h-5 px-2 font-bold text-[8px] shadow-sm ${
-                        c.loyaltyTier === 'Platinum'
-                          ? 'bg-[#f0f9ff] text-[#0284c7] border-[#bae6fd]'
-                          : c.loyaltyTier === 'Gold'
-                            ? 'bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] border-[var(--admin-border-strong)]'
-                            : c.loyaltyTier === 'Silver'
-                              ? 'bg-[#f8fafc] text-[var(--admin-text-secondary)] border-[#e2e8f0]'
-                              : 'bg-[#fffbeb] text-[#d97706] border-[#fde68a]'
-                      }`}
-                    >
-                      {c.loyaltyTier || 'Bronze'}
-                    </span>
-
-                    <div className="mt-1 flex flex-col items-end gap-1 text-[11px] text-[var(--admin-text-secondary)] font-semibold">
-                      <span className="flex items-center gap-1 shrink-0 whitespace-nowrap">
-                        <span className="material-symbols-outlined text-[13px] text-emerald-600 shrink-0">
-                          account_balance_wallet
-                        </span>
-                        <span className="whitespace-nowrap">
-                          {formatCurrency(c.walletBalance || 0)}
-                        </span>
-                      </span>
-                      <span className="flex items-center gap-1 shrink-0 whitespace-nowrap">
-                        <span className="material-symbols-outlined text-[13px] text-amber-500 shrink-0">
-                          stars
-                        </span>
-                        <span className="whitespace-nowrap">{c.siriCoins || 0} Coins</span>
+                      <span className="text-[10px] text-stone-500 dark:text-stone-400 truncate block mt-0.5 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[12px]">schedule</span>
+                        {c.lastLogin
+                          ? `Active ${formatDistanceToNow(new Date(c.lastLogin), { addSuffix: true })}`
+                          : 'New Member'}
+                        {c.health ? ` • Health: ${c.health}` : ''}
                       </span>
                     </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-3 gap-3 mb-5 p-3 bg-[var(--admin-surface-muted)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)]">
-                  <div className="text-center">
-                    <p className="text-[14px] font-bold text-[var(--admin-text-primary)]">
-                      {c.orders || 0}
-                    </p>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] mt-0.5">
-                      Orders
-                    </p>
-                  </div>
-                  <div className="text-center border-l border-r border-[var(--admin-border)]">
-                    <p className="text-[14px] font-bold text-[var(--admin-accent)]">
-                      {c.totalSpent >= 10000
-                        ? `₹${(c.totalSpent / 1000).toFixed(1)}K`
-                        : `₹${(c.totalSpent || 0).toLocaleString('en-IN')}`}
-                    </p>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] mt-0.5">
-                      Spent
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[12px] font-bold text-[var(--admin-text-primary)] mt-0.5">
-                      {c.health}
-                    </p>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--admin-text-tertiary)] mt-0.5">
-                      Health
-                    </p>
-                  </div>
-                </div>
+                  {/* 4. Financial Total Spent & Orders Strip */}
+                  <div className="flex items-center justify-between pt-0.5 text-xs">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[11px] text-[var(--admin-text-secondary)] font-medium">
+                        Total Spent:
+                      </span>
+                      <span className="font-extrabold text-[var(--admin-text-primary)] text-[13px]">
+                        {formatCurrency(c.totalSpent || 0)}
+                      </span>
+                    </div>
 
-                <div className="pt-4 border-t border-[var(--admin-border-subtle)] space-y-2">
-                  <button
-                    onClick={() => setSelectedCustomerId(c._id)}
-                    className="admin-btn w-full min-h-[36px] h-9 text-[12px] font-semibold bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-border-strong)] justify-center gap-2 transition-all cursor-pointer rounded-lg"
+                    <div className="flex items-center gap-1">
+                      <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] border bg-emerald-50 text-emerald-700 border-emerald-200">
+                        <span className="material-symbols-outlined text-[11px]">shopping_bag</span>
+                        {c.orders || 0} Order{c.orders === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 5. Symmetrical Action Controls (Equal 36px Height, 6px Radius) */}
+                  <div
+                    className="grid grid-cols-2 gap-2 pt-2 border-t border-stone-200/70 dark:border-stone-700/60 w-full"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <span className="material-symbols-outlined text-[16px] shrink-0">
-                      visibility
-                    </span>
-                    <span>Quick View</span>
-                  </button>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    <a
-                      href={`mailto:${c.email}`}
-                      style={{ paddingLeft: '6px', paddingRight: '6px' }}
-                      className="admin-btn admin-btn-outline min-h-[32px] h-8 text-[11px] font-medium hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-muted)] justify-center gap-1.5 w-full transition-all cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[14px] shrink-0">mail</span>
-                      <span className="truncate">Email</span>
-                    </a>
-                    <a
-                      href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${c.phone?.replace(/[^0-9]/g, '') || ''}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ paddingLeft: '6px', paddingRight: '6px' }}
-                      className="admin-btn admin-btn-outline min-h-[32px] h-8 text-[11px] font-medium border-[var(--admin-success-light)] text-[var(--admin-success)] hover:bg-[var(--admin-success-light)] justify-center gap-1.5 w-full transition-all cursor-pointer"
-                    >
-                      <WhatsAppIcon className="w-[13px] h-[13px] shrink-0" />
-                      <span className="truncate">WhatsApp</span>
-                    </a>
+                    {/* Box 1: Quick View Profile Button */}
                     <button
-                      onClick={() => handleDeleteCustomer(c)}
-                      style={{ paddingLeft: '6px', paddingRight: '6px' }}
-                      className="admin-btn admin-btn-outline min-h-[32px] h-8 text-[11px] font-medium border-red-200 dark:border-red-900/50 text-red-600 hover:text-white hover:bg-red-600 hover:border-red-600 justify-center gap-1.5 w-full transition-all cursor-pointer"
-                      title="Move Customer to Recycle Bin"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedCustomerId(cId);
+                      }}
+                      className="w-full h-9 !min-h-[36px] !max-h-[36px] rounded-[6px] bg-[var(--admin-accent)] hover:opacity-90 active:opacity-100 text-white text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                     >
-                      <span className="material-symbols-outlined text-[14px] shrink-0">delete</span>
-                      <span className="truncate">Delete</span>
+                      <span className="material-symbols-outlined text-[15px]">visibility</span>
+                      <span>Quick View</span>
+                    </button>
+
+                    {/* Box 2: Details Toggle */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpandCard(cId);
+                      }}
+                      className={`w-full h-9 !min-h-[36px] !max-h-[36px] rounded-[6px] border text-[11px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        isExpanded
+                          ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400'
+                          : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <span>Details</span>
+                      <span
+                        className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${
+                          isExpanded ? 'rotate-180 text-amber-600' : ''
+                        }`}
+                      >
+                        expand_more
+                      </span>
                     </button>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+
+                  {/* 6. Expandable Details Panel */}
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        key={`customer-card-expanded-${cId}`}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <div
+                          className="pt-3 border-t border-stone-200/80 dark:border-stone-700/80 space-y-3"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {/* Customer Contact Box (2 equal columns sideways aligned with icons) */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <a
+                              href={`tel:${c.phone || ''}`}
+                              onClick={(e) => {
+                                if (!c.phone) {
+                                  e.preventDefault();
+                                  toast.error('No phone number recorded');
+                                }
+                              }}
+                              className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-[6px] border border-stone-200 dark:border-stone-700 bg-[#FAF9F5] dark:bg-stone-800 text-stone-700 dark:text-stone-200 text-[11px] font-semibold hover:border-stone-300 dark:hover:border-stone-600 transition-colors"
+                            >
+                              <span className="material-symbols-outlined !text-[15px] !leading-none text-stone-500 shrink-0">
+                                call
+                              </span>
+                              <span className="truncate">{c.phone || 'No phone'}</span>
+                            </a>
+
+                            <a
+                              href={`${EXTERNAL_URLS.WHATSAPP_BASE}/${(c.phone || '').replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => {
+                                if (!c.phone) {
+                                  e.preventDefault();
+                                  toast.error('No phone number recorded');
+                                }
+                              }}
+                              className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-[6px] border border-emerald-200/80 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold hover:bg-emerald-100/60 dark:hover:bg-emerald-950/50 transition-colors"
+                            >
+                              <WhatsAppIcon className="w-3.5 h-3.5 shrink-0" />
+                              <span>WhatsApp</span>
+                            </a>
+                          </div>
+
+                          {/* Customer Stats 4-Box Grid */}
+                          <div className="grid grid-cols-2 gap-2 text-[11px]">
+                            <div className="bg-[#FAF9F5] dark:bg-stone-800/50 p-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/60">
+                              <span className="text-[9.5px] uppercase font-bold text-stone-400 block">
+                                Total Orders
+                              </span>
+                              <span className="text-[12px] font-bold text-[var(--admin-text-primary)]">
+                                {c.orders || 0}
+                              </span>
+                            </div>
+
+                            <div className="bg-[#FAF9F5] dark:bg-stone-800/50 p-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/60">
+                              <span className="text-[9.5px] uppercase font-bold text-stone-400 block">
+                                Lifetime Spent
+                              </span>
+                              <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
+                                {formatCurrency(c.totalSpent || 0)}
+                              </span>
+                            </div>
+
+                            <div className="bg-[#FAF9F5] dark:bg-stone-800/50 p-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/60">
+                              <span className="text-[9.5px] uppercase font-bold text-stone-400 block">
+                                Wallet Cash
+                              </span>
+                              <span className="text-[12px] font-bold text-[var(--admin-text-primary)]">
+                                {formatCurrency(c.walletBalance || 0)}
+                              </span>
+                            </div>
+
+                            <div className="bg-[#FAF9F5] dark:bg-stone-800/50 p-2 rounded-[6px] border border-stone-200/70 dark:border-stone-700/60">
+                              <span className="text-[9.5px] uppercase font-bold text-stone-400 block">
+                                Reward Coins
+                              </span>
+                              <span className="text-[12px] font-bold text-amber-600 dark:text-amber-400">
+                                {c.siriCoins || 0}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Account & Location Info Callout */}
+                          <div className="bg-stone-50 dark:bg-stone-800/40 p-2.5 rounded-[6px] border border-stone-200/70 dark:border-stone-700/60 space-y-1 text-[11px]">
+                            <div className="flex items-center justify-between text-stone-600 dark:text-stone-300">
+                              <span className="font-medium flex items-center gap-1">
+                                <span className="material-symbols-outlined !text-[14px] text-stone-400">
+                                  mail
+                                </span>
+                                Email:
+                              </span>
+                              <span className="font-bold text-stone-800 dark:text-stone-100 truncate max-w-[180px]">
+                                {c.email || 'None'}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-stone-600 dark:text-stone-300">
+                              <span className="font-medium flex items-center gap-1">
+                                <span className="material-symbols-outlined !text-[14px] text-stone-400">
+                                  location_on
+                                </span>
+                                City:
+                              </span>
+                              <span className="font-bold text-stone-800 dark:text-stone-100">
+                                {customerCity || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Footer Actions: Email Link & Delete Button */}
+                          <div className="flex items-center justify-between pt-1">
+                            {c.email ? (
+                              <a
+                                href={`mailto:${c.email}`}
+                                className="h-7 px-2.5 rounded-[5px] border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 hover:bg-stone-50 transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[13px]">mail</span>
+                                Email
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-stone-400">No email</span>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteCustomer(c);
+                              }}
+                              className="h-7 px-2.5 rounded-[5px] border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 hover:bg-rose-100 text-rose-600 dark:text-rose-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer"
+                              title="Move customer to recycle bin"
+                            >
+                              <span className="material-symbols-outlined text-[13px]">delete</span>
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>
@@ -499,7 +757,7 @@ export function AdminCustomers() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="admin-btn admin-btn-outline px-3 h-8 text-xs disabled:opacity-50 cursor-pointer"
+                  className="admin-btn admin-btn-outline px-3 h-8 text-xs disabled:opacity-50 cursor-pointer rounded-[6px]"
                 >
                   Previous
                 </button>
@@ -509,7 +767,7 @@ export function AdminCustomers() {
                 <button
                   onClick={() => setPage((p) => Math.min(meta.pages, p + 1))}
                   disabled={page === meta.pages}
-                  className="admin-btn admin-btn-outline px-3 h-8 text-xs disabled:opacity-50 cursor-pointer"
+                  className="admin-btn admin-btn-outline px-3 h-8 text-xs disabled:opacity-50 cursor-pointer rounded-[6px]"
                 >
                   Next
                 </button>
@@ -518,6 +776,7 @@ export function AdminCustomers() {
           </div>
         </div>
       )}
+
       {/* Slide-over Profile */}
       <AnimatePresence>
         {selectedCustomerId && (

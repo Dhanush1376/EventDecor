@@ -5,6 +5,13 @@ export const OrderCreatedCustomerTemplate = (data: any) => {
   const { customerInfo, orderDetails, products, deliveryInfo } = data;
   const frontendUrl = getFrontendUrl();
 
+  const firstTitle = products?.[0]?.name || products?.[0]?.title || 'Items';
+  const moreCount = products && products.length > 1 ? ` (+${products.length - 1} more)` : '';
+  const productTitle = `${firstTitle}${moreCount}`;
+  const invoiceRef =
+    orderDetails.invoiceNumber ||
+    (orderDetails.id ? `INV-${String(orderDetails.id).slice(-8).toUpperCase()}` : '');
+
   const productsHtml = products
     .map((p: any) =>
       ProductCard({
@@ -22,7 +29,7 @@ export const OrderCreatedCustomerTemplate = (data: any) => {
     
     <h2 style="color: #111827; margin-bottom: 16px;">Thank you for your order, ${customerInfo.name}!</h2>
     <p style="color: #4b5563; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">
-      We've received your order <strong>#${orderDetails.id}</strong> and are getting it ready for shipment.
+      We've received your order for <strong>${productTitle}</strong>${invoiceRef ? ` (Reference: <strong>${invoiceRef}</strong>)` : ''} and are getting it ready for shipment.
     </p>
 
     <div style="background-color: #f9fafb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
@@ -51,7 +58,9 @@ export const OrderCreatedCustomerTemplate = (data: any) => {
 
   return {
     html: content,
-    subject: `Order Confirmation - #${orderDetails.id}`,
-    preheader: `We've received your order and are getting it ready.`,
+    subject: invoiceRef
+      ? `Order Confirmed: ${productTitle} (${invoiceRef})`
+      : `Order Confirmed: ${productTitle}`,
+    preheader: `We've received your order for ${productTitle} and are getting it ready.`,
   };
 };

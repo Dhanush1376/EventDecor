@@ -8,7 +8,7 @@ import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import BrainCircuit from 'lucide-react/dist/esm/icons/brain-circuit';
 import api from '../../services/api';
-import { formatCurrency } from '../components/AdminUIKit';
+import { formatCurrency, AdminExecutiveDashboardSkeleton } from '../components/AdminUIKit';
 
 export default function ExecutiveDashboard() {
   const [data, setData] = useState(null);
@@ -31,11 +31,7 @@ export default function ExecutiveDashboard() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <AdminExecutiveDashboardSkeleton />;
   }
 
   if (!data) {

@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { m as motion } from 'framer-motion';
-import { PageHeader, fadeUp, stagger, StatCard, SkeletonDashboard } from '../components/AdminUIKit';
+import {
+  PageHeader,
+  fadeUp,
+  stagger,
+  StatCard,
+  AdminCatalogRegistrySkeleton,
+} from '../components/AdminUIKit';
 import { catalogService } from '../../services/domainServices';
 import { toast } from 'react-hot-toast';
 import {
@@ -144,7 +150,7 @@ export default function AdminCatalogRegistry() {
     }
   };
 
-  if (!stats && loading) return <SkeletonDashboard />;
+  if (!stats && loading) return <AdminCatalogRegistrySkeleton />;
 
   return (
     <motion.div

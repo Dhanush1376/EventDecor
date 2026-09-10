@@ -289,7 +289,7 @@ const AiGlobalConfig = ({ settings, providers, onRefresh }) => {
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 bg-[var(--admin-accent)] text-white px-6 py-2.5 rounded-md text-[13px] font-bold hover:brightness-110 transition-all active:scale-95 shadow-sm disabled:opacity-50"
+            className="h-9 px-4 rounded-[4px] bg-[var(--admin-accent)] hover:opacity-95 text-white font-bold text-[12px] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-all disabled:opacity-50"
           >
             {saving ? (
               <>

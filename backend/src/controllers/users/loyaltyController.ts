@@ -68,7 +68,8 @@ export const getAdminReviews = asyncHandler(async (req: Request, res: Response) 
 
   const [reviews, totalCount] = await Promise.all([
     Review.find(filter)
-      .populate('product', 'title imageSrc')
+      .populate('product', 'title imageSrc images')
+      .populate('showcase', 'title image coverImage')
       .populate('customer', 'name email walletBalance')
       .sort({ createdAt: -1 })
       .skip(skip)

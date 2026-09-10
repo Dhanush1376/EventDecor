@@ -6,19 +6,25 @@ export function LivePreviewCard({ formData, mobileTab }) {
     <>
       {/* Live Catalog Preview Card */}
       <div
-        className={`lg:sticky lg:top-24 space-y-6 w-full ${mobileTab === 'preview' ? 'block' : 'hidden lg:block'}`}
+        className={`lg:sticky lg:top-24 space-y-4 w-full ${mobileTab === 'preview' ? 'block' : 'hidden lg:block'}`}
       >
-        <div className="text-center lg:text-left">
-          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--admin-text-secondary)]">
-            Storefront Preview
+        <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[var(--admin-border)]">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px] text-[var(--admin-accent)]">
+              visibility
+            </span>
+            <h3 className="text-[12px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">
+              Storefront Preview
+            </h3>
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Live
           </span>
-          <p className="text-[11px] sm:text-[11px] text-[var(--admin-text-secondary)]/75 mt-0.5">
-            Real-time catalog rendition of your craft product
-          </p>
         </div>
 
-        {/* Luxury Card Rendering using real ProductCard */}
-        <div className="w-full max-w-[340px] mx-auto bg-white rounded-2xl shadow-[var(--admin-shadow-sm)] border border-[var(--admin-border)]/60 p-2">
+        {/* Exact Storefront Product Card without outer card background */}
+        <div className="w-full max-w-[300px] sm:max-w-[320px] mx-auto">
           <ProductCard
             title={formData.title || 'Product Title'}
             teluguTitle={formData.teluguTitle}

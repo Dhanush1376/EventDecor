@@ -14,15 +14,26 @@ export function CustomOrderFormBuilder({
 }) {
   return (
     <>
-      <div className="flex justify-between items-center bg-[var(--admin-bg-subtle)] px-4 py-3 rounded-xl border border-[var(--admin-border)]">
-        <span className="font-bold text-[13px] text-[var(--admin-text-primary)]">
-          Wizard Steps (Drag to reorder)
-        </span>
+      {/* Steps Header Bar */}
+      <div className="flex justify-between items-center bg-[var(--admin-surface)] px-3.5 py-2.5 rounded-[4px] border border-[var(--admin-border)] shadow-xs gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="material-symbols-outlined text-[18px] text-[var(--admin-accent)] shrink-0">
+            format_list_bulleted
+          </span>
+          <span className="font-bold text-[12.5px] text-[var(--admin-text-primary)] truncate">
+            Form Steps
+          </span>
+          <span className="text-[11px] text-[var(--admin-text-tertiary)] hidden sm:inline">
+            (drag to reorder)
+          </span>
+        </div>
         <button
+          type="button"
           onClick={() => addStep(activeType.id)}
-          className="text-[11px] font-bold uppercase text-[var(--admin-accent)] hover:underline flex items-center gap-1"
+          className="h-7.5 px-2.5 rounded-[4px] bg-[var(--admin-surface-muted)] hover:bg-[var(--admin-border-subtle)] text-[var(--admin-accent)] border border-[var(--admin-border)] text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors shrink-0 whitespace-nowrap"
         >
-          + Add New Step
+          <span className="material-symbols-outlined text-[15px]">add</span>
+          <span>Add Step</span>
         </button>
       </div>
 
@@ -37,116 +48,137 @@ export function CustomOrderFormBuilder({
             <Reorder.Item
               key={step.id}
               value={step}
-              className="bg-white border border-[var(--admin-border-subtle)] rounded-2xl shadow-sm overflow-hidden list-none"
+              className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] shadow-xs overflow-hidden list-none"
             >
               {/* Step Header */}
-              <div className="bg-[var(--admin-surface)] p-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between cursor-grab active:cursor-grabbing">
-                <div className="flex items-center gap-3 w-full">
-                  <span className="material-symbols-outlined text-black/20 text-[20px]">
+              <div className="bg-[var(--admin-surface-muted)] p-3 border-b border-[var(--admin-border-subtle)] flex items-center justify-between cursor-grab active:cursor-grabbing gap-2">
+                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                  <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] shrink-0">
                     drag_indicator
                   </span>
-                  <span className="bg-black text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0">
+                  <span className="w-5.5 h-5.5 rounded-[4px] bg-[var(--admin-accent)] text-white text-[10.5px] font-bold flex items-center justify-center shrink-0">
                     {stepIndex + 1}
                   </span>
                   <input
                     value={step.title}
                     onChange={(e) => updateStep(activeType.id, step.id, { title: e.target.value })}
-                    className="bg-transparent border-b border-dashed border-black/30 pb-0.5 outline-none font-bold text-[14px] text-black w-1/3 focus:border-[var(--admin-accent)] transition-all"
+                    className="bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 h-8 rounded-[4px] font-bold text-[13px] text-[var(--admin-text-primary)] w-1/3 focus:border-[var(--admin-accent)] outline-none transition-colors"
+                    placeholder="Step title"
                   />
                   <input
                     value={step.description || ''}
                     onChange={(e) =>
                       updateStep(activeType.id, step.id, { description: e.target.value })
                     }
-                    placeholder="Optional step description"
-                    className="bg-transparent text-[11px] outline-none text-[#685C57] w-1/2 ml-2"
+                    placeholder="Optional step description or helper guidance"
+                    className="bg-[var(--admin-surface)] border border-[var(--admin-border-subtle)] px-2.5 h-8 rounded-[4px] text-[11px] outline-none text-[var(--admin-text-secondary)] flex-1 min-w-0"
                   />
                 </div>
                 <button
+                  type="button"
                   onClick={() => deleteStep(activeType.id, step.id)}
-                  className="text-[var(--admin-error)] hover:bg-red-50 p-1.5 rounded-lg"
+                  className="admin-btn-icon !rounded-[4px] w-8 h-8 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0"
+                  title="Delete Step"
                 >
-                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                  <span className="material-symbols-outlined text-[17px]">delete</span>
                 </button>
               </div>
 
-              {/* Step Fields */}
-              <div className="p-4 bg-[#fdfdfc]">
+              {/* Step Fields Container */}
+              <div className="p-3.5 bg-[var(--admin-bg-subtle)]">
                 {step.fields && step.fields.length > 0 ? (
                   <Reorder.Group
                     axis="y"
                     values={step.fields}
                     onReorder={(newFields) => setFields(activeType.id, step.id, newFields)}
-                    className="space-y-3"
+                    className="space-y-2.5"
                   >
                     {step.fields.map((field) => (
                       <Reorder.Item
                         key={field.id}
                         value={field}
-                        className="flex flex-col gap-3 p-3 border border-[var(--admin-border-subtle)] bg-white rounded-xl hover:border-black/20 transition-all list-none relative"
+                        className="flex flex-col gap-2.5 p-3 border border-[var(--admin-border-subtle)] bg-[var(--admin-surface)] rounded-[4px] hover:border-[var(--admin-border-strong)] transition-all list-none relative"
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-black/20 text-[18px] cursor-grab active:cursor-grabbing">
-                            drag_indicator
-                          </span>
-
-                          <input
-                            value={field.label}
-                            onChange={(e) =>
-                              updateField(activeType.id, step.id, field.id, {
-                                label: e.target.value,
-                              })
-                            }
-                            className="bg-[var(--admin-surface)] border border-[var(--admin-border)] px-3 py-1.5 rounded-lg text-[12px] font-medium outline-none w-1/3 focus:border-[var(--admin-accent)]"
-                          />
-
-                          <select
-                            value={field.type}
-                            onChange={(e) =>
-                              updateField(activeType.id, step.id, field.id, {
-                                type: e.target.value,
-                              })
-                            }
-                            className="bg-[var(--admin-surface)] border border-[var(--admin-border)] px-3 py-1.5 rounded-lg text-[12px] outline-none cursor-pointer w-1/4"
-                          >
-                            <option value="text">Short Text</option>
-                            <option value="textarea">Long Text (Textarea)</option>
-                            <option value="dropdown">Dropdown Select</option>
-                            <option value="radio">Radio Buttons</option>
-                            <option value="checkbox">Checkbox (Single)</option>
-                            <option value="multiselect">Multi-Select Tags</option>
-                            <option value="file">File/Image Upload</option>
-                            <option value="date">Date Picker</option>
-                            <option value="number">Number</option>
-                            <option value="whatsapp_chat">WhatsApp Chat</option>
-                          </select>
-
-                          <label className="flex items-center gap-1.5 ml-auto text-[11px] font-bold uppercase tracking-wider cursor-pointer">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2.5 w-full">
+                          {/* Left / Top: Drag Handle + Label Input + Mobile Delete */}
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="material-symbols-outlined text-[18px] text-[var(--admin-text-tertiary)] cursor-grab active:cursor-grabbing shrink-0">
+                              drag_indicator
+                            </span>
                             <input
-                              type="checkbox"
-                              checked={field.required}
+                              value={field.label}
                               onChange={(e) =>
                                 updateField(activeType.id, step.id, field.id, {
-                                  required: e.target.checked,
+                                  label: e.target.value,
                                 })
                               }
-                              className="accent-[var(--admin-accent)]"
+                              placeholder="Field Label (e.g. Date Required)"
+                              className="bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 h-8 rounded-[4px] text-[12px] font-medium outline-none flex-1 min-w-0 text-[var(--admin-text-primary)] focus:border-[var(--admin-accent)]"
                             />
-                            Required
-                          </label>
+                            {/* Mobile Delete Button */}
+                            <button
+                              type="button"
+                              onClick={() => deleteField(activeType.id, step.id, field.id)}
+                              className="sm:hidden admin-btn-icon !rounded-[4px] w-7 h-7 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0 flex items-center justify-center"
+                              title="Remove Field"
+                            >
+                              <span className="material-symbols-outlined text-[15px]">close</span>
+                            </button>
+                          </div>
 
-                          <button
-                            onClick={() => deleteField(activeType.id, step.id, field.id)}
-                            className="text-[var(--admin-error)] opacity-60 hover:opacity-100 p-1"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">close</span>
-                          </button>
+                          {/* Right / Controls: Type Select + Required Checkbox + Desktop Delete */}
+                          <div className="flex items-center gap-2.5 pl-6 sm:pl-0 shrink-0">
+                            <select
+                              value={field.type}
+                              onChange={(e) =>
+                                updateField(activeType.id, step.id, field.id, {
+                                  type: e.target.value,
+                                })
+                              }
+                              className="bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2 h-8 rounded-[4px] text-[11.5px] font-medium text-[var(--admin-text-primary)] outline-none cursor-pointer w-38 shrink-0 focus:border-[var(--admin-accent)]"
+                            >
+                              <option value="text">Short Text</option>
+                              <option value="textarea">Long Text</option>
+                              <option value="dropdown">Dropdown Select</option>
+                              <option value="radio">Radio Buttons</option>
+                              <option value="checkbox">Single Checkbox</option>
+                              <option value="multiselect">Multi-Select Tags</option>
+                              <option value="file">File / Image Upload</option>
+                              <option value="date">Date Picker</option>
+                              <option value="number">Number</option>
+                              <option value="whatsapp_chat">WhatsApp Chat</option>
+                            </select>
+
+                            <label className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--admin-text-secondary)] cursor-pointer shrink-0 select-none">
+                              <input
+                                type="checkbox"
+                                checked={field.required}
+                                onChange={(e) =>
+                                  updateField(activeType.id, step.id, field.id, {
+                                    required: e.target.checked,
+                                  })
+                                }
+                                className="accent-[var(--admin-accent)] rounded-[2px] w-3.5 h-3.5"
+                              />
+                              <span>Required</span>
+                            </label>
+
+                            {/* Desktop Delete Button */}
+                            <button
+                              type="button"
+                              onClick={() => deleteField(activeType.id, step.id, field.id)}
+                              className="hidden sm:flex admin-btn-icon !rounded-[4px] w-7 h-7 text-[var(--admin-text-tertiary)] hover:text-[var(--admin-error)] hover:bg-[var(--admin-error-light)] shrink-0 items-center justify-center"
+                              title="Remove Field"
+                            >
+                              <span className="material-symbols-outlined text-[15px]">close</span>
+                            </button>
+                          </div>
                         </div>
 
                         {/* Options builder for dropdown/multiselect/radio */}
                         {['dropdown', 'multiselect', 'radio'].includes(field.type) && (
-                          <div className="ml-8 p-3 bg-[var(--admin-bg-subtle)] rounded-lg border border-[var(--admin-border-subtle)]">
-                            <p className="text-[10px] uppercase font-bold text-black/50 mb-2">
+                          <div className="ml-7 p-3 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border-subtle)] space-y-1.5">
+                            <p className="text-[9.5px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider">
                               Options (Comma separated)
                             </p>
                             <input
@@ -162,64 +194,80 @@ export function CustomOrderFormBuilder({
                                 });
                               }}
                               placeholder="e.g. Traditional, Modern, Rustic"
-                              className="w-full bg-white border border-[var(--admin-border)] px-3 py-2 rounded-lg text-[12px] outline-none"
+                              className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 h-8 rounded-[4px] text-[12px] text-[var(--admin-text-primary)] outline-none focus:border-[var(--admin-accent)]"
                             />
                           </div>
                         )}
 
                         {/* Options builder for whatsapp_chat */}
                         {field.type === 'whatsapp_chat' && (
-                          <div className="ml-8 p-3 bg-[var(--admin-bg-subtle)] rounded-lg border border-[var(--admin-border-subtle)]">
-                            <p className="text-[10px] uppercase font-bold text-black/50 mb-2">
-                              WhatsApp Number (with country code)
-                            </p>
-                            <input
-                              type="text"
-                              value={field.whatsappNumber || ''}
-                              onChange={(e) =>
-                                updateField(activeType.id, step.id, field.id, {
-                                  whatsappNumber: e.target.value,
-                                })
-                              }
-                              placeholder="e.g. 919866006648"
-                              className="w-full bg-white border border-[var(--admin-border)] px-3 py-2 rounded-lg text-[12px] outline-none mb-3"
-                            />
-                            <p className="text-[10px] uppercase font-bold text-black/50 mb-2">
-                              Pre-filled Message
-                            </p>
-                            <input
-                              type="text"
-                              value={field.whatsappMessage || ''}
-                              onChange={(e) =>
-                                updateField(activeType.id, step.id, field.id, {
-                                  whatsappMessage: e.target.value,
-                                })
-                              }
-                              placeholder="e.g. Hi, I need help with this customization!"
-                              className="w-full bg-white border border-[var(--admin-border)] px-3 py-2 rounded-lg text-[12px] outline-none"
-                            />
+                          <div className="ml-7 p-3 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border-subtle)] space-y-2">
+                            <div>
+                              <p className="text-[9.5px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider mb-1">
+                                WhatsApp Number (with country code, e.g. 919866006648)
+                              </p>
+                              <input
+                                type="text"
+                                value={field.whatsappNumber || ''}
+                                onChange={(e) =>
+                                  updateField(activeType.id, step.id, field.id, {
+                                    whatsappNumber: e.target.value,
+                                  })
+                                }
+                                placeholder="919866006648"
+                                className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 h-8 rounded-[4px] text-[12px] text-[var(--admin-text-primary)] outline-none"
+                              />
+                            </div>
+                            <div>
+                              <p className="text-[9.5px] uppercase font-bold text-[var(--admin-text-tertiary)] tracking-wider mb-1">
+                                Pre-filled Message
+                              </p>
+                              <input
+                                type="text"
+                                value={field.whatsappMessage || ''}
+                                onChange={(e) =>
+                                  updateField(activeType.id, step.id, field.id, {
+                                    whatsappMessage: e.target.value,
+                                  })
+                                }
+                                placeholder="Hi, I need assistance with this custom order!"
+                                className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] px-2.5 h-8 rounded-[4px] text-[12px] text-[var(--admin-text-primary)] outline-none"
+                              />
+                            </div>
                           </div>
                         )}
                       </Reorder.Item>
                     ))}
                   </Reorder.Group>
                 ) : (
-                  <p className="text-[12px] text-black/40 italic">No fields in this step.</p>
+                  <p className="text-[11.5px] text-[var(--admin-text-tertiary)] italic py-2">
+                    No fields added to this step yet.
+                  </p>
                 )}
 
                 <button
+                  type="button"
                   onClick={() => addField(activeType.id, step.id)}
-                  className="w-full py-2.5 border-2 border-dashed border-[var(--admin-border)] rounded-xl text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-secondary)] hover:border-black/30 hover:bg-[var(--admin-bg-subtle)] transition-all mt-3 cursor-pointer"
+                  className="w-full h-8.5 border border-dashed border-[var(--admin-border)] hover:border-[var(--admin-accent)] text-[var(--admin-accent)] bg-[var(--admin-surface)] rounded-[4px] text-[11px] font-bold uppercase tracking-wider transition-all mt-2.5 flex items-center justify-center gap-1 cursor-pointer"
                 >
-                  + Add Form Field
+                  <span className="material-symbols-outlined text-[15px]">add</span>
+                  <span>Add Form Field</span>
                 </button>
               </div>
             </Reorder.Item>
           ))}
         </Reorder.Group>
       ) : (
-        <div className="text-center p-10 bg-white rounded-xl border border-dashed border-black/20 text-black/50">
-          No steps added yet. Start building your form!
+        <div className="text-center py-12 bg-[var(--admin-surface)] rounded-[4px] border border-dashed border-[var(--admin-border)] text-[var(--admin-text-tertiary)]">
+          <span className="material-symbols-outlined text-[36px] mb-2 block text-[var(--admin-text-tertiary)]">
+            post_add
+          </span>
+          <p className="text-[13px] font-bold text-[var(--admin-text-primary)]">
+            No Steps Configured
+          </p>
+          <p className="text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
+            Click "+ Add Step" above to start building your custom order form.
+          </p>
         </div>
       )}
     </>

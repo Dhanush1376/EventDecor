@@ -7,9 +7,7 @@ import { getErrorMessage } from '../../../utils/core/errorHelpers';
 import { CustomOrderConfigHeader } from './CustomOrderConfigHeader';
 import { CustomOrderTypeTabs } from './CustomOrderTypeTabs';
 import { CustomOrderFormBuilder } from './CustomOrderFormBuilder';
-import { CustomOrderWorkflowBuilder } from './CustomOrderWorkflowBuilder';
 import { CustomOrderTypeSettings } from './CustomOrderTypeSettings';
-import { CustomOrderPreviewModal } from './CustomOrderPreviewModal';
 
 export function AdminCustomOrderConfig() {
   const [config, setConfig] = useState({ types: [] });
@@ -19,10 +17,6 @@ export function AdminCustomOrderConfig() {
   const confirm = useConfirm();
 
   const [activeTypeTab, setActiveTypeTab] = useState(null);
-  const [activeSectionTab, setActiveSectionTab] = useState('forms'); // 'forms' | 'workflows'
-
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [previewDevice, setPreviewDevice] = useState('desktop'); // desktop | tablet | mobile
 
   useEffect(() => {
     fetchConfig();
@@ -244,52 +238,6 @@ export function AdminCustomOrderConfig() {
     }));
   };
 
-  // --- Workflow Management ---
-  const addWorkflowStatus = (typeId) => {
-    setConfig((prev) => ({
-      ...prev,
-      types: prev.types.map((t) => {
-        if (t.id === typeId) {
-          return {
-            ...t,
-            workflows: [
-              ...(t.workflows || []),
-              { id: `status_${Date.now()}`, label: 'New Status', color: '#000000' },
-            ],
-          };
-        }
-        return t;
-      }),
-    }));
-  };
-
-  const updateWorkflowStatus = (typeId, statusId, updates) => {
-    setConfig((prev) => ({
-      ...prev,
-      types: prev.types.map((t) => {
-        if (t.id === typeId) {
-          return {
-            ...t,
-            workflows: t.workflows.map((w) => (w.id === statusId ? { ...w, ...updates } : w)),
-          };
-        }
-        return t;
-      }),
-    }));
-  };
-
-  const deleteWorkflowStatus = (typeId, statusId) => {
-    setConfig((prev) => ({
-      ...prev,
-      types: prev.types.map((t) => {
-        if (t.id === typeId) {
-          return { ...t, workflows: t.workflows.filter((w) => w.id !== statusId) };
-        }
-        return t;
-      }),
-    }));
-  };
-
   if (loading)
     return <div className="p-10 text-center animate-pulse">Loading Enterprise Form Builder...</div>;
 
@@ -303,7 +251,6 @@ export function AdminCustomOrderConfig() {
         publishing={publishing}
         handleSaveDraft={handleSaveDraft}
         handlePublish={handlePublish}
-        setShowPreviewModal={setShowPreviewModal}
       />
 
       <CustomOrderTypeTabs
@@ -316,44 +263,17 @@ export function AdminCustomOrderConfig() {
       {activeType && (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
           <div className="xl:col-span-8 space-y-4">
-            {/* SUB-TABS (Forms vs Workflows) */}
-            <div className="flex border-b border-[var(--admin-border)] gap-4 sm:gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              <button
-                onClick={() => setActiveSectionTab('forms')}
-                className={`shrink-0 whitespace-nowrap pb-3 text-[12px] sm:text-[13px] font-bold uppercase tracking-wider transition-all border-b-2 ${activeSectionTab === 'forms' ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]' : 'border-transparent text-black/50 hover:text-black'}`}
-              >
-                Form Builder
-              </button>
-              <button
-                onClick={() => setActiveSectionTab('workflows')}
-                className={`shrink-0 whitespace-nowrap pb-3 text-[12px] sm:text-[13px] font-bold uppercase tracking-wider transition-all border-b-2 ${activeSectionTab === 'workflows' ? 'border-[var(--admin-accent)] text-[var(--admin-accent)]' : 'border-transparent text-black/50 hover:text-black'}`}
-              >
-                Lifecycle Workflows
-              </button>
-            </div>
-
-            {activeSectionTab === 'forms' && (
-              <CustomOrderFormBuilder
-                activeType={activeType}
-                addStep={addStep}
-                setSteps={setSteps}
-                updateStep={updateStep}
-                deleteStep={deleteStep}
-                setFields={setFields}
-                addField={addField}
-                updateField={updateField}
-                deleteField={deleteField}
-              />
-            )}
-
-            {activeSectionTab === 'workflows' && (
-              <CustomOrderWorkflowBuilder
-                activeType={activeType}
-                addWorkflowStatus={addWorkflowStatus}
-                updateWorkflowStatus={updateWorkflowStatus}
-                deleteWorkflowStatus={deleteWorkflowStatus}
-              />
-            )}
+            <CustomOrderFormBuilder
+              activeType={activeType}
+              addStep={addStep}
+              setSteps={setSteps}
+              updateStep={updateStep}
+              deleteStep={deleteStep}
+              setFields={setFields}
+              addField={addField}
+              updateField={updateField}
+              deleteField={deleteField}
+            />
           </div>
 
           <div className="xl:col-span-4 space-y-4">
@@ -361,15 +281,6 @@ export function AdminCustomOrderConfig() {
           </div>
         </div>
       )}
-
-      <CustomOrderPreviewModal
-        showPreviewModal={showPreviewModal}
-        setShowPreviewModal={setShowPreviewModal}
-        previewDevice={previewDevice}
-        setPreviewDevice={setPreviewDevice}
-        config={config}
-        activeTypeTab={activeTypeTab}
-      />
     </div>
   );
 }

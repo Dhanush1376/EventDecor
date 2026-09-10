@@ -27,7 +27,7 @@ function BaseOptimizedImage({
   fallback,
   ...props
 }) {
-  const [isLoaded, setIsLoaded] = useState(eager || loading === 'eager');
+  const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
@@ -72,7 +72,7 @@ function BaseOptimizedImage({
   // Handle actual src changes (reference check bypassed, actual value check)
   useEffect(() => {
     if (src !== prevSrcRef.current) {
-      setIsLoaded(eager || loading === 'eager');
+      setIsLoaded(false);
       setHasError(false);
       setRetryCount(0);
       prevSrcRef.current = src;
@@ -125,6 +125,13 @@ function BaseOptimizedImage({
     [containerClassName, className],
   );
 
+  const isValidSrc = useMemo(() => {
+    if (!src || typeof src !== 'string') return false;
+    const trimmed = src.trim();
+    if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return false;
+    return true;
+  }, [src]);
+
   const aspectStyle = aspectRatio
     ? { aspectRatio }
     : width && height
@@ -135,7 +142,26 @@ function BaseOptimizedImage({
     [width, height],
   );
 
-  if (!src) return null;
+  if (!isValidSrc) {
+    return (
+      <div
+        ref={containerRef}
+        className={`${hasPositioning ? '' : 'relative'} overflow-hidden rounded-[inherit] w-full h-full min-h-[80px] ${containerClassName}`}
+        style={aspectStyle}
+      >
+        {fallback || (
+          <div className="absolute inset-0 rounded-[inherit] flex flex-col items-center justify-center bg-[#f7f6f2] dark:bg-[#1a1917] text-[#8a877f] dark:text-[#9e9b93] select-none p-3 text-center border border-black/5 dark:border-white/5 z-10">
+            <div className="w-10 h-10 rounded-full bg-black/[0.04] dark:bg-white/[0.06] flex items-center justify-center mb-1.5 shadow-xs">
+              <ImageOff className="w-5 h-5 opacity-70" strokeWidth={1.75} />
+            </div>
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider opacity-80 font-sans">
+              Image Unavailable
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -151,17 +177,21 @@ function BaseOptimizedImage({
         />
       )}
 
-      {/* Skeleton fallback if the image errored */}
+      {/* Fallback if the image errored */}
       {hasError &&
         (fallback || (
-          <div className="absolute inset-0 skeleton-box rounded-[inherit] flex flex-col items-center justify-center text-black/20 bg-black/5 z-0">
-            <ImageOff className="text-3xl mb-1" strokeWidth={1.5} />
-            <span className="text-[9px] uppercase tracking-widest font-bold">Unavailable</span>
+          <div className="absolute inset-0 rounded-[inherit] flex flex-col items-center justify-center bg-[#f7f6f2] dark:bg-[#1a1917] text-[#8a877f] dark:text-[#9e9b93] select-none p-3 text-center border border-black/5 dark:border-white/5 z-10">
+            <div className="w-10 h-10 rounded-full bg-black/[0.04] dark:bg-white/[0.06] flex items-center justify-center mb-1.5 shadow-xs">
+              <ImageOff className="w-5 h-5 opacity-70" strokeWidth={1.75} />
+            </div>
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider opacity-80 font-sans">
+              Image Unavailable
+            </span>
           </div>
         ))}
 
       {/* Native img tag with srcset to prevent duplicate downloads */}
-      {isInView && (
+      {isInView && !hasError && (
         <img
           ref={imgRef}
           src={optimizedUrl}
@@ -181,20 +211,12 @@ function BaseOptimizedImage({
             }
           }}
           onError={(e) => {
-            if (retryCount < MAX_RETRIES) {
-              // Retry with exponential backoff to handle ERR_NETWORK_CHANGED gracefully
-              const delay = Math.pow(2, retryCount) * 500;
-              setTimeout(() => {
-                setRetryCount((prev) => prev + 1);
-              }, delay);
-            } else {
-              handleImageError(e);
-              setHasError(true);
-              setIsLoaded(true);
-            }
+            handleImageError(e);
+            setHasError(true);
+            setIsLoaded(true);
           }}
-          className={`w-full ${isImageAutoHeight ? 'h-auto block' : `h-full ${hasObjectFit ? '' : 'object-cover'}`} rounded-[inherit] transition-all duration-500 ease-out transform-gpu ${className} ${
-            isLoaded && !hasError ? 'opacity-100' : 'opacity-0 will-change-opacity'
+          className={`w-full ${isImageAutoHeight ? 'h-auto block' : `h-full ${hasObjectFit ? '' : 'object-cover'}`} rounded-[inherit] transition-opacity duration-300 ease-out transform-gpu ${className} ${
+            isLoaded ? 'opacity-100' : 'opacity-0 will-change-opacity'
           }`}
           {...props}
         />

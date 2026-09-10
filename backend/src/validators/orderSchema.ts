@@ -145,6 +145,7 @@ export const updateStatusSchema = z.object({
       ),
       note: z.string().trim().max(1000).optional().or(z.literal('')),
       courierCharges: z.number().min(0).optional(),
+      collectedAmount: z.number().min(0).optional(),
     })
     .strict(),
 });

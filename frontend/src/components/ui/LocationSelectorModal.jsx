@@ -7,6 +7,11 @@ import { useScrollLock } from '../../hooks/useScrollLock';
 
 import logger from '../../utils/core/logger';
 import 'leaflet/dist/leaflet.css';
+import {
+  searchLocations,
+  reverseGeocodeCoords,
+  detectUserLocation,
+} from '../../utils/locationService';
 
 // Helper to check for Google Maps key
 const getGoogleMapsApiKey = () => {
@@ -262,43 +267,30 @@ export function LocationSelectorModal({
     }
   };
 
-  // Reverse Geocoding with OSM Nominatim API
+  // Reverse Geocoding with backend proxy and multi-tier fallbacks
   const reverseGeocodeLeaflet = async (lat, lng) => {
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
-      );
-      if (!response.ok) throw new Error('Network issue geocoding coordinates');
-      const data = await response.json();
+      const res = await reverseGeocodeCoords(Number(lat), Number(lng));
+      if (res.success && res.data) {
+        const d = res.data;
+        const formattedAddress =
+          d.address || [d.locality, d.city, d.state, d.pincode].filter(Boolean).join(', ');
 
-      const addr = data.address || {};
-      const street = addr.road || addr.suburb || addr.neighbourhood || '';
-      const city = addr.city || addr.town || addr.village || addr.county || '';
-      const state = addr.state || '';
-      const country = addr.country || '';
-      const pincode = addr.postcode || '';
-      const venueName = data.name || addr.amenity || addr.building || addr.shop || '';
+        const locDetails = {
+          name: d.landmark || d.locality || d.city || 'Selected Location',
+          address: formattedAddress,
+          city: d.city || '',
+          state: d.state || '',
+          country: d.country || 'India',
+          pincode: d.pincode || '',
+          latitude: Number(lat),
+          longitude: Number(lng),
+          googleMapsLink: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}&query_place_id=${lat},${lng}`,
+        };
 
-      // Derive formatted address
-      const formattedAddress =
-        data.display_name ||
-        `${venueName ? venueName + ', ' : ''}${street}, ${city}, ${state}, ${pincode}`;
-
-      const locDetails = {
-        name: venueName || street || 'Selected Landmark',
-        address: formattedAddress,
-        city: city,
-        state: state,
-        country: country,
-        pincode: pincode,
-        latitude: Number(lat),
-        longitude: Number(lng),
-        googleMapsLink: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}&query_place_id=${lat},${lng}`,
-      };
-
-      setSelectedLocation(locDetails);
-      // Auto fill search bar
-      setSearchQuery(venueName || street || formattedAddress);
+        setSelectedLocation(locDetails);
+        setSearchQuery(locDetails.name || formattedAddress);
+      }
     } catch (err) {
       logger.error('Reverse geocoding error', err);
     }
@@ -306,14 +298,12 @@ export function LocationSelectorModal({
 
   // Google Maps Engine (Safe Fallback Placeholder - will fallback automatically to OSM)
   const loadGoogleMapsEngine = () => {
-    // If user has a valid key but we want OSM leaflet for standard testing,
-    // we fallback cleanly here. Let's make sure it just uses OSM.
     loadLeafletEngine();
   };
 
   const searchTimeoutRef = useRef(null);
 
-  // Address Search Autocomplete (OSM Nominatim)
+  // Address Search Autocomplete (Multi-tier: Backend Nominatim + Photon Komoot fallback)
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -331,26 +321,14 @@ export function LocationSelectorModal({
 
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&countrycodes=in&limit=20`,
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setSuggestions(
-            data.map((item) => ({
-              displayName: item.display_name,
-              lat: Number(item.lat),
-              lon: Number(item.lon),
-              raw: item,
-            })),
-          );
-        }
+        const results = await searchLocations(query);
+        setSuggestions(results);
       } catch (err) {
         logger.error('Autocomplete fetching error', err);
       } finally {
         setIsLoadingSuggestions(false);
       }
-    }, 600); // 600ms debounce
+    }, 400); // 400ms debounce
   };
 
   // Select search suggestion
@@ -358,29 +336,22 @@ export function LocationSelectorModal({
     setSearchQuery(item.displayName);
     setSuggestions([]);
 
-    const lat = item.lat;
-    const lng = item.lon;
+    const lat = Number(item.lat);
+    const lng = Number(item.lon);
 
     if (mapInstanceRef.current && markerInstanceRef.current) {
       mapInstanceRef.current.setView([lat, lng], 16);
       markerInstanceRef.current.setLatLng([lat, lng]);
     }
 
-    const addr = item.raw.address || {};
-    const street = addr.road || addr.suburb || addr.neighbourhood || '';
-    const city = addr.city || addr.town || addr.village || addr.county || '';
-    const state = addr.state || '';
-    const country = addr.country || '';
-    const pincode = addr.postcode || '';
-    const venueName = item.raw.name || addr.amenity || addr.building || addr.shop || '';
-
+    const addr = item.address || {};
     const locDetails = {
-      name: venueName || street || 'Selected Location',
+      name: item.name || addr.road || 'Selected Location',
       address: item.displayName,
-      city: city,
-      state: state,
-      country: country,
-      pincode: pincode,
+      city: addr.city || '',
+      state: addr.state || '',
+      country: addr.country || 'India',
+      pincode: addr.pincode || '',
       latitude: lat,
       longitude: lng,
       googleMapsLink: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.displayName)}`,
@@ -390,56 +361,60 @@ export function LocationSelectorModal({
     toast.success(`Centered map on: ${locDetails.name}`);
   };
 
-  // Fetch Device Current Location
-  const _handleUseCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error('GPS tracking is not supported by your browser.');
-      return;
-    }
-
+  // Fetch Device Current Location with Multi-Tier GPS & Network IP fallback
+  const handleUseCurrentLocation = async () => {
     setIsDetectingGPS(true);
-    const gpsId = toast.loading('Acquiring GPS coordinates...');
+    const gpsId = toast.loading('Acquiring location...');
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
+    try {
+      const result = await detectUserLocation();
+      toast.dismiss(gpsId);
+      setIsDetectingGPS(false);
 
-        toast.dismiss(gpsId);
-        setIsDetectingGPS(false);
-        toast.success('Current location geocoded successfully!');
+      if (result.success && result.data && result.data.latitude && result.data.longitude) {
+        const { latitude: lat, longitude: lng } = result.data;
 
         if (mapInstanceRef.current && markerInstanceRef.current) {
           mapInstanceRef.current.setView([lat, lng], 16);
           markerInstanceRef.current.setLatLng([lat, lng]);
         }
-        reverseGeocodeLeaflet(lat, lng);
-      },
-      (error) => {
-        toast.dismiss(gpsId);
-        setIsDetectingGPS(false);
-        logger.error('GPS permission error', error);
 
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            toast.error(
-              window.isSecureContext
-                ? 'GPS Access Denied! Please enable browser location permissions.'
-                : 'Location requires a secure connection (HTTPS).',
-            );
-            break;
-          case error.POSITION_UNAVAILABLE:
-            toast.error('Location details unavailable. Please drop a manual map pin.');
-            break;
-          case error.TIMEOUT:
-            toast.error('Location tracking request timed out.');
-            break;
-          default:
-            toast.error('Failed to acquire device coordinates.');
+        const formattedAddress =
+          result.data.address ||
+          [result.data.locality, result.data.city, result.data.state, result.data.pincode]
+            .filter(Boolean)
+            .join(', ');
+
+        const locDetails = {
+          name:
+            result.data.landmark || result.data.locality || result.data.city || 'Current Location',
+          address: formattedAddress,
+          city: result.data.city || '',
+          state: result.data.state || '',
+          country: result.data.country || 'India',
+          pincode: result.data.pincode || '',
+          latitude: Number(lat),
+          longitude: Number(lng),
+          googleMapsLink: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}&query_place_id=${lat},${lng}`,
+        };
+
+        setSelectedLocation(locDetails);
+        setSearchQuery(locDetails.address || locDetails.name);
+
+        if (result.source === 'gps') {
+          toast.success('Current GPS location detected!');
+        } else {
+          toast.success('Approximate location detected via network!');
         }
-      },
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
+      } else {
+        toast.error(result.error || 'Failed to detect location. Please search or tap on the map.');
+      }
+    } catch (err) {
+      toast.dismiss(gpsId);
+      setIsDetectingGPS(false);
+      logger.error('Location detection error', err);
+      toast.error('Unable to detect location. Please search or select on the map.');
+    }
   };
 
   const handleConfirmLocation = () => {
@@ -525,7 +500,7 @@ export function LocationSelectorModal({
                       placeholder="Search traditional venues, halls, temples..."
                       value={searchQuery}
                       onChange={handleSearchChange}
-                      className="w-full pl-11 pr-10 py-3 rounded-full border border-black/10 bg-white text-[16px] sm:text-xs outline-none focus:border-primary font-medium shadow-sm transition-all"
+                      className="w-full pl-11 pr-10 py-2.5 sm:py-3 rounded-full border border-black/10 bg-white text-xs outline-none focus:border-primary font-medium shadow-sm transition-all"
                     />
                     {searchQuery && (
                       <button
@@ -542,7 +517,7 @@ export function LocationSelectorModal({
                   </div>
                   <button
                     type="button"
-                    onClick={_handleUseCurrentLocation}
+                    onClick={handleUseCurrentLocation}
                     disabled={isDetectingGPS}
                     className="w-[46px] h-[46px] shrink-0 rounded-full border border-[#826237]/20 bg-stone-50 hover:bg-[#FAF6F0] text-primary flex items-center justify-center shadow-sm disabled:opacity-50 transition-all active:scale-95"
                     title="Use Current Location"

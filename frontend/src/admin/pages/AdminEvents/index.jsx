@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import { useAdminEventsData } from './useAdminEventsData';
-import { PageHeader, stagger } from '../../components/AdminUIKit';
+import { PageHeader, stagger, formatCurrency } from '../../components/AdminUIKit';
 
 // Tabs
 import { DashboardTab } from './tabs/DashboardTab';
@@ -21,6 +21,7 @@ export function AdminEvents() {
   const setActiveTab = (id) => {
     setSearchParams({ tab: id });
   };
+  const [calendarSummary, setCalendarSummary] = useState(null);
   const {
     events,
     loadingPortfolio,
@@ -75,54 +76,122 @@ export function AdminEvents() {
     ['confirmed', 'team_assigned', 'setup_in_progress'].includes(b.status),
   ).length;
 
-  const tabs = [
-    { id: 'dashboard', label: 'Overview', icon: 'dashboard' },
-    { id: 'calendar', label: 'Calendar', icon: 'calendar_month' },
-    { id: 'bookings', label: 'Bookings', icon: 'assignment' },
-    { id: 'showcases', label: 'Showcase', icon: 'redeem' },
-  ];
+  const activeShowcasesCount = showcases.filter((s) => s.isActive !== false).length;
+  const featuredShowcasesCount = showcases.filter((s) => s.isFeatured).length;
+  const showcaseCategoriesCount = new Set(showcases.map((s) => s.category).filter(Boolean)).size;
+
+  const now = new Date();
+  const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const defaultCurrentMonthBookings = bookings.filter(
+    (b) => b.date && b.date.substring(0, 7) === currentMonthPrefix,
+  );
+  const defaultConfirmedCount = defaultCurrentMonthBookings.filter(
+    (b) =>
+      (b.status || '').toLowerCase() === 'confirmed' || (b.status || '').toLowerCase() === 'booked',
+  ).length;
+  const defaultPendingCount = defaultCurrentMonthBookings.filter((b) =>
+    (b.status || '').toLowerCase().includes('pending'),
+  ).length;
 
   return (
-    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6 pb-20">
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={stagger}
+      className="space-y-6 pb-1 sm:pb-4"
+    >
       <PageHeader
-        title="Events & Bookings Manager"
-        subtitle={`${bookings.length} active event bookings recorded`}
-        icon="event"
-        iconColor="orders"
-        headerAction={
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-md border border-[var(--admin-border)] w-full sm:w-max sm:h-10">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 h-10 sm:h-full rounded-sm text-[12px] sm:text-[13px] font-bold transition-all whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'bg-[var(--admin-surface)] text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
-                      : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
-                  <span>{tab.label}</span>
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={() => navigate('/admin/showcases/add')}
-              className="admin-btn admin-btn-primary h-10 w-full sm:w-auto px-4 flex items-center justify-center gap-2 shrink-0"
-            >
-              <span className="material-symbols-outlined text-[18px]">add</span>
-              Add Showcase
-            </button>
-          </div>
+        title={
+          activeTab === 'calendar'
+            ? 'Event Calendar'
+            : activeTab === 'bookings'
+              ? 'Event Bookings'
+              : activeTab === 'showcases'
+                ? 'Showcases & Presentations'
+                : 'Events & Bookings Overview'
         }
+        subtitle={
+          activeTab === 'calendar' ? (
+            <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+              <span className="font-semibold text-[var(--admin-text-primary)]">
+                {calendarSummary?.count ?? defaultCurrentMonthBookings.length} Events this Month
+              </span>
+              <span className="text-[var(--admin-border-strong)]">•</span>
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {calendarSummary?.confirmed ?? defaultConfirmedCount} Confirmed
+              </span>
+              <span className="text-[var(--admin-border-strong)]">•</span>
+              <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                {calendarSummary?.pending ?? defaultPendingCount} Pending
+              </span>
+            </div>
+          ) : activeTab === 'bookings' || activeTab === 'dashboard' ? (
+            loadingBookings ? (
+              <span>Loading bookings summary...</span>
+            ) : (
+              <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+                <span className="font-semibold text-[var(--admin-text-primary)]">
+                  {bookings.length} Total Bookings
+                </span>
+                {upcomingSetupsCount > 0 && (
+                  <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    {upcomingSetupsCount} Scheduled
+                  </span>
+                )}
+                {activeBookingsCount > 0 && (
+                  <span className="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    {activeBookingsCount} Live
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {formatCurrency(totalContractVal)} Volume
+                </span>
+              </div>
+            )
+          ) : activeTab === 'showcases' ? (
+            loadingShowcases ? (
+              <span>Loading showcases summary...</span>
+            ) : (
+              <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+                <span className="font-semibold text-[var(--admin-text-primary)]">
+                  {showcases.length} Total Designs
+                </span>
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {activeShowcasesCount} Active
+                </span>
+                {featuredShowcasesCount > 0 && (
+                  <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    {featuredShowcasesCount} Featured
+                  </span>
+                )}
+                {showcaseCategoriesCount > 0 && (
+                  <span className="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    {showcaseCategoriesCount} Categories
+                  </span>
+                )}
+              </div>
+            )
+          ) : (
+            `${bookings.length} active event bookings recorded`
+          )
+        }
+        headerAction={null}
       />
 
       <AnimatePresence mode="wait">
         {activeTab === 'dashboard' && (
           <DashboardTab
             bookings={bookings}
+            showcases={showcases}
+            events={events}
             setActiveTab={setActiveTab}
             totalContractVal={totalContractVal}
             outstandingBal={outstandingBal}
@@ -140,7 +209,13 @@ export function AdminEvents() {
             upcomingSetupsCount={upcomingSetupsCount}
           />
         )}
-        {activeTab === 'calendar' && <CalendarTab bookings={bookings} />}
+        {activeTab === 'calendar' && (
+          <CalendarTab
+            bookings={bookings}
+            showcases={showcases}
+            onMonthSummaryChange={setCalendarSummary}
+          />
+        )}
         {activeTab === 'showcases' && (
           <ShowcasesTab
             showcases={showcases}

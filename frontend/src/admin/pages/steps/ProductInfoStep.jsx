@@ -19,14 +19,14 @@ export function ProductInfoStep({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-row justify-between items-start gap-3">
-        <div className="flex-1 pr-2">
+      <div className="flex flex-row justify-between items-start gap-2 sm:gap-3">
+        <div className="flex-1 min-w-0 pr-1 sm:pr-2">
           <h2 className="text-[11px] font-bold text-[var(--admin-text-primary)]">Product Info</h2>
           <p className="text-[10px] sm:text-[11px] text-[var(--admin-text-secondary)] mt-0.5">
             Detail product info, category, and materials.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <AiProviderDropdown
             selectedProviderId={selectedProviderId}
             onChange={setSelectedProviderId}
@@ -36,15 +36,13 @@ export function ProductInfoStep({
             type="button"
             onClick={() => setShowAiInput(!showAiInput)}
             disabled={isAIGenerating}
-            className="bg-[var(--admin-accent)] text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95 disabled:opacity-70 cursor-pointer shrink-0"
+            className="bg-[var(--admin-accent)] text-white px-2.5 sm:px-3 h-9 min-h-[36px] box-border rounded-[4px] text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 sm:gap-1.5 shadow-xs hover:opacity-95 transition-all active:scale-95 disabled:opacity-70 cursor-pointer shrink-0"
             title="Auto-Fill with AI"
           >
             {isAIGenerating ? (
-              <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-md" />
+              <div className="skeleton-box inline-block w-3.5 h-3.5 rounded-[2px]" />
             ) : (
-              <span className="material-symbols-outlined text-[15px] sm:text-[14px]">
-                smart_toy
-              </span>
+              <span className="material-symbols-outlined text-[15px]">smart_toy</span>
             )}
             <span className="hidden sm:inline">
               {isAIGenerating ? 'Generating...' : 'Auto-Fill with AI'}
@@ -55,14 +53,14 @@ export function ProductInfoStep({
       </div>
 
       {showAiInput && (
-        <div className="bg-[var(--admin-surface)] p-4 rounded-xl border border-[var(--admin-border)] mb-4 mt-4 animate-in fade-in slide-in-from-top-2">
+        <div className="bg-[var(--admin-surface)] p-4 rounded-[4px] border border-[var(--admin-border)] mb-4 mt-4 animate-in fade-in slide-in-from-top-2 shadow-xs">
           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-2 block">
             Enter Title for AI Generation
           </label>
           <textarea
             value={aiPromptTitle}
             onChange={(e) => setAiPromptTitle(e.target.value)}
-            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:ring-1 focus:ring-[var(--admin-accent)] rounded-xl px-4 py-2.5 text-[12.5px] mb-3 outline-none transition-all resize-none"
+            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-[4px] p-2.5 text-[12.5px] mb-3 outline-none transition-all resize-none"
             placeholder="e.g. Traditional Brass Diya..."
             rows={2}
           />
@@ -70,7 +68,7 @@ export function ProductInfoStep({
             <button
               type="button"
               onClick={() => setShowAiInput(false)}
-              className="px-3 py-1.5 text-[11px] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-subtle)] rounded-lg font-bold transition-colors cursor-pointer"
+              className="h-8 px-3 text-[11px] text-[var(--admin-text-secondary)] hover:bg-[var(--admin-surface-muted)] rounded-[4px] font-bold border border-[var(--admin-border)] transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -81,7 +79,7 @@ export function ProductInfoStep({
                 handleAIFill(aiPromptTitle, selectedProviderId);
               }}
               disabled={!aiPromptTitle.trim()}
-              className="px-4 py-1.5 text-[11px] text-white bg-[var(--admin-accent)] rounded-lg font-bold disabled:opacity-50 hover:brightness-110 transition-all cursor-pointer"
+              className="h-8 px-3.5 text-[11px] text-white bg-[var(--admin-accent)] rounded-[4px] font-bold disabled:opacity-50 hover:opacity-95 transition-all cursor-pointer shadow-xs"
             >
               Generate
             </button>
@@ -90,7 +88,7 @@ export function ProductInfoStep({
       )}
 
       {aiError && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3 mt-4 mb-2 shadow-sm animate-in fade-in slide-in-from-top-2">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-[4px] p-3.5 flex items-start gap-3 mt-4 mb-2 shadow-xs animate-in fade-in slide-in-from-top-2">
           <span className="material-symbols-outlined text-red-500 shrink-0 mt-0.5">error</span>
           <div className="flex-1">
             <h3 className="text-red-800 dark:text-red-400 font-bold text-[13px] mb-1">
@@ -120,7 +118,7 @@ export function ProductInfoStep({
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             placeholder="Product title"
-            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
           />
         </div>
 
@@ -133,7 +131,7 @@ export function ProductInfoStep({
             value={formData.teluguTitle}
             onChange={(e) => setFormData({ ...formData, teluguTitle: e.target.value })}
             placeholder="సాంప్రదాయ పూజా పీఠం"
-            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
           />
         </div>
 
@@ -153,7 +151,7 @@ export function ProductInfoStep({
                 : ''
             }
             placeholder="vintage-teak-mirror"
-            className="w-full bg-[var(--admin-bg-subtle)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all border border-transparent opacity-70 cursor-not-allowed text-[var(--admin-text-primary)] font-medium"
+            className="w-full bg-[var(--admin-bg-subtle)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all border border-[var(--admin-border)] opacity-70 cursor-not-allowed text-[var(--admin-text-primary)] font-medium"
           />
         </div>
 
@@ -166,7 +164,7 @@ export function ProductInfoStep({
             value={formData.material}
             onChange={(e) => setFormData({ ...formData, material: e.target.value })}
             placeholder="e.g. Teak wood, Pure Brass"
-            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
           />
         </div>
 
@@ -196,14 +194,14 @@ export function ProductInfoStep({
               value={formData.primaryCategory}
               onChange={(e) => setFormData({ ...formData, primaryCategory: e.target.value })}
               placeholder="Traditional Urlis, Brass Lamps"
-              className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+              className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
             />
           ) : (
             <select
               required
               value={formData.primaryCategory}
               onChange={(e) => setFormData({ ...formData, primaryCategory: e.target.value })}
-              className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+              className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
             >
               <option value="">Select Category</option>
               {categoriesList.map((c) => (
@@ -219,7 +217,7 @@ export function ProductInfoStep({
           <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
             Secondary Categories (Optional)
           </label>
-          <div className="flex flex-wrap gap-2 p-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl max-h-40 overflow-y-auto">
+          <div className="flex flex-wrap gap-2 p-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] max-h-40 overflow-y-auto">
             {categoriesList
               .filter((c) => c !== formData.primaryCategory)
               .map((c) => {
@@ -239,10 +237,10 @@ export function ProductInfoStep({
                         setFormData({ ...formData, secondaryCategories: [...current, c] });
                       }
                     }}
-                    className={`px-3 py-1 text-[11px] font-semibold rounded-full border transition-all ${
+                    className={`px-2.5 py-1 text-[11px] font-semibold rounded-[4px] border transition-all ${
                       isSelected
                         ? 'bg-[var(--admin-accent)] text-white border-[var(--admin-accent)]'
-                        : 'bg-white text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]'
+                        : 'bg-[var(--admin-bg-subtle)] text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:border-[var(--admin-accent)]'
                     }`}
                   >
                     {c}
@@ -268,7 +266,7 @@ export function ProductInfoStep({
             value={formData.dimensions}
             onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
             placeholder='Dimensions (e.g. 18" x 4" x 24")'
-            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20"
+            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
           />
         </div>
 
@@ -281,23 +279,22 @@ export function ProductInfoStep({
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Enter product description..."
-            className="w-full bg-[var(--admin-bg-subtle)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] focus:bg-[var(--admin-surface)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20 resize-none"
+            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] p-3 text-[12.5px] outline-none transition-all resize-none"
           />
         </div>
       </div>
 
       {/* Product Personalization Settings */}
       <div
-        className={`p-4 bg-[var(--admin-bg-subtle)] border rounded-2xl space-y-4 mt-6 transition-all duration-300 ${focusedField === 'isCustomizable' ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50 scale-[1.01] shadow-lg' : 'border-[var(--admin-border)]'}`}
+        className={`p-4 bg-[var(--admin-bg-subtle)] border rounded-[4px] space-y-4 mt-6 transition-all duration-300 ${focusedField === 'isCustomizable' ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50' : 'border-[var(--admin-border)]'}`}
       >
         <div className="flex justify-between items-start">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">
               Customer Personalization Notes
             </p>
-            <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">
-              Allow customers to add custom text (e.g. names, engravings) for this product during
-              checkout.
+            <p className="text-[10.5px] text-[var(--admin-text-secondary)] mt-0.5">
+              Allow custom text or engravings at checkout
             </p>
           </div>
           <AdminToggle
@@ -315,7 +312,7 @@ export function ProductInfoStep({
         </div>
 
         {formData.customizationConfig?.enabled && (
-          <div className="space-y-4 pt-2 border-t border-[var(--admin-border)]/50 mt-2">
+          <div className="space-y-4 pt-2 border-t border-[var(--admin-border)] mt-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-[11px] font-bold text-[var(--admin-text-secondary)] uppercase tracking-wider mb-1.5 block">
@@ -334,7 +331,7 @@ export function ProductInfoStep({
                       },
                     }))
                   }
-                  className={`w-full bg-[var(--admin-surface)] rounded-xl px-4 py-2 text-[12.5px] border outline-none transition-all duration-300 ${focusedField === 'customizationNote' ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50 scale-[1.02] shadow-md' : 'border-[var(--admin-border)] focus:border-[var(--admin-accent)]/40'}`}
+                  className={`w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] border outline-none transition-all ${focusedField === 'customizationNote' ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50' : 'border-[var(--admin-border)] focus:border-[var(--admin-accent)]'}`}
                 />
               </div>
               <div>
@@ -354,7 +351,7 @@ export function ProductInfoStep({
                       },
                     }))
                   }
-                  className="w-full bg-[var(--admin-surface)] rounded-xl px-4 py-2 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)]/40 transition-all"
+                  className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)] transition-all"
                 />
               </div>
             </div>
@@ -377,7 +374,7 @@ export function ProductInfoStep({
                       },
                     }))
                   }
-                  className="w-full bg-[var(--admin-surface)] rounded-xl px-4 py-2 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)]/40 transition-all"
+                  className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)] transition-all"
                 />
               </div>
               <div>
@@ -421,7 +418,7 @@ export function ProductInfoStep({
                     },
                   }))
                 }
-                className="w-full bg-[var(--admin-surface)] rounded-xl px-4 py-2 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)]/40 transition-all"
+                className="w-full bg-[var(--admin-surface)] rounded-[4px] px-3 h-9 text-[12.5px] border border-[var(--admin-border)] outline-none focus:border-[var(--admin-accent)] transition-all"
               />
             </div>
           </div>
@@ -430,33 +427,32 @@ export function ProductInfoStep({
 
       {/* Product Notes & Complimentary Gift Information */}
       <div
-        className={`p-4 bg-[var(--admin-bg-subtle)] border rounded-2xl space-y-4 mt-6 transition-all duration-300 ${focusedField === 'customerNote' ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50 scale-[1.01] shadow-lg' : 'border-[var(--admin-border)]'}`}
+        className={`p-4 bg-[var(--admin-bg-subtle)] border rounded-[4px] space-y-4 mt-6 transition-all duration-300 ${focusedField === 'customerNote' ? 'border-[var(--admin-accent)] ring-2 ring-[var(--admin-accent)]/50' : 'border-[var(--admin-border)]'}`}
       >
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)] mb-1">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)] mb-0.5">
             Customer Note / Important Information
           </p>
-          <p className="text-[11px] text-[var(--admin-text-secondary)] mb-2">
-            Displays on the storefront product detail page as a Designer's Note. Supports multi-line
-            text.
+          <p className="text-[10.5px] text-[var(--admin-text-secondary)] mb-2">
+            Displays on the product page as a Designer's Note
           </p>
           <textarea
             rows={3}
             value={formData.customerNote || ''}
             onChange={(e) => setFormData({ ...formData, customerNote: e.target.value })}
             placeholder="e.g. Crafted with pure brass... Please note that slight color variations may occur."
-            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-xl px-4 py-2.5 text-[12.5px] outline-none transition-all focus:ring-2 focus:ring-[var(--admin-accent)]/20 resize-none"
+            className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] p-3 text-[12.5px] outline-none transition-all resize-none"
           />
         </div>
 
-        <div className="pt-4 border-t border-[var(--admin-border)]/50">
+        <div className="pt-4 border-t border-[var(--admin-border)]">
           <div className="flex justify-between items-start mb-4">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-text-primary)]">
                 Complimentary Gift Included
               </p>
-              <p className="text-[11px] text-[var(--admin-text-secondary)] mt-1">
-                Offer a free gift with this product purchase.
+              <p className="text-[10.5px] text-[var(--admin-text-secondary)] mt-0.5">
+                Offer a free gift with this product purchase
               </p>
             </div>
             <AdminToggle
@@ -492,7 +488,7 @@ export function ProductInfoStep({
                       },
                     }))
                   }
-                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-xl px-4 py-2 text-[12.5px] outline-none transition-all"
+                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
                 />
               </div>
 
@@ -513,7 +509,7 @@ export function ProductInfoStep({
                       },
                     }))
                   }
-                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-xl px-4 py-2 text-[12.5px] outline-none transition-all"
+                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
                 />
               </div>
 
@@ -534,7 +530,7 @@ export function ProductInfoStep({
                       },
                     }))
                   }
-                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-xl px-4 py-2 text-[12.5px] outline-none transition-all"
+                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
                 />
               </div>
 
@@ -555,7 +551,7 @@ export function ProductInfoStep({
                       },
                     }))
                   }
-                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-xl px-4 py-2 text-[12.5px] outline-none transition-all"
+                  className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] focus:border-[var(--admin-accent)] rounded-[4px] px-3 h-9 text-[12.5px] outline-none transition-all"
                 />
               </div>
             </div>

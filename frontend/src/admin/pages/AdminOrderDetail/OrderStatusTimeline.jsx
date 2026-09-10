@@ -68,7 +68,7 @@ export function OrderStatusTimeline({ order, updateOrderStatus }) {
   const currentIdx = happyPath.indexOf(order.status);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
+    <div className="bg-white rounded-[4px] shadow-sm border border-[var(--admin-border-subtle)] overflow-hidden">
       <div className="px-5 py-4 border-b border-[var(--admin-border-subtle)] flex items-center justify-between">
         <div className="flex flex-col">
           <h3 className="text-[14px] font-bold text-gray-900 tracking-tight">
@@ -78,17 +78,23 @@ export function OrderStatusTimeline({ order, updateOrderStatus }) {
             Track and override the order's current stage.
           </p>
         </div>
-        <div
-          className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5 shadow-sm border ${
-            isFailed
-              ? 'bg-red-50 text-red-600 border-red-100'
-              : STATUS_COLORS[order.status]
-                ? `${STATUS_COLORS[order.status].activeBg} text-white border-transparent`
-                : 'bg-[var(--admin-accent)] text-white border-[var(--admin-accent)]'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[14px]">{statusIcons[order.status]}</span>
-          {order.status}
+        {/* Status Dropdown to Update Order Status */}
+        <div className="relative w-[140px] sm:w-[155px] h-8 shrink-0">
+          <select
+            value={order.status}
+            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+            style={{ backgroundImage: 'none' }}
+            className="admin-no-arrow w-full h-8 !min-h-[32px] !max-h-[32px] !appearance-none !bg-none bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 border border-stone-300 dark:border-stone-600 text-stone-800 dark:text-stone-200 text-[11px] font-bold rounded-[4px] pl-2.5 pr-7 cursor-pointer shadow-2xs outline-none focus:border-amber-500 transition-colors truncate"
+          >
+            {allStatuses.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-stone-500">
+            <span className="material-symbols-outlined text-[16px]">expand_more</span>
+          </div>
         </div>
       </div>
 
@@ -170,7 +176,7 @@ export function OrderStatusTimeline({ order, updateOrderStatus }) {
 
       <div className="bg-gray-50 border-t border-[var(--admin-border-subtle)] px-4 sm:px-5 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-          Manual Overrides
+          Set Status
         </span>
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {['Pending', 'Confirmed', 'Processing', 'Delivered', 'Cancelled'].map((s) => {
@@ -179,10 +185,10 @@ export function OrderStatusTimeline({ order, updateOrderStatus }) {
               <button
                 key={s}
                 onClick={() => updateOrderStatus(order.id, s)}
-                className={`flex-auto sm:flex-none justify-center px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-[11px] font-bold flex items-center gap-1 sm:gap-1.5 transition-all border whitespace-nowrap ${
+                className={`flex-auto sm:flex-none justify-center px-2 sm:px-3 py-1.5 rounded-[4px] text-[10px] sm:text-[11px] font-bold flex items-center gap-1 sm:gap-1.5 transition-all border whitespace-nowrap cursor-pointer ${
                   isSelected
-                    ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50 shadow-sm'
+                    ? 'bg-[var(--admin-accent)] text-white border-[var(--admin-accent)] shadow-sm'
+                    : 'bg-white text-[var(--admin-text-secondary)] border-[var(--admin-border)] hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-bg-subtle)] shadow-sm'
                 }`}
               >
                 <span className="material-symbols-outlined text-[12px] sm:text-[13px]">

@@ -28,33 +28,37 @@ export function PeriodSelector({
 export function FilterBar({ filters, value, onChange, counts, className = '' }) {
   return (
     <div
-      className={`flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full sm:w-auto ${className}`}
+      className={`flex items-center gap-1 p-1 bg-[var(--admin-surface-muted)] rounded-[4px] border border-[var(--admin-border)] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full sm:w-auto max-w-full h-[42px] min-h-[42px] max-h-[42px] box-border ${className}`}
     >
-      {filters.map((f) => (
-        <button
-          key={f}
-          type="button"
-          onClick={() => onChange(f)}
-          className={`flex-1 sm:flex-none px-4 py-1.5 rounded-sm text-[13px] font-bold transition-all whitespace-nowrap ${
-            value === f
-              ? 'bg-white text-[var(--admin-accent)] shadow-sm border border-[var(--admin-border-subtle)]'
-              : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] border border-transparent'
-          }`}
-        >
-          {f}
-          {counts?.[f] !== undefined && (
-            <span
-              className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                value === f
-                  ? 'bg-[var(--admin-accent-muted)] text-[var(--admin-accent)]'
-                  : 'bg-[var(--admin-border-subtle)] text-[var(--admin-text-tertiary)]'
-              }`}
-            >
-              {counts[f]}
-            </span>
-          )}
-        </button>
-      ))}
+      {filters.map((f) => {
+        const isSelected = value === f;
+        const count = counts?.[f];
+        return (
+          <button
+            key={f}
+            type="button"
+            onClick={() => onChange(f)}
+            className={`flex-1 sm:flex-none h-[32px] min-h-[32px] max-h-[32px] px-2.5 sm:px-3.5 rounded-[3px] text-[12px] sm:text-[13px] font-bold transition-all whitespace-nowrap capitalize inline-flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer shrink-0 sm:shrink box-border leading-none ${
+              isSelected
+                ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)]'
+            }`}
+          >
+            <span>{f}</span>
+            {count !== undefined && (
+              <span
+                className={`inline-flex items-center justify-center min-w-[16px] sm:min-w-[18px] h-[16px] sm:h-[18px] px-1 rounded-full text-[9.5px] sm:text-[10px] font-extrabold leading-none ${
+                  isSelected
+                    ? 'bg-[var(--admin-accent-muted)] text-[var(--admin-accent)]'
+                    : 'bg-stone-200/90 dark:bg-stone-700/80 text-stone-600 dark:text-stone-300'
+                }`}
+              >
+                {count}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -76,7 +80,7 @@ export function MobileFilterDrawer({ isOpen, onClose, title = 'Filters', childre
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="fixed bottom-0 left-0 right-0 z-[1010] bg-[var(--admin-surface)] rounded-t-[var(--admin-radius-2xl)] shadow-2xl flex flex-col max-h-[85vh] md:hidden border-t border-[var(--admin-border)] overflow-hidden"
           >
             <div className="w-full flex justify-center pt-3 pb-1 shrink-0" onClick={onClose}>

@@ -165,7 +165,7 @@ export function useShowcaseSubmission({
         }
 
         if (!stayOnPage) {
-          navigate('/admin/events');
+          navigate('/admin/events?tab=showcases');
         } else if (!isEditMode && res.data?._id) {
           // If we created a new one but are staying on the page, redirect to the edit mode for the newly created item
           navigate(`/admin/showcases/edit/${res.data._id}`, { replace: true });

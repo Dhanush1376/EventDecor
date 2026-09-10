@@ -78,7 +78,7 @@ export function TargetingStep({ formData, setFormData, products, availableCatego
                 return (
                   <label
                     key={p._id || p.id}
-                    className="flex items-center gap-3 p-2.5 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[13px]"
+                    className="flex items-center gap-3 p-2.5 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[13px]"
                   >
                     <input
                       type="checkbox"
@@ -90,7 +90,7 @@ export function TargetingStep({ formData, setFormData, products, availableCatego
                       <img
                         src={p.imageSrc}
                         alt={p.title}
-                        className="w-8 h-8 rounded-[var(--admin-radius-md)] object-cover border border-[var(--admin-border-subtle)]"
+                        className="w-8 h-8 rounded-[3px] object-cover border border-[var(--admin-border-subtle)]"
                       />
                       <div>
                         <span className="font-semibold text-[var(--admin-text-primary)]">
@@ -123,7 +123,7 @@ export function TargetingStep({ formData, setFormData, products, availableCatego
                 return (
                   <label
                     key={cat}
-                    className="flex items-center gap-3 p-2.5 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[13px]"
+                    className="flex items-center gap-3 p-2.5 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[13px]"
                   >
                     <input
                       type="checkbox"
@@ -151,7 +151,7 @@ export function TargetingStep({ formData, setFormData, products, availableCatego
               return (
                 <label
                   key={tier}
-                  className="flex items-center gap-3 p-3 bg-[var(--admin-surface)] rounded-[var(--admin-radius-lg)] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[13px]"
+                  className="flex items-center gap-3 p-3 bg-[var(--admin-surface)] rounded-[4px] border border-[var(--admin-border-subtle)] hover:border-[var(--admin-border-strong)] cursor-pointer transition-all text-[13px]"
                 >
                   <input
                     type="checkbox"

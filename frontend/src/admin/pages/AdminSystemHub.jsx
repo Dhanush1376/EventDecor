@@ -1,28 +1,31 @@
 import React, { useState } from 'react';
 import { m as motion } from 'framer-motion';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { PageHeader, stagger } from '../components/AdminUIKit';
 
 import { AdminTeam } from './AdminTeam';
 import { AdminNotifications } from './AdminNotifications';
 import { AdminSettings } from './AdminSettings';
-import { AdminAuditHistory } from './AdminAuditHistory';
 
 export default function AdminSystemHub() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [teamHeaderAction, setTeamHeaderAction] = useState(null);
+
+  // If user navigated to old audit path, redirect to merged Staff live activity feed
+  if (location.pathname.includes('/system/audit')) {
+    return <Navigate to="/admin/analytics/operations?actor=staff" replace />;
+  }
 
   // Determine initial tab based on URL path
   const getInitialTab = () => {
     const path = location.pathname;
     if (path.includes('/system/notifications')) return 'notifications';
     if (path.includes('/system/settings')) return 'settings';
-    if (path.includes('/system/audit')) return 'audit';
     return 'users'; // Default to /admin/system/users or /admin/system
   };
 
   const activeTab = getInitialTab();
-  const [teamHeaderAction, setTeamHeaderAction] = useState(null);
 
   const handleTabChange = (tabId) => {
     const basePath = '/admin/system';
@@ -35,27 +38,44 @@ export default function AdminSystemHub() {
       case 'notifications':
         return {
           title: 'Notifications',
-          subtitle: 'System alerts, rules, and emails.',
-          icon: 'notifications',
+          subtitle: (
+            <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+              <span className="font-semibold text-[var(--admin-text-primary)]">System Alerts</span>
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Live Dispatch
+              </span>
+            </div>
+          ),
         };
       case 'settings':
         return {
           title: 'System Settings',
-          subtitle: 'Profile, backups, and configuration.',
-          icon: 'settings',
-        };
-      case 'audit':
-        return {
-          title: 'Audit History',
-          subtitle: 'Logs, activity, and security.',
-          icon: 'history',
+          subtitle: (
+            <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+              <span className="font-semibold text-[var(--admin-text-primary)]">
+                Platform Config
+              </span>
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Preferences & Backups
+              </span>
+            </div>
+          ),
         };
       case 'users':
       default:
         return {
           title: 'Active Admins',
-          subtitle: 'Manage team access and invitations.',
-          icon: 'admin_panel_settings',
+          subtitle: (
+            <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+              <span className="font-semibold text-[var(--admin-text-primary)]">Admin Portal</span>
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Access & Authorization
+              </span>
+            </div>
+          ),
         };
     }
   };
@@ -68,7 +88,6 @@ export default function AdminSystemHub() {
         <PageHeader
           title={headerProps.title}
           subtitle={headerProps.subtitle}
-          icon={headerProps.icon}
           headerAction={activeTab === 'users' ? teamHeaderAction : null}
         />
       </div>
@@ -79,7 +98,6 @@ export default function AdminSystemHub() {
         )}
         {activeTab === 'notifications' && <AdminNotifications hideHeader={true} />}
         {activeTab === 'settings' && <AdminSettings hideHeader={true} />}
-        {activeTab === 'audit' && <AdminAuditHistory hideHeader={true} />}
       </div>
     </motion.div>
   );

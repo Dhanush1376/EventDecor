@@ -109,29 +109,17 @@ export const inspectionValidator = [
 export const releaseDepositValidator = [
   body('deductionAmount').isFloat({ min: 0 }).withMessage('Deduction amount must be 0 or greater'),
   body('deductionReason').optional().trim(),
-  body('method').isIn(['razorpay', 'cash']).withMessage('Method must be razorpay or cash'),
+  body('method')
+    .optional()
+    .isIn(['razorpay', 'cash', 'bank_transfer', 'upi', 'other'])
+    .withMessage('Method must be razorpay, cash, bank_transfer, upi, or other'),
 ];
 
 export const updateRentalStatusValidator = [
   body('status')
     .notEmpty()
     .withMessage('Status is required')
-    .isIn([
-      'pending',
-      'confirmed',
-      'packed',
-      'out_for_delivery',
-      'delivered',
-      'active_rental',
-      'return_requested',
-      'returned',
-      'completed',
-      'late_return',
-      'damaged',
-      'lost',
-      'cancelled',
-      'refunded',
-    ])
+    .isIn(['pending', 'confirmed', 'active_rental', 'returned', 'completed', 'cancelled'])
     .withMessage('Invalid status'),
   body('note').optional().trim(),
 ];

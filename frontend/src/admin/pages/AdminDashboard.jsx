@@ -6,11 +6,8 @@ import { useAdmin } from '../context/AdminContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import {
   PageHeader,
-  PeriodSelector,
-  SkeletonDashboard,
-  AdminToggle,
+  AdminDashboardSkeleton,
   getRelativeTime,
-  fadeUp,
   stagger,
   CHART_COLORS,
 } from '../components/AdminUIKit';
@@ -18,33 +15,6 @@ import { AdminDashboardRecents } from '../components/dashboard/AdminDashboardRec
 import { AdminDashboardActivity } from '../components/dashboard/AdminDashboardActivity';
 import { AdminDashboardCharts } from '../components/dashboard/AdminDashboardCharts';
 import { AdminDashboardStats } from '../components/dashboard/AdminDashboardStats';
-
-const getInitials = (name) => {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  return parts
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-};
-
-const getStatusIndicatorColor = (status) => {
-  switch (status?.toLowerCase()) {
-    case 'confirmed':
-    case 'delivered':
-    case 'completed':
-      return 'bg-emerald-500';
-    case 'cancelled':
-    case 'failed':
-      return 'bg-rose-500';
-    case 'pending':
-    case 'processing':
-      return 'bg-amber-500';
-    default:
-      return 'bg-blue-500';
-  }
-};
 
 export function AdminDashboard() {
   const {
@@ -54,10 +24,6 @@ export function AdminDashboard() {
     dashboardStats,
     customers,
     auditLogs,
-    safetyLock,
-    toggleSafetyLock,
-    maintenanceMode,
-    toggleMaintenanceMode,
     lastDataRefresh,
     refreshDashboard,
     refreshOrders,
@@ -149,6 +115,8 @@ export function AdminDashboard() {
     return days.map((day) => dailyMap[day]);
   }, [orders]);
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // Trending products
   const trendingProducts = useMemo(() => {
     if (!products || products.length === 0) return [];
@@ -157,104 +125,117 @@ export function AdminDashboard() {
 
   const quickActions = [
     {
-      icon: 'edit_note',
-      label: 'Edit Web Pages',
-      path: '/admin/content',
-      color: 'var(--admin-accent)',
+      icon: 'shopping_bag',
+      label: 'All Orders',
+      path: '/admin/orders',
+      color: '#5a7d9a',
     },
     {
-      icon: 'design_services',
-      label: 'Custom Orders',
-      path: '/admin/custom-orders',
-      color: 'var(--admin-info)',
+      icon: 'inventory_2',
+      label: 'Catalog',
+      path: '/admin/products',
+      color: '#826237',
     },
-    { icon: 'shopping_bag', label: 'Orders', path: '/admin/orders', color: 'var(--admin-success)' },
     {
-      icon: 'analytics',
-      label: 'Analytics',
-      path: '/admin/analytics',
-      color: 'var(--admin-warning)',
+      icon: 'stream',
+      label: 'Live Activity',
+      path: '/admin/analytics/operations',
+      color: '#58856b',
+    },
+    {
+      icon: 'sell',
+      label: 'Coupons',
+      path: '/admin/coupons',
+      color: '#c2944b',
     },
   ];
 
+  const handleManualSync = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refreshDashboard(), refreshOrders()]);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
+
   if (dataLoading) {
-    return <SkeletonDashboard />;
+    return <AdminDashboardSkeleton />;
   }
 
   return (
-    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6">
+    <motion.div initial="hidden" animate="show" variants={stagger} className="space-y-6 pb-8">
       {/* Header */}
       <PageHeader
         title="Dashboard"
-        subtitle={`Welcome back. Here's your business overview. · Last synced ${lastDataRefresh ? lastDataRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`}
-        icon="dashboard"
-        iconColor="revenue"
+        subtitle={
+          <div className="flex flex-wrap items-center gap-2 text-[12.5px] mt-0.5">
+            <span className="font-semibold text-[var(--admin-text-primary)]">
+              Business Overview
+            </span>
+            <span className="text-[var(--admin-border-strong)]">•</span>
+            <span className="text-[var(--admin-text-secondary)]">{orders.length} orders total</span>
+            <span className="text-[var(--admin-border-strong)]">•</span>
+            <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              {lastDataRefresh
+                ? `Synced ${lastDataRefresh.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                : 'Live operational stream'}
+            </span>
+          </div>
+        }
         headerAction={
-          <PeriodSelector
-            value={chartPeriod}
-            onChange={setChartPeriod}
-            periods={['all-time', 'today', 'weekly', 'monthly', 'yearly']}
-          />
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0 shrink-0 ml-auto">
+            {/* Period Switcher (42px locked height) */}
+            <div className="bg-[var(--admin-surface-muted)] p-1 rounded-[4px] border border-[var(--admin-border)] flex items-center gap-1 h-[42px] min-h-[42px] max-h-[42px] box-border shadow-2xs shrink-0">
+              {[
+                { id: 'today', label: 'Today' },
+                { id: 'weekly', label: '7D' },
+                { id: 'monthly', label: 'Month' },
+                { id: 'all-time', label: 'All' },
+              ].map((p) => {
+                const isSelected = chartPeriod === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setChartPeriod(p.id)}
+                    className={`h-[32px] min-h-[32px] max-h-[32px] px-2.5 sm:px-3.5 rounded-[3px] text-[11.5px] sm:text-[12px] font-bold transition-all flex items-center justify-center cursor-pointer whitespace-nowrap box-border leading-none ${
+                      isSelected
+                        ? 'bg-white dark:bg-stone-800 text-[var(--admin-accent)] shadow-xs font-bold'
+                        : 'text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-white/40 dark:hover:bg-stone-800/40'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Sync Now Button (42px locked height) */}
+            <button
+              type="button"
+              onClick={handleManualSync}
+              disabled={isRefreshing}
+              className="h-[42px] min-h-[42px] max-h-[42px] px-2.5 sm:px-3 bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] rounded-[4px] border border-[var(--admin-border)] shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95 disabled:opacity-60 shrink-0"
+              title="Click to sync live dashboard data"
+            >
+              <span
+                className={`material-symbols-outlined text-[17px] text-[var(--admin-accent)] ${
+                  isRefreshing ? 'animate-spin' : ''
+                }`}
+              >
+                sync
+              </span>
+              <span className="text-[11.5px] font-bold whitespace-nowrap hidden sm:inline">
+                Sync Now
+              </span>
+            </button>
+          </div>
         }
       />
 
-      <motion.div
-        variants={fadeUp}
-        className="admin-card-interactive bg-[var(--admin-surface-muted)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5"
-        onClick={() => navigate('/admin/content')}
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-[var(--admin-radius-lg)] bg-[var(--admin-text-primary)] text-[var(--admin-text-inverse)] flex items-center justify-center shrink-0 shadow-[var(--admin-shadow-sm)]">
-            <span className="material-symbols-outlined text-[20px]">view_quilt</span>
-          </div>
-          <div>
-            <h2 className="text-[14px] font-semibold text-[var(--admin-text-primary)] tracking-tight">
-              Website Layout & Content
-            </h2>
-            <p className="text-[11px] text-[var(--admin-text-tertiary)] mt-0.5">
-              Manage website layout and content.
-            </p>
-          </div>
-        </div>
-        <button className="admin-btn admin-btn-outline bg-[var(--admin-surface)] min-h-[36px] self-end sm:self-auto">
-          Open Website Editor
-          <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-        </button>
-      </motion.div>
-
-      {/* Quick Security Overrides */}
-      <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="admin-card p-0 overflow-hidden border-2 border-[var(--admin-domain-danger-bg)] hover:border-[var(--admin-domain-danger)] transition-colors shadow-sm bg-white">
-          <AdminToggle
-            label="Global Safety Lock"
-            description="Block database writes to prevent accidental modifications during critical updates."
-            consequence={
-              safetyLock ? 'Database writes are blocked.' : 'Database is open for writes.'
-            }
-            checked={safetyLock}
-            onChange={toggleSafetyLock}
-            variant="error"
-            activeBgColor="var(--admin-domain-danger)"
-            className="px-5 py-4 border-none"
-          />
-        </div>
-
-        <div className="admin-card p-0 overflow-hidden border-2 border-[var(--admin-domain-users-bg)] hover:border-[var(--admin-domain-users)] transition-colors shadow-sm bg-white">
-          <AdminToggle
-            label="Maintenance Shield"
-            description="Redirect all storefront traffic to a maintenance screen."
-            consequence={
-              maintenanceMode ? 'Storefront is offline.' : 'Storefront is publicly accessible.'
-            }
-            checked={maintenanceMode}
-            onChange={toggleMaintenanceMode}
-            variant="warning"
-            activeBgColor="var(--admin-domain-users)"
-            className="px-5 py-4 border-none"
-          />
-        </div>
-      </motion.div>
-
+      {/* ─── 4-Column Connected Financial & Operational Telemetry Ledger ─── */}
       <AdminDashboardStats
         dashboardStats={dashboardStats}
         pendingOrders={pendingOrders}
@@ -262,6 +243,7 @@ export function AdminDashboard() {
         customers={customers}
       />
 
+      {/* ─── Charts & Trends Row ─── */}
       <AdminDashboardCharts
         orders={orders}
         revenueChartData={revenueChartData}
@@ -270,7 +252,7 @@ export function AdminDashboard() {
         isMobile={isMobile}
       />
 
-      {/* Middle Row */}
+      {/* ─── Operations & Activity Row ─── */}
       <AdminDashboardActivity
         quickActions={quickActions}
         dynamicRecentActivity={dynamicRecentActivity}
@@ -279,7 +261,7 @@ export function AdminDashboard() {
         lowStockProducts={lowStockProducts}
       />
 
-      {/* Bottom Row */}
+      {/* ─── Recents & Catalog Row ─── */}
       <AdminDashboardRecents
         orders={orders}
         eventBookings={eventBookings}

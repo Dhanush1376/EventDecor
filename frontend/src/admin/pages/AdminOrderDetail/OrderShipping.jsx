@@ -1,13 +1,13 @@
 import React from 'react';
 export function OrderShipping({ order }) {
   return (
-    <div className="bg-[var(--admin-surface)] rounded-xl shadow-sm border border-[var(--admin-border)] overflow-hidden">
+    <div className="bg-[var(--admin-surface)] rounded-[4px] shadow-sm border border-[var(--admin-border)] overflow-hidden">
       <div className="px-3 sm:px-5 py-3 sm:py-4 border-b border-[var(--admin-border-subtle)] bg-[var(--admin-bg-subtle)] flex items-center justify-between">
         <h3 className="text-[14px] font-bold text-[var(--admin-text-primary)] flex items-center gap-2">
           <span className="material-symbols-outlined text-[18px]">local_shipping</span>
           Shipping Profile
         </h3>
-        <span className="text-[10px] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] px-2 py-0.5 rounded-xl font-bold uppercase tracking-wider border border-[var(--admin-border)] shadow-sm">
+        <span className="text-[10px] bg-[var(--admin-surface)] text-[var(--admin-text-secondary)] px-2 py-0.5 rounded-[4px] font-bold uppercase tracking-wider border border-[var(--admin-border)] shadow-sm">
           {order.shipping?.type || 'Standard'}
         </span>
       </div>
@@ -84,7 +84,7 @@ export function OrderShipping({ order }) {
             )}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full h-10 flex items-center justify-center rounded-xl bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-bg-subtle)] transition-colors border border-[var(--admin-border)] shadow-sm font-bold text-[12px]"
+            className="w-full h-10 flex items-center justify-center rounded-[4px] bg-[var(--admin-surface)] text-[var(--admin-text-primary)] hover:bg-[var(--admin-bg-subtle)] transition-colors border border-[var(--admin-border)] shadow-sm font-bold text-[12px]"
           >
             <span className="material-symbols-outlined text-[16px] mr-1.5">map</span>
             Open in Maps

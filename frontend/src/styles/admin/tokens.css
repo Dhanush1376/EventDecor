@@ -6,17 +6,31 @@
 
 /* ─── DESIGN TOKENS ─── */
 .admin-section-root {
-  /* Font System */
-  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  --font-headline: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  --font-label: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  --font-signature: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  /* Font System: Strictly 1 Single Default Normal Font (Inter) */
+  --font-display:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  --font-headline:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  --font-label:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  --font-label-sm:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  --font-signature:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  --font-body:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  --font-mono:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  --font-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
   font-family:
     'Inter',
     -apple-system,
     BlinkMacSystemFont,
     'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
     sans-serif !important;
 
   /* ── Color Palette: Cream & Ivory Theme ── */
@@ -47,19 +61,19 @@
   --admin-accent-subtle: rgba(130, 98, 55, 0.05);
   --admin-accent-text: #ffffff;
 
-  /* Semantic Colors */
-  --admin-success: #7a8b76; /* Sage Green */
-  --admin-success-light: #f2f5f0;
-  --admin-success-border: #d1d9cd;
-  --admin-warning: #c29b62; /* Ochre */
-  --admin-warning-light: #f9f6f0;
-  --admin-warning-border: #e8dfcd;
-  --admin-error: #bc6c5c; /* Terracotta */
-  --admin-error-light: #f9f2f0;
-  --admin-error-border: #e6d0cc;
-  --admin-info: #6b8ead; /* Slate Blue */
-  --admin-info-light: #f0f4f8;
-  --admin-info-border: #c8d7e3;
+  /* Semantic Colors (High-Contrast & WCAG Compliant) */
+  --admin-success: #047857; /* Rich Emerald */
+  --admin-success-light: #ecfdf5;
+  --admin-success-border: #a7f3d0;
+  --admin-warning: #b45309; /* Warm Amber */
+  --admin-warning-light: #fffbeb;
+  --admin-warning-border: #fde68a;
+  --admin-error: #be123c; /* Vivid Rose */
+  --admin-error-light: #fff1f2;
+  --admin-error-border: #fecdd3;
+  --admin-info: #1d4ed8; /* Vivid Blue */
+  --admin-info-light: #eff6ff;
+  --admin-info-border: #bfdbfe;
 
   /* ── Domain Colors (Visual Hierarchy) ── */
   --admin-domain-revenue: #7a8b76;
@@ -122,13 +136,19 @@
 
   /* ── Transitions ── */
   --admin-ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --admin-ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
-  --admin-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --admin-ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --admin-ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --admin-ease-bounce: cubic-bezier(
+    0.16,
+    1,
+    0.3,
+    1
+  ); /* Deprecated: aliased to smooth curve to eliminate bounce */
   --admin-duration-fast: 120ms;
   --admin-duration-normal: 200ms;
-  --admin-duration-slow: 350ms;
-  --admin-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --admin-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --admin-duration-slow: 300ms;
+  --admin-transition: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --admin-transition-slow: 250ms cubic-bezier(0.16, 1, 0.3, 1);
 
   /* ── Chart Colors (Modern SaaS Palette) ── */
   --admin-chart-1: #3c362a; /* Deep Brown */

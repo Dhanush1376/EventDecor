@@ -5,6 +5,7 @@ import { useMaintenanceSession } from '../hooks/useMaintenanceSession';
 import { maintenanceService } from '../../services/api/maintenanceService';
 import { SiriLogo } from '../../components/ui/SiriLogo';
 import { useConfirm } from '../../context/ConfirmProvider';
+import { AdminMaintenanceConsoleSkeleton } from '../components/AdminUIKit';
 
 export function MaintenanceConsole() {
   const { session, logout, clearSession } = useMaintenanceSession();
@@ -101,15 +102,11 @@ export function MaintenanceConsole() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
-        <span className="material-symbols-outlined animate-spin text-[32px]">sync</span>
-      </div>
-    );
+    return <AdminMaintenanceConsoleSkeleton />;
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 lg:p-10 font-sans">
+    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 lg:p-10 admin-section-root">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#141414] p-6 rounded-2xl border border-white/5 shadow-xl">
@@ -118,7 +115,7 @@ export function MaintenanceConsole() {
               <SiriLogo size="40px" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold font-display">Super Admin Console</h1>
+              <h1 className="text-2xl font-bold">Super Admin Console</h1>
               <div className="flex items-center gap-2 text-sm text-white/50 mt-1">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 Secure session active

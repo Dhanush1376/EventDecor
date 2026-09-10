@@ -125,7 +125,7 @@ export function ChartCard({ title, subtitle, legend, children, className = '' })
             {title}
           </h3>
           {subtitle && (
-            <p className="text-[12px] text-[var(--admin-text-tertiary)] mt-0.5 leading-snug">
+            <p className="text-[11.5px] sm:text-[12px] text-[var(--admin-text-tertiary)] mt-0.5 leading-snug">
               {subtitle}
             </p>
           )}

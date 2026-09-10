@@ -61,17 +61,11 @@ export const navSections = [
         domain: 'orders',
       },
       {
-        label: 'Returns & Refunds',
+        label: 'Returns & Exchanges',
         icon: 'assignment_return',
         path: '/admin/returns',
-        keywords: 'returns, refunds, dashboard',
-        domain: 'orders',
-      },
-      {
-        label: 'Exchange Hub',
-        icon: 'swap_horiz',
-        path: '/admin/exchanges',
-        keywords: 'returns, exchanges, replacement',
+        matchPaths: ['/admin/returns', '/admin/exchanges'],
+        keywords: 'returns, refunds, exchanges, replacement, dashboard',
         domain: 'orders',
       },
       {
@@ -96,13 +90,6 @@ export const navSections = [
         domain: 'products',
       },
       {
-        label: 'Add Product',
-        icon: 'add_box',
-        path: '/admin/products/add',
-        keywords: 'create, new',
-        domain: 'products',
-      },
-      {
         label: 'Categories',
         icon: 'category',
         path: '/admin/categories',
@@ -121,6 +108,13 @@ export const navSections = [
         icon: 'dashboard',
         path: '/admin/events?tab=dashboard',
         keywords: 'booking, setups, dates, showcases, clients',
+        domain: 'orders',
+      },
+      {
+        label: 'Calendar',
+        icon: 'calendar_month',
+        path: '/admin/events?tab=calendar',
+        keywords: 'calendar, schedule, dates, events, bookings',
         domain: 'orders',
       },
       {
@@ -233,13 +227,6 @@ export const navSections = [
         path: '/admin/system/settings',
         keywords: 'profile, backups, config',
         domain: 'settings',
-      },
-      {
-        label: 'Audit History',
-        icon: 'history',
-        path: '/admin/system/audit',
-        keywords: 'logs, activity, security',
-        domain: 'danger',
       },
       {
         label: 'Recycle Bin',

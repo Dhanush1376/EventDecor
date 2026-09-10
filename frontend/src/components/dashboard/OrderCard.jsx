@@ -173,9 +173,16 @@ export function OrderCard({ order, item, itemIdx, idx }) {
             })}
           </span>
         </div>
-        <StatusPill color="neutral">
-          {order.orderType === 'rental' || item.type === 'rental' ? 'Rental' : 'Purchase'}
-        </StatusPill>
+        <div className="flex items-center gap-1.5">
+          {order.depositStatus === 'refunded' && (
+            <span className="text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Deposit Refunded
+            </span>
+          )}
+          <StatusPill color="neutral">
+            {order.orderType === 'rental' || item.type === 'rental' ? 'Rental' : 'Purchase'}
+          </StatusPill>
+        </div>
       </div>
 
       {/* Card Body - Item Container */}

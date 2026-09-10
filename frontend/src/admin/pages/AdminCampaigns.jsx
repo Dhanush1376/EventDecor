@@ -1,5 +1,5 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { SkeletonDashboard } from '../components/AdminUIKit';
+import { AdminCampaignsSkeleton } from '../components/AdminUIKit';
 import { useConfirm } from '../../context/ConfirmProvider';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -77,6 +77,10 @@ export function AdminCampaigns() {
   };
 
   // Template handlers moved to AdminTemplateCreate.jsx
+
+  if (isLoading && campaigns.length === 0 && templates.length === 0) {
+    return <AdminCampaignsSkeleton />;
+  }
 
   return (
     <motion.div
@@ -198,7 +202,7 @@ export function AdminCampaigns() {
       {/* Tab Content Panels */}
       <AnimatePresence mode="wait">
         {isLoading ? (
-          <SkeletonDashboard />
+          <AdminCampaignsSkeleton />
         ) : activeTab === 'broadcasts' ? (
           <motion.div
             key="broadcasts"

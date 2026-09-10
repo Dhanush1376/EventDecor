@@ -13,6 +13,7 @@ import Database from 'lucide-react/dist/esm/icons/database';
 import backupService from '../../services/backupService';
 import toast from 'react-hot-toast';
 import { useConfirm } from '../../../context/ConfirmProvider';
+import { AdminBackupCenterSkeleton } from '../../components/AdminUIKit';
 import './BackupCenter.css';
 
 // Sub-components
@@ -74,11 +75,7 @@ const BackupCenter = () => {
   const isActive = (path) => (location.pathname === `/admin/backup-center${path}` ? 'active' : '');
 
   if (loading && !healthData) {
-    return (
-      <div className="backup-center-container flex justify-center items-center">
-        Loading Enterprise Backup System...
-      </div>
-    );
+    return <AdminBackupCenterSkeleton />;
   }
 
   // Define the Overview Component (Default Route)
